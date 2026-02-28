@@ -56,6 +56,7 @@ export type Database = {
           created_by: string | null
           date: string | null
           disclaimer: string | null
+          floor_plan_url: string | null
           generated_at: string | null
           id: string
           notes: string | null
@@ -75,6 +76,7 @@ export type Database = {
           created_by?: string | null
           date?: string | null
           disclaimer?: string | null
+          floor_plan_url?: string | null
           generated_at?: string | null
           id?: string
           notes?: string | null
@@ -94,6 +96,7 @@ export type Database = {
           created_by?: string | null
           date?: string | null
           disclaimer?: string | null
+          floor_plan_url?: string | null
           generated_at?: string | null
           id?: string
           notes?: string | null
@@ -143,9 +146,12 @@ export type Database = {
       }
       items: {
         Row: {
+          coverage_type: string
           created_at: string | null
           description: string | null
+          excluded_rooms: Json
           id: string
+          included_rooms: Json
           internal_total: number | null
           internal_unit_price: number | null
           order_index: number
@@ -155,9 +161,12 @@ export type Database = {
           unit: string | null
         }
         Insert: {
+          coverage_type?: string
           created_at?: string | null
           description?: string | null
+          excluded_rooms?: Json
           id?: string
+          included_rooms?: Json
           internal_total?: number | null
           internal_unit_price?: number | null
           order_index?: number
@@ -167,9 +176,12 @@ export type Database = {
           unit?: string | null
         }
         Update: {
+          coverage_type?: string
           created_at?: string | null
           description?: string | null
+          excluded_rooms?: Json
           id?: string
+          included_rooms?: Json
           internal_total?: number | null
           internal_unit_price?: number | null
           order_index?: number
@@ -217,6 +229,41 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      rooms: {
+        Row: {
+          budget_id: string
+          created_at: string | null
+          id: string
+          name: string
+          order_index: number
+          polygon: Json
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          order_index?: number
+          polygon?: Json
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          order_index?: number
+          polygon?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sections: {
         Row: {
