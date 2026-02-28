@@ -30,7 +30,7 @@ export function RoomChecklist({ roomId, roomName, sections, onClear }: RoomCheck
   const excludedItems = itemResults.filter(i => !i.included);
 
   return (
-    <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 animate-fade-in">
+    <div className="rounded-lg border border-primary/20 bg-primary/5 p-5 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 text-primary" />
@@ -49,13 +49,13 @@ export function RoomChecklist({ roomId, roomName, sections, onClear }: RoomCheck
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {includedItems.length > 0 && (
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider mb-2 font-body flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+            <h4 className="text-xs font-semibold uppercase tracking-wider mb-2 font-body flex items-center gap-1.5 text-success">
               <Check className="h-3.5 w-3.5" /> Incluído ({includedItems.length})
             </h4>
             <ul className="space-y-1">
               {includedItems.map((item, i) => (
                 <li key={i} className="text-sm text-foreground/80 font-body flex items-start gap-2">
-                  <Check className="h-3.5 w-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <Check className="h-3.5 w-3.5 text-success mt-0.5 flex-shrink-0" />
                   <span>
                     {item.title}
                     <span className="text-muted-foreground text-xs ml-1">({item.sectionTitle})</span>

@@ -51,7 +51,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
         onClose={() => setLightboxOpen(false)}
       />
 
-      <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm hover:shadow-md transition-shadow">
+      <div className="rounded-lg overflow-hidden border border-border bg-card shadow-sm hover:shadow-md transition-shadow">
         {/* Cover image */}
         {section.cover_image_url ? (
           <div

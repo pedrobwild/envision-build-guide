@@ -22,7 +22,7 @@ export function ExecutiveSummary({ sections, rooms, total, projectName }: Execut
   ];
 
   return (
-    <div className="rounded-xl border border-border bg-gradient-to-br from-card to-accent/20 p-6 mb-8">
+    <div className="rounded-lg border border-border bg-card p-6 mb-8">
       <div className="mb-5">
         <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground">
           Visão Geral da Reforma
@@ -35,7 +35,7 @@ export function ExecutiveSummary({ sections, rooms, total, projectName }: Execut
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="flex items-center gap-3 p-3 rounded-lg bg-card/60 border border-border/50">
+          <div key={stat.label} className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border border-border/50">
             <div className="p-2 rounded-lg bg-accent">
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </div>
