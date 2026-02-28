@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
-import { ChevronDown, ChevronUp, Check, X, ImageIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, X, ImageIcon, MapPin } from "lucide-react";
 
 interface SectionCardProps {
   section: any;
   compact: boolean;
   showItemQty: boolean;
+  highlightZone?: string | null;
 }
 
-export function SectionCard({ section, compact, showItemQty }: SectionCardProps) {
+export function SectionCard({ section, compact, showItemQty, highlightZone }: SectionCardProps) {
   const [expanded, setExpanded] = useState(!compact);
   const subtotal = calculateSectionSubtotal(section);
   const items = section.items || [];
@@ -66,8 +67,16 @@ export function SectionCard({ section, compact, showItemQty }: SectionCardProps)
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {visibleItems.map((item: any) => {
                 const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
+                const isZoneMatch = highlightZone && item.floor_zone === highlightZone;
                 return (
-                  <div key={item.id} className="flex gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div
+                    key={item.id}
+                    className={`flex gap-3 p-3 rounded-lg transition-colors ${
+                      isZoneMatch
+                        ? 'bg-primary/10 ring-1 ring-primary/30'
+                        : 'bg-muted/30 hover:bg-muted/50'
+                    }`}
+                  >
                     {primaryImage ? (
                       <img
                         src={primaryImage.url}
@@ -81,7 +90,12 @@ export function SectionCard({ section, compact, showItemQty }: SectionCardProps)
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground font-body truncate">{item.title}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-foreground font-body truncate">{item.title}</p>
+                        {item.floor_zone && (
+                          <MapPin className="h-3 w-3 text-muted-foreground/50 flex-shrink-0" />
+                        )}
+                      </div>
                       {item.description && (
                         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 font-body">{item.description}</p>
                       )}

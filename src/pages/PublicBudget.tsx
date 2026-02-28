@@ -6,8 +6,10 @@ import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { BudgetContext } from "@/components/budget/BudgetContext";
 import { SectionCard } from "@/components/budget/SectionCard";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
+import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, SlidersHorizontal, List, LayoutGrid } from "lucide-react";
+import { Search, List, LayoutGrid } from "lucide-react";
+import { demoBudget } from "@/lib/demo-budget-data";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -16,8 +18,14 @@ export default function PublicBudget() {
   const [searchQuery, setSearchQuery] = useState("");
   const [compactMode, setCompactMode] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
+  const [activeFloorZone, setActiveFloorZone] = useState<string | null>(null);
 
   useEffect(() => {
+    if (publicId === 'demo') {
+      setBudget(demoBudget);
+      setLoading(false);
+      return;
+    }
     if (publicId) {
       fetchPublicBudget(publicId).then(data => {
         setBudget(data);
@@ -60,14 +68,19 @@ export default function PublicBudget() {
   const adjustments = budget.adjustments || [];
   const total = calculateBudgetTotal(sections, adjustments);
 
-  const filteredSections = searchQuery
-    ? sections.filter((s: any) =>
-        s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (s.items || []).some((item: any) =>
-          item.title.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      )
-    : sections;
+  // Filter by search and active floor zone
+  const filteredSections = sections.filter((s: any) => {
+    const matchSearch = !searchQuery ||
+      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.items || []).some((item: any) =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+    const matchZone = !activeFloorZone ||
+      (s.items || []).some((item: any) => item.floor_zone === activeFloorZone);
+
+    return matchSearch && matchZone;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,12 +113,38 @@ export default function PublicBudget() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main column */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Floor plan */}
+            {budget.floor_plan_url && (
+              <FloorPlanViewer
+                floorPlanUrl={budget.floor_plan_url}
+                sections={sections}
+                activeZone={activeFloorZone}
+                onZoneClick={setActiveFloorZone}
+              />
+            )}
+
+            {/* Active zone indicator */}
+            {activeFloorZone && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <span className="text-sm font-body text-foreground">
+                  Filtrando por: <strong className="text-primary">{activeFloorZone === 'cozinha' ? 'Cozinha' : activeFloorZone === 'banheiro' ? 'Banheiro' : activeFloorZone === 'sala' ? 'Sala / Living' : 'Dormitório'}</strong>
+                </span>
+                <button
+                  onClick={() => setActiveFloorZone(null)}
+                  className="ml-auto text-xs text-primary hover:text-primary/80 font-body font-medium"
+                >
+                  Limpar
+                </button>
+              </div>
+            )}
+
             {filteredSections.map((section: any, idx: number) => (
-              <div key={section.id} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
+              <div key={section.id} id={`section-${section.id}`} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
                 <SectionCard
                   section={section}
                   compact={compactMode}
                   showItemQty={budget.show_item_qty}
+                  highlightZone={activeFloorZone}
                 />
               </div>
             ))}
@@ -113,7 +152,7 @@ export default function PublicBudget() {
 
           {/* Desktop summary */}
           <div className="hidden lg:block">
-            <div className="sticky top-6">
+            <div className="sticky top-6 space-y-6">
               <BudgetSummary
                 sections={sections}
                 adjustments={adjustments}
