@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Save, ExternalLink, Copy, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, ExternalLink, Copy, Check, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { EditorStepper, type EditorStep } from "@/components/editor/EditorStepper";
 import { FloorPlanUploadStep } from "@/components/editor/FloorPlanUploadStep";
@@ -20,6 +20,7 @@ export default function BudgetEditorV2() {
   const [packages, setPackages] = useState<ParsedPackage[]>([]);
   const [saving, setSaving] = useState(false);
   const [roomSaveStatus, setRoomSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadBudget();
@@ -60,6 +61,14 @@ export default function BudgetEditorV2() {
   const completeStep = (step: EditorStep) => {
     setCompletedSteps(prev => new Set(prev).add(step));
   };
+
+  const autoSaveBudgetField = useCallback((field: string, value: string) => {
+    if (!budgetId) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      await supabase.from("budgets").update({ [field]: value }).eq("id", budgetId);
+    }, 800);
+  }, [budgetId]);
 
   const handleFloorPlanUploaded = (url: string) => {
     setFloorPlanUrl(url);
@@ -203,12 +212,29 @@ export default function BudgetEditorV2() {
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <input
-              value={budget.project_name}
-              onChange={(e) => setBudget({ ...budget, project_name: e.target.value })}
-              className="font-display font-bold text-lg text-foreground bg-transparent border-none focus:outline-none w-48 sm:w-auto"
-              placeholder="Nome do projeto"
-            />
+            <div className="flex flex-col">
+              <input
+                value={budget.project_name}
+                onChange={(e) => {
+                  setBudget({ ...budget, project_name: e.target.value });
+                  autoSaveBudgetField("project_name", e.target.value);
+                }}
+                className="font-display font-bold text-lg text-foreground bg-transparent border-none focus:outline-none w-48 sm:w-auto leading-tight"
+                placeholder="Nome do projeto"
+              />
+              <div className="flex items-center gap-1.5">
+                <User className="h-3 w-3 text-muted-foreground" />
+                <input
+                  value={budget.client_name}
+                  onChange={(e) => {
+                    setBudget({ ...budget, client_name: e.target.value });
+                    autoSaveBudgetField("client_name", e.target.value);
+                  }}
+                  className="text-xs text-muted-foreground bg-transparent border-none focus:outline-none font-body w-32 sm:w-auto"
+                  placeholder="Nome do cliente"
+                />
+              </div>
+            </div>
           </div>
 
           <EditorStepper
