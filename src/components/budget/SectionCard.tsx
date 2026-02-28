@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
-import { ChevronDown, ChevronUp, Check, X, ImageIcon, MapPin, ZoomIn } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, X, ImageIcon, ZoomIn } from "lucide-react";
 import { Lightbox } from "./Lightbox";
 
 interface SectionCardProps {
@@ -104,7 +104,14 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {visibleItems.map((item: any) => {
                   const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
-                  const isZoneMatch = highlightZone && item.floor_zone === highlightZone;
+                  const extraImages = (item.images || []).filter((img: any) => img !== primaryImage);
+                  const isZoneMatch = highlightZone && (() => {
+                    const ct = item.coverage_type || "geral";
+                    const inc: string[] = item.included_rooms || [];
+                    const exc: string[] = item.excluded_rooms || [];
+                    if (ct === "geral") return !exc.includes(highlightZone);
+                    return inc.includes(highlightZone);
+                  })();
                   return (
                     <div
                       key={item.id}
@@ -115,20 +122,40 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
                       }`}
                     >
                       {primaryImage ? (
-                        <button
-                          onClick={() => openLightbox(primaryImage.url)}
-                          className="relative w-14 h-14 rounded-md overflow-hidden flex-shrink-0 group cursor-zoom-in"
-                        >
-                          <img
-                            src={primaryImage.url}
-                            alt={item.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
-                            <ZoomIn className="h-3.5 w-3.5 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                        </button>
+                        <div className="flex flex-col gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => openLightbox(primaryImage.url)}
+                            className="relative w-14 h-14 rounded-md overflow-hidden group cursor-zoom-in"
+                          >
+                            <img
+                              src={primaryImage.url}
+                              alt={item.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
+                              <ZoomIn className="h-3.5 w-3.5 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </button>
+                          {extraImages.length > 0 && (
+                            <div className="flex gap-0.5">
+                              {extraImages.slice(0, 3).map((img: any, idx: number) => (
+                                <button
+                                  key={img.id || idx}
+                                  onClick={() => openLightbox(img.url)}
+                                  className="w-4 h-4 rounded-sm overflow-hidden cursor-zoom-in opacity-70 hover:opacity-100 transition-opacity"
+                                >
+                                  <img src={img.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                </button>
+                              ))}
+                              {extraImages.length > 3 && (
+                                <span className="w-4 h-4 rounded-sm bg-muted flex items-center justify-center text-[8px] text-muted-foreground font-body">
+                                  +{extraImages.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
                           <ImageIcon className="h-5 w-5 text-muted-foreground/30" />
@@ -137,9 +164,6 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-medium text-foreground font-body truncate">{item.title}</p>
-                          {item.floor_zone && (
-                            <MapPin className="h-3 w-3 text-muted-foreground/50 flex-shrink-0" />
-                          )}
                         </div>
                         {item.description && (
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 font-body">{item.description}</p>
