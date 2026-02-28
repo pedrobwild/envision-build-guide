@@ -66,6 +66,7 @@ export type Database = {
           public_token_hash: string | null
           show_item_prices: boolean | null
           show_item_qty: boolean | null
+          show_progress_bars: boolean | null
           status: string
           unit: string | null
           updated_at: string | null
@@ -88,6 +89,7 @@ export type Database = {
           public_token_hash?: string | null
           show_item_prices?: boolean | null
           show_item_qty?: boolean | null
+          show_progress_bars?: boolean | null
           status?: string
           unit?: string | null
           updated_at?: string | null
@@ -110,6 +112,7 @@ export type Database = {
           public_token_hash?: string | null
           show_item_prices?: boolean | null
           show_item_qty?: boolean | null
+          show_progress_bars?: boolean | null
           status?: string
           unit?: string | null
           updated_at?: string | null

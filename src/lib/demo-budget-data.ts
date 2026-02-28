@@ -36,6 +36,7 @@ export const demoBudget = {
   public_id: 'demo',
   show_item_qty: true,
   show_item_prices: false,
+  show_progress_bars: true,
   generated_at: '2026-02-21T00:00:00Z',
   disclaimer: 'Os valores apresentados são válidos pelo prazo indicado. Alterações de escopo podem impactar o orçamento final. Orçamento Bwild nº 000470 — Revisão 1.',
   notes: null,
