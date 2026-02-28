@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, ExternalLink, Copy, Check, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { EditorStepper, type EditorStep } from "@/components/editor/EditorStepper";
 import { FloorPlanUploadStep } from "@/components/editor/FloorPlanUploadStep";
 import { RoomDrawingStep, type Room } from "@/components/editor/RoomDrawingStep";
@@ -168,8 +169,15 @@ export default function BudgetEditorV2() {
 
       setBudget({ ...budget, status: "published", public_id: publicId });
       completeStep("coverage");
+      const publicUrl = `${window.location.origin}/o/${publicId}`;
+      toast.success("Orçamento publicado com sucesso!", {
+        description: "O link público foi copiado para a área de transferência.",
+        duration: 5000,
+      });
+      navigator.clipboard.writeText(publicUrl);
     } catch (err) {
       console.error("Save error:", err);
+      toast.error("Erro ao salvar. Tente novamente.");
     }
 
     setSaving(false);
