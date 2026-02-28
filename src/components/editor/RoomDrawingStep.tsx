@@ -1,6 +1,14 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Plus, Trash2, Edit3, Check, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export interface Room {
   id: string;
@@ -27,6 +35,9 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
   const [tempName, setTempName] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [imgSize, setImgSize] = useState({ w: 1, h: 1 });
+  const [deleteTarget, setDeleteTarget] = useState<Room | null>(null);
+  const [namingRoom, setNamingRoom] = useState<Room | null>(null);
+  const [namingValue, setNamingValue] = useState("");
 
   const getNormalizedCoords = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     const svg = svgRef.current;
@@ -45,13 +56,12 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
     const newPoints = [...currentPoints, coords];
     setCurrentPoints(newPoints);
 
-    // If 4+ points and close to first point, close the polygon
     if (newPoints.length >= 3) {
       const first = newPoints[0];
       const last = coords;
       const dist = Math.sqrt((first[0] - last[0]) ** 2 + (first[1] - last[1]) ** 2);
       if (dist < 0.03 && newPoints.length >= 4) {
-        finishPolygon(newPoints.slice(0, -1)); // remove the closing click
+        finishPolygon(newPoints.slice(0, -1));
       }
     }
   }, [drawMode, currentPoints, getNormalizedCoords]);
@@ -65,8 +75,9 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
     onRoomsChange([...rooms, newRoom]);
     setCurrentPoints([]);
     setDrawMode("idle");
-    setEditingName(newRoom.id);
-    setTempName(newRoom.name);
+    // Open naming dialog for the new room
+    setNamingRoom(newRoom);
+    setNamingValue(newRoom.name);
   };
 
   const startRectangleDraw = () => {
@@ -81,9 +92,18 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
     }
   }, [drawMode, currentPoints]);
 
-  const deleteRoom = (id: string) => {
-    onRoomsChange(rooms.filter(r => r.id !== id));
-    if (selectedRoom === id) setSelectedRoom(null);
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    onRoomsChange(rooms.filter(r => r.id !== deleteTarget.id));
+    if (selectedRoom === deleteTarget.id) setSelectedRoom(null);
+    setDeleteTarget(null);
+  };
+
+  const confirmName = () => {
+    if (!namingRoom) return;
+    const name = namingValue.trim() || namingRoom.name;
+    onRoomsChange(rooms.map(r => r.id === namingRoom.id ? { ...r, name } : r));
+    setNamingRoom(null);
   };
 
   const renameRoom = (id: string) => {
@@ -147,7 +167,6 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
               viewBox="0 0 1 1"
               preserveAspectRatio="none"
             >
-              {/* Existing rooms */}
               {rooms.map((room) => {
                 const points = room.polygon.map(p => p.join(",")).join(" ");
                 const [cx, cy] = getPolygonCenter(room.polygon);
@@ -178,7 +197,6 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
                 );
               })}
 
-              {/* Current drawing */}
               {currentPoints.length > 0 && (
                 <>
                   <polyline
@@ -243,7 +261,7 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
                         <Edit3 className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(room); }}
                         className="p-1 text-muted-foreground hover:text-destructive transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -263,6 +281,61 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
           </button>
         </div>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">Excluir Cômodo</DialogTitle>
+            <DialogDescription className="font-body">
+              Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong>? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <button
+              onClick={() => setDeleteTarget(null)}
+              className="px-4 py-2 rounded-lg border border-border text-sm font-body text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground font-body text-sm font-medium hover:bg-destructive/90 transition-colors"
+            >
+              Excluir
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Naming dialog for newly created room */}
+      <Dialog open={!!namingRoom} onOpenChange={(open) => { if (!open) confirmName(); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">Nomear Cômodo</DialogTitle>
+            <DialogDescription className="font-body">
+              Dê um nome para o cômodo recém-criado.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); confirmName(); }}>
+            <input
+              autoFocus
+              value={namingValue}
+              onChange={(e) => setNamingValue(e.target.value)}
+              placeholder="Ex: Sala de estar"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <DialogFooter className="mt-4">
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-body text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Confirmar
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex items-center justify-between pt-4">
         <button
