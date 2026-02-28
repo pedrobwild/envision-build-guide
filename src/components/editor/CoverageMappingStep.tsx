@@ -118,10 +118,15 @@ export function CoverageMappingStep({
     return [cx, cy];
   };
 
-  // Count mapped items
-  const mappedCount = Object.values(coverage).filter(c =>
-    c.includedRooms.length > 0 || c.excludedRooms.length > 0
-  ).length;
+  // Count mapped items - "geral" items are always considered mapped (they cover all by default)
+  const mappedCount = packages.reduce((count, pkg, pi) => {
+    return count + pkg.items.filter((item, ii) => {
+      if (item.coverageType === "geral") return true; // geral always mapped
+      const key = getItemKey(pi, ii);
+      const cov = coverage[key];
+      return cov && cov.includedRooms.length > 0;
+    }).length;
+  }, 0);
   const totalItems = packages.reduce((s, p) => s + p.items.length, 0);
 
   const handleSaveWithCoverage = () => {
