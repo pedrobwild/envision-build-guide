@@ -33,13 +33,14 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
     const lower = headers.map(h => (h || "").toString().trim().toLowerCase());
 
     const patterns: Record<string, string[]> = {
+      index: ["índice", "indice", "index", "cod", "código", "codigo"],
       section: ["seção", "secao", "pacote", "package", "categoria", "ambiente"],
       title: ["item", "título", "titulo", "nome", "servico", "serviço"],
       description: ["descrição", "descricao", "desc", "obs", "detalhe"],
       qty: ["qtd", "quantidade", "qty"],
-      unit: ["unidade", "und", "un"],
+      unit: ["unidade", "und", "un", "unid"],
       total: ["total", "valor", "subtotal", "preço total", "valor total"],
-      coverageType: ["cobertura", "coverage", "coveragetype", "tipo", "mapeamento"],
+      coverageType: ["cobertura", "coverage", "coveragetype", "contempla", "cotempla", "mapeamento"],
     };
 
     for (const [key, words] of Object.entries(patterns)) {
@@ -47,6 +48,83 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
       if (idx !== -1) map[key] = idx;
     }
     return map;
+  };
+
+  const isTopLevelIndex = (val: string) => {
+    const trimmed = val.trim();
+    return /^\d+$/.test(trimmed);
+  };
+
+  const parseRows = (json: any[][], map: Record<string, number>) => {
+    const packageMap = new Map<string, { items: ParsedItem[]; totalPrice: number }>();
+    const hasIndex = map.index !== undefined;
+    const hasSection = map.section !== undefined;
+    let currentSection = "Geral";
+
+    json.slice(1)
+      .filter(row => row.some((cell: any) => cell !== undefined && cell !== ""))
+      .forEach(row => {
+        const indexVal = hasIndex ? String(row[map.index] || "").trim() : "";
+        const itemName = map.title !== undefined ? String(row[map.title] || "") : "";
+        if (!itemName.trim()) return;
+
+        // Hierarchical detection: top-level index (e.g. "1", "2") = section header
+        if (hasIndex && !hasSection && isTopLevelIndex(indexVal)) {
+          currentSection = itemName.trim();
+          // Section headers with a total but no coverage are just section rows
+          const total = map.total !== undefined ? Number(row[map.total]) || 0 : 0;
+          if (total > 0) {
+            const existing = packageMap.get(currentSection) || { items: [], totalPrice: 0 };
+            existing.totalPrice = total;
+            packageMap.set(currentSection, existing);
+          } else {
+            if (!packageMap.has(currentSection)) {
+              packageMap.set(currentSection, { items: [], totalPrice: 0 });
+            }
+          }
+          return;
+        }
+
+        // Sub-section headers (e.g. "2.1 DEMOLIÇÕES") with no qty/coverage → skip
+        if (hasIndex && indexVal && !indexVal.includes(".") === false) {
+          const rawCoverage = map.coverageType !== undefined ? String(row[map.coverageType] || "").trim().toLowerCase() : "";
+          const hasQty = map.qty !== undefined && row[map.qty] !== undefined && row[map.qty] !== "";
+          if (!rawCoverage && !hasQty && indexVal.split(".").length === 2 && !isTopLevelIndex(indexVal)) {
+            // Could be a sub-section header like "2.1 DEMOLIÇÕES" - skip it
+            return;
+          }
+        }
+
+        const sectionName = hasSection
+          ? String(row[map.section] || currentSection)
+          : currentSection;
+
+        const total = map.total !== undefined ? Number(row[map.total]) || 0 : 0;
+        const rawCoverage = map.coverageType !== undefined ? String(row[map.coverageType] || "").trim().toLowerCase() : "";
+        const coverageType: "geral" | "local" = rawCoverage === "local" ? "local" : "geral";
+
+        // Skip sub-section header rows (no coverage, no qty, name is all caps)
+        const hasQty = map.qty !== undefined && row[map.qty] !== undefined && row[map.qty] !== "";
+        if (!rawCoverage && !hasQty && total === 0) return;
+
+        const item: ParsedItem = {
+          name: itemName,
+          description: map.description !== undefined ? String(row[map.description] || "") : undefined,
+          qty: map.qty !== undefined ? Number(row[map.qty]) || undefined : undefined,
+          unit: map.unit !== undefined ? String(row[map.unit] || "") : undefined,
+          total,
+          coverageType,
+        };
+
+        const existing = packageMap.get(sectionName) || { items: [], totalPrice: 0 };
+        existing.items.push(item);
+        if (!packageMap.has(sectionName)) {
+          existing.totalPrice = total;
+        }
+        packageMap.set(sectionName, existing);
+      });
+
+    return packageMap;
   };
 
   const handleFile = useCallback((f: File) => {
@@ -65,47 +143,33 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
           return;
         }
 
-        const headers = json[0].map(String);
+        // Find the header row (first row with recognizable column names)
+        let headerRowIdx = 0;
+        for (let i = 0; i < Math.min(json.length, 15); i++) {
+          const row = json[i];
+          if (!row) continue;
+          const lower = row.map((c: any) => (c || "").toString().trim().toLowerCase());
+          if (lower.some((h: string) => h.includes("item") || h.includes("índice") || h.includes("indice"))) {
+            headerRowIdx = i;
+            break;
+          }
+        }
+
+        const headers = json[headerRowIdx].map(String);
         const map = detectColumns(headers);
 
-        if (!map.section && !map.title) {
-          setError("Não foi possível detectar colunas 'Seção' e 'Item'.");
+        if (!map.index && !map.section && !map.title) {
+          setError("Não foi possível detectar colunas 'Índice', 'Seção' ou 'Item'.");
           return;
         }
 
-        // Parse rows
-        const packageMap = new Map<string, { items: ParsedItem[]; totalPrice: number }>();
+        const dataRows = [json[headerRowIdx], ...json.slice(headerRowIdx + 1)];
+        const packageMap = parseRows(dataRows, map);
 
-        json.slice(1)
-          .filter(row => row.some((cell: any) => cell !== undefined && cell !== ""))
-          .forEach(row => {
-            const sectionName = map.section !== undefined ? String(row[map.section] || "Geral") : "Geral";
-            const itemName = map.title !== undefined ? String(row[map.title] || "") : "";
-            if (!itemName.trim()) return;
-
-            const total = map.total !== undefined ? Number(row[map.total]) || 0 : 0;
-            const rawCoverage = map.coverageType !== undefined ? String(row[map.coverageType] || "").trim().toLowerCase() : "";
-            const coverageType: "geral" | "local" = rawCoverage === "local" ? "local" : "geral";
-
-            const item: ParsedItem = {
-              name: itemName,
-              description: map.description !== undefined ? String(row[map.description] || "") : undefined,
-              qty: map.qty !== undefined ? Number(row[map.qty]) || undefined : undefined,
-              unit: map.unit !== undefined ? String(row[map.unit] || "") : undefined,
-              total,
-              coverageType,
-            };
-
-            const existing = packageMap.get(sectionName) || { items: [], totalPrice: 0 };
-            existing.items.push(item);
-            existing.totalPrice += total;
-            packageMap.set(sectionName, existing);
-          });
-
-        const pkgs: ParsedPackage[] = [...packageMap.entries()].map(([name, data]) => ({
+        const pkgs: ParsedPackage[] = [...packageMap.entries()].map(([name, d]) => ({
           name,
-          price: data.totalPrice,
-          items: data.items,
+          price: d.totalPrice,
+          items: d.items,
         }));
 
         if (pkgs.length === 0) {
