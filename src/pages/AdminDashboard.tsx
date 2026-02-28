@@ -6,7 +6,7 @@ import { formatBRL, formatDate } from "@/lib/formatBRL";
 import {
   Plus, Copy, ExternalLink, LogOut, FileText, Upload,
   Search, Filter, TrendingUp, FolderOpen, CheckCircle, Clock,
-  MoreHorizontal, Trash2, Archive, Eye
+  MoreHorizontal, Trash2, Archive, Eye, Bell
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
@@ -21,9 +21,12 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     loadBudgets();
+    loadNotifications();
   }, []);
 
   const loadBudgets = async () => {
@@ -33,6 +36,24 @@ export default function AdminDashboard() {
       .order('created_at', { ascending: false });
     setBudgets(data || []);
     setLoading(false);
+  };
+
+  const loadNotifications = async () => {
+    const { data } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('read', false)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    setNotifications(data || []);
+  };
+
+  const markNotificationsRead = async () => {
+    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+    if (unreadIds.length > 0) {
+      await supabase.from('notifications').update({ read: true }).in('id', unreadIds);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    }
   };
 
   const createBudget = async () => {
@@ -138,6 +159,47 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  if (!showNotifications && notifications.some(n => !n.read)) {
+                    markNotificationsRead();
+                  }
+                }}
+                className="relative p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Bell className="h-4 w-4" />
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {notifications.filter(n => !n.read).length}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-80 rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
+                    <div className="p-3 border-b border-border">
+                      <h3 className="font-display font-semibold text-sm text-foreground">Notificações</h3>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className="p-4 text-center text-xs text-muted-foreground font-body">Nenhuma notificação</p>
+                      ) : (
+                        notifications.map(n => (
+                          <div key={n.id} className={`p-3 border-b border-border last:border-0 ${!n.read ? 'bg-primary/5' : ''}`}>
+                            <p className="text-sm font-body font-medium text-foreground">{n.title}</p>
+                            <p className="text-xs text-muted-foreground font-body mt-0.5">{n.message}</p>
+                            <p className="text-[10px] text-muted-foreground font-body mt-1">{formatDate(n.created_at)}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <ThemeToggle />
             <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-body">
               <LogOut className="h-4 w-4" /> Sair
