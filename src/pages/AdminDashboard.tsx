@@ -8,6 +8,7 @@ import {
   Search, Filter, TrendingUp, FolderOpen, CheckCircle, Clock,
   MoreHorizontal, Trash2, Archive, Eye
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { toast } from "sonner";
 
