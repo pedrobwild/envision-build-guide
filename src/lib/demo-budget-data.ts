@@ -216,16 +216,18 @@ export const demoBudget = {
       qty: null,
       section_price: 20723,
       cover_image_url: null,
-      tags: ['marcenaria', 'mobiliário'],
+      tags: ['marcenaria', 'mobiliário', 'bancada'],
       included_bullets: [
         'Armário aéreo + gabinete de cozinha (220×60×45 + 140×80×50 cm)',
         'Guarda-roupa de correr (140×60cm, h=260cm)',
         'Bancada + prateleira home office (130×60 + 130×40 cm)',
         'Gabinete de banheiro (70×50cm)',
         'Vassoureiro/gavetão de cozinha (180×15×55cm)',
+        'Bancadas de granito (branco Siena ou preto São Gabriel) com cubas e torneiras',
       ],
       excluded_bullets: [
         'Puxadores especiais (inclui modelo padrão)',
+        'Granitos especiais ou importados',
       ],
       notes: 'Toda a marcenaria é sob medida, produzida em MDF com acabamento de alta resistência.',
       items: [
@@ -234,6 +236,7 @@ export const demoBudget = {
         { id: 'i9-3', title: 'Bancada Home Office', description: 'Bancada + prateleira 130×60cm e 130×40cm', qty: 1, unit: 'UN', images: [], floor_zone: 'sala' },
         { id: 'i9-4', title: 'Gabinete de Banheiro', description: 'Dimensões 70×50cm, com cuba embutida', qty: 1, unit: 'UN', images: [], floor_zone: 'banheiro' },
         { id: 'i9-5', title: 'Vassoureiro / Gavetão Cozinha', description: 'Dimensões 180×15×55cm', qty: 1, unit: 'UN', images: [], floor_zone: 'cozinha' },
+        { id: 'i9-6', title: 'Bancadas de Granito + Cubas + Torneiras', description: 'Branco Siena ou Preto São Gabriel, cozinha e banheiro', qty: 1, unit: 'UN', images: [], floor_zone: 'cozinha' },
       ],
     },
     {
@@ -345,36 +348,15 @@ export const demoBudget = {
         { id: 'i14-1', title: 'Cortina Blackout Dublada com Voil', description: 'Dimensões 350×250cm, fornecimento e instalação', qty: 1, unit: 'UN', images: [], floor_zone: 'quarto' },
       ],
     },
-    {
-      id: 's15',
-      title: 'Bancadas de Granito e Metais',
-      subtitle: 'Novas bancadas com cubas e torneiras para cozinha e banheiro',
-      order_index: 14,
-      qty: null,
-      section_price: 4200,
-      cover_image_url: null,
-      tags: ['bancada', 'granito', 'metal'],
-      included_bullets: [
-        'Bancadas de granito branco Siena ou preto São Gabriel',
-        'Novas cubas e torneiras incluídas',
-        'Instalação na cozinha e banheiro',
-      ],
-      excluded_bullets: [
-        'Granitos especiais ou importados',
-      ],
-      notes: null,
-      items: [
-        { id: 'i15-1', title: 'Bancadas de Granito + Cubas + Torneiras', description: 'Branco Siena ou Preto São Gabriel, cozinha e banheiro', qty: 1, unit: 'UN', images: [], floor_zone: 'cozinha' },
-      ],
-    },
   ],
   adjustments: [],
 };
 
 // Floor plan zone coordinates (approximate % positions on the floor plan image)
+// Based on the actual Adriano Lelis floor plan layout
 export const floorPlanZones: Record<string, { label: string; x: number; y: number; w: number; h: number }> = {
-  cozinha: { label: 'Cozinha', x: 3, y: 8, w: 22, h: 30 },
-  banheiro: { label: 'Banheiro', x: 52, y: 8, w: 28, h: 28 },
-  sala: { label: 'Sala / Living', x: 3, y: 55, w: 48, h: 40 },
-  quarto: { label: 'Dormitório', x: 55, y: 45, w: 40, h: 42 },
+  cozinha: { label: 'Cozinha', x: 4, y: 18, w: 26, h: 25 },
+  banheiro: { label: 'Banheiro', x: 52, y: 18, w: 30, h: 22 },
+  sala: { label: 'Sala / Living', x: 4, y: 55, w: 45, h: 35 },
+  quarto: { label: 'Dormitório', x: 52, y: 48, w: 38, h: 38 },
 };
