@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
-import { Plus, Copy, ExternalLink, LogOut, FileText } from "lucide-react";
+import { Plus, Copy, ExternalLink, LogOut, FileText, Upload } from "lucide-react";
+import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -85,12 +87,20 @@ export default function AdminDashboard() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-display text-2xl font-bold text-foreground">Orçamentos</h2>
-          <button
-            onClick={createBudget}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium font-body hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="h-4 w-4" /> Novo Orçamento
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setImportOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30 text-sm font-medium font-body transition-colors"
+            >
+              <Upload className="h-4 w-4" /> Importar Excel
+            </button>
+            <button
+              onClick={createBudget}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium font-body hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="h-4 w-4" /> Novo Orçamento
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -159,6 +169,7 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+      <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} />
     </div>
   );
 }
