@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { MapPin } from "lucide-react";
+import { useState } from "react";
+import { MapPin, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface FloorPlanRoom {
@@ -16,6 +16,18 @@ interface FloorPlanViewerProps {
   onRoomClick: (roomId: string | null) => void;
 }
 
+// Distinct hue-based colors for each room (HSL based, mapped to tailwind-friendly inline styles)
+const ROOM_COLORS = [
+  { fill: "hsla(28, 80%, 52%, 0.12)", fillHover: "hsla(28, 80%, 52%, 0.28)", fillActive: "hsla(28, 80%, 52%, 0.35)", stroke: "hsla(28, 80%, 52%, 0.6)", strokeActive: "hsla(28, 80%, 52%, 0.9)", chip: "hsl(28, 80%, 52%)", dot: "hsl(28, 80%, 52%)" },
+  { fill: "hsla(200, 70%, 50%, 0.12)", fillHover: "hsla(200, 70%, 50%, 0.28)", fillActive: "hsla(200, 70%, 50%, 0.35)", stroke: "hsla(200, 70%, 50%, 0.6)", strokeActive: "hsla(200, 70%, 50%, 0.9)", chip: "hsl(200, 70%, 50%)", dot: "hsl(200, 70%, 50%)" },
+  { fill: "hsla(152, 60%, 40%, 0.12)", fillHover: "hsla(152, 60%, 40%, 0.28)", fillActive: "hsla(152, 60%, 40%, 0.35)", stroke: "hsla(152, 60%, 40%, 0.6)", strokeActive: "hsla(152, 60%, 40%, 0.9)", chip: "hsl(152, 60%, 40%)", dot: "hsl(152, 60%, 40%)" },
+  { fill: "hsla(280, 60%, 55%, 0.12)", fillHover: "hsla(280, 60%, 55%, 0.28)", fillActive: "hsla(280, 60%, 55%, 0.35)", stroke: "hsla(280, 60%, 55%, 0.6)", strokeActive: "hsla(280, 60%, 55%, 0.9)", chip: "hsl(280, 60%, 55%)", dot: "hsl(280, 60%, 55%)" },
+  { fill: "hsla(350, 70%, 50%, 0.12)", fillHover: "hsla(350, 70%, 50%, 0.28)", fillActive: "hsla(350, 70%, 50%, 0.35)", stroke: "hsla(350, 70%, 50%, 0.6)", strokeActive: "hsla(350, 70%, 50%, 0.9)", chip: "hsl(350, 70%, 50%)", dot: "hsl(350, 70%, 50%)" },
+  { fill: "hsla(45, 80%, 50%, 0.12)", fillHover: "hsla(45, 80%, 50%, 0.28)", fillActive: "hsla(45, 80%, 50%, 0.35)", stroke: "hsla(45, 80%, 50%, 0.6)", strokeActive: "hsla(45, 80%, 50%, 0.9)", chip: "hsl(45, 80%, 50%)", dot: "hsl(45, 80%, 50%)" },
+  { fill: "hsla(180, 55%, 45%, 0.12)", fillHover: "hsla(180, 55%, 45%, 0.28)", fillActive: "hsla(180, 55%, 45%, 0.35)", stroke: "hsla(180, 55%, 45%, 0.6)", strokeActive: "hsla(180, 55%, 45%, 0.9)", chip: "hsl(180, 55%, 45%)", dot: "hsl(180, 55%, 45%)" },
+  { fill: "hsla(15, 75%, 55%, 0.12)", fillHover: "hsla(15, 75%, 55%, 0.28)", fillActive: "hsla(15, 75%, 55%, 0.35)", stroke: "hsla(15, 75%, 55%, 0.6)", strokeActive: "hsla(15, 75%, 55%, 0.9)", chip: "hsl(15, 75%, 55%)", dot: "hsl(15, 75%, 55%)" },
+];
+
 export function FloorPlanViewer({
   floorPlanUrl,
   rooms,
@@ -25,7 +37,6 @@ export function FloorPlanViewer({
 }: FloorPlanViewerProps) {
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
 
-  // Count items per room based on coverage_type + included_rooms / excluded_rooms
   const roomItemCounts: Record<string, number> = {};
   rooms.forEach((r) => {
     let count = 0;
@@ -34,7 +45,6 @@ export function FloorPlanViewer({
         const coverageType = item.coverage_type || "geral";
         const included: string[] = item.included_rooms || [];
         const excluded: string[] = item.excluded_rooms || [];
-
         if (coverageType === "geral") {
           if (!excluded.includes(r.id)) count++;
         } else {
@@ -52,6 +62,8 @@ export function FloorPlanViewer({
     return [cx, cy];
   };
 
+  const getColor = (index: number) => ROOM_COLORS[index % ROOM_COLORS.length];
+
   if (!rooms || rooms.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -67,7 +79,7 @@ export function FloorPlanViewer({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
       <div className="px-5 py-4 border-b border-border flex items-center gap-2">
         <MapPin className="h-4 w-4 text-primary" />
         <h3 className="font-display font-bold text-foreground text-sm">Planta do Apartamento</h3>
@@ -88,12 +100,34 @@ export function FloorPlanViewer({
           viewBox="0 0 1 1"
           preserveAspectRatio="none"
         >
-          {rooms.map((room) => {
+          <defs>
+            {rooms.map((room, idx) => {
+              const color = getColor(idx);
+              return (
+                <filter key={`glow-${room.id}`} id={`glow-${room.id}`} x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="0.004" result="blur" />
+                  <feFlood floodColor={color.stroke} floodOpacity="0.4" />
+                  <feComposite in2="blur" operator="in" />
+                  <feMerge>
+                    <feMergeNode />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              );
+            })}
+          </defs>
+
+          {rooms.map((room, idx) => {
             const points = room.polygon.map((p) => p.join(",")).join(" ");
             const [cx, cy] = getPolygonCenter(room.polygon);
             const isActive = activeRoom === room.id;
             const isHovered = hoveredRoom === room.id;
             const count = roomItemCounts[room.id] || 0;
+            const color = getColor(idx);
+
+            const fillColor = isActive ? color.fillActive : isHovered ? color.fillHover : color.fill;
+            const strokeColor = isActive ? color.strokeActive : color.stroke;
+            const strokeWidth = isActive ? 0.004 : isHovered ? 0.003 : 0.0015;
 
             return (
               <g
@@ -102,39 +136,59 @@ export function FloorPlanViewer({
                 onMouseEnter={() => setHoveredRoom(room.id)}
                 onMouseLeave={() => setHoveredRoom(null)}
                 className="cursor-pointer"
+                filter={isActive || isHovered ? `url(#glow-${room.id})` : undefined}
               >
                 <polygon
                   points={points}
-                  className={cn(
-                    "transition-all duration-200",
-                    isActive
-                      ? "fill-primary/20 stroke-primary stroke-[0.003]"
-                      : isHovered
-                        ? "fill-primary/10 stroke-primary/60 stroke-[0.002]"
-                        : "fill-primary/5 stroke-primary/30 stroke-[0.001]"
-                  )}
+                  style={{
+                    fill: fillColor,
+                    stroke: strokeColor,
+                    strokeWidth,
+                    transition: "all 0.25s ease",
+                  }}
+                />
+                {/* Room name label with background */}
+                <rect
+                  x={cx - 0.045}
+                  y={cy - 0.022}
+                  width={0.09}
+                  height={isActive || isHovered ? 0.038 : 0.024}
+                  rx={0.004}
+                  style={{
+                    fill: isActive ? strokeColor : isHovered ? "hsla(0,0%,100%,0.85)" : "hsla(0,0%,100%,0.6)",
+                    transition: "all 0.25s ease",
+                  }}
+                  className="pointer-events-none"
                 />
                 <text
                   x={cx}
-                  y={cy - 0.012}
+                  y={isActive || isHovered ? cy - 0.006 : cy - 0.01}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  className={cn(
-                    "text-[0.022px] font-semibold pointer-events-none select-none",
-                    isActive || isHovered ? "fill-primary" : "fill-foreground/70"
-                  )}
-                  style={{ fontFamily: "var(--font-body)" }}
+                  style={{
+                    fontSize: "0.018px",
+                    fontFamily: "var(--font-body)",
+                    fontWeight: 600,
+                    fill: isActive ? "white" : isHovered ? strokeColor : "hsl(220, 20%, 25%)",
+                    transition: "all 0.25s ease",
+                  }}
+                  className="pointer-events-none select-none"
                 >
                   {room.name}
                 </text>
                 {(isActive || isHovered) && (
                   <text
                     x={cx}
-                    y={cy + 0.014}
+                    y={cy + 0.01}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    className="fill-primary/80 text-[0.016px] pointer-events-none select-none"
-                    style={{ fontFamily: "var(--font-body)" }}
+                    style={{
+                      fontSize: "0.013px",
+                      fontFamily: "var(--font-body)",
+                      fontWeight: 500,
+                      fill: isActive ? "hsla(0,0%,100%,0.9)" : strokeColor,
+                    }}
+                    className="pointer-events-none select-none"
                   >
                     {count} {count === 1 ? "item" : "itens"}
                   </text>
@@ -145,26 +199,38 @@ export function FloorPlanViewer({
         </svg>
       </div>
 
-      {/* Room chips */}
-      <div className="p-4 flex flex-wrap gap-2">
-        {rooms.map((room) => {
-          const count = roomItemCounts[room.id] || 0;
-          const isActive = activeRoom === room.id;
-          return (
-            <button
-              key={room.id}
-              onClick={() => onRoomClick(isActive ? null : room.id)}
-              className={cn(
-                "text-xs font-body px-3 py-1.5 rounded-full border transition-all",
-                isActive
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-muted/50 text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
-              )}
-            >
-              {room.name} ({count})
-            </button>
-          );
-        })}
+      {/* Legend + Room chips */}
+      <div className="p-4 space-y-3">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body">
+          <Eye className="h-3.5 w-3.5" />
+          <span>Clique em um cômodo para filtrar os itens do orçamento</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {rooms.map((room, idx) => {
+            const count = roomItemCounts[room.id] || 0;
+            const isActive = activeRoom === room.id;
+            const color = getColor(idx);
+            return (
+              <button
+                key={room.id}
+                onClick={() => onRoomClick(isActive ? null : room.id)}
+                className={cn(
+                  "text-xs font-body px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5",
+                  isActive
+                    ? "text-primary-foreground border-transparent shadow-sm"
+                    : "bg-card text-muted-foreground border-border hover:text-foreground"
+                )}
+                style={isActive ? { backgroundColor: color.chip, borderColor: color.chip } : undefined}
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: color.dot }}
+                />
+                {room.name} ({count})
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
