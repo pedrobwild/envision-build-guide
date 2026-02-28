@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
-import { ChevronDown, ChevronUp, Check, X, ImageIcon, ZoomIn } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, X, ImageIcon, ZoomIn, Info } from "lucide-react";
 import { Lightbox } from "./Lightbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SectionCardProps {
   section: any;
@@ -164,6 +165,20 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-medium text-foreground font-body truncate">{item.title}</p>
+                          {item.description && (
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button className="flex-shrink-0 text-muted-foreground hover:text-primary transition-colors">
+                                    <Info className="h-3.5 w-3.5" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs text-xs font-body">
+                                  {item.description}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                         </div>
                         {item.description && (
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 font-body">{item.description}</p>

@@ -6,6 +6,9 @@ import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { BudgetContext } from "@/components/budget/BudgetContext";
 import { SectionCard } from "@/components/budget/SectionCard";
+import { ExecutiveSummary } from "@/components/budget/ExecutiveSummary";
+import { RoomChecklist } from "@/components/budget/RoomChecklist";
+import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
 import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -140,6 +143,17 @@ export default function PublicBudget() {
       <main id="budget-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <BudgetContext budget={budget} />
 
+        <ExecutiveSummary
+          sections={sections}
+          rooms={rooms}
+          total={total}
+          projectName={budget.project_name}
+        />
+
+        {budget.show_progress_bars && (
+          <PackageProgressBars sections={sections} total={total} />
+        )}
+
         {/* Search & controls */}
         <div className="flex flex-col sm:flex-row gap-3 mb-8" data-pdf-hide>
           <div className="relative flex-1">
@@ -174,19 +188,15 @@ export default function PublicBudget() {
             )}
 
             {activeRoom && (() => {
-              const roomName = rooms.find((r: any) => r.id === activeRoom)?.name || activeRoom;
+              const roomObj = rooms.find((r: any) => r.id === activeRoom);
+              const roomName = roomObj?.name || activeRoom;
               return (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                  <span className="text-sm font-body text-foreground">
-                    Filtrando por: <strong className="text-primary">{roomName}</strong>
-                  </span>
-                  <button
-                    onClick={() => setActiveRoom(null)}
-                    className="ml-auto text-xs text-primary hover:text-primary/80 font-body font-medium"
-                  >
-                    Limpar
-                  </button>
-                </div>
+                <RoomChecklist
+                  roomId={activeRoom}
+                  roomName={roomName}
+                  sections={sections}
+                  onClear={() => setActiveRoom(null)}
+                />
               );
             })()}
 
