@@ -1,33 +1,42 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, HelpCircle, ShieldCheck } from "lucide-react";
-import { toast } from "sonner";
-import logoBwildWhite from "@/assets/logo-bwild-white.png";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Loader2, Mail, Lock, Eye, EyeOff,
+  AlertCircle, ShieldCheck, HelpCircle, ArrowLeft,
+} from "lucide-react";
+import authBg from "@/assets/auth-bg.png";
+import bwildLogo from "@/assets/logo-bwild-white.png";
+import { toast as sonnerToast } from "sonner";
 
 type Mode = "login" | "signup" | "forgot";
 
 export default function Login() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [mode, setMode] = useState<Mode>("login");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>("login");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     setLoading(true);
-    setError("");
 
     if (mode === "forgot") {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      if (error) setError(error.message);
+      if (error) setFormError(error.message);
       else {
-        toast.success("E-mail de recuperação enviado!", { description: "Verifique sua caixa de entrada." });
+        sonnerToast.success("E-mail de recuperação enviado!", { description: "Verifique sua caixa de entrada." });
         setMode("login");
       }
       setLoading(false);
@@ -36,104 +45,140 @@ export default function Login() {
 
     if (mode === "signup") {
       const { error } = await supabase.auth.signUp({ email, password });
-      if (error) setError(error.message);
-      else toast.success("Conta criada! Verifique seu e-mail para confirmar.", { duration: 6000 });
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setError(error.message);
-      else navigate("/admin");
+      if (error) setFormError(error.message);
+      else sonnerToast.success("Conta criada! Verifique seu e-mail para confirmar.", { duration: 6000 });
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        setLoading(false);
+        if (error.message.includes("Invalid login credentials")) {
+          setFormError("E-mail ou senha incorretos. Verifique e tente novamente.");
+        } else if (error.message.includes("Email not confirmed")) {
+          setFormError("Seu acesso ainda não foi ativado. Fale com o suporte para liberar.");
+        } else if (/rate limit/i.test(error.message)) {
+          setFormError("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+        } else {
+          setFormError("Não foi possível entrar. Tente novamente ou fale com o suporte.");
+        }
+        return;
+      }
+      navigate("/admin");
+    } catch {
+      setLoading(false);
+      setFormError("Não foi possível entrar. Tente novamente ou fale com o suporte.");
+    }
+  };
+
+  const handlePasswordKeyEvent = (e: React.KeyboardEvent) => {
+    if (typeof e.getModifierState === "function") {
+      setCapsLockOn(e.getModifierState("CapsLock"));
+    }
   };
 
   return (
     <div
-      className="min-h-screen relative flex items-center overflow-hidden"
-      style={{
-        background: "linear-gradient(160deg, #0a1628 0%, #0f2440 30%, #123456 55%, #154060 75%, #0f2440 100%)",
-      }}
+      className="min-h-[100dvh] flex relative bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${authBg})` }}
     >
-      {/* Ocean-like subtle texture overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "radial-gradient(ellipse at 70% 60%, rgba(20,70,120,0.35) 0%, transparent 60%), radial-gradient(ellipse at 30% 80%, rgba(15,50,90,0.25) 0%, transparent 50%)",
-        }}
+      {/* Logo – visible only on mobile */}
+      <img
+        src={bwildLogo}
+        alt="Bwild"
+        className="absolute top-6 right-6 h-8 md:hidden object-contain"
       />
 
-      {/* Logo top-right */}
-      <div className="absolute top-8 right-8 md:top-12 md:right-16 z-20">
-        <img src={logoBwildWhite} alt="Bwild" className="h-14 md:h-20 w-auto" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-lg px-10 md:px-20 py-12">
-        {/* Title */}
-        <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-12 leading-tight tracking-tight">
-          Orçamentos Bwild
-          <span className="text-emerald-400">.</span>
+      {/* Form – centered on mobile, left on desktop */}
+      <div className="flex flex-col justify-center items-center md:items-start w-full md:max-w-lg px-5 sm:px-12 md:px-16 py-10 sm:py-16 mx-auto md:mx-0">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-10 sm:mb-12 text-center md:text-left w-full font-display">
+          Orçamentos Bwild<span className="text-[#366478]">.</span>
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {formError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="flex items-start gap-2.5 rounded-lg border border-red-400/30 bg-red-500/10 p-3.5 mb-6 w-full"
+          >
+            <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-300 font-body">{formError}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6 w-full" noValidate>
           {/* Email */}
-          <div>
-            <label className="flex items-center gap-2.5 text-sm font-medium text-white mb-2.5 font-body">
-              <Mail className="h-4 w-4 opacity-80" />
-              E-mail
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="login-email" className="text-white flex items-center gap-1.5 text-sm font-medium font-body">
+              <Mail className="h-3.5 w-3.5" /> E-mail
+            </Label>
+            <Input
+              id="login-email"
               type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3.5 rounded-xl border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 font-body text-sm transition-all"
-              style={{ backgroundColor: "rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}
-              placeholder="seu@email.com"
+              className="h-12 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus-visible:ring-white/40 focus-visible:border-white/50 text-base font-body"
+              disabled={loading}
+              autoFocus
             />
           </div>
 
           {/* Password */}
           {mode !== "forgot" && (
-            <div>
-              <label className="flex items-center gap-2.5 text-sm font-medium text-white mb-2.5 font-body">
-                <Lock className="h-4 w-4 opacity-80" />
-                Senha
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="login-password" className="text-white flex items-center gap-1.5 text-sm font-medium font-body">
+                <Lock className="h-3.5 w-3.5" /> Senha
+              </Label>
               <div className="relative">
-                <input
+                <Input
+                  id="login-password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full px-4 py-3.5 rounded-xl border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 font-body text-sm transition-all pr-12"
-                  style={{ backgroundColor: "rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}
-                  placeholder="••••••••"
+                  onKeyDown={handlePasswordKeyEvent}
+                  onKeyUp={handlePasswordKeyEvent}
+                  className="h-12 bg-white/10 border-white/30 text-white placeholder:text-white/50 pr-11 focus-visible:ring-white/40 focus-visible:border-white/50 text-base font-body"
+                  disabled={loading}
                 />
                 <button
                   type="button"
+                  tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {capsLockOn && (
+                <p className="text-xs text-amber-400 flex items-center gap-1 mt-1 font-body">
+                  <AlertCircle className="h-3 w-3" />
+                  Caps Lock está ativado
+                </p>
+              )}
             </div>
-          )}
-
-          {error && (
-            <p className="text-sm text-red-300 font-body bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-              {error}
-            </p>
           )}
 
           {/* Forgot password link */}
           {mode === "login" && (
-            <div className="text-center">
+            <div className="flex justify-center pt-1">
               <button
                 type="button"
                 onClick={() => setMode("forgot")}
-                className="text-sm text-blue-300/70 hover:text-blue-200 transition-colors font-body"
+                className="text-xs text-white/80 hover:text-white hover:underline font-medium font-body"
               >
                 Esqueci minha senha
               </button>
@@ -141,21 +186,27 @@ export default function Login() {
           )}
 
           {/* Submit */}
-          <button
+          <Button
             type="submit"
+            className="w-full h-12 bg-white text-slate-900 hover:bg-white/90 font-semibold text-base font-body"
             disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-white text-[#0a1628] font-semibold font-body text-sm hover:bg-white/95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
           >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {mode === "forgot" ? "Enviar e-mail" : mode === "signup" ? "Criar conta" : "Entrar"}
-          </button>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {mode === "forgot" ? "Enviando..." : mode === "signup" ? "Criando..." : "Entrando..."}
+              </>
+            ) : (
+              mode === "forgot" ? "Enviar e-mail" : mode === "signup" ? "Criar conta" : "Entrar"
+            )}
+          </Button>
 
           {/* Toggle mode */}
-          <div className="text-center">
+          <div className="flex justify-center">
             <button
               type="button"
               onClick={() => setMode(mode === "signup" ? "login" : mode === "forgot" ? "login" : "signup")}
-              className="text-sm text-white/40 hover:text-white/70 transition-colors font-body inline-flex items-center gap-1.5"
+              className="text-sm text-white/60 hover:text-white/90 transition-colors font-body inline-flex items-center gap-1.5"
             >
               {mode === "forgot" && <ArrowLeft className="h-3.5 w-3.5" />}
               {mode === "signup" ? "Já tem conta? Entrar" : mode === "forgot" ? "Voltar ao login" : "Não tem conta? Criar"}
@@ -164,20 +215,21 @@ export default function Login() {
         </form>
 
         {/* Footer */}
-        <div className="mt-16 space-y-2 text-center">
-          <p className="text-xs text-white/30 font-body flex items-center justify-center gap-1.5">
-            <HelpCircle className="h-3 w-3" />
-            Problemas?{" "}
-            <span className="font-medium text-white/45 hover:text-white/60 cursor-pointer transition-colors">
-              Falar com suporte
-            </span>
-          </p>
-          <p className="text-xs text-white/20 font-body flex items-center justify-center gap-1.5">
-            <ShieldCheck className="h-3 w-3" />
-            Acesso seguro · LGPD
-          </p>
-          <p className="text-xs text-white/15 font-body">
-            © 2026 Bwild · Todos os direitos reservados
+        <div className="mt-8 flex items-center justify-center gap-1.5 text-sm text-white/70 w-full font-body">
+          <HelpCircle className="h-4 w-4 shrink-0" />
+          <span>Problemas?</span>
+          <span className="text-white/90 hover:text-white hover:underline font-medium cursor-pointer">
+            Falar com suporte
+          </span>
+        </div>
+
+        <div className="mt-6 flex flex-col items-center gap-1 w-full text-center">
+          <div className="flex items-center gap-1.5 text-xs text-white/50 font-body">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Acesso seguro · LGPD</span>
+          </div>
+          <p className="text-xs text-white/40 font-body">
+            © {new Date().getFullYear()} Bwild · Todos os direitos reservados
           </p>
         </div>
       </div>
