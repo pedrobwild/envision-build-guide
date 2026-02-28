@@ -36,6 +36,12 @@ export async function fetchPublicBudget(publicId: string) {
     .select('*')
     .eq('budget_id', budget.id);
 
+  const { data: rooms } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('budget_id', budget.id)
+    .order('order_index');
+
   // Attach items + images to sections
   const enrichedSections = (sections || []).map(section => {
     const sectionItems = (items || [])
@@ -52,6 +58,11 @@ export async function fetchPublicBudget(publicId: string) {
     ...budget,
     sections: enrichedSections,
     adjustments: adjustments || [],
+    rooms: (rooms || []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      polygon: r.polygon || [],
+    })),
   };
 }
 

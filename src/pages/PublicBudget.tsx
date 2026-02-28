@@ -18,7 +18,7 @@ export default function PublicBudget() {
   const [searchQuery, setSearchQuery] = useState("");
   const [compactMode, setCompactMode] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
-  const [activeFloorZone, setActiveFloorZone] = useState<string | null>(null);
+  const [activeRoom, setActiveRoom] = useState<string | null>(null);
 
   useEffect(() => {
     if (publicId === 'demo') {
@@ -66,6 +66,7 @@ export default function PublicBudget() {
 
   const sections = budget.sections || [];
   const adjustments = budget.adjustments || [];
+  const rooms = budget.rooms || [];
   const total = calculateBudgetTotal(sections, adjustments);
 
   // Filter by search and active floor zone
@@ -76,10 +77,17 @@ export default function PublicBudget() {
         item.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-    const matchZone = !activeFloorZone ||
-      (s.items || []).some((item: any) => item.floor_zone === activeFloorZone);
+    if (!matchSearch) return false;
+    if (!activeRoom) return true;
 
-    return matchSearch && matchZone;
+    // Filter sections that have at least one item covering the active room
+    return (s.items || []).some((item: any) => {
+      const coverageType = item.coverage_type || "geral";
+      const included: string[] = item.included_rooms || [];
+      const excluded: string[] = item.excluded_rooms || [];
+      if (coverageType === "geral") return !excluded.includes(activeRoom);
+      return included.includes(activeRoom);
+    });
   });
 
   return (
@@ -117,26 +125,30 @@ export default function PublicBudget() {
             {budget.floor_plan_url && (
               <FloorPlanViewer
                 floorPlanUrl={budget.floor_plan_url}
+                rooms={rooms}
                 sections={sections}
-                activeZone={activeFloorZone}
-                onZoneClick={setActiveFloorZone}
+                activeRoom={activeRoom}
+                onRoomClick={setActiveRoom}
               />
             )}
 
             {/* Active zone indicator */}
-            {activeFloorZone && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                <span className="text-sm font-body text-foreground">
-                  Filtrando por: <strong className="text-primary">{activeFloorZone === 'cozinha' ? 'Cozinha' : activeFloorZone === 'banheiro' ? 'Banheiro' : activeFloorZone === 'sala' ? 'Sala / Living' : 'Dormitório'}</strong>
-                </span>
-                <button
-                  onClick={() => setActiveFloorZone(null)}
-                  className="ml-auto text-xs text-primary hover:text-primary/80 font-body font-medium"
-                >
-                  Limpar
-                </button>
-              </div>
-            )}
+            {activeRoom && (() => {
+              const roomName = rooms.find((r: any) => r.id === activeRoom)?.name || activeRoom;
+              return (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                  <span className="text-sm font-body text-foreground">
+                    Filtrando por: <strong className="text-primary">{roomName}</strong>
+                  </span>
+                  <button
+                    onClick={() => setActiveRoom(null)}
+                    className="ml-auto text-xs text-primary hover:text-primary/80 font-body font-medium"
+                  >
+                    Limpar
+                  </button>
+                </div>
+              );
+            })()}
 
             {filteredSections.map((section: any, idx: number) => (
               <div key={section.id} id={`section-${section.id}`} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
@@ -144,7 +156,7 @@ export default function PublicBudget() {
                   section={section}
                   compact={compactMode}
                   showItemQty={budget.show_item_qty}
-                  highlightZone={activeFloorZone}
+                  highlightZone={activeRoom}
                 />
               </div>
             ))}
