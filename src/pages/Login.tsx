@@ -47,27 +47,29 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center overflow-hidden"
+    <div
+      className="min-h-screen relative flex items-center overflow-hidden"
       style={{
-        background: "linear-gradient(135deg, hsl(210 40% 12%) 0%, hsl(210 55% 20%) 40%, hsl(200 50% 30%) 70%, hsl(195 45% 25%) 100%)",
+        background: "linear-gradient(160deg, #0a1628 0%, #0f2440 30%, #123456 55%, #154060 75%, #0f2440 100%)",
       }}
     >
-      {/* Subtle texture overlay */}
-      <div className="absolute inset-0 opacity-[0.08]"
+      {/* Ocean-like subtle texture overlay */}
+      <div
+        className="absolute inset-0"
         style={{
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+          background: "radial-gradient(ellipse at 70% 60%, rgba(20,70,120,0.35) 0%, transparent 60%), radial-gradient(ellipse at 30% 80%, rgba(15,50,90,0.25) 0%, transparent 50%)",
         }}
       />
 
       {/* Logo top-right */}
-      <div className="absolute top-8 right-8 md:top-12 md:right-16">
-        <img src={logoBwildWhite} alt="Bwild" className="h-12 md:h-16 w-auto opacity-90" />
+      <div className="absolute top-8 right-8 md:top-12 md:right-16 z-20">
+        <img src={logoBwildWhite} alt="Bwild" className="h-14 md:h-20 w-auto" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-md px-8 md:px-16 py-12">
+      <div className="relative z-10 w-full max-w-lg px-10 md:px-20 py-12">
         {/* Title */}
-        <h1 className="font-display text-3xl md:text-4xl font-bold text-white mb-10 leading-tight">
+        <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-12 leading-tight tracking-tight">
           Orçamentos Bwild
           <span className="text-emerald-400">.</span>
         </h1>
@@ -75,8 +77,8 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-white/90 mb-2 font-body">
-              <Mail className="h-4 w-4" />
+            <label className="flex items-center gap-2.5 text-sm font-medium text-white mb-2.5 font-body">
+              <Mail className="h-4 w-4 opacity-80" />
               E-mail
             </label>
             <input
@@ -84,7 +86,8 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/15 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/25 focus:border-white/30 font-body text-sm transition-all"
+              className="w-full px-4 py-3.5 rounded-xl border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 font-body text-sm transition-all"
+              style={{ backgroundColor: "rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}
               placeholder="seu@email.com"
             />
           </div>
@@ -92,8 +95,8 @@ export default function Login() {
           {/* Password */}
           {mode !== "forgot" && (
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-white/90 mb-2 font-body">
-                <Lock className="h-4 w-4" />
+              <label className="flex items-center gap-2.5 text-sm font-medium text-white mb-2.5 font-body">
+                <Lock className="h-4 w-4 opacity-80" />
                 Senha
               </label>
               <div className="relative">
@@ -103,13 +106,14 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/15 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/25 focus:border-white/30 font-body text-sm transition-all pr-12"
+                  className="w-full px-4 py-3.5 rounded-xl border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 font-body text-sm transition-all pr-12"
+                  style={{ backgroundColor: "rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -125,50 +129,54 @@ export default function Login() {
 
           {/* Forgot password link */}
           {mode === "login" && (
-            <button
-              type="button"
-              onClick={() => setMode("forgot")}
-              className="text-sm text-white/60 hover:text-white/90 transition-colors font-body"
-            >
-              Esqueci minha senha
-            </button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setMode("forgot")}
+                className="text-sm text-blue-300/70 hover:text-blue-200 transition-colors font-body"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
           )}
 
           {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-lg bg-white text-charcoal font-semibold font-body text-sm hover:bg-white/95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+            className="w-full py-3.5 rounded-xl bg-white text-[#0a1628] font-semibold font-body text-sm hover:bg-white/95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {mode === "forgot" ? "Enviar e-mail" : mode === "signup" ? "Criar conta" : "Entrar"}
           </button>
 
           {/* Toggle mode */}
-          <button
-            type="button"
-            onClick={() => setMode(mode === "signup" ? "login" : mode === "forgot" ? "login" : "signup")}
-            className="w-full text-sm text-white/50 hover:text-white/80 transition-colors font-body flex items-center justify-center gap-1.5"
-          >
-            {mode === "forgot" && <ArrowLeft className="h-3.5 w-3.5" />}
-            {mode === "signup" ? "Já tem conta? Entrar" : mode === "forgot" ? "Voltar ao login" : "Não tem conta? Criar"}
-          </button>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signup" ? "login" : mode === "forgot" ? "login" : "signup")}
+              className="text-sm text-white/40 hover:text-white/70 transition-colors font-body inline-flex items-center gap-1.5"
+            >
+              {mode === "forgot" && <ArrowLeft className="h-3.5 w-3.5" />}
+              {mode === "signup" ? "Já tem conta? Entrar" : mode === "forgot" ? "Voltar ao login" : "Não tem conta? Criar"}
+            </button>
+          </div>
         </form>
 
         {/* Footer */}
-        <div className="mt-12 space-y-2 text-center">
-          <p className="text-xs text-white/35 font-body flex items-center justify-center gap-1.5">
+        <div className="mt-16 space-y-2 text-center">
+          <p className="text-xs text-white/30 font-body flex items-center justify-center gap-1.5">
             <HelpCircle className="h-3 w-3" />
             Problemas?{" "}
-            <span className="font-medium text-white/50 hover:text-white/70 cursor-pointer transition-colors">
+            <span className="font-medium text-white/45 hover:text-white/60 cursor-pointer transition-colors">
               Falar com suporte
             </span>
           </p>
-          <p className="text-xs text-white/25 font-body flex items-center justify-center gap-1.5">
+          <p className="text-xs text-white/20 font-body flex items-center justify-center gap-1.5">
             <ShieldCheck className="h-3 w-3" />
             Acesso seguro · LGPD
           </p>
-          <p className="text-xs text-white/20 font-body">
+          <p className="text-xs text-white/15 font-body">
             © 2026 Bwild · Todos os direitos reservados
           </p>
         </div>
