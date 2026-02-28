@@ -60,7 +60,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
     };
 
     for (const [key, words] of Object.entries(patterns)) {
-      const idx = lower.findIndex(h => words.some(w => h.includes(w)));
+      const idx = lower.findIndex(h => h && words.some(w => h.includes(w)));
       if (idx !== -1) map[key] = idx;
     }
     return map;
@@ -178,8 +178,8 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
         for (let i = 0; i < Math.min(json.length, 15); i++) {
           const row = json[i];
           if (!row) continue;
-          const lower = row.map((c: any) => (c || "").toString().trim().toLowerCase());
-          if (lower.some((h: string) => h.includes("item") || h.includes("índice") || h.includes("indice"))) {
+          const lower = row.map((c: any) => (c == null ? "" : String(c)).trim().toLowerCase());
+          if (lower.some((h: string) => h && (h.includes("item") || h.includes("índice") || h.includes("indice")))) {
             headerRowIdx = i;
             break;
           }
@@ -191,7 +191,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
           return;
         }
 
-        const headers = headerRow.map((c: any) => String(c ?? ""));
+        const headers = Array.from(headerRow, (c: any) => (c == null ? "" : String(c)));
         const map = detectColumns(headers);
 
         console.log("[Excel Import] Header row:", headerRowIdx, headers);
