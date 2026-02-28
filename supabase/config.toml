@@ -1,1 +1,4 @@
 project_id = "pieenhgjulsrjlioozsy"
+
+[functions.notify-budget-view]
+verify_jwt = false

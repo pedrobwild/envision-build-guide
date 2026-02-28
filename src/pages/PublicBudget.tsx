@@ -53,6 +53,12 @@ export default function PublicBudget() {
               last_viewed_at: new Date().toISOString(),
             }),
           }).catch(() => {});
+          // Trigger first-view notification
+          if ((data.view_count || 0) === 0) {
+            supabase.functions.invoke('notify-budget-view', {
+              body: { public_id: publicId },
+            }).catch(() => {});
+          }
         }
       });
     }
