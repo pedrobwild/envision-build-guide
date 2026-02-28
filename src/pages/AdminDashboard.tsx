@@ -241,6 +241,7 @@ export default function AdminDashboard() {
                     </div>
                     <p className="text-xs text-muted-foreground font-body">
                       {budget.client_name} • {budget.date ? formatDate(budget.date) : '—'} • {sectionCount} {sectionCount === 1 ? 'seção' : 'seções'}
+                      {budget.view_count > 0 && ` • ${budget.view_count} visualização${budget.view_count !== 1 ? 'ões' : ''}`}
                     </p>
                   </div>
 
