@@ -1,6 +1,14 @@
 import { useState, useCallback } from "react";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export interface ParsedPackage {
   name: string;
@@ -17,6 +25,12 @@ export interface ParsedItem {
   coverageType: "geral" | "local";
 }
 
+interface SkippedRow {
+  rowIndex: number;
+  cells: string[];
+  reason: string;
+}
+
 interface SpreadsheetImportStepProps {
   packages: ParsedPackage[];
   onImported: (packages: ParsedPackage[]) => void;
@@ -27,6 +41,8 @@ interface SpreadsheetImportStepProps {
 export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: SpreadsheetImportStepProps) {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [skippedRows, setSkippedRows] = useState<SkippedRow[]>([]);
+  const [showSkipped, setShowSkipped] = useState(false);
 
   const detectColumns = (headers: string[]) => {
     const map: Record<string, number> = {};
@@ -55,42 +71,51 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
     return /^\d+$/.test(trimmed);
   };
 
-  const parseRows = (json: any[][], map: Record<string, number>) => {
+  const isSubSectionIndex = (val: string) => {
+    const parts = val.trim().split(".");
+    return parts.length === 2 && parts.every(p => /^\d+$/.test(p));
+  };
+
+  const parseNumber = (val: any): number => {
+    if (typeof val === "number") return val;
+    if (!val) return 0;
+    const str = String(val).replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
+    return Number(str) || 0;
+  };
+
+  const parseRows = (json: any[][], map: Record<string, number>, headerRowIdx: number) => {
     const packageMap = new Map<string, { items: ParsedItem[]; totalPrice: number }>();
     const hasIndex = map.index !== undefined;
     const hasSection = map.section !== undefined;
     let currentSection = "Geral";
+    const skipped: SkippedRow[] = [];
 
     json.slice(1)
-      .filter(row => row.some((cell: any) => cell !== undefined && cell !== ""))
-      .forEach(row => {
-        const indexVal = hasIndex ? String(row[map.index] || "").trim() : "";
-        const itemName = map.title !== undefined ? String(row[map.title] || "") : "";
-        if (!itemName.trim()) return;
+      .forEach((row, rowOffset) => {
+        if (!row || !row.some((cell: any) => cell !== undefined && cell !== "")) return;
 
-        // Hierarchical detection: top-level index (e.g. "1", "2") = section header
+        const indexVal = hasIndex ? String(row[map.index] ?? "").trim() : "";
+        const itemName = map.title !== undefined ? String(row[map.title] ?? "").trim() : "";
+
+        // Skip completely empty name rows
+        if (!itemName) return;
+
+        // Top-level index (e.g. "1", "2") = section header
         if (hasIndex && !hasSection && isTopLevelIndex(indexVal)) {
-          currentSection = itemName.trim();
-          // Section headers with a total but no coverage are just section rows
-          const total = map.total !== undefined ? Number(row[map.total]) || 0 : 0;
-          if (total > 0) {
-            const existing = packageMap.get(currentSection) || { items: [], totalPrice: 0 };
-            existing.totalPrice = total;
-            packageMap.set(currentSection, existing);
-          } else {
-            if (!packageMap.has(currentSection)) {
-              packageMap.set(currentSection, { items: [], totalPrice: 0 });
-            }
-          }
+          currentSection = itemName;
+          const total = map.total !== undefined ? parseNumber(row[map.total]) : 0;
+          const existing = packageMap.get(currentSection) || { items: [], totalPrice: 0 };
+          if (total > 0) existing.totalPrice = total;
+          packageMap.set(currentSection, existing);
           return;
         }
 
-        // Sub-section headers (e.g. "2.1 DEMOLIÇÕES") with no qty/coverage → skip
-        if (hasIndex && indexVal && !indexVal.includes(".") === false) {
-          const rawCoverage = map.coverageType !== undefined ? String(row[map.coverageType] || "").trim().toLowerCase() : "";
+        // Sub-section headers (e.g. "2.1", "2.3") with no qty/coverage → skip
+        if (hasIndex && isSubSectionIndex(indexVal)) {
+          const rawCoverage = map.coverageType !== undefined ? String(row[map.coverageType] ?? "").trim().toLowerCase() : "";
           const hasQty = map.qty !== undefined && row[map.qty] !== undefined && row[map.qty] !== "";
-          if (!rawCoverage && !hasQty && indexVal.split(".").length === 2 && !isTopLevelIndex(indexVal)) {
-            // Could be a sub-section header like "2.1 DEMOLIÇÕES" - skip it
+          if (!rawCoverage && !hasQty) {
+            // Sub-section header, skip silently
             return;
           }
         }
@@ -99,18 +124,25 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
           ? String(row[map.section] || currentSection)
           : currentSection;
 
-        const total = map.total !== undefined ? Number(row[map.total]) || 0 : 0;
-        const rawCoverage = map.coverageType !== undefined ? String(row[map.coverageType] || "").trim().toLowerCase() : "";
+        const total = map.total !== undefined ? parseNumber(row[map.total]) : 0;
+        const rawCoverage = map.coverageType !== undefined ? String(row[map.coverageType] ?? "").trim().toLowerCase() : "";
         const coverageType: "geral" | "local" = rawCoverage === "local" ? "local" : "geral";
 
-        // Skip sub-section header rows (no coverage, no qty, name is all caps)
+        // Skip rows with no coverage, no qty, no total (likely noise/headers)
         const hasQty = map.qty !== undefined && row[map.qty] !== undefined && row[map.qty] !== "";
-        if (!rawCoverage && !hasQty && total === 0) return;
+        if (!rawCoverage && !hasQty && total === 0) {
+          skipped.push({
+            rowIndex: headerRowIdx + 1 + rowOffset + 1, // 1-indexed Excel row
+            cells: [indexVal, itemName, String(row[map.qty] ?? ""), rawCoverage].filter(Boolean),
+            reason: "Sem tipo de cobertura, quantidade ou total",
+          });
+          return;
+        }
 
         const item: ParsedItem = {
           name: itemName,
           description: map.description !== undefined ? String(row[map.description] || "") : undefined,
-          qty: map.qty !== undefined ? Number(row[map.qty]) || undefined : undefined,
+          qty: map.qty !== undefined ? parseNumber(row[map.qty]) || undefined : undefined,
           unit: map.unit !== undefined ? String(row[map.unit] || "") : undefined,
           total,
           coverageType,
@@ -118,18 +150,16 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
 
         const existing = packageMap.get(sectionName) || { items: [], totalPrice: 0 };
         existing.items.push(item);
-        if (!packageMap.has(sectionName)) {
-          existing.totalPrice = total;
-        }
         packageMap.set(sectionName, existing);
       });
 
-    return packageMap;
+    return { packageMap, skipped };
   };
 
   const handleFile = useCallback((f: File) => {
     setFile(f);
     setError(null);
+    setSkippedRows([]);
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -143,7 +173,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
           return;
         }
 
-        // Find the header row (first row with recognizable column names)
+        // Find the header row
         let headerRowIdx = 0;
         for (let i = 0; i < Math.min(json.length, 15); i++) {
           const row = json[i];
@@ -155,16 +185,25 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
           }
         }
 
-        const headers = json[headerRowIdx].map(String);
+        const headerRow = json[headerRowIdx];
+        if (!headerRow) {
+          setError("Cabeçalho não encontrado na planilha.");
+          return;
+        }
+
+        const headers = headerRow.map((c: any) => String(c ?? ""));
         const map = detectColumns(headers);
+
+        console.log("[Excel Import] Header row:", headerRowIdx, headers);
+        console.log("[Excel Import] Column map:", map);
 
         if (!map.index && !map.section && !map.title) {
           setError("Não foi possível detectar colunas 'Índice', 'Seção' ou 'Item'.");
           return;
         }
 
-        const dataRows = [json[headerRowIdx], ...json.slice(headerRowIdx + 1)];
-        const packageMap = parseRows(dataRows, map);
+        const dataRows = [headerRow, ...json.slice(headerRowIdx + 1)];
+        const { packageMap, skipped } = parseRows(dataRows, map, headerRowIdx);
 
         const pkgs: ParsedPackage[] = [...packageMap.entries()].map(([name, d]) => ({
           name,
@@ -173,13 +212,18 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
         }));
 
         if (pkgs.length === 0) {
-          setError("Nenhum item encontrado.");
+          setError("Nenhum item encontrado na planilha.");
           return;
         }
 
+        setSkippedRows(skipped);
+        if (skipped.length > 0) {
+          setShowSkipped(true);
+        }
         onImported(pkgs);
-      } catch {
-        setError("Erro ao ler o arquivo.");
+      } catch (err) {
+        console.error("[Excel Import] Error:", err);
+        setError(`Erro ao ler o arquivo: ${err instanceof Error ? err.message : "formato inválido"}`);
       }
     };
     reader.readAsArrayBuffer(f);
@@ -200,7 +244,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
       <div>
         <h3 className="font-display font-bold text-xl text-foreground mb-1">Importar Planilha</h3>
         <p className="text-sm text-muted-foreground font-body">
-          Upload do XLSX com colunas: Seção, Item, Total, Cobertura (geral/local). Se "Cobertura" estiver ausente, assume "geral".
+          Upload do XLSX com colunas: Índice, Item, Qtd, Total, Contempla (geral/local).
         </p>
       </div>
 
@@ -237,12 +281,22 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
               </p>
             </div>
             <button
-              onClick={() => { onImported([]); setFile(null); }}
+              onClick={() => { onImported([]); setFile(null); setSkippedRows([]); }}
               className="text-xs text-muted-foreground hover:text-destructive font-body transition-colors"
             >
               Remover
             </button>
           </div>
+
+          {skippedRows.length > 0 && (
+            <button
+              onClick={() => setShowSkipped(true)}
+              className="flex items-center gap-2 text-xs text-amber-600 hover:text-amber-700 font-body transition-colors"
+            >
+              <AlertCircle className="h-3.5 w-3.5" />
+              {skippedRows.length} linha(s) ignorada(s) — clique para ver
+            </button>
+          )}
 
           <div className="border border-border rounded-lg overflow-hidden max-h-72 overflow-y-auto">
             <table className="w-full text-xs font-body">
@@ -287,6 +341,46 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
           <p className="text-sm text-destructive font-body">{error}</p>
         </div>
       )}
+
+      {/* Skipped rows modal */}
+      <Dialog open={showSkipped} onOpenChange={setShowSkipped}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Linhas Ignoradas</DialogTitle>
+            <DialogDescription className="font-body">
+              Estas linhas foram ignoradas por não terem quantidade, tipo de cobertura ou total preenchidos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-60 overflow-y-auto border border-border rounded-lg">
+            <table className="w-full text-xs font-body">
+              <thead className="bg-muted/50 sticky top-0">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Linha</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Conteúdo</th>
+                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Motivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {skippedRows.map((row, i) => (
+                  <tr key={i} className="border-t border-border/50">
+                    <td className="px-3 py-1.5 text-muted-foreground">{row.rowIndex}</td>
+                    <td className="px-3 py-1.5 text-foreground">{row.cells.join(" | ")}</td>
+                    <td className="px-3 py-1.5 text-muted-foreground">{row.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setShowSkipped(false)}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-body text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Entendi
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex items-center justify-between pt-4">
         <button

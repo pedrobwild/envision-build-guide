@@ -64,9 +64,27 @@ export default function BudgetEditorV2() {
     if (url) completeStep("floor-plan");
   };
 
-  const handleRoomsChange = (newRooms: Room[]) => {
+  const handleRoomsChange = useCallback(async (newRooms: Room[]) => {
     setRooms(newRooms);
-  };
+    // Auto-save rooms to DB so they persist across step navigation
+    if (!budgetId) return;
+    try {
+      await supabase.from("rooms").delete().eq("budget_id", budgetId);
+      if (newRooms.length > 0) {
+        await supabase.from("rooms").insert(
+          newRooms.map((r, i) => ({
+            id: r.id,
+            budget_id: budgetId,
+            name: r.name,
+            polygon: r.polygon,
+            order_index: i,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Auto-save rooms error:", err);
+    }
+  }, [budgetId]);
 
   const goToStep = (step: EditorStep) => {
     setCurrentStep(step);
