@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Save, ExternalLink, Copy } from "lucide-react";
+import { ArrowLeft, Save, ExternalLink, Copy, Check, Loader2 } from "lucide-react";
 import { EditorStepper, type EditorStep } from "@/components/editor/EditorStepper";
 import { FloorPlanUploadStep } from "@/components/editor/FloorPlanUploadStep";
 import { RoomDrawingStep, type Room } from "@/components/editor/RoomDrawingStep";
@@ -18,6 +18,7 @@ export default function BudgetEditorV2() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [packages, setPackages] = useState<ParsedPackage[]>([]);
   const [saving, setSaving] = useState(false);
+  const [roomSaveStatus, setRoomSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   useEffect(() => {
     loadBudget();
@@ -66,8 +67,8 @@ export default function BudgetEditorV2() {
 
   const handleRoomsChange = useCallback(async (newRooms: Room[]) => {
     setRooms(newRooms);
-    // Auto-save rooms to DB so they persist across step navigation
     if (!budgetId) return;
+    setRoomSaveStatus("saving");
     try {
       await supabase.from("rooms").delete().eq("budget_id", budgetId);
       if (newRooms.length > 0) {
@@ -81,8 +82,11 @@ export default function BudgetEditorV2() {
           }))
         );
       }
+      setRoomSaveStatus("saved");
+      setTimeout(() => setRoomSaveStatus("idle"), 2000);
     } catch (err) {
       console.error("Auto-save rooms error:", err);
+      setRoomSaveStatus("idle");
     }
   }, [budgetId]);
 
@@ -206,6 +210,16 @@ export default function BudgetEditorV2() {
           />
 
           <div className="flex items-center gap-2">
+            {roomSaveStatus === "saving" && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground font-body animate-pulse">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Salvando...
+              </span>
+            )}
+            {roomSaveStatus === "saved" && (
+              <span className="flex items-center gap-1.5 text-xs text-primary font-body">
+                <Check className="h-3.5 w-3.5" /> Salvo
+              </span>
+            )}
             {budget.public_id && (
               <button
                 onClick={() => navigator.clipboard.writeText(`${window.location.origin}/o/${budget.public_id}`)}
