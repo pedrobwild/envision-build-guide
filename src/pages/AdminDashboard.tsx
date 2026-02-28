@@ -11,6 +11,8 @@ import {
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { toast } from "sonner";
+import logoDark from "@/assets/logo-bwild-dark.png";
+import logoWhite from "@/assets/logo-bwild-white.png";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -150,11 +152,11 @@ export default function AdminDashboard() {
       <header className="bg-card border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-display font-bold">B</span>
-            </div>
+            <img src={logoDark} alt="Bwild" className="h-7 dark:hidden" />
+            <img src={logoWhite} alt="Bwild" className="h-7 hidden dark:block" />
+            <div className="h-5 w-px bg-border" />
             <div>
-              <h1 className="font-display font-bold text-lg text-foreground leading-tight">Bwild Admin</h1>
+              <h1 className="font-display font-semibold text-sm text-foreground leading-tight">Painel Admin</h1>
               {user && <p className="text-xs text-muted-foreground font-body truncate max-w-48">{user.email}</p>}
             </div>
           </div>
@@ -217,7 +219,7 @@ export default function AdminDashboard() {
             { icon: Clock, label: "Rascunhos", value: metrics.drafts, color: "text-muted-foreground" },
             { icon: TrendingUp, label: "Valor total", value: formatBRL(metrics.totalValue), color: "text-primary" },
           ].map((m, i) => (
-            <div key={i} className="p-4 rounded-xl border border-border bg-card">
+            <div key={i} className="p-4 rounded-lg border border-border bg-card">
               <div className="flex items-center gap-2 mb-1">
                 <m.icon className={`h-4 w-4 ${m.color}`} />
                 <span className="text-xs text-muted-foreground font-body">{m.label}</span>
@@ -291,7 +293,7 @@ export default function AdminDashboard() {
               const sectionTotal = getBudgetTotal(budget);
               const sectionCount = (budget.sections || []).length;
               return (
-                <div key={budget.id} className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:shadow-sm transition-shadow group">
+                <div key={budget.id} className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card hover:shadow-sm transition-shadow group">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <Link to={`/admin/budget/${budget.id}`} className="font-medium text-foreground hover:text-primary transition-colors font-body text-sm truncate">

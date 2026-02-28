@@ -11,7 +11,7 @@ export function BudgetContext({ budget }: BudgetContextProps) {
     : null;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-5 rounded-xl bg-card border border-border">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-5 rounded-lg bg-card border border-border">
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-lg bg-accent">
           <MapPin className="h-4 w-4 text-accent-foreground" />

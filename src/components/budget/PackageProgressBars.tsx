@@ -11,13 +11,13 @@ export function PackageProgressBars({ sections, total }: PackageProgressBarsProp
 
   const COLORS = [
     "bg-primary",
-    "bg-blue-500",
-    "bg-emerald-500",
-    "bg-violet-500",
-    "bg-rose-500",
-    "bg-amber-500",
-    "bg-teal-500",
-    "bg-orange-500",
+    "bg-primary/70",
+    "bg-success",
+    "bg-warning",
+    "bg-accent-foreground",
+    "bg-muted-foreground",
+    "bg-destructive",
+    "bg-primary/40",
   ];
 
   const data = sections.map((s: any, idx: number) => {
@@ -27,7 +27,7 @@ export function PackageProgressBars({ sections, total }: PackageProgressBarsProp
   });
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 mb-8">
+    <div className="rounded-lg border border-border bg-card p-5 mb-8">
       <h3 className="font-display font-bold text-sm text-foreground mb-4">
         Distribuição do Investimento
       </h3>

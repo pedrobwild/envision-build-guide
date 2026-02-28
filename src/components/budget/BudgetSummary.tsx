@@ -10,7 +10,7 @@ interface BudgetSummaryProps {
 
 export function BudgetSummary({ sections, adjustments, total, generatedAt }: BudgetSummaryProps) {
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
       <h3 className="font-display font-bold text-lg text-foreground mb-5">Resumo do Orçamento</h3>
 
       <div className="space-y-3 mb-5">
