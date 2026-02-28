@@ -46,7 +46,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
 
   const detectColumns = (headers: string[]) => {
     const map: Record<string, number> = {};
-    const lower = headers.map(h => (h || "").toString().trim().toLowerCase());
+    const lower = headers.map(h => (h == null ? "" : String(h)).trim().toLowerCase());
 
     const patterns: Record<string, string[]> = {
       index: ["índice", "indice", "index", "cod", "código", "codigo"],
