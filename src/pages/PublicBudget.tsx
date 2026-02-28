@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicBudget, calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
@@ -10,6 +11,8 @@ import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, List, LayoutGrid } from "lucide-react";
 import { demoBudget } from "@/lib/demo-budget-data";
+import { exportBudgetPdf } from "@/lib/pdf-export";
+import { toast } from "sonner";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -19,6 +22,8 @@ export default function PublicBudget() {
   const [compactMode, setCompactMode] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const viewTracked = useRef(false);
 
   useEffect(() => {
     if (publicId === 'demo') {
@@ -30,9 +35,41 @@ export default function PublicBudget() {
       fetchPublicBudget(publicId).then(data => {
         setBudget(data);
         setLoading(false);
+        // Track view - use raw fetch to avoid type issues
+        if (data && !viewTracked.current) {
+          viewTracked.current = true;
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          fetch(`${supabaseUrl}/rest/v1/budgets?public_id=eq.${publicId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({
+              view_count: (data.view_count || 0) + 1,
+              last_viewed_at: new Date().toISOString(),
+            }),
+          }).catch(() => {});
+        }
       });
     }
   }, [publicId]);
+
+  const handleExportPdf = async () => {
+    setExporting(true);
+    try {
+      const filename = `${budget.project_name || 'orcamento'}.pdf`;
+      await exportBudgetPdf("budget-content", filename);
+      toast.success("PDF exportado com sucesso!");
+    } catch (err) {
+      console.error("PDF export error:", err);
+      toast.error("Erro ao gerar PDF.");
+    }
+    setExporting(false);
+  };
 
   if (loading) {
     return (
@@ -69,18 +106,14 @@ export default function PublicBudget() {
   const rooms = budget.rooms || [];
   const total = calculateBudgetTotal(sections, adjustments);
 
-  // Filter by search and active floor zone
   const filteredSections = sections.filter((s: any) => {
     const matchSearch = !searchQuery ||
       s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (s.items || []).some((item: any) =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
-
     if (!matchSearch) return false;
     if (!activeRoom) return true;
-
-    // Filter sections that have at least one item covering the active room
     return (s.items || []).some((item: any) => {
       const coverageType = item.coverage_type || "geral";
       const included: string[] = item.included_rooms || [];
@@ -92,13 +125,17 @@ export default function PublicBudget() {
 
   return (
     <div className="min-h-screen bg-background">
-      <BudgetHeader projectName={budget.project_name} />
+      <BudgetHeader
+        projectName={budget.project_name}
+        onExportPdf={handleExportPdf}
+        exporting={exporting}
+      />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main id="budget-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <BudgetContext budget={budget} />
 
         {/* Search & controls */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+        <div className="flex flex-col sm:flex-row gap-3 mb-8" data-pdf-hide>
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
@@ -119,9 +156,7 @@ export default function PublicBudget() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Floor plan */}
             {budget.floor_plan_url && (
               <FloorPlanViewer
                 floorPlanUrl={budget.floor_plan_url}
@@ -132,7 +167,6 @@ export default function PublicBudget() {
               />
             )}
 
-            {/* Active zone indicator */}
             {activeRoom && (() => {
               const roomName = rooms.find((r: any) => r.id === activeRoom)?.name || activeRoom;
               return (
@@ -162,7 +196,6 @@ export default function PublicBudget() {
             ))}
           </div>
 
-          {/* Desktop summary */}
           <div className="hidden lg:block">
             <div className="sticky top-6 space-y-6">
               <BudgetSummary
@@ -176,7 +209,7 @@ export default function PublicBudget() {
         </div>
 
         {/* Mobile summary toggle */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50" data-pdf-hide>
           <button
             onClick={() => setShowMobileSummary(!showMobileSummary)}
             className="w-full py-4 px-6 bg-charcoal text-primary-foreground flex items-center justify-between font-body font-semibold"
@@ -196,7 +229,6 @@ export default function PublicBudget() {
           )}
         </div>
 
-        {/* Disclaimer */}
         {budget.disclaimer && (
           <div className="mt-12 mb-24 lg:mb-8 p-6 rounded-lg bg-muted/50 border border-border">
             <p className="text-sm text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>

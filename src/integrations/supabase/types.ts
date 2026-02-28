@@ -59,6 +59,7 @@ export type Database = {
           floor_plan_url: string | null
           generated_at: string | null
           id: string
+          last_viewed_at: string | null
           notes: string | null
           project_name: string
           public_id: string | null
@@ -69,6 +70,7 @@ export type Database = {
           unit: string | null
           updated_at: string | null
           validity_days: number | null
+          view_count: number
         }
         Insert: {
           client_name?: string
@@ -79,6 +81,7 @@ export type Database = {
           floor_plan_url?: string | null
           generated_at?: string | null
           id?: string
+          last_viewed_at?: string | null
           notes?: string | null
           project_name?: string
           public_id?: string | null
@@ -89,6 +92,7 @@ export type Database = {
           unit?: string | null
           updated_at?: string | null
           validity_days?: number | null
+          view_count?: number
         }
         Update: {
           client_name?: string
@@ -99,6 +103,7 @@ export type Database = {
           floor_plan_url?: string | null
           generated_at?: string | null
           id?: string
+          last_viewed_at?: string | null
           notes?: string | null
           project_name?: string
           public_id?: string | null
@@ -109,6 +114,7 @@ export type Database = {
           unit?: string | null
           updated_at?: string | null
           validity_days?: number | null
+          view_count?: number
         }
         Relationships: []
       }

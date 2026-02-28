@@ -137,9 +137,12 @@ export default function AdminDashboard() {
               {user && <p className="text-xs text-muted-foreground font-body truncate max-w-48">{user.email}</p>}
             </div>
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-body">
-            <LogOut className="h-4 w-4" /> Sair
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-body">
+              <LogOut className="h-4 w-4" /> Sair
+            </button>
+          </div>
         </div>
       </header>
 
