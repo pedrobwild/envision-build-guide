@@ -165,7 +165,23 @@ export default function BudgetEditorV2() {
           excluded_rooms: item.excludedRooms || [],
         }));
 
-        await supabase.from("items").insert(itemInserts);
+        const { data: insertedItems } = await supabase.from("items").insert(itemInserts).select("id");
+
+        // Save item images
+        if (insertedItems) {
+          for (let ii = 0; ii < pkg.items.length; ii++) {
+            const item = pkg.items[ii] as any;
+            const itemId = insertedItems[ii]?.id;
+            if (!itemId || !item.images?.length) continue;
+            await supabase.from("item_images").insert(
+              item.images.map((img: any) => ({
+                item_id: itemId,
+                url: img.url,
+                is_primary: img.isPrimary || false,
+              }))
+            );
+          }
+        }
       }
 
       // Publish
@@ -315,6 +331,7 @@ export default function BudgetEditorV2() {
             onSave={handleSaveAndPublish}
             onBack={() => setCurrentStep("spreadsheet")}
             saving={saving}
+            budgetId={budgetId!}
           />
         )}
       </main>

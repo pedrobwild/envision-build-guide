@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Room } from "./RoomDrawingStep";
 import type { ParsedPackage, ParsedItem } from "./SpreadsheetImportStep";
+import { ItemImageUpload, type ItemImage } from "./ItemImageUpload";
 
 interface CoverageMappingStepProps {
   floorPlanUrl: string;
@@ -12,6 +13,7 @@ interface CoverageMappingStepProps {
   onSave: () => void;
   onBack: () => void;
   saving: boolean;
+  budgetId: string;
 }
 
 interface CoverageState {
@@ -29,9 +31,13 @@ export function CoverageMappingStep({
   onSave,
   onBack,
   saving,
+  budgetId,
 }: CoverageMappingStepProps) {
   const [expandedPkg, setExpandedPkg] = useState<string | null>(packages[0]?.name || null);
   const [selectedItem, setSelectedItem] = useState<{ pkgIdx: number; itemIdx: number } | null>(null);
+
+  // Image state per item key
+  const [itemImages, setItemImages] = useState<Record<string, ItemImage[]>>({});
 
   // Build a unique key for each item
   const getItemKey = (pkgIdx: number, itemIdx: number) => `${pkgIdx}-${itemIdx}`;
@@ -130,13 +136,19 @@ export function CoverageMappingStep({
   const totalItems = packages.reduce((s, p) => s + p.items.length, 0);
 
   const handleSaveWithCoverage = () => {
-    // Merge coverage into packages before saving
+    // Merge coverage and images into packages before saving
     const updated = packages.map((pkg, pi) => ({
       ...pkg,
       items: pkg.items.map((item, ii) => {
         const key = getItemKey(pi, ii);
         const cov = coverage[key] || { includedRooms: [], excludedRooms: [] };
-        return { ...item, includedRooms: cov.includedRooms, excludedRooms: cov.excludedRooms } as any;
+        const imgs = itemImages[key] || [];
+        return {
+          ...item,
+          includedRooms: cov.includedRooms,
+          excludedRooms: cov.excludedRooms,
+          images: imgs,
+        } as any;
       }),
     }));
     onPackagesChange(updated);
@@ -253,6 +265,18 @@ export function CoverageMappingStep({
                 ← Selecione um item para mapear sua cobertura na planta
               </p>
             </div>
+          )}
+
+          {/* Image upload for selected item */}
+          {currentItem && currentKey && (
+            <ItemImageUpload
+              images={itemImages[currentKey] || []}
+              onImagesChange={(imgs) =>
+                setItemImages(prev => ({ ...prev, [currentKey]: imgs }))
+              }
+              budgetId={budgetId}
+              itemLabel={currentItem.name}
+            />
           )}
 
           {/* Floor plan with rooms */}
