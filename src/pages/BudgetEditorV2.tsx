@@ -227,35 +227,34 @@ export default function BudgetEditorV2() {
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => navigate("/admin")}
-              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <div className="flex flex-col">
-              <input
-                value={budget.project_name}
-                onChange={(e) => {
-                  setBudget({ ...budget, project_name: e.target.value });
-                  autoSaveBudgetField("project_name", e.target.value);
-                }}
-                className="font-display font-bold text-lg text-foreground bg-transparent border-none focus:outline-none w-48 sm:w-auto leading-tight"
-                placeholder="Nome do projeto"
-              />
-              <div className="flex items-center gap-1.5">
-                <User className="h-3 w-3 text-muted-foreground" />
-                <input
-                  value={budget.client_name}
-                  onChange={(e) => {
-                    setBudget({ ...budget, client_name: e.target.value });
-                    autoSaveBudgetField("client_name", e.target.value);
-                  }}
-                  className="text-xs text-muted-foreground bg-transparent border-none focus:outline-none font-body w-32 sm:w-auto"
-                  placeholder="Nome do cliente"
-                />
-              </div>
+            <div className="flex flex-col min-w-0">
+              <span className="font-display font-bold text-sm text-foreground leading-tight truncate">
+                {budget.project_name || "Sem nome"}
+              </span>
+              {currentStep !== "metadata" && (
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-body flex-wrap">
+                  {budget.client_name && budget.client_name !== "Cliente" && (
+                    <span className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      {budget.client_name}
+                    </span>
+                  )}
+                  {budget.condominio && <span>• {budget.condominio}</span>}
+                  {budget.bairro && <span>• {budget.bairro}</span>}
+                  {budget.metragem && <span>• {budget.metragem}</span>}
+                  {budget.versao && <span>• v{budget.versao}</span>}
+                </div>
+              )}
+              {currentStep === "metadata" && (
+                <span className="text-xs text-muted-foreground font-body">Preencha os dados do cabeçalho</span>
+              )}
             </div>
           </div>
 
