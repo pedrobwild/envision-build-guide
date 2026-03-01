@@ -51,6 +51,8 @@ export type Database = {
       }
       budgets: {
         Row: {
+          approved_at: string | null
+          approved_by_name: string | null
           bairro: string | null
           client_name: string
           condominio: string | null
@@ -80,6 +82,8 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          approved_at?: string | null
+          approved_by_name?: string | null
           bairro?: string | null
           client_name?: string
           condominio?: string | null
@@ -109,6 +113,8 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          approved_at?: string | null
+          approved_by_name?: string | null
           bairro?: string | null
           client_name?: string
           condominio?: string | null
