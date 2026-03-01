@@ -1,6 +1,7 @@
 import { Download, Loader2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { formatDate } from "@/lib/formatBRL";
+import { motion } from "framer-motion";
 import logoDark from "@/assets/logo-bwild-dark.png";
 import logoWhite from "@/assets/logo-bwild-white.png";
 
@@ -9,6 +10,19 @@ interface BudgetHeaderProps {
   onExportPdf?: () => void;
   exporting?: boolean;
 }
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 18 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
+
+const stagger = {
+  visible: { transition: { staggerChildren: 0.06 } },
+};
 
 export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderProps) {
   const validUntil = budget.date && budget.validity_days
@@ -36,7 +50,12 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   return (
     <header className="sticky top-0 z-40">
       {/* Top bar */}
-      <div className="bg-charcoal">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-charcoal"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logoWhite} alt="Bwild" className="h-7" />
@@ -47,7 +66,9 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={onExportPdf}
               disabled={exporting}
               className="group flex items-center gap-2 px-4 py-2 rounded-md bg-white/10 text-white hover:bg-white/20 backdrop-blur transition-all text-sm font-body font-medium disabled:opacity-50 border border-white/10 hover:border-white/20"
@@ -58,21 +79,30 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 <Download className="h-4 w-4 group-hover:translate-y-0.5 transition-transform" />
               )}
               {exporting ? "Gerando..." : "Exportar PDF"}
-            </button>
+            </motion.button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Project title + metadata strip */}
       <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5"
+        >
           {/* Title row */}
-          <h1 className="font-display font-bold text-xl sm:text-2xl text-foreground leading-tight mb-4">
+          <motion.h1
+            variants={fadeUp}
+            custom={0}
+            className="font-display font-bold text-xl sm:text-2xl text-foreground leading-tight mb-4"
+          >
             {budget.project_name || "Orçamento"}
-          </h1>
+          </motion.h1>
 
           {/* Metadata grid */}
-          <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm font-body">
+          <motion.div variants={fadeUp} custom={1} className="flex flex-wrap gap-x-8 gap-y-3 text-sm font-body">
             {metaLeft.map((m, i) => (
               <div key={i} className="flex items-baseline gap-1.5">
                 <span className="text-muted-foreground">{m.label}:</span>
@@ -90,20 +120,24 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 <span className="font-semibold text-foreground">{m.value}</span>
               </div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Commercial info */}
           {commercial.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-x-8 gap-y-2 text-sm font-body">
+            <motion.div
+              variants={fadeUp}
+              custom={2}
+              className="mt-3 pt-3 border-t border-border flex flex-wrap gap-x-8 gap-y-2 text-sm font-body"
+            >
               {commercial.map((c, i) => (
                 <div key={i} className="flex items-baseline gap-1.5">
                   <span className="text-muted-foreground">{c.label}:</span>
                   <span className="font-medium text-foreground">{c.value}</span>
                 </div>
               ))}
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
     </header>
   );
