@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Save, ExternalLink, Copy, Check, Loader2, User } from "lucide-react";
+import { ArrowLeft, Save, ExternalLink, Copy, Check, Loader2, User, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { EditorStepper, type EditorStep } from "@/components/editor/EditorStepper";
 import { FloorPlanUploadStep } from "@/components/editor/FloorPlanUploadStep";
@@ -20,6 +20,7 @@ export default function BudgetEditorV2() {
   const [packages, setPackages] = useState<ParsedPackage[]>([]);
   const [saving, setSaving] = useState(false);
   const [roomSaveStatus, setRoomSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [showMetadata, setShowMetadata] = useState(false);
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -282,6 +283,42 @@ export default function BudgetEditorV2() {
           </div>
         </div>
       </header>
+
+      {/* Metadata Panel */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <button
+          onClick={() => setShowMetadata(!showMetadata)}
+          className="flex items-center gap-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-body"
+        >
+          {showMetadata ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          Dados do orçamento (cliente, condomínio, consultora...)
+        </button>
+        {showMetadata && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-4 animate-fade-in">
+            {[
+              { key: "client_name", label: "Cliente", placeholder: "Nome do cliente" },
+              { key: "condominio", label: "Condomínio", placeholder: "Nome do condomínio" },
+              { key: "bairro", label: "Bairro", placeholder: "Bairro" },
+              { key: "metragem", label: "Metragem", placeholder: "Ex: 120m²" },
+              { key: "consultora_comercial", label: "Consultora Comercial", placeholder: "Nome da vendedora" },
+              { key: "email_comercial", label: "E-mail Comercial", placeholder: "email@exemplo.com" },
+            ].map((field) => (
+              <div key={field.key}>
+                <label className="text-xs text-muted-foreground font-body mb-1 block">{field.label}</label>
+                <input
+                  value={budget[field.key] || ""}
+                  onChange={(e) => {
+                    setBudget({ ...budget, [field.key]: e.target.value });
+                    autoSaveBudgetField(field.key, e.target.value);
+                  }}
+                  placeholder={field.placeholder}
+                  className="w-full px-3 py-2 rounded-md border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
