@@ -76,6 +76,7 @@ export type Database = {
           unit: string | null
           updated_at: string | null
           validity_days: number | null
+          versao: string | null
           view_count: number
         }
         Insert: {
@@ -104,6 +105,7 @@ export type Database = {
           unit?: string | null
           updated_at?: string | null
           validity_days?: number | null
+          versao?: string | null
           view_count?: number
         }
         Update: {
@@ -132,6 +134,7 @@ export type Database = {
           unit?: string | null
           updated_at?: string | null
           validity_days?: number | null
+          versao?: string | null
           view_count?: number
         }
         Relationships: []
