@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicBudget, calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
-import { BudgetContext } from "@/components/budget/BudgetContext";
+
 import { SectionCard } from "@/components/budget/SectionCard";
 import { ExecutiveSummary } from "@/components/budget/ExecutiveSummary";
 import { RoomChecklist } from "@/components/budget/RoomChecklist";
@@ -135,14 +135,12 @@ export default function PublicBudget() {
   return (
     <div className="min-h-screen bg-background">
       <BudgetHeader
-        projectName={budget.project_name}
+        budget={budget}
         onExportPdf={handleExportPdf}
         exporting={exporting}
       />
 
       <main id="budget-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <BudgetContext budget={budget} />
-
         <ExecutiveSummary
           sections={sections}
           rooms={rooms}
