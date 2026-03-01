@@ -230,9 +230,9 @@ export default function PublicBudget() {
             ))}
           </div>
 
-          <div className="hidden lg:block space-y-6">
-            <SectionNav sections={filteredSections} />
-            <div className="sticky top-[480px] space-y-5">
+          <div className="hidden lg:block">
+            <div className="sticky top-4 space-y-5 max-h-[calc(100vh-2rem)] overflow-y-auto pb-4 scrollbar-thin">
+              <SectionNav sections={filteredSections} />
               <BudgetSummary
                 sections={sections}
                 adjustments={adjustments}
