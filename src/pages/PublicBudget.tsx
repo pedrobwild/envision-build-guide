@@ -19,6 +19,10 @@ import { demoBudget } from "@/lib/demo-budget-data";
 import { exportBudgetPdf } from "@/lib/pdf-export";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
+import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
+import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
+import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -228,12 +232,19 @@ export default function PublicBudget() {
 
           <div className="hidden lg:block space-y-6">
             <SectionNav sections={filteredSections} />
-            <div className="sticky top-[480px]">
+            <div className="sticky top-[480px] space-y-5">
               <BudgetSummary
                 sections={sections}
                 adjustments={adjustments}
                 total={total}
                 generatedAt={budget.generated_at}
+              />
+              <InstallmentSimulator total={total} />
+              <ApprovalCTA
+                budgetId={budget.id}
+                publicId={publicId || "demo"}
+                approvedAt={budget.approved_at}
+                approvedByName={budget.approved_by_name}
               />
             </div>
           </div>
@@ -260,18 +271,28 @@ export default function PublicBudget() {
           )}
         </div>
 
+        {/* FAQ */}
+        <div className="mt-12 lg:col-span-2">
+          <BudgetFAQ />
+        </div>
+
         {budget.disclaimer && (
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="mt-12 mb-24 lg:mb-8 p-6 rounded-lg bg-muted/50 border border-border"
+            className="mt-8 mb-24 lg:mb-8 p-6 rounded-lg bg-muted/50 border border-border"
           >
             <p className="text-sm text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>
           </motion.div>
         )}
       </main>
+
+      <WhatsAppButton
+        projectName={budget.project_name || "Orçamento"}
+        publicId={publicId || "demo"}
+      />
     </div>
   );
 }

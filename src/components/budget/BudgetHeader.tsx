@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/formatBRL";
 import { motion } from "framer-motion";
 import logoDark from "@/assets/logo-bwild-dark.png";
 import logoWhite from "@/assets/logo-bwild-white.png";
+import { ValidityCountdown } from "@/components/budget/ValidityCountdown";
 
 interface BudgetHeaderProps {
   budget: any;
@@ -99,6 +100,11 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             className="font-display font-bold text-xl sm:text-2xl text-foreground leading-tight mb-4"
           >
             {budget.project_name || "Orçamento"}
+            {budget.date && budget.validity_days && (
+              <span className="ml-3 align-middle">
+                <ValidityCountdown date={budget.date} validityDays={budget.validity_days} />
+              </span>
+            )}
           </motion.h1>
 
           {/* Metadata grid */}
