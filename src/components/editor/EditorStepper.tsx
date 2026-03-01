@@ -1,13 +1,14 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type EditorStep = "floor-plan" | "rooms" | "spreadsheet" | "coverage";
+export type EditorStep = "metadata" | "floor-plan" | "rooms" | "spreadsheet" | "coverage";
 
 const STEPS: { id: EditorStep; label: string; number: number }[] = [
-  { id: "floor-plan", label: "Planta", number: 1 },
-  { id: "rooms", label: "Cômodos", number: 2 },
-  { id: "spreadsheet", label: "Planilha", number: 3 },
-  { id: "coverage", label: "Mapeamento", number: 4 },
+  { id: "metadata", label: "Dados", number: 1 },
+  { id: "floor-plan", label: "Planta", number: 2 },
+  { id: "rooms", label: "Cômodos", number: 3 },
+  { id: "spreadsheet", label: "Planilha", number: 4 },
+  { id: "coverage", label: "Mapeamento", number: 5 },
 ];
 
 interface EditorStepperProps {
