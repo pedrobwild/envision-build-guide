@@ -1,5 +1,5 @@
 import { formatDate } from "@/lib/formatBRL";
-import { Calendar, MapPin, User, Clock } from "lucide-react";
+import { Calendar, MapPin, User, Clock, Building, Ruler, Mail, UserCheck } from "lucide-react";
 
 interface BudgetContextProps {
   budget: any;
@@ -10,47 +10,30 @@ export function BudgetContext({ budget }: BudgetContextProps) {
     ? new Date(new Date(budget.date).getTime() + budget.validity_days * 86400000)
     : null;
 
+  const fields = [
+    { icon: User, label: "Cliente", value: budget.client_name },
+    { icon: Building, label: "Condomínio", value: budget.condominio },
+    { icon: MapPin, label: "Bairro", value: budget.bairro },
+    { icon: Ruler, label: "Metragem", value: budget.metragem },
+    { icon: Calendar, label: "Data de elaboração", value: budget.date ? formatDate(budget.date) : null },
+    { icon: Clock, label: "Validade", value: validUntil ? formatDate(validUntil) : `${budget.validity_days || 30} dias` },
+    { icon: UserCheck, label: "Consultora Comercial", value: budget.consultora_comercial },
+    { icon: Mail, label: "E-mail", value: budget.email_comercial },
+  ];
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-5 rounded-lg bg-card border border-border">
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-accent">
-          <MapPin className="h-4 w-4 text-accent-foreground" />
+      {fields.map((f, i) => (
+        <div key={i} className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-accent">
+            <f.icon className="h-4 w-4 text-accent-foreground" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-body">{f.label}</p>
+            <p className="text-sm font-medium text-foreground font-body">{f.value || '—'}</p>
+          </div>
         </div>
-        <div>
-          <p className="text-xs text-muted-foreground font-body">Projeto</p>
-          <p className="text-sm font-medium text-foreground font-body">{budget.project_name || '—'}</p>
-          {budget.unit && <p className="text-xs text-muted-foreground">{budget.unit}</p>}
-        </div>
-      </div>
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-accent">
-          <User className="h-4 w-4 text-accent-foreground" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground font-body">Cliente</p>
-          <p className="text-sm font-medium text-foreground font-body">{budget.client_name || '—'}</p>
-        </div>
-      </div>
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-accent">
-          <Calendar className="h-4 w-4 text-accent-foreground" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground font-body">Data</p>
-          <p className="text-sm font-medium text-foreground font-body">{budget.date ? formatDate(budget.date) : '—'}</p>
-        </div>
-      </div>
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-accent">
-          <Clock className="h-4 w-4 text-accent-foreground" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground font-body">Validade</p>
-          <p className="text-sm font-medium text-foreground font-body">
-            {validUntil ? formatDate(validUntil) : `${budget.validity_days || 30} dias`}
-          </p>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }

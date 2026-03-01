@@ -51,15 +51,20 @@ export type Database = {
       }
       budgets: {
         Row: {
+          bairro: string | null
           client_name: string
+          condominio: string | null
+          consultora_comercial: string | null
           created_at: string | null
           created_by: string | null
           date: string | null
           disclaimer: string | null
+          email_comercial: string | null
           floor_plan_url: string | null
           generated_at: string | null
           id: string
           last_viewed_at: string | null
+          metragem: string | null
           notes: string | null
           project_name: string
           public_id: string | null
@@ -74,15 +79,20 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          bairro?: string | null
           client_name?: string
+          condominio?: string | null
+          consultora_comercial?: string | null
           created_at?: string | null
           created_by?: string | null
           date?: string | null
           disclaimer?: string | null
+          email_comercial?: string | null
           floor_plan_url?: string | null
           generated_at?: string | null
           id?: string
           last_viewed_at?: string | null
+          metragem?: string | null
           notes?: string | null
           project_name?: string
           public_id?: string | null
@@ -97,15 +107,20 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          bairro?: string | null
           client_name?: string
+          condominio?: string | null
+          consultora_comercial?: string | null
           created_at?: string | null
           created_by?: string | null
           date?: string | null
           disclaimer?: string | null
+          email_comercial?: string | null
           floor_plan_url?: string | null
           generated_at?: string | null
           id?: string
           last_viewed_at?: string | null
+          metragem?: string | null
           notes?: string | null
           project_name?: string
           public_id?: string | null

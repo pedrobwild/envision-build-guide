@@ -1,0 +1,6 @@
+ALTER TABLE public.budgets
+  ADD COLUMN IF NOT EXISTS condominio TEXT,
+  ADD COLUMN IF NOT EXISTS bairro TEXT,
+  ADD COLUMN IF NOT EXISTS metragem TEXT,
+  ADD COLUMN IF NOT EXISTS consultora_comercial TEXT,
+  ADD COLUMN IF NOT EXISTS email_comercial TEXT;
