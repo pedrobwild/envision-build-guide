@@ -300,12 +300,15 @@ export default function BudgetEditorV2() {
               { key: "condominio", label: "Condomínio", placeholder: "Nome do condomínio" },
               { key: "bairro", label: "Bairro", placeholder: "Bairro" },
               { key: "metragem", label: "Metragem", placeholder: "Ex: 120m²" },
+              { key: "date", label: "Data de elaboração", placeholder: "AAAA-MM-DD", type: "date" },
+              { key: "versao", label: "Versão", placeholder: "Ex: 1.0" },
               { key: "consultora_comercial", label: "Consultora Comercial", placeholder: "Nome da vendedora" },
               { key: "email_comercial", label: "E-mail Comercial", placeholder: "email@exemplo.com" },
             ].map((field) => (
               <div key={field.key}>
                 <label className="text-xs text-muted-foreground font-body mb-1 block">{field.label}</label>
                 <input
+                  type={(field as any).type || "text"}
                   value={budget[field.key] || ""}
                   onChange={(e) => {
                     setBudget({ ...budget, [field.key]: e.target.value });
