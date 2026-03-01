@@ -4,18 +4,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicBudget, calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
-
 import { SectionCard } from "@/components/budget/SectionCard";
 import { ExecutiveSummary } from "@/components/budget/ExecutiveSummary";
 import { RoomChecklist } from "@/components/budget/RoomChecklist";
 import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
 import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
+import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
+import { SectionNav } from "@/components/budget/SectionNav";
+import { AnimatedSection } from "@/components/budget/AnimatedSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, List, LayoutGrid } from "lucide-react";
 import { demoBudget } from "@/lib/demo-budget-data";
 import { exportBudgetPdf } from "@/lib/pdf-export";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -38,7 +41,6 @@ export default function PublicBudget() {
       fetchPublicBudget(publicId).then(data => {
         setBudget(data);
         setLoading(false);
-        // Track view - use raw fetch to avoid type issues
         if (data && !viewTracked.current) {
           viewTracked.current = true;
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -56,7 +58,6 @@ export default function PublicBudget() {
               last_viewed_at: new Date().toISOString(),
             }),
           }).catch(() => {});
-          // Trigger first-view notification
           if ((data.view_count || 0) === 0) {
             supabase.functions.invoke('notify-budget-view', {
               body: { public_id: publicId },
@@ -134,6 +135,7 @@ export default function PublicBudget() {
 
   return (
     <div className="min-h-screen bg-background">
+      <ReadingProgressBar />
       <BudgetHeader
         budget={budget}
         onExportPdf={handleExportPdf}
@@ -141,19 +143,31 @@ export default function PublicBudget() {
       />
 
       <main id="budget-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <ExecutiveSummary
-          sections={sections}
-          rooms={rooms}
-          total={total}
-          projectName={budget.project_name}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
+        >
+          <ExecutiveSummary
+            sections={sections}
+            rooms={rooms}
+            total={total}
+            projectName={budget.project_name}
+          />
+        </motion.div>
 
         {budget.show_progress_bars && (
           <PackageProgressBars sections={sections} total={total} />
         )}
 
         {/* Search & controls */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-8" data-pdf-hide>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.4 }}
+          className="flex flex-col sm:flex-row gap-3 mb-8"
+          data-pdf-hide
+        >
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
@@ -171,18 +185,20 @@ export default function PublicBudget() {
             {compactMode ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
             {compactMode ? "Detalhado" : "Compacto"}
           </button>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {budget.floor_plan_url && (
-              <FloorPlanViewer
-                floorPlanUrl={budget.floor_plan_url}
-                rooms={rooms}
-                sections={sections}
-                activeRoom={activeRoom}
-                onRoomClick={setActiveRoom}
-              />
+              <AnimatedSection id="floor-plan-section" index={0}>
+                <FloorPlanViewer
+                  floorPlanUrl={budget.floor_plan_url}
+                  rooms={rooms}
+                  sections={sections}
+                  activeRoom={activeRoom}
+                  onRoomClick={setActiveRoom}
+                />
+              </AnimatedSection>
             )}
 
             {activeRoom && (() => {
@@ -199,19 +215,20 @@ export default function PublicBudget() {
             })()}
 
             {filteredSections.map((section: any, idx: number) => (
-              <div key={section.id} id={`section-${section.id}`} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
+              <AnimatedSection key={section.id} id={`section-${section.id}`} index={idx + 1}>
                 <SectionCard
                   section={section}
                   compact={compactMode}
                   showItemQty={budget.show_item_qty}
                   highlightZone={activeRoom}
                 />
-              </div>
+              </AnimatedSection>
             ))}
           </div>
 
-          <div className="hidden lg:block">
-            <div className="sticky top-6 space-y-6">
+          <div className="hidden lg:block space-y-6">
+            <SectionNav sections={filteredSections} />
+            <div className="sticky top-[480px]">
               <BudgetSummary
                 sections={sections}
                 adjustments={adjustments}
@@ -244,9 +261,15 @@ export default function PublicBudget() {
         </div>
 
         {budget.disclaimer && (
-          <div className="mt-12 mb-24 lg:mb-8 p-6 rounded-lg bg-muted/50 border border-border">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-12 mb-24 lg:mb-8 p-6 rounded-lg bg-muted/50 border border-border"
+          >
             <p className="text-sm text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>
-          </div>
+          </motion.div>
         )}
       </main>
     </div>
