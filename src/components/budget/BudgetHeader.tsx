@@ -87,6 +87,15 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             Orçamento de Projeto e Reforma
           </motion.h1>
 
+          <motion.p
+            variants={fadeUp}
+            custom={0.5}
+            initial="hidden"
+            animate="visible"
+            className="mt-3 text-base sm:text-lg font-body text-white/60 text-center"
+          >
+            Projeto personalizado · Gestão completa · Execução com previsibilidade
+          </motion.p>
 
           {/* Highlighted fields: Cliente & Obra */}
           {highlightFields.length > 0 && (
@@ -135,6 +144,39 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               ))}
             </motion.div>
           )}
+
+          {/* Value badges */}
+          <motion.div
+            variants={fadeUp}
+            custom={3}
+            initial="hidden"
+            animate="visible"
+            className="mt-5 flex flex-wrap items-center justify-center gap-2"
+          >
+            {["✦ Projeto 100% personalizado", "📱 Acompanhamento digital", "🛡️ Garantia 5 anos"].map((badge) => (
+              <span
+                key={badge}
+                className="text-xs rounded-full border border-white/15 bg-white/[0.06] backdrop-blur-md px-3 py-1 text-white/70 font-body"
+              >
+                {badge}
+              </span>
+            ))}
+          </motion.div>
+
+          {/* Status strip */}
+          <motion.div
+            variants={fadeUp}
+            custom={3.5}
+            initial="hidden"
+            animate="visible"
+            className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-white/40 font-body"
+          >
+            <span>Etapa: <span className="text-white/60">Orçamento</span></span>
+            <span className="hidden sm:inline">|</span>
+            <span>Próximo passo: <span className="text-white/60">Briefing com arquiteta</span></span>
+            <span className="hidden sm:inline">|</span>
+            <span>Início: <span className="text-white/60">Imediato após aprovação</span></span>
+          </motion.div>
         </div>
       </div>
     </header>

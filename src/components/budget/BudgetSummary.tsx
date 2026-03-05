@@ -2,6 +2,7 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { CheckCircle2, Lock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 const includedItems = [
   "Projeto arquitetônico",
@@ -17,6 +18,16 @@ interface BudgetSummaryProps {
   adjustments: any[];
   total: number;
   generatedAt: string;
+}
+
+function getSectionTooltip(title: string): string {
+  const t = (title || "").toLowerCase();
+  if (t.includes("projeto") || t.includes("documentaç")) return "Projeto arquitetônico, executivo, ART e gestão documental.";
+  if (t.includes("marcenaria")) return "Móveis sob medida projetados para a unidade.";
+  if (t.includes("engenharia")) return "Coordenação técnica e gestão da obra.";
+  if (t.includes("elétri") || t.includes("eletri")) return "Instalações elétricas e automação.";
+  if (t.includes("hidráulic") || t.includes("hidraulic")) return "Instalações hidráulicas e de gás.";
+  return "Clique para ver detalhes desta seção.";
 }
 
 export function BudgetSummary({ sections, adjustments, total, generatedAt }: BudgetSummaryProps) {
@@ -39,27 +50,36 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt }: Bud
 
       <Separator className="mb-4" />
 
-      <div className="space-y-3 mb-5">
-        {sections.map((section: any) => {
-          const subtotal = calculateSectionSubtotal(section);
-          return (
-            <button
-              key={section.id}
-              onClick={() => {
-                document.getElementById(`section-${section.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              className="w-full flex items-center justify-between text-left hover:bg-muted/50 -mx-2 px-2 py-1.5 rounded-md transition-colors"
-            >
-              <span className="text-sm text-foreground font-body truncate mr-2">
-                {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}{section.title}
-              </span>
-              <span className="text-sm font-medium text-foreground font-body whitespace-nowrap">
-                {formatBRL(subtotal)}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <TooltipProvider>
+        <div className="space-y-3 mb-5">
+          {sections.map((section: any) => {
+            const subtotal = calculateSectionSubtotal(section);
+            const tooltipText = getSectionTooltip(section.title);
+            return (
+              <Tooltip key={section.id}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => {
+                      document.getElementById(`section-${section.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="w-full flex items-center justify-between text-left hover:bg-muted/50 -mx-2 px-2 py-1.5 rounded-md transition-colors"
+                  >
+                    <span className="text-sm text-foreground font-body truncate mr-2">
+                      {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}{section.title}
+                    </span>
+                    <span className="text-sm font-medium text-foreground font-body whitespace-nowrap">
+                      {formatBRL(subtotal)}
+                    </span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-[220px]">
+                  <p className="text-xs">{tooltipText}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </TooltipProvider>
 
       {adjustments.length > 0 && (
         <div className="border-t border-border pt-3 mb-3 space-y-2">
