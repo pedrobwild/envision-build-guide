@@ -1,5 +1,6 @@
 import { formatBRL } from "@/lib/formatBRL";
 import { Layers, Home, Package, TrendingUp, Globe, MapPin } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ExecutiveSummaryProps {
   sections: any[];
@@ -58,14 +59,32 @@ export function ExecutiveSummary({ sections, rooms, total, projectName }: Execut
       {totalRooms > 0 && (generalCount > 0 || localCount > 0) && (
         <div className="mt-4 pt-4 border-t border-border/50">
           <div className="flex items-center gap-6 text-xs font-body text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Globe className="h-3.5 w-3.5 text-primary/70" />
-              <span><strong className="text-foreground font-semibold">{generalCount}</strong> itens gerais</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-primary/70" />
-              <span><strong className="text-foreground font-semibold">{localCount}</strong> itens específicos por ambiente</span>
-            </div>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1.5 cursor-help">
+                    <Globe className="h-3.5 w-3.5 text-primary/70" />
+                    <span><strong className="text-foreground font-semibold">{generalCount}</strong> itens gerais</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[220px] text-xs">
+                  Itens que se aplicam a todos os ambientes do apartamento, como pintura e piso.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1.5 cursor-help">
+                    <MapPin className="h-3.5 w-3.5 text-primary/70" />
+                    <span><strong className="text-foreground font-semibold">{localCount}</strong> itens específicos por ambiente</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                  Itens vinculados a ambientes específicos, como marcenaria da cozinha ou box do banheiro.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       )}
