@@ -32,6 +32,7 @@ import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
 import { PortalShowcase } from "@/components/budget/PortalShowcase";
 import { ProjectSecurity } from "@/components/budget/ProjectSecurity";
 import { NextSteps } from "@/components/budget/NextSteps";
+import { StickyTableOfContents } from "@/components/budget/StickyTableOfContents";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -143,6 +144,7 @@ export default function PublicBudget() {
 
   return (
     <div className="min-h-screen bg-background">
+      <StickyTableOfContents />
       <ReadingProgressBar />
       <BudgetHeader
         budget={budget}
@@ -268,15 +270,8 @@ export default function PublicBudget() {
           </div>
         </div>
 
-        {/* Mobile summary toggle */}
+        {/* Mobile sticky bottom bar */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50" data-pdf-hide>
-          <button
-            onClick={() => setShowMobileSummary(!showMobileSummary)}
-            className="w-full py-4 px-6 bg-charcoal text-primary-foreground flex items-center justify-between font-body font-semibold"
-          >
-            <span>Resumo do Orçamento</span>
-            <span className="text-primary font-display text-lg">{formatBRL(total)}</span>
-          </button>
           {showMobileSummary && (
             <div className="bg-card border-t border-border p-6 max-h-[60vh] overflow-y-auto shadow-2xl">
               <BudgetSummary
@@ -287,6 +282,27 @@ export default function PublicBudget() {
               />
             </div>
           )}
+          <button
+            onClick={() => setShowMobileSummary(!showMobileSummary)}
+            className="w-full text-center text-xs text-muted-foreground py-1.5 bg-card border-t border-border font-body hover:text-foreground transition-colors"
+          >
+            {showMobileSummary ? "Fechar detalhes ↓" : "Ver detalhes ↑"}
+          </button>
+          <div className="bg-charcoal flex items-center justify-between px-4 py-3">
+            <div className="flex flex-col">
+              <span className="font-display font-bold text-white text-base">{formatBRL(total)}</span>
+              <span className="text-[10px] text-white/50 font-body">ou 10x de {formatBRL(total / 10)} sem juros</span>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                document.getElementById("next-steps")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="px-4 py-2.5 rounded-lg bg-success text-success-foreground font-display font-bold text-xs"
+            >
+              Iniciar meu projeto
+            </motion.button>
+          </div>
         </div>
 
         {/* FAQ */}
