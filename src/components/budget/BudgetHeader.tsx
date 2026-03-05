@@ -25,9 +25,12 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
     ? new Date(new Date(budget.date).getTime() + budget.validity_days * 86400000)
     : null;
 
-  const infoFields = [
+  const highlightFields = [
     { icon: User, label: "Cliente", value: budget.client_name },
     { icon: Building, label: "Obra", value: budget.condominio },
+  ].filter(f => f.value);
+
+  const infoFields = [
     { icon: MapPin, label: "Bairro", value: budget.bairro },
     { icon: Ruler, label: "Metragem", value: budget.metragem },
     { icon: Hash, label: "Versão", value: budget.versao },
@@ -85,24 +88,48 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </motion.h1>
 
 
-          {/* Project info pills */}
+          {/* Highlighted fields: Cliente & Obra */}
+          {highlightFields.length > 0 && (
+            <motion.div
+              variants={fadeUp}
+              custom={1}
+              initial="hidden"
+              animate="visible"
+              className="mt-8 flex flex-wrap items-center justify-center gap-4 max-w-4xl"
+            >
+              {highlightFields.map((field, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col items-center px-8 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 min-w-[160px]"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <field.icon className="h-4 w-4 text-white/50" />
+                    <span className="text-[11px] text-white/50 font-body uppercase tracking-wider">{field.label}</span>
+                  </div>
+                  <span className="text-base sm:text-lg font-display font-bold text-white text-center leading-snug">{field.value}</span>
+                </div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Secondary info pills */}
           {infoFields.length > 0 && (
             <motion.div
               variants={fadeUp}
               custom={2}
               initial="hidden"
               animate="visible"
-              className="mt-8 flex flex-wrap items-center justify-center gap-3 max-w-4xl"
+              className="mt-4 flex flex-wrap items-center justify-center gap-2.5 max-w-4xl"
             >
               {infoFields.map((field, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10"
                 >
-                  <field.icon className="h-4 w-4 text-white/60 shrink-0" />
+                  <field.icon className="h-3.5 w-3.5 text-white/50 shrink-0" />
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-white/50 font-body uppercase tracking-wider">{field.label}</span>
-                    <span className="text-sm font-display font-semibold text-white">{field.value}</span>
+                    <span className="text-[10px] text-white/45 font-body uppercase tracking-wider">{field.label}</span>
+                    <span className="text-xs font-display font-semibold text-white/90">{field.value}</span>
                   </div>
                 </div>
               ))}
