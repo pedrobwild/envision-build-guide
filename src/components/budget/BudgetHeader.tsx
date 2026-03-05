@@ -58,7 +58,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           transition={{ duration: 0.4 }}
           className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 flex items-center justify-between"
         >
-          <img src={logoWhite} alt="Bwild" className="h-8" />
+          <img src={logoWhite} alt="Bwild" className="h-12" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <motion.button
