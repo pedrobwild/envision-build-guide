@@ -12,7 +12,7 @@ import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
 import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
 import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
-import { SectionNav } from "@/components/budget/SectionNav";
+
 import { AnimatedSection } from "@/components/budget/AnimatedSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, List, LayoutGrid } from "lucide-react";
@@ -217,7 +217,7 @@ export default function PublicBudget() {
 
           <div className="hidden lg:block">
             <div className="sticky top-4 space-y-5 max-h-[calc(100vh-2rem)] overflow-y-auto pb-4 scrollbar-thin">
-              <SectionNav sections={filteredSections} />
+              
               <BudgetSummary
                 sections={sections}
                 adjustments={adjustments}
