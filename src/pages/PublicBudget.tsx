@@ -24,7 +24,7 @@ import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
 import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
-import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
+
 import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { ClientJourney } from "@/components/budget/ClientJourney";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
