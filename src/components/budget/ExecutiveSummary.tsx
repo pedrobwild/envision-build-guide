@@ -1,6 +1,5 @@
-import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
-import { Layers, Home, Package, TrendingUp } from "lucide-react";
+import { Layers, Home, Package, TrendingUp, Globe, MapPin } from "lucide-react";
 
 interface ExecutiveSummaryProps {
   sections: any[];
@@ -13,6 +12,15 @@ export function ExecutiveSummary({ sections, rooms, total, projectName }: Execut
   const totalItems = sections.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0);
   const totalPackages = sections.length;
   const totalRooms = rooms.length;
+
+  let generalCount = 0;
+  let localCount = 0;
+  sections.forEach((s: any) => {
+    (s.items || []).forEach((item: any) => {
+      if ((item.coverage_type || "geral") === "geral") generalCount++;
+      else localCount++;
+    });
+  });
 
   const stats = [
     { icon: Package, label: "Pacotes", value: String(totalPackages), color: "text-primary" },
@@ -46,6 +54,21 @@ export function ExecutiveSummary({ sections, rooms, total, projectName }: Execut
           </div>
         ))}
       </div>
+
+      {totalRooms > 0 && (generalCount > 0 || localCount > 0) && (
+        <div className="mt-4 pt-4 border-t border-border/50">
+          <div className="flex items-center gap-6 text-xs font-body text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Globe className="h-3.5 w-3.5 text-primary/70" />
+              <span><strong className="text-foreground font-semibold">{generalCount}</strong> itens gerais</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-primary/70" />
+              <span><strong className="text-foreground font-semibold">{localCount}</strong> itens específicos por ambiente</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
