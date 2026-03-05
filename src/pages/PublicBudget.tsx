@@ -162,12 +162,6 @@ export default function PublicBudget() {
 
         {/* Value sections — above the scope */}
         <div className="space-y-12 mb-10" data-pdf-hide>
-          <AnimatedSection id="investment-impact" index={-3}>
-            <InvestmentImpact
-              neighborhood={(budget as any).neighborhood || "Brooklin"}
-              squareMeters={(budget as any).square_meters || 21}
-            />
-          </AnimatedSection>
           <AnimatedSection id="what-is-included" index={-2}>
             <WhatIsIncluded />
           </AnimatedSection>
