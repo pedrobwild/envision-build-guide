@@ -69,75 +69,88 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
             </p>
           </DialogHeader>
 
-          {/* Items grid */}
-          <div className="px-6 py-5 space-y-4">
+          {/* Items grouped by section */}
+          <div className="px-6 py-5 space-y-5">
             {localItems.length === 0 ? (
               <p className="text-sm text-muted-foreground font-body text-center py-8">
                 Este ambiente não possui itens específicos como marcenaria, box ou móveis planejados.
               </p>
             ) : (
-              localItems.map(({ item, sectionTitle }) => {
-                const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
-                const extraImages = (item.images || []).filter((img: any) => img !== primaryImage);
-
-                return (
-                  <div
-                    key={item.id}
-                    className="flex gap-4 p-4 rounded-xl bg-muted/30 border border-border/50"
-                  >
-                    {/* Image */}
-                    {primaryImage ? (
-                      <button
-                        onClick={() => openLightbox(primaryImage.url)}
-                        className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 group cursor-zoom-in"
-                      >
-                        <img
-                          src={primaryImage.url}
-                          alt={item.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
-                          <ZoomIn className="h-4 w-4 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      </button>
-                    ) : (
-                      <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                        <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
-                      </div>
-                    )}
-
-                    {/* Info */}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground font-body">{item.title}</p>
-                      <p className="text-[11px] text-muted-foreground font-body mt-0.5">{sectionTitle}</p>
-                      {item.description && (
-                        <p className="text-xs text-muted-foreground/80 mt-1.5 line-clamp-2 font-body">{item.description}</p>
-                      )}
-
-                      {/* Extra images thumbnails */}
-                      {extraImages.length > 0 && (
-                        <div className="flex gap-1.5 mt-2">
-                          {extraImages.slice(0, 4).map((img: any, idx: number) => (
-                            <button
-                              key={img.id || idx}
-                              onClick={() => openLightbox(img.url)}
-                              className="w-8 h-8 rounded-md overflow-hidden cursor-zoom-in opacity-70 hover:opacity-100 transition-opacity border border-border/50"
-                            >
-                              <img src={img.url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                            </button>
-                          ))}
-                          {extraImages.length > 4 && (
-                            <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-body border border-border/50">
-                              +{extraImages.length - 4}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+              Object.entries(
+                localItems.reduce<Record<string, { item: any; sectionTitle: string }[]>>((acc, entry) => {
+                  (acc[entry.sectionTitle] = acc[entry.sectionTitle] || []).push(entry);
+                  return acc;
+                }, {})
+              ).map(([sectionTitle, items]) => (
+                <div key={sectionTitle} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-primary font-body">{sectionTitle}</h4>
+                    <div className="flex-1 h-px bg-border/60" />
+                    <span className="text-[10px] text-muted-foreground font-body">{items.length}</span>
                   </div>
-                );
-              })
+
+                  <div className="space-y-3">
+                    {items.map(({ item }) => {
+                      const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
+                      const extraImages = (item.images || []).filter((img: any) => img !== primaryImage);
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex gap-4 p-4 rounded-xl bg-muted/30 border border-border/50"
+                        >
+                          {primaryImage ? (
+                            <button
+                              onClick={() => openLightbox(primaryImage.url)}
+                              className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 group cursor-zoom-in"
+                            >
+                              <img
+                                src={primaryImage.url}
+                                alt={item.title}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                loading="lazy"
+                              />
+                              <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
+                                <ZoomIn className="h-4 w-4 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </button>
+                          ) : (
+                            <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                              <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
+                            </div>
+                          )}
+
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-foreground font-body">{item.title}</p>
+                            {item.description && (
+                              <p className="text-xs text-muted-foreground/80 mt-1.5 line-clamp-2 font-body">{item.description}</p>
+                            )}
+
+                            {extraImages.length > 0 && (
+                              <div className="flex gap-1.5 mt-2">
+                                {extraImages.slice(0, 4).map((img: any, idx: number) => (
+                                  <button
+                                    key={img.id || idx}
+                                    onClick={() => openLightbox(img.url)}
+                                    className="w-8 h-8 rounded-md overflow-hidden cursor-zoom-in opacity-70 hover:opacity-100 transition-opacity border border-border/50"
+                                  >
+                                    <img src={img.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                  </button>
+                                ))}
+                                {extraImages.length > 4 && (
+                                  <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-body border border-border/50">
+                                    +{extraImages.length - 4}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </DialogContent>
