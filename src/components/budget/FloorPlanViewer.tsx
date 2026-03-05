@@ -37,17 +37,15 @@ export function FloorPlanViewer({
 }: FloorPlanViewerProps) {
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null);
 
+  // Count only LOCAL (specific) items per room
   const roomItemCounts: Record<string, number> = {};
   rooms.forEach((r) => {
     let count = 0;
     sections.forEach((s: any) => {
       (s.items || []).forEach((item: any) => {
         const coverageType = item.coverage_type || "geral";
-        const included: string[] = item.included_rooms || [];
-        const excluded: string[] = item.excluded_rooms || [];
-        if (coverageType === "geral") {
-          if (!excluded.includes(r.id)) count++;
-        } else {
+        if (coverageType !== "geral") {
+          const included: string[] = item.included_rooms || [];
           if (included.includes(r.id)) count++;
         }
       });
@@ -203,7 +201,7 @@ export function FloorPlanViewer({
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body">
           <Eye className="h-3.5 w-3.5" />
-          <span>Clique em um cômodo para filtrar os itens do orçamento</span>
+          <span>Clique em um cômodo para ver os itens específicos</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {rooms.map((room, idx) => {

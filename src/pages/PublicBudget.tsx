@@ -7,7 +7,7 @@ import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { BudgetContext } from "@/components/budget/BudgetContext";
 import { SectionCard } from "@/components/budget/SectionCard";
 import { ExecutiveSummary } from "@/components/budget/ExecutiveSummary";
-import { RoomChecklist } from "@/components/budget/RoomChecklist";
+import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
 import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
 import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
@@ -33,6 +33,7 @@ export default function PublicBudget() {
   const [compactMode, setCompactMode] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
 
@@ -122,21 +123,22 @@ export default function PublicBudget() {
   const total = calculateBudgetTotal(sections, adjustments);
 
   const filteredSections = sections.filter((s: any) => {
-    const matchSearch = !searchQuery ||
-      s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    if (!searchQuery) return true;
+    return s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (s.items || []).some((item: any) =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
-    if (!matchSearch) return false;
-    if (!activeRoom) return true;
-    return (s.items || []).some((item: any) => {
-      const coverageType = item.coverage_type || "geral";
-      const included: string[] = item.included_rooms || [];
-      const excluded: string[] = item.excluded_rooms || [];
-      if (coverageType === "geral") return !excluded.includes(activeRoom);
-      return included.includes(activeRoom);
-    });
   });
+
+  const handleRoomClick = (roomId: string | null) => {
+    if (roomId) {
+      setActiveRoom(roomId);
+      setRoomModalOpen(true);
+    } else {
+      setActiveRoom(null);
+      setRoomModalOpen(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -203,20 +205,21 @@ export default function PublicBudget() {
                   rooms={rooms}
                   sections={sections}
                   activeRoom={activeRoom}
-                  onRoomClick={setActiveRoom}
+                  onRoomClick={handleRoomClick}
                 />
               </AnimatedSection>
             )}
 
+            {/* Room Detail Modal */}
             {activeRoom && (() => {
               const roomObj = rooms.find((r: any) => r.id === activeRoom);
-              const roomName = roomObj?.name || activeRoom;
               return (
-                <RoomChecklist
-                  roomId={activeRoom}
-                  roomName={roomName}
+                <RoomDetailModal
+                  open={roomModalOpen}
+                  onClose={() => { setRoomModalOpen(false); setActiveRoom(null); }}
+                  roomName={roomObj?.name || ""}
                   sections={sections}
-                  onClear={() => setActiveRoom(null)}
+                  roomId={activeRoom}
                 />
               );
             })()}
@@ -227,7 +230,6 @@ export default function PublicBudget() {
                   section={section}
                   compact={compactMode}
                   showItemQty={budget.show_item_qty}
-                  highlightZone={activeRoom}
                 />
               </AnimatedSection>
             ))}
