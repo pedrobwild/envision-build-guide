@@ -378,10 +378,10 @@ export const demoBudget = {
   ],
   adjustments: [],
   rooms: [
-    { id: 'cozinha', name: 'Cozinha', polygon: [[0.04, 0.18], [0.30, 0.18], [0.30, 0.43], [0.04, 0.43]] },
-    { id: 'banheiro', name: 'Banheiro', polygon: [[0.52, 0.18], [0.82, 0.18], [0.82, 0.40], [0.52, 0.40]] },
-    { id: 'sala', name: 'Sala / Living', polygon: [[0.04, 0.55], [0.49, 0.55], [0.49, 0.90], [0.04, 0.90]] },
-    { id: 'quarto', name: 'Dormitório', polygon: [[0.52, 0.48], [0.90, 0.48], [0.90, 0.86], [0.52, 0.86]] },
+    { id: 'cozinha', name: 'Cozinha', polygon: [[0.10, 0.07], [0.42, 0.07], [0.42, 0.47], [0.10, 0.47]] },
+    { id: 'banheiro', name: 'Banheiro', polygon: [[0.53, 0.07], [0.87, 0.07], [0.87, 0.37], [0.53, 0.37]] },
+    { id: 'sala', name: 'Sala / Living', polygon: [[0.07, 0.50], [0.50, 0.50], [0.50, 0.93], [0.07, 0.93]] },
+    { id: 'quarto', name: 'Dormitório', polygon: [[0.53, 0.42], [0.92, 0.42], [0.92, 0.93], [0.53, 0.93]] },
   ],
 };
 
