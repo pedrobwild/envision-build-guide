@@ -1,8 +1,9 @@
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Calendar, MapPin, User, Building, Ruler, UserCheck, Mail, Hash, Clock } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
-import { ValidityCountdown } from "@/components/budget/ValidityCountdown";
+import headerBg from "@/assets/header-bg.png";
+import { formatDate } from "@/lib/formatBRL";
 
 interface BudgetHeaderProps {
   budget: any;
@@ -20,27 +21,32 @@ const fadeUp = {
 };
 
 export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderProps) {
-  const pills = [
-    { label: "Cliente", value: budget.client_name },
-    { label: "Metragem", value: budget.metragem },
-    { label: "Orçamento", value: budget.versao ? `#${budget.versao}` : null },
-  ].filter(p => p.value);
+  const validUntil = budget.date && budget.validity_days
+    ? new Date(new Date(budget.date).getTime() + budget.validity_days * 86400000)
+    : null;
+
+  const infoFields = [
+    { icon: User, label: "Cliente", value: budget.client_name },
+    { icon: Building, label: "Obra", value: budget.condominio },
+    { icon: MapPin, label: "Bairro", value: budget.bairro },
+    { icon: Ruler, label: "Metragem", value: budget.metragem },
+    { icon: Hash, label: "Versão", value: budget.versao },
+    { icon: Calendar, label: "Data", value: budget.date ? formatDate(budget.date) : null },
+    { icon: Clock, label: "Validade", value: validUntil ? formatDate(validUntil) : null },
+    { icon: UserCheck, label: "Consultora", value: budget.consultora_comercial },
+    { icon: Mail, label: "E-mail", value: budget.email_comercial },
+  ].filter(f => f.value);
 
   return (
     <header className="relative">
-      {/* Hero with dark overlay */}
-      <div className="relative overflow-hidden bg-charcoal min-h-[340px] sm:min-h-[400px] flex flex-col">
+      <div className="relative overflow-hidden min-h-[420px] sm:min-h-[480px] flex flex-col">
         {/* Background image */}
-        {budget.floor_plan_url ? (
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${budget.floor_plan_url})` }}
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-charcoal via-charcoal-light to-charcoal" />
-        )}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${headerBg})` }}
+        />
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-charcoal/80 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-charcoal/40" />
 
         {/* Top bar */}
         <motion.div
@@ -75,41 +81,40 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             animate="visible"
             className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-white leading-tight max-w-3xl"
           >
-            {budget.project_name || "Orçamento de Reforma"}
+            Orçamento de Projeto e Reforma
           </motion.h1>
 
-          <motion.p
-            variants={fadeUp}
-            custom={1}
-            initial="hidden"
-            animate="visible"
-            className="mt-3 text-white/70 font-body text-sm sm:text-base max-w-lg"
-          >
-            Transformamos ambientes com excelência, design e qualidade
-          </motion.p>
-
-          {budget.date && budget.validity_days && (
-            <motion.div variants={fadeUp} custom={1.5} initial="hidden" animate="visible" className="mt-3">
-              <ValidityCountdown date={budget.date} validityDays={budget.validity_days} />
-            </motion.div>
+          {budget.project_name && (
+            <motion.p
+              variants={fadeUp}
+              custom={1}
+              initial="hidden"
+              animate="visible"
+              className="mt-3 text-white/70 font-display font-semibold text-lg sm:text-xl"
+            >
+              {budget.project_name}
+            </motion.p>
           )}
 
-          {/* Glassmorphism pills */}
-          {pills.length > 0 && (
+          {/* Project info pills */}
+          {infoFields.length > 0 && (
             <motion.div
               variants={fadeUp}
               custom={2}
               initial="hidden"
               animate="visible"
-              className="mt-8 flex flex-wrap items-center justify-center gap-3"
+              className="mt-8 flex flex-wrap items-center justify-center gap-3 max-w-4xl"
             >
-              {pills.map((pill, i) => (
+              {infoFields.map((field, i) => (
                 <div
                   key={i}
-                  className="flex flex-col items-center px-6 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 min-w-[120px]"
+                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15"
                 >
-                  <span className="text-[11px] text-white/60 font-body uppercase tracking-wider">{pill.label}</span>
-                  <span className="text-sm sm:text-base font-display font-bold text-white mt-0.5">{pill.value}</span>
+                  <field.icon className="h-4 w-4 text-white/60 shrink-0" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-white/50 font-body uppercase tracking-wider">{field.label}</span>
+                    <span className="text-sm font-display font-semibold text-white">{field.value}</span>
+                  </div>
                 </div>
               ))}
             </motion.div>
