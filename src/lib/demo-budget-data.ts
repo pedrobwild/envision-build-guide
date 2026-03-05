@@ -27,8 +27,9 @@ const thumb = (id: string) => [{ url: img(id, 200, 200), is_primary: true }];
 
 export const demoBudget = {
   id: 'demo',
-  project_name: 'Reforma Completa — Adriano Lelis',
-  client_name: 'Adriano Lelis',
+  project_name: 'Reforma Completa — Pedro Alves',
+  client_name: 'Pedro Alves',
+  condominio: 'Nex One Brooklin',
   unit: 'Apartamento Compacto',
   date: '2026-02-21',
   validity_days: 30,
