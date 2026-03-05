@@ -6,7 +6,7 @@ import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { BudgetContext } from "@/components/budget/BudgetContext";
 import { SectionCard } from "@/components/budget/SectionCard";
-import { ExecutiveSummary } from "@/components/budget/ExecutiveSummary";
+
 
 import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
@@ -145,18 +145,6 @@ export default function PublicBudget() {
       <main id="budget-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <BudgetContext budget={budget} />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
-        >
-          <ExecutiveSummary
-            sections={sections}
-            rooms={rooms}
-            total={total}
-            projectName={budget.project_name}
-          />
-        </motion.div>
 
         {budget.show_progress_bars && (
           <PackageProgressBars sections={sections} total={total} />
