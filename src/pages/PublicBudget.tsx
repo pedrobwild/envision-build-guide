@@ -24,6 +24,9 @@ import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
 import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
+import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
+import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
+import { ClientJourney } from "@/components/budget/ClientJourney";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -149,6 +152,22 @@ export default function PublicBudget() {
         {budget.show_progress_bars && (
           <PackageProgressBars sections={sections} total={total} />
         )}
+
+        {/* Value sections — above the scope */}
+        <div className="space-y-12 mb-10" data-pdf-hide>
+          <AnimatedSection id="investment-impact" index={-3}>
+            <InvestmentImpact
+              neighborhood={(budget as any).neighborhood || "Brooklin"}
+              squareMeters={(budget as any).square_meters || 21}
+            />
+          </AnimatedSection>
+          <AnimatedSection id="what-is-included" index={-2}>
+            <WhatIsIncluded />
+          </AnimatedSection>
+          <AnimatedSection id="client-journey" index={-1}>
+            <ClientJourney />
+          </AnimatedSection>
+        </div>
 
         {/* Search & controls */}
         <motion.div
