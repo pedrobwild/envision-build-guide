@@ -46,7 +46,7 @@ export function SectionNav({ sections }: SectionNavProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="sticky top-32"
+      className=""
     >
       <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         <button
