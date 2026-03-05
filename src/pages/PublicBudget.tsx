@@ -7,7 +7,7 @@ import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { BudgetContext } from "@/components/budget/BudgetContext";
 import { SectionCard } from "@/components/budget/SectionCard";
 import { ExecutiveSummary } from "@/components/budget/ExecutiveSummary";
-import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
+
 import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
 import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
@@ -33,7 +33,6 @@ export default function PublicBudget() {
   const [compactMode, setCompactMode] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
-  const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
 
@@ -131,13 +130,7 @@ export default function PublicBudget() {
   });
 
   const handleRoomClick = (roomId: string | null) => {
-    if (roomId) {
-      setActiveRoom(roomId);
-      setRoomModalOpen(true);
-    } else {
-      setActiveRoom(null);
-      setRoomModalOpen(false);
-    }
+    setActiveRoom(roomId || null);
   };
 
   return (
@@ -210,19 +203,6 @@ export default function PublicBudget() {
               </AnimatedSection>
             )}
 
-            {/* Room Detail Modal */}
-            {activeRoom && (() => {
-              const roomObj = rooms.find((r: any) => r.id === activeRoom);
-              return (
-                <RoomDetailModal
-                  open={roomModalOpen}
-                  onClose={() => { setRoomModalOpen(false); setActiveRoom(null); }}
-                  roomName={roomObj?.name || ""}
-                  sections={sections}
-                  roomId={activeRoom}
-                />
-              );
-            })()}
 
             {filteredSections.map((section: any, idx: number) => (
               <AnimatedSection key={section.id} id={`section-${section.id}`} index={idx + 1}>
