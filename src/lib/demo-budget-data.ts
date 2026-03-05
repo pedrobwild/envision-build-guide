@@ -377,7 +377,26 @@ export const demoBudget = {
     },
   ],
   adjustments: [],
+  rooms: [
+    { id: 'cozinha', name: 'Cozinha', polygon: [[0.04, 0.18], [0.30, 0.18], [0.30, 0.43], [0.04, 0.43]] },
+    { id: 'banheiro', name: 'Banheiro', polygon: [[0.52, 0.18], [0.82, 0.18], [0.82, 0.40], [0.52, 0.40]] },
+    { id: 'sala', name: 'Sala / Living', polygon: [[0.04, 0.55], [0.49, 0.55], [0.49, 0.90], [0.04, 0.90]] },
+    { id: 'quarto', name: 'Dormitório', polygon: [[0.52, 0.48], [0.90, 0.48], [0.90, 0.86], [0.52, 0.86]] },
+  ],
 };
+
+// Map floor_zone to coverage_type + included_rooms for demo items
+demoBudget.sections.forEach((section: any) => {
+  (section.items || []).forEach((item: any) => {
+    if (item.floor_zone) {
+      item.coverage_type = 'local';
+      item.included_rooms = [item.floor_zone];
+    } else {
+      item.coverage_type = 'geral';
+      item.included_rooms = [];
+    }
+  });
+});
 
 // Floor plan zone coordinates (approximate % positions on the floor plan image)
 // Based on the actual Adriano Lelis floor plan layout
