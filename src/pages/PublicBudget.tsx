@@ -30,6 +30,8 @@ import { ClientJourney } from "@/components/budget/ClientJourney";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
 import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
 import { PortalShowcase } from "@/components/budget/PortalShowcase";
+import { ProjectSecurity } from "@/components/budget/ProjectSecurity";
+import { NextSteps } from "@/components/budget/NextSteps";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -236,6 +238,14 @@ export default function PublicBudget() {
                 />
               </AnimatedSection>
             ))}
+
+            <AnimatedSection id="project-security" index={99}>
+              <ProjectSecurity />
+            </AnimatedSection>
+
+            <AnimatedSection id="next-steps" index={100}>
+              <NextSteps />
+            </AnimatedSection>
           </div>
 
           <div className="hidden lg:block">
