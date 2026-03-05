@@ -84,17 +84,6 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             Orçamento de Projeto e Reforma
           </motion.h1>
 
-          {budget.project_name && (
-            <motion.p
-              variants={fadeUp}
-              custom={1}
-              initial="hidden"
-              animate="visible"
-              className="mt-3 text-white/70 font-display font-semibold text-lg sm:text-xl"
-            >
-              {budget.project_name}
-            </motion.p>
-          )}
 
           {/* Project info pills */}
           {infoFields.length > 0 && (
