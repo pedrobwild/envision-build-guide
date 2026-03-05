@@ -27,6 +27,9 @@ import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
 import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { ClientJourney } from "@/components/budget/ClientJourney";
+import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
+import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
+import { PortalShowcase } from "@/components/budget/PortalShowcase";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -211,8 +214,21 @@ export default function PublicBudget() {
             )}
 
 
+            <AnimatedSection id="engenharia-section" index={0.5}>
+              <EngenhariaExpander />
+            </AnimatedSection>
+
+            <AnimatedSection id="portal-section" index={0.6}>
+              <PortalShowcase />
+            </AnimatedSection>
+
             {filteredSections.map((section: any, idx: number) => (
               <AnimatedSection key={section.id} id={`section-${section.id}`} index={idx + 1}>
+                {section.title && section.title.toLowerCase().includes("projetos") && (
+                  <div className="mb-6">
+                    <ArquitetonicoExpander />
+                  </div>
+                )}
                 <SectionCard
                   section={section}
                   compact={compactMode}
