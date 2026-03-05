@@ -58,7 +58,7 @@ export function ExecutiveSummary({ sections, rooms, total, projectName }: Execut
 
       {totalRooms > 0 && (generalCount > 0 || localCount > 0) && (
         <div className="mt-4 pt-4 border-t border-border/50">
-          <div className="flex items-center gap-6 text-xs font-body text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-body text-muted-foreground">
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
