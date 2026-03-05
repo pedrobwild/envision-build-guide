@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { X, MapPin, ImageIcon, ZoomIn } from "lucide-react";
+import { MapPin, ImageIcon, ZoomIn } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Lightbox } from "./Lightbox";
+import { motion } from "framer-motion";
 
 interface RoomDetailModalProps {
   open: boolean;
@@ -81,8 +82,14 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
                   (acc[entry.sectionTitle] = acc[entry.sectionTitle] || []).push(entry);
                   return acc;
                 }, {})
-              ).map(([sectionTitle, items]) => (
-                <div key={sectionTitle} className="space-y-3">
+              ).map(([sectionTitle, items], groupIdx) => (
+                <motion.div
+                  key={sectionTitle}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: groupIdx * 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                  className="space-y-3"
+                >
                   <div className="flex items-center gap-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-primary font-body">{sectionTitle}</h4>
                     <div className="flex-1 h-px bg-border/60" />
@@ -149,7 +156,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
                       );
                     })}
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
           </div>
