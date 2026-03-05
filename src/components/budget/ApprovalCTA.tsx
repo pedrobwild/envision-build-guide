@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Loader2, PartyPopper } from "lucide-react";
+import { CheckCircle2, Loader2, PartyPopper, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -73,8 +73,11 @@ export function ApprovalCTA({ budgetId, publicId, approvedAt, approvedByName }: 
     <div className="rounded-lg border border-border bg-card p-5">
       <AnimatePresence mode="wait">
         {step === "idle" && (
-          <motion.div key="idle" exit={{ opacity: 0 }} className="text-center">
-            <p className="font-display font-semibold text-foreground mb-3">Pronto para aprovar?</p>
+          <motion.div key="idle" exit={{ opacity: 0 }} className="text-center space-y-3">
+            <p className="font-display font-semibold text-foreground">Pronto para iniciar seu projeto?</p>
+            <p className="text-sm text-muted-foreground font-body">
+              Após iniciar, agendamos seu briefing com a Lorena e começamos seu Projeto 3D.
+            </p>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -82,8 +85,20 @@ export function ApprovalCTA({ budgetId, publicId, approvedAt, approvedByName }: 
               className="w-full py-3 rounded-lg bg-success text-success-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
             >
               <CheckCircle2 className="h-5 w-5" />
-              Aprovar Orçamento
+              Iniciar meu projeto
             </motion.button>
+            <a
+              href="https://wa.me/5511999999999?text=Olá, gostaria de tirar dúvidas sobre meu orçamento."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2.5 rounded-lg border border-border text-foreground font-display font-semibold text-sm hover:bg-muted/50 transition-colors flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Falar com especialista
+            </a>
+            <p className="text-xs text-muted-foreground font-body">
+              Sem compromisso — tire dúvidas com nosso time.
+            </p>
           </motion.div>
         )}
 
@@ -116,7 +131,7 @@ export function ApprovalCTA({ budgetId, publicId, approvedAt, approvedByName }: 
               ) : (
                 <CheckCircle2 className="h-5 w-5" />
               )}
-              {step === "loading" ? "Aprovando..." : "Confirmar Aprovação"}
+              {step === "loading" ? "Aprovando..." : "Confirmar e iniciar projeto"}
             </motion.button>
           </motion.div>
         )}

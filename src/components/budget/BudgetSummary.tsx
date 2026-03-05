@@ -1,5 +1,16 @@
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
+import { CheckCircle2, Lock } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+
+const includedItems = [
+  "Projeto arquitetônico",
+  "Engenharia e gestão",
+  "Execução da obra",
+  "Materiais e equipamentos",
+  "Acompanhamento digital",
+  "Garantia de 5 anos",
+];
 
 interface BudgetSummaryProps {
   sections: any[];
@@ -12,6 +23,21 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt }: Bud
   return (
     <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
       <h3 className="font-display font-bold text-lg text-foreground mb-5">Resumo do Orçamento</h3>
+
+      {/* What's included */}
+      <div className="mb-4 space-y-2">
+        <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">O que está incluso neste valor</p>
+        <ul className="space-y-1.5">
+          {includedItems.map((item) => (
+            <li key={item} className="flex items-center gap-2 text-xs font-body text-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <Separator className="mb-4" />
 
       <div className="space-y-3 mb-5">
         {sections.map((section: any) => {
@@ -52,6 +78,10 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt }: Bud
         <div className="flex items-center justify-between">
           <span className="font-display font-bold text-foreground">Total Final</span>
           <span className="font-display font-bold text-2xl text-primary">{formatBRL(total)}</span>
+        </div>
+        <div className="flex items-center justify-center gap-1.5 mt-2">
+          <Lock className="h-3 w-3 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground font-body">Sem custos ocultos</span>
         </div>
       </div>
 
