@@ -3,8 +3,7 @@ import { cn } from "@/lib/utils";
 
 const tocItems = [
   { label: "Visão geral", id: "investment-impact" },
-  { label: "O que está incluso", id: "what-is-included" },
-  { label: "Sua jornada", id: "client-journey" },
+  { label: "Projeto", id: "arquitetonico-section" },
   { label: "Engenharia", id: "engenharia-section" },
   { label: "Portal Bwild", id: "portal-section" },
   { label: "Escopo da reforma", id: "floor-plan-section" },
