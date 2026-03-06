@@ -1,7 +1,8 @@
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Calendar, MessageCircle } from "lucide-react";
+import { Calendar, MessageCircle, Loader2 } from "lucide-react";
 import { mockBudget } from "@/lib/orcamento-mock-data";
+import { useOrcamentoBudget } from "@/hooks/useOrcamentoBudget";
 import { BudgetHero } from "@/components/orcamento/BudgetHero";
 import { ServicesSection } from "@/components/orcamento/ServicesSection";
 import { JourneySection } from "@/components/orcamento/JourneySection";
@@ -11,7 +12,31 @@ import { StickyBudgetSummary } from "@/components/orcamento/StickyBudgetSummary"
 
 export default function OrcamentoPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const budget = mockBudget; // TODO: fetch by projectId
+  const { data: budget, isLoading, error } = useOrcamentoBudget(projectId);
+
+  // Fallback to mock for "demo" slug or while loading fails
+  const resolvedBudget = budget ?? (projectId === "demo" || error ? mockBudget : null);
+
+  if (isLoading && !resolvedBudget) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!resolvedBudget) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <p className="text-lg font-display font-semibold text-foreground">Orçamento não encontrado</p>
+          <p className="text-sm text-muted-foreground font-body">
+            Verifique o link ou entre em contato com a equipe.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -20,19 +45,19 @@ export default function OrcamentoPage() {
           {/* Main content */}
           <div className="flex-1 min-w-0 space-y-10 sm:space-y-14">
             <div id="budget-hero">
-              <BudgetHero meta={budget.meta} included={budget.included} />
+              <BudgetHero meta={resolvedBudget.meta} included={resolvedBudget.included} />
             </div>
             <div id="services-section">
-              <ServicesSection services={budget.services} />
+              <ServicesSection services={resolvedBudget.services} />
             </div>
             <div id="journey-section">
-              <JourneySection steps={budget.journey} />
+              <JourneySection steps={resolvedBudget.journey} />
             </div>
             <div id="scope-section">
-              <ScopeSection scope={budget.scope} />
+              <ScopeSection scope={resolvedBudget.scope} />
             </div>
             <div id="portal-section">
-              <PortalWarrantyNextSteps portalTabs={budget.portalTabs} />
+              <PortalWarrantyNextSteps portalTabs={resolvedBudget.portalTabs} />
             </div>
 
             {/* Bottom spacer for mobile CTA */}
@@ -42,7 +67,7 @@ export default function OrcamentoPage() {
           {/* Sidebar - desktop */}
           <aside className="hidden lg:block w-[280px] flex-shrink-0">
             <div className="sticky top-6">
-              <StickyBudgetSummary meta={budget.meta} included={budget.included} />
+              <StickyBudgetSummary meta={resolvedBudget.meta} included={resolvedBudget.included} />
             </div>
           </aside>
         </div>
