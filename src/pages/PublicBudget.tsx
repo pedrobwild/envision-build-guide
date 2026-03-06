@@ -163,8 +163,20 @@ export default function PublicBudget() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
+            <AnimatedSection id="arquitetonico-section" index={0}>
+              <ArquitetonicoExpander />
+            </AnimatedSection>
+
+            <AnimatedSection id="engenharia-section" index={0.5}>
+              <EngenhariaExpander />
+            </AnimatedSection>
+
+            <AnimatedSection id="portal-section" index={0.6}>
+              <PortalShowcase />
+            </AnimatedSection>
+
             {budget.floor_plan_url && (
-              <AnimatedSection id="floor-plan-section" index={0}>
+              <AnimatedSection id="floor-plan-section" index={0.8}>
                 <FloorPlanViewer
                   floorPlanUrl={budget.floor_plan_url}
                   rooms={rooms}
@@ -175,22 +187,10 @@ export default function PublicBudget() {
               </AnimatedSection>
             )}
 
-
-            <AnimatedSection id="engenharia-section" index={0.5}>
-              <EngenhariaExpander />
-            </AnimatedSection>
-
-            <AnimatedSection id="portal-section" index={0.6}>
-              <PortalShowcase />
-            </AnimatedSection>
-
-            {filteredSections.map((section: any, idx: number) => (
+            {filteredSections
+              .filter((section: any) => !section.title?.toLowerCase().includes("projetos"))
+              .map((section: any, idx: number) => (
               <AnimatedSection key={section.id} id={`section-${section.id}`} index={idx + 1}>
-                {section.title && section.title.toLowerCase().includes("projetos") && (
-                  <div className="mb-6">
-                    <ArquitetonicoExpander />
-                  </div>
-                )}
                 <SectionCard
                   section={section}
                   compact={compactMode}
