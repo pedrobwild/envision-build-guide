@@ -13,6 +13,7 @@ import BudgetEditor from "./pages/BudgetEditor";
 import BudgetEditorV2 from "./pages/BudgetEditorV2";
 import PublicBudget from "./pages/PublicBudget";
 import QAEvaluator from "./pages/QAEvaluator";
+import OrcamentoPage from "./pages/OrcamentoPage";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/admin/budget/:budgetId" element={<ProtectedRoute><BudgetEditorV2 /></ProtectedRoute>} />
           <Route path="/admin/budget/:budgetId/legacy" element={<ProtectedRoute><BudgetEditor /></ProtectedRoute>} />
           <Route path="/o/:publicId" element={<PublicBudget />} />
+          <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
           <Route path="/qa" element={<QAEvaluator />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
