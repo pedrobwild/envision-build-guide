@@ -160,9 +160,12 @@ export function ArquitetonicoExpander() {
         </CardContent>
       </Card>
 
-      {lightboxSrc && (
-        <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
-      )}
+      <Lightbox
+        images={gallery[activeTab].map((img) => ({ url: img.src, alt: img.alt }))}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
     </>
   );
 }
