@@ -104,7 +104,11 @@ export function ArquitetonicoExpander() {
                 {gallery[activeTab].map((img) => (
                   <button
                     key={img.src}
-                    onClick={() => setLightboxSrc(img.src)}
+                    onClick={() => {
+                      const idx = gallery[activeTab].indexOf(img);
+                      setLightboxIndex(idx);
+                      setLightboxOpen(true);
+                    }}
                     className="group relative rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <img
