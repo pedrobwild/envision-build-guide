@@ -144,7 +144,7 @@ export default function PublicBudget() {
 
   return (
     <div className="min-h-screen bg-background">
-      <StickyTableOfContents />
+      
       <ReadingProgressBar />
       <BudgetHeader
         budget={budget}
