@@ -5,6 +5,8 @@ import { CheckCircle2, ZoomIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lightbox } from "@/components/budget/Lightbox";
 
+type GalleryTab = "3d" | "exec";
+
 const bullets = [
   "Reuniões de briefing e revisões com arquiteta",
   "Projeto 3D: layout, iluminação, marcenaria e decoração",
