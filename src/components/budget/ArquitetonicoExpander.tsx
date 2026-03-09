@@ -39,8 +39,9 @@ const gallery = {
 };
 
 export function ArquitetonicoExpander() {
-  const [activeTab, setActiveTab] = useState<"3d" | "exec">("3d");
-  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<GalleryTab>("3d");
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   return (
     <>
