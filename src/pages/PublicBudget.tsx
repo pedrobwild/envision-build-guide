@@ -32,7 +32,7 @@ import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
 import { PortalShowcase } from "@/components/budget/PortalShowcase";
 import { ProjectSecurity } from "@/components/budget/ProjectSecurity";
 import { NextSteps } from "@/components/budget/NextSteps";
-import { StickyTableOfContents } from "@/components/budget/StickyTableOfContents";
+
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -144,7 +144,7 @@ export default function PublicBudget() {
 
   return (
     <div className="min-h-screen bg-background">
-      <StickyTableOfContents />
+      
       <ReadingProgressBar />
       <BudgetHeader
         budget={budget}
