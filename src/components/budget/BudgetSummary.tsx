@@ -35,20 +35,6 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt }: Bud
     <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
       <h3 className="font-display font-bold text-lg text-foreground mb-5">Resumo do Orçamento</h3>
 
-      {/* What's included */}
-      <div className="mb-4 space-y-2">
-        <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">O que está incluso neste valor</p>
-        <ul className="space-y-1.5">
-          {includedItems.map((item) => (
-            <li key={item} className="flex items-center gap-2 text-xs font-body text-foreground">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <Separator className="mb-4" />
 
       <TooltipProvider>
         <div className="space-y-3 mb-5">
