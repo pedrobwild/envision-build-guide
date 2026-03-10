@@ -1,29 +1,25 @@
 // Demo budget data extracted from the Adriano Lelis spreadsheet
-// Images from Unsplash (free, high-quality reference photos)
 
-const img = (id: string, w = 400, h = 300) =>
-  `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&q=80`;
-
-// Section cover images (16:9 aspect)
-const covers = {
-  projetos: img('1503387762-592deb58ef4e', 800, 450),      // Blueprints/plans
-  civis: img('1504307651254-35680f356dfd', 800, 450),       // Construction/renovation
-  revestimentos: img('1615529328331-f8917597711f', 800, 450), // Wood flooring
-  pinturas: img('1562259949-e8e7689e7828', 800, 450),       // Painting walls
-  instalacoes: img('1558618666-fcd25c85f1d7', 800, 450),    // Tools/installation
-  luminarias: img('1524484485831-a92ffc0de03f', 800, 450),  // Modern lighting
-  vidros: img('1552321554-5fefe8c9ef14', 800, 450),         // Mirror/glass bathroom
-  limpeza: img('1581578731548-c64695cc6952', 800, 450),     // Clean room
-  marcenaria: img('1556909114-f6e7ad7d3136', 800, 450),     // Custom cabinetry
-  mobiliario: img('1555041469-a586c61ea9bc', 800, 450),     // Modern furniture
-  eletro: img('1556909172-54557c7e4fb7', 800, 450),         // Kitchen appliances
-  banheiro: img('1552321554-5fefe8c9ef14', 800, 450),       // Bathroom accessories
-  diversos: img('1558618666-fcd25c85f1d7', 800, 450),       // Misc accessories
-  cortinas: img('1513694203232-719a280e022f', 800, 450),     // Curtains/drapes
+// Section cover images — null (no external dependencies)
+const covers: Record<string, null> = {
+  projetos: null,
+  civis: null,
+  revestimentos: null,
+  pinturas: null,
+  instalacoes: null,
+  luminarias: null,
+  vidros: null,
+  limpeza: null,
+  marcenaria: null,
+  mobiliario: null,
+  eletro: null,
+  banheiro: null,
+  diversos: null,
+  cortinas: null,
 };
 
-// Item thumbnail helper
-const thumb = (id: string) => [{ url: img(id, 200, 200), is_primary: true }];
+// Item thumbnail helper — empty (no external images)
+const thumb = (_id: string): never[] => [];
 
 export const demoBudget = {
   id: 'demo',
