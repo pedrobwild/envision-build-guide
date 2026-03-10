@@ -79,7 +79,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
             <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 sm:px-5 sm:pb-4">
               <h2 className="font-display text-base sm:text-lg font-bold text-white leading-tight">{section.title}</h2>
               {section.subtitle && (
-                <p className="text-white/70 text-[11px] sm:text-xs mt-0.5 font-body line-clamp-1">{section.subtitle}</p>
+                <p className="text-white/70 text-xs mt-0.5 font-body line-clamp-1">{section.subtitle}</p>
               )}
             </div>
           </div>
