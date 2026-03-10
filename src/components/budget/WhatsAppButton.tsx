@@ -10,7 +10,7 @@ interface WhatsAppButtonProps {
 
 export function WhatsAppButton({ projectName, publicId, phone = "5500000000000" }: WhatsAppButtonProps) {
   const message = encodeURIComponent(
-    `Olá! Estou analisando o orçamento "${projectName}" e gostaria de tirar algumas dúvidas.\n\n🔗 ${window.location.origin}/o/${publicId}`
+    `Olá! Estou analisando o orçamento "${projectName}" e gostaria de tirar algumas dúvidas.\n\n🔗 ${getPublicBudgetUrl(publicId)}`
   );
   const url = `https://wa.me/${phone}?text=${message}`;
 
