@@ -40,7 +40,7 @@ export function EditorStepper({ current, onStepClick, completedSteps }: EditorSt
               {isCompleted && !isActive ? (
                 <Check className="h-3.5 w-3.5" />
               ) : (
-                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px] font-bold">
+                <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-xs font-bold">
                   {step.number}
                 </span>
               )}

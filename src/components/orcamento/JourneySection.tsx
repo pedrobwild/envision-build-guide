@@ -39,7 +39,7 @@ export function JourneySection({ steps }: JourneySectionProps) {
                 {step.id}
               </div>
               <p className={cn(
-                "text-[11px] font-display mt-1.5 leading-tight transition-colors",
+                "text-xs font-display mt-1.5 leading-tight transition-colors",
                 activeStep === i ? "text-primary font-semibold" : "text-muted-foreground"
               )}>
                 {step.title}

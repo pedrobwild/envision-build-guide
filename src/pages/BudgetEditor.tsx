@@ -369,7 +369,7 @@ export default function BudgetEditor() {
                               placeholder="Valor (R$)" />
                             <button
                               onClick={() => updateItem(section.id, item.id, 'coverage_type', item.coverage_type === 'geral' ? 'local' : 'geral')}
-                              className={`px-2 py-1 rounded text-[10px] font-body font-semibold uppercase tracking-wider border transition-colors flex-shrink-0 ${
+                              className={`px-2 py-1 rounded text-xs font-body font-semibold uppercase tracking-wider border transition-colors flex-shrink-0 ${
                                 item.coverage_type === 'geral'
                                   ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20'
                                   : 'bg-accent/50 text-accent-foreground border-border hover:bg-accent'
