@@ -25,6 +25,7 @@ import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
 import { PortalShowcase } from "@/components/budget/PortalShowcase";
 import { ProjectSecurity } from "@/components/budget/ProjectSecurity";
 import { NextSteps } from "@/components/budget/NextSteps";
+import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
 import { ChevronUp, X, Eye, EyeOff } from "lucide-react";
 import { useScrollspy } from "@/hooks/useScrollspy";
 
@@ -177,6 +178,10 @@ export default function PublicBudget() {
 
               <AnimatedSection id="engenharia-section" index={0.5}>
                 <EngenhariaExpander />
+              </AnimatedSection>
+
+              <AnimatedSection id="turnkey-comparison" index={0.55}>
+                <TurnkeyComparison />
               </AnimatedSection>
 
               <AnimatedSection id="portal-section" index={0.6}>
