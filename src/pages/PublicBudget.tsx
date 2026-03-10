@@ -300,7 +300,7 @@ export default function PublicBudget() {
             <div className="relative z-50">
               <button
                 onClick={() => setShowMobileSummary(true)}
-                className="w-full text-center text-[11px] text-muted-foreground py-1.5 bg-card border-t border-border font-body hover:text-foreground transition-colors flex items-center justify-center gap-1"
+                className="w-full text-center text-xs text-muted-foreground py-1.5 bg-card border-t border-border font-body hover:text-foreground transition-colors flex items-center justify-center gap-1"
               >
                 <ChevronUp className="h-3 w-3" />
                 Ver detalhes do orçamento
