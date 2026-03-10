@@ -154,7 +154,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   ].map((field, i) => (
                     <div key={i} className="px-4 sm:px-5 py-4 sm:py-5 text-center">
                       <field.icon className="h-4 w-4 text-white/30 mx-auto mb-1.5" />
-                      <p className="text-[9px] text-white/35 font-body uppercase tracking-[0.15em] mb-0.5">{field.label}</p>
+                      <p className="text-xs text-white/35 font-body uppercase tracking-[0.15em] mb-0.5">{field.label}</p>
                       <p className="text-sm sm:text-base font-display font-bold text-white truncate">{field.value}</p>
                     </div>
                   ))}
