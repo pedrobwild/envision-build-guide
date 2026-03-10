@@ -91,15 +91,15 @@ export default function PublicBudget() {
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <Skeleton className="h-16 w-full mb-6" />
-          <Skeleton className="h-32 w-full mb-6" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
+          <Skeleton className="h-14 w-full mb-4" />
+          <Skeleton className="h-24 w-full mb-4" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
               {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-64 w-full rounded-lg" />
+                <Skeleton key={i} className="h-48 w-full rounded-xl" />
               ))}
             </div>
-            <Skeleton className="h-96 w-full rounded-lg" />
+            <Skeleton className="h-80 w-full rounded-xl" />
           </div>
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function PublicBudget() {
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">Orçamento não encontrado</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">O link pode estar expirado ou inválido.</p>
+          <p className="text-sm text-muted-foreground font-body">O link pode estar expirado ou inválido.</p>
         </div>
       </div>
     );
@@ -148,19 +148,23 @@ export default function PublicBudget() {
           <PackageProgressBars sections={sections} total={total} />
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            <AnimatedSection id="arquitetonico-section" index={0}>
-              <ArquitetonicoExpander />
-            </AnimatedSection>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+          {/* Content column */}
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+            {/* Institutional sections — tighter spacing */}
+            <div className="space-y-3">
+              <AnimatedSection id="arquitetonico-section" index={0}>
+                <ArquitetonicoExpander />
+              </AnimatedSection>
 
-            <AnimatedSection id="engenharia-section" index={0.5}>
-              <EngenhariaExpander />
-            </AnimatedSection>
+              <AnimatedSection id="engenharia-section" index={0.5}>
+                <EngenhariaExpander />
+              </AnimatedSection>
 
-            <AnimatedSection id="portal-section" index={0.6}>
-              <PortalShowcase />
-            </AnimatedSection>
+              <AnimatedSection id="portal-section" index={0.6}>
+                <PortalShowcase />
+              </AnimatedSection>
+            </div>
 
             {budget.floor_plan_url && (
               <AnimatedSection id="floor-plan-section" index={0.8}>
@@ -172,6 +176,15 @@ export default function PublicBudget() {
                   onRoomClick={handleRoomClick}
                 />
               </AnimatedSection>
+            )}
+
+            {/* Section label */}
+            {filteredSections.filter((s: any) => !s.title?.toLowerCase().includes("projetos")).length > 0 && (
+              <div className="pt-2 pb-1">
+                <p className="text-[10px] sm:text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
+                  Escopo técnico detalhado
+                </p>
+              </div>
             )}
 
             {filteredSections
@@ -197,7 +210,7 @@ export default function PublicBudget() {
 
           {/* Desktop sidebar */}
           <div className="hidden lg:block">
-            <div className="sticky top-4 space-y-5 max-h-[calc(100vh-2rem)] overflow-y-auto pb-4 scrollbar-thin">
+            <div className="sticky top-4 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto pb-4 scrollbar-thin">
               <BudgetSummary
                 sections={sections}
                 adjustments={adjustments}
@@ -217,7 +230,6 @@ export default function PublicBudget() {
 
         {/* Mobile sticky bottom bar */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50" data-pdf-hide>
-          {/* Backdrop */}
           <AnimatePresence>
             {showMobileSummary && (
               <motion.div
@@ -230,7 +242,6 @@ export default function PublicBudget() {
             )}
           </AnimatePresence>
 
-          {/* Drawer */}
           <AnimatePresence>
             {showMobileSummary && (
               <motion.div
@@ -268,7 +279,6 @@ export default function PublicBudget() {
             )}
           </AnimatePresence>
 
-          {/* Bottom CTA bar */}
           {!showMobileSummary && (
             <div className="relative z-50">
               <button
@@ -298,7 +308,7 @@ export default function PublicBudget() {
         </div>
 
         {/* FAQ */}
-        <div className="mt-8 sm:mt-12 lg:col-span-2">
+        <div className="mt-6 sm:mt-8 lg:col-span-2">
           <BudgetFAQ />
         </div>
 
@@ -308,9 +318,9 @@ export default function PublicBudget() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="mt-6 sm:mt-8 mb-28 lg:mb-8 p-4 sm:p-6 rounded-lg bg-muted/50 border border-border"
+            className="mt-4 sm:mt-6 mb-28 lg:mb-8 p-4 rounded-lg bg-muted/50 border border-border"
           >
-            <p className="text-xs sm:text-sm text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>
+            <p className="text-[11px] sm:text-xs text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>
           </motion.div>
         )}
       </main>
