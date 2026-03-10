@@ -280,6 +280,8 @@ export default function PublicBudget() {
                     publicId={publicId || "demo"}
                     approvedAt={budget.approved_at}
                     approvedByName={budget.approved_by_name}
+                    expired={validity.expired}
+                    projectName={budget.project_name}
                   />
                 </div>
               </motion.div>
