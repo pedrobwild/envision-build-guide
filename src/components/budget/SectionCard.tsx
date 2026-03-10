@@ -4,7 +4,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import { ChevronDown, ChevronUp, Check, X, ZoomIn, Info } from "lucide-react";
 import { Lightbox } from "./Lightbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from "@/lib/section-icons";
 import { cn } from "@/lib/utils";
 
@@ -12,13 +12,14 @@ interface SectionCardProps {
   section: any;
   compact: boolean;
   showItemQty: boolean;
+  showItemPrices?: boolean;
   highlightZone?: string | null;
   sectionIndex?: number;
 }
 
 const HIGH_VALUE_THRESHOLD = 10000;
 
-export function SectionCard({ section, compact, showItemQty, highlightZone, sectionIndex = 0 }: SectionCardProps) {
+export function SectionCard({ section, compact, showItemQty, showItemPrices = false, highlightZone, sectionIndex = 0 }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
   const isHighValue = subtotal >= HIGH_VALUE_THRESHOLD;
   const isLowValue = subtotal < 500;
@@ -151,7 +152,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone, sect
           <div className="px-4 sm:px-5 py-3 sm:py-4">
             {items.length > 0 && (
               <>
-                <div className="space-y-1.5">
+                <div>
                   {visibleItems.map((item: any, i: number) => {
                     const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
                     const isZoneMatch = highlightZone && (() => {
@@ -162,19 +163,24 @@ export function SectionCard({ section, compact, showItemQty, highlightZone, sect
                       return inc.includes(highlightZone);
                     })();
 
+                    const itemTotal = Number(item.internal_total) || 0;
+                    const itemUnitPrice = Number(item.internal_unit_price) || 0;
+                    const itemQty = Number(item.qty) || 0;
+                    const isLastItem = i === visibleItems.length - 1;
+
                     return (
                       <div
                         key={item.id}
-                        className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors ${
-                          isZoneMatch
-                            ? 'bg-primary/10 ring-1 ring-primary/20'
-                            : i % 2 === 0 ? 'bg-transparent' : 'bg-muted/20'
-                        }`}
+                        className={cn(
+                          "flex items-center gap-2.5 px-2.5 py-2.5 transition-colors",
+                          isZoneMatch && "bg-primary/10 ring-1 ring-primary/20 rounded-lg",
+                          !isLastItem && "border-b border-border/50"
+                        )}
                       >
                         {primaryImage ? (
                           <button
                             onClick={() => openLightbox(primaryImage.url)}
-                            className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-md overflow-hidden group cursor-zoom-in flex-shrink-0"
+                            className="relative w-8 h-8 rounded-full overflow-hidden group cursor-zoom-in flex-shrink-0"
                           >
                             <img
                               src={primaryImage.url}
@@ -184,11 +190,12 @@ export function SectionCard({ section, compact, showItemQty, highlightZone, sect
                             />
                           </button>
                         ) : (
-                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-md bg-muted/50 flex items-center justify-center flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0">
                             <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
                           </div>
                         )}
 
+                        {/* Left: name + qty */}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <p className="text-xs sm:text-sm font-medium text-foreground font-body truncate">{item.title}</p>
@@ -213,6 +220,28 @@ export function SectionCard({ section, compact, showItemQty, highlightZone, sect
                             </p>
                           )}
                         </div>
+
+                        {/* Right: prices */}
+                        <AnimatePresence>
+                          {showItemPrices && itemTotal > 0 && (
+                            <motion.div
+                              initial={{ opacity: 0, x: 8 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 8 }}
+                              transition={{ duration: 0.25 }}
+                              className="text-right flex-shrink-0"
+                            >
+                              <p className="text-xs sm:text-sm font-display font-semibold text-foreground">
+                                {formatBRL(itemTotal)}
+                              </p>
+                              {itemQty > 1 && itemUnitPrice > 0 && (
+                                <p className="text-xs text-muted-foreground font-body">
+                                  ({formatBRL(itemUnitPrice)}/un)
+                                </p>
+                              )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     );
                   })}
