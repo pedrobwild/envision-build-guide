@@ -217,6 +217,8 @@ export default function PublicBudget() {
                 adjustments={adjustments}
                 total={total}
                 generatedAt={budget.generated_at}
+                budgetDate={budget.date}
+                validityDays={budget.validity_days || 30}
               />
               <InstallmentSimulator total={total} />
               <ApprovalCTA
