@@ -200,7 +200,7 @@ export default function BudgetEditorV2() {
 
       setBudget({ ...budget, status: "published", public_id: publicId });
       completeStep("coverage");
-      const publicUrl = `${window.location.origin}/o/${publicId}`;
+      const publicUrl = getPublicBudgetUrl(publicId);
       toast.success("Orçamento publicado com sucesso!", {
         description: "O link público foi copiado para a área de transferência.",
         duration: 5000,
