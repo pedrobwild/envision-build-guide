@@ -26,6 +26,7 @@ import { PortalShowcase } from "@/components/budget/PortalShowcase";
 import { ProjectSecurity } from "@/components/budget/ProjectSecurity";
 import { NextSteps } from "@/components/budget/NextSteps";
 import { ChevronUp, X, Eye, EyeOff } from "lucide-react";
+import { useScrollspy } from "@/hooks/useScrollspy";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
