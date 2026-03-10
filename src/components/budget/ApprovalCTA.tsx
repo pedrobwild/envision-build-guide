@@ -9,6 +9,8 @@ interface ApprovalCTAProps {
   publicId: string;
   approvedAt?: string | null;
   approvedByName?: string | null;
+  expired?: boolean;
+  projectName?: string;
 }
 
 export function ApprovalCTA({ budgetId, publicId, approvedAt, approvedByName }: ApprovalCTAProps) {
