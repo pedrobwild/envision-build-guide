@@ -11,7 +11,7 @@ const steps = [
 export function NextSteps() {
   return (
     <Card className="border-border overflow-hidden">
-      <CardContent className="p-5 sm:p-6 space-y-5">
+      <CardContent className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
         <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
           O que acontece depois que você inicia
         </h3>
@@ -20,22 +20,22 @@ export function NextSteps() {
           {/* Vertical connector line */}
           <div className="absolute left-[15px] top-2 bottom-2 w-px border-l-2 border-dashed border-primary/30" />
 
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {steps.map((s) => (
-              <div key={s.num} className="relative flex items-start gap-4">
-                <div className="absolute -left-8 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-display font-bold z-10">
+              <div key={s.num} className="relative flex items-start gap-3 sm:gap-4">
+                <div className="absolute -left-8 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] sm:text-xs font-display font-bold z-10">
                   {s.num}
                 </div>
-                <div className="pt-1">
-                  <p className="text-sm font-display font-semibold text-foreground">{s.title}</p>
-                  <p className="text-xs text-muted-foreground font-body mt-0.5">{s.desc}</p>
+                <div className="pt-0.5 sm:pt-1">
+                  <p className="text-xs sm:text-sm font-display font-semibold text-foreground">{s.title}</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground font-body mt-0.5">{s.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground font-body italic pt-2">
+        <p className="text-[11px] sm:text-xs text-muted-foreground font-body italic pt-1 sm:pt-2">
           Você terá canal direto com engenheiro e gerente de relacionamento durante todo o processo.
         </p>
       </CardContent>
