@@ -251,6 +251,7 @@ export default function PublicBudget() {
                 validityDays={budget.validity_days || 30}
               />
               <InstallmentSimulator total={total} />
+              <ROISimulator total={total} />
               <ApprovalCTA
                 budgetId={budget.id}
                 publicId={publicId || "demo"}
