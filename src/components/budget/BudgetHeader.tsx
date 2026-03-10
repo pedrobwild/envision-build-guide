@@ -100,7 +100,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 {["✦ Projeto personalizado", "📱 Acompanhamento digital", "🛡️ Garantia 5 anos"].map((badge) => (
                   <span
                     key={badge}
-                    className="text-[9px] sm:text-[10px] rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white/50 font-body"
+                    className="text-xs rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white/50 font-body"
                   >
                     {badge}
                   </span>
