@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/formatBRL";
 import { calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import {
   Plus, Trash2, GripVertical, Save, ExternalLink, ArrowLeft,
   ChevronDown, ChevronUp, ImageIcon, Copy

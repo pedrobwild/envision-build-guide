@@ -9,6 +9,7 @@ import { RoomDrawingStep, type Room } from "@/components/editor/RoomDrawingStep"
 import { SpreadsheetImportStep, type ParsedPackage } from "@/components/editor/SpreadsheetImportStep";
 import { CoverageMappingStep } from "@/components/editor/CoverageMappingStep";
 import { MetadataStep } from "@/components/editor/MetadataStep";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
