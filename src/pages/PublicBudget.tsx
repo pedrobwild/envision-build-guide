@@ -97,6 +97,7 @@ export default function PublicBudget() {
   const handleExportPdf = async () => {
     setExporting(true);
     try {
+      const { exportBudgetPdf } = await import("@/lib/pdf-export");
       const filename = `${budget.project_name || 'orcamento'}.pdf`;
       await exportBudgetPdf("budget-content", filename);
       toast.success("PDF exportado com sucesso!");
