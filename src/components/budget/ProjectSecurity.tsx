@@ -54,7 +54,7 @@ export function ProjectSecurity() {
               </motion.span>
             </div>
             <Progress value={92} className="h-2" />
-            <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
+            <p className="text-xs text-muted-foreground font-body leading-relaxed">
               Projetos com projeto executivo e engenheiro dedicado.
             </p>
           </div>
