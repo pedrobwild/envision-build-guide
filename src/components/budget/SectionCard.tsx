@@ -168,7 +168,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
                           )}
                         </div>
                         {showItemQty && item.qty && (
-                          <p className="text-[10px] text-muted-foreground font-body">
+                          <p className="text-xs text-muted-foreground font-body">
                             {item.qty} {item.unit || 'un'}
                           </p>
                         )}
