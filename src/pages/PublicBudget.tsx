@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicBudget, calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
@@ -26,6 +26,7 @@ import { PortalShowcase } from "@/components/budget/PortalShowcase";
 import { ProjectSecurity } from "@/components/budget/ProjectSecurity";
 import { NextSteps } from "@/components/budget/NextSteps";
 import { ChevronUp, X, Eye, EyeOff } from "lucide-react";
+import { useScrollspy } from "@/hooks/useScrollspy";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -38,6 +39,14 @@ export default function PublicBudget() {
   const [showPrices, setShowPrices] = useState(true);
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
+
+  // Scrollspy: must be before early returns
+  const allSectionIds = useMemo(() => {
+    const sections = budget?.sections || [];
+    return sections.map((s: any) => `section-${s.id}`);
+  }, [budget]);
+
+  const activeSection = useScrollspy(allSectionIds);
 
   useEffect(() => {
     if (budget) {
@@ -144,6 +153,7 @@ export default function PublicBudget() {
   const handleRoomClick = (roomId: string | null) => {
     setActiveRoom(roomId || null);
   };
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -258,6 +268,7 @@ export default function PublicBudget() {
                 generatedAt={budget.generated_at}
                 budgetDate={budget.date}
                 validityDays={budget.validity_days || 30}
+                activeSection={activeSection}
               />
               <InstallmentSimulator total={total} />
               <ROISimulator total={total} />
@@ -313,6 +324,7 @@ export default function PublicBudget() {
                     generatedAt={budget.generated_at}
                     budgetDate={budget.date}
                     validityDays={budget.validity_days || 30}
+                    activeSection={activeSection}
                   />
                   <InstallmentSimulator total={total} />
                   <ROISimulator total={total} />
