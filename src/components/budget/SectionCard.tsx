@@ -204,7 +204,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
             <div className="mt-3 pt-3 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-3">
               {included.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-semibold text-success uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
+                  <h4 className="text-xs font-semibold text-success uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
                     <Check className="h-3 w-3" /> Incluso
                   </h4>
                   <ul className="space-y-1">
