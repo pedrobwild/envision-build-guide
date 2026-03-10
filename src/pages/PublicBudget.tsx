@@ -25,7 +25,7 @@ import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
 import { PortalShowcase } from "@/components/budget/PortalShowcase";
 import { ProjectSecurity } from "@/components/budget/ProjectSecurity";
 import { NextSteps } from "@/components/budget/NextSteps";
-import { ChevronUp, X } from "lucide-react";
+import { ChevronUp, X, Eye, EyeOff } from "lucide-react";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -35,6 +35,7 @@ export default function PublicBudget() {
   const [compactMode, setCompactMode] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const [showPrices, setShowPrices] = useState(true);
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
 
@@ -189,10 +190,17 @@ export default function PublicBudget() {
             {filteredSections.filter((s: any) => !s.title?.toLowerCase().includes("projetos")).length > 0 && (
               <>
                 <PackageProgressBars sections={sections} total={total} />
-                <div className="pt-2 pb-1">
+                <div className="pt-2 pb-1 flex items-center justify-between">
                   <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
                     Escopo técnico detalhado
                   </p>
+                  <button
+                    onClick={() => setShowPrices(!showPrices)}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors"
+                  >
+                    {showPrices ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    {showPrices ? "Ocultar valores" : "Mostrar valores"}
+                  </button>
                 </div>
               </>
             )}
@@ -223,6 +231,7 @@ export default function PublicBudget() {
                         section={section}
                         compact={compactMode}
                         showItemQty={budget.show_item_qty}
+                        showItemPrices={showPrices}
                         sectionIndex={idx}
                       />
                     </AnimatedSection>
