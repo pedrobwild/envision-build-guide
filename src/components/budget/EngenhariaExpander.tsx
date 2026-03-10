@@ -54,7 +54,7 @@ export function EngenhariaExpander() {
         </div>
 
         <div className="flex items-center gap-2 pt-1">
-          <span className="text-[10px] sm:text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
+          <span className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
             O que você evita
           </span>
           <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
