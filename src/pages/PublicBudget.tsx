@@ -180,6 +180,10 @@ export default function PublicBudget() {
                 <EngenhariaExpander />
               </AnimatedSection>
 
+              <AnimatedSection id="turnkey-comparison" index={0.55}>
+                <TurnkeyComparison />
+              </AnimatedSection>
+
               <AnimatedSection id="portal-section" index={0.6}>
                 <PortalShowcase />
               </AnimatedSection>
