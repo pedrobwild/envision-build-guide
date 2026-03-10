@@ -97,7 +97,7 @@ export function ArquitetonicoExpander() {
 
           {/* Gallery tabs */}
           <div className="space-y-3">
-            <p className="text-[10px] sm:text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
+            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
               Exemplo de entrega real
             </p>
             <div className="flex gap-2">
