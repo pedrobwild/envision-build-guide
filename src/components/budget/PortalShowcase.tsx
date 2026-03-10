@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, Play } from "lucide-react";
+import { CheckCircle2, Play, Smartphone, BarChart3, FileText, MessageSquare, Calendar, CreditCard } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,17 +10,16 @@ import {
 } from "@/components/ui/dialog";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 const features = [
-  "Projetos e documentos",
-  "Cronograma atualizado",
-  "Relatórios semanais",
-  "Progresso da obra",
-  "Fluxo de pagamentos",
-  "Canal direto com engenheiro",
+  { icon: FileText, text: "Projetos e documentos" },
+  { icon: Calendar, text: "Cronograma atualizado" },
+  { icon: BarChart3, text: "Relatórios semanais" },
+  { icon: Smartphone, text: "Progresso da obra" },
+  { icon: CreditCard, text: "Fluxo de pagamentos" },
+  { icon: MessageSquare, text: "Canal direto com engenheiro" },
 ];
-
-const placeholders = ["Cronograma", "Financeiro", "Relatórios"];
 
 export function PortalShowcase() {
   const [videoOpen, setVideoOpen] = useState(false);
@@ -28,37 +27,34 @@ export function PortalShowcase() {
   return (
     <>
       <Card className="border-border overflow-hidden">
-        <CardContent className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
-          <div>
-            <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-              Acompanhe tudo em tempo real
-            </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
-              Transparência total: documentos, etapas, pagamentos e próximos passos.
-            </p>
+        <CardContent className="p-4 sm:p-5 md:p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Smartphone className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
+                Acompanhe tudo em tempo real
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5">
+                Transparência total: documentos, etapas, pagamentos e próximos passos.
+              </p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
-            {features.map((f) => (
-              <div key={f} className="flex items-center gap-2 text-xs sm:text-sm font-body text-foreground">
-                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                <span>{f}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {placeholders.map((p) => (
-              <button
-                key={p}
-                onClick={() => setVideoOpen(true)}
-                className="group relative aspect-video rounded-lg bg-muted/60 border border-border flex items-center justify-center cursor-pointer hover:border-primary/40 hover:bg-muted transition-all active:scale-95"
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {features.map((f, i) => (
+              <motion.div
+                key={f.text}
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.04, duration: 0.3 }}
+                className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-transparent hover:border-primary/10 transition-colors"
               >
-                <span className="text-[10px] sm:text-[11px] text-muted-foreground font-body group-hover:opacity-0 transition-opacity">[{p}]</span>
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Play className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                </div>
-              </button>
+                <f.icon className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                <span className="text-[11px] sm:text-xs font-body text-foreground">{f.text}</span>
+              </motion.div>
             ))}
           </div>
 
@@ -66,19 +62,18 @@ export function PortalShowcase() {
             variant="outline"
             size="sm"
             onClick={() => setVideoOpen(true)}
-            className="w-full gap-2 font-body text-xs sm:text-sm"
+            className="w-full gap-2 font-body text-xs sm:text-sm border-primary/20 hover:bg-primary/5 hover:text-primary"
           >
-            <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Play className="h-3.5 w-3.5" />
             Ver demonstração do portal
           </Button>
 
-          <p className="text-[10px] sm:text-xs text-muted-foreground font-body">
+          <p className="text-[10px] text-muted-foreground font-body text-center">
             Sistema web e mobile disponível durante toda a obra.
           </p>
         </CardContent>
       </Card>
 
-      {/* Video Demo Modal */}
       <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
         <DialogContent className="sm:max-w-2xl max-w-[calc(100vw-2rem)]">
           <DialogHeader>
@@ -89,8 +84,8 @@ export function PortalShowcase() {
           </DialogHeader>
           <AspectRatio ratio={16 / 9} className="bg-muted rounded-lg overflow-hidden">
             <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-muted/80 border border-dashed border-border rounded-lg">
-              <Play className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/50" />
-              <span className="text-xs sm:text-sm text-muted-foreground font-body">
+              <Play className="h-10 w-10 text-muted-foreground/50" />
+              <span className="text-xs text-muted-foreground font-body">
                 Vídeo demonstrativo em breve
               </span>
             </div>

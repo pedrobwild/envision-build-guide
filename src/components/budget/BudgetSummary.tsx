@@ -1,6 +1,6 @@
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
-import { Lock, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 
@@ -27,8 +27,6 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt }: Bud
     subtotal: calculateSectionSubtotal(s),
   }));
 
-  const maxSubtotal = Math.max(...sectionSubtotals.map((s) => s.subtotal), 1);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -37,47 +35,36 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt }: Bud
       className="rounded-xl border border-border bg-card overflow-hidden shadow-lg"
     >
       {/* Header */}
-      <div className="bg-primary px-6 py-4">
-        <h3 className="font-display font-bold text-lg text-primary-foreground">
+      <div className="bg-primary px-5 py-3.5">
+        <h3 className="font-display font-bold text-sm text-primary-foreground tracking-wide">
           Resumo do Orçamento
         </h3>
       </div>
 
       {/* Sections list */}
-      <div className="px-6 pt-5 pb-2">
+      <div className="px-4 pt-4 pb-2">
         <TooltipProvider>
-          <div className="space-y-2.5">
+          <div className="space-y-0.5">
             {sectionSubtotals.map((section: any, idx: number) => {
               const tooltipText = getSectionTooltip(section.title);
-              const barWidth = Math.max((section.subtotal / maxSubtotal) * 100, 4);
               return (
                 <Tooltip key={section.id}>
                   <TooltipTrigger asChild>
                     <motion.button
-                      initial={{ opacity: 0, x: -8 }}
+                      initial={{ opacity: 0, x: -4 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.03, duration: 0.3 }}
+                      transition={{ delay: idx * 0.02, duration: 0.2 }}
                       onClick={() => {
                         document.getElementById(`section-${section.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                       }}
-                      className="w-full text-left group"
+                      className="w-full text-left group flex items-center justify-between py-2 px-2 rounded-md hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-foreground font-body truncate mr-2 group-hover:text-primary transition-colors">
-                          {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}{section.title}
-                        </span>
-                        <span className="text-sm font-semibold text-foreground font-body whitespace-nowrap">
-                          {formatBRL(section.subtotal)}
-                        </span>
-                      </div>
-                      <div className="h-1 rounded-full bg-muted overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${barWidth}%` }}
-                          transition={{ delay: 0.3 + idx * 0.05, duration: 0.6, ease: "easeOut" }}
-                          className="h-full rounded-full bg-primary/30"
-                        />
-                      </div>
+                      <span className="text-xs text-foreground font-body truncate mr-3 group-hover:text-primary transition-colors">
+                        {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}{section.title}
+                      </span>
+                      <span className="text-xs font-semibold text-foreground font-body whitespace-nowrap tabular-nums">
+                        {formatBRL(section.subtotal)}
+                      </span>
                     </motion.button>
                   </TooltipTrigger>
                   <TooltipContent side="left" className="max-w-[220px]">
@@ -92,12 +79,12 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt }: Bud
 
       {/* Adjustments */}
       {adjustments.length > 0 && (
-        <div className="px-6 pt-2 pb-2 space-y-2">
-          <div className="border-t border-border pt-3 space-y-2">
+        <div className="px-4 pt-1 pb-2 space-y-1">
+          <div className="border-t border-border pt-2 space-y-1.5">
             {adjustments.map((adj: any) => (
-              <div key={adj.id} className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground font-body">{adj.label}</span>
-                <span className={`text-sm font-medium font-body ${adj.sign > 0 ? 'text-foreground' : 'text-success'}`}>
+              <div key={adj.id} className="flex items-center justify-between px-2">
+                <span className="text-xs text-muted-foreground font-body">{adj.label}</span>
+                <span className={`text-xs font-medium font-body tabular-nums ${adj.sign > 0 ? 'text-foreground' : 'text-success'}`}>
                   {adj.sign > 0 ? '+' : '-'} {formatBRL(Math.abs(adj.amount))}
                 </span>
               </div>
@@ -107,28 +94,28 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt }: Bud
       )}
 
       {/* Total */}
-      <div className="mx-6 mt-3 mb-4 rounded-lg bg-primary/5 border border-primary/15 p-4">
+      <div className="mx-4 mt-2 mb-3 rounded-lg bg-primary/5 border border-primary/15 p-3.5">
         <div className="flex items-center justify-between">
-          <span className="font-display font-bold text-foreground text-sm">Investimento Total</span>
+          <span className="font-display font-bold text-foreground text-xs">Investimento Total</span>
           <motion.span
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.4 }}
-            className="font-display font-extrabold text-2xl text-primary"
+            className="font-display font-extrabold text-xl text-primary tabular-nums"
           >
             {formatBRL(total)}
           </motion.span>
         </div>
-        <div className="flex items-center justify-center gap-1.5 mt-2.5">
-          <Shield className="h-3.5 w-3.5 text-primary/60" />
-          <span className="text-xs text-muted-foreground font-body">Preço fixo · Sem custos ocultos</span>
+        <div className="flex items-center justify-center gap-1.5 mt-2">
+          <Shield className="h-3 w-3 text-primary/60" />
+          <span className="text-[10px] text-muted-foreground font-body">Preço fixo · Sem custos ocultos</span>
         </div>
       </div>
 
       {/* Footer */}
       {generatedAt && (
-        <div className="px-6 pb-4">
-          <p className="text-[11px] text-muted-foreground text-center font-body">
+        <div className="px-4 pb-3">
+          <p className="text-[10px] text-muted-foreground text-center font-body">
             Gerado em {formatDate(generatedAt)}
           </p>
         </div>
