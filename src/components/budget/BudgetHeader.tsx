@@ -106,6 +106,19 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                     {badge}
                   </span>
                 ))}
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-xs rounded-full border border-success/30 bg-success/20 px-2.5 py-1 text-success-foreground font-body inline-flex items-center gap-1 cursor-default">
+                        <ShieldCheck className="h-3 w-3" />
+                        92% de previsibilidade
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs">
+                      <p className="text-xs">92% dos nossos projetos são entregues dentro do prazo e orçamento previstos</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </motion.div>
 
               {/* Status strip */}
