@@ -101,7 +101,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
 
         {/* Subtotal strip */}
         <div className="px-4 sm:px-5 py-2.5 border-b border-border bg-muted/30 flex items-center justify-between">
-          <span className="text-[11px] sm:text-xs text-muted-foreground font-body">
+          <span className="text-xs text-muted-foreground font-body">
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}Subtotal
           </span>
           <span className="font-display font-bold text-sm sm:text-base text-primary">{formatBRL(subtotal)}</span>
