@@ -40,7 +40,7 @@ export function NextSteps() {
               </div>
               <div className="sm:space-y-1">
                 <p className="text-xs font-display font-semibold text-foreground">{s.title}</p>
-                <p className="text-[10px] text-muted-foreground font-body leading-relaxed">{s.desc}</p>
+                <p className="text-xs text-muted-foreground font-body leading-relaxed">{s.desc}</p>
               </div>
             </motion.div>
           ))}
