@@ -51,13 +51,12 @@ export function ArquitetonicoExpander() {
     setCurrentSlide(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
 
-  // Re-attach listener when tab or api changes
-  useState(() => {
+  useEffect(() => {
     if (!emblaApi) return;
     emblaApi.on("select", onSelect);
     onSelect();
     return () => { emblaApi.off("select", onSelect); };
-  });
+  }, [emblaApi, onSelect]);
 
   // Reset carousel when tab changes
   const handleTabChange = (tab: GalleryTab) => {
