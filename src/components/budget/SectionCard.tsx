@@ -219,7 +219,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
               )}
               {excluded.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
+                  <h4 className="text-xs font-semibold text-destructive uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
                     <X className="h-3 w-3" /> Não incluso
                   </h4>
                   <ul className="space-y-1">
