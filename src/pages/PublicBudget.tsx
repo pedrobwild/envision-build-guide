@@ -121,6 +121,7 @@ export default function PublicBudget() {
   const adjustments = budget.adjustments || [];
   const rooms = budget.rooms || [];
   const total = calculateBudgetTotal(sections, adjustments);
+  const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
   const filteredSections = sections.filter((s: any) => {
     if (!searchQuery) return true;
