@@ -268,6 +268,7 @@ export default function PublicBudget() {
                 generatedAt={budget.generated_at}
                 budgetDate={budget.date}
                 validityDays={budget.validity_days || 30}
+                activeSection={activeSection}
               />
               <InstallmentSimulator total={total} />
               <ROISimulator total={total} />
