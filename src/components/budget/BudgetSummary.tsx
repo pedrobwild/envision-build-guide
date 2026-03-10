@@ -1,6 +1,6 @@
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
-import { formatBRL, formatDate } from "@/lib/formatBRL";
-import { Shield } from "lucide-react";
+import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
+import { Shield, Clock, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 
