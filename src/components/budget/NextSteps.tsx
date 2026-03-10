@@ -35,7 +35,7 @@ export function NextSteps() {
               transition={{ delay: i * 0.06, duration: 0.3 }}
               className="relative flex sm:flex-col items-start gap-3 sm:gap-2 p-3 rounded-xl bg-muted/30 sm:text-center"
             >
-              <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-display font-bold flex-shrink-0 sm:mx-auto">
+              <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-display font-bold flex-shrink-0 sm:mx-auto">
                 {s.num}
               </div>
               <div className="sm:space-y-1">
