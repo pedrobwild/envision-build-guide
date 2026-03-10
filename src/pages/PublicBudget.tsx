@@ -190,10 +190,17 @@ export default function PublicBudget() {
             {filteredSections.filter((s: any) => !s.title?.toLowerCase().includes("projetos")).length > 0 && (
               <>
                 <PackageProgressBars sections={sections} total={total} />
-                <div className="pt-2 pb-1">
+                <div className="pt-2 pb-1 flex items-center justify-between">
                   <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
                     Escopo técnico detalhado
                   </p>
+                  <button
+                    onClick={() => setShowPrices(!showPrices)}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors"
+                  >
+                    {showPrices ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    {showPrices ? "Ocultar valores" : "Mostrar valores"}
+                  </button>
                 </div>
               </>
             )}
