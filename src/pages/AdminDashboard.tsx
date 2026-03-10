@@ -327,7 +327,7 @@ export default function AdminDashboard() {
                     {budget.public_id && (
                       <>
                         <button
-                          onClick={() => window.open(`/o/${budget.public_id}`, '_blank')}
+                          onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), '_blank')}
                           className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
                           title="Ver público"
                         >
