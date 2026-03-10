@@ -231,6 +231,7 @@ export default function PublicBudget() {
                         section={section}
                         compact={compactMode}
                         showItemQty={budget.show_item_qty}
+                        showItemPrices={showPrices}
                         sectionIndex={idx}
                       />
                     </AnimatedSection>
