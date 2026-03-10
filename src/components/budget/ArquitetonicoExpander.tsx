@@ -239,7 +239,7 @@ export function ArquitetonicoExpander() {
       </Card>
 
       <Lightbox
-        images={images.map((img) => ({ url: img.src, alt: img.alt }))}
+        images={images.filter(m => m.type !== "video").map((img) => ({ url: img.src, alt: img.alt }))}
         initialIndex={lightboxIndex}
         open={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
