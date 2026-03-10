@@ -136,7 +136,7 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
         </div>
         <div className="flex items-center justify-center gap-1.5 mt-2">
           <Shield className="h-3 w-3 text-primary/60" />
-          <span className="text-[10px] text-muted-foreground font-body">Preço fixo · Sem custos ocultos</span>
+          <span className="text-xs text-muted-foreground font-body">Preço fixo · Sem custos ocultos</span>
         </div>
       </div>
 
