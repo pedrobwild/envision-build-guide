@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchPublicBudget, calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
-import { formatBRL, formatDate, getValidityInfo } from "@/lib/formatBRL";
+import { fetchPublicBudget, calculateBudgetTotal } from "@/lib/supabase-helpers";
+import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { SectionCard } from "@/components/budget/SectionCard";
 import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
@@ -12,7 +12,6 @@ import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
 import { AnimatedSection } from "@/components/budget/AnimatedSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { demoBudget } from "@/lib/demo-budget-data";
-
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
@@ -26,17 +25,20 @@ import { PortalShowcase } from "@/components/budget/PortalShowcase";
 import { ProjectSecurity } from "@/components/budget/ProjectSecurity";
 import { NextSteps } from "@/components/budget/NextSteps";
 import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
+import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
+import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
+import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
 import { ChevronUp, X, Eye, EyeOff } from "lucide-react";
 import { useScrollspy } from "@/hooks/useScrollspy";
+import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
 
 export default function PublicBudget() {
-  const { publicId } = useParams<{ publicId: string }>();
-  const [budget, setBudget] = useState<any>(null);
+  const { publicId } = useParams<{ projectId?: string; publicId?: string }>();
+  const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [compactMode, setCompactMode] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [showPrices, setShowPrices] = useState(true);
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
@@ -44,7 +46,7 @@ export default function PublicBudget() {
   // Scrollspy: must be before early returns
   const allSectionIds = useMemo(() => {
     const sections = budget?.sections || [];
-    return sections.map((s: any) => `section-${s.id}`);
+    return sections.map((s) => `section-${s.id}`);
   }, [budget]);
 
   const activeSection = useScrollspy(allSectionIds);
@@ -59,19 +61,19 @@ export default function PublicBudget() {
 
   useEffect(() => {
     if (publicId === 'demo') {
-      setBudget(demoBudget);
+      setBudget(demoBudget as unknown as BudgetData);
       setLoading(false);
       return;
     }
     if (publicId) {
-      fetchPublicBudget(publicId).then(data => {
-        setBudget(data);
+      fetchPublicBudget(publicId).then((data) => {
+        setBudget(data as BudgetData | null);
         setLoading(false);
         if (data && !viewTracked.current) {
           viewTracked.current = true;
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
           const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-          fetch(`${supabaseUrl}/rest/v1/budgets?public_id=eq.${publicId}`, {
+          fetch(`${supabaseUrl}/rest/v1/budgets?public_id=eq.${encodeURIComponent(publicId)}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -98,7 +100,7 @@ export default function PublicBudget() {
     setExporting(true);
     try {
       const { exportBudgetPdf } = await import("@/lib/pdf-export");
-      const filename = `${budget.project_name || 'orcamento'}.pdf`;
+      const filename = `${budget?.project_name || 'orcamento'}.pdf`;
       await exportBudgetPdf("budget-content", filename);
       toast.success("PDF exportado com sucesso!");
     } catch (err) {
@@ -138,24 +140,22 @@ export default function PublicBudget() {
     );
   }
 
-  const sections = budget.sections || [];
-  const adjustments = budget.adjustments || [];
-  const rooms = budget.rooms || [];
+  const sections: BudgetSection[] = budget.sections || [];
+  const adjustments: BudgetAdjustment[] = budget.adjustments || [];
+  const rooms: BudgetRoom[] = budget.rooms || [];
   const total = calculateBudgetTotal(sections, adjustments);
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
-  const filteredSections = sections.filter((s: any) => {
-    if (!searchQuery) return true;
-    return s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.items || []).some((item: any) =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-  });
+  const filteredSections = sections.filter((s) => !s.title?.toLowerCase().includes("projetos"));
 
   const handleRoomClick = (roomId: string | null) => {
     setActiveRoom(roomId || null);
+    if (roomId) {
+      setRoomModalOpen(true);
+    }
   };
 
+  const activeRoomData = rooms.find((r) => r.id === activeRoom);
 
   return (
     <div className="min-h-screen bg-background">
@@ -166,12 +166,26 @@ export default function PublicBudget() {
         exporting={exporting}
       />
 
+      {/* Room Detail Modal */}
+      {activeRoom && activeRoomData && (
+        <RoomDetailModal
+          open={roomModalOpen}
+          onClose={() => {
+            setRoomModalOpen(false);
+            setActiveRoom(null);
+          }}
+          roomName={activeRoomData.name}
+          sections={sections}
+          roomId={activeRoom}
+        />
+      )}
+
       <main id="budget-content" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Content column */}
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-            {/* Institutional sections — tighter spacing */}
+            {/* Institutional sections */}
             <div className="space-y-3">
               <AnimatedSection id="arquitetonico-section" index={0}>
                 <ArquitetonicoExpander />
@@ -183,6 +197,13 @@ export default function PublicBudget() {
 
               <AnimatedSection id="turnkey-comparison" index={0.55}>
                 <TurnkeyComparison />
+              </AnimatedSection>
+
+              <AnimatedSection id="investment-impact" index={0.57}>
+                <InvestmentImpact
+                  neighborhood={budget.bairro || "São Paulo"}
+                  squareMeters={budget.metragem ? parseInt(budget.metragem, 10) || 35 : 35}
+                />
               </AnimatedSection>
 
               <AnimatedSection id="portal-section" index={0.6}>
@@ -202,8 +223,13 @@ export default function PublicBudget() {
               </AnimatedSection>
             )}
 
+            {/* WhatIsIncluded — before scope */}
+            <AnimatedSection id="whats-included" index={0.9}>
+              <WhatIsIncluded />
+            </AnimatedSection>
+
             {/* PackageProgressBars + Section label */}
-            {filteredSections.filter((s: any) => !s.title?.toLowerCase().includes("projetos")).length > 0 && (
+            {filteredSections.length > 0 && (
               <>
                 <PackageProgressBars sections={sections} total={total} />
                 <div className="pt-2 pb-1 flex items-center justify-between">
@@ -221,39 +247,36 @@ export default function PublicBudget() {
               </>
             )}
 
-            {filteredSections
-              .filter((section: any) => !section.title?.toLowerCase().includes("projetos"))
-              .map((section: any, idx: number) => {
-                // Visual separators between groups
-                const separator = idx === 5
-                  ? "Acabamentos e materiais"
-                  : idx === 10
-                    ? "Mobiliário e equipamentos"
-                    : null;
+            {filteredSections.map((section, idx) => {
+              const separator = idx === 5
+                ? "Acabamentos e materiais"
+                : idx === 10
+                  ? "Mobiliário e equipamentos"
+                  : null;
 
-                return (
-                  <div key={section.id}>
-                    {separator && (
-                      <div className="flex items-center gap-4 py-3">
-                        <hr className="flex-1 border-muted" />
-                        <span className="text-xs text-muted-foreground font-display uppercase tracking-wider">
-                          {separator}
-                        </span>
-                        <hr className="flex-1 border-muted" />
-                      </div>
-                    )}
-                    <AnimatedSection id={`section-${section.id}`} index={idx + 1}>
-                      <SectionCard
-                        section={section}
-                        compact={compactMode}
-                        showItemQty={budget.show_item_qty}
-                        showItemPrices={showPrices}
-                        sectionIndex={idx}
-                      />
-                    </AnimatedSection>
-                  </div>
-                );
-              })}
+              return (
+                <div key={section.id}>
+                  {separator && (
+                    <div className="flex items-center gap-4 py-3">
+                      <hr className="flex-1 border-muted" />
+                      <span className="text-xs text-muted-foreground font-display uppercase tracking-wider">
+                        {separator}
+                      </span>
+                      <hr className="flex-1 border-muted" />
+                    </div>
+                  )}
+                  <AnimatedSection id={`section-${section.id}`} index={idx + 1}>
+                    <SectionCard
+                      section={section}
+                      compact={false}
+                      showItemQty={budget.show_item_qty ?? true}
+                      showItemPrices={showPrices}
+                      sectionIndex={idx}
+                    />
+                  </AnimatedSection>
+                </div>
+              );
+            })}
 
             <AnimatedSection id="project-security" index={99}>
               <ProjectSecurity />
@@ -271,7 +294,7 @@ export default function PublicBudget() {
                 sections={sections}
                 adjustments={adjustments}
                 total={total}
-                generatedAt={budget.generated_at}
+                generatedAt={budget.generated_at || ""}
                 budgetDate={budget.date}
                 validityDays={budget.validity_days || 30}
                 activeSection={activeSection}
@@ -327,7 +350,7 @@ export default function PublicBudget() {
                     sections={sections}
                     adjustments={adjustments}
                     total={total}
-                    generatedAt={budget.generated_at}
+                    generatedAt={budget.generated_at || ""}
                     budgetDate={budget.date}
                     validityDays={budget.validity_days || 30}
                     activeSection={activeSection}
