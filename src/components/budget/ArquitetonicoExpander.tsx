@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { CheckCircle2, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Lightbox } from "@/components/budget/Lightbox";
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -59,11 +58,12 @@ export function ArquitetonicoExpander() {
   }, [emblaApi, onSelect]);
 
   // Reset carousel when tab changes
-  const handleTabChange = (tab: GalleryTab) => {
-    setActiveTab(tab);
+  useEffect(() => {
+    if (!emblaApi) return;
     setCurrentSlide(0);
-    setTimeout(() => emblaApi?.scrollTo(0, true), 50);
-  };
+    emblaApi.reInit();
+    emblaApi.scrollTo(0, true);
+  }, [activeTab, emblaApi]);
 
   const images = gallery[activeTab];
 
@@ -104,7 +104,7 @@ export function ArquitetonicoExpander() {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`relative px-3 py-1.5 rounded-md text-xs font-display font-semibold transition-colors ${
                     activeTab === tab.id
                       ? "bg-primary text-primary-foreground"
@@ -116,84 +116,75 @@ export function ArquitetonicoExpander() {
               ))}
             </div>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-                className="relative"
-              >
-                {/* Carousel */}
-                <div ref={emblaRef} className="overflow-hidden rounded-lg">
-                  <div className="flex">
-                    {images.map((img, idx) => (
-                      <div key={img.src} className="min-w-0 shrink-0 grow-0 basis-full">
-                        <button
-                          onClick={() => {
-                            setLightboxIndex(idx);
-                            setLightboxOpen(true);
-                          }}
-                          className="group relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
-                        >
-                          <img
-                            src={img.src}
-                            alt={img.alt}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
-                            <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                          </div>
-                          <span className="absolute bottom-1.5 left-1.5 right-1.5 text-[9px] sm:text-[10px] font-body text-white bg-foreground/60 backdrop-blur-sm rounded px-2 py-0.5 sm:py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
-                            {img.alt}
-                          </span>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Nav arrows */}
-                {images.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => emblaApi?.scrollPrev()}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:bg-card transition-colors"
-                      aria-label="Anterior"
-                    >
-                      <ChevronLeft className="h-4 w-4 text-foreground" />
-                    </button>
-                    <button
-                      onClick={() => emblaApi?.scrollNext()}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:bg-card transition-colors"
-                      aria-label="Próxima"
-                    >
-                      <ChevronRight className="h-4 w-4 text-foreground" />
-                    </button>
-                  </>
-                )}
-
-                {/* Dots */}
-                {images.length > 1 && (
-                  <div className="flex justify-center gap-1.5 mt-2">
-                    {images.map((_, idx) => (
+            <div className="relative">
+              {/* Carousel */}
+              <div ref={emblaRef} className="overflow-hidden rounded-lg">
+                <div className="flex">
+                  {images.map((img, idx) => (
+                    <div key={img.src} className="min-w-0 shrink-0 grow-0 basis-full">
                       <button
-                        key={idx}
-                        onClick={() => emblaApi?.scrollTo(idx)}
-                        className={`h-1.5 rounded-full transition-all ${
-                          idx === currentSlide
-                            ? "w-4 bg-primary"
-                            : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                        }`}
-                        aria-label={`Slide ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+                        onClick={() => {
+                          setLightboxIndex(idx);
+                          setLightboxOpen(true);
+                        }}
+                        className="group relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
+                      >
+                        <img
+                          src={img.src}
+                          alt={img.alt}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
+                          <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                        </div>
+                        <span className="absolute bottom-1.5 left-1.5 right-1.5 text-[9px] sm:text-[10px] font-body text-white bg-foreground/60 backdrop-blur-sm rounded px-2 py-0.5 sm:py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
+                          {img.alt}
+                        </span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nav arrows */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => emblaApi?.scrollPrev()}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:bg-card transition-colors"
+                    aria-label="Anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4 text-foreground" />
+                  </button>
+                  <button
+                    onClick={() => emblaApi?.scrollNext()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:bg-card transition-colors"
+                    aria-label="Próxima"
+                  >
+                    <ChevronRight className="h-4 w-4 text-foreground" />
+                  </button>
+                </>
+              )}
+
+              {/* Dots */}
+              {images.length > 1 && (
+                <div className="flex justify-center gap-1.5 mt-2">
+                  {images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => emblaApi?.scrollTo(idx)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        idx === currentSlide
+                          ? "w-4 bg-primary"
+                          : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                      }`}
+                      aria-label={`Slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <Accordion type="single" collapsible>
