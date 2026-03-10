@@ -154,12 +154,6 @@ export default function PublicBudget() {
     setActiveRoom(roomId || null);
   };
 
-  // Scrollspy: track all section element IDs
-  const allSectionIds = useMemo(() => {
-    return sections.map((s: any) => `section-${s.id}`);
-  }, [sections]);
-
-  const activeSection = useScrollspy(allSectionIds);
 
   return (
     <div className="min-h-screen bg-background">
