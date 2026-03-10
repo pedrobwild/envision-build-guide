@@ -40,6 +40,14 @@ export default function PublicBudget() {
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
 
+  // Scrollspy: must be before early returns
+  const allSectionIds = useMemo(() => {
+    const sections = budget?.sections || [];
+    return sections.map((s: any) => `section-${s.id}`);
+  }, [budget]);
+
+  const activeSection = useScrollspy(allSectionIds);
+
   useEffect(() => {
     if (budget) {
       document.title = budget.project_name
