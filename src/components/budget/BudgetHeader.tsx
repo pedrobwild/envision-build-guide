@@ -128,7 +128,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   {(() => {
                     const { expiresAt, expired } = getValidityInfo(budget.date, budget.validity_days || 30);
                     return (
-                      <p className={`text-[10px] sm:text-[11px] font-body ${expired ? 'text-destructive/80' : 'text-white/40'}`}>
+                      <p className={`text-xs font-body ${expired ? 'text-destructive/80' : 'text-white/40'}`}>
                         {expired
                           ? "Valores e condições deste orçamento expiraram — solicite uma atualização."
                           : `Este orçamento reflete valores e condições válidos até ${formatDateLong(expiresAt)}.`
