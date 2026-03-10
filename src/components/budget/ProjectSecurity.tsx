@@ -40,7 +40,7 @@ export function ProjectSecurity() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Score */}
           <div className="rounded-xl bg-muted/30 p-4 space-y-2.5">
-            <p className="text-[10px] font-display font-semibold text-muted-foreground uppercase tracking-wide">
+            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
               Índice de previsibilidade
             </p>
             <div className="flex items-end gap-2">
