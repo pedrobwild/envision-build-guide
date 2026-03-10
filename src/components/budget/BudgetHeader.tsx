@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
 import { formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
-import { ValidityCountdown } from "@/components/budget/ValidityCountdown";
 
 interface BudgetHeaderProps {
   budget: any;
@@ -34,6 +33,22 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
     validUntil && { icon: Clock, label: "Validade", value: formatDate(validUntil) },
     budget.consultora_comercial && { icon: UserCheck, label: "Consultora", value: budget.consultora_comercial },
   ].filter(Boolean) as { icon: any; label: string; value: string }[];
+
+  // Compact inline meta for mobile
+  const compactMeta = [
+    budget.client_name,
+    budget.condominio || budget.project_name,
+    budget.metragem,
+    budget.versao,
+    budget.consultora_comercial,
+  ].filter(Boolean).join(" · ");
+
+  const validity = budget.date ? getValidityInfo(budget.date, budget.validity_days || 30) : null;
+  const validityLabel = validity
+    ? validity.expired
+      ? "Proposta expirada"
+      : `Válido até ${formatDate(validity.expiresAt)}`
+    : null;
 
   return (
     <header className="relative">
@@ -68,12 +83,13 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
         {/* Hero */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 lg:gap-12 items-end py-8 sm:py-12 lg:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 lg:gap-12 items-end py-5 sm:py-12 lg:py-16">
             {/* Left — Title & subtitle */}
             <div>
+              {/* "ORÇAMENTO BWILD" label — desktop only */}
               <motion.div
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
-                className="inline-flex items-center gap-1.5 text-xs font-body uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4"
+                className="hidden lg:inline-flex items-center gap-1.5 text-xs font-body uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4"
               >
                 <span className="w-6 h-px bg-white/30" />
                 Orçamento Bwild
@@ -83,20 +99,29 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
                 className="font-display font-extrabold text-[clamp(1.75rem,5vw,3.5rem)] text-white leading-[1.05] tracking-tight"
               >
-                Projeto e<br />Reforma
+                Projeto e<br className="hidden sm:block" /> Reforma
               </motion.h1>
 
+              {/* Mobile: inline badges as subtitle text */}
               <motion.p
                 variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                className="mt-3 text-xs sm:text-sm font-body text-white/40 max-w-md leading-relaxed"
+                className="mt-2 text-xs font-body text-white/40 max-w-md leading-relaxed lg:hidden"
+              >
+                Projeto personalizado · Acompanhamento digital · Garantia 5 anos
+              </motion.p>
+
+              {/* Desktop: original subtitle */}
+              <motion.p
+                variants={fadeUp} custom={1} initial="hidden" animate="visible"
+                className="hidden lg:block mt-3 text-sm font-body text-white/40 max-w-md leading-relaxed"
               >
                 Projeto personalizado · Gestão completa · Execução com previsibilidade
               </motion.p>
 
-              {/* Value badges */}
+              {/* Desktop: Value badges */}
               <motion.div
                 variants={fadeUp} custom={1.5} initial="hidden" animate="visible"
-                className="mt-4 sm:mt-5 flex flex-wrap gap-1.5"
+                className="hidden lg:flex mt-5 flex-wrap gap-1.5"
               >
                 {["✦ Projeto personalizado", "📱 Acompanhamento digital", "🛡️ Garantia 5 anos"].map((badge) => (
                   <span
@@ -121,10 +146,32 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 </TooltipProvider>
               </motion.div>
 
-              {/* Status strip */}
+              {/* Mobile: compact meta line */}
+              <motion.p
+                variants={fadeUp} custom={1.5} initial="hidden" animate="visible"
+                className="mt-2 text-xs font-body text-white/50 truncate lg:hidden"
+              >
+                {compactMeta}
+              </motion.p>
+
+              {/* Mobile: compact status + validity in one line */}
               <motion.div
                 variants={fadeUp} custom={2} initial="hidden" animate="visible"
-                className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/30 font-body"
+                className="mt-2 flex items-center gap-2 text-xs text-white/30 font-body lg:hidden"
+              >
+                <span>Etapa: <span className="text-white/50">Orçamento</span></span>
+                {validityLabel && (
+                  <>
+                    <span className="text-white/15">·</span>
+                    <span className={validity?.expired ? 'text-destructive/80' : 'text-white/50'}>{validityLabel}</span>
+                  </>
+                )}
+              </motion.div>
+
+              {/* Desktop: full status strip */}
+              <motion.div
+                variants={fadeUp} custom={2} initial="hidden" animate="visible"
+                className="hidden lg:flex mt-4 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/30 font-body"
               >
                 <span>Etapa: <span className="text-white/50">Orçamento</span></span>
                 <span className="text-white/15">·</span>
@@ -133,11 +180,11 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 <span>Início: <span className="text-white/50">Imediato</span></span>
               </motion.div>
 
-              {/* Validity notice */}
+              {/* Desktop: Validity notice */}
               {budget.date && (
                 <motion.div
                   variants={fadeUp} custom={2.5} initial="hidden" animate="visible"
-                  className="mt-3"
+                  className="hidden lg:block mt-3"
                 >
                   {(() => {
                     const { expiresAt, expired } = getValidityInfo(budget.date, budget.validity_days || 30);
@@ -154,10 +201,10 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               )}
             </div>
 
-            {/* Right — Client & Project info card */}
+            {/* Right — Client & Project info card — DESKTOP ONLY */}
             <motion.div
               variants={fadeUp} custom={1} initial="hidden" animate="visible"
-              className="w-full lg:w-[320px] xl:w-[360px]"
+              className="hidden lg:block w-full lg:w-[320px] xl:w-[360px]"
             >
               <div className="rounded-2xl bg-white/[0.06] backdrop-blur-xl border border-white/[0.1] overflow-hidden">
                 {/* Client & Obra */}
@@ -166,17 +213,17 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                     { icon: User, label: "Cliente", value: budget.client_name },
                     { icon: Building, label: "Obra", value: budget.condominio || budget.project_name },
                   ].map((field, i) => (
-                    <div key={i} className="px-4 sm:px-5 py-4 sm:py-5 text-center">
+                    <div key={i} className="px-5 py-5 text-center">
                       <field.icon className="h-4 w-4 text-white/30 mx-auto mb-1.5" />
                       <p className="text-xs text-white/35 font-body uppercase tracking-[0.15em] mb-0.5">{field.label}</p>
-                      <p className="text-sm sm:text-base font-display font-bold text-white truncate">{field.value}</p>
+                      <p className="text-base font-display font-bold text-white truncate">{field.value}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Meta items */}
                 {metaItems.length > 0 && (
-                  <div className="border-t border-white/[0.08] px-4 sm:px-5 py-3 grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div className="border-t border-white/[0.08] px-5 py-3 grid grid-cols-2 gap-x-4 gap-y-2">
                     {metaItems.map((item, i) => (
                       <div key={i} className="flex items-center gap-2 min-w-0">
                         <item.icon className="h-3 w-3 text-white/25 flex-shrink-0" />

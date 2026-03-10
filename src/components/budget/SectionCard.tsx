@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { motion, AnimatePresence } from "framer-motion";
 import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from "@/lib/section-icons";
 import { cn } from "@/lib/utils";
+import type { ScopeCategory } from "@/lib/scope-categories";
 
 interface SectionCardProps {
   section: any;
@@ -15,16 +16,20 @@ interface SectionCardProps {
   showItemPrices?: boolean;
   highlightZone?: string | null;
   sectionIndex?: number;
+  categoryColor?: ScopeCategory;
 }
 
 const HIGH_VALUE_THRESHOLD = 10000;
+const MEDIUM_VALUE_THRESHOLD = 5000;
+const LOW_VALUE_THRESHOLD = 1000;
 
-export function SectionCard({ section, compact, showItemQty, showItemPrices = false, highlightZone, sectionIndex = 0 }: SectionCardProps) {
+export function SectionCard({ section, compact, showItemQty, showItemPrices = false, highlightZone, sectionIndex = 0, categoryColor }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
   const isHighValue = subtotal >= HIGH_VALUE_THRESHOLD;
-  const isLowValue = subtotal < 500;
+  const isLarge = subtotal > MEDIUM_VALUE_THRESHOLD;
+  const isSmall = subtotal < LOW_VALUE_THRESHOLD;
 
-  const [expanded, setExpanded] = useState(!compact && !isLowValue);
+  const [expanded, setExpanded] = useState(!compact && !isSmall);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<{ url: string; alt?: string }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -32,7 +37,8 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
   const items = section.items || [];
   const included = Array.isArray(section.included_bullets) ? section.included_bullets : [];
   const excluded = Array.isArray(section.excluded_bullets) ? section.excluded_bullets : [];
-  const visibleItems = expanded ? items : items.slice(0, 4);
+  const maxVisible = isSmall ? items.length : (items.length > 6 ? 4 : items.length);
+  const visibleItems = expanded ? items : items.slice(0, maxVisible);
 
   const allImages: { url: string; alt?: string }[] = [];
   if (section.cover_image_url) {
@@ -53,8 +59,63 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
 
   const hasCover = !!section.cover_image_url;
   const SectionIcon = getIconForSection(section.title);
-  const accentColor = SECTION_ACCENT_COLORS[sectionIndex % SECTION_ACCENT_COLORS.length];
-  const iconColors = SECTION_ICON_BG_COLORS[sectionIndex % SECTION_ICON_BG_COLORS.length];
+
+  // Use category color if provided, else fallback to rotating
+  const borderColor = categoryColor?.borderClass || SECTION_ACCENT_COLORS[sectionIndex % SECTION_ACCENT_COLORS.length];
+  const iconColors = categoryColor
+    ? `${categoryColor.bgClass}/10 ${categoryColor.colorClass}`
+    : SECTION_ICON_BG_COLORS[sectionIndex % SECTION_ICON_BG_COLORS.length];
+
+  // Small sections: compact single-line, expandable
+  if (isSmall && !hasCover) {
+    return (
+      <>
+        <Lightbox
+          images={lightboxImages}
+          initialIndex={lightboxIndex}
+          open={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.3 }}
+          className="rounded-xl border border-border bg-card overflow-hidden"
+        >
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="w-full flex items-center gap-3 p-4 min-h-[44px] text-left"
+          >
+            <SectionIcon className={`h-4 w-4 flex-shrink-0 ${categoryColor?.colorClass || 'text-muted-foreground'}`} />
+            <span className="text-sm font-body font-medium text-foreground flex-1 truncate">{section.title}</span>
+            <span className="text-sm font-mono tabular-nums text-muted-foreground flex-shrink-0">{formatBRL(subtotal)}</span>
+            {expanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
+          </button>
+          {expanded && (
+            <div className="px-4 pb-3 border-t border-border/50">
+              {items.map((item: any, i: number) => (
+                <div key={item.id} className={cn("flex items-center gap-2.5 py-2", i < items.length - 1 && "border-b border-border/30")}>
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0" />
+                  <span className="text-xs font-body text-foreground flex-1 truncate">{item.title}</span>
+                  <AnimatePresence>
+                    {showItemPrices && Number(item.internal_total) > 0 && (
+                      <motion.span
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="text-xs font-mono tabular-nums text-muted-foreground"
+                      >
+                        {formatBRL(Number(item.internal_total))}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -71,15 +132,16 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
         viewport={{ once: true, margin: "-40px" }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          "rounded-xl overflow-hidden border border-border bg-card shadow-sm hover:shadow-md transition-all duration-300",
-          !hasCover && `border-l-4 ${accentColor}`,
-          isHighValue && "bg-primary/[0.02]"
+          "rounded-xl overflow-hidden border bg-card transition-all duration-300",
+          !hasCover && `border-l-[3px] ${borderColor} border-border`,
+          hasCover && "border-border",
+          isLarge && !hasCover && "bg-primary/[0.01]"
         )}
       >
-        {/* Header — compact when no cover image */}
+        {/* Header — with cover image */}
         {hasCover ? (
           <div
-            className="relative h-32 sm:h-40 overflow-hidden cursor-zoom-in group"
+            className="relative h-28 sm:h-36 overflow-hidden cursor-zoom-in group"
             onClick={() => openLightbox(section.cover_image_url)}
           >
             <img
@@ -92,11 +154,11 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
             <div className="absolute top-3 right-3 p-1.5 rounded-full bg-card/20 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-opacity">
               <ZoomIn className="h-3.5 w-3.5" />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 sm:px-5 sm:pb-4">
+            <div className="absolute bottom-0 left-0 right-0 px-4 pb-3">
               <div className="flex items-center gap-2">
                 <h2 className="font-display text-base sm:text-lg font-bold text-white leading-tight">{section.title}</h2>
                 {isHighValue && (
-                  <span className="text-xs font-body font-medium bg-white/20 text-white rounded-full px-2 py-0.5 backdrop-blur-sm">
+                  <span className="text-[10px] font-body font-medium bg-white/20 text-white rounded-full px-2 py-0.5 backdrop-blur-sm">
                     Principal
                   </span>
                 )}
@@ -109,17 +171,20 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
         ) : (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="w-full text-left px-4 sm:px-5 pt-4 sm:pt-5 pb-0"
+            className="w-full text-left px-4 pt-4 pb-0 min-h-[44px]"
           >
             <div className="flex items-start gap-3">
-              <div className={cn("w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0", iconColors)}>
-                <SectionIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", iconColors)}>
+                <SectionIcon className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-display text-base sm:text-lg font-bold text-foreground leading-tight">{section.title}</h2>
+                  <h2 className="font-display text-sm sm:text-base font-bold text-foreground leading-tight">{section.title}</h2>
                   {isHighValue && (
-                    <span className="text-xs font-body font-medium bg-primary/10 text-primary rounded-full px-2 py-0.5">
+                    <span className={cn(
+                      "text-[10px] font-body font-medium rounded-full px-2 py-0.5",
+                      categoryColor ? `${categoryColor.bgClass}/10 ${categoryColor.colorClass}` : "bg-primary/10 text-primary"
+                    )}>
                       Principal
                     </span>
                   )}
@@ -140,16 +205,16 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
         )}
 
         {/* Subtotal strip */}
-        <div className="px-4 sm:px-5 py-2.5 border-b border-border bg-muted/30 flex items-center justify-between">
+        <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center justify-between">
           <span className="text-xs text-muted-foreground font-body">
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}Subtotal
           </span>
-          <span className="font-display font-bold text-sm sm:text-base text-primary">{formatBRL(subtotal)}</span>
+          <span className="font-display font-bold text-sm text-primary tabular-nums">{formatBRL(subtotal)}</span>
         </div>
 
         {/* Items — collapsible */}
         {expanded && (
-          <div className="px-4 sm:px-5 py-3 sm:py-4">
+          <div className="px-4 py-3">
             {items.length > 0 && (
               <>
                 <div>
@@ -172,9 +237,10 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                       <div
                         key={item.id}
                         className={cn(
-                          "flex items-center gap-2.5 px-2.5 py-2.5 transition-colors",
+                          "flex items-center gap-2.5 px-2 py-2 transition-colors min-h-[44px]",
                           isZoneMatch && "bg-primary/10 ring-1 ring-primary/20 rounded-lg",
-                          !isLastItem && "border-b border-border/50"
+                          !isLastItem && "border-b border-border/50",
+                          i % 2 === 1 && "bg-muted/20"
                         )}
                       >
                         {primaryImage ? (
@@ -198,7 +264,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                         {/* Left: name + qty */}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
-                            <p className="text-xs sm:text-sm font-medium text-foreground font-body truncate">{item.title}</p>
+                            <p className="text-xs sm:text-sm font-medium text-foreground font-body truncate leading-relaxed">{item.title}</p>
                             {item.description && (
                               <TooltipProvider delayDuration={200}>
                                 <Tooltip>
@@ -231,11 +297,11 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                               transition={{ duration: 0.25 }}
                               className="text-right flex-shrink-0"
                             >
-                              <p className="text-xs sm:text-sm font-display font-semibold text-foreground">
+                              <p className="text-xs sm:text-sm font-mono font-semibold text-foreground tabular-nums">
                                 {formatBRL(itemTotal)}
                               </p>
                               {itemQty > 1 && itemUnitPrice > 0 && (
-                                <p className="text-xs text-muted-foreground font-body">
+                                <p className="text-xs text-muted-foreground font-body tabular-nums">
                                   ({formatBRL(itemUnitPrice)}/un)
                                 </p>
                               )}
@@ -247,22 +313,23 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                   })}
                 </div>
 
-                {items.length > 4 && (
+                {items.length > maxVisible && !expanded && (
                   <button
-                    onClick={() => setExpanded(!expanded)}
-                    className="mt-2.5 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1 w-full justify-center"
+                    onClick={() => setExpanded(true)}
+                    className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1 w-full justify-center min-h-[44px]"
                   >
-                    {expanded ? (
-                      <>
-                        <ChevronUp className="h-3.5 w-3.5" />
-                        Ocultar
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-3.5 w-3.5" />
-                        Ver todos os {items.length} itens
-                      </>
-                    )}
+                    <ChevronDown className="h-3.5 w-3.5" />
+                    Ver todos os {items.length} itens
+                  </button>
+                )}
+
+                {expanded && items.length > 4 && (
+                  <button
+                    onClick={() => setExpanded(false)}
+                    className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1 w-full justify-center min-h-[44px]"
+                  >
+                    <ChevronUp className="h-3.5 w-3.5" />
+                    Ocultar
                   </button>
                 )}
               </>
@@ -278,7 +345,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                     </h4>
                     <ul className="space-y-1">
                       {included.map((b: string, i: number) => (
-                        <li key={i} className="text-xs text-foreground/80 font-body flex items-start gap-1.5">
+                        <li key={i} className="text-xs text-foreground/80 font-body flex items-start gap-1.5 leading-relaxed">
                           <Check className="h-3 w-3 text-success mt-0.5 flex-shrink-0" />
                           {b}
                         </li>
@@ -293,7 +360,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                     </h4>
                     <ul className="space-y-1">
                       {excluded.map((b: string, i: number) => (
-                        <li key={i} className="text-xs text-foreground/60 font-body flex items-start gap-1.5">
+                        <li key={i} className="text-xs text-foreground/60 font-body flex items-start gap-1.5 leading-relaxed">
                           <X className="h-3 w-3 text-destructive/60 mt-0.5 flex-shrink-0" />
                           {b}
                         </li>
@@ -305,7 +372,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
             )}
 
             {section.notes && (
-              <p className="mt-3 pt-2.5 border-t border-border text-xs text-muted-foreground font-body italic">
+              <p className="mt-3 pt-2.5 border-t border-border text-xs text-muted-foreground font-body italic leading-relaxed">
                 {section.notes}
               </p>
             )}
@@ -316,7 +383,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
         {!expanded && !hasCover && (
           <button
             onClick={() => setExpanded(true)}
-            className="w-full px-4 sm:px-5 py-2.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors flex items-center justify-center gap-1.5"
+            className="w-full px-4 py-2.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors flex items-center justify-center gap-1.5 min-h-[44px]"
           >
             <ChevronDown className="h-3.5 w-3.5" />
             Ver {items.length} {items.length === 1 ? 'item' : 'itens'}

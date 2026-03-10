@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchPublicBudget, calculateBudgetTotal } from "@/lib/supabase-helpers";
+import { fetchPublicBudget, calculateBudgetTotal, calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { SectionCard } from "@/components/budget/SectionCard";
-import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
 import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
 import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
 import { AnimatedSection } from "@/components/budget/AnimatedSection";
+import { ScopeTransitionZone } from "@/components/budget/ScopeTransitionZone";
+import { CategoryHeader } from "@/components/budget/CategoryHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { demoBudget } from "@/lib/demo-budget-data";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
 import { ChevronUp, X, Eye, EyeOff } from "lucide-react";
 import { useScrollspy } from "@/hooks/useScrollspy";
+import { categorizeSections } from "@/lib/scope-categories";
 import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
 
 export default function PublicBudget() {
@@ -43,7 +45,6 @@ export default function PublicBudget() {
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
 
-  // Scrollspy: must be before early returns
   const allSectionIds = useMemo(() => {
     const sections = budget?.sections || [];
     return sections.map((s) => `section-${s.id}`);
@@ -147,6 +148,10 @@ export default function PublicBudget() {
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
   const filteredSections = sections.filter((s) => !s.title?.toLowerCase().includes("projetos"));
+  const categorizedGroups = categorizeSections(filteredSections);
+
+  // Compute scope-only total (excluding "projetos")
+  const scopeTotal = filteredSections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
 
   const handleRoomClick = (roomId: string | null) => {
     setActiveRoom(roomId || null);
@@ -156,6 +161,9 @@ export default function PublicBudget() {
   };
 
   const activeRoomData = rooms.find((r) => r.id === activeRoom);
+
+  // Track global section index for icon colors
+  let globalSectionIdx = 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -185,7 +193,7 @@ export default function PublicBudget() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Content column */}
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-            {/* Institutional sections */}
+            {/* Institutional / narrative sections */}
             <div className="space-y-3">
               <AnimatedSection id="arquitetonico-section" index={0}>
                 <ArquitetonicoExpander />
@@ -228,56 +236,64 @@ export default function PublicBudget() {
               <WhatIsIncluded />
             </AnimatedSection>
 
-            {/* PackageProgressBars + Section label */}
+            {/* === TRANSITION ZONE === */}
             {filteredSections.length > 0 && (
-              <>
-                <PackageProgressBars sections={sections} total={total} />
-                <div className="pt-2 pb-1 flex items-center justify-between">
-                  <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
-                    Escopo técnico detalhado
-                  </p>
+              <AnimatedSection id="scope-transition" index={0.95}>
+                <ScopeTransitionZone sections={filteredSections} total={scopeTotal} />
+              </AnimatedSection>
+            )}
+
+            {/* === TECHNICAL SCOPE — categorized === */}
+            {filteredSections.length > 0 && (
+              <div className="bg-muted/[0.03] rounded-xl">
+                {/* Price toggle */}
+                <div className="pt-2 pb-1 flex items-center justify-end">
                   <button
                     onClick={() => setShowPrices(!showPrices)}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors min-h-[44px] px-2"
                   >
                     {showPrices ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                     {showPrices ? "Ocultar valores" : "Mostrar valores"}
                   </button>
                 </div>
-              </>
+
+                {categorizedGroups.map((group) => {
+                  const groupSections = group.sections;
+                  return (
+                    <div key={group.category.id}>
+                      <CategoryHeader category={group.category} subtotal={group.subtotal} />
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3">
+                        {groupSections.map((section) => {
+                          const subtotal = calculateSectionSubtotal(section);
+                          const isLarge = subtotal > 5000;
+                          const currentIdx = globalSectionIdx++;
+
+                          return (
+                            <div
+                              key={section.id}
+                              className={isLarge ? "lg:col-span-2" : "lg:col-span-1"}
+                            >
+                              <AnimatedSection id={`section-${section.id}`} index={currentIdx + 1}>
+                                <SectionCard
+                                  section={section}
+                                  compact={false}
+                                  showItemQty={budget.show_item_qty ?? true}
+                                  showItemPrices={showPrices}
+                                  sectionIndex={currentIdx}
+                                  categoryColor={group.category}
+                                />
+                              </AnimatedSection>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
 
-            {filteredSections.map((section, idx) => {
-              const separator = idx === 5
-                ? "Acabamentos e materiais"
-                : idx === 10
-                  ? "Mobiliário e equipamentos"
-                  : null;
-
-              return (
-                <div key={section.id}>
-                  {separator && (
-                    <div className="flex items-center gap-4 py-3">
-                      <hr className="flex-1 border-muted" />
-                      <span className="text-xs text-muted-foreground font-display uppercase tracking-wider">
-                        {separator}
-                      </span>
-                      <hr className="flex-1 border-muted" />
-                    </div>
-                  )}
-                  <AnimatedSection id={`section-${section.id}`} index={idx + 1}>
-                    <SectionCard
-                      section={section}
-                      compact={false}
-                      showItemQty={budget.show_item_qty ?? true}
-                      showItemPrices={showPrices}
-                      sectionIndex={idx}
-                    />
-                  </AnimatedSection>
-                </div>
-              );
-            })}
-
+            {/* Back to white bg for security/FAQ */}
             <AnimatedSection id="project-security" index={99}>
               <ProjectSecurity />
             </AnimatedSection>
@@ -298,6 +314,7 @@ export default function PublicBudget() {
                 budgetDate={budget.date}
                 validityDays={budget.validity_days || 30}
                 activeSection={activeSection}
+                categorizedGroups={categorizedGroups}
               />
               <InstallmentSimulator total={total} />
               <ROISimulator total={total} />
@@ -336,11 +353,15 @@ export default function PublicBudget() {
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
                 className="relative z-50 bg-card border-t border-border rounded-t-2xl max-h-[75vh] overflow-y-auto shadow-2xl"
               >
-                <div className="sticky top-0 bg-card z-10 px-4 pt-3 pb-2 border-b border-border flex items-center justify-between">
+                {/* Grab handle */}
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="w-10 h-1 bg-muted rounded-full" />
+                </div>
+                <div className="sticky top-0 bg-card z-10 px-4 pt-1 pb-2 border-b border-border flex items-center justify-between">
                   <span className="text-sm font-display font-bold text-foreground">Detalhes do Orçamento</span>
                   <button
                     onClick={() => setShowMobileSummary(false)}
-                    className="p-1.5 rounded-full hover:bg-muted transition-colors"
+                    className="p-1.5 rounded-full hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                   >
                     <X className="h-4 w-4 text-muted-foreground" />
                   </button>
@@ -354,6 +375,7 @@ export default function PublicBudget() {
                     budgetDate={budget.date}
                     validityDays={budget.validity_days || 30}
                     activeSection={activeSection}
+                    categorizedGroups={categorizedGroups}
                   />
                   <InstallmentSimulator total={total} />
                   <ROISimulator total={total} />
@@ -374,14 +396,14 @@ export default function PublicBudget() {
             <div className="relative z-50">
               <button
                 onClick={() => setShowMobileSummary(true)}
-                className="w-full text-center text-xs text-muted-foreground py-1.5 bg-card border-t border-border font-body hover:text-foreground transition-colors flex items-center justify-center gap-1"
+                className="w-full text-center text-xs text-muted-foreground py-1.5 bg-card border-t border-border font-body hover:text-foreground transition-colors flex items-center justify-center gap-1 min-h-[44px]"
               >
                 <ChevronUp className="h-3 w-3" />
                 Ver detalhes do orçamento
               </button>
               <div className="bg-charcoal flex items-center justify-between px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
                 <div className="flex flex-col">
-                  <span className="font-display font-bold text-white text-base">{formatBRL(total)}</span>
+                  <span className="font-display font-bold text-white text-base tabular-nums">{formatBRL(total)}</span>
                   {validity.expired ? (
                     <span className="text-xs text-destructive/80 font-body">Proposta expirada</span>
                   ) : (
@@ -397,7 +419,7 @@ export default function PublicBudget() {
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-xs"
+                    className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-xs min-h-[44px] flex items-center"
                   >
                     Solicitar atualização
                   </a>
@@ -407,7 +429,7 @@ export default function PublicBudget() {
                     onClick={() => {
                       document.getElementById("next-steps")?.scrollIntoView({ behavior: "smooth" });
                     }}
-                    className="px-4 py-2.5 rounded-lg bg-success text-success-foreground font-display font-bold text-xs"
+                    className="px-4 py-2.5 rounded-lg bg-success text-success-foreground font-display font-bold text-xs min-h-[44px]"
                   >
                     Iniciar meu projeto
                   </motion.button>
@@ -428,7 +450,7 @@ export default function PublicBudget() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="mt-4 sm:mt-6 mb-28 lg:mb-8 p-4 rounded-lg bg-muted/50 border border-border"
+            className="mt-4 sm:mt-6 mb-28 lg:mb-8 p-4 rounded-xl bg-muted/50 border border-border"
           >
             <p className="text-xs text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>
           </motion.div>
