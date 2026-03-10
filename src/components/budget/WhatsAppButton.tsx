@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 
 interface WhatsAppButtonProps {
   projectName: string;
