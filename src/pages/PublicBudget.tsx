@@ -309,7 +309,7 @@ export default function PublicBudget() {
                 <div className="flex flex-col">
                   <span className="font-display font-bold text-white text-base">{formatBRL(total)}</span>
                   {validity.expired ? (
-                    <span className="text-[10px] text-destructive/80 font-body">Proposta expirada</span>
+                    <span className="text-xs text-destructive/80 font-body">Proposta expirada</span>
                   ) : (
                     <span className="text-[10px] text-white/50 font-body">
                       Válido por mais {validity.daysLeft} {validity.daysLeft === 1 ? 'dia' : 'dias'}
