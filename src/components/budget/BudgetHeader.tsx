@@ -1,10 +1,8 @@
-import { Download, Loader2, Calendar, User, Building, Ruler, UserCheck, Hash, Clock, ShieldCheck } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Download, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
-import { formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
+import { formatDate, getValidityInfo } from "@/lib/formatBRL";
 
 interface BudgetHeaderProps {
   budget: any;
@@ -13,26 +11,21 @@ interface BudgetHeaderProps {
 }
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 14 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
   }),
 };
 
 export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderProps) {
-  const validUntil = budget.date && budget.validity_days
-    ? new Date(new Date(budget.date).getTime() + budget.validity_days * 86400000)
+  const validity = budget.date ? getValidityInfo(budget.date, budget.validity_days || 30) : null;
+  const validityLabel = validity
+    ? validity.expired
+      ? "Proposta expirada"
+      : `Válido até ${formatDate(validity.expiresAt)}`
     : null;
-
-  const metaItems = [
-    budget.metragem && { icon: Ruler, label: "Metragem", value: budget.metragem },
-    budget.versao && { icon: Hash, label: "Versão", value: budget.versao },
-    budget.date && { icon: Calendar, label: "Data", value: formatDate(budget.date) },
-    validUntil && { icon: Clock, label: "Validade", value: formatDate(validUntil) },
-    budget.consultora_comercial && { icon: UserCheck, label: "Consultora", value: budget.consultora_comercial },
-  ].filter(Boolean) as { icon: any; label: string; value: string }[];
 
   // Compact inline meta for mobile
   const compactMeta = [
@@ -43,12 +36,18 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
     budget.consultora_comercial,
   ].filter(Boolean).join(" · ");
 
-  const validity = budget.date ? getValidityInfo(budget.date, budget.validity_days || 30) : null;
-  const validityLabel = validity
-    ? validity.expired
-      ? "Proposta expirada"
-      : `Válido até ${formatDate(validity.expiresAt)}`
-    : null;
+  // Desktop inline meta
+  const metaLine2 = [
+    budget.metragem,
+    budget.versao && `v${budget.versao.replace(/^v/i, '')}`,
+    budget.date && formatDate(budget.date),
+  ].filter(Boolean).join(" · ");
+
+  const statBadges = [
+    { value: "92%", label: "previsibilidade", accent: true },
+    { value: "5 anos", label: "garantia", accent: false },
+    { value: "100%", label: "digital", accent: false },
+  ];
 
   return (
     <header className="relative">
@@ -56,17 +55,32 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         {/* Background */}
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${headerBg})` }} />
         <div className="absolute inset-0 bg-gradient-to-b from-charcoal/70 via-charcoal/50 to-charcoal/80" />
+        {/* Subtle texture overlay — desktop only */}
+        <div
+          className="absolute inset-0 hidden lg:block opacity-[0.015] pointer-events-none"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(120deg, transparent, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 3px)',
+          }}
+        />
 
-        {/* Nav */}
+        {/* ─── FAIXA 1 — Nav ─── */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
           className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 flex items-center justify-between"
         >
-          <img src={logoWhite} alt="Bwild" className="h-7 sm:h-9 lg:h-10" />
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
+          <img src={logoWhite} alt="Bwild" className="h-7 sm:h-9 lg:h-8" />
+          <div className="flex items-center gap-3">
+            {/* Consultora — desktop only */}
+            {budget.consultora_comercial && (
+              <span className="hidden lg:inline text-[11px] text-white/30 font-body">
+                {budget.consultora_comercial}, sua consultora
+              </span>
+            )}
+            {budget.consultora_comercial && (
+              <span className="hidden lg:block w-px h-4 bg-white/10" />
+            )}
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -81,164 +95,127 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </div>
         </motion.div>
 
-        {/* Hero */}
+        {/* ─── FAIXA 2 — Conteúdo principal ─── */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 lg:gap-12 items-end py-5 sm:py-12 lg:py-16">
-            {/* Left — Title & subtitle */}
-            <div>
-              {/* "ORÇAMENTO BWILD" label — desktop only */}
+
+          {/* ── MOBILE (<lg) ── */}
+          <div className="lg:hidden py-5">
+            <motion.h1
+              variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
+              className="font-display font-extrabold text-2xl text-white leading-[1.05] tracking-tight"
+            >
+              {budget.project_name || "Projeto e Reforma"}
+            </motion.h1>
+
+            <motion.p
+              variants={fadeUp} custom={1} initial="hidden" animate="visible"
+              className="mt-2 text-xs font-body text-white/40 leading-relaxed"
+            >
+              Projeto personalizado · Acompanhamento digital · Garantia 5 anos
+            </motion.p>
+
+            <motion.p
+              variants={fadeUp} custom={1.5} initial="hidden" animate="visible"
+              className="mt-2 text-xs font-body text-white/50 truncate"
+            >
+              {compactMeta}
+            </motion.p>
+
+            <motion.div
+              variants={fadeUp} custom={2} initial="hidden" animate="visible"
+              className="mt-2 flex items-center gap-2 text-xs text-white/30 font-body"
+            >
+              <span>Etapa: <span className="text-white/50">Orçamento</span></span>
+              {validityLabel && (
+                <>
+                  <span className="text-white/15">·</span>
+                  <span className={validity?.expired ? 'text-destructive/80' : 'text-white/50'}>{validityLabel}</span>
+                </>
+              )}
+            </motion.div>
+          </div>
+
+          {/* ── DESKTOP (lg+) ── */}
+          <div className="hidden lg:flex items-start justify-between py-5">
+            {/* Left — Title + client data */}
+            <div className="flex-1 min-w-0">
               <motion.div
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
-                className="hidden lg:inline-flex items-center gap-1.5 text-xs font-body uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4"
+                className="flex items-start gap-5"
               >
-                <span className="w-6 h-px bg-white/30" />
-                Orçamento Bwild
+                {/* Title */}
+                <h1 className="font-display font-extrabold text-[1.85rem] xl:text-3xl text-white leading-[1.1] tracking-tight flex-shrink-0">
+                  {budget.project_name || "Projeto e Reforma"}
+                </h1>
+
+                {/* Separator */}
+                <span className="w-px h-7 bg-white/10 mt-1 flex-shrink-0" />
+
+                {/* Client block */}
+                <div className="min-w-0 mt-0.5">
+                  <p className="text-sm text-white/70 font-body truncate">
+                    <span className="font-semibold">{budget.client_name}</span>
+                    {(budget.condominio || budget.project_name) && (
+                      <span className="text-white/45"> · {budget.condominio || budget.project_name}</span>
+                    )}
+                  </p>
+                  {metaLine2 && (
+                    <p className="text-xs text-white/30 font-body mt-0.5">{metaLine2}</p>
+                  )}
+                </div>
               </motion.div>
 
-              <motion.h1
-                variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
-                className="font-display font-extrabold text-[clamp(1.75rem,5vw,3.5rem)] text-white leading-[1.05] tracking-tight"
-              >
-                Projeto e<br className="hidden sm:block" /> Reforma
-              </motion.h1>
-
-              {/* Mobile: inline badges as subtitle text */}
+              {/* Subtitle */}
               <motion.p
                 variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                className="mt-2 text-xs font-body text-white/40 max-w-md leading-relaxed lg:hidden"
-              >
-                Projeto personalizado · Acompanhamento digital · Garantia 5 anos
-              </motion.p>
-
-              {/* Desktop: original subtitle */}
-              <motion.p
-                variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                className="hidden lg:block mt-3 text-sm font-body text-white/40 max-w-md leading-relaxed"
+                className="mt-2.5 text-xs text-white/30 font-body"
               >
                 Projeto personalizado · Gestão completa · Execução com previsibilidade
               </motion.p>
-
-              {/* Desktop: Value badges */}
-              <motion.div
-                variants={fadeUp} custom={1.5} initial="hidden" animate="visible"
-                className="hidden lg:flex mt-5 flex-wrap gap-1.5"
-              >
-                {["✦ Projeto personalizado", "📱 Acompanhamento digital", "🛡️ Garantia 5 anos"].map((badge) => (
-                  <span
-                    key={badge}
-                    className="text-xs rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white/50 font-body"
-                  >
-                    {badge}
-                  </span>
-                ))}
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-xs rounded-full border border-success/30 bg-success/20 px-2.5 py-1 text-success-foreground font-body inline-flex items-center gap-1 cursor-default">
-                        <ShieldCheck className="h-3 w-3" />
-                        92% de previsibilidade
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
-                      <p className="text-xs">92% dos nossos projetos são entregues dentro do prazo e orçamento previstos</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </motion.div>
-
-              {/* Mobile: compact meta line */}
-              <motion.p
-                variants={fadeUp} custom={1.5} initial="hidden" animate="visible"
-                className="mt-2 text-xs font-body text-white/50 truncate lg:hidden"
-              >
-                {compactMeta}
-              </motion.p>
-
-              {/* Mobile: compact status + validity in one line */}
-              <motion.div
-                variants={fadeUp} custom={2} initial="hidden" animate="visible"
-                className="mt-2 flex items-center gap-2 text-xs text-white/30 font-body lg:hidden"
-              >
-                <span>Etapa: <span className="text-white/50">Orçamento</span></span>
-                {validityLabel && (
-                  <>
-                    <span className="text-white/15">·</span>
-                    <span className={validity?.expired ? 'text-destructive/80' : 'text-white/50'}>{validityLabel}</span>
-                  </>
-                )}
-              </motion.div>
-
-              {/* Desktop: full status strip */}
-              <motion.div
-                variants={fadeUp} custom={2} initial="hidden" animate="visible"
-                className="hidden lg:flex mt-4 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/30 font-body"
-              >
-                <span>Etapa: <span className="text-white/50">Orçamento</span></span>
-                <span className="text-white/15">·</span>
-                <span>Próximo: <span className="text-white/50">Briefing</span></span>
-                <span className="text-white/15">·</span>
-                <span>Início: <span className="text-white/50">Imediato</span></span>
-              </motion.div>
-
-              {/* Desktop: Validity notice */}
-              {budget.date && (
-                <motion.div
-                  variants={fadeUp} custom={2.5} initial="hidden" animate="visible"
-                  className="hidden lg:block mt-3"
-                >
-                  {(() => {
-                    const { expiresAt, expired } = getValidityInfo(budget.date, budget.validity_days || 30);
-                    return (
-                      <p className={`text-xs font-body ${expired ? 'text-destructive/80' : 'text-white/40'}`}>
-                        {expired
-                          ? "Valores e condições deste orçamento expiraram — solicite uma atualização."
-                          : `Este orçamento reflete valores e condições válidos até ${formatDateLong(expiresAt)}.`
-                        }
-                      </p>
-                    );
-                  })()}
-                </motion.div>
-              )}
             </div>
 
-            {/* Right — Client & Project info card — DESKTOP ONLY */}
+            {/* Right — Stat badges */}
             <motion.div
               variants={fadeUp} custom={1} initial="hidden" animate="visible"
-              className="hidden lg:block w-full lg:w-[320px] xl:w-[360px]"
+              className="flex items-center gap-3 flex-shrink-0 ml-8"
             >
-              <div className="rounded-2xl bg-white/[0.06] backdrop-blur-xl border border-white/[0.1] overflow-hidden">
-                {/* Client & Obra */}
-                <div className="grid grid-cols-2 divide-x divide-white/[0.08]">
-                  {[
-                    { icon: User, label: "Cliente", value: budget.client_name },
-                    { icon: Building, label: "Obra", value: budget.condominio || budget.project_name },
-                  ].map((field, i) => (
-                    <div key={i} className="px-5 py-5 text-center">
-                      <field.icon className="h-4 w-4 text-white/30 mx-auto mb-1.5" />
-                      <p className="text-xs text-white/35 font-body uppercase tracking-[0.15em] mb-0.5">{field.label}</p>
-                      <p className="text-base font-display font-bold text-white truncate">{field.value}</p>
-                    </div>
-                  ))}
+              {statBadges.map((badge) => (
+                <div key={badge.label} className="text-center min-w-[56px]">
+                  <p className={`text-lg font-extrabold font-mono leading-none ${badge.accent ? 'text-green-400' : 'text-white/50'}`}>
+                    {badge.value}
+                  </p>
+                  <p className="text-[8px] uppercase tracking-wider text-white/25 font-body mt-1">
+                    {badge.label}
+                  </p>
                 </div>
-
-                {/* Meta items */}
-                {metaItems.length > 0 && (
-                  <div className="border-t border-white/[0.08] px-5 py-3 grid grid-cols-2 gap-x-4 gap-y-2">
-                    {metaItems.map((item, i) => (
-                      <div key={i} className="flex items-center gap-2 min-w-0">
-                        <item.icon className="h-3 w-3 text-white/25 flex-shrink-0" />
-                        <div className="flex items-center gap-1 min-w-0">
-                          <span className="text-xs text-white/30 font-body uppercase tracking-wider flex-shrink-0">{item.label}</span>
-                          <span className="text-xs font-display font-semibold text-white/80 truncate">{item.value}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              ))}
             </motion.div>
           </div>
         </div>
+
+        {/* ─── FAIXA 3 — Status strip (desktop) ─── */}
+        <motion.div
+          variants={fadeUp} custom={2} initial="hidden" animate="visible"
+          className="relative z-10 hidden lg:block border-t border-white/[0.04] bg-black/10"
+        >
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
+            <p className="text-[10px] text-white/25 font-body">
+              Etapa: <span className="text-white/50">Orçamento</span>
+              <span className="mx-2 text-white/10">·</span>
+              Próximo: <span className="text-white/50">Briefing</span>
+              <span className="mx-2 text-white/10">·</span>
+              Início: <span className="text-white/50">Imediato</span>
+            </p>
+            {validityLabel && (
+              <p className={`text-[9px] font-body ${validity?.expired ? 'text-destructive/60' : 'text-white/20'}`}>
+                {validity?.expired
+                  ? "Valores expirados — solicite atualização"
+                  : `Valores válidos até ${formatDate(validity!.expiresAt)}`
+                }
+              </p>
+            )}
+          </div>
+        </motion.div>
       </div>
     </header>
   );
