@@ -110,7 +110,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {/* Status strip */}
               <motion.div
                 variants={fadeUp} custom={2} initial="hidden" animate="visible"
-                className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] sm:text-[11px] text-white/30 font-body"
+                className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/30 font-body"
               >
                 <span>Etapa: <span className="text-white/50">Orçamento</span></span>
                 <span className="text-white/15">·</span>
