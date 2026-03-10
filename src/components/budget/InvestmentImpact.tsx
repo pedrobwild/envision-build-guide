@@ -96,7 +96,7 @@ export function InvestmentImpact({ neighborhood, squareMeters }: InvestmentImpac
           </TabsContent>
         </Tabs>
 
-        <p className="text-[11px] text-muted-foreground/70 font-body leading-relaxed">
+        <p className="text-xs text-muted-foreground/70 font-body leading-relaxed">
           Estimativas educacionais. Resultados variam com bairro, fotos, avaliações e operação.
         </p>
       </CardContent>

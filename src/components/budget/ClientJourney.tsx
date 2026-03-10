@@ -79,8 +79,8 @@ export function ClientJourney() {
                 {i + 1}
               </div>
               <step.icon className="h-4 w-4 text-primary mt-2" />
-              <p className="text-[11px] font-display font-semibold text-foreground mt-1 leading-tight">{step.title}</p>
-              <p className="text-[10px] text-muted-foreground font-body mt-0.5 leading-tight">{step.summary}</p>
+              <p className="text-xs font-display font-semibold text-foreground mt-1 leading-tight">{step.title}</p>
+              <p className="text-xs text-muted-foreground font-body mt-0.5 leading-tight">{step.summary}</p>
             </motion.div>
           ))}
         </div>

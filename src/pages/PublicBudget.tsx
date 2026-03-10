@@ -356,7 +356,7 @@ export default function PublicBudget() {
             transition={{ duration: 0.5 }}
             className="mt-4 sm:mt-6 mb-28 lg:mb-8 p-4 rounded-lg bg-muted/50 border border-border"
           >
-            <p className="text-[11px] sm:text-xs text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>
+            <p className="text-xs text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>
           </motion.div>
         )}
       </main>

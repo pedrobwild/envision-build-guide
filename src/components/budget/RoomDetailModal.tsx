@@ -145,7 +145,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
                                   </button>
                                 ))}
                                 {extraImages.length > 4 && (
-                                  <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-body border border-border/50">
+                                  <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground font-body border border-border/50">
                                     +{extraImages.length - 4}
                                   </span>
                                 )}
