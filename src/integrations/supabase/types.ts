@@ -66,6 +66,8 @@ export type Database = {
           generated_at: string | null
           id: string
           last_viewed_at: string | null
+          lead_email: string | null
+          lead_name: string | null
           metragem: string | null
           notes: string | null
           project_name: string
@@ -97,6 +99,8 @@ export type Database = {
           generated_at?: string | null
           id?: string
           last_viewed_at?: string | null
+          lead_email?: string | null
+          lead_name?: string | null
           metragem?: string | null
           notes?: string | null
           project_name?: string
@@ -128,6 +132,8 @@ export type Database = {
           generated_at?: string | null
           id?: string
           last_viewed_at?: string | null
+          lead_email?: string | null
+          lead_name?: string | null
           metragem?: string | null
           notes?: string | null
           project_name?: string
