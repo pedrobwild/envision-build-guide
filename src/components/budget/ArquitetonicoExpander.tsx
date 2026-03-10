@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { CheckCircle2, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, ZoomIn, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { Lightbox } from "@/components/budget/Lightbox";
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -27,8 +27,11 @@ const tabs = [
   { id: "exec", label: "Projeto Executivo" },
 ] as const;
 
-const gallery = {
+type MediaItem = { src: string; alt: string; type?: "video" | "image" };
+
+const gallery: Record<GalleryTab, MediaItem[]> = {
   "3d": [
+    { src: "/images/Sandra_e_Thiago_Video_3D-2.mp4", alt: "Projeto 3D — Vídeo Tour", type: "video" },
     { src: "/images/exemplo-projeto-3d-1.png", alt: "Projeto 3D — Planta humanizada" },
     { src: "/images/exemplo-projeto-3d-2.png", alt: "Projeto 3D — Sala e cozinha" },
   ],
@@ -122,26 +125,43 @@ export function ArquitetonicoExpander() {
                 <div className="flex">
                   {images.map((img, idx) => (
                     <div key={img.src} className="min-w-0 shrink-0 grow-0 basis-full">
-                      <button
-                        onClick={() => {
-                          setLightboxIndex(idx);
-                          setLightboxOpen(true);
-                        }}
-                        className="group relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
-                      >
-                        <img
-                          src={img.src}
-                          alt={img.alt}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
-                          <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                      {img.type === "video" ? (
+                        <div className="relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10]">
+                          <video
+                            src={img.src}
+                            controls
+                            playsInline
+                            preload="metadata"
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute top-2 left-2 flex items-center gap-1 text-[10px] font-display font-semibold text-white bg-primary/80 backdrop-blur-sm rounded px-2 py-0.5">
+                            <Play className="h-3 w-3" /> Vídeo 3D
+                          </span>
                         </div>
-                        <span className="absolute bottom-1.5 left-1.5 right-1.5 text-xs font-body text-white bg-foreground/60 backdrop-blur-sm rounded px-2 py-0.5 sm:py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
-                          {img.alt}
-                        </span>
-                      </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            const imageOnly = images.filter(m => m.type !== "video");
+                            const realIdx = imageOnly.findIndex(m => m.src === img.src);
+                            setLightboxIndex(realIdx >= 0 ? realIdx : 0);
+                            setLightboxOpen(true);
+                          }}
+                          className="group relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
+                        >
+                          <img
+                            src={img.src}
+                            alt={img.alt}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
+                            <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                          </div>
+                          <span className="absolute bottom-1.5 left-1.5 right-1.5 text-xs font-body text-white bg-foreground/60 backdrop-blur-sm rounded px-2 py-0.5 sm:py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
+                            {img.alt}
+                          </span>
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -219,7 +239,7 @@ export function ArquitetonicoExpander() {
       </Card>
 
       <Lightbox
-        images={images.map((img) => ({ url: img.src, alt: img.alt }))}
+        images={images.filter(m => m.type !== "video").map((img) => ({ url: img.src, alt: img.alt }))}
         initialIndex={lightboxIndex}
         open={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
