@@ -68,7 +68,7 @@ export function ProjectSecurity() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.03, duration: 0.2 }}
-                className="flex items-center gap-2 text-[11px] sm:text-xs font-body text-foreground"
+                className="flex items-center gap-2 text-xs font-body text-foreground"
               >
                 <CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0" />
                 <span>{item}</span>
