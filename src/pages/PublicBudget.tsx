@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicBudget, calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
-import { formatBRL, formatDate } from "@/lib/formatBRL";
+import { formatBRL, formatDate, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { SectionCard } from "@/components/budget/SectionCard";
 import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
