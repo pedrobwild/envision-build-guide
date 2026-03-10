@@ -1,4 +1,5 @@
-import { Download, Loader2, Calendar, User, Building, Ruler, UserCheck, Hash, Clock } from "lucide-react";
+import { Download, Loader2, Calendar, User, Building, Ruler, UserCheck, Hash, Clock, ShieldCheck } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
