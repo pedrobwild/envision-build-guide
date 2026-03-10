@@ -209,7 +209,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
                   </h4>
                   <ul className="space-y-1">
                     {included.map((b: string, i: number) => (
-                      <li key={i} className="text-[11px] sm:text-xs text-foreground/80 font-body flex items-start gap-1.5">
+                      <li key={i} className="text-xs text-foreground/80 font-body flex items-start gap-1.5">
                         <Check className="h-3 w-3 text-success mt-0.5 flex-shrink-0" />
                         {b}
                       </li>
