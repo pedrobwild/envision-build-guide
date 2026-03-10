@@ -3,7 +3,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
-import { formatDate } from "@/lib/formatBRL";
+import { formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
+import { ValidityCountdown } from "@/components/budget/ValidityCountdown";
 
 interface BudgetHeaderProps {
   budget: any;
