@@ -93,7 +93,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
                   <div className="flex items-center gap-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-primary font-body">{sectionTitle}</h4>
                     <div className="flex-1 h-px bg-border/60" />
-                    <span className="text-[10px] text-muted-foreground font-body">{items.length}</span>
+                    <span className="text-xs text-muted-foreground font-body">{items.length}</span>
                   </div>
 
                   <div className="space-y-3">
@@ -145,7 +145,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
                                   </button>
                                 ))}
                                 {extraImages.length > 4 && (
-                                  <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-body border border-border/50">
+                                  <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground font-body border border-border/50">
                                     +{extraImages.length - 4}
                                   </span>
                                 )}

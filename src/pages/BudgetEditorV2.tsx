@@ -240,7 +240,7 @@ export default function BudgetEditorV2() {
                 {budget.project_name || "Sem nome"}
               </span>
               {currentStep !== "metadata" && (
-                <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-body flex-wrap">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground font-body flex-wrap">
                   {budget.client_name && budget.client_name !== "Cliente" && (
                     <span className="flex items-center gap-1">
                       <User className="h-3 w-3" />

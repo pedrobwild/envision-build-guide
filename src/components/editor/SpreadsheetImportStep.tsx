@@ -315,7 +315,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
                       <td className="px-3 py-1.5 text-muted-foreground">{i === 0 ? pkg.name : ""}</td>
                       <td className="px-3 py-1.5 text-foreground">{item.name}</td>
                       <td className="px-3 py-1.5 text-center">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                        <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
                           item.coverageType === "geral"
                             ? "bg-primary/10 text-primary"
                             : "bg-accent text-accent-foreground"

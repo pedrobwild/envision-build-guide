@@ -58,7 +58,7 @@ export function InvestmentImpact({ neighborhood, squareMeters }: InvestmentImpac
                   className="rounded-xl border border-primary/15 bg-primary/5 p-4 text-center space-y-2"
                 >
                   <m.icon className="h-5 w-5 mx-auto text-primary" />
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wide leading-tight">{m.label}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide leading-tight">{m.label}</p>
                   <p className="text-lg font-display font-bold text-foreground">{m.value}</p>
                 </motion.div>
               ))}
@@ -96,7 +96,7 @@ export function InvestmentImpact({ neighborhood, squareMeters }: InvestmentImpac
           </TabsContent>
         </Tabs>
 
-        <p className="text-[11px] text-muted-foreground/70 font-body leading-relaxed">
+        <p className="text-xs text-muted-foreground/70 font-body leading-relaxed">
           Estimativas educacionais. Resultados variam com bairro, fotos, avaliações e operação.
         </p>
       </CardContent>

@@ -204,7 +204,7 @@ export function CoverageMappingStep({
                       >
                         <span className="flex-1 truncate">{item.name}</span>
                         <span className={cn(
-                          "px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0",
+                          "px-1.5 py-0.5 rounded text-xs font-medium shrink-0",
                           item.coverageType === "geral"
                             ? "bg-primary/10 text-primary"
                             : "bg-accent text-accent-foreground"

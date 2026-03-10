@@ -40,7 +40,7 @@ export function ProjectSecurity() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Score */}
           <div className="rounded-xl bg-muted/30 p-4 space-y-2.5">
-            <p className="text-[10px] font-display font-semibold text-muted-foreground uppercase tracking-wide">
+            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
               Índice de previsibilidade
             </p>
             <div className="flex items-end gap-2">
@@ -54,7 +54,7 @@ export function ProjectSecurity() {
               </motion.span>
             </div>
             <Progress value={92} className="h-2" />
-            <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
+            <p className="text-xs text-muted-foreground font-body leading-relaxed">
               Projetos com projeto executivo e engenheiro dedicado.
             </p>
           </div>
@@ -68,7 +68,7 @@ export function ProjectSecurity() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.03, duration: 0.2 }}
-                className="flex items-center gap-2 text-[11px] sm:text-xs font-body text-foreground"
+                className="flex items-center gap-2 text-xs font-body text-foreground"
               >
                 <CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0" />
                 <span>{item}</span>
@@ -80,12 +80,12 @@ export function ProjectSecurity() {
         {/* Delivery callout */}
         <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 space-y-2">
           <p className="font-display font-semibold text-xs text-foreground">Entrega e garantia</p>
-          <p className="text-[10px] text-muted-foreground font-body">
+          <p className="text-xs text-muted-foreground font-body">
             Obra finalizada após vistoria e aprovação de todos os detalhes.
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {deliveryBullets.map((b) => (
-              <span key={b} className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-body text-muted-foreground">
+              <span key={b} className="flex items-center gap-1.5 text-xs font-body text-muted-foreground">
                 <CheckCircle2 className="h-3 w-3 text-primary flex-shrink-0" />
                 {b}
               </span>

@@ -136,14 +136,14 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
         </div>
         <div className="flex items-center justify-center gap-1.5 mt-2">
           <Shield className="h-3 w-3 text-primary/60" />
-          <span className="text-[10px] text-muted-foreground font-body">Preço fixo · Sem custos ocultos</span>
+          <span className="text-xs text-muted-foreground font-body">Preço fixo · Sem custos ocultos</span>
         </div>
       </div>
 
       {/* Footer */}
       {generatedAt && (
         <div className="px-4 pb-3">
-          <p className="text-[10px] text-muted-foreground text-center font-body">
+          <p className="text-xs text-muted-foreground text-center font-body">
             Gerado em {formatDate(generatedAt)}
           </p>
         </div>

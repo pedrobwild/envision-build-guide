@@ -47,20 +47,20 @@ export function EngenhariaExpander() {
               <b.icon className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
               <div>
                 <span className="text-xs font-display font-semibold text-foreground block">{b.highlight}</span>
-                <span className="text-[11px] text-muted-foreground font-body">{b.text}</span>
+                <span className="text-xs text-muted-foreground font-body">{b.text}</span>
               </div>
             </motion.div>
           ))}
         </div>
 
         <div className="flex items-center gap-2 pt-1">
-          <span className="text-[10px] sm:text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
+          <span className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
             O que você evita
           </span>
           <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
           <div className="flex flex-wrap gap-1.5">
             {chips.map((c) => (
-              <Badge key={c} variant="secondary" className="text-[10px] sm:text-xs font-body bg-destructive/5 text-destructive/80 border-destructive/10">
+              <Badge key={c} variant="secondary" className="text-xs font-body bg-destructive/5 text-destructive/80 border-destructive/10">
                 {c}
               </Badge>
             ))}

@@ -92,7 +92,7 @@ export function SectionNav({ sections }: SectionNavProps) {
                       />
 
                       <span className={cn(
-                        "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 transition-colors",
+                        "w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors",
                         isActive
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground group-hover:bg-accent"
@@ -107,7 +107,7 @@ export function SectionNav({ sections }: SectionNavProps) {
                         )}>
                           {s.title}
                         </p>
-                        <p className="text-[11px] text-muted-foreground font-body">
+                        <p className="text-xs text-muted-foreground font-body">
                           {formatBRL(subtotal)}
                         </p>
                       </div>

@@ -72,7 +72,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             <div>
               <motion.div
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
-                className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-body uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4"
+                className="inline-flex items-center gap-1.5 text-xs font-body uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4"
               >
                 <span className="w-6 h-px bg-white/30" />
                 Orçamento Bwild
@@ -100,7 +100,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 {["✦ Projeto personalizado", "📱 Acompanhamento digital", "🛡️ Garantia 5 anos"].map((badge) => (
                   <span
                     key={badge}
-                    className="text-[9px] sm:text-[10px] rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white/50 font-body"
+                    className="text-xs rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white/50 font-body"
                   >
                     {badge}
                   </span>
@@ -110,7 +110,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {/* Status strip */}
               <motion.div
                 variants={fadeUp} custom={2} initial="hidden" animate="visible"
-                className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] sm:text-[11px] text-white/30 font-body"
+                className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/30 font-body"
               >
                 <span>Etapa: <span className="text-white/50">Orçamento</span></span>
                 <span className="text-white/15">·</span>
@@ -128,7 +128,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   {(() => {
                     const { expiresAt, expired } = getValidityInfo(budget.date, budget.validity_days || 30);
                     return (
-                      <p className={`text-[10px] sm:text-[11px] font-body ${expired ? 'text-destructive/80' : 'text-white/40'}`}>
+                      <p className={`text-xs font-body ${expired ? 'text-destructive/80' : 'text-white/40'}`}>
                         {expired
                           ? "Valores e condições deste orçamento expiraram — solicite uma atualização."
                           : `Este orçamento reflete valores e condições válidos até ${formatDateLong(expiresAt)}.`
@@ -154,7 +154,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   ].map((field, i) => (
                     <div key={i} className="px-4 sm:px-5 py-4 sm:py-5 text-center">
                       <field.icon className="h-4 w-4 text-white/30 mx-auto mb-1.5" />
-                      <p className="text-[9px] text-white/35 font-body uppercase tracking-[0.15em] mb-0.5">{field.label}</p>
+                      <p className="text-xs text-white/35 font-body uppercase tracking-[0.15em] mb-0.5">{field.label}</p>
                       <p className="text-sm sm:text-base font-display font-bold text-white truncate">{field.value}</p>
                     </div>
                   ))}
@@ -167,8 +167,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                       <div key={i} className="flex items-center gap-2 min-w-0">
                         <item.icon className="h-3 w-3 text-white/25 flex-shrink-0" />
                         <div className="flex items-center gap-1 min-w-0">
-                          <span className="text-[9px] text-white/30 font-body uppercase tracking-wider flex-shrink-0">{item.label}</span>
-                          <span className="text-[11px] font-display font-semibold text-white/80 truncate">{item.value}</span>
+                          <span className="text-xs text-white/30 font-body uppercase tracking-wider flex-shrink-0">{item.label}</span>
+                          <span className="text-xs font-display font-semibold text-white/80 truncate">{item.value}</span>
                         </div>
                       </div>
                     ))}

@@ -79,7 +79,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
             <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 sm:px-5 sm:pb-4">
               <h2 className="font-display text-base sm:text-lg font-bold text-white leading-tight">{section.title}</h2>
               {section.subtitle && (
-                <p className="text-white/70 text-[11px] sm:text-xs mt-0.5 font-body line-clamp-1">{section.subtitle}</p>
+                <p className="text-white/70 text-xs mt-0.5 font-body line-clamp-1">{section.subtitle}</p>
               )}
             </div>
           </div>
@@ -92,7 +92,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
               <div className="min-w-0">
                 <h2 className="font-display text-base sm:text-lg font-bold text-foreground leading-tight">{section.title}</h2>
                 {section.subtitle && (
-                  <p className="text-muted-foreground text-[11px] sm:text-xs mt-0.5 font-body line-clamp-1">{section.subtitle}</p>
+                  <p className="text-muted-foreground text-xs mt-0.5 font-body line-clamp-1">{section.subtitle}</p>
                 )}
               </div>
             </div>
@@ -101,7 +101,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
 
         {/* Subtotal strip */}
         <div className="px-4 sm:px-5 py-2.5 border-b border-border bg-muted/30 flex items-center justify-between">
-          <span className="text-[11px] sm:text-xs text-muted-foreground font-body">
+          <span className="text-xs text-muted-foreground font-body">
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}Subtotal
           </span>
           <span className="font-display font-bold text-sm sm:text-base text-primary">{formatBRL(subtotal)}</span>
@@ -168,7 +168,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
                           )}
                         </div>
                         {showItemQty && item.qty && (
-                          <p className="text-[10px] text-muted-foreground font-body">
+                          <p className="text-xs text-muted-foreground font-body">
                             {item.qty} {item.unit || 'un'}
                           </p>
                         )}
@@ -204,12 +204,12 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
             <div className="mt-3 pt-3 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-3">
               {included.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-semibold text-success uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
+                  <h4 className="text-xs font-semibold text-success uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
                     <Check className="h-3 w-3" /> Incluso
                   </h4>
                   <ul className="space-y-1">
                     {included.map((b: string, i: number) => (
-                      <li key={i} className="text-[11px] sm:text-xs text-foreground/80 font-body flex items-start gap-1.5">
+                      <li key={i} className="text-xs text-foreground/80 font-body flex items-start gap-1.5">
                         <Check className="h-3 w-3 text-success mt-0.5 flex-shrink-0" />
                         {b}
                       </li>
@@ -219,12 +219,12 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
               )}
               {excluded.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
+                  <h4 className="text-xs font-semibold text-destructive uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
                     <X className="h-3 w-3" /> Não incluso
                   </h4>
                   <ul className="space-y-1">
                     {excluded.map((b: string, i: number) => (
-                      <li key={i} className="text-[11px] sm:text-xs text-foreground/60 font-body flex items-start gap-1.5">
+                      <li key={i} className="text-xs text-foreground/60 font-body flex items-start gap-1.5">
                         <X className="h-3 w-3 text-destructive/60 mt-0.5 flex-shrink-0" />
                         {b}
                       </li>
@@ -236,7 +236,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
           )}
 
           {section.notes && (
-            <p className="mt-3 pt-2.5 border-t border-border text-[10px] sm:text-[11px] text-muted-foreground font-body italic">
+            <p className="mt-3 pt-2.5 border-t border-border text-xs text-muted-foreground font-body italic">
               {section.notes}
             </p>
           )}

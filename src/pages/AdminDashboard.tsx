@@ -174,7 +174,7 @@ export default function AdminDashboard() {
               >
                 <Bell className="h-4 w-4" />
                 {notifications.filter(n => !n.read).length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
                     {notifications.filter(n => !n.read).length}
                   </span>
                 )}
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
                           <div key={n.id} className={`p-3 border-b border-border last:border-0 ${!n.read ? 'bg-primary/5' : ''}`}>
                             <p className="text-sm font-body font-medium text-foreground">{n.title}</p>
                             <p className="text-xs text-muted-foreground font-body mt-0.5">{n.message}</p>
-                            <p className="text-[10px] text-muted-foreground font-body mt-1">{formatDate(n.created_at)}</p>
+                            <p className="text-xs text-muted-foreground font-body mt-1">{formatDate(n.created_at)}</p>
                           </div>
                         ))
                       )}

@@ -97,7 +97,7 @@ export function ArquitetonicoExpander() {
 
           {/* Gallery tabs */}
           <div className="space-y-3">
-            <p className="text-[10px] sm:text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
+            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
               Exemplo de entrega real
             </p>
             <div className="flex gap-2">
@@ -138,7 +138,7 @@ export function ArquitetonicoExpander() {
                         <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
                           <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                         </div>
-                        <span className="absolute bottom-1.5 left-1.5 right-1.5 text-[9px] sm:text-[10px] font-body text-white bg-foreground/60 backdrop-blur-sm rounded px-2 py-0.5 sm:py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
+                        <span className="absolute bottom-1.5 left-1.5 right-1.5 text-xs font-body text-white bg-foreground/60 backdrop-blur-sm rounded px-2 py-0.5 sm:py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
                           {img.alt}
                         </span>
                       </button>

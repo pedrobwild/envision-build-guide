@@ -53,7 +53,7 @@ export function PortalShowcase() {
                 className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-transparent hover:border-primary/10 transition-colors"
               >
                 <f.icon className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                <span className="text-[11px] sm:text-xs font-body text-foreground">{f.text}</span>
+                <span className="text-xs font-body text-foreground">{f.text}</span>
               </motion.div>
             ))}
           </div>
@@ -68,7 +68,7 @@ export function PortalShowcase() {
             Ver demonstração do portal
           </Button>
 
-          <p className="text-[10px] text-muted-foreground font-body text-center">
+          <p className="text-xs text-muted-foreground font-body text-center">
             Sistema web e mobile disponível durante toda a obra.
           </p>
         </CardContent>

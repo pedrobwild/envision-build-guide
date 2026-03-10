@@ -190,7 +190,7 @@ export default function PublicBudget() {
             {/* Section label */}
             {filteredSections.filter((s: any) => !s.title?.toLowerCase().includes("projetos")).length > 0 && (
               <div className="pt-2 pb-1">
-                <p className="text-[10px] sm:text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
+                <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
                   Escopo técnico detalhado
                 </p>
               </div>
@@ -300,7 +300,7 @@ export default function PublicBudget() {
             <div className="relative z-50">
               <button
                 onClick={() => setShowMobileSummary(true)}
-                className="w-full text-center text-[11px] text-muted-foreground py-1.5 bg-card border-t border-border font-body hover:text-foreground transition-colors flex items-center justify-center gap-1"
+                className="w-full text-center text-xs text-muted-foreground py-1.5 bg-card border-t border-border font-body hover:text-foreground transition-colors flex items-center justify-center gap-1"
               >
                 <ChevronUp className="h-3 w-3" />
                 Ver detalhes do orçamento
@@ -309,9 +309,9 @@ export default function PublicBudget() {
                 <div className="flex flex-col">
                   <span className="font-display font-bold text-white text-base">{formatBRL(total)}</span>
                   {validity.expired ? (
-                    <span className="text-[10px] text-destructive/80 font-body">Proposta expirada</span>
+                    <span className="text-xs text-destructive/80 font-body">Proposta expirada</span>
                   ) : (
-                    <span className="text-[10px] text-white/50 font-body">
+                    <span className="text-xs text-white/50 font-body">
                       Válido por mais {validity.daysLeft} {validity.daysLeft === 1 ? 'dia' : 'dias'}
                     </span>
                   )}
@@ -356,7 +356,7 @@ export default function PublicBudget() {
             transition={{ duration: 0.5 }}
             className="mt-4 sm:mt-6 mb-28 lg:mb-8 p-4 rounded-lg bg-muted/50 border border-border"
           >
-            <p className="text-[11px] sm:text-xs text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>
+            <p className="text-xs text-muted-foreground font-body leading-relaxed">{budget.disclaimer}</p>
           </motion.div>
         )}
       </main>
