@@ -148,6 +148,7 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
           </p>
         </div>
       )}
+      </div>
     </motion.div>
   );
 }

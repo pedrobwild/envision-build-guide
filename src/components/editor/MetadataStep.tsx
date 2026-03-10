@@ -1,4 +1,4 @@
-import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, ArrowRight } from "lucide-react";
+import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, ArrowRight, Timer } from "lucide-react";
 
 interface MetadataStepProps {
   budget: any;
@@ -13,6 +13,7 @@ const FIELDS = [
   { key: "metragem", label: "Metragem", placeholder: "Ex: 120m²", icon: Ruler },
   { key: "date", label: "Data de elaboração", placeholder: "AAAA-MM-DD", icon: Calendar, type: "date" },
   { key: "versao", label: "Versão", placeholder: "Ex: 1.0", icon: Hash },
+  { key: "validity_days", label: "Validade (dias)", placeholder: "30", icon: Timer, type: "number" },
   { key: "consultora_comercial", label: "Consultora Comercial", placeholder: "Nome da vendedora", icon: UserCheck },
   { key: "email_comercial", label: "E-mail Comercial", placeholder: "email@exemplo.com", icon: Mail, type: "email" },
 ];
