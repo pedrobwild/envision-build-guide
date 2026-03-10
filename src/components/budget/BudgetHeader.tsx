@@ -167,8 +167,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                       <div key={i} className="flex items-center gap-2 min-w-0">
                         <item.icon className="h-3 w-3 text-white/25 flex-shrink-0" />
                         <div className="flex items-center gap-1 min-w-0">
-                          <span className="text-[9px] text-white/30 font-body uppercase tracking-wider flex-shrink-0">{item.label}</span>
-                          <span className="text-[11px] font-display font-semibold text-white/80 truncate">{item.value}</span>
+                          <span className="text-xs text-white/30 font-body uppercase tracking-wider flex-shrink-0">{item.label}</span>
+                          <span className="text-xs font-display font-semibold text-white/80 truncate">{item.value}</span>
                         </div>
                       </div>
                     ))}

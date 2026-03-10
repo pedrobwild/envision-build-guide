@@ -60,7 +60,7 @@ export function EngenhariaExpander() {
           <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
           <div className="flex flex-wrap gap-1.5">
             {chips.map((c) => (
-              <Badge key={c} variant="secondary" className="text-[10px] sm:text-xs font-body bg-destructive/5 text-destructive/80 border-destructive/10">
+              <Badge key={c} variant="secondary" className="text-xs font-body bg-destructive/5 text-destructive/80 border-destructive/10">
                 {c}
               </Badge>
             ))}

@@ -46,7 +46,7 @@ export function NextSteps() {
           ))}
         </div>
 
-        <p className="text-[10px] text-muted-foreground font-body italic text-center pt-1">
+        <p className="text-xs text-muted-foreground font-body italic text-center pt-1">
           Canal direto com engenheiro e gerente de relacionamento durante todo o processo.
         </p>
       </CardContent>

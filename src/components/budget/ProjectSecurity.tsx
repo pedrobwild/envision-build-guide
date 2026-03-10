@@ -85,7 +85,7 @@ export function ProjectSecurity() {
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {deliveryBullets.map((b) => (
-              <span key={b} className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-body text-muted-foreground">
+              <span key={b} className="flex items-center gap-1.5 text-xs font-body text-muted-foreground">
                 <CheckCircle2 className="h-3 w-3 text-primary flex-shrink-0" />
                 {b}
               </span>
