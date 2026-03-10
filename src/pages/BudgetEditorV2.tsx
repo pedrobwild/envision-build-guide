@@ -9,6 +9,7 @@ import { RoomDrawingStep, type Room } from "@/components/editor/RoomDrawingStep"
 import { SpreadsheetImportStep, type ParsedPackage } from "@/components/editor/SpreadsheetImportStep";
 import { CoverageMappingStep } from "@/components/editor/CoverageMappingStep";
 import { MetadataStep } from "@/components/editor/MetadataStep";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -200,7 +201,7 @@ export default function BudgetEditorV2() {
 
       setBudget({ ...budget, status: "published", public_id: publicId });
       completeStep("coverage");
-      const publicUrl = `${window.location.origin}/o/${publicId}`;
+      const publicUrl = getPublicBudgetUrl(publicId);
       toast.success("Orçamento publicado com sucesso!", {
         description: "O link público foi copiado para a área de transferência.",
         duration: 5000,
@@ -277,7 +278,7 @@ export default function BudgetEditorV2() {
             )}
             {budget.public_id && (
               <button
-                onClick={() => navigator.clipboard.writeText(`${window.location.origin}/o/${budget.public_id}`)}
+                onClick={() => navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!))}
                 className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
                 title="Copiar link público"
               >

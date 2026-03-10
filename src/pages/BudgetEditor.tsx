@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/formatBRL";
 import { calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import {
   Plus, Trash2, GripVertical, Save, ExternalLink, ArrowLeft,
   ChevronDown, ChevronUp, ImageIcon, Copy
@@ -225,7 +226,7 @@ export default function BudgetEditor() {
             </button>
             {budget.public_id && (
               <button
-                onClick={() => navigator.clipboard.writeText(`${window.location.origin}/o/${budget.public_id}`)}
+                onClick={() => navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!))}
                 className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
                 title="Copiar link público"
               >

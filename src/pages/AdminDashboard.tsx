@@ -11,6 +11,7 @@ import {
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { toast } from "sonner";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import logoDark from "@/assets/logo-bwild-dark.png";
 import logoWhite from "@/assets/logo-bwild-white.png";
 
@@ -334,7 +335,7 @@ export default function AdminDashboard() {
                         </button>
                         <button
                           onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/o/${budget.public_id}`);
+                            navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
                             toast.success("Link copiado!");
                           }}
                           className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
