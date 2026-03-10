@@ -38,6 +38,14 @@ export default function PublicBudget() {
   const viewTracked = useRef(false);
 
   useEffect(() => {
+    if (budget) {
+      document.title = budget.project_name
+        ? `${budget.project_name} — Orçamento Bwild`
+        : 'Bwild — Orçamento de Reforma';
+    }
+  }, [budget]);
+
+  useEffect(() => {
     if (publicId === 'demo') {
       setBudget(demoBudget);
       setLoading(false);
