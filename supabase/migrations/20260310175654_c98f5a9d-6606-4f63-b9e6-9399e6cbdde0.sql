@@ -1,0 +1,2 @@
+ALTER TABLE public.budgets ADD COLUMN IF NOT EXISTS lead_email text DEFAULT NULL;
+ALTER TABLE public.budgets ADD COLUMN IF NOT EXISTS lead_name text DEFAULT NULL;
