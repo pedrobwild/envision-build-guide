@@ -9,6 +9,8 @@ interface BudgetSummaryProps {
   adjustments: any[];
   total: number;
   generatedAt: string;
+  budgetDate?: string | null;
+  validityDays?: number;
 }
 
 function getSectionTooltip(title: string): string {
