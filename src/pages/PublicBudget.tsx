@@ -190,7 +190,7 @@ export default function PublicBudget() {
             {/* Section label */}
             {filteredSections.filter((s: any) => !s.title?.toLowerCase().includes("projetos")).length > 0 && (
               <div className="pt-2 pb-1">
-                <p className="text-[10px] sm:text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
+                <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
                   Escopo técnico detalhado
                 </p>
               </div>

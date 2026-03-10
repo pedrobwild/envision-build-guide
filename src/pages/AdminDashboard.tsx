@@ -194,7 +194,7 @@ export default function AdminDashboard() {
                           <div key={n.id} className={`p-3 border-b border-border last:border-0 ${!n.read ? 'bg-primary/5' : ''}`}>
                             <p className="text-sm font-body font-medium text-foreground">{n.title}</p>
                             <p className="text-xs text-muted-foreground font-body mt-0.5">{n.message}</p>
-                            <p className="text-[10px] text-muted-foreground font-body mt-1">{formatDate(n.created_at)}</p>
+                            <p className="text-xs text-muted-foreground font-body mt-1">{formatDate(n.created_at)}</p>
                           </div>
                         ))
                       )}

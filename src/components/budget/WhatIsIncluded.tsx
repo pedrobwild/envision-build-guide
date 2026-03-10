@@ -52,7 +52,7 @@ export function WhatIsIncluded() {
                 <p className="text-xs text-muted-foreground font-body leading-relaxed">{item.desc}</p>
               </div>
             </div>
-            <Badge variant="secondary" className="text-[10px] font-body">
+            <Badge variant="secondary" className="text-xs font-body">
               Por que isso importa: {item.badge}
             </Badge>
           </motion.div>

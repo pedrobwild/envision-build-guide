@@ -68,7 +68,7 @@ export function PortalShowcase() {
             Ver demonstração do portal
           </Button>
 
-          <p className="text-[10px] text-muted-foreground font-body text-center">
+          <p className="text-xs text-muted-foreground font-body text-center">
             Sistema web e mobile disponível durante toda a obra.
           </p>
         </CardContent>

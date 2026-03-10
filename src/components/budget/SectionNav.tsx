@@ -107,7 +107,7 @@ export function SectionNav({ sections }: SectionNavProps) {
                         )}>
                           {s.title}
                         </p>
-                        <p className="text-[11px] text-muted-foreground font-body">
+                        <p className="text-xs text-muted-foreground font-body">
                           {formatBRL(subtotal)}
                         </p>
                       </div>

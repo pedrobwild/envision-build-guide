@@ -236,7 +236,7 @@ export function SectionCard({ section, compact, showItemQty, highlightZone }: Se
           )}
 
           {section.notes && (
-            <p className="mt-3 pt-2.5 border-t border-border text-[10px] sm:text-[11px] text-muted-foreground font-body italic">
+            <p className="mt-3 pt-2.5 border-t border-border text-xs text-muted-foreground font-body italic">
               {section.notes}
             </p>
           )}
