@@ -47,7 +47,7 @@ export function EngenhariaExpander() {
               <b.icon className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
               <div>
                 <span className="text-xs font-display font-semibold text-foreground block">{b.highlight}</span>
-                <span className="text-[11px] text-muted-foreground font-body">{b.text}</span>
+                <span className="text-xs text-muted-foreground font-body">{b.text}</span>
               </div>
             </motion.div>
           ))}
