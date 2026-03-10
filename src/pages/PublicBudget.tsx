@@ -311,7 +311,7 @@ export default function PublicBudget() {
                   {validity.expired ? (
                     <span className="text-xs text-destructive/80 font-body">Proposta expirada</span>
                   ) : (
-                    <span className="text-[10px] text-white/50 font-body">
+                    <span className="text-xs text-white/50 font-body">
                       Válido por mais {validity.daysLeft} {validity.daysLeft === 1 ? 'dia' : 'dias'}
                     </span>
                   )}
