@@ -12,7 +12,7 @@ import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
 import { AnimatedSection } from "@/components/budget/AnimatedSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { demoBudget } from "@/lib/demo-budget-data";
-import { exportBudgetPdf } from "@/lib/pdf-export";
+
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
