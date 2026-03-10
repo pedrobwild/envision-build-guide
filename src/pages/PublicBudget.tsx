@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
+import { ROISimulator } from "@/components/budget/ROISimulator";
 import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
 import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
@@ -250,6 +251,7 @@ export default function PublicBudget() {
                 validityDays={budget.validity_days || 30}
               />
               <InstallmentSimulator total={total} />
+              <ROISimulator total={total} />
               <ApprovalCTA
                 budgetId={budget.id}
                 publicId={publicId || "demo"}
@@ -304,6 +306,7 @@ export default function PublicBudget() {
                     validityDays={budget.validity_days || 30}
                   />
                   <InstallmentSimulator total={total} />
+                  <ROISimulator total={total} />
                   <ApprovalCTA
                     budgetId={budget.id}
                     publicId={publicId || "demo"}
