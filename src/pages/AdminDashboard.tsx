@@ -334,7 +334,7 @@ export default function AdminDashboard() {
                         </button>
                         <button
                           onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/o/${budget.public_id}`);
+                            navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
                             toast.success("Link copiado!");
                           }}
                           className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"

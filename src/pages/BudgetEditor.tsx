@@ -225,7 +225,7 @@ export default function BudgetEditor() {
             </button>
             {budget.public_id && (
               <button
-                onClick={() => navigator.clipboard.writeText(`${window.location.origin}/o/${budget.public_id}`)}
+                onClick={() => navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!))}
                 className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
                 title="Copiar link público"
               >
