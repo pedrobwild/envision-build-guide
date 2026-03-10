@@ -80,7 +80,7 @@ export function ProjectSecurity() {
         {/* Delivery callout */}
         <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 space-y-2">
           <p className="font-display font-semibold text-xs text-foreground">Entrega e garantia</p>
-          <p className="text-[10px] text-muted-foreground font-body">
+          <p className="text-xs text-muted-foreground font-body">
             Obra finalizada após vistoria e aprovação de todos os detalhes.
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
