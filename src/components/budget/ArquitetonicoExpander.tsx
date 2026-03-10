@@ -29,8 +29,8 @@ const tabs = [
 
 const gallery = {
   "3d": [
-    { src: "/images/exemplo-projeto-3d-1.jpg", alt: "Projeto 3D — Sala e cozinha" },
-    { src: "/images/exemplo-projeto-3d-2.jpg", alt: "Projeto 3D — Dormitório e banheiro" },
+    { src: "/images/exemplo-projeto-3d-1.png", alt: "Projeto 3D — Planta humanizada" },
+    { src: "/images/exemplo-projeto-3d-2.png", alt: "Projeto 3D — Sala e cozinha" },
   ],
   exec: [
     { src: "/images/exemplo-executivo-1.jpg", alt: "Projeto Executivo — Vistas modificações" },
