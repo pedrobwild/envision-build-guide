@@ -3,7 +3,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
-import { formatDate } from "@/lib/formatBRL";
+import { formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
+import { ValidityCountdown } from "@/components/budget/ValidityCountdown";
 
 interface BudgetHeaderProps {
   budget: any;
@@ -117,6 +118,26 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 <span className="text-white/15">·</span>
                 <span>Início: <span className="text-white/50">Imediato</span></span>
               </motion.div>
+
+              {/* Validity notice */}
+              {budget.date && (
+                <motion.div
+                  variants={fadeUp} custom={2.5} initial="hidden" animate="visible"
+                  className="mt-3"
+                >
+                  {(() => {
+                    const { expiresAt, expired } = getValidityInfo(budget.date, budget.validity_days || 30);
+                    return (
+                      <p className={`text-[10px] sm:text-[11px] font-body ${expired ? 'text-destructive/80' : 'text-white/40'}`}>
+                        {expired
+                          ? "Valores e condições deste orçamento expiraram — solicite uma atualização."
+                          : `Este orçamento reflete valores e condições válidos até ${formatDateLong(expiresAt)}.`
+                        }
+                      </p>
+                    );
+                  })()}
+                </motion.div>
+              )}
             </div>
 
             {/* Right — Client & Project info card */}

@@ -1,6 +1,6 @@
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
-import { formatBRL, formatDate } from "@/lib/formatBRL";
-import { Shield } from "lucide-react";
+import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
+import { Shield, Clock, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 
@@ -9,6 +9,8 @@ interface BudgetSummaryProps {
   adjustments: any[];
   total: number;
   generatedAt: string;
+  budgetDate?: string | null;
+  validityDays?: number;
 }
 
 function getSectionTooltip(title: string): string {
@@ -21,19 +23,45 @@ function getSectionTooltip(title: string): string {
   return "Clique para ver detalhes desta seção.";
 }
 
-export function BudgetSummary({ sections, adjustments, total, generatedAt }: BudgetSummaryProps) {
+export function BudgetSummary({ sections, adjustments, total, generatedAt, budgetDate, validityDays = 30 }: BudgetSummaryProps) {
   const sectionSubtotals = sections.map((s: any) => ({
     ...s,
     subtotal: calculateSectionSubtotal(s),
   }));
+
+  const validity = budgetDate ? getValidityInfo(budgetDate, validityDays) : null;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="rounded-xl border border-border bg-card overflow-hidden shadow-lg"
+      className="space-y-3"
     >
+      {/* Validity notice */}
+      {validity && (
+        <div className={`rounded-lg p-3 flex items-start gap-2.5 ${
+          validity.expired
+            ? 'bg-destructive/10 border border-destructive/20'
+            : 'bg-warning/10 border border-warning/20'
+        }`}>
+          {validity.expired ? (
+            <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+          ) : (
+            <Clock className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+          )}
+          <p className={`text-xs font-body leading-relaxed ${
+            validity.expired ? 'text-destructive' : 'text-foreground'
+          }`}>
+            {validity.expired
+              ? "Valores e condições expirados — solicite uma atualização."
+              : `Valores válidos até ${formatDateLong(validity.expiresAt)}.`
+            }
+          </p>
+        </div>
+      )}
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-lg">
       {/* Header */}
       <div className="bg-primary px-5 py-3.5">
         <h3 className="font-display font-bold text-sm text-primary-foreground tracking-wide">
@@ -120,6 +148,7 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt }: Bud
           </p>
         </div>
       )}
+      </div>
     </motion.div>
   );
 }

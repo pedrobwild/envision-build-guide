@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicBudget, calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
-import { formatBRL, formatDate } from "@/lib/formatBRL";
+import { formatBRL, formatDate, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { SectionCard } from "@/components/budget/SectionCard";
 import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
@@ -121,6 +121,7 @@ export default function PublicBudget() {
   const adjustments = budget.adjustments || [];
   const rooms = budget.rooms || [];
   const total = calculateBudgetTotal(sections, adjustments);
+  const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
   const filteredSections = sections.filter((s: any) => {
     if (!searchQuery) return true;
@@ -216,6 +217,8 @@ export default function PublicBudget() {
                 adjustments={adjustments}
                 total={total}
                 generatedAt={budget.generated_at}
+                budgetDate={budget.date}
+                validityDays={budget.validity_days || 30}
               />
               <InstallmentSimulator total={total} />
               <ApprovalCTA
@@ -223,6 +226,8 @@ export default function PublicBudget() {
                 publicId={publicId || "demo"}
                 approvedAt={budget.approved_at}
                 approvedByName={budget.approved_by_name}
+                expired={validity.expired}
+                projectName={budget.project_name}
               />
             </div>
           </div>
@@ -266,6 +271,8 @@ export default function PublicBudget() {
                     adjustments={adjustments}
                     total={total}
                     generatedAt={budget.generated_at}
+                    budgetDate={budget.date}
+                    validityDays={budget.validity_days || 30}
                   />
                   <InstallmentSimulator total={total} />
                   <ApprovalCTA
@@ -273,6 +280,8 @@ export default function PublicBudget() {
                     publicId={publicId || "demo"}
                     approvedAt={budget.approved_at}
                     approvedByName={budget.approved_by_name}
+                    expired={validity.expired}
+                    projectName={budget.project_name}
                   />
                 </div>
               </motion.div>
@@ -291,17 +300,36 @@ export default function PublicBudget() {
               <div className="bg-charcoal flex items-center justify-between px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
                 <div className="flex flex-col">
                   <span className="font-display font-bold text-white text-base">{formatBRL(total)}</span>
-                  <span className="text-[10px] text-white/50 font-body">ou 10x de {formatBRL(total / 10)} sem juros</span>
+                  {validity.expired ? (
+                    <span className="text-[10px] text-destructive/80 font-body">Proposta expirada</span>
+                  ) : (
+                    <span className="text-[10px] text-white/50 font-body">
+                      Válido por mais {validity.daysLeft} {validity.daysLeft === 1 ? 'dia' : 'dias'}
+                    </span>
+                  )}
                 </div>
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    document.getElementById("next-steps")?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="px-4 py-2.5 rounded-lg bg-success text-success-foreground font-display font-bold text-xs"
-                >
-                  Iniciar meu projeto
-                </motion.button>
+                {validity.expired && !budget.approved_at ? (
+                  <a
+                    href={`https://wa.me/5511999999999?text=${encodeURIComponent(
+                      `Olá! O orçamento ${budget.project_name || 'do projeto'} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-xs"
+                  >
+                    Solicitar atualização
+                  </a>
+                ) : (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      document.getElementById("next-steps")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="px-4 py-2.5 rounded-lg bg-success text-success-foreground font-display font-bold text-xs"
+                  >
+                    Iniciar meu projeto
+                  </motion.button>
+                )}
               </div>
             </div>
           )}

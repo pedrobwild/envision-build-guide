@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Loader2, PartyPopper, MessageCircle } from "lucide-react";
+import { CheckCircle2, Loader2, PartyPopper, MessageCircle, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -9,11 +9,38 @@ interface ApprovalCTAProps {
   publicId: string;
   approvedAt?: string | null;
   approvedByName?: string | null;
+  expired?: boolean;
+  projectName?: string;
 }
 
-export function ApprovalCTA({ budgetId, publicId, approvedAt, approvedByName }: ApprovalCTAProps) {
+export function ApprovalCTA({ budgetId, publicId, approvedAt, approvedByName, expired, projectName }: ApprovalCTAProps) {
   const [step, setStep] = useState<"idle" | "form" | "loading" | "done">(approvedAt ? "done" : "idle");
   const [name, setName] = useState(approvedByName || "");
+
+  const whatsappUpdateUrl = `https://wa.me/5511999999999?text=${encodeURIComponent(
+    `Olá! O orçamento ${projectName || 'do projeto'} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
+  )}`;
+
+  if (expired && !approvedAt) {
+    return (
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-5 text-center space-y-3">
+        <AlertTriangle className="h-6 w-6 text-destructive mx-auto" />
+        <p className="font-display font-semibold text-foreground text-sm">Orçamento expirado</p>
+        <p className="text-xs text-muted-foreground font-body">
+          Os valores e condições desta proposta não estão mais vigentes. Solicite uma atualização.
+        </p>
+        <a
+          href={whatsappUpdateUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+        >
+          <MessageCircle className="h-4 w-4" />
+          Solicitar atualização
+        </a>
+      </div>
+    );
+  }
 
   const handleApprove = async () => {
     if (!name.trim()) {
