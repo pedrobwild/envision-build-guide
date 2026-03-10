@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { CheckCircle2, ZoomIn } from "lucide-react";
+import { CheckCircle2, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lightbox } from "@/components/budget/Lightbox";
+import useEmblaCarousel from "embla-carousel-react";
 
 type GalleryTab = "3d" | "exec";
 
