@@ -12,7 +12,7 @@ import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
 import { AnimatedSection } from "@/components/budget/AnimatedSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { demoBudget } from "@/lib/demo-budget-data";
-import { exportBudgetPdf } from "@/lib/pdf-export";
+
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
@@ -97,6 +97,7 @@ export default function PublicBudget() {
   const handleExportPdf = async () => {
     setExporting(true);
     try {
+      const { exportBudgetPdf } = await import("@/lib/pdf-export");
       const filename = `${budget.project_name || 'orcamento'}.pdf`;
       await exportBudgetPdf("budget-content", filename);
       toast.success("PDF exportado com sucesso!");
