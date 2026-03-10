@@ -35,6 +35,7 @@ export default function PublicBudget() {
   const [compactMode, setCompactMode] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const [showPrices, setShowPrices] = useState(true);
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
 
