@@ -72,7 +72,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             <div>
               <motion.div
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
-                className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-body uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4"
+                className="inline-flex items-center gap-1.5 text-xs font-body uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4"
               >
                 <span className="w-6 h-px bg-white/30" />
                 Orçamento Bwild
