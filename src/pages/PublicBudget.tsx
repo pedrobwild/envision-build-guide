@@ -184,26 +184,50 @@ export default function PublicBudget() {
               </AnimatedSection>
             )}
 
-            {/* Section label */}
+            {/* PackageProgressBars + Section label */}
             {filteredSections.filter((s: any) => !s.title?.toLowerCase().includes("projetos")).length > 0 && (
-              <div className="pt-2 pb-1">
-                <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
-                  Escopo técnico detalhado
-                </p>
-              </div>
+              <>
+                <PackageProgressBars sections={sections} total={total} />
+                <div className="pt-2 pb-1">
+                  <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-widest">
+                    Escopo técnico detalhado
+                  </p>
+                </div>
+              </>
             )}
 
             {filteredSections
               .filter((section: any) => !section.title?.toLowerCase().includes("projetos"))
-              .map((section: any, idx: number) => (
-              <AnimatedSection key={section.id} id={`section-${section.id}`} index={idx + 1}>
-                <SectionCard
-                  section={section}
-                  compact={compactMode}
-                  showItemQty={budget.show_item_qty}
-                />
-              </AnimatedSection>
-            ))}
+              .map((section: any, idx: number) => {
+                // Visual separators between groups
+                const separator = idx === 5
+                  ? "Acabamentos e materiais"
+                  : idx === 10
+                    ? "Mobiliário e equipamentos"
+                    : null;
+
+                return (
+                  <div key={section.id}>
+                    {separator && (
+                      <div className="flex items-center gap-4 py-3">
+                        <hr className="flex-1 border-muted" />
+                        <span className="text-xs text-muted-foreground font-display uppercase tracking-wider">
+                          {separator}
+                        </span>
+                        <hr className="flex-1 border-muted" />
+                      </div>
+                    )}
+                    <AnimatedSection id={`section-${section.id}`} index={idx + 1}>
+                      <SectionCard
+                        section={section}
+                        compact={compactMode}
+                        showItemQty={budget.show_item_qty}
+                        sectionIndex={idx}
+                      />
+                    </AnimatedSection>
+                  </div>
+                );
+              })}
 
             <AnimatedSection id="project-security" index={99}>
               <ProjectSecurity />
