@@ -46,34 +46,34 @@ export function ArquitetonicoExpander() {
   return (
     <>
       <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5 overflow-hidden">
-        <CardContent className="p-5 sm:p-6 space-y-5">
+        <CardContent className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
           <div>
             <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
               Projeto Arquitetônico Personalizado
             </h3>
-            <p className="text-sm text-muted-foreground font-body mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
               Diferente de modelos padronizados, o projeto da Bwild é desenvolvido exclusivamente para sua unidade.
             </p>
           </div>
 
-          <ul className="space-y-2.5">
+          <ul className="space-y-2 sm:space-y-2.5">
             {bullets.map((b) => (
-              <li key={b} className="flex items-start gap-2.5 text-sm font-body text-foreground">
-                <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <li key={b} className="flex items-start gap-2 sm:gap-2.5 text-xs sm:text-sm font-body text-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 flex-shrink-0" />
                 <span>{b}</span>
               </li>
             ))}
           </ul>
 
-          <div className="rounded-lg border-l-4 border-primary bg-primary/5 px-4 py-3">
-            <p className="text-sm font-body text-foreground leading-relaxed">
+          <div className="rounded-lg border-l-4 border-primary bg-primary/5 px-3 sm:px-4 py-2.5 sm:py-3">
+            <p className="text-xs sm:text-sm font-body text-foreground leading-relaxed">
               Você tem contato direto com a Lorena, sócia e diretora de arquitetura — projeto feito para sua unidade.
             </p>
           </div>
 
           {/* Gallery tabs */}
           <div className="space-y-3">
-            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
+            <p className="text-[10px] sm:text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
               Exemplo de entrega real
             </p>
             <div className="flex gap-2">
@@ -99,7 +99,7 @@ export function ArquitetonicoExpander() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.25 }}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3"
               >
                 {gallery[activeTab].map((img) => (
                   <button
@@ -109,7 +109,7 @@ export function ArquitetonicoExpander() {
                       setLightboxIndex(idx);
                       setLightboxOpen(true);
                     }}
-                    className="group relative rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="group relative rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
                   >
                     <img
                       src={img.src}
@@ -118,9 +118,9 @@ export function ArquitetonicoExpander() {
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-charcoal/0 group-hover:bg-charcoal/30 transition-colors flex items-center justify-center">
-                      <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                      <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                     </div>
-                    <span className="absolute bottom-2 left-2 right-2 text-[10px] font-body text-white bg-charcoal/60 backdrop-blur-sm rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
+                    <span className="absolute bottom-1.5 left-1.5 right-1.5 text-[9px] sm:text-[10px] font-body text-white bg-charcoal/60 backdrop-blur-sm rounded px-2 py-0.5 sm:py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
                       {img.alt}
                     </span>
                   </button>
@@ -131,10 +131,10 @@ export function ArquitetonicoExpander() {
 
           <Accordion type="single" collapsible>
             <AccordionItem value="exec" className="border-border">
-              <AccordionTrigger className="hover:no-underline text-sm font-display font-semibold py-2">
+              <AccordionTrigger className="hover:no-underline text-xs sm:text-sm font-display font-semibold py-2">
                 Saiba mais
               </AccordionTrigger>
-              <AccordionContent className="space-y-3 text-sm font-body text-muted-foreground">
+              <AccordionContent className="space-y-3 text-xs sm:text-sm font-body text-muted-foreground">
                 <p className="font-display font-semibold text-foreground text-xs">
                   Projeto Executivo — o que acontece nesta etapa
                 </p>

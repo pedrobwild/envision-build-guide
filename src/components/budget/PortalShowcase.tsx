@@ -28,35 +28,35 @@ export function PortalShowcase() {
   return (
     <>
       <Card className="border-border overflow-hidden">
-        <CardContent className="p-5 sm:p-6 space-y-5">
+        <CardContent className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
           <div>
             <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
               Acompanhe tudo em tempo real
             </h3>
-            <p className="text-sm text-muted-foreground font-body mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
               Transparência total: documentos, etapas, pagamentos e próximos passos.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
             {features.map((f) => (
-              <div key={f} className="flex items-center gap-2 text-sm font-body text-foreground">
-                <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+              <div key={f} className="flex items-center gap-2 text-xs sm:text-sm font-body text-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
                 <span>{f}</span>
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {placeholders.map((p) => (
               <button
                 key={p}
                 onClick={() => setVideoOpen(true)}
-                className="group relative aspect-video rounded-lg bg-muted/60 border border-border flex items-center justify-center cursor-pointer hover:border-primary/40 hover:bg-muted transition-all"
+                className="group relative aspect-video rounded-lg bg-muted/60 border border-border flex items-center justify-center cursor-pointer hover:border-primary/40 hover:bg-muted transition-all active:scale-95"
               >
-                <span className="text-[11px] text-muted-foreground font-body group-hover:opacity-0 transition-opacity">[{p}]</span>
+                <span className="text-[10px] sm:text-[11px] text-muted-foreground font-body group-hover:opacity-0 transition-opacity">[{p}]</span>
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Play className="h-5 w-5 text-primary" />
+                  <Play className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
               </button>
             ))}
@@ -66,13 +66,13 @@ export function PortalShowcase() {
             variant="outline"
             size="sm"
             onClick={() => setVideoOpen(true)}
-            className="w-full gap-2 font-body"
+            className="w-full gap-2 font-body text-xs sm:text-sm"
           >
-            <Play className="h-4 w-4" />
+            <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Ver demonstração do portal
           </Button>
 
-          <p className="text-xs text-muted-foreground font-body">
+          <p className="text-[10px] sm:text-xs text-muted-foreground font-body">
             Sistema web e mobile disponível durante toda a obra.
           </p>
         </CardContent>
@@ -80,7 +80,7 @@ export function PortalShowcase() {
 
       {/* Video Demo Modal */}
       <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl max-w-[calc(100vw-2rem)]">
           <DialogHeader>
             <DialogTitle className="font-display">Portal do Cliente</DialogTitle>
             <DialogDescription className="font-body">
@@ -88,10 +88,9 @@ export function PortalShowcase() {
             </DialogDescription>
           </DialogHeader>
           <AspectRatio ratio={16 / 9} className="bg-muted rounded-lg overflow-hidden">
-            {/* Replace with <iframe> when a real video URL is available */}
             <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-muted/80 border border-dashed border-border rounded-lg">
-              <Play className="h-12 w-12 text-muted-foreground/50" />
-              <span className="text-sm text-muted-foreground font-body">
+              <Play className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/50" />
+              <span className="text-xs sm:text-sm text-muted-foreground font-body">
                 Vídeo demonstrativo em breve
               </span>
             </div>
