@@ -117,7 +117,7 @@ export const brooklinEmpreendimentos: EmpreendimentoProject[] = [
     empreendimento: "HUB Brooklin by EZ",
     metragem: 25,
     bairro: "Brooklin",
-    fotos: ["/images/projects/studio-1.jpg", "/images/projects/studio-2.jpg", "/images/projects/studio-7.jpg"],
+    fotos: ["/images/projects/hub-ra-1.png", "/images/projects/hub-ra-2.png", "/images/projects/hub-ra-3.png"],
   },
   {
     id: "brk-15",
