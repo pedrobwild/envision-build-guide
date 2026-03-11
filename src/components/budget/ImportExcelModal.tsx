@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -28,21 +28,21 @@ interface ImportExcelModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const EXPECTED_COLUMNS = ["Seção", "Item", "Descrição", "Qtd", "Unidade", "Preço Unit.", "Total"];
+type ImportStep = "upload" | "parsing" | "preview" | "importing" | "done";
 
 export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
-  const [columnMap, setColumnMap] = useState<Record<string, number>>({});
-  const [step, setStep] = useState<"upload" | "preview" | "importing" | "done">("upload");
+  const [parsedMeta, setParsedMeta] = useState<Record<string, string | null>>({});
+  const [step, setStep] = useState<ImportStep>("upload");
   const [error, setError] = useState<string | null>(null);
   const [createdBudgetId, setCreatedBudgetId] = useState<string | null>(null);
 
   const reset = () => {
     setFile(null);
     setParsedRows([]);
-    setColumnMap({});
+    setParsedMeta({});
     setStep("upload");
     setError(null);
     setCreatedBudgetId(null);
@@ -53,10 +53,10 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
     onOpenChange(val);
   };
 
+  // ─── Excel parsing ───
   const detectColumns = (headers: string[]): Record<string, number> => {
     const map: Record<string, number> = {};
     const lower = headers.map((h) => (h || "").toString().trim().toLowerCase());
-
     const patterns: Record<string, string[]> = {
       section: ["seção", "secao", "seçao", "section", "categoria", "ambiente"],
       title: ["item", "título", "titulo", "nome", "descrição curta", "servico", "serviço"],
@@ -66,18 +66,14 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
       unitPrice: ["preço unit", "preco unit", "valor unit", "unit price", "p.u.", "pu"],
       total: ["total", "valor", "subtotal", "valor total", "preço total"],
     };
-
     for (const [key, words] of Object.entries(patterns)) {
       const idx = lower.findIndex((h) => words.some((w) => h.includes(w)));
       if (idx !== -1) map[key] = idx;
     }
-
     return map;
   };
 
-  const handleFile = useCallback((f: File) => {
-    setFile(f);
-    setError(null);
+  const parseExcel = useCallback((f: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -98,8 +94,6 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
           setError("Não foi possível detectar as colunas 'Seção' e 'Item'. Verifique o cabeçalho.");
           return;
         }
-
-        setColumnMap(map);
 
         const rows: ParsedRow[] = json
           .slice(1)
@@ -129,6 +123,106 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
     reader.readAsArrayBuffer(f);
   }, []);
 
+  // ─── PDF parsing (AI-powered) ───
+  const parsePdf = useCallback(async (f: File) => {
+    setStep("parsing");
+    setError(null);
+
+    try {
+      // Extract text from PDF using pdfjs-dist
+      const arrayBuffer = await f.arrayBuffer();
+      const pdfjsLib = await import("pdfjs-dist");
+
+      // Set worker source
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let textContent = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items
+          .map((item: any) => item.str)
+          .join(" ");
+        textContent += pageText + "\n\n";
+      }
+
+      if (!textContent.trim()) {
+        setError("Não foi possível extrair texto do PDF. O arquivo pode ser uma imagem escaneada.");
+        setStep("upload");
+        return;
+      }
+
+      // Send to AI edge function for structured parsing
+      const { data, error: fnError } = await supabase.functions.invoke("parse-budget-pdf", {
+        body: { textContent },
+      });
+
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error);
+
+      // Convert AI response to ParsedRow[]
+      const sections = data.sections || [];
+      const rows: ParsedRow[] = [];
+
+      for (const section of sections) {
+        for (const item of section.items || []) {
+          rows.push({
+            section: section.title || "Geral",
+            title: item.title || "",
+            qty: item.qty ?? undefined,
+            unit: item.unit ?? undefined,
+            total: item.total ?? undefined,
+          });
+        }
+      }
+
+      if (rows.length === 0) {
+        setError("Nenhum item encontrado no PDF.");
+        setStep("upload");
+        return;
+      }
+
+      // Store metadata
+      if (data.meta) {
+        setParsedMeta({
+          clientName: data.meta.clientName || null,
+          projectName: data.meta.projectName || null,
+          area: data.meta.area || null,
+          bairro: data.meta.bairro || null,
+          version: data.meta.version || null,
+          date: data.meta.date || null,
+        });
+      }
+
+      setParsedRows(rows);
+      setStep("preview");
+    } catch (err: any) {
+      console.error("PDF parse error:", err);
+      setError(err?.message || "Erro ao processar o PDF. Tente novamente.");
+      setStep("upload");
+    }
+  }, []);
+
+  // ─── File handler ───
+  const handleFile = useCallback(
+    (f: File) => {
+      setFile(f);
+      setError(null);
+      const ext = f.name.split(".").pop()?.toLowerCase();
+
+      if (ext === "pdf") {
+        parsePdf(f);
+      } else if (ext === "xlsx" || ext === "xls") {
+        parseExcel(f);
+      } else {
+        setError("Formato não suportado. Use .xlsx, .xls ou .pdf");
+      }
+    },
+    [parseExcel, parsePdf]
+  );
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
@@ -138,13 +232,13 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
     [handleFile]
   );
 
+  // ─── Import to database ───
   const handleImport = async () => {
     setStep("importing");
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
-      // Group rows by section
       const sectionMap = new Map<string, ParsedRow[]>();
       parsedRows.forEach((row) => {
         const list = sectionMap.get(row.section) || [];
@@ -152,12 +246,18 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
         sectionMap.set(row.section, list);
       });
 
-      // Create budget
+      const projectName = parsedMeta.clientName
+        ? `Reforma ${parsedMeta.clientName}`
+        : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação";
+
       const { data: budget, error: budgetErr } = await supabase
         .from("budgets")
         .insert({
-          project_name: file?.name.replace(/\.(xlsx|xls)$/i, "") || "Importação Excel",
-          client_name: "Cliente",
+          project_name: parsedMeta.projectName || projectName,
+          client_name: parsedMeta.clientName || "Cliente",
+          metragem: parsedMeta.area || null,
+          bairro: parsedMeta.bairro || null,
+          versao: parsedMeta.version || null,
           created_by: user.id,
         })
         .select()
@@ -167,7 +267,6 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
 
       let sectionIdx = 0;
       for (const [sectionTitle, items] of sectionMap.entries()) {
-        // Calculate section total
         const sectionTotal = items.reduce((s, i) => s + (i.total || 0), 0);
 
         const { data: section, error: secErr } = await supabase
@@ -211,16 +310,19 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
     return acc;
   }, {});
 
+  const isPdf = file?.name.toLowerCase().endsWith(".pdf");
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-display">
-            <FileSpreadsheet className="h-5 w-5 text-primary" />
-            Importar Planilha Excel
+          <DialogTitle className="flex items-center gap-2 font-display pr-8">
+            {isPdf ? <FileText className="h-5 w-5 text-primary" /> : <FileSpreadsheet className="h-5 w-5 text-primary" />}
+            Importar Orçamento
           </DialogTitle>
           <DialogDescription className="font-body">
-            Faça upload de um arquivo .xlsx com colunas: Seção, Item, Qtd, Unidade, Preço Unit., Total.
+            Faça upload de um arquivo <strong>.xlsx</strong> ou <strong>.pdf</strong> com os dados do orçamento.
+            {" "}PDFs são processados com IA para extrair seções e itens automaticamente.
           </DialogDescription>
         </DialogHeader>
 
@@ -233,7 +335,7 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file";
-              input.accept = ".xlsx,.xls";
+              input.accept = ".xlsx,.xls,.pdf";
               input.onchange = (e: any) => {
                 const f = e.target.files?.[0];
                 if (f) handleFile(f);
@@ -245,7 +347,23 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
             <p className="text-sm font-body text-foreground font-medium mb-1">
               Arraste o arquivo aqui ou clique para selecionar
             </p>
-            <p className="text-xs text-muted-foreground font-body">.xlsx ou .xls</p>
+            <p className="text-xs text-muted-foreground font-body">
+              .xlsx, .xls ou .pdf
+            </p>
+          </div>
+        )}
+
+        {/* Step: Parsing PDF with AI */}
+        {step === "parsing" && (
+          <div className="flex flex-col items-center py-10 gap-4">
+            <div className="relative">
+              <Loader2 className="h-10 w-10 text-primary animate-spin" />
+              <Sparkles className="h-4 w-4 text-primary absolute -top-1 -right-1 animate-pulse" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-body text-foreground font-medium">Analisando PDF com IA...</p>
+              <p className="text-xs text-muted-foreground font-body mt-1">Extraindo seções, itens e valores automaticamente</p>
+            </div>
           </div>
         )}
 
@@ -261,10 +379,34 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
         {step === "preview" && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground font-body">
-              <FileSpreadsheet className="h-4 w-4" />
+              {isPdf ? <FileText className="h-4 w-4" /> : <FileSpreadsheet className="h-4 w-4" />}
               <span className="truncate">{file?.name}</span>
-              <span className="ml-auto whitespace-nowrap">{parsedRows.length} itens • {Object.keys(sectionGroups).length} seções</span>
+              {isPdf && <Sparkles className="h-3 w-3 text-primary" />}
+              <span className="ml-auto whitespace-nowrap">
+                {parsedRows.length} itens • {Object.keys(sectionGroups).length} seções
+              </span>
             </div>
+
+            {/* Metadata from PDF */}
+            {parsedMeta.clientName && (
+              <div className="flex flex-wrap gap-2 text-xs font-body">
+                {parsedMeta.clientName && (
+                  <span className="px-2 py-1 rounded-md bg-muted text-foreground">
+                    Cliente: {parsedMeta.clientName}
+                  </span>
+                )}
+                {parsedMeta.area && (
+                  <span className="px-2 py-1 rounded-md bg-muted text-foreground">
+                    Área: {parsedMeta.area}
+                  </span>
+                )}
+                {parsedMeta.bairro && (
+                  <span className="px-2 py-1 rounded-md bg-muted text-foreground">
+                    Bairro: {parsedMeta.bairro}
+                  </span>
+                )}
+              </div>
+            )}
 
             <div className="border border-border rounded-lg overflow-hidden max-h-80 overflow-y-auto">
               <table className="w-full text-xs font-body">
