@@ -66,7 +66,7 @@ export function getCategoryForSection(sectionTitle: string): ScopeCategory {
   for (const cat of SCOPE_CATEGORIES) {
     if (cat.matches.some((m) => lower.includes(m))) return cat;
   }
-  return SCOPE_CATEGORIES[3]; // fallback to complementos
+  return SCOPE_CATEGORIES[SCOPE_CATEGORIES.length - 1]; // fallback to last category
 }
 
 export interface CategorizedGroup {
