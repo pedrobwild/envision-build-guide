@@ -246,7 +246,7 @@ export default function PublicBudget() {
                   </button>
                 </div>
 
-                {categorizedGroups.map((group) => {
+                {categorizedGroups.filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id)).map((group) => {
                   const groupSections = group.sections;
                   return (
                     <div key={group.category.id}>
