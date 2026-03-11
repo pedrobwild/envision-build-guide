@@ -32,7 +32,7 @@ type MediaItem = { src: string; alt: string; type?: "video" | "image" };
 
 const gallery: Record<GalleryTab, MediaItem[]> = {
   "3d": [
-    { src: "/images/Sandra_e_Thiago_Video_3D-2.mp4", alt: "Projeto 3D — Vídeo Tour", type: "video" },
+    { src: "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media/videos/projeto-3d-tour.mp4", alt: "Projeto 3D — Vídeo Tour", type: "video" },
     { src: "/images/exemplo-projeto-3d-1.png", alt: "Projeto 3D — Planta humanizada" },
     { src: "/images/exemplo-projeto-3d-2.png", alt: "Projeto 3D — Sala e cozinha" },
   ],
