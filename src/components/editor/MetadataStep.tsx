@@ -1,4 +1,4 @@
-import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, ArrowRight, Timer } from "lucide-react";
+import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, ArrowRight, Timer, Clock } from "lucide-react";
 
 interface MetadataStepProps {
   budget: any;
