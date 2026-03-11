@@ -47,23 +47,9 @@ export function EngenhariaExpander() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 pt-1">
-          <span className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
-            O que você evita
-          </span>
-          <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
-          <div className="flex flex-wrap gap-1.5">
-            {chips.map((c) => (
-              <Badge key={c} variant="secondary" className="text-xs font-body bg-destructive/5 text-destructive/80 border-destructive/10">
-                {c}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
         <div className="rounded-lg bg-primary/5 border border-primary/10 px-3 py-2.5">
           <p className="text-xs text-foreground font-body italic text-center">
-            "Você contrata um resultado — não um processo."
+            "Você não contrata apenas uma gestão de obra. Contrata segurança, previsibilidade e um resultado à altura do seu investimento."
           </p>
         </div>
       </CardContent>
