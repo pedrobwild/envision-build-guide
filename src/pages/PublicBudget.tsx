@@ -285,7 +285,7 @@ export default function PublicBudget() {
 
             {/* Back to white bg for security/FAQ */}
             <AnimatedSection id="project-security" index={99}>
-              <ProjectSecurity />
+              <ProjectSecurity prazoDiasUteis={budget?.prazo_dias_uteis ?? 55} />
             </AnimatedSection>
 
             <AnimatedSection id="next-steps" index={100}>

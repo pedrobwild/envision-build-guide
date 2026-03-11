@@ -49,7 +49,7 @@ export function ProjectSecurity({ prazoDiasUteis = 55 }: { prazoDiasUteis?: numb
               <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                 <Clock className="h-4.5 w-4.5 text-primary" />
               </div>
-              <span className="text-2xl font-display font-bold text-primary">55</span>
+              <span className="text-2xl font-display font-bold text-primary">{prazoDiasUteis}</span>
               <span className="text-xs text-muted-foreground font-body leading-snug">dias úteis de execução</span>
             </motion.div>
             <motion.div
