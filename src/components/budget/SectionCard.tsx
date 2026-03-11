@@ -209,7 +209,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
           <span className="text-xs text-muted-foreground font-body">
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}Subtotal
           </span>
-          <span className="font-display font-bold text-sm text-primary tabular-nums">{formatBRL(subtotal)}</span>
+          <span className="font-display font-bold text-base text-foreground tabular-nums">{formatBRL(subtotal)}</span>
         </div>
 
         {/* Items — collapsible */}
