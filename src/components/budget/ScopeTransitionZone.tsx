@@ -1,4 +1,3 @@
-import { PackageProgressBars } from "@/components/budget/PackageProgressBars";
 import { motion } from "framer-motion";
 import type { BudgetSection } from "@/types/budget";
 
@@ -24,7 +23,7 @@ export function ScopeTransitionZone({ sections, total }: ScopeTransitionZoneProp
           Tudo o que está incluído no seu investimento
         </p>
       </div>
-      <PackageProgressBars sections={sections} total={total} />
+      
     </motion.div>
   );
 }
