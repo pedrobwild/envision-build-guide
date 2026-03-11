@@ -1,10 +1,11 @@
 import { useRef, useEffect, useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
-import { Shield, Clock, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { Shield, Clock, AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CategoryDistributionBar } from "@/components/budget/CategoryDistributionBar";
+import { CategoryDetailDialog } from "@/components/budget/CategoryDetailDialog";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface BudgetSummaryProps {
