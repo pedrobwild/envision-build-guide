@@ -183,7 +183,6 @@ export default function BudgetEditorV2() {
       await supabase.from("budgets").update({
         status: "published",
         public_id: publicId,
-        floor_plan_url: floorPlanUrl,
       }).eq("id", budgetId);
 
       setBudget({ ...budget, status: "published", public_id: publicId });
