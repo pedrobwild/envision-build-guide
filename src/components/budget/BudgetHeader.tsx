@@ -213,7 +213,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   {neighborhood && (
                     <>
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="text-white/40 text-xs uppercase tracking-wide font-medium">Obra</span>
+                        <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Obra</span>
                         <span className="text-white/90 font-semibold">{neighborhood}</span>
                       </span>
                       {(area || version || dateStr) && <span className="text-white/20 text-xs">|</span>}
