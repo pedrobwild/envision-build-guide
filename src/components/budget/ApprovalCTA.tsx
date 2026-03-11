@@ -21,7 +21,7 @@ interface ApprovalCTAProps {
   clientName?: string;
 }
 
-const DEFAULT_PHONE = "5511999999999";
+const DEFAULT_PHONE = "5511911906183";
 
 export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientName }: ApprovalCTAProps) {
   const [saveOpen, setSaveOpen] = useState(false);
