@@ -224,62 +224,7 @@ export default function PublicBudget() {
 
             {/* WhatIsIncluded oculto temporariamente */}
 
-            {/* === TRANSITION ZONE === */}
-            {filteredSections.length > 0 && (
-              <AnimatedSection id="scope-transition" index={0.95}>
-                <ScopeTransitionZone sections={filteredSections} total={scopeTotal} />
-              </AnimatedSection>
-            )}
-
-            {/* === TECHNICAL SCOPE — categorized === */}
-            {filteredSections.length > 0 && (
-              <div className="bg-muted/[0.03] rounded-xl">
-                {/* Price toggle */}
-                <div className="pt-2 pb-1 flex items-center justify-end">
-                  <button
-                    onClick={() => setShowPrices(!showPrices)}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors min-h-[44px] px-2"
-                  >
-                    {showPrices ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                    {showPrices ? "Ocultar valores" : "Mostrar valores"}
-                  </button>
-                </div>
-
-                {categorizedGroups.map((group) => {
-                  const groupSections = group.sections;
-                  return (
-                    <div key={group.category.id}>
-                      <CategoryHeader category={group.category} subtotal={group.subtotal} />
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3">
-                        {groupSections.map((section) => {
-                          const subtotal = calculateSectionSubtotal(section);
-                          const isLarge = subtotal > 5000;
-                          const currentIdx = globalSectionIdx++;
-
-                          return (
-                            <div
-                              key={section.id}
-                              className={isLarge ? "lg:col-span-2" : "lg:col-span-1"}
-                            >
-                              <AnimatedSection id={`section-${section.id}`} index={currentIdx + 1}>
-                                <SectionCard
-                                  section={section}
-                                  compact={false}
-                                  showItemQty={budget.show_item_qty ?? true}
-                                  showItemPrices={showPrices}
-                                  sectionIndex={currentIdx}
-                                  categoryColor={group.category}
-                                />
-                              </AnimatedSection>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {/* Escopo Técnico Detalhado oculto temporariamente */}
 
             {/* Back to white bg for security/FAQ */}
             <AnimatedSection id="project-security" index={99}>
