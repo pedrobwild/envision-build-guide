@@ -1,27 +1,20 @@
 import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { CheckCircle2, ZoomIn, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { Pencil, Palette, FileCheck, FileText, Headset, Lightbulb, ZoomIn, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { Lightbox } from "@/components/budget/Lightbox";
 import useEmblaCarousel from "embla-carousel-react";
 import ReactPlayer from "react-player";
+import { motion } from "framer-motion";
 
 type GalleryTab = "3d" | "exec";
 
 const bullets = [
-  "Consultoria: Nosso time irá sugerir a melhor composição de projeto para que seu objetivo com a reforma seja alcançado",
-  "Projeto 3D: Apresentado levando em consideração a sua visão, preferências e objetivos com o projeto, incluindo revisões",
-  "Personalização: Escolha cores e disposições da pintura e marcenaria que melhor te atendem",
-  "Projeto Executivo: Modelo ultra detalhado que guia minuciosamente a execução do projeto, à prova de falhas estruturais",
-  "Documentação e Burocracia: Cuidamos de toda a interface necessária com o CREA para emissão da ART e posteriormente liberação da obra com o condomínio da sua unidade",
-  "Acompanhamento Técnico: O arquiteto acompanhará todo o andamento da obra junto do engenheiro responsável",
-];
-
-const executiveDetails = [
-  "Plantas detalhadas com dimensões exatas",
-  "Projeto elétrico e hidráulico",
-  "Especificações de materiais e acabamentos",
-  "Detalhamento de marcenaria e mobiliário sob medida",
+  { icon: Lightbulb, highlight: "Consultoria", text: "Nosso time sugere a melhor composição de projeto para que seu objetivo com a reforma seja alcançado." },
+  { icon: Pencil, highlight: "Projeto 3D", text: "Apresentado levando em consideração sua visão, preferências e objetivos, incluindo revisões." },
+  { icon: Palette, highlight: "Personalização", text: "Escolha cores e disposições da pintura e marcenaria que melhor te atendem." },
+  { icon: FileCheck, highlight: "Projeto Executivo", text: "Modelo ultra detalhado que guia minuciosamente a execução do projeto, à prova de falhas estruturais." },
+  { icon: FileText, highlight: "Documentação e Burocracia", text: "Cuidamos de toda a interface com o CREA para emissão da ART e liberação da obra com o condomínio." },
+  { icon: Headset, highlight: "Acompanhamento Técnico", text: "O arquiteto acompanhará todo o andamento da obra junto do engenheiro responsável." },
 ];
 
 const tabs = [
@@ -62,7 +55,6 @@ export function ArquitetonicoExpander() {
     return () => { emblaApi.off("select", onSelect); };
   }, [emblaApi, onSelect]);
 
-  // Reset carousel when tab changes
   useEffect(() => {
     if (!emblaApi) return;
     setCurrentSlide(0);
@@ -75,28 +67,44 @@ export function ArquitetonicoExpander() {
   return (
     <>
       <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5 overflow-hidden">
-        <CardContent className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
-          <div>
-            <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-              Projeto Arquitetônico Personalizado
-            </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
-              Diferente de modelos padronizados que o mercado pratica, o seu projeto da Bwild é único e desenvolvido exclusivamente para sua unidade, não haverá nenhum outro projeto igual ao seu!
-            </p>
+        <CardContent className="p-4 sm:p-5 md:p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Pencil className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
+                Projeto Arquitetônico Personalizado
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5">
+                Diferente de modelos padronizados, o seu projeto da Bwild é único e desenvolvido exclusivamente para sua unidade.
+              </p>
+            </div>
           </div>
 
-          <ul className="space-y-2 sm:space-y-2.5">
-            {bullets.map((b) => (
-              <li key={b} className="flex items-start gap-2 sm:gap-2.5 text-xs sm:text-sm font-body text-foreground">
-                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>{b}</span>
-              </li>
+          {/* Card grid — same pattern as EngenhariaExpander */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {bullets.map((b, i) => (
+              <motion.div
+                key={b.highlight}
+                initial={{ opacity: 0, x: -8 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05, duration: 0.3 }}
+                className="flex items-start gap-2.5 p-2.5 rounded-lg bg-muted/30"
+              >
+                <b.icon className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="text-xs font-display font-semibold text-foreground block">{b.highlight}</span>
+                  <span className="text-xs text-muted-foreground font-body">{b.text}</span>
+                </div>
+              </motion.div>
             ))}
-          </ul>
+          </div>
 
-          <div className="rounded-lg border-l-4 border-primary bg-primary/5 px-3 sm:px-4 py-2.5 sm:py-3">
-            <p className="text-xs sm:text-sm font-body text-foreground leading-relaxed">
-              Você tem contato direto com a Lorena, sócia e diretora de arquitetura — projeto feito para sua unidade.
+          <div className="rounded-lg bg-primary/5 border border-primary/10 px-3 py-2.5">
+            <p className="text-xs text-foreground font-body italic text-center">
+              "Você tem contato direto com a Lorena, sócia e diretora de arquitetura — projeto feito para sua unidade."
             </p>
           </div>
 
@@ -122,10 +130,9 @@ export function ArquitetonicoExpander() {
             </div>
 
             <div className="relative">
-              {/* Carousel */}
               <div ref={emblaRef} className="overflow-hidden rounded-lg">
                 <div className="flex">
-                  {images.map((img, idx) => (
+                  {images.map((img) => (
                     <div key={img.src} className="min-w-0 shrink-0 grow-0 basis-full">
                       {img.type === "video" ? (
                         <div className="relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10]">
@@ -170,7 +177,6 @@ export function ArquitetonicoExpander() {
                 </div>
               </div>
 
-              {/* Nav arrows */}
               {images.length > 1 && (
                 <>
                   <button
@@ -190,7 +196,6 @@ export function ArquitetonicoExpander() {
                 </>
               )}
 
-              {/* Dots */}
               {images.length > 1 && (
                 <div className="flex justify-center gap-1.5 mt-2">
                   {images.map((_, idx) => (
@@ -209,35 +214,6 @@ export function ArquitetonicoExpander() {
               )}
             </div>
           </div>
-
-          <Accordion type="single" collapsible>
-            <AccordionItem value="exec" className="border-border">
-              <AccordionTrigger className="hover:no-underline text-xs sm:text-sm font-display font-semibold py-2">
-                Saiba mais
-              </AccordionTrigger>
-              <AccordionContent className="space-y-3 text-xs sm:text-sm font-body text-muted-foreground">
-                <p className="font-display font-semibold text-foreground text-xs">
-                  Projeto Executivo — o que acontece nesta etapa
-                </p>
-                <p>
-                  Nossa equipe de engenharia desenvolve o conjunto completo de documentos técnicos para execução com precisão.
-                </p>
-                <ul className="space-y-1.5 pl-1">
-                  {executiveDetails.map((d) => (
-                    <li key={d} className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">•</span>
-                      <span>{d}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="rounded-md bg-muted/50 px-3 py-2 mt-2">
-                  <p className="text-xs text-muted-foreground italic">
-                    Menos improviso, menos retrabalho, mais previsibilidade.
-                  </p>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </CardContent>
       </Card>
 
