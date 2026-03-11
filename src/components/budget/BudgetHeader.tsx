@@ -186,7 +186,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 variants={fadeUp} custom={2} initial="hidden" animate="visible"
                 className="mt-2 flex items-center gap-2 text-xs text-white/60 font-body"
               >
-                <span>Etapa: <span className="text-white/80">Orçamento</span></span>
+                <span className="hidden" />
                 {!cfg.hide_validity && validityLabel && (
                   <>
                     <span className="text-white/30">·</span>
