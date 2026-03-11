@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MapPin, ArrowLeft, MessageCircle } from "lucide-react";
+import { MapPin, ArrowLeft, MessageCircle, ChevronLeft, ChevronRight, Camera, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import useEmblaCarousel from "embla-carousel-react";
+import { cn } from "@/lib/utils";
+import { groupByEmpreendimento, type EmpreendimentoGroup } from "@/data/brooklin-projects";
 
 /* ── Data ── */
 type Neighborhood = {
@@ -238,7 +241,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
             <MapFallback height="600px" />
           )}
         </div>
-        <div className="flex-[2] md:max-h-[600px]" ref={panelRef}>
+        <div className="flex-[2] md:max-h-[600px] overflow-y-auto" ref={panelRef}>
           {selectedData ? (
             <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} whatsappUrl={whatsappUrl} />
           ) : (
@@ -322,35 +325,51 @@ function NeighborhoodDetail({
   onBack: () => void;
   whatsappUrl: string;
 }) {
+  const empreendimentos = groupByEmpreendimento(data.name);
+
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 h-full flex flex-col">
+    <div className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-4">
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground font-body mb-4 transition-colors min-h-[44px] self-start"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground font-body transition-colors min-h-[44px] self-start"
       >
         <ArrowLeft className="h-4 w-4" />
         Voltar
       </button>
 
-      <h3 className="text-xl font-display font-bold text-foreground">{data.name}</h3>
-      <Badge className="mt-1 mb-5 self-start bg-primary text-primary-foreground text-xs">
-        {data.count} {data.count === 1 ? "projeto entregue" : "projetos entregues"}
-      </Badge>
+      <div>
+        <h3 className="text-xl font-display font-bold text-foreground">{data.name}</h3>
+        <Badge className="mt-1 bg-primary text-primary-foreground text-xs">
+          {data.count} {data.count === 1 ? "projeto entregue" : "projetos entregues"}
+        </Badge>
+      </div>
 
-      <div className="flex gap-3 mb-5">
-        <div className="flex-1 bg-muted rounded-xl p-4 text-center">
+      <div className="flex gap-3">
+        <div className="flex-1 bg-muted rounded-xl p-3 text-center">
           <span className="font-mono text-2xl font-bold text-primary">{data.count}</span>
-          <p className="text-xs text-muted-foreground font-body mt-1">projetos</p>
+          <p className="text-xs text-muted-foreground font-body mt-0.5">projetos</p>
         </div>
-        <div className="flex-1 bg-muted rounded-xl p-4 text-center">
+        <div className="flex-1 bg-muted rounded-xl p-3 text-center">
           <span className="font-mono text-2xl font-bold text-primary">
             {data.avgSqm ? `${data.avgSqm}m²` : "—"}
           </span>
-          <p className="text-xs text-muted-foreground font-body mt-1">média</p>
+          <p className="text-xs text-muted-foreground font-body mt-0.5">média</p>
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground font-body leading-relaxed flex-1">
+      {/* Empreendimentos with project cards */}
+      {empreendimentos.length > 0 && (
+        <div className="space-y-3 pt-2 border-t border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Empreendimentos
+          </p>
+          {empreendimentos.map((emp, i) => (
+            <EmpreendimentoCard key={i} group={emp} />
+          ))}
+        </div>
+      )}
+
+      <p className="text-sm text-muted-foreground font-body leading-relaxed">
         Já entregamos {data.count} {data.count === 1 ? "studio reformado" : "studios reformados"} no{" "}
         {data.name}, um dos bairros com maior demanda de short stay em SP.
       </p>
@@ -359,11 +378,122 @@ function NeighborhoodDetail({
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-6 inline-flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm py-3 px-4 min-h-[44px] hover:bg-primary/90 transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
+        className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm py-3 px-4 min-h-[44px] hover:bg-primary/90 transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
       >
         <MessageCircle className="h-4 w-4 shrink-0" />
         <span className="truncate">Tenho um imóvel no {data.name}</span>
       </a>
+    </div>
+  );
+}
+
+/* ── Empreendimento Card with Carousel ── */
+function EmpreendimentoCard({ group }: { group: EmpreendimentoGroup }) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [hovering, setHovering] = useState(false);
+
+  // Flatten all photos from all projects of this empreendimento
+  const allPhotos = group.allFotos.flat();
+  // Unique metragens
+  const uniqueMetragens = [...new Set(group.metragens)].sort((a, b) => a - b);
+  const metLabel = uniqueMetragens.length === 1
+    ? `${uniqueMetragens[0]}m²`
+    : `${uniqueMetragens[0]}–${uniqueMetragens[uniqueMetragens.length - 1]}m²`;
+
+  const onSlideChange = useCallback(() => {
+    if (!emblaApi) return;
+    setActiveSlide(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSlideChange);
+    onSlideChange();
+  }, [emblaApi, onSlideChange]);
+
+  return (
+    <div
+      className="rounded-xl border border-border overflow-hidden bg-card"
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      {/* Photo carousel */}
+      <div className="relative aspect-[16/10] overflow-hidden" ref={emblaRef}>
+        <div className="flex h-full">
+          {allPhotos.map((foto, i) => (
+            <div key={i} className="flex-[0_0_100%] min-w-0 relative">
+              <img
+                src={foto}
+                alt={`${group.name} — foto ${i + 1}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  const el = e.target as HTMLImageElement;
+                  el.style.display = "none";
+                  const parent = el.parentElement;
+                  if (parent) {
+                    const fallback = parent.querySelector(".fallback-bg") as HTMLElement;
+                    if (fallback) fallback.style.display = "flex";
+                  }
+                }}
+              />
+              <div className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden">
+                <Camera className="h-8 w-8 text-muted-foreground/40" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Dots */}
+        {allPhotos.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {allPhotos.map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full transition-colors",
+                  i === activeSlide ? "bg-white" : "bg-white/40"
+                )}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Arrows on hover */}
+        {hovering && allPhotos.length > 1 && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); emblaApi?.scrollPrev(); }}
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
+            >
+              <ChevronLeft className="h-4 w-4 text-foreground" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); emblaApi?.scrollNext(); }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
+            >
+              <ChevronRight className="h-4 w-4 text-foreground" />
+            </button>
+          </>
+        )}
+
+        {/* Project count badge */}
+        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full font-body">
+          {group.projectCount} {group.projectCount === 1 ? "projeto" : "projetos"}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-3 flex items-center gap-2">
+        <Building2 className="h-4 w-4 text-primary shrink-0" />
+        <div className="min-w-0">
+          <h4 className="text-sm font-display font-bold text-foreground leading-tight truncate">
+            {group.name}
+          </h4>
+          <p className="text-xs text-muted-foreground font-body">{metLabel}</p>
+        </div>
+      </div>
     </div>
   );
 }
