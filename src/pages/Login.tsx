@@ -178,7 +178,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setMode("forgot")}
-                className="text-xs text-white/80 hover:text-white hover:underline font-medium font-body"
+                className="text-xs text-white/90 hover:text-white hover:underline font-medium font-body"
               >
                 Esqueci minha senha
               </button>
