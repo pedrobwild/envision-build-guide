@@ -226,6 +226,11 @@ export default function PublicBudget() {
               <WhatIsIncluded />
             </AnimatedSection>
 
+            {/* Condições do Projeto */}
+            <AnimatedSection id="condicoes" index={0.92}>
+              <ProjectConditions estimatedWeeks={budget?.estimated_weeks ?? 8} />
+            </AnimatedSection>
+
             {/* === TRANSITION ZONE === */}
             {filteredSections.length > 0 && (
               <AnimatedSection id="scope-transition" index={0.95}>
@@ -282,15 +287,10 @@ export default function PublicBudget() {
                 })}
               </div>
             )}
-
-            {/* Condições do Projeto */}
-            <AnimatedSection id="condicoes" index={99}>
-              <ProjectConditions estimatedWeeks={budget?.estimated_weeks ?? 8} />
-            </AnimatedSection>
-
             <AnimatedSection id="next-steps" index={100}>
               <NextSteps />
             </AnimatedSection>
+
           </div>
 
           {/* Desktop sidebar */}
