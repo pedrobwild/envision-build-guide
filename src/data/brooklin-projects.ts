@@ -61,7 +61,7 @@ export const brooklinEmpreendimentos: EmpreendimentoProject[] = [
     empreendimento: "Level Brooklin",
     metragem: 24,
     bairro: "Brooklin",
-    fotos: ["/images/projects/studio-7.jpg", "/images/projects/studio-1.jpg", "/images/projects/studio-4.jpg"],
+    fotos: ["/images/projects/level-fb-1.png", "/images/projects/level-fb-2.png", "/images/projects/level-fb-3.png"],
   },
   {
     id: "brk-7",
