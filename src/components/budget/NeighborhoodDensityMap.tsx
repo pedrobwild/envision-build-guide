@@ -359,10 +359,10 @@ function NeighborhoodDetail({
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-6 flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm py-3 min-h-[44px] hover:bg-primary/90 transition-colors"
+        className="mt-6 inline-flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm py-3 px-4 min-h-[44px] hover:bg-primary/90 transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
       >
-        <MessageCircle className="h-4 w-4" />
-        Tenho um imóvel no {data.name}
+        <MessageCircle className="h-4 w-4 shrink-0" />
+        <span className="truncate">Tenho um imóvel no {data.name}</span>
       </a>
     </div>
   );
