@@ -29,7 +29,7 @@ import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
 import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
-import { ChevronUp, X, Eye, EyeOff } from "lucide-react";
+import { ChevronUp, X, Eye, EyeOff, MessageCircle } from "lucide-react";
 import { useScrollspy } from "@/hooks/useScrollspy";
 import { categorizeSections } from "@/lib/scope-categories";
 import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
@@ -311,10 +311,9 @@ export default function PublicBudget() {
               <ApprovalCTA
                 budgetId={budget.id}
                 publicId={publicId || "demo"}
-                approvedAt={budget.approved_at}
-                approvedByName={budget.approved_by_name}
                 expired={validity.expired}
                 projectName={budget.project_name}
+                clientName={budget.client_name}
               />
             </div>
           </div>
@@ -372,10 +371,9 @@ export default function PublicBudget() {
                   <ApprovalCTA
                     budgetId={budget.id}
                     publicId={publicId || "demo"}
-                    approvedAt={budget.approved_at}
-                    approvedByName={budget.approved_by_name}
                     expired={validity.expired}
                     projectName={budget.project_name}
+                    clientName={budget.client_name}
                   />
                 </div>
               </motion.div>
@@ -402,27 +400,30 @@ export default function PublicBudget() {
                     </span>
                   )}
                 </div>
-                {validity.expired && !budget.approved_at ? (
+                {validity.expired ? (
                   <a
                     href={`https://wa.me/5511999999999?text=${encodeURIComponent(
                       `Olá! O orçamento ${budget.project_name || 'do projeto'} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-xs min-h-[44px] flex items-center"
+                    className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-xs min-h-[44px] flex items-center gap-2"
                   >
+                    <MessageCircle className="h-4 w-4" />
                     Solicitar atualização
                   </a>
                 ) : (
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => {
-                      document.getElementById("next-steps")?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="px-4 py-2.5 rounded-lg bg-success text-success-foreground font-display font-bold text-xs min-h-[44px]"
+                  <a
+                    href={`https://wa.me/5511999999999?text=${encodeURIComponent(
+                      `Olá! Sou ${budget.client_name || 'cliente'}, estou analisando o orçamento do projeto ${budget.project_name || 'do projeto'} (Ref: ${publicId}) e gostaria de conversar sobre os próximos passos.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-xs min-h-[44px] flex items-center gap-2"
                   >
-                    Iniciar meu projeto
-                  </motion.button>
+                    <MessageCircle className="h-4 w-4" />
+                    Falar com especialista
+                  </a>
                 )}
               </div>
             </div>
