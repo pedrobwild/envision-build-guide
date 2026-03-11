@@ -256,19 +256,18 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
           </div>
         </div>
 
-        {/* Predictability mini-card */}
+        {/* Condições do projeto mini-card */}
         <button
-          onClick={() => document.getElementById("project-security")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          onClick={() => document.getElementById("condicoes")?.scrollIntoView({ behavior: "smooth", block: "start" })}
           className="mx-4 mb-3 rounded-xl border border-border hover:border-primary/30 bg-muted/30 hover:bg-primary/[0.03] p-3 transition-all group cursor-pointer min-h-[44px] w-[calc(100%-2rem)]"
         >
           <div className="flex items-center gap-2 mb-1.5">
             <Shield className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary transition-colors" />
-            <span className="text-xs text-muted-foreground font-body">Índice de previsibilidade</span>
+            <span className="text-xs text-muted-foreground font-body">Condições do projeto</span>
           </div>
-          <p className="text-xl font-display font-bold text-primary mb-1.5 tabular-nums">92%</p>
-          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-primary" style={{ width: "92%" }} />
-          </div>
+          <p className="text-sm font-display font-medium text-foreground mb-1 font-body">
+            Orçamento fechado · Garantia 5 anos
+          </p>
         </button>
 
         {/* Footer */}

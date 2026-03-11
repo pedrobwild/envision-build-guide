@@ -80,9 +80,9 @@ const QA_CRITERIA = [
     prompt: 3,
   },
   {
-    id: "security",
-    label: "Seção: Segurança do projeto",
-    description: "ProjectSecurity renderiza score 92%, checklist e bloco de garantia",
+    id: "condicoes",
+    label: "Seção: Condições do Projeto",
+    description: "ProjectConditions renderiza prazo estimado, orçamento fechado e checklist",
     prompt: 3,
   },
   {

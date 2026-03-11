@@ -12,7 +12,7 @@ const positives = [
   "Preço fixo — sem surpresas",
   "Gestão única de ponta a ponta",
   "0h/semana do seu tempo",
-  "92% de cumprimento do prazo",
+  "Cronograma detalhado e controlado",
   "Projeto focado em rentabilidade",
 ];
 

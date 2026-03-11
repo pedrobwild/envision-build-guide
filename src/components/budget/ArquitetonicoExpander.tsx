@@ -137,7 +137,7 @@ export function ArquitetonicoExpander() {
                             height="100%"
                             style={{ position: "absolute", top: 0, left: 0 }}
                           />
-                          <span className="absolute top-2 left-2 flex items-center gap-1 text-[10px] font-display font-semibold text-white bg-primary/80 backdrop-blur-sm rounded px-2 py-0.5 z-10 pointer-events-none">
+                          <span className="absolute top-2 left-2 flex items-center gap-1 text-xs font-display font-semibold text-white bg-primary/80 backdrop-blur-sm rounded px-2 py-0.5 z-10 pointer-events-none">
                             <Play className="h-3 w-3" /> Vídeo 3D
                           </span>
                         </div>

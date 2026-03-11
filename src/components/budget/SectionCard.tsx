@@ -89,7 +89,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
           >
             <SectionIcon className={`h-4 w-4 flex-shrink-0 ${categoryColor?.colorClass || 'text-muted-foreground'}`} />
             <span className="text-sm font-body font-medium text-foreground flex-1 truncate">{section.title}</span>
-            <span className="text-sm font-mono tabular-nums text-muted-foreground flex-shrink-0">{formatBRL(subtotal)}</span>
+            <span className="text-base font-mono font-semibold tabular-nums text-foreground flex-shrink-0">{formatBRL(subtotal)}</span>
             {expanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
           </button>
           {expanded && (
@@ -97,7 +97,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
               {items.map((item: any, i: number) => (
                 <div key={item.id} className={cn("flex items-center gap-2.5 py-2", i < items.length - 1 && "border-b border-border/30")}>
                   <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0" />
-                  <span className="text-xs font-body text-foreground flex-1 truncate">{item.title}</span>
+                  <span className="text-sm font-body text-foreground flex-1 truncate">{item.title}</span>
                   <AnimatePresence>
                     {showItemPrices && Number(item.internal_total) > 0 && (
                       <motion.span
@@ -156,11 +156,11 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
             </div>
             <div className="absolute bottom-0 left-0 right-0 px-4 pb-3">
               <div className="flex items-center gap-2">
-                <h2 className="font-display text-base sm:text-lg font-bold text-white leading-tight">{section.title}</h2>
+                <h2 className="font-display text-lg sm:text-xl font-bold text-white leading-tight">{section.title}</h2>
                 {isHighValue && (
-                  <span className="text-[10px] font-body font-medium bg-white/20 text-white rounded-full px-2 py-0.5 backdrop-blur-sm">
-                    Principal
-                  </span>
+                    <span className="text-xs font-body font-medium bg-white/20 text-white rounded-full px-2 py-0.5 backdrop-blur-sm">
+                      Principal
+                    </span>
                 )}
               </div>
               {section.subtitle && (
@@ -179,10 +179,10 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-display text-sm sm:text-base font-bold text-foreground leading-tight">{section.title}</h2>
+                  <h2 className="font-display text-base sm:text-lg font-bold text-foreground leading-tight">{section.title}</h2>
                   {isHighValue && (
                     <span className={cn(
-                      "text-[10px] font-body font-medium rounded-full px-2 py-0.5",
+                      "text-xs font-body font-medium rounded-full px-2 py-0.5",
                       categoryColor ? `${categoryColor.bgClass}/10 ${categoryColor.colorClass}` : "bg-primary/10 text-primary"
                     )}>
                       Principal
@@ -209,7 +209,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
           <span className="text-xs text-muted-foreground font-body">
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}Subtotal
           </span>
-          <span className="font-display font-bold text-sm text-primary tabular-nums">{formatBRL(subtotal)}</span>
+          <span className="font-display font-bold text-base text-foreground tabular-nums">{formatBRL(subtotal)}</span>
         </div>
 
         {/* Items — collapsible */}
@@ -264,7 +264,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                         {/* Left: name + qty */}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
-                            <p className="text-xs sm:text-sm font-medium text-foreground font-body truncate leading-relaxed">{item.title}</p>
+                            <p className="text-sm font-medium text-foreground font-body truncate leading-relaxed">{item.title}</p>
                             {item.description && (
                               <TooltipProvider delayDuration={200}>
                                 <Tooltip>
@@ -297,7 +297,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                               transition={{ duration: 0.25 }}
                               className="text-right flex-shrink-0"
                             >
-                              <p className="text-xs sm:text-sm font-mono font-semibold text-foreground tabular-nums">
+                              <p className="text-sm font-mono font-semibold text-foreground tabular-nums">
                                 {formatBRL(itemTotal)}
                               </p>
                               {itemQty > 1 && itemUnitPrice > 0 && (

@@ -23,7 +23,7 @@ import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
 import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
 import { PortalShowcase } from "@/components/budget/PortalShowcase";
-import { ProjectSecurity } from "@/components/budget/ProjectSecurity";
+import { ProjectConditions } from "@/components/budget/ProjectConditions";
 import { NextSteps } from "@/components/budget/NextSteps";
 import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
 import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
@@ -283,9 +283,9 @@ export default function PublicBudget() {
               </div>
             )}
 
-            {/* Back to white bg for security/FAQ */}
-            <AnimatedSection id="project-security" index={99}>
-              <ProjectSecurity prazoDiasUteis={budget?.prazo_dias_uteis ?? 55} />
+            {/* Condições do Projeto */}
+            <AnimatedSection id="condicoes" index={99}>
+              <ProjectConditions estimatedWeeks={budget?.estimated_weeks ?? 8} />
             </AnimatedSection>
 
             <AnimatedSection id="next-steps" index={100}>

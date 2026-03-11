@@ -1,0 +1,1 @@
+ALTER TABLE public.budgets ADD COLUMN estimated_weeks integer DEFAULT 8;
