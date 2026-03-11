@@ -49,11 +49,9 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
   // Unified meta line: bairro · metragem · versão · data
   const neighborhood = budget.bairro || budget.condominio || "";
-  const metaParts = [
-    budget.metragem,
-    budget.versao && `v${budget.versao.replace(/^v/i, '')}`,
-    budget.date && formatDate(budget.date),
-  ].filter(Boolean);
+  const area = budget.metragem ? `${budget.metragem}${budget.metragem.toString().includes('m²') ? '' : 'm²'}` : "";
+  const version = budget.versao ? budget.versao.replace(/^v/i, '') : "";
+  const dateStr = budget.date ? formatDate(budget.date) : "";
 
   const statBadges = [
     { value: "5 anos", label: "garantia", accent: false },
@@ -140,20 +138,38 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             {/* Meta line: bairro · metragem · versão · data */}
             <motion.div
               variants={fadeUp} custom={0.8} initial="hidden" animate="visible"
-              className="mt-1 flex items-center gap-2 text-xs text-white/60 font-body flex-wrap"
+              className="mt-2 flex items-center gap-2 text-xs font-body flex-wrap"
             >
               {neighborhood && (
                 <>
-                  <span className="text-white/80 font-medium">{neighborhood}</span>
-                  {metaParts.length > 0 && <span className="text-white/20">·</span>}
+                  <span className="inline-flex items-center gap-1">
+                    <span className="text-white/40 text-[10px] uppercase tracking-wide font-medium">Obra</span>
+                    <span className="text-white/90 font-semibold">{neighborhood}</span>
+                  </span>
+                  {(area || version || dateStr) && <span className="text-white/20">|</span>}
                 </>
               )}
-              {metaParts.map((part, i) => (
-                <span key={i} className="flex items-center gap-2">
-                  {i > 0 && <span className="text-white/20">·</span>}
-                  <span>{part}</span>
-                </span>
-              ))}
+              {area && (
+                <>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="text-white/40 text-[10px] uppercase tracking-wide font-medium">Área</span>
+                    <span className="text-white/90 font-semibold">{area}</span>
+                  </span>
+                  {(version || dateStr) && <span className="text-white/20">|</span>}
+                </>
+              )}
+              {version && (
+                <>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="text-white/40 text-[10px] uppercase tracking-wide font-medium">Versão</span>
+                    <span className="text-white/90 font-semibold">{version}</span>
+                  </span>
+                  {dateStr && <span className="text-white/20">|</span>}
+                </>
+              )}
+              {dateStr && (
+                <span className="text-white/50">{dateStr}</span>
+              )}
             </motion.div>
 
             {!cfg.hide_tagline && (
@@ -192,20 +208,38 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   {clientName || projectTitle}
                 </h1>
 
-                {/* Unified meta line */}
-                <div className="mt-1.5 flex items-center gap-2 text-sm text-white/60 font-body flex-wrap">
+                {/* Labeled meta chips */}
+                <div className="mt-2 flex items-center gap-2.5 text-sm font-body flex-wrap">
                   {neighborhood && (
                     <>
-                      <span className="text-white/80 font-medium">{neighborhood}</span>
-                      {metaParts.length > 0 && <span className="text-white/20">·</span>}
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="text-white/40 text-xs uppercase tracking-wide font-medium">Obra</span>
+                        <span className="text-white/90 font-semibold">{neighborhood}</span>
+                      </span>
+                      {(area || version || dateStr) && <span className="text-white/20 text-xs">|</span>}
                     </>
                   )}
-                  {metaParts.map((part, i) => (
-                    <span key={i} className="flex items-center gap-2">
-                      {i > 0 && <span className="text-white/20">·</span>}
-                      <span>{part}</span>
-                    </span>
-                  ))}
+                  {area && (
+                    <>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="text-white/40 text-xs uppercase tracking-wide font-medium">Área</span>
+                        <span className="text-white/90 font-semibold">{area}</span>
+                      </span>
+                      {(version || dateStr) && <span className="text-white/20 text-xs">|</span>}
+                    </>
+                  )}
+                  {version && (
+                    <>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="text-white/40 text-xs uppercase tracking-wide font-medium">Versão</span>
+                        <span className="text-white/90 font-semibold">{version}</span>
+                      </span>
+                      {dateStr && <span className="text-white/20 text-xs">|</span>}
+                    </>
+                  )}
+                  {dateStr && (
+                    <span className="text-white/50">{dateStr}</span>
+                  )}
                 </div>
               </motion.div>
 
