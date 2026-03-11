@@ -210,17 +210,7 @@ export default function PublicBudget() {
               </AnimatedSection>
             </div>
 
-            {budget.floor_plan_url && (
-              <AnimatedSection id="floor-plan-section" index={0.8}>
-                <FloorPlanViewer
-                  floorPlanUrl={budget.floor_plan_url}
-                  rooms={rooms}
-                  sections={sections}
-                  activeRoom={activeRoom}
-                  onRoomClick={handleRoomClick}
-                />
-              </AnimatedSection>
-            )}
+            {/* Floor plan hidden */}
 
             <AnimatedSection id="whats-included" index={0.9}>
               <WhatIsIncluded />
