@@ -21,5 +21,17 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Auto-reload on stale dynamic import (Vite chunk hash mismatch)
+      window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('Failed to fetch dynamically imported module')) {
+          if (!sessionStorage.getItem('chunk_reload')) {
+            sessionStorage.setItem('chunk_reload', '1');
+            window.location.reload();
+          }
+        }
+      });
+      window.addEventListener('load', function() { sessionStorage.removeItem('chunk_reload'); });
+    </script>
   </body>
 </html>
