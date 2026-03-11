@@ -222,7 +222,10 @@ export default function PublicBudget() {
               </AnimatedSection>
             )}
 
-            {/* WhatIsIncluded oculto temporariamente */}
+            {/* WhatIsIncluded — before scope */}
+            <AnimatedSection id="whats-included" index={0.9}>
+              <WhatIsIncluded />
+            </AnimatedSection>
 
             {/* === TRANSITION ZONE === */}
             {filteredSections.length > 0 && (
