@@ -128,7 +128,7 @@ export default function Login() {
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-12 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus-visible:ring-white/40 focus-visible:border-white/50 text-base font-body"
+              className="h-12 bg-white/10 border-white/30 text-white placeholder:text-white/60 focus-visible:ring-white/40 focus-visible:border-white/50 text-base font-body"
               disabled={loading}
               autoFocus
             />
