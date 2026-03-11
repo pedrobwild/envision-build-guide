@@ -9,11 +9,12 @@ import ReactPlayer from "react-player";
 type GalleryTab = "3d" | "exec";
 
 const bullets = [
-  "Reuniões de briefing e revisões com arquiteta",
-  "Projeto 3D: layout, iluminação, marcenaria e decoração",
-  "Projeto executivo + memorial descritivo",
-  "ART e acompanhamento técnico durante a obra",
-  "Aprovação no CREA e no condomínio (toda burocracia)",
+  "Consultoria: Nosso time irá sugerir a melhor composição de projeto para que seu objetivo com a reforma seja alcançado",
+  "Projeto 3D: Apresentado levando em consideração a sua visão, preferências e objetivos com o projeto, incluindo revisões",
+  "Personalização: Escolha cores e disposições da pintura e marcenaria que melhor te atendem",
+  "Projeto Executivo: Modelo ultra detalhado que guia minuciosamente a execução do projeto, à prova de falhas estruturais",
+  "Documentação e Burocracia: Cuidamos de toda a interface necessária com o CREA para emissão da ART e posteriormente liberação da obra com o condomínio da sua unidade",
+  "Acompanhamento Técnico: O arquiteto acompanhará todo o andamento da obra junto do engenheiro responsável",
 ];
 
 const executiveDetails = [
@@ -80,7 +81,7 @@ export function ArquitetonicoExpander() {
               Projeto Arquitetônico Personalizado
             </h3>
             <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
-              Diferente de modelos padronizados, o projeto da Bwild é desenvolvido exclusivamente para sua unidade.
+              Diferente de modelos padronizados que o mercado pratica, o seu projeto da Bwild é único e desenvolvido exclusivamente para sua unidade, não haverá nenhum outro projeto igual ao seu!
             </p>
           </div>
 
