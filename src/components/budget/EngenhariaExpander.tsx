@@ -1,19 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { HardHat, Truck, CalendarClock, Monitor, ArrowRight } from "lucide-react";
+import { HardHat, Truck, CalendarClock, Monitor } from "lucide-react";
 import { motion } from "framer-motion";
 
 const bullets = [
-  { icon: HardHat, text: "Mobilização e coordenação de mão de obra e fornecedores", highlight: "Coordenação completa" },
-  { icon: Truck, text: "Compras e logística de materiais e equipamentos", highlight: "Logística integrada" },
-  { icon: CalendarClock, text: "Gestão de cronograma por engenheiro dedicado", highlight: "Engenheiro dedicado" },
-  { icon: Monitor, text: "Atualizações contínuas no portal", highlight: "Transparência total" },
-];
-
-const chips = [
-  "Atrasos por falta de material",
-  "Ruído entre fornecedores",
-  "Surpresas no custo",
+  { icon: HardHat, text: "Toda a operação da obra sob gestão centralizada, do planejamento à execução.", highlight: "Coordenação completa" },
+  { icon: Truck, text: "Materiais, equipamentos e fornecedores sincronizados sob nosso controle, para manter o ritmo da obra.", highlight: "Logística integrada" },
+  { icon: CalendarClock, text: "Atuando como gestor da obra, realiza planejamento e acompanhamento técnico próximo, com gestão ativa de cronograma, da execução e vistorias técnicas de qualidade.", highlight: "Engenheiro sênior dedicado" },
+  { icon: Monitor, text: "Visibilidade contínua da evolução da obra, com atualizações frequentes por meio do aplicativo web da Bwild.", highlight: "Transparência total" },
 ];
 
 export function EngenhariaExpander() {
@@ -29,7 +22,7 @@ export function EngenhariaExpander() {
               Engenharia e Gestão
             </h3>
             <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5">
-              Você não precisa gerenciar a obra — nós cuidamos de tudo.
+              A experiência de ter a obra conduzida por você, sem nenhum esforço, com excelência, previsibilidade e total tranquilidade.
             </p>
           </div>
         </div>
@@ -53,23 +46,9 @@ export function EngenhariaExpander() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 pt-1">
-          <span className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
-            O que você evita
-          </span>
-          <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
-          <div className="flex flex-wrap gap-1.5">
-            {chips.map((c) => (
-              <Badge key={c} variant="secondary" className="text-xs font-body bg-destructive/5 text-destructive/80 border-destructive/10">
-                {c}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
         <div className="rounded-lg bg-primary/5 border border-primary/10 px-3 py-2.5">
           <p className="text-xs text-foreground font-body italic text-center">
-            "Você contrata um resultado — não um processo."
+            "Você não contrata apenas uma gestão de obra. Contrata segurança, previsibilidade e um resultado à altura do seu investimento."
           </p>
         </div>
       </CardContent>
