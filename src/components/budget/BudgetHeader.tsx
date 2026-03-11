@@ -264,7 +264,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                     <p className="text-lg font-extrabold font-mono leading-none text-white">
                       {badge.value}
                     </p>
-                    <p className="text-xs uppercase tracking-wider text-white/60 font-body mt-1">
+                    <p className="text-xs uppercase tracking-wider text-white/75 font-body mt-1">
                       {badge.label}
                     </p>
                   </div>
