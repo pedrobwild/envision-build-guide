@@ -195,9 +195,6 @@ export function NeighborhoodDensityMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]);
 
-  // Top 5 for summary
-  const top5 = [...NEIGHBORHOOD_DATA].sort((a, b) => b.count - a.count).slice(0, 5);
-
   const whatsappUrl = selectedData
     ? `https://wa.me/5511911906183?text=${encodeURIComponent(`Olá! Tenho um imóvel no ${selectedData.name} e gostaria de um orçamento.`)}`
     : "#";
