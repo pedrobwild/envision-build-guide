@@ -59,14 +59,14 @@ export const mockBudget: BudgetSummary = {
     {
       id: "eng",
       title: "Engenharia e Gestão",
-      valueProp: "Obra previsível com engenheiro dedicado.",
+      valueProp: "A experiência de ter a obra conduzida por você, sem nenhum esforço, com excelência, previsibilidade e total tranquilidade.",
       includes: [
-        "Mobilização e coordenação de mão de obra",
-        "Compras e logística de materiais",
-        "Gestão de cronograma e qualidade",
-        "Engenheiro dedicado + atualização semanal",
+        "Coordenação completa — toda a operação sob gestão centralizada",
+        "Logística integrada — materiais, equipamentos e fornecedores sincronizados",
+        "Engenheiro sênior dedicado — planejamento, acompanhamento técnico e vistorias de qualidade",
+        "Transparência total — visibilidade contínua da evolução via aplicativo web Bwild",
       ],
-      result: "Obra previsível e controlada.",
+      result: "Você não contrata apenas uma gestão de obra. Contrata segurança, previsibilidade e um resultado à altura do seu investimento.",
     },
   ],
   journey: [
