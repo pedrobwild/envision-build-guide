@@ -53,9 +53,6 @@ export default function BudgetEditorV2() {
     // Determine initial step based on existing data
     if ((b as any).floor_plan_url) {
       const completed = new Set<EditorStep>(["metadata", "floor-plan"]);
-      if (existingRooms && existingRooms.length > 0) {
-        completed.add("rooms");
-      }
       setCompletedSteps(completed);
     } else {
       // At minimum, metadata is completed if we have client data
