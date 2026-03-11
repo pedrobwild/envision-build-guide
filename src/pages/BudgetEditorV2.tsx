@@ -341,14 +341,17 @@ export default function BudgetEditorV2() {
 
         {currentStep === "coverage" && (
           <CoverageMappingStep
+            floorPlanUrl={floorPlanUrl || ""}
             rooms={rooms}
             packages={packages}
             onPackagesChange={setPackages}
-            onPublish={() => {
+            onSave={() => {
               completeStep("coverage");
               handleSaveAndPublish();
             }}
             onBack={() => setCurrentStep("spreadsheet")}
+            saving={saving}
+            budgetId={budgetId!}
           />
         )}
       </main>
