@@ -215,11 +215,7 @@ export default function PublicBudget() {
               </AnimatedSection>
 
               <AnimatedSection id="projetos-regiao" index={0.7}>
-                <BrooklinProjectsMapSection
-                  projects={brooklinProjects}
-                  bairro="Brooklin"
-                  center={[-46.6935, -23.6245]}
-                />
+                <NeighborhoodDensityMap />
               </AnimatedSection>
             </div>
 
