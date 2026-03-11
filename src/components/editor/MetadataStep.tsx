@@ -6,6 +6,7 @@ interface MetadataStepProps {
   budget: any;
   onFieldChange: (field: string, value: any) => void;
   onNext: () => void;
+  saving?: boolean;
 }
 
 const FIELDS = [
