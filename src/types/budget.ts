@@ -56,6 +56,7 @@ export interface BudgetData {
   unit?: string | null;
   date?: string | null;
   validity_days?: number | null;
+  prazo_dias_uteis?: number | null;
   versao?: string | null;
   consultora_comercial?: string | null;
   email_comercial?: string | null;
