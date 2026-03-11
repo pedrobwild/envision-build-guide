@@ -129,14 +129,12 @@ export function ArquitetonicoExpander() {
                       {img.type === "video" ? (
                         <div className="relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10]">
                           <ReactPlayer
-                            url={img.src}
+                            src={img.src}
                             controls
-                            playsinline
+                            playsInline
                             width="100%"
                             height="100%"
                             style={{ position: "absolute", top: 0, left: 0 }}
-                            light
-                            playing
                           />
                           <span className="absolute top-2 left-2 flex items-center gap-1 text-[10px] font-display font-semibold text-white bg-primary/80 backdrop-blur-sm rounded px-2 py-0.5 z-10 pointer-events-none">
                             <Play className="h-3 w-3" /> Vídeo 3D
