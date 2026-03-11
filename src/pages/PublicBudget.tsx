@@ -288,14 +288,8 @@ export default function PublicBudget() {
               </div>
             )}
 
-            {/* Condições do Projeto */}
-            <AnimatedSection id="condicoes" index={99}>
-              <ProjectConditions estimatedWeeks={budget?.estimated_weeks ?? 8} />
-            </AnimatedSection>
 
-            <AnimatedSection id="next-steps" index={100}>
-              <NextSteps />
-            </AnimatedSection>
+
           </div>
 
           {/* Desktop sidebar */}
