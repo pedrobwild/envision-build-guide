@@ -218,42 +218,22 @@ export function NeighborhoodDensityMap() {
         </p>
       </div>
 
-      {/* Desktop: side by side */}
-      <div className="hidden md:flex gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-[3] min-w-0">
           {apiKey ? (
             <div
               ref={mapContainer}
-              className="w-full h-[600px] rounded-xl overflow-hidden border border-border"
+              className="w-full h-[280px] md:h-[600px] rounded-xl overflow-hidden border border-border"
             />
           ) : (
             <MapFallback height="600px" />
           )}
         </div>
-        <div className="flex-[2] max-h-[600px]" ref={panelRef}>
+        <div className="flex-[2] md:max-h-[600px]" ref={panelRef}>
           {selectedData ? (
             <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} whatsappUrl={whatsappUrl} />
           ) : (
-            <SummaryPanel top5={top5} />
-          )}
-        </div>
-      </div>
-
-      {/* Mobile: stack */}
-      <div className="md:hidden space-y-4">
-        {apiKey ? (
-          <div
-            ref={mapContainer}
-            className="w-full h-[280px] rounded-xl overflow-hidden border border-border"
-          />
-        ) : (
-          <MapFallback height="280px" />
-        )}
-        <div ref={panelRef}>
-          {selectedData ? (
-            <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} whatsappUrl={whatsappUrl} />
-          ) : (
-            <SummaryPanel top5={top5} />
+            <SummaryPanel />
           )}
         </div>
       </div>
