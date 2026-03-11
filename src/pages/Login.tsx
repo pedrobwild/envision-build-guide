@@ -224,11 +224,11 @@ export default function Login() {
         </div>
 
         <div className="mt-6 flex flex-col items-center gap-1 w-full text-center">
-          <div className="flex items-center gap-1.5 text-xs text-white/50 font-body">
+          <div className="flex items-center gap-1.5 text-xs text-white/70 font-body">
             <ShieldCheck className="h-3.5 w-3.5" />
             <span>Acesso seguro · LGPD</span>
           </div>
-          <p className="text-xs text-white/40 font-body">
+          <p className="text-xs text-white/60 font-body">
             © {new Date().getFullYear()} Bwild · Todos os direitos reservados
           </p>
         </div>
