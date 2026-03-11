@@ -309,8 +309,21 @@ export default function BudgetEditorV2() {
             onUploaded={handleFloorPlanUploaded}
             onNext={() => {
               completeStep("floor-plan");
+              setCurrentStep("rooms");
+            }}
+          />
+        )}
+
+        {currentStep === "rooms" && floorPlanUrl && (
+          <RoomDrawingStep
+            floorPlanUrl={floorPlanUrl}
+            rooms={rooms}
+            onRoomsChange={handleRoomsChange}
+            onNext={() => {
+              completeStep("rooms");
               setCurrentStep("spreadsheet");
             }}
+            onBack={() => setCurrentStep("floor-plan")}
           />
         )}
 
@@ -320,9 +333,22 @@ export default function BudgetEditorV2() {
             onImported={setPackages}
             onNext={() => {
               completeStep("spreadsheet");
+              setCurrentStep("coverage");
+            }}
+            onBack={() => setCurrentStep("rooms")}
+          />
+        )}
+
+        {currentStep === "coverage" && (
+          <CoverageMappingStep
+            rooms={rooms}
+            packages={packages}
+            onPackagesChange={setPackages}
+            onPublish={() => {
+              completeStep("coverage");
               handleSaveAndPublish();
             }}
-            onBack={() => setCurrentStep("floor-plan")}
+            onBack={() => setCurrentStep("spreadsheet")}
           />
         )}
       </main>
