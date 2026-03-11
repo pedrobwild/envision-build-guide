@@ -249,14 +249,12 @@ export default function PublicBudget() {
                       <CategoryHeader category={group.category} subtotal={group.subtotal} />
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3">
                         {groupSections.map((section) => {
-                          const subtotal = calculateSectionSubtotal(section);
-                          const isLarge = subtotal > 5000;
                           const currentIdx = globalSectionIdx++;
 
                           return (
                             <div
                               key={section.id}
-                              className={isLarge ? "lg:col-span-2" : "lg:col-span-1"}
+                              className="lg:col-span-1"
                             >
                               <AnimatedSection id={`section-${section.id}`} index={currentIdx + 1}>
                                 <SectionCard
