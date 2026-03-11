@@ -81,7 +81,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.3 }}
-          className="rounded-xl border border-border bg-card overflow-hidden"
+          className="rounded-xl border border-border bg-card overflow-hidden h-full flex flex-col"
         >
           <button
             onClick={() => setExpanded(!expanded)}
@@ -132,10 +132,9 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
         viewport={{ once: true, margin: "-40px" }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          "rounded-xl overflow-hidden border bg-card transition-all duration-300",
+          "rounded-xl overflow-hidden border bg-card transition-all duration-300 h-full flex flex-col",
           !hasCover && `border-l-[3px] ${borderColor} border-border`,
-          hasCover && "border-border",
-          isLarge && !hasCover && "bg-primary/[0.01]"
+          hasCover && "border-border"
         )}
       >
         {/* Header — with cover image */}
