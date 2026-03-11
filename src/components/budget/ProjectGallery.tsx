@@ -92,7 +92,7 @@ export function ProjectGallery() {
                     {img.type === "video" ? (
                       <div className="relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10]">
                         <ReactPlayer
-                          url={img.src}
+                          src={img.src}
                           controls
                           playsinline
                           width="100%"
