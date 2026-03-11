@@ -195,9 +195,6 @@ export function NeighborhoodDensityMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]);
 
-  // Top 5 for summary
-  const top5 = [...NEIGHBORHOOD_DATA].sort((a, b) => b.count - a.count).slice(0, 5);
-
   const whatsappUrl = selectedData
     ? `https://wa.me/5511911906183?text=${encodeURIComponent(`Olá! Tenho um imóvel no ${selectedData.name} e gostaria de um orçamento.`)}`
     : "#";
@@ -218,42 +215,22 @@ export function NeighborhoodDensityMap() {
         </p>
       </div>
 
-      {/* Desktop: side by side */}
-      <div className="hidden md:flex gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-[3] min-w-0">
           {apiKey ? (
             <div
               ref={mapContainer}
-              className="w-full h-[600px] rounded-xl overflow-hidden border border-border"
+              className="w-full h-[280px] md:h-[600px] rounded-xl overflow-hidden border border-border"
             />
           ) : (
             <MapFallback height="600px" />
           )}
         </div>
-        <div className="flex-[2] max-h-[600px]" ref={panelRef}>
+        <div className="flex-[2] md:max-h-[600px]" ref={panelRef}>
           {selectedData ? (
             <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} whatsappUrl={whatsappUrl} />
           ) : (
-            <SummaryPanel top5={top5} />
-          )}
-        </div>
-      </div>
-
-      {/* Mobile: stack */}
-      <div className="md:hidden space-y-4">
-        {apiKey ? (
-          <div
-            ref={mapContainer}
-            className="w-full h-[280px] rounded-xl overflow-hidden border border-border"
-          />
-        ) : (
-          <MapFallback height="280px" />
-        )}
-        <div ref={panelRef}>
-          {selectedData ? (
-            <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} whatsappUrl={whatsappUrl} />
-          ) : (
-            <SummaryPanel top5={top5} />
+            <SummaryPanel />
           )}
         </div>
       </div>
@@ -275,7 +252,7 @@ function MapFallback({ height }: { height: string }) {
   );
 }
 
-function SummaryPanel({ top5 }: { top5: Neighborhood[] }) {
+function SummaryPanel() {
   return (
     <div className="bg-card border border-border rounded-2xl p-6 h-full flex flex-col">
       <p className="text-lg font-display font-bold text-foreground mb-4">🏙️ Presença em SP</p>
@@ -291,22 +268,7 @@ function SummaryPanel({ top5 }: { top5: Neighborhood[] }) {
         </div>
       </div>
 
-      <div className="border-t border-border pt-4 flex-1">
-        <p className="text-sm font-semibold text-foreground font-body mb-3">Bairros mais ativos:</p>
-        <ul className="space-y-2">
-          {top5.map((n) => (
-            <li key={n.id} className="flex items-center justify-between text-sm font-body">
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-primary" />
-                {n.name}
-              </span>
-              <span className="text-muted-foreground tabular-nums">{n.count} proj.</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <p className="text-xs text-muted-foreground font-body mt-6 text-center">
+      <p className="text-xs text-muted-foreground font-body mt-auto text-center">
         Clique em um bairro no mapa para ver detalhes
       </p>
     </div>
