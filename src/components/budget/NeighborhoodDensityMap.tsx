@@ -68,7 +68,7 @@ export function NeighborhoodDensityMap() {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<Map<string, { marker: maplibregl.Marker; el: HTMLDivElement; labelEl?: HTMLDivElement }>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
-  const apiKey = (import.meta.env.VITE_MAPTILER_API_KEY as string) || "";
+  const apiKey = (import.meta.env.VITE_MAPTILER_API_KEY as string) || "FQaugVdcxiB24tG5rETf";
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
