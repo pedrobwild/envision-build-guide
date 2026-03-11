@@ -136,7 +136,7 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
       // Set worker source
       pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
       let textContent = "";
 
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -148,15 +148,35 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
         textContent += pageText + "\n\n";
       }
 
-      if (!textContent.trim()) {
-        setError("Não foi possível extrair texto do PDF. O arquivo pode ser uma imagem escaneada.");
-        setStep("upload");
-        return;
+      const isScanned = !textContent.trim() || textContent.trim().length < 50;
+      let requestBody: Record<string, any>;
+
+      if (isScanned) {
+        // Scanned PDF: render pages as images and send for OCR
+        const pageImages: string[] = [];
+        const scale = 2; // Higher resolution for better OCR
+        const maxPages = Math.min(pdf.numPages, 10); // Limit to 10 pages
+
+        for (let i = 1; i <= maxPages; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement("canvas");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext("2d")!;
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          const dataUrl = canvas.toDataURL("image/png", 0.9);
+          pageImages.push(dataUrl);
+        }
+
+        requestBody = { pageImages };
+      } else {
+        requestBody = { textContent };
       }
 
       // Send to AI edge function for structured parsing
       const { data, error: fnError } = await supabase.functions.invoke("parse-budget-pdf", {
-        body: { textContent },
+        body: requestBody,
       });
 
       if (fnError) throw new Error(fnError.message);
