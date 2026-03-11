@@ -300,7 +300,7 @@ export default function BudgetEditorV2() {
               completeStep("spreadsheet");
               handleSaveAndPublish();
             }}
-            onBack={() => setCurrentStep("floor-plan")}
+            onBack={() => setCurrentStep("metadata")}
           />
         )}
       </main>
