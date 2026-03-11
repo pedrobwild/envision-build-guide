@@ -46,12 +46,9 @@ export function CategoryDetailDialog({ open, onClose, group }: CategoryDetailDia
                     {items.map((item: any) => {
                       const itemTotal = item.internal_total ?? (item.qty && item.internal_unit_price ? item.qty * item.internal_unit_price : 0);
                       return (
-                        <div key={item.id} className="flex items-center justify-between py-1 px-2 rounded text-xs">
-                          <span className="text-muted-foreground font-body truncate mr-2">
+                        <div key={item.id} className="py-1.5 px-2 rounded text-xs">
+                          <span className="text-muted-foreground font-body break-words">
                             {item.qty && item.qty > 1 ? `${item.qty}× ` : ""}{item.title}
-                          </span>
-                          <span className="text-muted-foreground font-mono tabular-nums whitespace-nowrap">
-                            {formatBRL(itemTotal)}
                           </span>
                         </div>
                       );
