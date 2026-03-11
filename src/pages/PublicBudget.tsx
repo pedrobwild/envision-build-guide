@@ -212,9 +212,7 @@ export default function PublicBudget() {
 
             {/* Floor plan hidden */}
 
-            <AnimatedSection id="whats-included" index={0.9}>
-              <WhatIsIncluded />
-            </AnimatedSection>
+            {/* WhatIsIncluded hidden */}
 
             {/* Condições do Projeto */}
             <AnimatedSection id="condicoes" index={0.92}>
