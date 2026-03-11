@@ -382,7 +382,12 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
             </div>
             <div className="text-center">
               <p className="text-sm font-body text-foreground font-medium">Analisando PDF com IA...</p>
-              <p className="text-xs text-muted-foreground font-body mt-1">Extraindo seções, itens e valores automaticamente</p>
+              <p className="text-xs text-muted-foreground font-body mt-1">
+                Extraindo seções, itens e valores automaticamente (inclui OCR para PDFs escaneados)
+              </p>
+            </div>
+          </div>
+        )}
             </div>
           </div>
         )}
