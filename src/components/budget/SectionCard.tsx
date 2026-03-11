@@ -29,7 +29,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
   const isLarge = subtotal > MEDIUM_VALUE_THRESHOLD;
   const isSmall = subtotal < LOW_VALUE_THRESHOLD;
 
-  const [expanded, setExpanded] = useState(!compact && !isSmall);
+  const [expanded, setExpanded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<{ url: string; alt?: string }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
