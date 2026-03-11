@@ -23,7 +23,7 @@ export function EngenhariaExpander() {
               Engenharia e Gestão
             </h3>
             <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5">
-              Você não precisa gerenciar a obra — nós cuidamos de tudo.
+              A experiência de ter a obra conduzida por você, sem nenhum esforço, com excelência, previsibilidade e total tranquilidade.
             </p>
           </div>
         </div>
