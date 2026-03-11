@@ -18,7 +18,7 @@ const deliveryBullets = [
   "Canal ágil para suporte pós-obra",
 ];
 
-export function ProjectSecurity() {
+export function ProjectSecurity({ prazoDiasUteis = 55 }: { prazoDiasUteis?: number }) {
   return (
     <Card className="border-border overflow-hidden">
       <CardContent className="p-4 sm:p-5 md:p-6 space-y-4">
