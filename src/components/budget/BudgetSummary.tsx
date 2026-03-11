@@ -306,6 +306,12 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
           </div>
         )}
       </div>
+
+      <CategoryDetailDialog
+        open={!!detailGroup}
+        onClose={() => setDetailGroup(null)}
+        group={detailGroup}
+      />
     </motion.div>
   );
 }
