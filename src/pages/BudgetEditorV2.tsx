@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, ExternalLink, Copy, Check, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { EditorStepper, type EditorStep } from "@/components/editor/EditorStepper";
-import { FloorPlanUploadStep } from "@/components/editor/FloorPlanUploadStep";
+
 import { RoomDrawingStep, type Room } from "@/components/editor/RoomDrawingStep";
 import { SpreadsheetImportStep, type ParsedPackage } from "@/components/editor/SpreadsheetImportStep";
 import { CoverageMappingStep } from "@/components/editor/CoverageMappingStep";
