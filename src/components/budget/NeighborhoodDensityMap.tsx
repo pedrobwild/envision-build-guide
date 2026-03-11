@@ -344,18 +344,8 @@ function NeighborhoodDetail({
         </Badge>
       </div>
 
-      <div className="flex gap-3">
-        <div className="flex-1 bg-muted rounded-xl p-3 text-center">
-          <span className="font-mono text-2xl font-bold text-primary">{data.count}</span>
-          <p className="text-xs text-muted-foreground font-body mt-0.5">projetos</p>
-        </div>
-        <div className="flex-1 bg-muted rounded-xl p-3 text-center">
-          <span className="font-mono text-2xl font-bold text-primary">
-            {data.avgSqm ? `${data.avgSqm}m²` : "—"}
-          </span>
-          <p className="text-xs text-muted-foreground font-body mt-0.5">média</p>
-        </div>
-      </div>
+
+
 
       {/* Empreendimentos with project cards */}
       {empreendimentos.length > 0 && (
