@@ -26,7 +26,7 @@ export const brooklinEmpreendimentos: EmpreendimentoProject[] = [
     empreendimento: "My One Brooklin",
     metragem: 28,
     bairro: "Brooklin",
-    fotos: ["/images/projects/studio-1.jpg", "/images/projects/studio-5.jpg", "/images/projects/studio-3.jpg"],
+    fotos: ["/images/projects/myone-1.jpg", "/images/projects/myone-2.jpg", "/images/projects/myone-3.jpg"],
   },
   {
     id: "brk-2",
