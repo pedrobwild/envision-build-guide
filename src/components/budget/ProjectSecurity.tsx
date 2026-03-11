@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Shield, CheckCircle2 } from "lucide-react";
+import { Shield, CheckCircle2, Clock, Award } from "lucide-react";
 import { motion } from "framer-motion";
 
 const checklist = [
@@ -38,25 +37,34 @@ export function ProjectSecurity() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Score */}
-          <div className="rounded-xl bg-muted/30 p-4 space-y-2.5">
-            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
-              Índice de previsibilidade
-            </p>
-            <div className="flex items-end gap-2">
-              <motion.span
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="text-3xl font-display font-bold text-primary"
-              >
-                92%
-              </motion.span>
-            </div>
-            <Progress value={92} className="h-2" />
-            <p className="text-xs text-muted-foreground font-body leading-relaxed">
-              Projetos com projeto executivo e engenheiro dedicado.
-            </p>
+          {/* Highlights */}
+          <div className="grid grid-cols-2 gap-3">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3 }}
+              className="rounded-xl bg-muted/30 p-4 flex flex-col items-center text-center gap-2"
+            >
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                <Clock className="h-4.5 w-4.5 text-primary" />
+              </div>
+              <span className="text-2xl font-display font-bold text-primary">55</span>
+              <span className="text-xs text-muted-foreground font-body leading-snug">dias úteis de execução</span>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="rounded-xl bg-muted/30 p-4 flex flex-col items-center text-center gap-2"
+            >
+              <div className="w-9 h-9 rounded-full bg-success/10 flex items-center justify-center">
+                <Award className="h-4.5 w-4.5 text-success" />
+              </div>
+              <span className="text-2xl font-display font-bold text-success">5 anos</span>
+              <span className="text-xs text-muted-foreground font-body leading-snug">de garantia estrutural</span>
+            </motion.div>
           </div>
 
           {/* Checklist */}
