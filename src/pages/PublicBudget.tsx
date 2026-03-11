@@ -283,9 +283,9 @@ export default function PublicBudget() {
               </div>
             )}
 
-            {/* Back to white bg for security/FAQ */}
-            <AnimatedSection id="project-security" index={99}>
-              <ProjectSecurity prazoDiasUteis={budget?.prazo_dias_uteis ?? 55} />
+            {/* Condições do Projeto */}
+            <AnimatedSection id="condicoes" index={99}>
+              <ProjectConditions estimatedWeeks={budget?.estimated_weeks ?? 8} />
             </AnimatedSection>
 
             <AnimatedSection id="next-steps" index={100}>
