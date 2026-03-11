@@ -54,7 +54,7 @@ export const brooklinEmpreendimentos: EmpreendimentoProject[] = [
     empreendimento: "Metrocasa Berrini",
     metragem: 24,
     bairro: "Brooklin",
-    fotos: ["/images/projects/studio-6.jpg", "/images/projects/studio-3.jpg", "/images/projects/studio-7.jpg"],
+    fotos: ["/images/projects/metrocasa-ta-1.png", "/images/projects/metrocasa-ta-2.png", "/images/projects/metrocasa-ta-3.png"],
   },
   {
     id: "brk-6",
