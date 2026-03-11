@@ -4,6 +4,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { CheckCircle2, ZoomIn, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { Lightbox } from "@/components/budget/Lightbox";
 import useEmblaCarousel from "embla-carousel-react";
+import ReactPlayer from "react-player";
 
 type GalleryTab = "3d" | "exec";
 
