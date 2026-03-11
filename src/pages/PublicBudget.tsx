@@ -23,6 +23,7 @@ import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
 import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
 import { PortalShowcase } from "@/components/budget/PortalShowcase";
+import { ProjectGallery } from "@/components/budget/ProjectGallery";
 import { ProjectConditions } from "@/components/budget/ProjectConditions";
 import { NextSteps } from "@/components/budget/NextSteps";
 import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
@@ -197,6 +198,10 @@ export default function PublicBudget() {
             <div className="space-y-3">
               <AnimatedSection id="arquitetonico-section" index={0}>
                 <ArquitetonicoExpander />
+              </AnimatedSection>
+
+              <AnimatedSection id="gallery-section" index={0.25}>
+                <ProjectGallery />
               </AnimatedSection>
 
               <AnimatedSection id="engenharia-section" index={0.5}>
