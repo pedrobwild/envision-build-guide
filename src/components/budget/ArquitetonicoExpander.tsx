@@ -81,7 +81,7 @@ export function ArquitetonicoExpander() {
               Projeto Arquitetônico Personalizado
             </h3>
             <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
-              Diferente de modelos padronizados, o projeto da Bwild é desenvolvido exclusivamente para sua unidade.
+              Diferente de modelos padronizados que o mercado pratica, o seu projeto da Bwild é único e desenvolvido exclusivamente para sua unidade, não haverá nenhum outro projeto igual ao seu!
             </p>
           </div>
 
