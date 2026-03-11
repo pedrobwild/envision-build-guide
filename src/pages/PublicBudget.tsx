@@ -148,11 +148,10 @@ export default function PublicBudget() {
   const total = calculateBudgetTotal(sections, adjustments);
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
-  const filteredSections = sections.filter((s) => !s.title?.toLowerCase().includes("projetos"));
-  const categorizedGroups = categorizeSections(filteredSections);
+  const categorizedGroups = categorizeSections(sections);
 
-  // Compute scope-only total (excluding "projetos")
-  const scopeTotal = filteredSections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
+  // Compute scope total
+  const scopeTotal = sections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
 
   const handleRoomClick = (roomId: string | null) => {
     setActiveRoom(roomId || null);
