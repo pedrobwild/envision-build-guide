@@ -138,7 +138,7 @@ export const brooklinEmpreendimentos: EmpreendimentoProject[] = [
     empreendimento: "Greenview Brooklin",
     metragem: 20,
     bairro: "Brooklin",
-    fotos: ["/images/projects/studio-4.jpg", "/images/projects/studio-7.jpg", "/images/projects/studio-6.jpg"],
+    fotos: ["/images/projects/greenview-1.png", "/images/projects/greenview-2.png", "/images/projects/greenview-3.png"],
   },
 ];
 
