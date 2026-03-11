@@ -17,7 +17,7 @@ export default function BudgetEditorV2() {
   const [budget, setBudget] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState<EditorStep>("metadata");
   const [completedSteps, setCompletedSteps] = useState<Set<EditorStep>>(new Set());
-  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
+  
   const [rooms, setRooms] = useState<Room[]>([]);
   const [packages, setPackages] = useState<ParsedPackage[]>([]);
   const [saving, setSaving] = useState(false);
