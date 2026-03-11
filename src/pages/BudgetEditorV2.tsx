@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, ExternalLink, Copy, Check, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { EditorStepper, type EditorStep } from "@/components/editor/EditorStepper";
-import { FloorPlanUploadStep } from "@/components/editor/FloorPlanUploadStep";
+
 import { RoomDrawingStep, type Room } from "@/components/editor/RoomDrawingStep";
 import { SpreadsheetImportStep, type ParsedPackage } from "@/components/editor/SpreadsheetImportStep";
 import { CoverageMappingStep } from "@/components/editor/CoverageMappingStep";
@@ -17,7 +17,7 @@ export default function BudgetEditorV2() {
   const [budget, setBudget] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState<EditorStep>("metadata");
   const [completedSteps, setCompletedSteps] = useState<Set<EditorStep>>(new Set());
-  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
+  
   const [rooms, setRooms] = useState<Room[]>([]);
   const [packages, setPackages] = useState<ParsedPackage[]>([]);
   const [saving, setSaving] = useState(false);
@@ -33,7 +33,7 @@ export default function BudgetEditorV2() {
     const { data: b } = await supabase.from("budgets").select("*").eq("id", budgetId).single();
     if (!b) { navigate("/admin"); return; }
     setBudget(b);
-    setFloorPlanUrl((b as any).floor_plan_url || null);
+    
 
     // Load existing rooms
     const { data: existingRooms } = await supabase
@@ -50,15 +50,9 @@ export default function BudgetEditorV2() {
       })));
     }
 
-    // Determine initial step based on existing data
-    if ((b as any).floor_plan_url) {
-      const completed = new Set<EditorStep>(["metadata", "floor-plan"]);
-      setCompletedSteps(completed);
-    } else {
-      // At minimum, metadata is completed if we have client data
-      if (b.client_name && b.client_name !== 'Cliente') {
-        setCompletedSteps(new Set<EditorStep>(["metadata"]));
-      }
+    // At minimum, metadata is completed if we have client data
+    if (b.client_name && b.client_name !== 'Cliente') {
+      setCompletedSteps(new Set<EditorStep>(["metadata"]));
     }
   };
 
@@ -74,10 +68,6 @@ export default function BudgetEditorV2() {
     }, 800);
   }, [budgetId]);
 
-  const handleFloorPlanUploaded = (url: string) => {
-    setFloorPlanUrl(url);
-    if (url) completeStep("floor-plan");
-  };
 
   const handleRoomsChange = useCallback(async (newRooms: Room[]) => {
     setRooms(newRooms);
@@ -193,7 +183,6 @@ export default function BudgetEditorV2() {
       await supabase.from("budgets").update({
         status: "published",
         public_id: publicId,
-        floor_plan_url: floorPlanUrl,
       }).eq("id", budgetId);
 
       setBudget({ ...budget, status: "published", public_id: publicId });
@@ -297,22 +286,11 @@ export default function BudgetEditorV2() {
             }}
             onNext={() => {
               completeStep("metadata");
-              setCurrentStep("floor-plan");
-            }}
-          />
-        )}
-
-        {currentStep === "floor-plan" && (
-          <FloorPlanUploadStep
-            budgetId={budgetId!}
-            floorPlanUrl={floorPlanUrl}
-            onUploaded={handleFloorPlanUploaded}
-            onNext={() => {
-              completeStep("floor-plan");
               setCurrentStep("spreadsheet");
             }}
           />
         )}
+
 
         {currentStep === "spreadsheet" && (
           <SpreadsheetImportStep
@@ -322,7 +300,7 @@ export default function BudgetEditorV2() {
               completeStep("spreadsheet");
               handleSaveAndPublish();
             }}
-            onBack={() => setCurrentStep("floor-plan")}
+            onBack={() => setCurrentStep("metadata")}
           />
         )}
       </main>

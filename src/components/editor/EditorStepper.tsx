@@ -5,8 +5,7 @@ export type EditorStep = "metadata" | "floor-plan" | "rooms" | "spreadsheet" | "
 
 const STEPS: { id: EditorStep; label: string; number: number }[] = [
   { id: "metadata", label: "Dados", number: 1 },
-  { id: "floor-plan", label: "Planta", number: 2 },
-  { id: "spreadsheet", label: "Planilha", number: 3 },
+  { id: "spreadsheet", label: "Planilha", number: 2 },
 ];
 
 interface EditorStepperProps {
