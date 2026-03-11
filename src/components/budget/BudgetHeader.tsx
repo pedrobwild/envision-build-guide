@@ -152,7 +152,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {area && (
                 <>
                   <span className="inline-flex items-center gap-1">
-                    <span className="text-white/40 text-[10px] uppercase tracking-wide font-medium">Área</span>
+                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Área</span>
                     <span className="text-white/90 font-semibold">{area}</span>
                   </span>
                   {(version || dateStr) && <span className="text-white/20">|</span>}
