@@ -14,7 +14,7 @@ export function CategoryDetailDialog({ open, onClose, group }: CategoryDetailDia
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto overflow-x-hidden w-[calc(100vw-2rem)]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
             <div className={`w-1.5 h-5 rounded-full ${group.category.bgClass}`} />
