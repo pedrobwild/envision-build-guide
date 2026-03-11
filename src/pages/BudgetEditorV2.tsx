@@ -68,10 +68,6 @@ export default function BudgetEditorV2() {
     }, 800);
   }, [budgetId]);
 
-  const handleFloorPlanUploaded = (url: string) => {
-    setFloorPlanUrl(url);
-    if (url) completeStep("floor-plan");
-  };
 
   const handleRoomsChange = useCallback(async (newRooms: Room[]) => {
     setRooms(newRooms);
