@@ -27,15 +27,6 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
       : `Válido até ${formatDate(validity.expiresAt)}`
     : null;
 
-  // Compact inline meta for mobile
-  const compactMeta = [
-    budget.client_name,
-    budget.condominio || budget.project_name,
-    budget.metragem,
-    budget.versao,
-    budget.consultora_comercial,
-  ].filter(Boolean).join(" · ");
-
   // Desktop inline meta
   const metaLine2 = [
     budget.metragem,
@@ -44,10 +35,17 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   ].filter(Boolean).join(" · ");
 
   const statBadges = [
-    { value: "92%", label: "previsibilidade", accent: true },
     { value: "5 anos", label: "garantia", accent: false },
     { value: "100%", label: "digital", accent: false },
   ];
+
+  const clientContext = [
+    budget.client_name,
+    budget.condominio || budget.project_name,
+  ].filter(Boolean).join(" · ");
+
+  const projectTitle = budget.project_name || "Projeto e Reforma";
+  const showPersonalizedSubtitle = !budget.project_name || budget.project_name === "Projeto e Reforma";
 
   return (
     <header className="relative">
@@ -55,7 +53,6 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         {/* Background */}
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${headerBg})` }} />
         <div className="absolute inset-0 bg-gradient-to-b from-charcoal/70 via-charcoal/50 to-charcoal/80" />
-        {/* Subtle texture overlay — desktop only */}
         <div
           className="absolute inset-0 hidden lg:block opacity-[0.015] pointer-events-none"
           style={{
@@ -72,9 +69,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         >
           <img src={logoWhite} alt="Bwild" className="h-7 sm:h-9 lg:h-8" />
           <div className="flex items-center gap-3">
-            {/* Consultora — desktop only */}
             {budget.consultora_comercial && (
-              <span className="hidden lg:inline text-[11px] text-white/30 font-body">
+              <span className="hidden lg:inline text-xs text-white/30 font-body">
                 {budget.consultora_comercial}, sua consultora
               </span>
             )}
@@ -95,6 +91,21 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </div>
         </motion.div>
 
+        {/* ─── Context bar ─── */}
+        <motion.div
+          variants={fadeUp} custom={0} initial="hidden" animate="visible"
+          className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3"
+        >
+          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
+            <span className="text-xs font-bold uppercase tracking-[0.15em] text-white/50 bg-white/[0.06] border border-white/[0.08] rounded-md px-3 py-1">
+              Orçamento
+            </span>
+            <span className="text-sm font-medium text-white/70 font-body truncate ml-4">
+              {clientContext}
+            </span>
+          </div>
+        </motion.div>
+
         {/* ─── FAIXA 2 — Conteúdo principal ─── */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
@@ -104,21 +115,23 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
               className="font-display font-extrabold text-2xl text-white leading-[1.05] tracking-tight"
             >
-              {budget.project_name || "Projeto e Reforma"}
+              {projectTitle}
             </motion.h1>
+
+            {showPersonalizedSubtitle && (
+              <motion.p
+                variants={fadeUp} custom={0.8} initial="hidden" animate="visible"
+                className="mt-1 text-sm font-body text-white/50"
+              >
+                Orçamento personalizado para {budget.client_name}
+              </motion.p>
+            )}
 
             <motion.p
               variants={fadeUp} custom={1} initial="hidden" animate="visible"
               className="mt-2 text-xs font-body text-white/40 leading-relaxed"
             >
               Projeto personalizado · Acompanhamento digital · Garantia 5 anos
-            </motion.p>
-
-            <motion.p
-              variants={fadeUp} custom={1.5} initial="hidden" animate="visible"
-              className="mt-2 text-xs font-body text-white/50 truncate"
-            >
-              {compactMeta}
             </motion.p>
 
             <motion.div
@@ -143,15 +156,19 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
                 className="flex items-start gap-5"
               >
-                {/* Title */}
-                <h1 className="font-display font-extrabold text-[1.85rem] xl:text-3xl text-white leading-[1.1] tracking-tight flex-shrink-0">
-                  {budget.project_name || "Projeto e Reforma"}
-                </h1>
+                <div className="min-w-0">
+                  <h1 className="font-display font-extrabold text-[1.85rem] xl:text-3xl text-white leading-[1.1] tracking-tight">
+                    {projectTitle}
+                  </h1>
+                  {showPersonalizedSubtitle && (
+                    <p className="text-sm text-white/50 font-body mt-1">
+                      Orçamento personalizado para {budget.client_name}
+                    </p>
+                  )}
+                </div>
 
-                {/* Separator */}
                 <span className="w-px h-7 bg-white/10 mt-1 flex-shrink-0" />
 
-                {/* Client block */}
                 <div className="min-w-0 mt-0.5">
                   <p className="text-sm text-white/70 font-body truncate">
                     <span className="font-semibold">{budget.client_name}</span>
@@ -165,16 +182,15 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 </div>
               </motion.div>
 
-              {/* Subtitle */}
               <motion.p
                 variants={fadeUp} custom={1} initial="hidden" animate="visible"
                 className="mt-2.5 text-xs text-white/30 font-body"
               >
-                Projeto personalizado · Gestão completa · Execução com previsibilidade
+                Projeto personalizado · Gestão completa · Execução com garantia
               </motion.p>
             </div>
 
-            {/* Right — Stat badges */}
+            {/* Right — Stat badges (NO 92%) */}
             <motion.div
               variants={fadeUp} custom={1} initial="hidden" animate="visible"
               className="flex items-center gap-3 flex-shrink-0 ml-8"
@@ -184,7 +200,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   <p className={`text-lg font-extrabold font-mono leading-none ${badge.accent ? 'text-green-400' : 'text-white/50'}`}>
                     {badge.value}
                   </p>
-                  <p className="text-[8px] uppercase tracking-wider text-white/25 font-body mt-1">
+                  <p className="text-xs uppercase tracking-wider text-white/25 font-body mt-1">
                     {badge.label}
                   </p>
                 </div>
@@ -199,7 +215,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           className="relative z-10 hidden lg:block border-t border-white/[0.04] bg-black/10"
         >
           <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
-            <p className="text-[10px] text-white/25 font-body">
+            <p className="text-xs text-white/25 font-body">
               Etapa: <span className="text-white/50">Orçamento</span>
               <span className="mx-2 text-white/10">·</span>
               Próximo: <span className="text-white/50">Briefing</span>
@@ -207,7 +223,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               Início: <span className="text-white/50">Imediato</span>
             </p>
             {validityLabel && (
-              <p className={`text-[9px] font-body ${validity?.expired ? 'text-destructive/60' : 'text-white/20'}`}>
+              <p className={`text-sm font-body ${validity?.expired ? 'text-destructive/60' : 'text-white/40'}`}>
                 {validity?.expired
                   ? "Valores expirados — solicite atualização"
                   : `Valores válidos até ${formatDate(validity!.expiresAt)}`
