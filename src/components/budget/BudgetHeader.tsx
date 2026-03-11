@@ -143,7 +143,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {neighborhood && (
                 <>
                   <span className="inline-flex items-center gap-1">
-                    <span className="text-white/40 text-[10px] uppercase tracking-wide font-medium">Obra</span>
+                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Obra</span>
                     <span className="text-white/90 font-semibold">{neighborhood}</span>
                   </span>
                   {(area || version || dateStr) && <span className="text-white/20">|</span>}
@@ -152,7 +152,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {area && (
                 <>
                   <span className="inline-flex items-center gap-1">
-                    <span className="text-white/40 text-[10px] uppercase tracking-wide font-medium">Área</span>
+                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Área</span>
                     <span className="text-white/90 font-semibold">{area}</span>
                   </span>
                   {(version || dateStr) && <span className="text-white/20">|</span>}
@@ -161,21 +161,21 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {version && (
                 <>
                   <span className="inline-flex items-center gap-1">
-                    <span className="text-white/40 text-[10px] uppercase tracking-wide font-medium">Versão</span>
+                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Versão</span>
                     <span className="text-white/90 font-semibold">{version}</span>
                   </span>
                   {dateStr && <span className="text-white/20">|</span>}
                 </>
               )}
               {dateStr && (
-                <span className="text-white/50">{dateStr}</span>
+                <span className="text-white/70">{dateStr}</span>
               )}
             </motion.div>
 
             {!cfg.hide_tagline && (
               <motion.p
                 variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                className="mt-2 text-xs font-body text-white/60 leading-relaxed"
+                className="mt-2 text-xs font-body text-white/75 leading-relaxed"
               >
                 {tagline}
               </motion.p>
@@ -213,7 +213,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   {neighborhood && (
                     <>
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="text-white/40 text-xs uppercase tracking-wide font-medium">Obra</span>
+                        <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Obra</span>
                         <span className="text-white/90 font-semibold">{neighborhood}</span>
                       </span>
                       {(area || version || dateStr) && <span className="text-white/20 text-xs">|</span>}
@@ -222,7 +222,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   {area && (
                     <>
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="text-white/40 text-xs uppercase tracking-wide font-medium">Área</span>
+                        <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Área</span>
                         <span className="text-white/90 font-semibold">{area}</span>
                       </span>
                       {(version || dateStr) && <span className="text-white/20 text-xs">|</span>}
@@ -231,14 +231,14 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   {version && (
                     <>
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="text-white/40 text-xs uppercase tracking-wide font-medium">Versão</span>
+                        <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Versão</span>
                         <span className="text-white/90 font-semibold">{version}</span>
                       </span>
                       {dateStr && <span className="text-white/20 text-xs">|</span>}
                     </>
                   )}
                   {dateStr && (
-                    <span className="text-white/50">{dateStr}</span>
+                    <span className="text-white/70">{dateStr}</span>
                   )}
                 </div>
               </motion.div>
@@ -246,7 +246,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {!cfg.hide_tagline && (
                 <motion.p
                   variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                  className="mt-2.5 text-xs text-white/60 font-body"
+                  className="mt-2.5 text-xs text-white/75 font-body"
                 >
                   {tagline}
                 </motion.p>
@@ -264,7 +264,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                     <p className="text-lg font-extrabold font-mono leading-none text-white">
                       {badge.value}
                     </p>
-                    <p className="text-xs uppercase tracking-wider text-white/60 font-body mt-1">
+                    <p className="text-xs uppercase tracking-wider text-white/75 font-body mt-1">
                       {badge.label}
                     </p>
                   </div>
