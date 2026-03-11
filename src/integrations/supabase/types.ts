@@ -70,6 +70,7 @@ export type Database = {
           lead_name: string | null
           metragem: string | null
           notes: string | null
+          prazo_dias_uteis: number | null
           project_name: string
           public_id: string | null
           public_token_hash: string | null
@@ -103,6 +104,7 @@ export type Database = {
           lead_name?: string | null
           metragem?: string | null
           notes?: string | null
+          prazo_dias_uteis?: number | null
           project_name?: string
           public_id?: string | null
           public_token_hash?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           lead_name?: string | null
           metragem?: string | null
           notes?: string | null
+          prazo_dias_uteis?: number | null
           project_name?: string
           public_id?: string | null
           public_token_hash?: string | null

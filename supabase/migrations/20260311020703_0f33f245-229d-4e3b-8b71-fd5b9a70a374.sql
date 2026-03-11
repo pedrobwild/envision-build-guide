@@ -1,0 +1,1 @@
+ALTER TABLE public.budgets ADD COLUMN prazo_dias_uteis integer DEFAULT 55;
