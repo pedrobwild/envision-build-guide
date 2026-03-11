@@ -402,7 +402,7 @@ export default function PublicBudget() {
                 </div>
                 {validity.expired ? (
                   <a
-                    href={`https://wa.me/5511999999999?text=${encodeURIComponent(
+                    href={`https://wa.me/5511911906183?text=${encodeURIComponent(
                       `Olá! O orçamento ${budget.project_name || 'do projeto'} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
                     )}`}
                     target="_blank"
