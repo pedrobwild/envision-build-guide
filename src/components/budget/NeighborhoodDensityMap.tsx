@@ -3,7 +3,6 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin, ArrowLeft, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 /* ── Data ── */
 type Neighborhood = {
@@ -44,39 +43,58 @@ const NEIGHBORHOOD_DATA: Neighborhood[] = [
 const TOTAL_PROJECTS = 99;
 const TOTAL_NEIGHBORHOODS = 26;
 
-type Tier = "high" | "mid" | "low";
+const TOP_5 = [
+  { name: "Brooklin", id: "brooklin", count: 14 },
+  { name: "Pinheiros", id: "pinheiros", count: 11 },
+  { name: "Perdizes", id: "perdizes", count: 8 },
+  { name: "Vila Clementino", id: "vila-clementino", count: 6 },
+  { name: "Santo Amaro", id: "santo-amaro", count: 6 },
+];
 
-function getTier(count: number): Tier {
-  if (count >= 8) return "high";
-  if (count >= 3) return "mid";
-  return "low";
+function getPinStyle(count: number) {
+  if (count >= 8) return { bg: "#004c7f", size: 48, mobileSize: 40, shadow: "0 3px 12px rgba(0,76,127,0.5)", fontSize: 14, showLabel: true };
+  if (count >= 3) return { bg: "#366478", size: 38, mobileSize: 32, shadow: "0 2px 8px rgba(54,100,120,0.4)", fontSize: 12, showLabel: true };
+  return { bg: "#243d58", size: 28, mobileSize: 24, shadow: "0 1px 4px rgba(36,61,88,0.3)", fontSize: 11, showLabel: false };
 }
-
-const TIER_CONFIG = {
-  high: { bgColor: "hsl(204,100%,25%)", size: 48, mobileSize: 40, fontSize: 14, showLabel: true },
-  mid: { bgColor: "hsl(200,35%,34%)", size: 38, mobileSize: 32, fontSize: 12, showLabel: true },
-  low: { bgColor: "hsl(210,40%,24%)", size: 28, mobileSize: 24, fontSize: 11, showLabel: false },
-};
 
 const DEFAULT_CENTER: [number, number] = [-46.6679, -23.5874];
 const DEFAULT_ZOOM = 11.5;
 
+function normalize(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+
 /* ── Component ── */
-export function NeighborhoodDensityMap() {
+interface NeighborhoodDensityMapProps {
+  clientNeighborhood?: string;
+}
+
+export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensityMapProps) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const markersRef = useRef<Map<string, { marker: maplibregl.Marker; el: HTMLDivElement; labelEl?: HTMLDivElement }>>(new Map());
+  const markersRef = useRef<Map<string, { marker: maplibregl.Marker; el: HTMLDivElement }>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
+  const autoSelectedRef = useRef(false);
   const apiKey = (import.meta.env.VITE_MAPTILER_API_KEY as string) || "FQaugVdcxiB24tG5rETf";
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
   const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
 
   const handleSelect = useCallback((id: string | null) => {
     setSelected((prev) => (prev === id ? null : id));
   }, []);
+
+  // Auto-select client neighborhood on mount
+  useEffect(() => {
+    if (!mapLoaded || !clientNeighborhood || autoSelectedRef.current) return;
+    const match = NEIGHBORHOOD_DATA.find(n => normalize(n.name) === normalize(clientNeighborhood));
+    if (match) {
+      autoSelectedRef.current = true;
+      setTimeout(() => handleSelect(match.id), 800);
+    }
+  }, [mapLoaded, clientNeighborhood, handleSelect]);
 
   // Sync map with selection
   useEffect(() => {
@@ -91,18 +109,18 @@ export function NeighborhoodDensityMap() {
     // Update marker styles
     markersRef.current.forEach((entry, id) => {
       const isActive = id === selected;
-      const tier = getTier(NEIGHBORHOOD_DATA.find((d) => d.id === id)!.count);
-      const cfg = TIER_CONFIG[tier];
-      const sz = isMobile ? cfg.mobileSize : cfg.size;
+      const count = NEIGHBORHOOD_DATA.find((d) => d.id === id)!.count;
+      const style = getPinStyle(count);
+      const sz = isMobile ? style.mobileSize : style.size;
       entry.el.style.width = `${isActive ? sz + 6 : sz}px`;
       entry.el.style.height = `${isActive ? sz + 6 : sz}px`;
       entry.el.style.boxShadow = isActive
-        ? "0 0 0 4px rgba(0,76,127,0.35), 0 4px 12px rgba(0,0,0,0.25)"
-        : "0 2px 8px rgba(0,76,127,0.4)";
+        ? `0 0 0 4px rgba(0,76,127,0.35), ${style.shadow}`
+        : style.shadow;
       entry.el.style.transform = isActive ? "scale(1.12)" : "scale(1)";
+      entry.el.style.borderWidth = isActive ? "3px" : "2px";
     });
 
-    // Mobile: scroll panel into view
     if (selected && isMobile && panelRef.current) {
       panelRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
@@ -129,30 +147,25 @@ export function NeighborhoodDensityMap() {
     map.on("load", () => {
       const mobile = window.innerWidth < 768;
       NEIGHBORHOOD_DATA.forEach((n) => {
-        const tier = getTier(n.count);
-        const cfg = TIER_CONFIG[tier];
-        const sz = mobile ? cfg.mobileSize : cfg.size;
+        const style = getPinStyle(n.count);
+        const sz = mobile ? style.mobileSize : style.size;
 
-        // Wrapper for pin + label
         const wrapper = document.createElement("div");
         wrapper.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:2px;";
 
-        // Pin circle
         const el = document.createElement("div");
         el.style.cssText = `
           width:${sz}px;height:${sz}px;border-radius:50%;
-          background:${cfg.bgColor};display:flex;align-items:center;justify-content:center;
-          color:white;font-weight:700;font-size:${cfg.fontSize}px;
+          background:${style.bg};display:flex;align-items:center;justify-content:center;
+          color:white;font-weight:700;font-size:${style.fontSize}px;
           cursor:pointer;transition:transform 150ms, box-shadow 150ms;
-          box-shadow:0 2px 8px rgba(0,76,127,0.4);
+          box-shadow:${style.shadow};
           font-family:'SF Mono','Fira Code',ui-monospace,monospace;
           border:2px solid rgba(255,255,255,0.8);
         `;
         el.textContent = String(n.count);
 
-        el.addEventListener("mouseenter", () => {
-          el.style.transform = "scale(1.12)";
-        });
+        el.addEventListener("mouseenter", () => { el.style.transform = "scale(1.12)"; });
         el.addEventListener("mouseleave", () => {
           if (selected !== n.id) el.style.transform = "scale(1)";
         });
@@ -163,12 +176,10 @@ export function NeighborhoodDensityMap() {
 
         wrapper.appendChild(el);
 
-        // Label below pin (only high/mid)
-        let labelEl: HTMLDivElement | undefined;
-        if (cfg.showLabel) {
-          labelEl = document.createElement("div");
+        if (style.showLabel) {
+          const labelEl = document.createElement("div");
           labelEl.style.cssText = `
-            font-size:10px;font-weight:600;color:hsl(204,100%,25%);
+            font-size:10px;font-weight:600;color:#004c7f;
             white-space:nowrap;font-family:var(--font-body,'Inter',sans-serif);
             text-shadow:0 0 3px white,0 0 3px white,0 0 3px white;
             pointer-events:none;
@@ -181,8 +192,10 @@ export function NeighborhoodDensityMap() {
           .setLngLat([n.lng, n.lat])
           .addTo(map);
 
-        markersRef.current.set(n.id, { marker, el, labelEl });
+        markersRef.current.set(n.id, { marker, el });
       });
+
+      setMapLoaded(true);
     });
 
     mapRef.current = map;
@@ -201,7 +214,6 @@ export function NeighborhoodDensityMap() {
 
   return (
     <div className="py-12 lg:py-16" data-pdf-hide>
-      {/* Header */}
       <div className="mb-6">
         <span className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-3 font-body">
           <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
@@ -230,7 +242,7 @@ export function NeighborhoodDensityMap() {
           {selectedData ? (
             <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} whatsappUrl={whatsappUrl} />
           ) : (
-            <SummaryPanel />
+            <SummaryPanel onSelectNeighborhood={handleSelect} />
           )}
         </div>
       </div>
@@ -242,22 +254,19 @@ export function NeighborhoodDensityMap() {
 
 function MapFallback({ height }: { height: string }) {
   return (
-    <div
-      className="bg-muted rounded-xl flex flex-col items-center justify-center gap-3"
-      style={{ height }}
-    >
+    <div className="bg-muted rounded-xl flex flex-col items-center justify-center gap-3" style={{ height }}>
       <MapPin className="h-12 w-12 text-muted-foreground/30" />
       <span className="text-sm text-muted-foreground font-body">Mapa indisponível</span>
     </div>
   );
 }
 
-function SummaryPanel() {
+function SummaryPanel({ onSelectNeighborhood }: { onSelectNeighborhood: (id: string) => void }) {
   return (
     <div className="bg-card border border-border rounded-2xl p-6 h-full flex flex-col">
       <p className="text-lg font-display font-bold text-foreground mb-4">🏙️ Presença em SP</p>
 
-      <div className="flex gap-6 mb-6">
+      <div className="flex gap-6 mb-4">
         <div>
           <span className="font-mono text-3xl font-bold text-primary">{TOTAL_PROJECTS}</span>
           <p className="text-sm text-muted-foreground font-body">projetos entregues</p>
@@ -268,7 +277,36 @@ function SummaryPanel() {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground font-body mt-auto text-center">
+      <div className="mt-1 pt-5 border-t border-border">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Bairros mais ativos
+        </p>
+        {TOP_5.map((b, i) => (
+          <button
+            key={b.id}
+            onClick={() => onSelectNeighborhood(b.id)}
+            className="w-full flex items-center justify-between py-2 px-2 -mx-0 hover:bg-muted rounded-lg transition-colors group"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-mono w-4">{i + 1}</span>
+              <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                {b.name}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div
+                className="h-1.5 rounded-full bg-primary/20"
+                style={{ width: `${(b.count / 14) * 56}px` }}
+              />
+              <span className="text-xs font-mono font-semibold text-primary w-8 text-right">
+                {b.count}
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <p className="text-xs text-muted-foreground font-body mt-auto pt-4 text-center">
         Clique em um bairro no mapa para ver detalhes
       </p>
     </div>
