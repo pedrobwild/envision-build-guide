@@ -252,7 +252,7 @@ function MapFallback({ height }: { height: string }) {
   );
 }
 
-function SummaryPanel({ top5 }: { top5: Neighborhood[] }) {
+function SummaryPanel() {
   return (
     <div className="bg-card border border-border rounded-2xl p-6 h-full flex flex-col">
       <p className="text-lg font-display font-bold text-foreground mb-4">🏙️ Presença em SP</p>
@@ -268,22 +268,7 @@ function SummaryPanel({ top5 }: { top5: Neighborhood[] }) {
         </div>
       </div>
 
-      <div className="border-t border-border pt-4 flex-1">
-        <p className="text-sm font-semibold text-foreground font-body mb-3">Bairros mais ativos:</p>
-        <ul className="space-y-2">
-          {top5.map((n) => (
-            <li key={n.id} className="flex items-center justify-between text-sm font-body">
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-primary" />
-                {n.name}
-              </span>
-              <span className="text-muted-foreground tabular-nums">{n.count} proj.</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <p className="text-xs text-muted-foreground font-body mt-6 text-center">
+      <p className="text-xs text-muted-foreground font-body mt-auto text-center">
         Clique em um bairro no mapa para ver detalhes
       </p>
     </div>
