@@ -33,7 +33,7 @@ export const brooklinEmpreendimentos: EmpreendimentoProject[] = [
     empreendimento: "Atmosfera Studio 360",
     metragem: 24,
     bairro: "Brooklin",
-    fotos: ["/images/projects/studio-2.jpg", "/images/projects/studio-4.jpg", "/images/projects/studio-6.jpg"],
+    fotos: ["/images/projects/atmosfera-1.png", "/images/projects/atmosfera-2.png", "/images/projects/atmosfera-3.png"],
   },
   {
     id: "brk-3",
