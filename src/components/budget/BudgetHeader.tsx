@@ -49,11 +49,9 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
   // Unified meta line: bairro · metragem · versão · data
   const neighborhood = budget.bairro || budget.condominio || "";
-  const metaParts = [
-    budget.metragem,
-    budget.versao && `v${budget.versao.replace(/^v/i, '')}`,
-    budget.date && formatDate(budget.date),
-  ].filter(Boolean);
+  const area = budget.metragem ? `${budget.metragem}${budget.metragem.toString().includes('m²') ? '' : 'm²'}` : "";
+  const version = budget.versao ? budget.versao.replace(/^v/i, '') : "";
+  const dateStr = budget.date ? formatDate(budget.date) : "";
 
   const statBadges = [
     { value: "5 anos", label: "garantia", accent: false },
