@@ -1,3 +1,15 @@
+// Legacy type kept for backward compatibility with existing components
+export type ProjetoBairro = {
+  id: string;
+  titulo: string;
+  metragem: string;
+  cep: string;
+  bairro: string;
+  lat: number;
+  lng: number;
+  fotos: string[];
+};
+
 export type EmpreendimentoProject = {
   id: string;
   empreendimento: string;
