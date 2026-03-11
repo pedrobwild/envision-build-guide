@@ -48,11 +48,6 @@ export function ArquitetonicoExpander() {
           ))}
         </div>
 
-        <div className="rounded-lg bg-primary/5 border border-primary/10 px-3 py-2.5">
-          <p className="text-xs text-foreground font-body italic text-center">
-            "Você tem contato direto com a Lorena, sócia e diretora de arquitetura — projeto feito para sua unidade."
-          </p>
-        </div>
       </CardContent>
     </Card>
   );
