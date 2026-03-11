@@ -62,6 +62,7 @@ export type Database = {
           date: string | null
           disclaimer: string | null
           email_comercial: string | null
+          estimated_weeks: number | null
           floor_plan_url: string | null
           generated_at: string | null
           id: string
@@ -96,6 +97,7 @@ export type Database = {
           date?: string | null
           disclaimer?: string | null
           email_comercial?: string | null
+          estimated_weeks?: number | null
           floor_plan_url?: string | null
           generated_at?: string | null
           id?: string
@@ -130,6 +132,7 @@ export type Database = {
           date?: string | null
           disclaimer?: string | null
           email_comercial?: string | null
+          estimated_weeks?: number | null
           floor_plan_url?: string | null
           generated_at?: string | null
           id?: string
