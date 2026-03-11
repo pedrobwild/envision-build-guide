@@ -1,8 +1,10 @@
 import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, ArrowRight, Timer, Clock } from "lucide-react";
+import { HeaderConfigStep } from "@/components/editor/HeaderConfigStep";
+import type { HeaderConfig } from "@/components/budget/BudgetHeader";
 
 interface MetadataStepProps {
   budget: any;
-  onFieldChange: (field: string, value: string) => void;
+  onFieldChange: (field: string, value: any) => void;
   onNext: () => void;
 }
 
@@ -22,6 +24,7 @@ const FIELDS = [
 
 export function MetadataStep({ budget, onFieldChange, onNext }: MetadataStepProps) {
   const hasClientName = !!budget.client_name && budget.client_name !== "Cliente";
+  const headerConfig: HeaderConfig = budget.header_config || {};
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -63,6 +66,14 @@ export function MetadataStep({ budget, onFieldChange, onNext }: MetadataStepProp
           onChange={(e) => onFieldChange("project_name", e.target.value)}
           placeholder="Nome do projeto"
           className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+        />
+      </div>
+
+      {/* Header config */}
+      <div className="mb-8 p-4 rounded-xl border border-border bg-card">
+        <HeaderConfigStep
+          config={headerConfig}
+          onChange={(cfg) => onFieldChange("header_config", cfg)}
         />
       </div>
 

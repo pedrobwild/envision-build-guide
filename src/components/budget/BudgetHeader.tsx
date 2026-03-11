@@ -4,6 +4,19 @@ import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
 import { formatDate, getValidityInfo } from "@/lib/formatBRL";
 
+export interface HeaderConfig {
+  hide_badge?: boolean;
+  hide_client_context?: boolean;
+  hide_subtitle?: boolean;
+  hide_tagline?: boolean;
+  hide_stat_badges?: boolean;
+  hide_status_strip?: boolean;
+  hide_validity?: boolean;
+  hide_consultora?: boolean;
+  custom_tagline?: string;
+  custom_subtitle?: string;
+}
+
 interface BudgetHeaderProps {
   budget: any;
   onExportPdf?: () => void;
@@ -27,7 +40,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
       : `Válido até ${formatDate(validity.expiresAt)}`
     : null;
 
-  // Desktop inline meta
+  const cfg: HeaderConfig = (budget.header_config as HeaderConfig) || {};
+
   const metaLine2 = [
     budget.metragem,
     budget.versao && `v${budget.versao.replace(/^v/i, '')}`,
@@ -45,7 +59,10 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   ].filter(Boolean).join(" · ");
 
   const projectTitle = budget.project_name || "Projeto e Reforma";
-  const showPersonalizedSubtitle = !budget.project_name || budget.project_name === "Projeto e Reforma";
+  const showPersonalizedSubtitle = !cfg.hide_subtitle && (!budget.project_name || budget.project_name === "Projeto e Reforma");
+
+  const tagline = cfg.custom_tagline || "Projeto personalizado · Gestão completa · Execução com garantia";
+  const subtitleText = cfg.custom_subtitle || `Orçamento personalizado para ${budget.client_name}`;
 
   return (
     <header className="relative">
@@ -69,13 +86,13 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         >
           <img src={logoWhite} alt="Bwild" className="h-7 sm:h-9 lg:h-8" />
           <div className="flex items-center gap-3">
-            {budget.consultora_comercial && (
-              <span className="hidden lg:inline text-xs text-white/30 font-body">
+            {!cfg.hide_consultora && budget.consultora_comercial && (
+              <span className="hidden lg:inline text-xs text-white/70 font-body">
                 {budget.consultora_comercial}, sua consultora
               </span>
             )}
-            {budget.consultora_comercial && (
-              <span className="hidden lg:block w-px h-4 bg-white/10" />
+            {!cfg.hide_consultora && budget.consultora_comercial && (
+              <span className="hidden lg:block w-px h-4 bg-white/20" />
             )}
             <motion.button
               whileHover={{ scale: 1.03 }}
@@ -92,19 +109,23 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         </motion.div>
 
         {/* ─── Context bar ─── */}
-        <motion.div
-          variants={fadeUp} custom={0} initial="hidden" animate="visible"
-          className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3"
-        >
-          <div className="flex justify-between items-center py-2 border-b border-white/[0.06]">
-            <span className="text-xs font-bold uppercase tracking-[0.15em] text-white/50 bg-white/[0.06] border border-white/[0.08] rounded-md px-3 py-1">
-              Orçamento
-            </span>
-            <span className="text-sm font-medium text-white/70 font-body truncate ml-4">
-              {clientContext}
-            </span>
-          </div>
-        </motion.div>
+        {!cfg.hide_client_context && (
+          <motion.div
+            variants={fadeUp} custom={0} initial="hidden" animate="visible"
+            className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3"
+          >
+            <div className="flex justify-between items-center py-2 border-b border-white/[0.08]">
+              {!cfg.hide_badge && (
+                <span className="text-xs font-bold uppercase tracking-[0.15em] text-white bg-white/[0.08] border border-white/[0.12] rounded-md px-3 py-1">
+                  Orçamento
+                </span>
+              )}
+              <span className="text-sm font-medium text-white/90 font-body truncate ml-4">
+                {clientContext}
+              </span>
+            </div>
+          </motion.div>
+        )}
 
         {/* ─── FAIXA 2 — Conteúdo principal ─── */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
@@ -121,31 +142,35 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             {showPersonalizedSubtitle && (
               <motion.p
                 variants={fadeUp} custom={0.8} initial="hidden" animate="visible"
-                className="mt-1 text-sm font-body text-white/50"
+                className="mt-1 text-sm font-body text-white/80"
               >
-                Orçamento personalizado para {budget.client_name}
+                {subtitleText}
               </motion.p>
             )}
 
-            <motion.p
-              variants={fadeUp} custom={1} initial="hidden" animate="visible"
-              className="mt-2 text-xs font-body text-white/40 leading-relaxed"
-            >
-              Projeto personalizado · Acompanhamento digital · Garantia 5 anos
-            </motion.p>
+            {!cfg.hide_tagline && (
+              <motion.p
+                variants={fadeUp} custom={1} initial="hidden" animate="visible"
+                className="mt-2 text-xs font-body text-white/60 leading-relaxed"
+              >
+                {tagline}
+              </motion.p>
+            )}
 
-            <motion.div
-              variants={fadeUp} custom={2} initial="hidden" animate="visible"
-              className="mt-2 flex items-center gap-2 text-xs text-white/30 font-body"
-            >
-              <span>Etapa: <span className="text-white/50">Orçamento</span></span>
-              {validityLabel && (
-                <>
-                  <span className="text-white/15">·</span>
-                  <span className={validity?.expired ? 'text-destructive/80' : 'text-white/50'}>{validityLabel}</span>
-                </>
-              )}
-            </motion.div>
+            {!cfg.hide_status_strip && (
+              <motion.div
+                variants={fadeUp} custom={2} initial="hidden" animate="visible"
+                className="mt-2 flex items-center gap-2 text-xs text-white/60 font-body"
+              >
+                <span>Etapa: <span className="text-white/80">Orçamento</span></span>
+                {!cfg.hide_validity && validityLabel && (
+                  <>
+                    <span className="text-white/30">·</span>
+                    <span className={validity?.expired ? 'text-destructive' : 'text-white/80'}>{validityLabel}</span>
+                  </>
+                )}
+              </motion.div>
+            )}
           </div>
 
           {/* ── DESKTOP (lg+) ── */}
@@ -161,77 +186,83 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                     {projectTitle}
                   </h1>
                   {showPersonalizedSubtitle && (
-                    <p className="text-sm text-white/50 font-body mt-1">
-                      Orçamento personalizado para {budget.client_name}
+                    <p className="text-sm text-white/80 font-body mt-1">
+                      {subtitleText}
                     </p>
                   )}
                 </div>
 
-                <span className="w-px h-7 bg-white/10 mt-1 flex-shrink-0" />
+                <span className="w-px h-7 bg-white/20 mt-1 flex-shrink-0" />
 
                 <div className="min-w-0 mt-0.5">
-                  <p className="text-sm text-white/70 font-body truncate">
-                    <span className="font-semibold">{budget.client_name}</span>
+                  <p className="text-sm text-white/90 font-body truncate">
+                    <span className="font-semibold text-white">{budget.client_name}</span>
                     {(budget.condominio || budget.project_name) && (
-                      <span className="text-white/45"> · {budget.condominio || budget.project_name}</span>
+                      <span className="text-white/70"> · {budget.condominio || budget.project_name}</span>
                     )}
                   </p>
                   {metaLine2 && (
-                    <p className="text-xs text-white/30 font-body mt-0.5">{metaLine2}</p>
+                    <p className="text-xs text-white/60 font-body mt-0.5">{metaLine2}</p>
                   )}
                 </div>
               </motion.div>
 
-              <motion.p
-                variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                className="mt-2.5 text-xs text-white/30 font-body"
-              >
-                Projeto personalizado · Gestão completa · Execução com garantia
-              </motion.p>
+              {!cfg.hide_tagline && (
+                <motion.p
+                  variants={fadeUp} custom={1} initial="hidden" animate="visible"
+                  className="mt-2.5 text-xs text-white/60 font-body"
+                >
+                  {tagline}
+                </motion.p>
+              )}
             </div>
 
-            {/* Right — Stat badges (NO 92%) */}
-            <motion.div
-              variants={fadeUp} custom={1} initial="hidden" animate="visible"
-              className="flex items-center gap-3 flex-shrink-0 ml-8"
-            >
-              {statBadges.map((badge) => (
-                <div key={badge.label} className="text-center min-w-[56px]">
-                  <p className={`text-lg font-extrabold font-mono leading-none ${badge.accent ? 'text-green-400' : 'text-white/50'}`}>
-                    {badge.value}
-                  </p>
-                  <p className="text-xs uppercase tracking-wider text-white/25 font-body mt-1">
-                    {badge.label}
-                  </p>
-                </div>
-              ))}
-            </motion.div>
+            {/* Right — Stat badges */}
+            {!cfg.hide_stat_badges && (
+              <motion.div
+                variants={fadeUp} custom={1} initial="hidden" animate="visible"
+                className="flex items-center gap-3 flex-shrink-0 ml-8"
+              >
+                {statBadges.map((badge) => (
+                  <div key={badge.label} className="text-center min-w-[56px]">
+                    <p className={`text-lg font-extrabold font-mono leading-none ${badge.accent ? 'text-green-400' : 'text-white'}`}>
+                      {badge.value}
+                    </p>
+                    <p className="text-xs uppercase tracking-wider text-white/60 font-body mt-1">
+                      {badge.label}
+                    </p>
+                  </div>
+                ))}
+              </motion.div>
+            )}
           </div>
         </div>
 
         {/* ─── FAIXA 3 — Status strip (desktop) ─── */}
-        <motion.div
-          variants={fadeUp} custom={2} initial="hidden" animate="visible"
-          className="relative z-10 hidden lg:block border-t border-white/[0.04] bg-black/10"
-        >
-          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
-            <p className="text-xs text-white/25 font-body">
-              Etapa: <span className="text-white/50">Orçamento</span>
-              <span className="mx-2 text-white/10">·</span>
-              Próximo: <span className="text-white/50">Briefing</span>
-              <span className="mx-2 text-white/10">·</span>
-              Início: <span className="text-white/50">Imediato</span>
-            </p>
-            {validityLabel && (
-              <p className={`text-sm font-body ${validity?.expired ? 'text-destructive/60' : 'text-white/40'}`}>
-                {validity?.expired
-                  ? "Valores expirados — solicite atualização"
-                  : `Valores válidos até ${formatDate(validity!.expiresAt)}`
-                }
+        {!cfg.hide_status_strip && (
+          <motion.div
+            variants={fadeUp} custom={2} initial="hidden" animate="visible"
+            className="relative z-10 hidden lg:block border-t border-white/[0.06] bg-black/10"
+          >
+            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
+              <p className="text-xs text-white/60 font-body">
+                Etapa: <span className="text-white/90">Orçamento</span>
+                <span className="mx-2 text-white/20">·</span>
+                Próximo: <span className="text-white/90">Briefing</span>
+                <span className="mx-2 text-white/20">·</span>
+                Início: <span className="text-white/90">Imediato</span>
               </p>
-            )}
-          </div>
-        </motion.div>
+              {!cfg.hide_validity && validityLabel && (
+                <p className={`text-sm font-body ${validity?.expired ? 'text-destructive' : 'text-white/80'}`}>
+                  {validity?.expired
+                    ? "Valores expirados — solicite atualização"
+                    : `Valores válidos até ${formatDate(validity!.expiresAt)}`
+                  }
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
       </div>
     </header>
   );

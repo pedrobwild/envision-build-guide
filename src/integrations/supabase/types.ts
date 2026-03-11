@@ -65,6 +65,7 @@ export type Database = {
           estimated_weeks: number | null
           floor_plan_url: string | null
           generated_at: string | null
+          header_config: Json | null
           id: string
           last_viewed_at: string | null
           lead_email: string | null
@@ -100,6 +101,7 @@ export type Database = {
           estimated_weeks?: number | null
           floor_plan_url?: string | null
           generated_at?: string | null
+          header_config?: Json | null
           id?: string
           last_viewed_at?: string | null
           lead_email?: string | null
@@ -135,6 +137,7 @@ export type Database = {
           estimated_weeks?: number | null
           floor_plan_url?: string | null
           generated_at?: string | null
+          header_config?: Json | null
           id?: string
           last_viewed_at?: string | null
           lead_email?: string | null

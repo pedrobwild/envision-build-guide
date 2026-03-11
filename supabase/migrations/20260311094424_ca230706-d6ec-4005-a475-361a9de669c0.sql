@@ -1,0 +1,1 @@
+ALTER TABLE public.budgets ADD COLUMN IF NOT EXISTS header_config jsonb DEFAULT '{}'::jsonb;
