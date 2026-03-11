@@ -1,4 +1,4 @@
-import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, ArrowRight, Timer, Clock } from "lucide-react";
+import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, Save, Timer, Clock, Loader2 } from "lucide-react";
 import { HeaderConfigStep } from "@/components/editor/HeaderConfigStep";
 import type { HeaderConfig } from "@/components/budget/BudgetHeader";
 
@@ -6,6 +6,7 @@ interface MetadataStepProps {
   budget: any;
   onFieldChange: (field: string, value: any) => void;
   onNext: () => void;
+  saving?: boolean;
 }
 
 const FIELDS = [
@@ -22,7 +23,7 @@ const FIELDS = [
   { key: "email_comercial", label: "E-mail Comercial", placeholder: "email@exemplo.com", icon: Mail, type: "email" },
 ];
 
-export function MetadataStep({ budget, onFieldChange, onNext }: MetadataStepProps) {
+export function MetadataStep({ budget, onFieldChange, onNext, saving }: MetadataStepProps) {
   const hasClientName = !!budget.client_name && budget.client_name !== "Cliente";
   const headerConfig: HeaderConfig = budget.header_config || {};
 
@@ -80,11 +81,20 @@ export function MetadataStep({ budget, onFieldChange, onNext }: MetadataStepProp
       <div className="flex justify-end">
         <button
           onClick={onNext}
-          disabled={!hasClientName}
+          disabled={!hasClientName || saving}
           className="flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-body font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Próximo
-          <ArrowRight className="h-4 w-4" />
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Publicando...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Salvar e Publicar
+            </>
+          )}
         </button>
       </div>
     </div>
