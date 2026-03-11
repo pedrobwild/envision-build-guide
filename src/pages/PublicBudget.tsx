@@ -221,14 +221,14 @@ export default function PublicBudget() {
             {/* Condições do Projeto — oculto temporariamente */}
 
             {/* === TRANSITION ZONE === */}
-            {filteredSections.length > 0 && (
+            {sections.length > 0 && (
               <AnimatedSection id="scope-transition" index={0.95}>
-                <ScopeTransitionZone sections={filteredSections} total={scopeTotal} />
+                <ScopeTransitionZone sections={sections} total={scopeTotal} />
               </AnimatedSection>
             )}
 
             {/* === TECHNICAL SCOPE — categorized === */}
-            {filteredSections.length > 0 && (
+            {sections.length > 0 && (
               <div className="bg-muted/[0.03] rounded-xl">
                 {/* Price toggle */}
                 <div className="pt-2 pb-1 flex items-center justify-end">
