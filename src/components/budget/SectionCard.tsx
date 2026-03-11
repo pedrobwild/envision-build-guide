@@ -297,7 +297,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                               transition={{ duration: 0.25 }}
                               className="text-right flex-shrink-0"
                             >
-                              <p className="text-xs sm:text-sm font-mono font-semibold text-foreground tabular-nums">
+                              <p className="text-sm font-mono font-semibold text-foreground tabular-nums">
                                 {formatBRL(itemTotal)}
                               </p>
                               {itemQty > 1 && itemUnitPrice > 0 && (
