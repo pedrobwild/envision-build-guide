@@ -44,6 +44,12 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
     setCollapsedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
+  // Dialog for non-displayed categories
+  const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
+
+  // Categories displayed in main content (cards)
+  const DISPLAYED_CATEGORIES = ["marcenaria", "mobiliario", "eletro"];
+
   const hasCategorized = categorizedGroups && categorizedGroups.length > 0;
   const scopeTotal = categorizedGroups?.reduce((s, g) => s + g.subtotal, 0) || 0;
 
