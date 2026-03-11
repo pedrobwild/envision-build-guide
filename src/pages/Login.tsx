@@ -206,7 +206,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setMode(mode === "signup" ? "login" : mode === "forgot" ? "login" : "signup")}
-              className="text-sm text-white/60 hover:text-white/90 transition-colors font-body inline-flex items-center gap-1.5"
+              className="text-sm text-white/80 hover:text-white transition-colors font-body inline-flex items-center gap-1.5"
             >
               {mode === "forgot" && <ArrowLeft className="h-3.5 w-3.5" />}
               {mode === "signup" ? "Já tem conta? Entrar" : mode === "forgot" ? "Voltar ao login" : "Não tem conta? Criar"}
