@@ -218,15 +218,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   return (
     <div className="py-12 lg:py-16" data-pdf-hide>
       <div className="mb-6">
-        <span className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-3 font-body">
-          <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-          {TOTAL_PROJECTS} projetos entregues em São Paulo
-        </span>
         <h2 className="text-2xl lg:text-3xl font-display font-bold text-foreground tracking-tight">
-          Onde já entregamos
+          99 projetos realizados pela Bwild em São Paulo
         </h2>
         <p className="text-muted-foreground text-sm mt-1 font-body">
-          Projetos realizados em {TOTAL_NEIGHBORHOODS} bairros — clique em um bairro para ver detalhes.
+          Projetos realizados em {TOTAL_NEIGHBORHOODS} bairros
         </p>
       </div>
 
