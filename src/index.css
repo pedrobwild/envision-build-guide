@@ -116,3 +116,21 @@
     font-family: var(--font-body);
   }
 }
+
+/* MapLibre popup styling */
+.project-map-popup .maplibregl-popup-content {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid hsl(var(--border));
+}
+.project-map-popup .maplibregl-popup-tip {
+  border-top-color: hsl(var(--card));
+}
+
+/* Image fallback for project cards */
+.fallback-active .fallback-bg {
+  display: flex !important;
+}

@@ -23,6 +23,8 @@ import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
 import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
 import { PortalShowcase } from "@/components/budget/PortalShowcase";
+import { BrooklinProjectsMapSection } from "@/components/budget/BrooklinProjectsMapSection";
+import { brooklinProjects } from "@/data/brooklin-projects";
 import { ProjectGallery } from "@/components/budget/ProjectGallery";
 import { ProjectConditions } from "@/components/budget/ProjectConditions";
 import { NextSteps } from "@/components/budget/NextSteps";
@@ -211,6 +213,14 @@ export default function PublicBudget() {
 
               <AnimatedSection id="portal-section" index={0.6}>
                 <PortalShowcase />
+              </AnimatedSection>
+
+              <AnimatedSection id="projetos-regiao" index={0.7}>
+                <BrooklinProjectsMapSection
+                  projects={brooklinProjects}
+                  bairro="Brooklin"
+                  center={[-46.6935, -23.6245]}
+                />
               </AnimatedSection>
             </div>
 
