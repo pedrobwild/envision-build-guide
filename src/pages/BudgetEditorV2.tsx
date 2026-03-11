@@ -291,17 +291,6 @@ export default function BudgetEditorV2() {
           />
         )}
 
-        {currentStep === "floor-plan" && (
-          <FloorPlanUploadStep
-            budgetId={budgetId!}
-            floorPlanUrl={floorPlanUrl}
-            onUploaded={handleFloorPlanUploaded}
-            onNext={() => {
-              completeStep("floor-plan");
-              setCurrentStep("spreadsheet");
-            }}
-          />
-        )}
 
         {currentStep === "spreadsheet" && (
           <SpreadsheetImportStep
