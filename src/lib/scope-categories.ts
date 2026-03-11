@@ -17,7 +17,7 @@ export const SCOPE_CATEGORIES: ScopeCategory[] = [
     colorClass: "text-primary",
     bgClass: "bg-primary",
     borderClass: "border-l-primary",
-    matches: ["projetos", "documentações", "documentacoes", "engenharia", "gestão", "gestao", "impostos", "fretes", "logística", "logistica", "limpeza"],
+    matches: ["projetos", "projeto arquitet", "documentações", "documentacoes", "engenharia", "gestão", "gestao", "impostos", "frete", "fretes", "logística", "logistica", "limpeza"],
   },
   {
     id: "infraestrutura",

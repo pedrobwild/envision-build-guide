@@ -148,11 +148,10 @@ export default function PublicBudget() {
   const total = calculateBudgetTotal(sections, adjustments);
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
-  const filteredSections = sections.filter((s) => !s.title?.toLowerCase().includes("projetos"));
-  const categorizedGroups = categorizeSections(filteredSections);
+  const categorizedGroups = categorizeSections(sections);
 
-  // Compute scope-only total (excluding "projetos")
-  const scopeTotal = filteredSections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
+  // Compute scope total
+  const scopeTotal = sections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
 
   const handleRoomClick = (roomId: string | null) => {
     setActiveRoom(roomId || null);
@@ -222,14 +221,14 @@ export default function PublicBudget() {
             {/* Condições do Projeto — oculto temporariamente */}
 
             {/* === TRANSITION ZONE === */}
-            {filteredSections.length > 0 && (
+            {sections.length > 0 && (
               <AnimatedSection id="scope-transition" index={0.95}>
-                <ScopeTransitionZone sections={filteredSections} total={scopeTotal} />
+                <ScopeTransitionZone sections={sections} total={scopeTotal} />
               </AnimatedSection>
             )}
 
             {/* === TECHNICAL SCOPE — categorized === */}
-            {filteredSections.length > 0 && (
+            {sections.length > 0 && (
               <div className="bg-muted/[0.03] rounded-xl">
                 {/* Price toggle */}
                 <div className="pt-2 pb-1 flex items-center justify-end">
