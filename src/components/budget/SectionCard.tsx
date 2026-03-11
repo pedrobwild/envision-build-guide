@@ -97,7 +97,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
               {items.map((item: any, i: number) => (
                 <div key={item.id} className={cn("flex items-center gap-2.5 py-2", i < items.length - 1 && "border-b border-border/30")}>
                   <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0" />
-                  <span className="text-xs font-body text-foreground flex-1 truncate">{item.title}</span>
+                  <span className="text-sm font-body text-foreground flex-1 truncate">{item.title}</span>
                   <AnimatePresence>
                     {showItemPrices && Number(item.internal_total) > 0 && (
                       <motion.span
