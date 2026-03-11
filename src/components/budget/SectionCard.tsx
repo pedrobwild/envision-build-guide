@@ -81,7 +81,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.3 }}
-          className="rounded-xl border border-border bg-card overflow-hidden"
+          className="rounded-xl border border-border bg-card overflow-hidden h-full flex flex-col"
         >
           <button
             onClick={() => setExpanded(!expanded)}
