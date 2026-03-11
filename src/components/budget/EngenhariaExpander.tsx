@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { HardHat, Truck, CalendarClock, Monitor, ArrowRight } from "lucide-react";
+import { HardHat, Truck, CalendarClock, Monitor } from "lucide-react";
 import { motion } from "framer-motion";
 
 const bullets = [
