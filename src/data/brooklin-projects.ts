@@ -131,7 +131,7 @@ export const brooklinEmpreendimentos: EmpreendimentoProject[] = [
     empreendimento: "ZIP Brooklin",
     metragem: 24,
     bairro: "Brooklin",
-    fotos: ["/images/projects/studio-3.jpg", "/images/projects/studio-1.jpg", "/images/projects/studio-5.jpg"],
+    fotos: ["/images/projects/zip-br-1.png", "/images/projects/zip-br-2.png"],
   },
   {
     id: "brk-17",
