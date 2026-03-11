@@ -287,8 +287,9 @@ export default function PublicBudget() {
                 })}
               </div>
             )}
-
-
+            <AnimatedSection id="next-steps" index={100}>
+              <NextSteps />
+            </AnimatedSection>
 
           </div>
 
