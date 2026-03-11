@@ -219,10 +219,7 @@ export default function PublicBudget() {
 
             {/* WhatIsIncluded hidden */}
 
-            {/* Condições do Projeto */}
-            <AnimatedSection id="condicoes" index={0.92}>
-              <ProjectConditions estimatedWeeks={budget?.estimated_weeks ?? 8} />
-            </AnimatedSection>
+            {/* Condições do Projeto — oculto temporariamente */}
 
             {/* === TRANSITION ZONE === */}
             {filteredSections.length > 0 && (
