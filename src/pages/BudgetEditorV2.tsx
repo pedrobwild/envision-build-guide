@@ -286,7 +286,7 @@ export default function BudgetEditorV2() {
             }}
             onNext={() => {
               completeStep("metadata");
-              setCurrentStep("floor-plan");
+              setCurrentStep("spreadsheet");
             }}
           />
         )}
