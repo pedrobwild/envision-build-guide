@@ -53,9 +53,6 @@ export default function BudgetEditorV2() {
     // Determine initial step based on existing data
     if ((b as any).floor_plan_url) {
       const completed = new Set<EditorStep>(["metadata", "floor-plan"]);
-      if (existingRooms && existingRooms.length > 0) {
-        completed.add("rooms");
-      }
       setCompletedSteps(completed);
     } else {
       // At minimum, metadata is completed if we have client data
@@ -312,21 +309,8 @@ export default function BudgetEditorV2() {
             onUploaded={handleFloorPlanUploaded}
             onNext={() => {
               completeStep("floor-plan");
-              setCurrentStep("rooms");
-            }}
-          />
-        )}
-
-        {currentStep === "rooms" && floorPlanUrl && (
-          <RoomDrawingStep
-            floorPlanUrl={floorPlanUrl}
-            rooms={rooms}
-            onRoomsChange={handleRoomsChange}
-            onNext={() => {
-              completeStep("rooms");
               setCurrentStep("spreadsheet");
             }}
-            onBack={() => setCurrentStep("floor-plan")}
           />
         )}
 
@@ -336,22 +320,9 @@ export default function BudgetEditorV2() {
             onImported={setPackages}
             onNext={() => {
               completeStep("spreadsheet");
-              setCurrentStep("coverage");
+              handleSaveAndPublish();
             }}
-            onBack={() => setCurrentStep("rooms")}
-          />
-        )}
-
-        {currentStep === "coverage" && floorPlanUrl && (
-          <CoverageMappingStep
-            floorPlanUrl={floorPlanUrl}
-            rooms={rooms}
-            packages={packages}
-            onPackagesChange={setPackages}
-            onSave={handleSaveAndPublish}
-            onBack={() => setCurrentStep("spreadsheet")}
-            saving={saving}
-            budgetId={budgetId!}
+            onBack={() => setCurrentStep("floor-plan")}
           />
         )}
       </main>
