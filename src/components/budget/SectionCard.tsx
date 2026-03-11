@@ -158,9 +158,9 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
               <div className="flex items-center gap-2">
                 <h2 className="font-display text-lg sm:text-xl font-bold text-white leading-tight">{section.title}</h2>
                 {isHighValue && (
-                  <span className="text-[10px] font-body font-medium bg-white/20 text-white rounded-full px-2 py-0.5 backdrop-blur-sm">
-                    Principal
-                  </span>
+                    <span className="text-xs font-body font-medium bg-white/20 text-white rounded-full px-2 py-0.5 backdrop-blur-sm">
+                      Principal
+                    </span>
                 )}
               </div>
               {section.subtitle && (
