@@ -238,7 +238,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                     </>
                   )}
                   {dateStr && (
-                    <span className="text-white/50">{dateStr}</span>
+                    <span className="text-white/70">{dateStr}</span>
                   )}
                 </div>
               </motion.div>
