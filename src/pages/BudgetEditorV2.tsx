@@ -33,7 +33,7 @@ export default function BudgetEditorV2() {
     const { data: b } = await supabase.from("budgets").select("*").eq("id", budgetId).single();
     if (!b) { navigate("/admin"); return; }
     setBudget(b);
-    setFloorPlanUrl((b as any).floor_plan_url || null);
+    
 
     // Load existing rooms
     const { data: existingRooms } = await supabase
