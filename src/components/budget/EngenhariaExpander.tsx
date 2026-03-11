@@ -4,16 +4,10 @@ import { HardHat, Truck, CalendarClock, Monitor, ArrowRight } from "lucide-react
 import { motion } from "framer-motion";
 
 const bullets = [
-  { icon: HardHat, text: "Mobilização e coordenação de mão de obra e fornecedores", highlight: "Coordenação completa" },
-  { icon: Truck, text: "Compras e logística de materiais e equipamentos", highlight: "Logística integrada" },
-  { icon: CalendarClock, text: "Gestão de cronograma por engenheiro dedicado", highlight: "Engenheiro dedicado" },
-  { icon: Monitor, text: "Atualizações contínuas no portal", highlight: "Transparência total" },
-];
-
-const chips = [
-  "Atrasos por falta de material",
-  "Ruído entre fornecedores",
-  "Surpresas no custo",
+  { icon: HardHat, text: "Toda a operação da obra sob gestão centralizada, do planejamento à execução.", highlight: "Coordenação completa" },
+  { icon: Truck, text: "Materiais, equipamentos e fornecedores sincronizados sob nosso controle, para manter o ritmo da obra.", highlight: "Logística integrada" },
+  { icon: CalendarClock, text: "Atuando como gestor da obra, realiza planejamento e acompanhamento técnico próximo, com gestão ativa de cronograma, da execução e vistorias técnicas de qualidade.", highlight: "Engenheiro sênior dedicado" },
+  { icon: Monitor, text: "Visibilidade contínua da evolução da obra, com atualizações frequentes por meio do aplicativo web da Bwild.", highlight: "Transparência total" },
 ];
 
 export function EngenhariaExpander() {
