@@ -15,6 +15,7 @@ const FIELDS = [
   { key: "versao", label: "Versão", placeholder: "Ex: 1.0", icon: Hash },
   { key: "validity_days", label: "Validade (dias)", placeholder: "30", icon: Timer, type: "number" },
   { key: "prazo_dias_uteis", label: "Prazo de execução (dias úteis)", placeholder: "55", icon: Clock, type: "number" },
+  { key: "estimated_weeks", label: "Prazo estimado (semanas)", placeholder: "8", icon: Timer, type: "number" },
   { key: "consultora_comercial", label: "Consultora Comercial", placeholder: "Nome da vendedora", icon: UserCheck },
   { key: "email_comercial", label: "E-mail Comercial", placeholder: "email@exemplo.com", icon: Mail, type: "email" },
 ];
