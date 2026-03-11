@@ -182,7 +182,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                   <h2 className="font-display text-base sm:text-lg font-bold text-foreground leading-tight">{section.title}</h2>
                   {isHighValue && (
                     <span className={cn(
-                      "text-[10px] font-body font-medium rounded-full px-2 py-0.5",
+                      "text-xs font-body font-medium rounded-full px-2 py-0.5",
                       categoryColor ? `${categoryColor.bgClass}/10 ${categoryColor.colorClass}` : "bg-primary/10 text-primary"
                     )}>
                       Principal
