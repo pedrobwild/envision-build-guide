@@ -89,7 +89,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
           >
             <SectionIcon className={`h-4 w-4 flex-shrink-0 ${categoryColor?.colorClass || 'text-muted-foreground'}`} />
             <span className="text-sm font-body font-medium text-foreground flex-1 truncate">{section.title}</span>
-            <span className="text-sm font-mono tabular-nums text-muted-foreground flex-shrink-0">{formatBRL(subtotal)}</span>
+            <span className="text-base font-mono font-semibold tabular-nums text-foreground flex-shrink-0">{formatBRL(subtotal)}</span>
             {expanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
           </button>
           {expanded && (
