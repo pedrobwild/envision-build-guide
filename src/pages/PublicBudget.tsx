@@ -199,6 +199,10 @@ export default function PublicBudget() {
                 <ArquitetonicoExpander />
               </AnimatedSection>
 
+              <AnimatedSection id="gallery-section" index={0.25}>
+                <ProjectGallery />
+              </AnimatedSection>
+
               <AnimatedSection id="engenharia-section" index={0.5}>
                 <EngenhariaExpander />
               </AnimatedSection>
