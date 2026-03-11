@@ -121,29 +121,49 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
             <div className="space-y-2">
               {categorizedGroups.map((group) => {
                 const isCollapsed = collapsedGroups[group.category.id];
+                const isDisplayedInContent = DISPLAYED_CATEGORIES.includes(group.category.id);
+                // Check if category has a single section with the same name
+                const isSingleRedundant =
+                  group.sections.length === 1 &&
+                  group.sections[0].title.toLowerCase().trim() === group.category.label.toLowerCase().trim();
+                // For non-displayed categories that match a keyword closely
+                const isSingleSection = group.sections.length === 1;
+
                 return (
                   <div key={group.category.id}>
                     {/* Group header */}
                     <button
-                      onClick={() => toggleGroup(group.category.id)}
+                      onClick={() => {
+                        if (!isDisplayedInContent) {
+                          // Open popup for hidden categories
+                          setDetailGroup(group);
+                        } else {
+                          toggleGroup(group.category.id);
+                        }
+                      }}
                       className="w-full flex items-center gap-2 py-1.5 min-h-[36px]"
                     >
                       <div className={`w-1 h-3.5 rounded-full ${group.category.bgClass}`} />
                       <span className={`text-xs font-display font-bold uppercase tracking-wider ${group.category.colorClass} flex-1 text-left`}>
                         {group.category.label}
                       </span>
+                      {!isDisplayedInContent && (
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      )}
                       <span className={`text-xs font-mono tabular-nums font-semibold ${group.category.colorClass}`}>
                         {formatBRL(group.subtotal)}
                       </span>
-                      {isCollapsed ? (
-                        <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                      ) : (
-                        <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                      {isDisplayedInContent && !isSingleRedundant && (
+                        isCollapsed ? (
+                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        ) : (
+                          <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                        )
                       )}
                     </button>
 
-                    {/* Group items */}
-                    {!isCollapsed && (
+                    {/* Group items — only for displayed categories with non-redundant sub-items */}
+                    {isDisplayedInContent && !isSingleRedundant && !isCollapsed && (
                       <div className="pl-3 space-y-0">
                         {group.sections.map((section) => {
                           const sectionElId = `section-${section.id}`;
