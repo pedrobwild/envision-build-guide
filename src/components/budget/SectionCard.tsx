@@ -179,7 +179,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-display text-sm sm:text-base font-bold text-foreground leading-tight">{section.title}</h2>
+                  <h2 className="font-display text-base sm:text-lg font-bold text-foreground leading-tight">{section.title}</h2>
                   {isHighValue && (
                     <span className={cn(
                       "text-[10px] font-body font-medium rounded-full px-2 py-0.5",
