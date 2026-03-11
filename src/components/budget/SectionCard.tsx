@@ -264,7 +264,7 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                         {/* Left: name + qty */}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
-                            <p className="text-xs sm:text-sm font-medium text-foreground font-body truncate leading-relaxed">{item.title}</p>
+                            <p className="text-sm font-medium text-foreground font-body truncate leading-relaxed">{item.title}</p>
                             {item.description && (
                               <TooltipProvider delayDuration={200}>
                                 <Tooltip>
