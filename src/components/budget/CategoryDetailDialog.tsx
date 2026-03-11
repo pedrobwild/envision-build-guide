@@ -14,7 +14,7 @@ export function CategoryDetailDialog({ open, onClose, group }: CategoryDetailDia
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto overflow-x-hidden w-[calc(100vw-2rem)]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
             <div className={`w-1.5 h-5 rounded-full ${group.category.bgClass}`} />
@@ -46,12 +46,9 @@ export function CategoryDetailDialog({ open, onClose, group }: CategoryDetailDia
                     {items.map((item: any) => {
                       const itemTotal = item.internal_total ?? (item.qty && item.internal_unit_price ? item.qty * item.internal_unit_price : 0);
                       return (
-                        <div key={item.id} className="flex items-center justify-between py-1 px-2 rounded text-xs">
-                          <span className="text-muted-foreground font-body truncate mr-2">
+                        <div key={item.id} className="py-1.5 px-2 rounded text-xs">
+                          <span className="text-muted-foreground font-body break-words">
                             {item.qty && item.qty > 1 ? `${item.qty}× ` : ""}{item.title}
-                          </span>
-                          <span className="text-muted-foreground font-mono tabular-nums whitespace-nowrap">
-                            {formatBRL(itemTotal)}
                           </span>
                         </div>
                       );
