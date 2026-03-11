@@ -203,16 +203,7 @@ export default function PublicBudget() {
                 <EngenhariaExpander />
               </AnimatedSection>
 
-              <AnimatedSection id="turnkey-comparison" index={0.55}>
-                <TurnkeyComparison />
-              </AnimatedSection>
-
-              <AnimatedSection id="investment-impact" index={0.57}>
-                <InvestmentImpact
-                  neighborhood={budget.bairro || "São Paulo"}
-                  squareMeters={budget.metragem ? parseInt(budget.metragem, 10) || 35 : 35}
-                />
-              </AnimatedSection>
+              {/* TurnkeyComparison e InvestmentImpact ocultos temporariamente */}
 
               <AnimatedSection id="portal-section" index={0.6}>
                 <PortalShowcase />
