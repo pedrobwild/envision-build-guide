@@ -186,7 +186,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 variants={fadeUp} custom={2} initial="hidden" animate="visible"
                 className="mt-2 flex items-center gap-2 text-xs text-white/60 font-body"
               >
-                <span>Etapa: <span className="text-white/80">Orçamento</span></span>
+                <span className="hidden" />
                 {!cfg.hide_validity && validityLabel && (
                   <>
                     <span className="text-white/30">·</span>
@@ -281,11 +281,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             className="relative z-10 hidden lg:block border-t border-white/[0.06] bg-black/10"
           >
             <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
-              <p className="text-xs text-white/60 font-body">
-                Etapa: <span className="text-white/90">Orçamento</span>
-                <span className="mx-2 text-white/20">·</span>
-                Próximo: <span className="text-white/90">Briefing</span>
-              </p>
+              <span className="hidden" />
               {!cfg.hide_validity && validityLabel && (
                 <p className={`text-sm font-body ${validity?.expired ? 'text-destructive' : 'text-white/80'}`}>
                   {validity?.expired
