@@ -388,9 +388,6 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
             </div>
           </div>
         )}
-            </div>
-          </div>
-        )}
 
         {/* Error */}
         {error && (
