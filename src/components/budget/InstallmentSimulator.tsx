@@ -7,13 +7,10 @@ interface InstallmentSimulatorProps {
   total: number;
 }
 
-const options = [
-  { months: 3, label: "3× sem juros" },
-  { months: 6, label: "6× sem juros" },
-  { months: 10, label: "10× sem juros" },
-  { months: 12, label: "12× sem juros" },
-  { months: 18, label: "18× sem juros" },
-];
+const options = Array.from({ length: 18 }, (_, i) => ({
+  months: i + 1,
+  label: `${i + 1}× sem juros`,
+}));
 
 export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
   const [selected, setSelected] = useState(10);
