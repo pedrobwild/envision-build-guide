@@ -1,42 +1,76 @@
 import { useState } from "react";
 import { formatBRL } from "@/lib/formatBRL";
-import { motion } from "framer-motion";
-import { Calculator } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CreditCard, ChevronDown } from "lucide-react";
 
 interface InstallmentSimulatorProps {
   total: number;
 }
 
 const options = [
-  { months: 6, label: "6×" },
-  { months: 10, label: "10×" },
-  { months: 12, label: "12×" },
+  { months: 3, label: "3× sem juros" },
+  { months: 6, label: "6× sem juros" },
+  { months: 10, label: "10× sem juros" },
+  { months: 12, label: "12× sem juros" },
+  { months: 18, label: "18× sem juros" },
 ];
 
 export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
   const [selected, setSelected] = useState(10);
+  const [open, setOpen] = useState(false);
+
+  const selectedOption = options.find((o) => o.months === selected)!;
 
   return (
     <div className="rounded-lg border border-border bg-card p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <Calculator className="h-4 w-4 text-primary" />
-        <h4 className="font-display font-bold text-sm text-foreground">Simulador de Parcelas</h4>
+      <div className="flex items-center gap-2 mb-3">
+        <CreditCard className="h-4 w-4 text-primary" />
+        <h4 className="font-display font-bold text-sm text-foreground">Formas de Pagamento</h4>
       </div>
 
-      <div className="flex gap-2 mb-4">
-        {options.map((opt) => (
-          <button
-            key={opt.months}
-            onClick={() => setSelected(opt.months)}
-            className={`flex-1 py-2 rounded-md text-sm font-body font-semibold transition-all ${
-              selected === opt.months
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      <p className="text-sm text-muted-foreground font-body mb-4">
+        Cartão de crédito em até <strong className="text-foreground">18× sem juros</strong>.
+      </p>
+
+      {/* Dropdown selector */}
+      <div className="relative mb-4">
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors text-sm font-body"
+        >
+          <span className="text-foreground font-medium">
+            {selectedOption.label} — {formatBRL(total / selected)}
+          </span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+
+        <AnimatePresence>
+          {open && (
+            <motion.ul
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg shadow-lg overflow-hidden"
+            >
+              {options.map((opt) => (
+                <li key={opt.months}>
+                  <button
+                    onClick={() => { setSelected(opt.months); setOpen(false); }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-body transition-colors ${
+                      selected === opt.months
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    <span className="font-semibold tabular-nums">{formatBRL(total / opt.months)}</span>
+                  </button>
+                </li>
+              ))}
+            </motion.ul>
+          )}
+        </AnimatePresence>
       </div>
 
       <motion.div
@@ -45,14 +79,14 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <p className="text-xs text-muted-foreground font-body mb-1">
+        <p className="text-sm text-muted-foreground font-body mb-1">
           {selected}× de
         </p>
-        <p className="font-display font-bold text-xl text-primary">
+        <p className="font-display font-bold text-xl text-primary" style={{ fontVariantNumeric: "tabular-nums" }}>
           {formatBRL(total / selected)}
         </p>
-        <p className="text-xs text-muted-foreground font-body mt-1">
-          sem juros
+        <p className="text-sm text-muted-foreground font-body mt-1">
+          sem juros no cartão
         </p>
       </motion.div>
     </div>
