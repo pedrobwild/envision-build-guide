@@ -143,36 +143,30 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             >
               {neighborhood && (
                 <>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Bairro</span>
-                    <span className="text-white/90 font-semibold">{neighborhood}</span>
-                  </span>
-                  {(area || version || dateStr) && <span className="text-white/20">|</span>}
+                  <span className="text-white/60">Bairro</span>
+                  <span className="text-white/90 font-semibold">{neighborhood}</span>
+                  {(area || version || dateStr) && <span className="text-white/20">·</span>}
                 </>
               )}
               {area && (
                 <>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Área</span>
-                    <span className="text-white/90 font-semibold">{area}</span>
-                  </span>
-                  {(version || dateStr) && <span className="text-white/20">|</span>}
+                  <span className="text-white/60">Área</span>
+                  <span className="text-white/90 font-semibold">{area}</span>
+                  {(version || dateStr) && <span className="text-white/20">·</span>}
                 </>
               )}
               {version && (
                 <>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Versão</span>
-                    <span className="text-white/90 font-semibold">{version}</span>
-                  </span>
-                  {dateStr && <span className="text-white/20">|</span>}
+                  <span className="text-white/60">Versão</span>
+                  <span className="text-white/90 font-semibold">{version}</span>
+                  {dateStr && <span className="text-white/20">·</span>}
                 </>
               )}
               {dateStr && (
-                <span className="inline-flex items-center gap-1">
-                  <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Elaboração</span>
+                <>
+                  <span className="text-white/60">Elaboração</span>
                   <span className="text-white/90 font-semibold">{dateStr}</span>
-                </span>
+                </>
               )}
             </motion.div>
 
