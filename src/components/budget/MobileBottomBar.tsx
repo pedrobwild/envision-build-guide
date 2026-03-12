@@ -51,7 +51,7 @@ export function MobileBottomBar({
       );
   const whatsappUrl = `https://wa.me/${DEFAULT_PHONE}?text=${whatsappMessage}`;
 
-  const ctaLabel = validity.expired ? "Solicitar atualização" : "Falar com especialista";
+  const ctaLabel = validity.expired ? "Solicitar atualização" : "Iniciar meu projeto";
 
   const installmentOptions = [3, 6, 10, 12, 18];
 
