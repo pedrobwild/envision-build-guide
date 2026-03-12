@@ -35,6 +35,7 @@ import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
 import { Eye, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useScrollspy } from "@/hooks/useScrollspy";
 import { categorizeSections } from "@/lib/scope-categories";
 import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
