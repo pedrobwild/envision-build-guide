@@ -12,6 +12,7 @@ import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, Loader2, 
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { matchAndCopyItemMedia } from "@/lib/item-media-matcher";
 
 interface ParsedRow {
   section: string;
