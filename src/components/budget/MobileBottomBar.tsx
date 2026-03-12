@@ -138,7 +138,7 @@ export function MobileBottomBar({
               {categorizedGroups.length > 0 && (
                 <div className="space-y-1">
                   <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Composição
+                    Composição do investimento
                   </p>
                   {categorizedGroups.map((group) => (
                     <div
