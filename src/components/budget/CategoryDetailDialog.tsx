@@ -17,7 +17,7 @@ interface ImageRecord {
 
 const MAX_IMAGES = 5;
 
-function ItemImageGallery({ item, budgetId }: { item: any; budgetId: string }) {
+function ItemImageGallery({ item, budgetId, editable }: { item: any; budgetId: string; editable: boolean }) {
   const [images, setImages] = useState<ImageRecord[]>(() =>
     (item.images || []).map((img: any) => ({ id: img.id, url: img.url, is_primary: !!img.is_primary }))
   );
