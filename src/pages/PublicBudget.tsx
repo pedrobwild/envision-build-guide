@@ -422,25 +422,18 @@ export default function PublicBudget() {
           </AnimatePresence>
 
           {!showMobileSummary && (
-            <div className="relative z-50">
-              <button
-                onClick={() => setShowMobileSummary(true)}
-                className="w-full text-center text-xs text-muted-foreground py-1.5 bg-card border-t border-border font-body hover:text-foreground transition-colors flex items-center justify-center gap-1 min-h-[44px]"
-              >
-                <ChevronUp className="h-3 w-3" />
-                Ver detalhes do orçamento
-              </button>
-              <div className="bg-charcoal flex items-center justify-between px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-                <div className="flex flex-col">
-                  <span className="font-display font-bold text-white text-base tabular-nums">{formatBRL(total)}</span>
-                  {validity.expired ? (
-                    <span className="text-xs text-destructive/80 font-body">Proposta expirada</span>
-                  ) : (
-                    <span className="text-xs text-white/50 font-body">
-                      Válido por mais {validity.daysLeft} {validity.daysLeft === 1 ? 'dia' : 'dias'}
-                    </span>
-                  )}
-                </div>
+            <div className="relative z-50 bg-card border-t border-border">
+              <div className="flex items-center justify-between px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]">
+                <button
+                  onClick={() => setShowMobileSummary(true)}
+                  className="flex flex-col min-h-[44px] justify-center"
+                >
+                  <span className="font-display font-bold text-foreground text-base tabular-nums">{formatBRL(total)}</span>
+                  <span className="text-[11px] text-muted-foreground font-body flex items-center gap-1">
+                    <ChevronUp className="h-3 w-3" />
+                    Ver resumo
+                  </span>
+                </button>
                 {validity.expired ? (
                   <a
                     href={`https://wa.me/5511911906183?text=${encodeURIComponent(
@@ -448,7 +441,7 @@ export default function PublicBudget() {
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-xs min-h-[44px] flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2"
                   >
                     <MessageCircle className="h-4 w-4" />
                     Solicitar atualização
@@ -460,7 +453,7 @@ export default function PublicBudget() {
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-xs min-h-[44px] flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2"
                   >
                     <MessageCircle className="h-4 w-4" />
                     Falar com especialista
