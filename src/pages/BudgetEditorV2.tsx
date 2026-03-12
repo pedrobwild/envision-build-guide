@@ -54,6 +54,9 @@ export default function BudgetEditorV2() {
     setSaving(true);
 
     try {
+      // Ensure version tracking is initialized
+      await ensureVersionGroup(budgetId);
+
       const publicId = budget.public_id || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
       await supabase.from("budgets").update({
         status: "published",
