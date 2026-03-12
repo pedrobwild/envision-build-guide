@@ -152,16 +152,18 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
     const map: Record<string, number> = {};
     const lower = headers.map((h) => (h || "").toString().trim().toLowerCase());
     const patterns: Record<string, string[]> = {
-      section: ["seção", "secao", "seçao", "section", "categoria", "ambiente"],
+      index: ["índice", "indice", "index"],
+      code: ["cód", "cod", "código", "codigo"],
+      section: ["seção", "secao", "seçao", "section", "categoria", "ambiente", "pacote"],
       title: ["item", "título", "titulo", "nome", "descrição curta", "servico", "serviço"],
       description: ["descrição", "descricao", "desc", "observação", "obs", "detalhe"],
       qty: ["qtd", "quantidade", "qty", "quant"],
-      unit: ["unidade", "und", "un", "unit"],
+      unit: ["unidade", "und", "un", "unit", "unid"],
       unitPrice: ["preço unit", "preco unit", "valor unit", "unit price", "p.u.", "pu"],
-      total: ["total", "valor", "subtotal", "valor total", "preço total"],
+      total: ["total", "valor", "subtotal", "valor total", "preço total", "total venda"],
     };
     for (const [key, words] of Object.entries(patterns)) {
-      const idx = lower.findIndex((h) => words.some((w) => h.includes(w)));
+      const idx = lower.findIndex((h) => h && words.some((w) => h.includes(w)));
       if (idx !== -1) map[key] = idx;
     }
     return map;
@@ -208,8 +210,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         console.log("[Excel Import] Header row:", headerRowIdx, headers);
         console.log("[Excel Import] Column map:", map);
 
-        if (!map.section && !map.title) {
-          // Try to use first non-empty text column as title
+        if (!map.section && !map.title && !map.index) {
           const firstTextCol = headers.findIndex((h) => h.trim().length > 0);
           if (firstTextCol !== -1) {
             map.title = firstTextCol;
@@ -220,19 +221,38 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         }
 
         const dataRows = nonEmptyRows.slice(headerRowIdx + 1);
+        const indexCol = map.index !== undefined ? map.index : -1;
 
-        // Detect section by index pattern (e.g. "1", "2") if no explicit section column
-        const hasIndex = headers.some((h) => {
-          const l = h.trim().toLowerCase();
-          return l.includes("índice") || l.includes("indice") || l.includes("index") || l.includes("cod") || l.includes("código");
-        });
-        const indexCol = hasIndex ? headers.findIndex((h) => {
-          const l = h.trim().toLowerCase();
-          return l.includes("índice") || l.includes("indice") || l.includes("index") || l.includes("cod") || l.includes("código");
-        }) : -1;
+        // Extract metadata from rows before header
+        const meta: ParsedMeta = {};
+        for (let i = 0; i < headerRowIdx && i < nonEmptyRows.length; i++) {
+          const row = nonEmptyRows[i];
+          if (!row) continue;
+          const rowText = row.map((c: any) => String(c ?? "").trim()).join(" ").toLowerCase();
+          for (let j = 0; j < row.length; j++) {
+            const cellText = String(row[j] ?? "").trim().toLowerCase();
+            if (cellText.includes("cliente")) {
+              const val = String(row[j + 1] ?? row[j + 2] ?? "").trim();
+              if (val) meta.clientName = val;
+            }
+            if (cellText.includes("obra")) {
+              const val = String(row[j + 1] ?? row[j + 2] ?? "").trim();
+              if (val) meta.projectName = val;
+            }
+          }
+        }
+        if (meta.clientName || meta.projectName) {
+          setParsedMeta(meta);
+        }
 
         let currentSection = "Geral";
+        let currentSubSection = "";
         const rows: ParsedRow[] = [];
+        const sectionTotals: Record<string, number> = {};
+
+        const isTopLevel = (v: string) => /^\d+$/.test(v.trim());
+        const isSubSection = (v: string) => /^\d+\.\d+$/.test(v.trim());
+        const isItem = (v: string) => /^\d+\.\d+\.\d+/.test(v.trim()) || /^\d+\.\d+$/.test(v.trim());
 
         for (const row of dataRows) {
           if (!Array.isArray(row)) continue;
@@ -243,10 +263,26 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
 
           if (!itemName) continue;
 
-          // Top-level index = section header
-          if (indexCol >= 0 && !map.section && /^\d+$/.test(indexVal)) {
+          // Top-level index (e.g. "1", "2") = section header with total
+          if (indexCol >= 0 && isTopLevel(indexVal)) {
             currentSection = itemName;
+            currentSubSection = "";
+            const total = map.total !== undefined ? toNumber(cells[map.total]) : undefined;
+            if (total && total > 0) {
+              sectionTotals[currentSection] = total;
+            }
             continue;
+          }
+
+          // Sub-section header (e.g. "3.1" DEMOLIÇÕES) — no qty, no unit → grouping label, skip
+          if (indexCol >= 0 && isSubSection(indexVal)) {
+            const hasQty = map.qty !== undefined && cells[map.qty] !== undefined && cells[map.qty] !== "" && cells[map.qty] !== 0;
+            const hasTotal = map.total !== undefined && toNumber(cells[map.total]);
+            // If it has qty or total, it's an actual item (like "6.1"), not a sub-section header
+            if (!hasQty && !hasTotal) {
+              currentSubSection = itemName;
+              continue;
+            }
           }
 
           const section = map.section !== undefined ? String(cells[map.section] || currentSection) : currentSection;
@@ -267,11 +303,20 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           return;
         }
 
-        const sectionTotals: Record<string, number> = {};
-        rows.forEach((row) => {
-          if (!row.total) return;
-          sectionTotals[row.section] = (sectionTotals[row.section] || 0) + row.total;
-        });
+        // If items have no individual totals, try to distribute section totals
+        const itemsWithTotals = rows.filter((r) => r.total && r.total > 0);
+        if (itemsWithTotals.length === 0 && Object.keys(sectionTotals).length > 0) {
+          // Keep section totals for display but don't fabricate item totals
+          console.log("[Excel Import] Items have no individual totals. Section totals:", sectionTotals);
+        } else {
+          // Recalculate section totals from items
+          rows.forEach((row) => {
+            if (!row.total) return;
+            sectionTotals[row.section] = (sectionTotals[row.section] || 0) + row.total;
+          });
+        }
+
+        console.log("[Excel Import] Parsed", rows.length, "items across", new Set(rows.map(r => r.section)).size, "sections");
 
         setParsedSectionTotals(sectionTotals);
         setParsedRows(rows);
