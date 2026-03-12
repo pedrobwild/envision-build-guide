@@ -13,7 +13,6 @@ interface CategoryDetailDialogProps {
   editable?: boolean;
 }
 
-const IMAGE_GALLERY_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
 
 export function CategoryDetailDialog({ open, onClose, group, budgetId, editable = false }: CategoryDetailDialogProps) {
   if (!group) return null;
