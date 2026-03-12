@@ -199,6 +199,16 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 )}
               </motion.div>
             )}
+
+            {/* Video testimonial CTA (mobile) */}
+            {!cfg.hide_stat_badges && (
+              <motion.div
+                variants={fadeUp} custom={2.5} initial="hidden" animate="visible"
+                className="mt-3"
+              >
+                <TestimonialVideoPreview />
+              </motion.div>
+            )}
           </div>
 
           {/* ── DESKTOP (lg+) ── */}
