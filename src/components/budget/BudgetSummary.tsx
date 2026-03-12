@@ -17,6 +17,7 @@ interface BudgetSummaryProps {
   validityDays?: number;
   activeSection?: string | null;
   categorizedGroups?: CategorizedGroup[];
+  budgetId?: string;
 }
 
 export function BudgetSummary({
