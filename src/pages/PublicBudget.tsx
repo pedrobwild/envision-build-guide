@@ -270,8 +270,8 @@ export default function PublicBudget() {
                   <PortalShowcase />
                 </AnimatedSection>
 
-                {/* Map — desktop only */}
-                <div className="hidden lg:block">
+                {/* Map */}
+                <div>
                   <AnimatedSection id="projetos-regiao" index={0.7}>
                     <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
                   </AnimatedSection>
