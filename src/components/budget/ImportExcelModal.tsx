@@ -36,11 +36,12 @@ interface ParsedMeta {
 interface ImportExcelModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  fileFilter?: 'pdf' | 'excel';
 }
 
 type ImportStep = "upload" | "parsing" | "preview" | "importing" | "done";
 
-export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) {
+export function ImportExcelModal({ open, onOpenChange, fileFilter }: ImportExcelModalProps) {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
@@ -479,7 +480,7 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file";
-              input.accept = ".xlsx,.xls,.pdf";
+              input.accept = fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx,.xls' : '.xlsx,.xls,.pdf';
               input.onchange = (e: any) => {
                 const f = e.target.files?.[0];
                 if (f) handleFile(f);

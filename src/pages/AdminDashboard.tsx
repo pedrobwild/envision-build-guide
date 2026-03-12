@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import {
-  Plus, Copy, ExternalLink, LogOut, FileText, Upload,
+  Plus, Copy, ExternalLink, LogOut, FileText, Upload, FileSpreadsheet,
   Search, Filter, TrendingUp, FolderOpen, CheckCircle, Clock,
   MoreHorizontal, Trash2, Archive, Eye, Bell
 } from "lucide-react";
@@ -24,6 +24,8 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const [importType, setImportType] = useState<'pdf' | 'excel'>('pdf');
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -255,19 +257,38 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="relative">
             <button
-              onClick={() => setImportOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30 text-sm font-medium font-body transition-colors"
-            >
-              <Upload className="h-4 w-4" /> Importar
-            </button>
-            <button
-              onClick={createBudget}
+              onClick={() => setNewMenuOpen(!newMenuOpen)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium font-body hover:bg-primary/90 transition-colors"
             >
               <Plus className="h-4 w-4" /> Novo
             </button>
+            {newMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setNewMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-lg border border-border bg-popover shadow-lg py-1">
+                  <button
+                    onClick={() => { setNewMenuOpen(false); createBudget(); }}
+                    className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
+                  >
+                    <FileText className="h-4 w-4 text-muted-foreground" /> Em branco
+                  </button>
+                  <button
+                    onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType('pdf'); }}
+                    className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
+                  >
+                    <Upload className="h-4 w-4 text-muted-foreground" /> Importar PDF
+                  </button>
+                  <button
+                    onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType('excel'); }}
+                    className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 text-muted-foreground" /> Importar Planilha
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -383,7 +404,7 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
-      <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} />
+      <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} fileFilter={importType} />
     </div>
   );
 }
