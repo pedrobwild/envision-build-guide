@@ -85,7 +85,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           transition={{ duration: 0.3 }}
           className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 flex items-center justify-between"
         >
-          <img src={logoWhite} alt="Bwild" className="h-7 sm:h-9 lg:h-8" />
+          <img src={logoWhite} alt="Bwild" className="h-10 sm:h-12 lg:h-11" />
           <div className="flex items-center gap-3">
             {!cfg.hide_consultora && budget.consultora_comercial && (
               <span className="hidden lg:inline text-xs text-white/70 font-body">
@@ -109,19 +109,17 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </div>
         </motion.div>
 
-        {/* ─── Context bar (badge only, no client name duplication) ─── */}
-        {!cfg.hide_client_context && !cfg.hide_badge && (
-          <motion.div
-            variants={fadeUp} custom={0} initial="hidden" animate="visible"
-            className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3"
-          >
-            <div className="flex items-center py-2 border-b border-white/[0.08]">
-              <span className="text-xs font-bold uppercase tracking-[0.15em] text-white bg-white/[0.08] border border-white/[0.12] rounded-md px-3 py-1">
-                Orçamento
-              </span>
-            </div>
-          </motion.div>
-        )}
+        {/* ─── Company info strip ─── */}
+        <motion.div
+          variants={fadeUp} custom={0} initial="hidden" animate="visible"
+          className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3"
+        >
+          <div className="py-2 border-b border-white/[0.08]">
+            <p className="text-[11px] font-body text-white/50 leading-relaxed">
+              CNPJ: 47.350.338/0001-37 · Responsável Técnico: Thiago Dantas do Amor · CAU: A162437-7
+            </p>
+          </div>
+        </motion.div>
 
         {/* ─── FAIXA 2 — Conteúdo principal ─── */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
