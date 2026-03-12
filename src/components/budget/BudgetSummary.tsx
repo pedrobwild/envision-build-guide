@@ -163,46 +163,6 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                       )}
                     </button>
 
-                    {/* Group items — only for NON-displayed categories (popup ones) */}
-                    {!isDisplayedInContent && !isCollapsed && (
-                      <div className="pl-3 space-y-0">
-                        {group.sections.map((section) => {
-                          const sectionElId = `section-${section.id}`;
-                          const isActive = activeSection === sectionElId;
-                          const subtotal = calculateSectionSubtotal(section);
-
-                          return (
-                            <button
-                              key={section.id}
-                              ref={isActive ? activeRef : undefined}
-                              onClick={() => {
-                                document.getElementById(sectionElId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                              }}
-                              className={cn(
-                                "w-full text-left flex items-center justify-between py-1.5 px-2 rounded-md transition-all duration-200 min-h-[32px]",
-                                isActive && "border-l-2 border-primary bg-primary/5",
-                                !isActive && "border-l-2 border-transparent",
-                                "hover:bg-muted/50"
-                              )}
-                            >
-                              <span className={cn(
-                                "text-xs font-body truncate mr-2 transition-colors",
-                                isActive ? "text-foreground font-medium" : "text-muted-foreground",
-                                "group-hover:text-primary"
-                              )}>
-                                {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}{section.title}
-                              </span>
-                              <span className={cn(
-                                "text-xs font-mono tabular-nums whitespace-nowrap",
-                                isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                              )}>
-                                {formatBRL(subtotal)}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
                 );
               })}
