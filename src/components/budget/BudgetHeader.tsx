@@ -130,66 +130,35 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         {/* ─── FAIXA 2 — Conteúdo principal ─── */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
-          {/* ── MOBILE (<lg) ── */}
-          <div className="lg:hidden py-6 space-y-3">
+          {/* ── MOBILE (<lg) — compact, decision-oriented ── */}
+          <div className="lg:hidden py-4 space-y-1.5">
             <motion.h1
-              variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
-              className="font-display font-bold text-2xl text-white leading-tight tracking-tight"
+              variants={fadeUp} custom={0.3} initial="hidden" animate="visible"
+              className="font-display font-bold text-xl text-white leading-tight tracking-tight"
             >
               {heroTitle}
             </motion.h1>
 
-            {/* Meta line */}
             <motion.div
-              variants={fadeUp} custom={0.8} initial="hidden" animate="visible"
-              className="flex items-center gap-2 text-xs font-body flex-wrap"
+              variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
+              className="flex items-center gap-1.5 text-xs font-body flex-wrap"
             >
               {neighborhood && (
                 <>
-                  <span className="text-white/70">Bairro</span>
                   <span className="text-white/95 font-medium">{neighborhood}</span>
-                  {(area || version || dateStr) && <span className="text-white/40">·</span>}
+                  {(area || version) && <span className="text-white/40">·</span>}
                 </>
               )}
               {area && (
                 <>
-                  <span className="text-white/70">Área</span>
                   <span className="text-white/95 font-medium">{area}</span>
-                  {(version || dateStr) && <span className="text-white/40">·</span>}
+                  {version && <span className="text-white/40">·</span>}
                 </>
               )}
               {version && (
-                <>
-                  <span className="text-white/70">Versão</span>
-                  <span className="text-white/95 font-medium">{version}</span>
-                  {dateStr && <span className="text-white/40">·</span>}
-                </>
-              )}
-              {dateStr && (
-                <>
-                  <span className="text-white/70">Elaboração</span>
-                  <span className="text-white/95 font-medium">{dateStr}</span>
-                </>
+                <span className="text-white/95 font-medium">v{version}</span>
               )}
             </motion.div>
-
-            {!cfg.hide_tagline && (
-              <motion.p
-                variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                className="text-xs font-body text-white/80 leading-relaxed"
-              >
-                {tagline}
-              </motion.p>
-            )}
-
-
-            {!cfg.hide_stat_badges && (
-              <motion.div
-                variants={fadeUp} custom={2.5} initial="hidden" animate="visible"
-              >
-                <TestimonialVideoPreview />
-              </motion.div>
-            )}
           </div>
 
           {/* ── DESKTOP (lg+) ── */}
