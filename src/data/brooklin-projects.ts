@@ -177,3 +177,45 @@ export function groupByEmpreendimento(bairro: string): EmpreendimentoGroup[] {
     allFotos: data.fotos,
   }));
 }
+
+// Helper: individual project cards (no grouping of photos)
+export type IndividualProject = {
+  id: string;
+  empreendimento: string;
+  displayName: string;
+  metragem: number;
+  fotos: string[];
+};
+
+export function getIndividualProjects(bairro: string): IndividualProject[] {
+  const filtered = brooklinEmpreendimentos.filter(
+    (p) => p.bairro.toLowerCase() === bairro.toLowerCase()
+  );
+
+  // Count how many projects per empreendimento
+  const counts = new Map<string, number>();
+  for (const p of filtered) {
+    counts.set(p.empreendimento, (counts.get(p.empreendimento) || 0) + 1);
+  }
+
+  // Track index per empreendimento for unit suffix
+  const indices = new Map<string, number>();
+
+  return filtered.map((p) => {
+    const total = counts.get(p.empreendimento) || 1;
+    const idx = (indices.get(p.empreendimento) || 0) + 1;
+    indices.set(p.empreendimento, idx);
+
+    const displayName = total > 1
+      ? `${p.empreendimento} — Und. ${idx}`
+      : p.empreendimento;
+
+    return {
+      id: p.id,
+      empreendimento: p.empreendimento,
+      displayName,
+      metragem: p.metragem,
+      fotos: p.fotos,
+    };
+  });
+}
