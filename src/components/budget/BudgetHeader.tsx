@@ -91,7 +91,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           <img src={logoWhite} alt="Bwild" className="h-10 sm:h-12 lg:h-11" />
           <div className="flex items-center gap-3">
             {!cfg.hide_consultora && budget.consultora_comercial && (
-              <span className="hidden lg:inline text-xs text-white/70 font-body">
+              <span className="hidden lg:inline text-xs text-white/80 font-body">
                 {budget.consultora_comercial}, sua consultora
               </span>
             )}
