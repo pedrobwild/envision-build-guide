@@ -11,6 +11,7 @@ export function AnimatedSection({ children, id, index }: AnimatedSectionProps) {
   return (
     <motion.div
       id={id}
+      className="scroll-mt-20"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
