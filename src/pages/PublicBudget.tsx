@@ -188,6 +188,15 @@ export default function PublicBudget() {
   const allScrollIds = useMemo(() => [...mobileNavIds, ...allSectionIds], [mobileNavIds.join(","), allSectionIds.join(",")]);
   const activeMobileNav = useScrollspy(mobileNavIds);
 
+  const handleRoomClick = (roomId: string | null) => {
+    setActiveRoom(roomId || null);
+    if (roomId) setRoomModalOpen(true);
+  };
+
+  const activeRoomData = rooms.find((r) => r.id === activeRoom);
+
+  let globalSectionIdx = 0;
+
   return (
     <div className="min-h-screen bg-background">
       <ReadingProgressBar />
@@ -213,66 +222,62 @@ export default function PublicBudget() {
 
       <main id="budget-content" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 lg:gap-8">
+        {/* ═══ MOBILE HERO CARD — price + validity + CTA above the fold ═══ */}
+        <MobileHeroCard
+          total={total}
+          validity={validity}
+          projectName={budget.project_name}
+          clientName={budget.client_name}
+          publicId={publicId || "demo"}
+          included={includedItems}
+        />
+
+        {/* ═══ MOBILE SECTION NAV — sticky pills ═══ */}
+        <MobileSectionNav items={mobileNavItems} activeId={activeMobileNav} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 lg:gap-8 mt-3 lg:mt-0">
           {/* Content column */}
           <div className="min-w-0 space-y-3 sm:space-y-4">
-            {/* Institutional / narrative sections */}
-            <div className="space-y-3">
+
+            {/* ─── MOBILE ORDER 1: O que está incluído (Arq + Eng merged) ─── */}
+            <div id="mobile-included">
               <AnimatedSection id="arquitetonico-section" index={0}>
                 <ArquitetonicoExpander />
               </AnimatedSection>
 
-              <AnimatedSection id="gallery-section" index={0.25}>
-                <ProjectGallery />
-              </AnimatedSection>
-
-              <AnimatedSection id="engenharia-section" index={0.5}>
-                <EngenhariaExpander />
-              </AnimatedSection>
-
-              {/* TurnkeyComparison e InvestmentImpact ocultos temporariamente */}
-
-              <AnimatedSection id="portal-section" index={0.6}>
-                <PortalShowcase />
-              </AnimatedSection>
-
-              <AnimatedSection id="projetos-regiao" index={0.7}>
-                <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
-              </AnimatedSection>
+              <div className="mt-3">
+                <AnimatedSection id="engenharia-section" index={0.5}>
+                  <EngenhariaExpander />
+                </AnimatedSection>
+              </div>
             </div>
 
-            {/* Floor plan hidden */}
-
-            {/* WhatIsIncluded hidden */}
-
-            {/* Condições do Projeto — oculto temporariamente */}
-
-            {/* === TECHNICAL SCOPE — categorized === */}
-            {sections.length > 0 && (
-              <div className="rounded-xl">
-                {/* Transition header + price toggle */}
-                <div className="flex items-end justify-between pt-2 pb-1">
-                  <div>
-                    <h2 className="text-2xl lg:text-3xl font-display font-bold text-foreground tracking-tight">
-                      Detalhamento da Mobília e Eletros
-                    </h2>
-                    <p className="text-muted-foreground text-sm mt-1 font-body">
-                      Especificação completa dos itens selecionados para o seu projeto
-                    </p>
+            {/* ─── MOBILE ORDER 2: Escopo técnico detalhado — early for decision ─── */}
+            <div id="mobile-scope">
+              {sections.length > 0 && (
+                <div className="rounded-xl">
+                  <div className="flex items-end justify-between pt-2 pb-1">
+                    <div>
+                      <h2 className="text-xl lg:text-3xl font-display font-bold text-foreground tracking-tight">
+                        Detalhamento da Mobília e Eletros
+                      </h2>
+                      <p className="text-muted-foreground text-xs sm:text-sm mt-1 font-body">
+                        Especificação completa dos itens selecionados
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowPrices(!showPrices)}
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors min-h-[44px] px-2 flex-shrink-0"
+                    >
+                      {showPrices ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      {showPrices ? "Ocultar valores" : "Mostrar valores"}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setShowPrices(!showPrices)}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors min-h-[44px] px-2 flex-shrink-0"
-                  >
-                    {showPrices ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                    {showPrices ? "Ocultar valores" : "Mostrar valores"}
-                  </button>
-                </div>
 
-                {categorizedGroups.filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id)).map((group) => {
-                  const groupSections = group.sections;
+                  {categorizedGroups.filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id)).map((group) => {
+                    const groupSections = group.sections;
                     return (
-                    <div key={group.category.id} className="space-y-2 sm:space-y-3">
+                      <div key={group.category.id} className="space-y-2 sm:space-y-3">
                         <CategoryHeader category={group.category} subtotal={group.subtotal} />
                         {groupSections.map((section) => {
                           const currentIdx = globalSectionIdx++;
@@ -291,11 +296,34 @@ export default function PublicBudget() {
                             </AnimatedSection>
                           );
                         })}
-                    </div>
-                  );
-                })}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* ─── MOBILE ORDER 3: Trust / Confidence builders ─── */}
+            <div id="mobile-trust" className="space-y-3">
+              <AnimatedSection id="gallery-section" index={0.25}>
+                <ProjectGallery />
+              </AnimatedSection>
+
+              {/* Map — desktop only */}
+              <div className="hidden lg:block">
+                <AnimatedSection id="projetos-regiao" index={0.7}>
+                  <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
+                </AnimatedSection>
               </div>
-            )}
+            </div>
+
+            {/* ─── MOBILE ORDER 4: Portal + Garantia ─── */}
+            <div id="mobile-portal">
+              <AnimatedSection id="portal-section" index={0.6}>
+                <PortalShowcase />
+              </AnimatedSection>
+            </div>
+
             <AnimatedSection id="next-steps" index={100}>
               <NextSteps />
             </AnimatedSection>
