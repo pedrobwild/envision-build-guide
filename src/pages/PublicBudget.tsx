@@ -259,9 +259,27 @@ export default function PublicBudget() {
                   <EngenhariaExpander />
                 </AnimatedSection>
               </div>
+
+              {/* ─── Visual 3D + Portal logo após Engenharia ─── */}
+              <div id="mobile-trust" className="space-y-3 mt-3 scroll-mt-20">
+                <AnimatedSection id="gallery-section" index={0.55}>
+                  <ProjectGallery />
+                </AnimatedSection>
+
+                <AnimatedSection id="portal-section-inline" index={0.6}>
+                  <PortalShowcase />
+                </AnimatedSection>
+
+                {/* Map — desktop only */}
+                <div className="hidden lg:block">
+                  <AnimatedSection id="projetos-regiao" index={0.7}>
+                    <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
+                  </AnimatedSection>
+                </div>
+              </div>
             </div>
 
-            {/* ─── MOBILE ORDER 2: Escopo técnico detalhado — early for decision ─── */}
+            {/* ─── Escopo técnico detalhado ─── */}
             <div id="mobile-scope" className="scroll-mt-20">
               {sections.length > 0 && (
                 <div className="rounded-xl">
@@ -326,29 +344,6 @@ export default function PublicBudget() {
               )}
             </div>
 
-            {/* ── Mid-page CTA: after scope ── */}
-            <InlineCTA
-              publicId={publicId || "demo"}
-              projectName={budget.project_name}
-              clientName={budget.client_name}
-              expired={validity.expired}
-              variant="subtle"
-            />
-
-            {/* ─── MOBILE ORDER 3: Trust / Confidence builders ─── */}
-            <div id="mobile-trust" className="space-y-3 scroll-mt-20">
-              <AnimatedSection id="gallery-section" index={0.25}>
-                <ProjectGallery />
-              </AnimatedSection>
-
-              {/* Map — desktop only */}
-              <div className="hidden lg:block">
-                <AnimatedSection id="projetos-regiao" index={0.7}>
-                  <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
-                </AnimatedSection>
-              </div>
-            </div>
-
             {/* ── Strong CTA: after trust, before portal ── */}
             <InlineCTA
               publicId={publicId || "demo"}
@@ -358,12 +353,8 @@ export default function PublicBudget() {
               variant="strong"
             />
 
-            {/* ─── MOBILE ORDER 4: Portal + Garantia ─── */}
-            <div id="mobile-portal" className="scroll-mt-20">
-              <AnimatedSection id="portal-section" index={0.6}>
-                <PortalShowcase />
-              </AnimatedSection>
-            </div>
+            {/* mobile-portal anchor kept for nav */}
+            <div id="mobile-portal" className="scroll-mt-20" />
 
             <div id="mobile-next-steps" className="scroll-mt-20">
               <AnimatedSection id="next-steps" index={100}>
