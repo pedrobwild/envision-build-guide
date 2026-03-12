@@ -191,9 +191,9 @@ export default function PublicBudget() {
 
       <main id="budget-content" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 lg:gap-8">
           {/* Content column */}
-          <div className="lg:col-span-3 space-y-3 sm:space-y-4">
+          <div className="min-w-0 space-y-3 sm:space-y-4">
             {/* Institutional / narrative sections */}
             <div className="space-y-3">
               <AnimatedSection id="arquitetonico-section" index={0}>
