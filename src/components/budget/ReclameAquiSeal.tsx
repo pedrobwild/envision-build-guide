@@ -15,7 +15,7 @@ export function ReclameAquiSeal() {
       />
       <span className="text-emerald-300 group-hover:text-emerald-200">
         <span className="sm:hidden">0 reclamações</span>
-        <span className="hidden sm:inline">Nenhuma reclamação há 6 meses</span>
+        <span className="hidden sm:inline">0 reclamações há 6 meses</span>
       </span>
     </a>
   );
