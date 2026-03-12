@@ -38,6 +38,8 @@ interface ImportExcelModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   fileFilter?: 'pdf' | 'excel';
+  /** If set, the imported budget will be assigned to this version group instead of being standalone. */
+  targetBudgetGroupId?: string;
 }
 
 type ImportStep = "upload" | "parsing" | "preview" | "importing" | "done";
