@@ -34,6 +34,7 @@ import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
 import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
 import { InlineCTA } from "@/components/budget/InlineCTA";
+import { TrustStrip } from "@/components/budget/TrustStrip";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
 import { Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
