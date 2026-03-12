@@ -50,8 +50,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
   // Unified meta line: bairro · metragem · versão · data
   const neighborhood = budget.bairro || budget.condominio || "";
-  const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '') : "";
-  const area = rawArea ? (rawArea.includes('m²') ? rawArea : `${rawArea}m²`) : "";
+  const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
+  const area = rawArea ? `${rawArea}m²` : "";
   const version = budget.versao ? budget.versao.replace(/^v/i, '').padStart(2, '0') : "";
   const dateStr = budget.date ? formatDate(budget.date) : "";
 
