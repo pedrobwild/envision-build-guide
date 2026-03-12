@@ -235,6 +235,7 @@ interface CategoryDetailDialogProps {
   onClose: () => void;
   group: CategorizedGroup | null;
   budgetId?: string;
+  editable?: boolean;
 }
 
 export function CategoryDetailDialog({ open, onClose, group, budgetId }: CategoryDetailDialogProps) {
