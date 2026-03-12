@@ -82,8 +82,8 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
         <p className="font-display font-bold text-xl text-primary" style={{ fontVariantNumeric: "tabular-nums" }}>
           {formatBRL(total / selected)}
         </p>
-        <p className="text-sm text-muted-foreground font-body mt-1">
-          sem juros no cartão
+        <p className="text-xs text-muted-foreground font-body mt-3">
+          Consultar outras formas de pagamento com sua consultora comercial
         </p>
       </motion.div>
     </div>
