@@ -142,13 +142,6 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                       <span className={`text-xs font-mono tabular-nums font-semibold ${group.category.colorClass}`}>
                         {formatBRL(group.subtotal)}
                       </span>
-                      {!isDisplayedInContent && !isCollapsed && group.sections.length > 1 && (
-                        isCollapsed ? (
-                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                        ) : (
-                          <ChevronUp className="h-3 w-3 text-muted-foreground" />
-                        )
-                      )}
                     </button>
 
                   </div>
