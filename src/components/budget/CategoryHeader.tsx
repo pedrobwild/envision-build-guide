@@ -8,9 +8,9 @@ interface CategoryHeaderProps {
 
 export function CategoryHeader({ category, subtotal }: CategoryHeaderProps) {
   return (
-    <div className="mt-8 first:mt-0 mb-2 flex items-center gap-2.5">
-      <div className={`w-1 h-4 rounded-full ${category.bgClass}`} />
-      <span className={`text-base font-display font-bold uppercase tracking-wider ${category.colorClass}`}>
+    <div className="mt-8 first:mt-0 mb-3 flex items-center gap-3">
+      <div className={`w-1 h-5 rounded-full ${category.bgClass}`} />
+      <span className={`text-base font-display font-bold tracking-tight ${category.colorClass}`}>
         {category.label}
       </span>
       <span className="ml-auto text-base font-mono font-bold tabular-nums text-foreground">
