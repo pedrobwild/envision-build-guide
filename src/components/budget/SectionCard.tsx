@@ -246,7 +246,9 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                           i % 2 === 1 && "bg-muted/20"
                         )}
                       >
-                        {primaryImage ? (
+                        {categoryColor && IMAGE_GALLERY_CATEGORIES.has(categoryColor.id) && budgetId ? (
+                          <ItemImageGallery item={item} budgetId={budgetId} editable={editable} />
+                        ) : primaryImage ? (
                           <button
                             onClick={() => openLightbox(primaryImage.url)}
                             className="relative w-8 h-8 rounded-full overflow-hidden group cursor-zoom-in flex-shrink-0"
