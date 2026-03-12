@@ -9,7 +9,7 @@ interface InstallmentSimulatorProps {
 
 const options = Array.from({ length: 18 }, (_, i) => ({
   months: i + 1,
-  label: `${i + 1}× sem juros`,
+  label: `${i + 1} ${i === 0 ? 'parcela' : 'parcelas'}`,
 }));
 
 export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
@@ -82,8 +82,8 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
         <p className="font-display font-bold text-xl text-primary" style={{ fontVariantNumeric: "tabular-nums" }}>
           {formatBRL(total / selected)}
         </p>
-        <p className="text-sm text-muted-foreground font-body mt-1">
-          sem juros no cartão
+        <p className="text-xs text-muted-foreground font-body mt-3">
+          Consultar outras formas de pagamento com sua consultora comercial
         </p>
       </motion.div>
     </div>
