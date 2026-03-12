@@ -9,7 +9,7 @@ interface InstallmentSimulatorProps {
 
 const options = Array.from({ length: 18 }, (_, i) => ({
   months: i + 1,
-  label: `${i + 1}× sem juros`,
+  label: `${i + 1} ${i === 0 ? 'parcela' : 'parcelas'}`,
 }));
 
 export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
