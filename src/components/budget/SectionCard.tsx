@@ -27,7 +27,7 @@ const HIGH_VALUE_THRESHOLD = 10000;
 const MEDIUM_VALUE_THRESHOLD = 5000;
 const LOW_VALUE_THRESHOLD = 1000;
 
-export function SectionCard({ section, compact, showItemQty, showItemPrices = false, highlightZone, sectionIndex = 0, categoryColor }: SectionCardProps) {
+export function SectionCard({ section, compact, showItemQty, showItemPrices = false, highlightZone, sectionIndex = 0, categoryColor, budgetId, editable = false }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
   const isHighValue = subtotal >= HIGH_VALUE_THRESHOLD;
   const isLarge = subtotal > MEDIUM_VALUE_THRESHOLD;
