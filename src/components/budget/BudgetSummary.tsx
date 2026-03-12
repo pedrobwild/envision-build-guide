@@ -18,6 +18,7 @@ interface BudgetSummaryProps {
   activeSection?: string | null;
   categorizedGroups?: CategorizedGroup[];
   budgetId?: string;
+  editable?: boolean;
 }
 
 export function BudgetSummary({
