@@ -128,7 +128,10 @@ export default function BudgetEditorV2() {
       </header>
 
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Version History */}
+        <VersionHistoryPanel budgetId={budgetId!} onVersionChange={loadBudget} />
+
         <MetadataStep
           budget={budget}
           onFieldChange={(field, value) => {
