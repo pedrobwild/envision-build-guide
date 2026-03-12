@@ -5,17 +5,17 @@ import { motion } from "framer-motion";
 const checklist = [
   "Projeto executivo completo",
   "Orçamento detalhado e fixo",
-  "Cronograma planejado",
-  "Engenheiro responsável",
-  "Portal com atualização contínua",
-  "Vistoria final obrigatória",
+  "Cronograma com marcos semanais",
+  "Engenheiro responsável dedicado",
+  "Portal com atualizações em tempo real",
+  "Vistoria final antes da entrega",
   "Garantia estrutural de 5 anos",
 ];
 
 const deliveryBullets = [
   "Manual de obra e manutenção",
-  "Certificado de garantia de 5 anos",
-  "Canal ágil para suporte pós-obra",
+  "Certificado de garantia",
+  "Suporte pós-obra",
 ];
 
 export function ProjectSecurity({ prazoDiasUteis = 55 }: { prazoDiasUteis?: number }) {
@@ -28,10 +28,10 @@ export function ProjectSecurity({ prazoDiasUteis = 55 }: { prazoDiasUteis?: numb
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-              Segurança e previsibilidade
+              O que garante seu projeto
             </h3>
             <p className="text-xs text-muted-foreground font-body mt-0.5">
-              Indicadores que garantem tranquilidade no seu projeto.
+              Previsibilidade em cada etapa, do contrato à entrega.
             </p>
           </div>
         </div>
@@ -50,7 +50,7 @@ export function ProjectSecurity({ prazoDiasUteis = 55 }: { prazoDiasUteis?: numb
                 <Clock className="h-4.5 w-4.5 text-primary" />
               </div>
               <span className="text-2xl font-display font-bold text-primary">{prazoDiasUteis}</span>
-              <span className="text-xs text-muted-foreground font-body leading-snug">dias úteis de execução</span>
+              <span className="text-xs text-muted-foreground font-body leading-snug">dias úteis</span>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -63,7 +63,7 @@ export function ProjectSecurity({ prazoDiasUteis = 55 }: { prazoDiasUteis?: numb
                 <Award className="h-4.5 w-4.5 text-success" />
               </div>
               <span className="text-2xl font-display font-bold text-success">5 anos</span>
-              <span className="text-xs text-muted-foreground font-body leading-snug">de garantia estrutural</span>
+              <span className="text-xs text-muted-foreground font-body leading-snug">de garantia</span>
             </motion.div>
           </div>
 
@@ -87,10 +87,7 @@ export function ProjectSecurity({ prazoDiasUteis = 55 }: { prazoDiasUteis?: numb
 
         {/* Delivery callout */}
         <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 space-y-2">
-          <p className="font-display font-semibold text-xs text-foreground">Entrega e garantia</p>
-          <p className="text-xs text-muted-foreground font-body">
-            Obra finalizada após vistoria e aprovação de todos os detalhes.
-          </p>
+          <p className="font-display font-semibold text-xs text-foreground">Na entrega da obra</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {deliveryBullets.map((b) => (
               <span key={b} className="flex items-center gap-1.5 text-xs font-body text-muted-foreground">

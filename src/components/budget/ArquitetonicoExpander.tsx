@@ -3,12 +3,12 @@ import { Pencil, Palette, FileCheck, FileText, Headset, Lightbulb } from "lucide
 import { motion } from "framer-motion";
 
 const bullets = [
-  { icon: Lightbulb, highlight: "Consultoria", text: "Nosso time sugere a melhor composição de projeto para que seu objetivo com a reforma seja alcançado." },
-  { icon: Pencil, highlight: "Projeto 3D", text: "Apresentado levando em consideração sua visão, preferências e objetivos, incluindo revisões." },
-  { icon: Palette, highlight: "Personalização", text: "Escolha cores e disposições da pintura e marcenaria que melhor te atendem." },
-  { icon: FileCheck, highlight: "Projeto Executivo", text: "Modelo ultra detalhado que guia minuciosamente a execução do projeto, à prova de falhas estruturais." },
-  { icon: FileText, highlight: "Documentação e Burocracia", text: "Cuidamos de toda a interface com o CREA para emissão da ART e liberação da obra com o condomínio." },
-  { icon: Headset, highlight: "Acompanhamento Técnico", text: "O arquiteto acompanhará todo o andamento da obra junto do engenheiro responsável." },
+  { icon: Lightbulb, highlight: "Consultoria", text: "Orientação para alcançar o melhor resultado com seu investimento." },
+  { icon: Pencil, highlight: "Projeto 3D", text: "Maquete realista do seu espaço, com revisões até a aprovação." },
+  { icon: Palette, highlight: "Personalização", text: "Cores, materiais e disposição escolhidos por você, guiados pelo arquiteto." },
+  { icon: FileCheck, highlight: "Projeto executivo", text: "Plantas detalhadas que eliminam improvisos na execução." },
+  { icon: FileText, highlight: "Documentação", text: "ART, CREA e liberação do condomínio — cuidamos de tudo." },
+  { icon: Headset, highlight: "Acompanhamento", text: "Arquiteto e engenheiro juntos durante toda a obra." },
 ];
 
 export function ArquitetonicoExpander() {
@@ -21,10 +21,10 @@ export function ArquitetonicoExpander() {
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-              Projeto Arquitetônico Personalizado
+              Arquitetura
             </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5">
-              Diferente de modelos padronizados, o seu projeto da Bwild é único e desenvolvido exclusivamente para sua unidade.
+            <p className="text-xs text-muted-foreground font-body mt-0.5">
+              Projeto exclusivo para sua unidade — do conceito à documentação.
             </p>
           </div>
         </div>

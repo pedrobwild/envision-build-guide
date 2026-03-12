@@ -9,24 +9,28 @@ import { HelpCircle } from "lucide-react";
 
 const faqs = [
   {
-    q: "O que acontece após a aprovação do orçamento?",
-    a: "Após a aprovação, nossa equipe entra em contato para alinhar o cronograma de execução, definir datas de início e assinatura do contrato.",
+    q: "O que acontece após aprovar este orçamento?",
+    a: "Entramos em contato para assinar o contrato, alinhar o cronograma e definir a data de início. Você terá um engenheiro e um gerente de relacionamento dedicados desde o primeiro dia.",
   },
   {
-    q: "Os valores podem mudar depois da aprovação?",
-    a: "Os valores são fixos dentro do prazo de validade. Alterações de escopo solicitadas pelo cliente podem gerar aditivos, sempre acordados previamente.",
+    q: "Os valores podem mudar?",
+    a: "Não. Dentro do prazo de validade, os valores são fixos. Eventuais alterações de escopo solicitadas por você geram aditivos, sempre acordados e aprovados antes da execução.",
   },
   {
-    q: "Quais são as formas de pagamento?",
-    a: "Trabalhamos com parcelamento por etapas de obra, transferência bancária, PIX e boleto. Condições especiais podem ser negociadas diretamente com a consultora.",
+    q: "Como funciona o pagamento?",
+    a: "Parcelamento vinculado às etapas da obra, via PIX, transferência ou boleto. Condições personalizadas podem ser negociadas com sua consultora.",
   },
   {
-    q: "A reforma inclui garantia?",
-    a: "Sim. Todos os serviços possuem garantia de 1 ano para mão de obra. Materiais seguem a garantia do fabricante.",
+    q: "Qual a garantia dos serviços?",
+    a: "1 ano de garantia sobre a mão de obra. Materiais seguem a garantia do fabricante. Emitimos certificado formal na entrega da obra.",
   },
   {
-    q: "Quanto tempo dura a reforma?",
-    a: "O prazo varia conforme a complexidade do projeto. Um cronograma detalhado é apresentado antes do início, com acompanhamento semanal de progresso.",
+    q: "Quanto tempo leva a reforma?",
+    a: "Depende da complexidade do projeto. Antes de iniciar, você recebe um cronograma detalhado com marcos semanais e acompanhamento pelo nosso portal.",
+  },
+  {
+    q: "Preciso acompanhar a obra pessoalmente?",
+    a: "Não. Toda a gestão é feita pela nossa equipe. Você acompanha o progresso pelo portal Bwild, com fotos, relatórios e canal direto com o engenheiro.",
   },
 ];
 
@@ -37,17 +41,17 @@ export function BudgetFAQ() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="rounded-lg border border-border bg-card p-6"
+      className="rounded-lg border border-border bg-card p-4 sm:p-6"
     >
-      <div className="flex items-center gap-2 mb-5">
+      <div className="flex items-center gap-2 mb-4">
         <HelpCircle className="h-5 w-5 text-primary" />
-        <h3 className="font-display font-bold text-lg text-foreground">Perguntas Frequentes</h3>
+        <h3 className="font-display font-bold text-base sm:text-lg text-foreground">Dúvidas frequentes</h3>
       </div>
 
       <Accordion type="single" collapsible className="space-y-1">
         {faqs.map((faq, i) => (
           <AccordionItem key={i} value={`faq-${i}`} className="border-border">
-            <AccordionTrigger className="text-sm font-body font-medium text-foreground hover:no-underline">
+            <AccordionTrigger className="text-sm font-body font-medium text-foreground hover:no-underline text-left">
               {faq.q}
             </AccordionTrigger>
             <AccordionContent className="text-sm font-body text-muted-foreground leading-relaxed">

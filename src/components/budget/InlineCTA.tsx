@@ -62,8 +62,8 @@ export function InlineCTA({
       {/* Contextual copy */}
       <p className="text-center text-sm font-body text-muted-foreground leading-snug">
         {isStrong
-          ? "Gostou do que viu? Converse com nossa equipe sem compromisso."
-          : "Dúvidas? Nossa equipe está pronta para ajudar."}
+          ? "Pronto para avançar? Converse com nossa equipe, sem compromisso."
+          : "Alguma dúvida? Estamos à disposição."}
       </p>
 
       {/* CTA button */}
