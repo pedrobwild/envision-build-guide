@@ -266,8 +266,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 <TestimonialVideoPreview />
               </motion.div>
             )}
+          </div>
         </div>
-
 
         {/* ─── FAIXA 3 — Status strip (desktop) — sem "Início: Imediato" ─── */}
         {!cfg.hide_status_strip && (
