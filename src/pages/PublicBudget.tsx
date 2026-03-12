@@ -236,21 +236,22 @@ export default function PublicBudget() {
 
             {/* Condições do Projeto — oculto temporariamente */}
 
-            {/* === TRANSITION ZONE === */}
-            {sections.length > 0 && (
-              <AnimatedSection id="scope-transition" index={0.95}>
-                <ScopeTransitionZone sections={sections} total={scopeTotal} />
-              </AnimatedSection>
-            )}
-
             {/* === TECHNICAL SCOPE — categorized === */}
             {sections.length > 0 && (
-              <div className="bg-muted/[0.03] rounded-xl">
-                {/* Price toggle */}
-                <div className="pt-2 pb-1 flex items-center justify-end">
+              <div className="rounded-xl">
+                {/* Transition header + price toggle */}
+                <div className="flex items-end justify-between pt-2 pb-1">
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-display font-bold text-foreground tracking-tight">
+                      Detalhamento da Mobília e Eletros
+                    </h2>
+                    <p className="text-muted-foreground text-sm mt-1 font-body">
+                      Especificação completa dos itens selecionados para o seu projeto
+                    </p>
+                  </div>
                   <button
                     onClick={() => setShowPrices(!showPrices)}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors min-h-[44px] px-2"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors min-h-[44px] px-2 flex-shrink-0"
                   >
                     {showPrices ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                     {showPrices ? "Ocultar valores" : "Mostrar valores"}
