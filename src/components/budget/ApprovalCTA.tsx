@@ -75,7 +75,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
     return (
       <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-5 text-center space-y-3">
         <AlertTriangle className="h-6 w-6 text-destructive mx-auto" />
-        <p className="font-display font-semibold text-foreground text-sm">Orçamento expirado</p>
+        <p className="font-display font-semibold text-foreground text-sm">Condições expiradas</p>
         <p className="text-xs text-muted-foreground font-body">
           Os valores e condições desta proposta não estão mais vigentes.
         </p>
