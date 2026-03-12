@@ -17,7 +17,7 @@ interface ImageRecord {
 
 const MAX_IMAGES = 5;
 
-function ItemImageGallery({ item, budgetId }: { item: any; budgetId: string }) {
+function ItemImageGallery({ item, budgetId, editable }: { item: any; budgetId: string; editable: boolean }) {
   const [images, setImages] = useState<ImageRecord[]>(() =>
     (item.images || []).map((img: any) => ({ id: img.id, url: img.url, is_primary: !!img.is_primary }))
   );
@@ -97,9 +97,10 @@ function ItemImageGallery({ item, budgetId }: { item: any; budgetId: string }) {
     }
   };
 
-  const canAdd = images.length < MAX_IMAGES;
+  const canAdd = editable && images.length < MAX_IMAGES;
 
   if (images.length === 0) {
+    if (!editable) return null;
     return (
       <div className="flex-shrink-0">
         <button
@@ -141,13 +142,15 @@ function ItemImageGallery({ item, budgetId }: { item: any; budgetId: string }) {
           onClick={() => setLightboxOpen(true)}
         />
         {/* Remove button */}
-        <button
-          onClick={() => handleRemove(activeIdx)}
-          disabled={uploading}
-          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm disabled:opacity-50"
-        >
-          <X className="h-3 w-3" />
-        </button>
+        {editable && (
+          <button
+            onClick={() => handleRemove(activeIdx)}
+            disabled={uploading}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm disabled:opacity-50"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
         {/* Primary badge */}
         {active?.is_primary && images.length > 1 && (
           <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
@@ -232,9 +235,10 @@ interface CategoryDetailDialogProps {
   onClose: () => void;
   group: CategorizedGroup | null;
   budgetId?: string;
+  editable?: boolean;
 }
 
-export function CategoryDetailDialog({ open, onClose, group, budgetId }: CategoryDetailDialogProps) {
+export function CategoryDetailDialog({ open, onClose, group, budgetId, editable = false }: CategoryDetailDialogProps) {
   if (!group) return null;
 
   return (
@@ -272,7 +276,7 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId }: Categor
                   <div className="divide-y divide-border/30">
                     {items.map((item: any) => (
                       <div key={item.id} className="flex items-center gap-3 px-4 py-3 min-h-[56px]">
-                        {budgetId && <ItemImageGallery item={item} budgetId={budgetId} />}
+                        {budgetId && <ItemImageGallery item={item} budgetId={budgetId} editable={editable} />}
 
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-body font-medium text-foreground">{item.title}</p>

@@ -18,6 +18,7 @@ interface BudgetSummaryProps {
   activeSection?: string | null;
   categorizedGroups?: CategorizedGroup[];
   budgetId?: string;
+  editable?: boolean;
 }
 
 export function BudgetSummary({
@@ -30,6 +31,7 @@ export function BudgetSummary({
   activeSection,
   categorizedGroups,
   budgetId,
+  editable = false,
 }: BudgetSummaryProps) {
   const validity = budgetDate ? getValidityInfo(budgetDate, validityDays) : null;
 
@@ -129,6 +131,7 @@ export function BudgetSummary({
         onClose={() => setDetailGroup(null)}
         group={detailGroup}
         budgetId={budgetId}
+        editable={editable}
       />
     </motion.div>
   );
