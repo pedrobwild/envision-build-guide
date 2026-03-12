@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
