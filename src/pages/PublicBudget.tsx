@@ -34,7 +34,7 @@ import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
 import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
-import { ChevronUp, X, Eye, EyeOff, MessageCircle } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useScrollspy } from "@/hooks/useScrollspy";
 import { categorizeSections } from "@/lib/scope-categories";
 import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
