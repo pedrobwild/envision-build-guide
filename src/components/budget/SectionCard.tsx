@@ -280,32 +280,45 @@ export function SectionCard({
         {/* ── Preview items (collapsed) — mobile-first: show top items ── */}
         {!expanded && items.length > 0 && (
           <div className="px-4 py-2">
-            {previewItems.map((item: any, i: number) => (
-              <div
-                key={item.id}
-                className={cn(
-                  "flex items-center gap-2 py-1.5",
-                  i < previewItems.length - 1 && "border-b border-border/30"
-                )}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0" />
-                <span className="text-sm font-body text-foreground flex-1 truncate">
-                  {item.title}
-                </span>
-                <AnimatePresence>
-                  {showItemPrices && Number(item.internal_total) > 0 && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-xs font-mono tabular-nums text-muted-foreground flex-shrink-0"
-                    >
-                      {formatBRL(Number(item.internal_total))}
-                    </motion.span>
+            {previewItems.map((item: any, i: number) => {
+              const thumb = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "flex items-center gap-2.5 py-2",
+                    i < previewItems.length - 1 && "border-b border-border/30"
                   )}
-                </AnimatePresence>
-              </div>
-            ))}
+                >
+                  {/* Thumbnail or bullet */}
+                  {thumb ? (
+                    <img
+                      src={thumb.url}
+                      alt={item.title}
+                      className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-border/50"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0 ml-3 mr-2.5" />
+                  )}
+                  <span className="text-sm font-body text-foreground flex-1 truncate">
+                    {item.title}
+                  </span>
+                  <AnimatePresence>
+                    {showItemPrices && Number(item.internal_total) > 0 && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-xs font-mono tabular-nums text-muted-foreground flex-shrink-0"
+                      >
+                        {formatBRL(Number(item.internal_total))}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
 
             {hiddenCount > 0 && (
               <button
