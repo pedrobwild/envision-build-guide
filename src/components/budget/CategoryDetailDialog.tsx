@@ -227,6 +227,13 @@ function ItemImageGallery({ item, budgetId }: { item: any; budgetId: string }) {
   );
 }
 
+interface CategoryDetailDialogProps {
+  open: boolean;
+  onClose: () => void;
+  group: CategorizedGroup | null;
+  budgetId?: string;
+}
+
 export function CategoryDetailDialog({ open, onClose, group, budgetId }: CategoryDetailDialogProps) {
   if (!group) return null;
 
