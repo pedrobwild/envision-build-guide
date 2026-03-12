@@ -246,13 +246,11 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         }
 
         let currentSection = "Geral";
-        let currentSubSection = "";
         const rows: ParsedRow[] = [];
         const sectionTotals: Record<string, number> = {};
 
         const isTopLevel = (v: string) => /^\d+$/.test(v.trim());
         const isSubSection = (v: string) => /^\d+\.\d+$/.test(v.trim());
-        const isItem = (v: string) => /^\d+\.\d+\.\d+/.test(v.trim()) || /^\d+\.\d+$/.test(v.trim());
 
         for (const row of dataRows) {
           if (!Array.isArray(row)) continue;
@@ -266,7 +264,6 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           // Top-level index (e.g. "1", "2") = section header with total
           if (indexCol >= 0 && isTopLevel(indexVal)) {
             currentSection = itemName;
-            currentSubSection = "";
             const total = map.total !== undefined ? toNumber(cells[map.total]) : undefined;
             if (total && total > 0) {
               sectionTotals[currentSection] = total;
@@ -274,13 +271,12 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
             continue;
           }
 
-          // Sub-section header (e.g. "3.1" DEMOLIÇÕES) — no qty, no unit → grouping label, skip
+          // Sub-section header (e.g. "3.1", "4.2") — treat as header if it has NO qty
+          // Items like "6.1" with qty are leaf items and should be imported
           if (indexCol >= 0 && isSubSection(indexVal)) {
             const hasQty = map.qty !== undefined && cells[map.qty] !== undefined && cells[map.qty] !== "" && cells[map.qty] !== 0;
-            const hasTotal = map.total !== undefined && toNumber(cells[map.total]);
-            // If it has qty or total, it's an actual item (like "6.1"), not a sub-section header
-            if (!hasQty && !hasTotal) {
-              currentSubSection = itemName;
+            if (!hasQty) {
+              // Sub-section header — skip (its total is already included in parent section total)
               continue;
             }
           }
@@ -303,13 +299,24 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           return;
         }
 
-        // If items have no individual totals, try to distribute section totals
-        const itemsWithTotals = rows.filter((r) => r.total && r.total > 0);
-        if (itemsWithTotals.length === 0 && Object.keys(sectionTotals).length > 0) {
-          // Keep section totals for display but don't fabricate item totals
-          console.log("[Excel Import] Items have no individual totals. Section totals:", sectionTotals);
-        } else {
-          // Recalculate section totals from items
+        // Extract grand total from last rows (often in the spreadsheet footer)
+        for (let i = nonEmptyRows.length - 1; i >= Math.max(0, nonEmptyRows.length - 5); i--) {
+          const row = nonEmptyRows[i];
+          if (!row) continue;
+          for (const cell of row) {
+            const val = toNumber(cell);
+            if (val && val > 10000) {
+              meta.grandTotal = val;
+              break;
+            }
+          }
+          if (meta.grandTotal) break;
+        }
+        setParsedMeta({ ...meta });
+
+        // Use section totals from top-level headers (they already include sub-section totals)
+        // Only recalculate if we have no section totals but items have individual totals
+        if (Object.keys(sectionTotals).length === 0) {
           rows.forEach((row) => {
             if (!row.total) return;
             sectionTotals[row.section] = (sectionTotals[row.section] || 0) + row.total;
