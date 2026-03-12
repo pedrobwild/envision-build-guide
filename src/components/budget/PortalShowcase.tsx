@@ -34,10 +34,10 @@ export function PortalShowcase() {
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-                Acompanhe tudo em tempo real
+                Portal de Gestão Bwild
               </h3>
               <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5">
-                Transparência total: documentos, etapas, pagamentos e próximos passos.
+                Sistema desenvolvido para que você possa acompanhar o andamento em tempo real da sua obra, da onde estiver, na palma da sua mão.
               </p>
             </div>
           </div>
