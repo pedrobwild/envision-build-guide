@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import { Rocket } from "lucide-react";
 
 const steps = [
-  { num: 1, title: "Iniciar o projeto", desc: "Aprovação do orçamento e assinatura do contrato." },
-  { num: 2, title: "Briefing com a Lorena", desc: "Videochamada para traduzir sua visão no Projeto 3D." },
-  { num: 3, title: "Projeto 3D", desc: "Primeira versão de layout, iluminação, marcenaria e decoração." },
-  { num: 4, title: "Revisões e aprovação", desc: "Ajustes até a versão final aprovada." },
-  { num: 5, title: "Início da obra", desc: "Execução com acompanhamento no portal Bwild." },
+  { num: 1, title: "Briefing com Arquitetura", desc: "Levantamento de informações para elaboração certeira do projeto." },
+  { num: 2, title: "Projeto 3D", desc: "Apresentação do projeto em maquete de alta definição com revisões." },
+  { num: 3, title: "Medição Técnica", desc: "Medição detalhada do ambiente, garantindo a correta execução do executivo." },
+  { num: 4, title: "Projeto Executivo", desc: "Plantas detalhadas com dimensões exatas, projeto elétrico, especificações de materiais e acabamentos." },
+  { num: 5, title: "Liberação da Obra", desc: "Emissão da ART no CREA e envio de toda documentação para que o condomínio libere a reforma." },
+  { num: 6, title: "Início da Obra", desc: "Elaboração do cronograma e mobilização da equipe técnica para darmos o start oficial." },
 ];
 
 export function NextSteps() {
@@ -20,12 +21,12 @@ export function NextSteps() {
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-              O que acontece depois que você inicia
+              Sua jornada com a Bwild após assinatura do contrato
             </h3>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 sm:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           {steps.map((s, i) => (
             <motion.div
               key={s.num}
