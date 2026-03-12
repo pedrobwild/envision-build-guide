@@ -47,7 +47,7 @@ const TOTAL_PROJECTS = 99;
 const TOTAL_NEIGHBORHOODS = 26;
 
 const TOP_5 = [
-  { name: "Brooklin", id: "brooklin", count: 14 },
+  { name: "Brooklin", id: "brooklin", count: 17 },
   { name: "Pinheiros", id: "pinheiros", count: 11 },
   { name: "Perdizes", id: "perdizes", count: 8 },
   { name: "Vila Clementino", id: "vila-clementino", count: 6 },
