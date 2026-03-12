@@ -43,7 +43,7 @@ export default function PublicBudget() {
   const { publicId } = useParams<{ projectId?: string; publicId?: string }>();
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showMobileSummary, setShowMobileSummary] = useState(false);
+  const [showPrices, setShowPrices] = useState(true);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [showPrices, setShowPrices] = useState(true);
