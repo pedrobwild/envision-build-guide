@@ -35,6 +35,7 @@ import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
 import { Eye, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useScrollspy } from "@/hooks/useScrollspy";
 import { categorizeSections } from "@/lib/scope-categories";
 import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
@@ -239,7 +240,7 @@ export default function PublicBudget() {
           <div className="min-w-0 space-y-3 sm:space-y-4">
 
             {/* ─── MOBILE ORDER 1: O que está incluído (Arq + Eng merged) ─── */}
-            <div id="mobile-included">
+            <div id="mobile-included" className="scroll-mt-20">
               <AnimatedSection id="arquitetonico-section" index={0}>
                 <ArquitetonicoExpander />
               </AnimatedSection>
@@ -252,25 +253,33 @@ export default function PublicBudget() {
             </div>
 
             {/* ─── MOBILE ORDER 2: Escopo técnico detalhado — early for decision ─── */}
-            <div id="mobile-scope">
+            <div id="mobile-scope" className="scroll-mt-20">
               {sections.length > 0 && (
                 <div className="rounded-xl">
-                  <div className="flex items-end justify-between pt-2 pb-1">
-                    <div>
-                      <h2 className="text-xl lg:text-3xl font-display font-bold text-foreground tracking-tight">
+                  <div className="flex items-center justify-between pt-2 pb-2 gap-3">
+                    <div className="min-w-0">
+                      <h2 className="text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
                         Detalhamento da Mobília e Eletros
                       </h2>
-                      <p className="text-muted-foreground text-xs sm:text-sm mt-1 font-body">
+                      <p className="text-muted-foreground text-xs mt-0.5 font-body hidden sm:block">
                         Especificação completa dos itens selecionados
                       </p>
                     </div>
-                    <button
-                      onClick={() => setShowPrices(!showPrices)}
-                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body transition-colors min-h-[44px] px-2 flex-shrink-0"
-                    >
-                      {showPrices ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      {showPrices ? "Ocultar valores" : "Mostrar valores"}
-                    </button>
+                    <label className="flex items-center gap-2 flex-shrink-0 min-h-[44px] cursor-pointer">
+                      <span className="text-xs text-muted-foreground font-body hidden sm:inline">
+                        {showPrices ? "Valores" : "Valores"}
+                      </span>
+                      <Switch
+                        checked={showPrices}
+                        onCheckedChange={setShowPrices}
+                        aria-label="Mostrar ou ocultar valores"
+                      />
+                      {showPrices ? (
+                        <Eye className="h-3.5 w-3.5 text-primary sm:hidden" />
+                      ) : (
+                        <EyeOff className="h-3.5 w-3.5 text-muted-foreground sm:hidden" />
+                      )}
+                    </label>
                   </div>
 
                   {categorizedGroups.filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id)).map((group) => {
@@ -309,7 +318,7 @@ export default function PublicBudget() {
             </div>
 
             {/* ─── MOBILE ORDER 3: Trust / Confidence builders ─── */}
-            <div id="mobile-trust" className="space-y-3">
+            <div id="mobile-trust" className="space-y-3 scroll-mt-20">
               <AnimatedSection id="gallery-section" index={0.25}>
                 <ProjectGallery />
               </AnimatedSection>
@@ -323,7 +332,7 @@ export default function PublicBudget() {
             </div>
 
             {/* ─── MOBILE ORDER 4: Portal + Garantia ─── */}
-            <div id="mobile-portal">
+            <div id="mobile-portal" className="scroll-mt-20">
               <AnimatedSection id="portal-section" index={0.6}>
                 <PortalShowcase />
               </AnimatedSection>
