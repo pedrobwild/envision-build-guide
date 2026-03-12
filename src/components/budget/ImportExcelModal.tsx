@@ -23,6 +23,16 @@ interface ParsedRow {
   total?: number;
 }
 
+interface ParsedMeta {
+  clientName?: string | null;
+  projectName?: string | null;
+  area?: string | null;
+  bairro?: string | null;
+  version?: string | null;
+  date?: string | null;
+  grandTotal?: number | null;
+}
+
 interface ImportExcelModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -34,15 +44,39 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
-  const [parsedMeta, setParsedMeta] = useState<Record<string, string | null>>({});
+  const [parsedMeta, setParsedMeta] = useState<ParsedMeta>({});
+  const [parsedSectionTotals, setParsedSectionTotals] = useState<Record<string, number>>({});
   const [step, setStep] = useState<ImportStep>("upload");
   const [error, setError] = useState<string | null>(null);
   const [createdBudgetId, setCreatedBudgetId] = useState<string | null>(null);
+
+  const toNumber = useCallback((value: unknown): number | undefined => {
+    if (value === null || value === undefined || value === "") return undefined;
+    if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+
+    const raw = String(value).replace(/R\$/gi, "").replace(/\s/g, "").trim();
+    if (!raw) return undefined;
+
+    const hasComma = raw.includes(",");
+    const hasDot = raw.includes(".");
+
+    const normalized = (hasComma && hasDot
+      ? raw.replace(/\./g, "").replace(/,/g, ".")
+      : hasComma
+        ? raw.replace(/,/g, ".")
+        : raw
+    ).replace(/[^0-9.-]/g, "");
+
+    if (!normalized || normalized === "-" || normalized === ".") return undefined;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }, []);
 
   const reset = () => {
     setFile(null);
     setParsedRows([]);
     setParsedMeta({});
+    setParsedSectionTotals({});
     setStep("upload");
     setError(null);
     setCreatedBudgetId(null);
@@ -52,6 +86,62 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
     if (!val) reset();
     onOpenChange(val);
   };
+
+  const extractStructuredPageText = useCallback((items: any[]): string => {
+    const tokens = (items || [])
+      .map((item: any) => ({
+        text: String(item?.str || "").trim(),
+        x: Number(item?.transform?.[4] ?? 0),
+        y: Number(item?.transform?.[5] ?? 0),
+      }))
+      .filter((token: any) => token.text.length > 0);
+
+    if (tokens.length === 0) return "";
+
+    const lines: Array<{ y: number; tokens: Array<{ text: string; x: number }> }> = [];
+    const yThreshold = 2.5;
+
+    for (const token of tokens) {
+      const line = lines.find((l) => Math.abs(l.y - token.y) <= yThreshold);
+      if (line) {
+        line.tokens.push({ text: token.text, x: token.x });
+        line.y = (line.y + token.y) / 2;
+      } else {
+        lines.push({ y: token.y, tokens: [{ text: token.text, x: token.x }] });
+      }
+    }
+
+    return lines
+      .sort((a, b) => b.y - a.y)
+      .map((line) => line.tokens.sort((a, b) => a.x - b.x).map((t) => t.text).join(" "))
+      .join("\n");
+  }, []);
+
+  const renderPdfPagesAsImages = useCallback(async (pdf: any, maxPages = 8) => {
+    const pageImages: string[] = [];
+    const scale = 1.8;
+
+    for (let i = 1; i <= Math.min(pdf.numPages, maxPages); i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) continue;
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      pageImages.push(canvas.toDataURL("image/png", 0.9));
+    }
+
+    return pageImages;
+  }, []);
+
+  const invokePdfParser = useCallback(async (body: Record<string, unknown>) => {
+    const { data, error: fnError } = await supabase.functions.invoke("parse-budget-pdf", { body });
+    if (fnError) throw new Error(fnError.message);
+    if (data?.error) throw new Error(data.error);
+    return data;
+  }, []);
 
   // ─── Excel parsing ───
   const detectColumns = (headers: string[]): Record<string, number> => {
@@ -114,6 +204,13 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
           return;
         }
 
+        const sectionTotals: Record<string, number> = {};
+        rows.forEach((row) => {
+          if (!row.total) return;
+          sectionTotals[row.section] = (sectionTotals[row.section] || 0) + row.total;
+        });
+
+        setParsedSectionTotals(sectionTotals);
         setParsedRows(rows);
         setStep("preview");
       } catch {
@@ -129,11 +226,8 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
     setError(null);
 
     try {
-      // Extract text from PDF using pdfjs-dist
       const arrayBuffer = await f.arrayBuffer();
       const pdfjsLib = await import("pdfjs-dist");
-
-      // Set worker source
       pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
       const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
@@ -142,58 +236,61 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        const pageText = content.items
-          .map((item: any) => item.str)
-          .join(" ");
-        textContent += pageText + "\n\n";
+        const pageText = extractStructuredPageText(content.items as any[]);
+        textContent += `\n--- Página ${i} ---\n${pageText}\n`;
       }
 
-      const isScanned = !textContent.trim() || textContent.trim().length < 50;
-      let requestBody: Record<string, any>;
+      const isScanned = !textContent.trim() || textContent.trim().length < 120;
+      let parsedData: any;
 
       if (isScanned) {
-        // Scanned PDF: render pages as images and send for OCR
-        const pageImages: string[] = [];
-        const scale = 2; // Higher resolution for better OCR
-        const maxPages = Math.min(pdf.numPages, 10); // Limit to 10 pages
-
-        for (let i = 1; i <= maxPages; i++) {
-          const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale });
-          const canvas = document.createElement("canvas");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const ctx = canvas.getContext("2d")!;
-          await page.render({ canvasContext: ctx, viewport }).promise;
-          const dataUrl = canvas.toDataURL("image/png", 0.9);
-          pageImages.push(dataUrl);
-        }
-
-        requestBody = { pageImages };
+        const pageImages = await renderPdfPagesAsImages(pdf, 10);
+        parsedData = await invokePdfParser({ pageImages });
       } else {
-        requestBody = { textContent };
+        parsedData = await invokePdfParser({ textContent });
       }
 
-      // Send to AI edge function for structured parsing
-      const { data, error: fnError } = await supabase.functions.invoke("parse-budget-pdf", {
-        body: requestBody,
-      });
+      const hasValues = (sections: any[]) =>
+        sections.some(
+          (section: any) =>
+            (toNumber(section?.total) || 0) > 0 ||
+            (section?.items || []).some((item: any) => (toNumber(item?.total) || 0) > 0)
+        );
 
-      if (fnError) throw new Error(fnError.message);
-      if (data?.error) throw new Error(data.error);
+      if (
+        !isScanned &&
+        (!Array.isArray(parsedData?.sections) ||
+          parsedData.sections.length === 0 ||
+          !hasValues(parsedData.sections))
+      ) {
+        const pageImages = await renderPdfPagesAsImages(pdf, 8);
+        parsedData = await invokePdfParser({ textContent, pageImages });
+      }
 
-      // Convert AI response to ParsedRow[]
-      const sections = data.sections || [];
+      const sections = Array.isArray(parsedData?.sections) ? parsedData.sections : [];
       const rows: ParsedRow[] = [];
+      const sectionTotals: Record<string, number> = {};
 
       for (const section of sections) {
-        for (const item of section.items || []) {
+        const sectionTitle = String(section?.title || "Geral").trim() || "Geral";
+        const normalizedSectionTotal = toNumber(section?.total);
+
+        if (normalizedSectionTotal && normalizedSectionTotal > 0) {
+          sectionTotals[sectionTitle] = normalizedSectionTotal;
+        }
+
+        for (const item of section?.items || []) {
+          const title = String(item?.title || "").trim();
+          if (!title) continue;
+
           rows.push({
-            section: section.title || "Geral",
-            title: item.title || "",
-            qty: item.qty ?? undefined,
-            unit: item.unit ?? undefined,
-            total: item.total ?? undefined,
+            section: sectionTitle,
+            title,
+            description: String(item?.description || "").trim() || undefined,
+            qty: toNumber(item?.qty),
+            unit: String(item?.unit || "").trim() || undefined,
+            unitPrice: toNumber(item?.unitPrice),
+            total: toNumber(item?.total),
           });
         }
       }
@@ -204,18 +301,19 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
         return;
       }
 
-      // Store metadata
-      if (data.meta) {
+      if (parsedData?.meta) {
         setParsedMeta({
-          clientName: data.meta.clientName || null,
-          projectName: data.meta.projectName || null,
-          area: data.meta.area || null,
-          bairro: data.meta.bairro || null,
-          version: data.meta.version || null,
-          date: data.meta.date || null,
+          clientName: parsedData.meta.clientName || null,
+          projectName: parsedData.meta.projectName || null,
+          area: parsedData.meta.area || null,
+          bairro: parsedData.meta.bairro || null,
+          version: parsedData.meta.version || null,
+          date: parsedData.meta.date || null,
+          grandTotal: toNumber(parsedData.meta.grandTotal) || null,
         });
       }
 
+      setParsedSectionTotals(sectionTotals);
       setParsedRows(rows);
       setStep("preview");
     } catch (err: any) {
@@ -223,7 +321,7 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
       setError(err?.message || "Erro ao processar o PDF. Tente novamente.");
       setStep("upload");
     }
-  }, []);
+  }, [extractStructuredPageText, invokePdfParser, renderPdfPagesAsImages, toNumber]);
 
   // ─── File handler ───
   const handleFile = useCallback(
@@ -256,25 +354,29 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
   const handleImport = async () => {
     setStep("importing");
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
       const sectionMap = new Map<string, ParsedRow[]>();
       parsedRows.forEach((row) => {
-        const list = sectionMap.get(row.section) || [];
+        const key = row.section?.trim() || "Geral";
+        const list = sectionMap.get(key) || [];
         list.push(row);
-        sectionMap.set(row.section, list);
+        sectionMap.set(key, list);
       });
 
-      const projectName = parsedMeta.clientName
-        ? `Reforma ${parsedMeta.clientName}`
-        : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação";
+      const clientName = parsedMeta.clientName?.trim() || "Cliente";
+      const projectName =
+        parsedMeta.projectName?.trim() ||
+        (parsedMeta.clientName?.trim() ? `Reforma ${parsedMeta.clientName.trim()}` : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação");
 
       const { data: budget, error: budgetErr } = await supabase
         .from("budgets")
         .insert({
-          project_name: parsedMeta.projectName || projectName,
-          client_name: parsedMeta.clientName || "Cliente",
+          project_name: projectName,
+          client_name: clientName,
           metragem: parsedMeta.area || null,
           bairro: parsedMeta.bairro || null,
           versao: parsedMeta.version || null,
@@ -287,7 +389,14 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
 
       let sectionIdx = 0;
       for (const [sectionTitle, items] of sectionMap.entries()) {
-        const sectionTotal = items.reduce((s, i) => s + (i.total || 0), 0);
+        const calculatedSectionTotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
+        const parserSectionTotal = parsedSectionTotals[sectionTitle] || 0;
+        const finalSectionTotal =
+          calculatedSectionTotal > 0
+            ? calculatedSectionTotal
+            : parserSectionTotal > 0
+              ? parserSectionTotal
+              : null;
 
         const { data: section, error: secErr } = await supabase
           .from("sections")
@@ -295,25 +404,40 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
             budget_id: budget.id,
             title: sectionTitle,
             order_index: sectionIdx++,
-            section_price: sectionTotal > 0 ? sectionTotal : null,
+            section_price: finalSectionTotal,
           })
           .select()
           .single();
 
-        if (secErr || !section) continue;
+        if (secErr || !section) {
+          throw secErr || new Error(`Falha ao criar seção: ${sectionTitle}`);
+        }
 
-        const itemInserts = items.map((item, i) => ({
-          section_id: section.id,
-          title: item.title,
-          description: item.description || null,
-          qty: item.qty || null,
-          unit: item.unit || null,
-          internal_unit_price: item.unitPrice || null,
-          internal_total: item.total || null,
-          order_index: i,
-        }));
+        const itemInserts = items.map((item, i) => {
+          const hasQty = typeof item.qty === "number" && Number.isFinite(item.qty) && item.qty > 0;
+          const inferredTotal =
+            item.total ??
+            (hasQty && item.unitPrice ? item.qty! * item.unitPrice : undefined) ??
+            (items.length === 1 && finalSectionTotal ? finalSectionTotal : undefined);
 
-        await supabase.from("items").insert(itemInserts);
+          const inferredUnitPrice =
+            item.unitPrice ??
+            (hasQty && inferredTotal !== undefined ? inferredTotal / (item.qty as number) : undefined);
+
+          return {
+            section_id: section.id,
+            title: item.title,
+            description: item.description || null,
+            qty: item.qty || null,
+            unit: item.unit || null,
+            internal_unit_price: inferredUnitPrice ?? null,
+            internal_total: inferredTotal ?? null,
+            order_index: i,
+          };
+        });
+
+        const { error: itemsErr } = await supabase.from("items").insert(itemInserts);
+        if (itemsErr) throw itemsErr;
       }
 
       setCreatedBudgetId(budget.id);
