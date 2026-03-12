@@ -24,7 +24,7 @@ export function WhatsAppButton({ projectName, publicId, phone = "5511911906183" 
       transition={{ delay: 1.5, type: "spring", stiffness: 200 }}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
-      className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2 rounded-full bg-[#25D366] text-white px-4 sm:px-5 py-2.5 sm:py-3 shadow-lg hover:shadow-xl transition-shadow font-body font-semibold text-xs sm:text-sm"
+      className="hidden lg:flex fixed bottom-6 right-4 sm:right-6 z-40 items-center gap-2 rounded-full bg-[#25D366] text-white px-5 py-3 shadow-lg hover:shadow-xl transition-shadow font-body font-semibold text-sm"
       data-pdf-hide
     >
       <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
