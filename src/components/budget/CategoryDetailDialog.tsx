@@ -265,7 +265,7 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId }: Categor
                   <div className="divide-y divide-border/30">
                     {items.map((item: any) => (
                       <div key={item.id} className="flex items-center gap-3 px-4 py-3 min-h-[56px]">
-                        {budgetId && <ItemImageSlot item={item} budgetId={budgetId} />}
+                        {budgetId && <ItemImageGallery item={item} budgetId={budgetId} />}
 
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-body font-medium text-foreground">{item.title}</p>
