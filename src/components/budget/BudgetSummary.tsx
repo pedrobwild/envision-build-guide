@@ -123,23 +123,22 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                     <button
                       onClick={() => {
                         if (isDisplayedInContent) {
-                          // Scroll to the first section in this category
                           const firstId = `section-${group.sections[0]?.id}`;
                           document.getElementById(firstId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         } else {
                           setDetailGroup(group);
                         }
                       }}
-                      className="w-full flex items-center gap-2 py-1.5 min-h-[36px]"
+                      className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-2 py-2 min-h-[40px] hover:bg-muted/40 rounded-md px-1 transition-colors"
                     >
-                      <div className={`w-1 h-3.5 rounded-full ${group.category.bgClass}`} />
-                      <span className={`text-xs font-display font-bold uppercase tracking-wider ${group.category.colorClass} flex-1 text-left`}>
+                      <div className={`w-1 self-stretch rounded-full ${group.category.bgClass}`} />
+                      <span className={`text-xs font-display font-bold uppercase tracking-wider ${group.category.colorClass} text-left leading-tight`}>
                         {group.category.label}
+                        {!isDisplayedInContent && (
+                          <ExternalLink className="inline-block h-3 w-3 text-muted-foreground ml-1 -mt-0.5" />
+                        )}
                       </span>
-                      {!isDisplayedInContent && (
-                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                      )}
-                      <span className={`text-xs font-mono tabular-nums font-semibold ${group.category.colorClass}`}>
+                      <span className={`text-sm font-mono tabular-nums font-semibold ${group.category.colorClass} whitespace-nowrap`}>
                         {formatBRL(group.subtotal)}
                       </span>
                     </button>
