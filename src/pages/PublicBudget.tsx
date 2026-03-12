@@ -241,6 +241,9 @@ export default function PublicBudget() {
         {/* ═══ MOBILE SECTION NAV — sticky pills ═══ */}
         <MobileSectionNav items={mobileNavItems} activeId={activeMobileNav} />
 
+        {/* ═══ TRUST STRIP — scannable confidence chips ═══ */}
+        <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
+
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 lg:gap-8 mt-3 lg:mt-0">
           {/* Content column */}
           <div className="min-w-0 space-y-3 sm:space-y-4">
