@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
-import { Shield, Clock, AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Shield, Clock, AlertTriangle, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CategoryDistributionBar } from "@/components/budget/CategoryDistributionBar";
@@ -38,11 +38,6 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
     }
   }, [activeSection]);
 
-  // Collapsible group state
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const toggleGroup = (groupId: string) => {
-    setCollapsedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
-  };
 
   // Dialog for non-displayed categories
   const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
@@ -120,14 +115,7 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
           {hasCategorized ? (
             <div className="space-y-2">
               {categorizedGroups.map((group) => {
-                const isCollapsed = collapsedGroups[group.category.id];
                 const isDisplayedInContent = DISPLAYED_CATEGORIES.includes(group.category.id);
-                // Check if category has a single section with the same name
-                const isSingleRedundant =
-                  group.sections.length === 1 &&
-                  group.sections[0].title.toLowerCase().trim() === group.category.label.toLowerCase().trim();
-                // For non-displayed categories that match a keyword closely
-                const isSingleSection = group.sections.length === 1;
 
                 return (
                   <div key={group.category.id}>
@@ -154,55 +142,8 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                       <span className={`text-xs font-mono tabular-nums font-semibold ${group.category.colorClass}`}>
                         {formatBRL(group.subtotal)}
                       </span>
-                      {!isDisplayedInContent && !isCollapsed && group.sections.length > 1 && (
-                        isCollapsed ? (
-                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                        ) : (
-                          <ChevronUp className="h-3 w-3 text-muted-foreground" />
-                        )
-                      )}
                     </button>
 
-                    {/* Group items — only for NON-displayed categories (popup ones) */}
-                    {!isDisplayedInContent && !isCollapsed && (
-                      <div className="pl-3 space-y-0">
-                        {group.sections.map((section) => {
-                          const sectionElId = `section-${section.id}`;
-                          const isActive = activeSection === sectionElId;
-                          const subtotal = calculateSectionSubtotal(section);
-
-                          return (
-                            <button
-                              key={section.id}
-                              ref={isActive ? activeRef : undefined}
-                              onClick={() => {
-                                document.getElementById(sectionElId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                              }}
-                              className={cn(
-                                "w-full text-left flex items-center justify-between py-1.5 px-2 rounded-md transition-all duration-200 min-h-[32px]",
-                                isActive && "border-l-2 border-primary bg-primary/5",
-                                !isActive && "border-l-2 border-transparent",
-                                "hover:bg-muted/50"
-                              )}
-                            >
-                              <span className={cn(
-                                "text-xs font-body truncate mr-2 transition-colors",
-                                isActive ? "text-foreground font-medium" : "text-muted-foreground",
-                                "group-hover:text-primary"
-                              )}>
-                                {section.qty && section.qty > 1 ? `${section.qty}× ` : ''}{section.title}
-                              </span>
-                              <span className={cn(
-                                "text-xs font-mono tabular-nums whitespace-nowrap",
-                                isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                              )}>
-                                {formatBRL(subtotal)}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
                 );
               })}
