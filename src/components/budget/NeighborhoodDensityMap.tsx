@@ -5,7 +5,7 @@ import { MapPin, ArrowLeft, MessageCircle, ChevronLeft, ChevronRight, Camera, Bu
 import { Badge } from "@/components/ui/badge";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
-import { groupByEmpreendimento, type EmpreendimentoGroup } from "@/data/brooklin-projects";
+import { getIndividualProjects, type IndividualProject } from "@/data/brooklin-projects";
 
 /* ── Data ── */
 type Neighborhood = {
@@ -321,7 +321,7 @@ function NeighborhoodDetail({
   onBack: () => void;
   whatsappUrl: string;
 }) {
-  const empreendimentos = groupByEmpreendimento(data.name);
+  const projects = getIndividualProjects(data.name);
 
   return (
     <div className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-4">
@@ -343,14 +343,14 @@ function NeighborhoodDetail({
 
 
 
-      {/* Empreendimentos with project cards */}
-      {empreendimentos.length > 0 && (
+      {/* Individual project cards */}
+      {projects.length > 0 && (
         <div className="space-y-3 pt-2 border-t border-border">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Empreendimentos
           </p>
-          {empreendimentos.map((emp, i) => (
-            <EmpreendimentoCard key={i} group={emp} />
+          {projects.map((proj) => (
+            <IndividualProjectCard key={proj.id} project={proj} />
           ))}
         </div>
       )}
@@ -373,19 +373,11 @@ function NeighborhoodDetail({
   );
 }
 
-/* ── Empreendimento Card with Carousel ── */
-function EmpreendimentoCard({ group }: { group: EmpreendimentoGroup }) {
+/* ── Individual Project Card with Carousel ── */
+function IndividualProjectCard({ project }: { project: IndividualProject }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [activeSlide, setActiveSlide] = useState(0);
   const [hovering, setHovering] = useState(false);
-
-  // Flatten all photos from all projects of this empreendimento
-  const allPhotos = group.allFotos.flat();
-  // Unique metragens
-  const uniqueMetragens = [...new Set(group.metragens)].sort((a, b) => a - b);
-  const metLabel = uniqueMetragens.length === 1
-    ? `${uniqueMetragens[0]}m²`
-    : `${uniqueMetragens[0]}–${uniqueMetragens[uniqueMetragens.length - 1]}m²`;
 
   const onSlideChange = useCallback(() => {
     if (!emblaApi) return;
@@ -407,11 +399,11 @@ function EmpreendimentoCard({ group }: { group: EmpreendimentoGroup }) {
       {/* Photo carousel */}
       <div className="relative aspect-[16/10] overflow-hidden" ref={emblaRef}>
         <div className="flex h-full">
-          {allPhotos.map((foto, i) => (
+          {project.fotos.map((foto, i) => (
             <div key={i} className="flex-[0_0_100%] min-w-0 relative">
               <img
                 src={foto}
-                alt={`${group.name} — foto ${i + 1}`}
+                alt={`${project.displayName} — foto ${i + 1}`}
                 className="w-full h-full object-cover"
                 loading="lazy"
                 onError={(e) => {
@@ -432,9 +424,9 @@ function EmpreendimentoCard({ group }: { group: EmpreendimentoGroup }) {
         </div>
 
         {/* Dots */}
-        {allPhotos.length > 1 && (
+        {project.fotos.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-            {allPhotos.map((_, i) => (
+            {project.fotos.map((_, i) => (
               <div
                 key={i}
                 className={cn(
@@ -447,7 +439,7 @@ function EmpreendimentoCard({ group }: { group: EmpreendimentoGroup }) {
         )}
 
         {/* Arrows on hover */}
-        {hovering && allPhotos.length > 1 && (
+        {hovering && project.fotos.length > 1 && (
           <>
             <button
               onClick={(e) => { e.stopPropagation(); emblaApi?.scrollPrev(); }}
@@ -463,11 +455,6 @@ function EmpreendimentoCard({ group }: { group: EmpreendimentoGroup }) {
             </button>
           </>
         )}
-
-        {/* Project count badge */}
-        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full font-body">
-          {group.projectCount} {group.projectCount === 1 ? "projeto" : "projetos"}
-        </div>
       </div>
 
       {/* Info */}
@@ -475,9 +462,9 @@ function EmpreendimentoCard({ group }: { group: EmpreendimentoGroup }) {
         <Building2 className="h-4 w-4 text-primary shrink-0" />
         <div className="min-w-0">
           <h4 className="text-sm font-display font-bold text-foreground leading-tight truncate">
-            {group.name}
+            {project.displayName}
           </h4>
-          <p className="text-xs text-muted-foreground font-body">{metLabel}</p>
+          <p className="text-xs text-muted-foreground font-body">{project.metragem}m²</p>
         </div>
       </div>
     </div>
