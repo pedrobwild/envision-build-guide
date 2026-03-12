@@ -69,10 +69,10 @@ export function MobileHeroCard({
         {/* Greeting + subtitle */}
         <div>
           <h2 className="font-display font-bold text-lg text-foreground leading-tight tracking-tight">
-            {displayName ? `${displayName}, seu orçamento está pronto` : "Seu orçamento está pronto"}
+            {displayName ? `${displayName}, sua proposta está pronta` : "Sua proposta está pronta"}
           </h2>
           <p className="text-sm font-body text-muted-foreground mt-0.5 leading-snug">
-            Projeto completo com gestão, execução e garantia.
+            Arquitetura, engenharia e gestão em um único contrato.
           </p>
         </div>
 
