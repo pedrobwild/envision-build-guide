@@ -1,4 +1,5 @@
 import { Download, Loader2 } from "lucide-react";
+import { TestimonialVideoPreview } from "./TestimonialVideoModal";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
@@ -259,22 +260,13 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               )}
             </div>
 
-            {/* Right — Stat badge (garantia only) */}
+            {/* Right — Video testimonial CTA */}
             {!cfg.hide_stat_badges && (
               <motion.div
                 variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                className="flex items-center gap-3 flex-shrink-0 ml-8"
+                className="flex-shrink-0 ml-8"
               >
-                {statBadges.map((badge) => (
-                  <div key={badge.label} className="text-center min-w-[56px]">
-                    <p className="text-lg font-extrabold font-mono leading-none text-white">
-                      {badge.value}
-                    </p>
-                    <p className="text-xs uppercase tracking-wider text-white/75 font-body mt-1">
-                      {badge.label}
-                    </p>
-                  </div>
-                ))}
+                <TestimonialVideoPreview />
               </motion.div>
             )}
           </div>
