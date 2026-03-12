@@ -10,6 +10,8 @@ import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from
 import { cn } from "@/lib/utils";
 import type { ScopeCategory } from "@/lib/scope-categories";
 
+const IMAGE_GALLERY_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
+
 interface SectionCardProps {
   section: any;
   compact: boolean;
@@ -18,8 +20,9 @@ interface SectionCardProps {
   highlightZone?: string | null;
   sectionIndex?: number;
   categoryColor?: ScopeCategory;
+  budgetId?: string;
+  editable?: boolean;
 }
-
 const HIGH_VALUE_THRESHOLD = 10000;
 const MEDIUM_VALUE_THRESHOLD = 5000;
 const LOW_VALUE_THRESHOLD = 1000;
