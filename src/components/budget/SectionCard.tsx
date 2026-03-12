@@ -3,11 +3,14 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
 import { ChevronDown, ChevronUp, Check, X, ZoomIn, Info } from "lucide-react";
 import { Lightbox } from "./Lightbox";
+import { ItemImageGallery } from "./ItemImageGallery";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from "@/lib/section-icons";
 import { cn } from "@/lib/utils";
 import type { ScopeCategory } from "@/lib/scope-categories";
+
+const IMAGE_GALLERY_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
 
 interface SectionCardProps {
   section: any;
@@ -17,13 +20,14 @@ interface SectionCardProps {
   highlightZone?: string | null;
   sectionIndex?: number;
   categoryColor?: ScopeCategory;
+  budgetId?: string;
+  editable?: boolean;
 }
-
 const HIGH_VALUE_THRESHOLD = 10000;
 const MEDIUM_VALUE_THRESHOLD = 5000;
 const LOW_VALUE_THRESHOLD = 1000;
 
-export function SectionCard({ section, compact, showItemQty, showItemPrices = false, highlightZone, sectionIndex = 0, categoryColor }: SectionCardProps) {
+export function SectionCard({ section, compact, showItemQty, showItemPrices = false, highlightZone, sectionIndex = 0, categoryColor, budgetId, editable = false }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
   const isHighValue = subtotal >= HIGH_VALUE_THRESHOLD;
   const isLarge = subtotal > MEDIUM_VALUE_THRESHOLD;
@@ -242,7 +246,9 @@ export function SectionCard({ section, compact, showItemQty, showItemPrices = fa
                           i % 2 === 1 && "bg-muted/20"
                         )}
                       >
-                        {primaryImage ? (
+                        {categoryColor && IMAGE_GALLERY_CATEGORIES.has(categoryColor.id) && budgetId ? (
+                          <ItemImageGallery item={item} budgetId={budgetId} editable={editable} />
+                        ) : primaryImage ? (
                           <button
                             onClick={() => openLightbox(primaryImage.url)}
                             className="relative w-8 h-8 rounded-full overflow-hidden group cursor-zoom-in flex-shrink-0"

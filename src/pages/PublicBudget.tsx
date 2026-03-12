@@ -262,6 +262,7 @@ export default function PublicBudget() {
                                 showItemPrices={showPrices}
                                 sectionIndex={currentIdx}
                                 categoryColor={group.category}
+                                budgetId={budget.id}
                               />
                             </AnimatedSection>
                           );
