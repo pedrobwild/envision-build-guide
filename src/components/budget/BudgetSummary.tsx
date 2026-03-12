@@ -115,14 +115,7 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
           {hasCategorized ? (
             <div className="space-y-2">
               {categorizedGroups.map((group) => {
-                const isCollapsed = collapsedGroups[group.category.id];
                 const isDisplayedInContent = DISPLAYED_CATEGORIES.includes(group.category.id);
-                // Check if category has a single section with the same name
-                const isSingleRedundant =
-                  group.sections.length === 1 &&
-                  group.sections[0].title.toLowerCase().trim() === group.category.label.toLowerCase().trim();
-                // For non-displayed categories that match a keyword closely
-                const isSingleSection = group.sections.length === 1;
 
                 return (
                   <div key={group.category.id}>
