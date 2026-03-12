@@ -21,7 +21,7 @@ export function NextSteps() {
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-              O que acontece depois que você inicia
+              Sua jornada com a Bwild após assinatura do contrato
             </h3>
           </div>
         </div>
