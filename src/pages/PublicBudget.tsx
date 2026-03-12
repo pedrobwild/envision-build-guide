@@ -353,6 +353,7 @@ export default function PublicBudget() {
                     validityDays={budget.validity_days || 30}
                     activeSection={activeSection}
                     categorizedGroups={categorizedGroups}
+                    budgetId={budget.id}
                   />
                   <InstallmentSimulator total={total} />
                   <ROISimulator total={total} />
