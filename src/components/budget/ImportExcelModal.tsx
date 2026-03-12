@@ -152,16 +152,18 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
     const map: Record<string, number> = {};
     const lower = headers.map((h) => (h || "").toString().trim().toLowerCase());
     const patterns: Record<string, string[]> = {
-      section: ["seção", "secao", "seçao", "section", "categoria", "ambiente"],
+      index: ["índice", "indice", "index"],
+      code: ["cód", "cod", "código", "codigo"],
+      section: ["seção", "secao", "seçao", "section", "categoria", "ambiente", "pacote"],
       title: ["item", "título", "titulo", "nome", "descrição curta", "servico", "serviço"],
       description: ["descrição", "descricao", "desc", "observação", "obs", "detalhe"],
       qty: ["qtd", "quantidade", "qty", "quant"],
-      unit: ["unidade", "und", "un", "unit"],
+      unit: ["unidade", "und", "un", "unit", "unid"],
       unitPrice: ["preço unit", "preco unit", "valor unit", "unit price", "p.u.", "pu"],
-      total: ["total", "valor", "subtotal", "valor total", "preço total"],
+      total: ["total", "valor", "subtotal", "valor total", "preço total", "total venda"],
     };
     for (const [key, words] of Object.entries(patterns)) {
-      const idx = lower.findIndex((h) => words.some((w) => h.includes(w)));
+      const idx = lower.findIndex((h) => h && words.some((w) => h.includes(w)));
       if (idx !== -1) map[key] = idx;
     }
     return map;
