@@ -122,7 +122,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display">Salve este orçamento</DialogTitle>
+            <DialogTitle className="font-display">Receber esta proposta por email</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground font-body">
             Enviaremos o link deste orçamento para seu email.
