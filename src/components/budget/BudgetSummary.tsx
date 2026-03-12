@@ -283,19 +283,6 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
           </div>
         </div>
 
-        {/* Condições do projeto mini-card */}
-        <button
-          onClick={() => document.getElementById("condicoes")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-          className="mx-4 mb-3 rounded-xl border border-border hover:border-primary/30 bg-muted/30 hover:bg-primary/[0.03] p-3 transition-all group cursor-pointer min-h-[44px] w-[calc(100%-2rem)]"
-        >
-          <div className="flex items-center gap-2 mb-1.5">
-            <Shield className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary transition-colors" />
-            <span className="text-xs text-muted-foreground font-body">Condições do projeto</span>
-          </div>
-          <p className="text-sm font-display font-medium text-foreground mb-1 font-body">
-            Orçamento fechado · Garantia 5 anos
-          </p>
-        </button>
 
         {/* Footer */}
         {generatedAt && (
