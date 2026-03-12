@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
-import { ROISimulator } from "@/components/budget/ROISimulator";
+
 import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
 import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
