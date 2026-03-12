@@ -172,36 +172,95 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const wb = XLSX.read(data, { type: "array" });
+        const wb = XLSX.read(data, { type: "array", cellDates: false, cellNF: false, cellText: false });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const json: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const json: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
 
-        if (json.length < 2) {
+        // Filter out completely empty rows
+        const nonEmptyRows = json.filter((row) => Array.isArray(row) && row.some((cell: any) => cell !== undefined && cell !== null && cell !== ""));
+
+        if (nonEmptyRows.length < 2) {
           setError("A planilha precisa ter pelo menos 2 linhas (cabeçalho + dados).");
           return;
         }
 
-        const headers = json[0].map(String);
-        const map = detectColumns(headers);
+        // Find header row (may not be the first row)
+        let headerRowIdx = 0;
+        for (let i = 0; i < Math.min(nonEmptyRows.length, 15); i++) {
+          const row = nonEmptyRows[i];
+          if (!row) continue;
+          const lower = row.map((c: any) => (c == null ? "" : String(c)).trim().toLowerCase());
+          if (lower.some((h: string) => h && (h.includes("item") || h.includes("índice") || h.includes("indice") || h.includes("seção") || h.includes("secao") || h.includes("título") || h.includes("titulo")))) {
+            headerRowIdx = i;
+            break;
+          }
+        }
 
-        if (!map.section && !map.title) {
-          setError("Não foi possível detectar as colunas 'Seção' e 'Item'. Verifique o cabeçalho.");
+        const headerRow = nonEmptyRows[headerRowIdx];
+        if (!headerRow || !Array.isArray(headerRow)) {
+          setError("Cabeçalho não encontrado na planilha.");
           return;
         }
 
-        const rows: ParsedRow[] = json
-          .slice(1)
-          .filter((row) => row.some((cell: any) => cell !== undefined && cell !== ""))
-          .map((row) => ({
-            section: map.section !== undefined ? String(row[map.section] || "Geral") : "Geral",
-            title: map.title !== undefined ? String(row[map.title] || "") : "",
-            description: map.description !== undefined ? String(row[map.description] || "") : undefined,
-            qty: map.qty !== undefined ? Number(row[map.qty]) || undefined : undefined,
-            unit: map.unit !== undefined ? String(row[map.unit] || "") : undefined,
-            unitPrice: map.unitPrice !== undefined ? Number(row[map.unitPrice]) || undefined : undefined,
-            total: map.total !== undefined ? Number(row[map.total]) || undefined : undefined,
-          }))
-          .filter((r) => r.title.trim() !== "");
+        const headers = Array.from(headerRow, (c: any) => (c == null ? "" : String(c)));
+        const map = detectColumns(headers);
+
+        console.log("[Excel Import] Header row:", headerRowIdx, headers);
+        console.log("[Excel Import] Column map:", map);
+
+        if (!map.section && !map.title) {
+          // Try to use first non-empty text column as title
+          const firstTextCol = headers.findIndex((h) => h.trim().length > 0);
+          if (firstTextCol !== -1) {
+            map.title = firstTextCol;
+          } else {
+            setError("Não foi possível detectar as colunas 'Seção' e 'Item'. Verifique o cabeçalho.");
+            return;
+          }
+        }
+
+        const dataRows = nonEmptyRows.slice(headerRowIdx + 1);
+
+        // Detect section by index pattern (e.g. "1", "2") if no explicit section column
+        const hasIndex = headers.some((h) => {
+          const l = h.trim().toLowerCase();
+          return l.includes("índice") || l.includes("indice") || l.includes("index") || l.includes("cod") || l.includes("código");
+        });
+        const indexCol = hasIndex ? headers.findIndex((h) => {
+          const l = h.trim().toLowerCase();
+          return l.includes("índice") || l.includes("indice") || l.includes("index") || l.includes("cod") || l.includes("código");
+        }) : -1;
+
+        let currentSection = "Geral";
+        const rows: ParsedRow[] = [];
+
+        for (const row of dataRows) {
+          if (!Array.isArray(row)) continue;
+          const cells = row.map((c: any) => (c == null ? "" : c));
+
+          const indexVal = indexCol >= 0 ? String(cells[indexCol] ?? "").trim() : "";
+          const itemName = map.title !== undefined ? String(cells[map.title] ?? "").trim() : "";
+
+          if (!itemName) continue;
+
+          // Top-level index = section header
+          if (indexCol >= 0 && !map.section && /^\d+$/.test(indexVal)) {
+            currentSection = itemName;
+            continue;
+          }
+
+          const section = map.section !== undefined ? String(cells[map.section] || currentSection) : currentSection;
+
+          rows.push({
+            section,
+            title: itemName,
+            description: map.description !== undefined ? String(cells[map.description] || "") : undefined,
+            qty: map.qty !== undefined ? toNumber(cells[map.qty]) : undefined,
+            unit: map.unit !== undefined ? String(cells[map.unit] || "") : undefined,
+            unitPrice: map.unitPrice !== undefined ? toNumber(cells[map.unitPrice]) : undefined,
+            total: map.total !== undefined ? toNumber(cells[map.total]) : undefined,
+          });
+        }
 
         if (rows.length === 0) {
           setError("Nenhum item encontrado na planilha.");
@@ -217,12 +276,16 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         setParsedSectionTotals(sectionTotals);
         setParsedRows(rows);
         setStep("preview");
-      } catch {
-        setError("Erro ao ler o arquivo. Verifique se é um Excel válido (.xlsx ou .xls).");
+      } catch (err) {
+        console.error("[Excel Import] Error:", err);
+        setError(`Erro ao ler o arquivo: ${err instanceof Error ? err.message : "formato inválido"}. Verifique se é um Excel válido (.xlsx ou .xls).`);
       }
     };
+    reader.onerror = () => {
+      setError("Erro ao ler o arquivo. Tente novamente.");
+    };
     reader.readAsArrayBuffer(f);
-  }, []);
+  }, [toNumber]);
 
   // ─── PDF parsing (AI-powered) ───
   const parsePdf = useCallback(async (f: File) => {
