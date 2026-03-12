@@ -249,9 +249,7 @@ export default function PublicBudget() {
                 {categorizedGroups.filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id)).map((group) => {
                   const groupSections = group.sections;
                     return (
-                    <div key={group.category.id} className="lg:grid lg:grid-cols-2 lg:gap-3">
-                      <div /> {/* left spacer */}
-                      <div className="space-y-2 sm:space-y-3">
+                    <div key={group.category.id} className="space-y-2 sm:space-y-3">
                         <CategoryHeader category={group.category} subtotal={group.subtotal} />
                         {groupSections.map((section) => {
                           const currentIdx = globalSectionIdx++;
@@ -268,7 +266,6 @@ export default function PublicBudget() {
                             </AnimatedSection>
                           );
                         })}
-                      </div>
                     </div>
                   );
                 })}
