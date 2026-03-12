@@ -180,10 +180,12 @@ export default function PublicBudget() {
 
   // Mobile nav items
   const mobileNavItems = [
-    { id: "mobile-included", label: "Incluído" },
-    { id: "mobile-scope", label: "Escopo" },
-    { id: "mobile-trust", label: "Confiança" },
-    { id: "mobile-portal", label: "Garantia" },
+    { id: "mobile-included", label: "Incluído", icon: "📋" },
+    { id: "mobile-scope", label: "Escopo", icon: "🪑" },
+    { id: "mobile-trust", label: "Portfólio", icon: "🏠" },
+    { id: "mobile-portal", label: "Garantia", icon: "🛡️" },
+    { id: "mobile-next-steps", label: "Próximos passos", icon: "🚀" },
+    { id: "mobile-faq", label: "Dúvidas", icon: "❓" },
   ];
 
   // mobileNavIds and activeMobileNav already declared above early returns
