@@ -2,17 +2,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Smartphone, BarChart3, FileText, MessageSquare, Calendar, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 import portalDemoGif from "@/assets/portal-demo.gif";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-
 const features = [
   { icon: FileText, text: "Projetos e documentos" },
   { icon: Calendar, text: "Cronograma atualizado" },
