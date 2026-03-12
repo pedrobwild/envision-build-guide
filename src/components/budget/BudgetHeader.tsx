@@ -179,20 +179,6 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               </motion.p>
             )}
 
-            {!cfg.hide_status_strip && (
-              <motion.div
-                variants={fadeUp} custom={2} initial="hidden" animate="visible"
-                className="flex items-center gap-2 text-xs text-white/60 font-body"
-              >
-                <span className="hidden" />
-                {!cfg.hide_validity && validityLabel && (
-                  <>
-                    <span className="text-white/30">·</span>
-                    <span className={validity?.expired ? 'text-destructive' : 'text-white/80'}>{validityLabel}</span>
-                  </>
-                )}
-              </motion.div>
-            )}
 
             {!cfg.hide_stat_badges && (
               <motion.div
