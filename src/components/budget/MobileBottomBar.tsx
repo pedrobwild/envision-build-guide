@@ -9,6 +9,8 @@ import {
   Shield,
   CreditCard,
   Bookmark,
+  Award,
+  CheckCircle2,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
@@ -249,6 +251,23 @@ export function MobileBottomBar({
       {/* ── Sticky bar (collapsed) ── */}
       {!open && (
         <div className="relative z-50 bg-card border-t border-border">
+          {/* Trust micro-line */}
+          <div className="flex items-center justify-center gap-3 px-4 py-1 bg-muted/30 border-b border-border">
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-body">
+              <Shield className="h-2.5 w-2.5" />
+              Preço fixo
+            </span>
+            <span className="text-muted-foreground/20">·</span>
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-body">
+              <Award className="h-2.5 w-2.5" />
+              Garantia 5 anos
+            </span>
+            <span className="text-muted-foreground/20">·</span>
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-body">
+              <CheckCircle2 className="h-2.5 w-2.5" />
+              Sem custos ocultos
+            </span>
+          </div>
           <div className="flex items-center justify-between px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]">
             {/* Left: total + expand trigger */}
             <button
