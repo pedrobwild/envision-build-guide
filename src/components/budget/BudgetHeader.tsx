@@ -98,8 +98,9 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 backdrop-blur-md transition-all text-xs font-body font-medium border border-emerald-400/20 group"
             >
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 group-hover:text-emerald-300" />
-              <span className="hidden sm:inline text-emerald-300 group-hover:text-emerald-200">
-                Nenhuma reclamação há 6 meses
+              <span className="text-emerald-300 group-hover:text-emerald-200">
+                <span className="sm:hidden">0 reclamações</span>
+                <span className="hidden sm:inline">Nenhuma reclamação há 6 meses</span>
               </span>
             </a>
             {!cfg.hide_consultora && budget.consultora_comercial && (
