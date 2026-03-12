@@ -21,6 +21,10 @@ function ItemImageSlot({ item, budgetId }: { item: any; budgetId: string }) {
     const primary = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
     return primary?.url || null;
   });
+  const [imageId, setImageId] = useState<string | null>(() => {
+    const primary = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
+    return primary?.id || null;
+  });
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (file: File) => {
@@ -33,9 +37,14 @@ function ItemImageSlot({ item, budgetId }: { item: any; budgetId: string }) {
       const { data: urlData } = supabase.storage.from("budget-assets").getPublicUrl(path);
       const url = urlData.publicUrl;
 
-      // Persist to item_images table
-      await supabase.from("item_images").insert({ item_id: item.id, url, is_primary: !imageUrl });
+      // If replacing, delete old record first
+      if (imageId) {
+        await supabase.from("item_images").delete().eq("id", imageId);
+      }
+
+      const { data: inserted } = await supabase.from("item_images").insert({ item_id: item.id, url, is_primary: true }).select("id").single();
       setImageUrl(url);
+      setImageId(inserted?.id || null);
       toast.success("Imagem adicionada");
     } catch (err) {
       console.error(err);
@@ -44,14 +53,41 @@ function ItemImageSlot({ item, budgetId }: { item: any; budgetId: string }) {
     setUploading(false);
   };
 
+  const handleRemove = async () => {
+    if (!imageId) return;
+    setUploading(true);
+    try {
+      await supabase.from("item_images").delete().eq("id", imageId);
+      setImageUrl(null);
+      setImageId(null);
+      toast.success("Imagem removida");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao remover");
+    }
+    setUploading(false);
+  };
+
   return (
-    <div className="flex-shrink-0">
+    <div className="flex-shrink-0 relative group">
       {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt={item.title}
-          className="w-12 h-12 rounded-lg object-cover border border-border"
-        />
+        <>
+          <img
+            src={imageUrl}
+            alt={item.title}
+            className="w-12 h-12 rounded-lg object-cover border border-border cursor-pointer"
+            onClick={() => inputRef.current?.click()}
+            title="Clique para trocar a imagem"
+          />
+          <button
+            onClick={handleRemove}
+            disabled={uploading}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm disabled:opacity-50"
+            title="Remover imagem"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </>
       ) : (
         <button
           onClick={() => inputRef.current?.click()}
@@ -73,6 +109,7 @@ function ItemImageSlot({ item, budgetId }: { item: any; budgetId: string }) {
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleUpload(file);
+          e.target.value = "";
         }}
       />
     </div>
