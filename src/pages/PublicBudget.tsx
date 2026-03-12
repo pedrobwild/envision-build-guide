@@ -332,7 +332,7 @@ export default function PublicBudget() {
             </div>
 
             {/* ─── MOBILE ORDER 4: Portal + Garantia ─── */}
-            <div id="mobile-portal">
+            <div id="mobile-portal" className="scroll-mt-20">
               <AnimatedSection id="portal-section" index={0.6}>
                 <PortalShowcase />
               </AnimatedSection>
