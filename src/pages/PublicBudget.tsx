@@ -345,6 +345,15 @@ export default function PublicBudget() {
               </div>
             </div>
 
+            {/* ── Strong CTA: after trust, before portal ── */}
+            <InlineCTA
+              publicId={publicId || "demo"}
+              projectName={budget.project_name}
+              clientName={budget.client_name}
+              expired={validity.expired}
+              variant="strong"
+            />
+
             {/* ─── MOBILE ORDER 4: Portal + Garantia ─── */}
             <div id="mobile-portal" className="scroll-mt-20">
               <AnimatedSection id="portal-section" index={0.6}>
