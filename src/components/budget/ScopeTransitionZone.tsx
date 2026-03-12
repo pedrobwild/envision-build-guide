@@ -13,9 +13,9 @@ export function ScopeTransitionZone({ sections, total }: ScopeTransitionZoneProp
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="py-4 sm:py-5 -mx-3 sm:-mx-6 lg:-mx-8 px-3 sm:px-6 lg:px-8"
+      className="py-2 sm:py-3 -mx-3 sm:-mx-6 lg:-mx-8 px-3 sm:px-6 lg:px-8"
     >
-      <div className="text-center mb-4">
+      <div className="text-center">
         <h2 className="text-lg sm:text-xl font-display font-bold text-foreground">
           Detalhamento da Mobília e Eletros
         </h2>
