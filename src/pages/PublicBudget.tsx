@@ -158,8 +158,8 @@ export default function PublicBudget() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">Orçamento não encontrado</h1>
-          <p className="text-sm text-muted-foreground font-body">O link pode estar expirado ou inválido.</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">Proposta não encontrada</h1>
+          <p className="text-sm text-muted-foreground font-body">Este link pode ter expirado ou estar incorreto. Entre em contato com sua consultora.</p>
         </div>
       </div>
     );
