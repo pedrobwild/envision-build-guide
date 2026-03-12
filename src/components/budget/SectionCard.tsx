@@ -3,6 +3,7 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
 import { ChevronDown, ChevronUp, Check, X, ZoomIn, Info } from "lucide-react";
 import { Lightbox } from "./Lightbox";
+import { ItemImageGallery } from "./ItemImageGallery";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from "@/lib/section-icons";
