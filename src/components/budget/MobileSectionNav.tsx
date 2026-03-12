@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 interface NavItem {
   id: string;
   label: string;
+  icon?: string; // emoji or short symbol
 }
 
 interface MobileSectionNavProps {
@@ -17,6 +18,10 @@ export function MobileSectionNav({ items, activeId }: MobileSectionNavProps) {
   const activeRef = useRef<HTMLButtonElement>(null);
   const [isSticky, setIsSticky] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Active index for progress
+  const activeIndex = activeId ? items.findIndex((i) => i.id === activeId) : -1;
+  const progress = activeIndex >= 0 ? ((activeIndex + 1) / items.length) * 100 : 0;
 
   // Scroll active pill into view
   useEffect(() => {
@@ -57,14 +62,32 @@ export function MobileSectionNav({ items, activeId }: MobileSectionNavProps) {
             ? "bg-background/95 backdrop-blur-md border-b border-border shadow-sm"
             : "bg-transparent"
         )}
+        role="navigation"
+        aria-label="Navegação de seções"
       >
+        {/* Progress bar — only when sticky */}
+        {isSticky && progress > 0 && (
+          <motion.div
+            className="h-0.5 bg-primary/20 w-full"
+            initial={false}
+          >
+            <motion.div
+              className="h-full bg-primary"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            />
+          </motion.div>
+        )}
+
         <div
           ref={scrollRef}
-          className="flex gap-1.5 overflow-x-auto scrollbar-none px-3 py-2.5"
+          className="flex gap-1.5 overflow-x-auto scrollbar-none px-3 py-2"
           style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
         >
-          {items.map((item) => {
+          {items.map((item, index) => {
             const isActive = activeId === item.id;
+            const isPast = activeIndex >= 0 && index < activeIndex;
             return (
               <button
                 key={item.id}
@@ -72,12 +95,14 @@ export function MobileSectionNav({ items, activeId }: MobileSectionNavProps) {
                 onClick={() => scrollTo(item.id)}
                 className={cn(
                   "relative flex-shrink-0 min-h-[36px] px-3.5 py-1.5 rounded-full text-xs font-body font-medium transition-colors whitespace-nowrap",
-                  "scroll-snap-align-start",
                   isActive
                     ? "text-primary-foreground"
-                    : "text-muted-foreground bg-muted/50 active:bg-muted"
+                    : isPast
+                      ? "text-primary bg-primary/10 active:bg-primary/15"
+                      : "text-muted-foreground bg-muted/50 active:bg-muted"
                 )}
                 style={{ scrollSnapAlign: "start" }}
+                aria-current={isActive ? "true" : undefined}
               >
                 {isActive && (
                   <motion.div
@@ -86,7 +111,10 @@ export function MobileSectionNav({ items, activeId }: MobileSectionNavProps) {
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-                <span className="relative z-10">{item.label}</span>
+                <span className="relative z-10 flex items-center gap-1">
+                  {item.icon && <span className="text-[10px]">{item.icon}</span>}
+                  {item.label}
+                </span>
               </button>
             );
           })}

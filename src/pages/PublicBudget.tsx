@@ -69,7 +69,9 @@ export default function PublicBudget() {
   const activeSection = useScrollspy(allSectionIds);
 
   // Mobile nav scrollspy — must be before early returns
-  const mobileNavIds = useMemo(() => ["mobile-included", "mobile-scope", "mobile-trust", "mobile-portal"], []);
+  const mobileNavIds = useMemo(() => [
+    "mobile-included", "mobile-scope", "mobile-trust", "mobile-portal", "mobile-next-steps", "mobile-faq"
+  ], []);
   const activeMobileNav = useScrollspy(mobileNavIds);
 
   useEffect(() => {
@@ -178,10 +180,12 @@ export default function PublicBudget() {
 
   // Mobile nav items
   const mobileNavItems = [
-    { id: "mobile-included", label: "Incluído" },
-    { id: "mobile-scope", label: "Escopo" },
-    { id: "mobile-trust", label: "Confiança" },
-    { id: "mobile-portal", label: "Garantia" },
+    { id: "mobile-included", label: "Incluído", icon: "📋" },
+    { id: "mobile-scope", label: "Escopo", icon: "🪑" },
+    { id: "mobile-trust", label: "Portfólio", icon: "🏠" },
+    { id: "mobile-portal", label: "Garantia", icon: "🛡️" },
+    { id: "mobile-next-steps", label: "Próximos passos", icon: "🚀" },
+    { id: "mobile-faq", label: "Dúvidas", icon: "❓" },
   ];
 
   // mobileNavIds and activeMobileNav already declared above early returns
@@ -338,9 +342,11 @@ export default function PublicBudget() {
               </AnimatedSection>
             </div>
 
-            <AnimatedSection id="next-steps" index={100}>
-              <NextSteps />
-            </AnimatedSection>
+            <div id="mobile-next-steps" className="scroll-mt-20">
+              <AnimatedSection id="next-steps" index={100}>
+                <NextSteps />
+              </AnimatedSection>
+            </div>
 
           </div>
 
@@ -381,8 +387,7 @@ export default function PublicBudget() {
           publicId={publicId || "demo"}
         />
 
-        {/* FAQ */}
-        <div className="mt-6 sm:mt-8 lg:col-span-2">
+        <div id="mobile-faq" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20">
           <BudgetFAQ />
         </div>
 
