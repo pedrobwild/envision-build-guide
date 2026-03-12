@@ -49,7 +49,7 @@ export function MobileHeroCard({
   )}`;
 
   const ctaUrl = validity.expired ? whatsappUpdateUrl : whatsappUrl;
-  const ctaLabel = validity.expired ? "Solicitar atualização" : "Falar com especialista";
+  const ctaLabel = validity.expired ? "Solicitar atualização" : "Iniciar meu projeto";
 
   // Meta chips
   const metaChips: { label: string; value: string }[] = [];

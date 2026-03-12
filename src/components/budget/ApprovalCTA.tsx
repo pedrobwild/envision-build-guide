@@ -105,7 +105,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
           className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-display font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
           <MessageCircle className="h-5 w-5" />
-          Falar com especialista
+          Iniciar meu projeto
         </motion.a>
 
         {/* Secondary — Salvar para revisar depois */}

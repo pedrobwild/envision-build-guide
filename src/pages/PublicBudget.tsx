@@ -33,6 +33,7 @@ import { NextSteps } from "@/components/budget/NextSteps";
 import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
 import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
+import { InlineCTA } from "@/components/budget/InlineCTA";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
 import { Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -321,6 +322,15 @@ export default function PublicBudget() {
               )}
             </div>
 
+            {/* ── Mid-page CTA: after scope ── */}
+            <InlineCTA
+              publicId={publicId || "demo"}
+              projectName={budget.project_name}
+              clientName={budget.client_name}
+              expired={validity.expired}
+              variant="subtle"
+            />
+
             {/* ─── MOBILE ORDER 3: Trust / Confidence builders ─── */}
             <div id="mobile-trust" className="space-y-3 scroll-mt-20">
               <AnimatedSection id="gallery-section" index={0.25}>
@@ -334,6 +344,15 @@ export default function PublicBudget() {
                 </AnimatedSection>
               </div>
             </div>
+
+            {/* ── Strong CTA: after trust, before portal ── */}
+            <InlineCTA
+              publicId={publicId || "demo"}
+              projectName={budget.project_name}
+              clientName={budget.client_name}
+              expired={validity.expired}
+              variant="strong"
+            />
 
             {/* ─── MOBILE ORDER 4: Portal + Garantia ─── */}
             <div id="mobile-portal" className="scroll-mt-20">
