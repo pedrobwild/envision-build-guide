@@ -20,6 +20,7 @@ import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
 import { MobileHeroCard } from "@/components/budget/MobileHeroCard";
 import { MobileSectionNav } from "@/components/budget/MobileSectionNav";
+import { MobileBottomBar } from "@/components/budget/MobileBottomBar";
 
 import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
