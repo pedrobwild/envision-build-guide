@@ -251,7 +251,7 @@ export default function PublicBudget() {
                   return (
                     <div key={group.category.id}>
                       <CategoryHeader category={group.category} subtotal={group.subtotal} />
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 direction-rtl [&>*]:direction-ltr" style={{ direction: 'rtl' }}>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 [&>*:only-child]:lg:col-start-2">
                         {groupSections.map((section) => {
                           const currentIdx = globalSectionIdx++;
 
