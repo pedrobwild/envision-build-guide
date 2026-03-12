@@ -54,12 +54,18 @@ function parseBrazilianNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
 
-  const normalized = String(value)
-    .replace(/R\$/gi, "")
-    .replace(/\s/g, "")
-    .replace(/\./g, "")
-    .replace(/,/g, ".")
-    .replace(/[^0-9.-]/g, "");
+  const raw = String(value).replace(/R\$/gi, "").replace(/\s/g, "").trim();
+  if (!raw) return null;
+
+  const hasComma = raw.includes(",");
+  const hasDot = raw.includes(".");
+
+  const normalized = (hasComma && hasDot
+    ? raw.replace(/\./g, "").replace(/,/g, ".")
+    : hasComma
+      ? raw.replace(/,/g, ".")
+      : raw
+  ).replace(/[^0-9.-]/g, "");
 
   if (!normalized || normalized === "-" || normalized === ".") return null;
   const parsed = Number(normalized);

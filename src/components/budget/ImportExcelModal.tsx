@@ -54,12 +54,18 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
     if (value === null || value === undefined || value === "") return undefined;
     if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
 
-    const normalized = String(value)
-      .replace(/R\$/gi, "")
-      .replace(/\s/g, "")
-      .replace(/\./g, "")
-      .replace(/,/g, ".")
-      .replace(/[^0-9.-]/g, "");
+    const raw = String(value).replace(/R\$/gi, "").replace(/\s/g, "").trim();
+    if (!raw) return undefined;
+
+    const hasComma = raw.includes(",");
+    const hasDot = raw.includes(".");
+
+    const normalized = (hasComma && hasDot
+      ? raw.replace(/\./g, "").replace(/,/g, ".")
+      : hasComma
+        ? raw.replace(/,/g, ".")
+        : raw
+    ).replace(/[^0-9.-]/g, "");
 
     if (!normalized || normalized === "-" || normalized === ".") return undefined;
     const parsed = Number(normalized);
