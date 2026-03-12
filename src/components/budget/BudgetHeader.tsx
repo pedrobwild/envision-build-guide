@@ -1,8 +1,9 @@
-import { Download, Loader2, ShieldCheck } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { TestimonialVideoPreview } from "./TestimonialVideoModal";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
+import seloReclameAqui from "@/assets/selo-reclame-aqui.png";
 import { formatDate, getValidityInfo } from "@/lib/formatBRL";
 
 export interface HeaderConfig {
@@ -95,9 +96,9 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               href="https://www.reclameaqui.com.br/empresa/bwild-reformas/sobre/#info-rav"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 backdrop-blur-md transition-all text-xs font-body font-medium border border-emerald-400/20 group"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 backdrop-blur-md transition-all text-xs font-body font-medium border border-emerald-400/20 group"
             >
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 group-hover:text-emerald-300" />
+              <img src={seloReclameAqui} alt="Selo Reclame Aqui" className="h-6 w-6 sm:h-7 sm:w-7 object-contain" />
               <span className="text-emerald-300 group-hover:text-emerald-200">
                 <span className="sm:hidden">0 reclamações</span>
                 <span className="hidden sm:inline">Nenhuma reclamação há 6 meses</span>
