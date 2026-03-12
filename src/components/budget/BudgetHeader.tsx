@@ -211,7 +211,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
                 className="space-y-2"
               >
-                <h1 className="font-display font-extrabold text-[1.85rem] xl:text-3xl text-white leading-[1.1] tracking-tight">
+                <h1 className="font-display font-bold text-3xl text-white leading-tight tracking-tight">
                   {heroTitle}
                 </h1>
 
