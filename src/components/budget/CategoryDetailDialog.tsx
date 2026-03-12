@@ -238,9 +238,12 @@ interface CategoryDetailDialogProps {
   editable?: boolean;
 }
 
+const IMAGE_GALLERY_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
+
 export function CategoryDetailDialog({ open, onClose, group, budgetId, editable = false }: CategoryDetailDialogProps) {
   if (!group) return null;
 
+  const showImages = IMAGE_GALLERY_CATEGORIES.has(group.category.id);
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent side="left" className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0 overflow-y-auto">
