@@ -114,7 +114,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
           className="w-full h-10 rounded-lg border border-border text-foreground font-body font-medium text-sm hover:bg-muted/50 transition-colors flex items-center justify-center gap-2"
         >
           <Bookmark className="h-4 w-4" />
-          Salvar para revisar depois
+          Receber por email
         </button>
       </div>
 
