@@ -241,7 +241,10 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                     </>
                   )}
                   {dateStr && (
-                    <span className="text-white/70">{dateStr}</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Elaboração</span>
+                      <span className="text-white/90 font-semibold">{dateStr}</span>
+                    </span>
                   )}
                 </div>
               </motion.div>
