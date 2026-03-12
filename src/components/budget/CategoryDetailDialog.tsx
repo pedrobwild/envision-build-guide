@@ -142,13 +142,15 @@ function ItemImageGallery({ item, budgetId, editable }: { item: any; budgetId: s
           onClick={() => setLightboxOpen(true)}
         />
         {/* Remove button */}
-        <button
-          onClick={() => handleRemove(activeIdx)}
-          disabled={uploading}
-          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm disabled:opacity-50"
-        >
-          <X className="h-3 w-3" />
-        </button>
+        {editable && (
+          <button
+            onClick={() => handleRemove(activeIdx)}
+            disabled={uploading}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm disabled:opacity-50"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
         {/* Primary badge */}
         {active?.is_primary && images.length > 1 && (
           <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
