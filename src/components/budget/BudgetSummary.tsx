@@ -29,6 +29,7 @@ export function BudgetSummary({
   validityDays = 30,
   activeSection,
   categorizedGroups,
+  budgetId,
 }: BudgetSummaryProps) {
   const validity = budgetDate ? getValidityInfo(budgetDate, validityDays) : null;
 
