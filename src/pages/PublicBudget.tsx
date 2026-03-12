@@ -318,7 +318,7 @@ export default function PublicBudget() {
             </div>
 
             {/* ─── MOBILE ORDER 3: Trust / Confidence builders ─── */}
-            <div id="mobile-trust" className="space-y-3">
+            <div id="mobile-trust" className="space-y-3 scroll-mt-20">
               <AnimatedSection id="gallery-section" index={0.25}>
                 <ProjectGallery />
               </AnimatedSection>
