@@ -387,8 +387,7 @@ export default function PublicBudget() {
           publicId={publicId || "demo"}
         />
 
-        {/* FAQ */}
-        <div className="mt-6 sm:mt-8 lg:col-span-2">
+        <div id="mobile-faq" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20">
           <BudgetFAQ />
         </div>
 
