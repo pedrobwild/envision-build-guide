@@ -34,10 +34,6 @@ const fadeUp = {
   }),
 };
 
-/** Capitalize each word: "pedro henrique" → "Pedro Henrique" */
-function titleCase(str: string) {
-  return str.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
-}
 
 export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderProps) {
   const validity = budget.date ? getValidityInfo(budget.date, budget.validity_days || 30) : null;
@@ -60,7 +56,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
     { value: "5 anos", label: "garantia", accent: false },
   ];
 
-  const clientName = titleCase(budget.client_name || "");
+  const clientName = budget.client_name || "";
 
   const projectTitle = budget.project_name || "Projeto e Reforma";
   const heroTitle = clientName ? `Orçamento ${clientName}` : projectTitle;
