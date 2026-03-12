@@ -307,7 +307,6 @@ export default function PublicBudget() {
                 editable={isAdmin}
               />
               <InstallmentSimulator total={total} />
-              <ROISimulator total={total} />
               <ApprovalCTA
                 budgetId={budget.id}
                 publicId={publicId || "demo"}
@@ -369,7 +368,7 @@ export default function PublicBudget() {
                     editable={isAdmin}
                   />
                   <InstallmentSimulator total={total} />
-                  <ROISimulator total={total} />
+                  
                   <ApprovalCTA
                     budgetId={budget.id}
                     publicId={publicId || "demo"}
