@@ -67,6 +67,7 @@ export type Database = {
           generated_at: string | null
           header_config: Json | null
           id: string
+          is_current_version: boolean | null
           last_viewed_at: string | null
           lead_email: string | null
           lead_name: string | null
@@ -84,6 +85,8 @@ export type Database = {
           updated_at: string | null
           validity_days: number | null
           versao: string | null
+          version_group_id: string | null
+          version_number: number | null
           view_count: number
         }
         Insert: {
@@ -103,6 +106,7 @@ export type Database = {
           generated_at?: string | null
           header_config?: Json | null
           id?: string
+          is_current_version?: boolean | null
           last_viewed_at?: string | null
           lead_email?: string | null
           lead_name?: string | null
@@ -120,6 +124,8 @@ export type Database = {
           updated_at?: string | null
           validity_days?: number | null
           versao?: string | null
+          version_group_id?: string | null
+          version_number?: number | null
           view_count?: number
         }
         Update: {
@@ -139,6 +145,7 @@ export type Database = {
           generated_at?: string | null
           header_config?: Json | null
           id?: string
+          is_current_version?: boolean | null
           last_viewed_at?: string | null
           lead_email?: string | null
           lead_name?: string | null
@@ -156,6 +163,8 @@ export type Database = {
           updated_at?: string | null
           validity_days?: number | null
           versao?: string | null
+          version_group_id?: string | null
+          version_number?: number | null
           view_count?: number
         }
         Relationships: []
