@@ -20,6 +20,7 @@ import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
 import { MobileHeroCard } from "@/components/budget/MobileHeroCard";
 import { MobileSectionNav } from "@/components/budget/MobileSectionNav";
+import { MobileBottomBar } from "@/components/budget/MobileBottomBar";
 
 import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
@@ -33,7 +34,7 @@ import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
 import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
-import { ChevronUp, X, Eye, EyeOff, MessageCircle } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useScrollspy } from "@/hooks/useScrollspy";
 import { categorizeSections } from "@/lib/scope-categories";
 import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
@@ -42,7 +43,6 @@ export default function PublicBudget() {
   const { publicId } = useParams<{ projectId?: string; publicId?: string }>();
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [showPrices, setShowPrices] = useState(true);
@@ -358,111 +358,15 @@ export default function PublicBudget() {
           </div>
         </div>
 
-        {/* Mobile sticky bottom bar */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50" data-pdf-hide>
-          <AnimatePresence>
-            {showMobileSummary && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-foreground/40 z-40"
-                onClick={() => setShowMobileSummary(false)}
-              />
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {showMobileSummary && (
-              <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="relative z-50 bg-card border-t border-border rounded-t-2xl max-h-[75vh] overflow-y-auto shadow-2xl"
-              >
-                {/* Grab handle */}
-                <div className="flex justify-center pt-3 pb-1">
-                  <div className="w-10 h-1 bg-muted rounded-full" />
-                </div>
-                <div className="sticky top-0 bg-card z-10 px-4 pt-1 pb-2 border-b border-border flex items-center justify-between">
-                  <span className="text-sm font-display font-bold text-foreground">Detalhes do Orçamento</span>
-                  <button
-                    onClick={() => setShowMobileSummary(false)}
-                    className="p-1.5 rounded-full hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                </div>
-                <div className="p-4 space-y-4">
-                  <BudgetSummary
-                    sections={sections}
-                    adjustments={adjustments}
-                    total={total}
-                    generatedAt={budget.generated_at || ""}
-                    budgetDate={budget.date}
-                    validityDays={budget.validity_days || 30}
-                    activeSection={activeSection}
-                    categorizedGroups={categorizedGroups}
-                    budgetId={budget.id}
-                    editable={isAdmin}
-                  />
-                  <InstallmentSimulator total={total} />
-                  
-                  <ApprovalCTA
-                    budgetId={budget.id}
-                    publicId={publicId || "demo"}
-                    expired={validity.expired}
-                    projectName={budget.project_name}
-                    clientName={budget.client_name}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {!showMobileSummary && (
-            <div className="relative z-50 bg-card border-t border-border">
-              <div className="flex items-center justify-between px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]">
-                <button
-                  onClick={() => setShowMobileSummary(true)}
-                  className="flex flex-col min-h-[44px] justify-center"
-                >
-                  <span className="font-display font-bold text-foreground text-base tabular-nums">{formatBRL(total)}</span>
-                  <span className="text-[11px] text-muted-foreground font-body flex items-center gap-1">
-                    <ChevronUp className="h-3 w-3" />
-                    Ver resumo
-                  </span>
-                </button>
-                {validity.expired ? (
-                  <a
-                    href={`https://wa.me/5511911906183?text=${encodeURIComponent(
-                      `Olá! O orçamento ${budget.project_name || 'do projeto'} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Solicitar atualização
-                  </a>
-                ) : (
-                  <a
-                    href={`https://wa.me/5511911906183?text=${encodeURIComponent(
-                      `Olá! Sou ${budget.client_name || 'cliente'}, estou analisando o orçamento do projeto ${budget.project_name || 'do projeto'} (Ref: ${publicId}) e gostaria de conversar sobre os próximos passos.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Falar com especialista
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Mobile sticky bottom bar + drawer */}
+        <MobileBottomBar
+          total={total}
+          validity={validity}
+          categorizedGroups={categorizedGroups}
+          projectName={budget.project_name}
+          clientName={budget.client_name}
+          publicId={publicId || "demo"}
+        />
 
         {/* FAQ */}
         <div className="mt-6 sm:mt-8 lg:col-span-2">
