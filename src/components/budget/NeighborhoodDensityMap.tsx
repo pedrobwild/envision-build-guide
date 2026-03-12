@@ -18,7 +18,7 @@ type Neighborhood = {
 };
 
 const NEIGHBORHOOD_DATA: Neighborhood[] = [
-  { id: "brooklin", name: "Brooklin", count: 14, avgSqm: 25.7, lat: -23.6273, lng: -46.6957 },
+  { id: "brooklin", name: "Brooklin", count: 17, avgSqm: 25.7, lat: -23.6273, lng: -46.6957 },
   { id: "pinheiros", name: "Pinheiros", count: 11, avgSqm: 26.6, lat: -23.5614, lng: -46.6845 },
   { id: "perdizes", name: "Perdizes", count: 8, avgSqm: 28.0, lat: -23.5352, lng: -46.6698 },
   { id: "vila-clementino", name: "Vila Clementino", count: 6, avgSqm: 25.3, lat: -23.6069, lng: -46.6389 },
