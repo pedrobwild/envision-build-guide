@@ -239,7 +239,7 @@ export function MobileBottomBar({
                     className="w-full min-h-[44px] rounded-xl border border-border text-foreground font-body font-medium text-sm flex items-center justify-center gap-2 hover:bg-muted/50 transition-colors"
                   >
                     <Bookmark className="h-4 w-4 flex-shrink-0" />
-                    Salvar para revisar depois
+                    Receber por email
                   </button>
                 )}
               </div>
