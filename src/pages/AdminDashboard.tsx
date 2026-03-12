@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import {
-  Plus, Copy, ExternalLink, LogOut, FileText, Upload,
+  Plus, Copy, ExternalLink, LogOut, FileText, Upload, FileSpreadsheet,
   Search, Filter, TrendingUp, FolderOpen, CheckCircle, Clock,
   MoreHorizontal, Trash2, Archive, Eye, Bell
 } from "lucide-react";
