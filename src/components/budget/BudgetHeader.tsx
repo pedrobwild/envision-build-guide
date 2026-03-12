@@ -41,16 +41,17 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const validity = budget.date ? getValidityInfo(budget.date, budget.validity_days || 30) : null;
   const validityLabel = validity
     ? validity.expired
-      ? "Proposta expirada"
-      : `Válido até ${formatDate(validity.expiresAt)}`
+      ? "Orçamento expirado"
+      : `Validade: ${formatDate(validity.expiresAt)}`
     : null;
 
   const cfg: HeaderConfig = (budget.header_config as HeaderConfig) || {};
 
   // Unified meta line: bairro · metragem · versão · data
   const neighborhood = budget.bairro || budget.condominio || "";
-  const area = budget.metragem ? `${budget.metragem}${budget.metragem.toString().includes('m²') ? '' : 'm²'}` : "";
-  const version = budget.versao ? budget.versao.replace(/^v/i, '') : "";
+  const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '') : "";
+  const area = rawArea ? (rawArea.includes('m²') ? rawArea : `${rawArea}m²`) : "";
+  const version = budget.versao ? budget.versao.replace(/^v/i, '').padStart(2, '0') : "";
   const dateStr = budget.date ? formatDate(budget.date) : "";
 
   const statBadges = [
@@ -142,7 +143,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {neighborhood && (
                 <>
                   <span className="inline-flex items-center gap-1">
-                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Obra</span>
+                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Bairro</span>
                     <span className="text-white/90 font-semibold">{neighborhood}</span>
                   </span>
                   {(area || version || dateStr) && <span className="text-white/20">|</span>}
@@ -167,7 +168,10 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 </>
               )}
               {dateStr && (
-                <span className="text-white/70">{dateStr}</span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Elaboração</span>
+                  <span className="text-white/90 font-semibold">{dateStr}</span>
+                </span>
               )}
             </motion.div>
 
@@ -212,7 +216,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                   {neighborhood && (
                     <>
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Obra</span>
+                        <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Bairro</span>
                         <span className="text-white/90 font-semibold">{neighborhood}</span>
                       </span>
                       {(area || version || dateStr) && <span className="text-white/20 text-xs">|</span>}
@@ -237,7 +241,10 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                     </>
                   )}
                   {dateStr && (
-                    <span className="text-white/70">{dateStr}</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Elaboração</span>
+                      <span className="text-white/90 font-semibold">{dateStr}</span>
+                    </span>
                   )}
                 </div>
               </motion.div>
@@ -284,8 +291,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {!cfg.hide_validity && validityLabel && (
                 <p className={`text-sm font-body ${validity?.expired ? 'text-destructive' : 'text-white/80'}`}>
                   {validity?.expired
-                    ? "Valores expirados — solicite atualização"
-                    : `Valores válidos até ${formatDate(validity!.expiresAt)}`
+                    ? "Orçamento expirado — solicite atualização"
+                    : `Validade do orçamento: ${formatDate(validity!.expiresAt)}`
                   }
                 </p>
               )}
