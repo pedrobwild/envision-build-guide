@@ -13,14 +13,16 @@ export function ScopeTransitionZone({ sections, total }: ScopeTransitionZoneProp
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="py-2 sm:py-3 -mx-3 sm:-mx-6 lg:-mx-8 px-3 sm:px-6 lg:px-8"
+      className="py-12 lg:py-16"
     >
-      <div className="text-center">
-        <h2 className="text-lg sm:text-xl font-display font-bold text-foreground">
+      <div className="mb-6">
+        <h2 className="text-2xl lg:text-3xl font-display font-bold text-foreground tracking-tight">
           Detalhamento da Mobília e Eletros
         </h2>
+        <p className="text-muted-foreground text-sm mt-1 font-body">
+          Especificação completa dos itens selecionados para o seu projeto
+        </p>
       </div>
-      
     </motion.div>
   );
 }
