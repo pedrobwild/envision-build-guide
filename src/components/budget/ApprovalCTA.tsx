@@ -125,7 +125,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
             <DialogTitle className="font-display">Receber esta proposta por email</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground font-body">
-            Enviaremos o link deste orçamento para seu email.
+            Enviaremos o link desta proposta para você acessar quando quiser.
           </p>
           <div className="space-y-3 mt-2">
             <Input
