@@ -74,26 +74,9 @@ export function BudgetSummary({
           <h3 className="font-display font-bold text-base text-foreground tracking-tight">
             Resumo do Orçamento
           </h3>
-          {sections.length > 0 && (
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[13px] text-muted-foreground font-body">
-                  {activeIndex >= 0 ? activeIndex + 1 : 0} de {sections.length} seções
-                </span>
-                <span className="text-[13px] text-muted-foreground font-body tabular-nums">
-                  {progressPercent}%
-                </span>
-              </div>
-              <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-primary"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPercent}%` }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                />
-              </div>
-            </div>
-          )}
+          <p className="mt-2 text-xs text-muted-foreground font-body">
+            Clique em cada tópico para visualizar o escopo detalhado
+          </p>
         </div>
 
         {/* Category distribution bar */}
