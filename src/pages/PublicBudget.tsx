@@ -169,15 +169,11 @@ export default function PublicBudget() {
   const categorizedGroups = categorizeSections(sections);
   const scopeTotal = sections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
 
-  // Included items for mobile hero
-  const includedItems = [
-    "Projeto arquitetônico 3D",
-    "Projeto executivo",
-    "Engenharia estrutural",
-    "Gestão completa da obra",
-    "Documentação e burocracia",
-    "Acompanhamento técnico",
-  ];
+  // Meta for mobile hero
+  const heroNeighborhood = budget.bairro || budget.condominio || "";
+  const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
+  const heroArea = rawArea ? `${rawArea}m²` : "";
+  const heroVersion = budget.versao ? `v${budget.versao.replace(/^v/i, '').padStart(2, '0')}` : "";
 
   // Mobile nav items
   const mobileNavItems = [
