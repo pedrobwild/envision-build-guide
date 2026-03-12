@@ -130,7 +130,7 @@ export default function PublicBudget() {
       toast.success("PDF gerado com sucesso.");
     } catch (err) {
       console.error("PDF export error:", err);
-      toast.error("Erro ao gerar PDF.");
+      toast.error("Não foi possível gerar o PDF. Tente novamente.");
     }
     setExporting(false);
   };
