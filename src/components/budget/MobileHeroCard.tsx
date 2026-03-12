@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { MessageCircle, Bookmark, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { formatBRL } from "@/lib/formatBRL";
+import { MessageCircle, Bookmark, Clock, AlertTriangle, Shield, CheckCircle2 } from "lucide-react";
+import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 
 interface MobileHeroCardProps {
@@ -13,10 +13,18 @@ interface MobileHeroCardProps {
   projectName?: string;
   clientName?: string;
   publicId: string;
-  included: string[];
+  /** Optional meta chips: bairro, area, version */
+  neighborhood?: string;
+  area?: string;
+  version?: string;
+  onSaveForLater?: () => void;
 }
 
 const DEFAULT_PHONE = "5511911906183";
+
+function titleCase(str: string) {
+  return str.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+}
 
 export function MobileHeroCard({
   total,
@@ -24,8 +32,13 @@ export function MobileHeroCard({
   projectName,
   clientName,
   publicId,
-  included,
+  neighborhood,
+  area,
+  version,
+  onSaveForLater,
 }: MobileHeroCardProps) {
+  const displayName = clientName ? titleCase(clientName) : "";
+
   const whatsappMessage = encodeURIComponent(
     `Olá! Sou ${clientName || "cliente"}, estou analisando o orçamento do projeto ${projectName || "do projeto"} (Ref: ${publicId}) e gostaria de conversar sobre os próximos passos.`
   );
@@ -35,100 +48,135 @@ export function MobileHeroCard({
     `Olá! O orçamento ${projectName || "do projeto"} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
   )}`;
 
+  const ctaUrl = validity.expired ? whatsappUpdateUrl : whatsappUrl;
+  const ctaLabel = validity.expired ? "Solicitar atualização" : "Falar com especialista";
+
+  // Meta chips
+  const metaChips: { label: string; value: string }[] = [];
+  if (neighborhood) metaChips.push({ label: "Bairro", value: neighborhood });
+  if (area) metaChips.push({ label: "Área", value: area });
+  if (version) metaChips.push({ label: "Versão", value: version });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.15 }}
-      className="lg:hidden rounded-xl border border-border bg-card p-4 space-y-4"
+      transition={{ duration: 0.4, delay: 0.1 }}
+      className="lg:hidden rounded-2xl border border-border bg-card overflow-hidden"
     >
-      {/* Price + Validity */}
-      <div className="flex items-start justify-between gap-3">
+      {/* ── Top: context ── */}
+      <div className="px-4 pt-4 pb-3 space-y-2">
+        {/* Greeting + subtitle */}
         <div>
-          <p className="text-xs font-body text-muted-foreground mb-0.5">
-            Investimento total
+          <h2 className="font-display font-bold text-lg text-foreground leading-tight tracking-tight">
+            {displayName ? `${displayName}, seu orçamento está pronto` : "Seu orçamento está pronto"}
+          </h2>
+          <p className="text-sm font-body text-muted-foreground mt-0.5 leading-snug">
+            Projeto completo com gestão, execução e garantia.
           </p>
-          <motion.p
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none"
-          >
-            {formatBRL(total)}
-          </motion.p>
         </div>
 
-        {/* Validity badge */}
-        <motion.div
-          initial={{ opacity: 0, x: 8 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
-          className={cn(
-            "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-body font-semibold flex-shrink-0",
-            validity.expired
-              ? "bg-destructive/10 text-destructive"
-              : validity.daysLeft <= 5
-                ? "bg-warning/10 text-warning"
-                : "bg-success/10 text-success"
-          )}
-        >
-          {validity.expired ? (
-            <>
-              <AlertTriangle className="h-3 w-3" />
-              Expirado
-            </>
-          ) : (
-            <>
-              <Clock className={cn("h-3 w-3", validity.daysLeft <= 5 && "animate-pulse")} />
-              {validity.daysLeft}d restantes
-            </>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Quick included list */}
-      {included.length > 0 && (
-        <div className="border-t border-border pt-3">
-          <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Contemplado
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {included.slice(0, 6).map((item) => (
+        {/* Meta chips */}
+        {metaChips.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap gap-1.5"
+          >
+            {metaChips.map((chip) => (
               <span
-                key={item}
+                key={chip.label}
                 className="inline-flex items-center gap-1 text-xs font-body text-foreground bg-muted/60 rounded-md px-2 py-1"
               >
-                <CheckCircle2 className="h-3 w-3 text-primary flex-shrink-0" />
-                {item}
+                <span className="text-muted-foreground">{chip.label}</span>
+                <span className="font-medium">{chip.value}</span>
               </span>
             ))}
+          </motion.div>
+        )}
+      </div>
+
+      {/* ── Investment block ── */}
+      <div className="mx-4 rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-body text-muted-foreground mb-1">
+              Investimento total
+            </p>
+            <motion.p
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.25, duration: 0.4 }}
+              className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none"
+            >
+              {formatBRL(total)}
+            </motion.p>
+          </div>
+
+          {/* Validity badge */}
+          <motion.div
+            initial={{ opacity: 0, x: 6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.45 }}
+            className={cn(
+              "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-body font-semibold flex-shrink-0",
+              validity.expired
+                ? "bg-destructive/10 text-destructive"
+                : validity.daysLeft <= 5
+                  ? "bg-warning/10 text-warning"
+                  : "bg-success/10 text-success"
+            )}
+          >
+            {validity.expired ? (
+              <>
+                <AlertTriangle className="h-3 w-3" />
+                Expirado
+              </>
+            ) : (
+              <>
+                <Clock className={cn("h-3 w-3", validity.daysLeft <= 5 && "animate-pulse")} />
+                {validity.daysLeft}d restantes
+              </>
+            )}
+          </motion.div>
+        </div>
+
+        {/* Trust micro-indicators */}
+        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-primary/10">
+          <div className="flex items-center gap-1.5">
+            <Shield className="h-3.5 w-3.5 text-primary/50" />
+            <span className="text-xs text-muted-foreground font-body">Preço fixo</span>
+          </div>
+          <span className="text-muted-foreground/30">·</span>
+          <div className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5 text-primary/50" />
+            <span className="text-xs text-muted-foreground font-body">Garantia 5 anos</span>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* CTA */}
-      <div className="space-y-2 pt-1">
-        {validity.expired ? (
-          <a
-            href={whatsappUpdateUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full min-h-[48px] rounded-xl bg-primary text-primary-foreground font-display font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+      {/* ── CTAs ── */}
+      <div className="px-4 pt-3 pb-4 space-y-2">
+        <motion.a
+          href={ctaUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          whileTap={{ scale: 0.98 }}
+          className="w-full min-h-[48px] rounded-xl bg-primary text-primary-foreground font-display font-semibold text-sm flex items-center justify-center gap-2"
+        >
+          <MessageCircle className="h-4.5 w-4.5 flex-shrink-0" />
+          {ctaLabel}
+        </motion.a>
+
+        {onSaveForLater && (
+          <button
+            onClick={onSaveForLater}
+            className="w-full min-h-[44px] rounded-xl border border-border text-foreground font-body font-medium text-sm flex items-center justify-center gap-2 hover:bg-muted/50 transition-colors active:scale-[0.98]"
           >
-            <MessageCircle className="h-4.5 w-4.5" />
-            Solicitar atualização
-          </a>
-        ) : (
-          <motion.a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            whileTap={{ scale: 0.98 }}
-            className="w-full min-h-[48px] rounded-xl bg-primary text-primary-foreground font-display font-semibold text-sm flex items-center justify-center gap-2"
-          >
-            <MessageCircle className="h-4.5 w-4.5" />
-            Falar com especialista
-          </motion.a>
+            <Bookmark className="h-4 w-4 flex-shrink-0" />
+            Salvar para revisar depois
+          </button>
         )}
       </div>
     </motion.div>
