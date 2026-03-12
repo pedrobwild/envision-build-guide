@@ -274,6 +274,7 @@ export default function PublicBudget() {
                                 sectionIndex={currentIdx}
                                 categoryColor={group.category}
                                 budgetId={budget.id}
+                                editable={isAdmin}
                               />
                             </AnimatedSection>
                           );
