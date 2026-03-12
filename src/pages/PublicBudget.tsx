@@ -33,6 +33,7 @@ import { NextSteps } from "@/components/budget/NextSteps";
 import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
 import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
 import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
+import { InlineCTA } from "@/components/budget/InlineCTA";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
 import { Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
