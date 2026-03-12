@@ -163,21 +163,30 @@ export default function PublicBudget() {
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
   const categorizedGroups = categorizeSections(sections);
-
-  // Compute scope total
   const scopeTotal = sections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
 
-  const handleRoomClick = (roomId: string | null) => {
-    setActiveRoom(roomId || null);
-    if (roomId) {
-      setRoomModalOpen(true);
-    }
-  };
+  // Included items for mobile hero
+  const includedItems = [
+    "Projeto arquitetônico 3D",
+    "Projeto executivo",
+    "Engenharia estrutural",
+    "Gestão completa da obra",
+    "Documentação e burocracia",
+    "Acompanhamento técnico",
+  ];
 
-  const activeRoomData = rooms.find((r) => r.id === activeRoom);
+  // Mobile nav items
+  const mobileNavItems = [
+    { id: "mobile-included", label: "Incluído" },
+    { id: "mobile-scope", label: "Escopo" },
+    { id: "mobile-trust", label: "Confiança" },
+    { id: "mobile-portal", label: "Garantia" },
+  ];
 
-  // Track global section index for icon colors
-  let globalSectionIdx = 0;
+  // Scrollspy for mobile nav
+  const mobileNavIds = mobileNavItems.map((n) => n.id);
+  const allScrollIds = useMemo(() => [...mobileNavIds, ...allSectionIds], [mobileNavIds.join(","), allSectionIds.join(",")]);
+  const activeMobileNav = useScrollspy(mobileNavIds);
 
   return (
     <div className="min-h-screen bg-background">
