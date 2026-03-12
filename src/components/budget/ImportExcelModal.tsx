@@ -458,6 +458,12 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         console.warn("[Import] Media matching failed (non-critical):", matchErr);
       }
 
+      // If importing into an existing budget group, assign to that group
+      if (targetBudgetGroupId) {
+        const { assignImportedBudgetToGroup } = await import("@/lib/budget-versioning");
+        await assignImportedBudgetToGroup(budget.id, targetBudgetGroupId);
+      }
+
       setCreatedBudgetId(budget.id);
       setStep("done");
     } catch (err: any) {
