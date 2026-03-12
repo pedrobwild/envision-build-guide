@@ -7,6 +7,7 @@ import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
+import { ensureVersionGroup } from "@/lib/budget-versioning";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
