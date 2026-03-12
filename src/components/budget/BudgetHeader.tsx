@@ -204,18 +204,19 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </div>
 
           {/* ── DESKTOP (lg+) ── */}
-          <div className="hidden lg:flex items-start justify-between py-5">
+          <div className="hidden lg:flex items-start justify-between py-6">
             {/* Left — Client name + meta */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 space-y-2.5">
               <motion.div
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
+                className="space-y-2"
               >
                 <h1 className="font-display font-extrabold text-[1.85rem] xl:text-3xl text-white leading-[1.1] tracking-tight">
                   {heroTitle}
                 </h1>
 
                 {/* Labeled meta chips */}
-                <div className="mt-2 flex items-center gap-2 text-sm font-body flex-wrap">
+                <div className="flex items-center gap-2 text-sm font-body flex-wrap">
                   {neighborhood && (
                     <>
                       <span className="text-white/60 text-xs">Bairro</span>
@@ -249,12 +250,23 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {!cfg.hide_tagline && (
                 <motion.p
                   variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                  className="mt-2.5 text-xs text-white/75 font-body"
+                  className="text-xs text-white/75 font-body"
                 >
                   {tagline}
                 </motion.p>
               )}
             </div>
+
+            {/* Right — Video testimonial CTA */}
+            {!cfg.hide_stat_badges && (
+              <motion.div
+                variants={fadeUp} custom={1} initial="hidden" animate="visible"
+                className="flex-shrink-0 ml-8"
+              >
+                <TestimonialVideoPreview />
+              </motion.div>
+            )}
+          </div>
 
             {/* Right — Video testimonial CTA */}
             {!cfg.hide_stat_badges && (
