@@ -131,7 +131,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
               className="font-display font-extrabold text-2xl text-white leading-[1.05] tracking-tight"
             >
-              {clientName || projectTitle}
+              {heroTitle}
             </motion.h1>
 
             {/* Meta line: bairro · metragem · versão · data */}
