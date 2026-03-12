@@ -268,10 +268,10 @@ export default function PublicBudget() {
                   <div className="flex items-center justify-between pt-2 pb-2 gap-3">
                     <div className="min-w-0">
                       <h2 className="text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
-                        Detalhamento da Mobília e Eletros
+                        Mobília e eletrodomésticos
                       </h2>
                       <p className="text-muted-foreground text-xs mt-0.5 font-body hidden sm:block">
-                        Especificação completa dos itens selecionados
+                        Especificação completa dos itens do seu projeto
                       </p>
                     </div>
                     <label className="flex items-center gap-2 flex-shrink-0 min-h-[44px] cursor-pointer">
