@@ -342,9 +342,11 @@ export default function PublicBudget() {
               </AnimatedSection>
             </div>
 
-            <AnimatedSection id="next-steps" index={100}>
-              <NextSteps />
-            </AnimatedSection>
+            <div id="mobile-next-steps" className="scroll-mt-20">
+              <AnimatedSection id="next-steps" index={100}>
+                <NextSteps />
+              </AnimatedSection>
+            </div>
 
           </div>
 
