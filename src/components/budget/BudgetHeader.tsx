@@ -291,8 +291,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {!cfg.hide_validity && validityLabel && (
                 <p className={`text-sm font-body ${validity?.expired ? 'text-destructive' : 'text-white/80'}`}>
                   {validity?.expired
-                    ? "Valores expirados — solicite atualização"
-                    : `Valores válidos até ${formatDate(validity!.expiresAt)}`
+                    ? "Orçamento expirado — solicite atualização"
+                    : `Validade do orçamento: ${formatDate(validity!.expiresAt)}`
                   }
                 </p>
               )}
