@@ -266,19 +266,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 <TestimonialVideoPreview />
               </motion.div>
             )}
-          </div>
-
-            {/* Right — Video testimonial CTA */}
-            {!cfg.hide_stat_badges && (
-              <motion.div
-                variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                className="flex-shrink-0 ml-8"
-              >
-                <TestimonialVideoPreview />
-              </motion.div>
-            )}
-          </div>
         </div>
+
 
         {/* ─── FAIXA 3 — Status strip (desktop) — sem "Início: Imediato" ─── */}
         {!cfg.hide_status_strip && (
