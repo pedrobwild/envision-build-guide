@@ -143,29 +143,29 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             >
               {neighborhood && (
                 <>
-                  <span className="text-white/60">Bairro</span>
-                  <span className="text-white/90 font-semibold">{neighborhood}</span>
-                  {(area || version || dateStr) && <span className="text-white/20">·</span>}
+                  <span className="text-white/70">Bairro</span>
+                  <span className="text-white/95 font-medium">{neighborhood}</span>
+                  {(area || version || dateStr) && <span className="text-white/40">·</span>}
                 </>
               )}
               {area && (
                 <>
-                  <span className="text-white/60">Área</span>
-                  <span className="text-white/90 font-semibold">{area}</span>
-                  {(version || dateStr) && <span className="text-white/20">·</span>}
+                  <span className="text-white/70">Área</span>
+                  <span className="text-white/95 font-medium">{area}</span>
+                  {(version || dateStr) && <span className="text-white/40">·</span>}
                 </>
               )}
               {version && (
                 <>
-                  <span className="text-white/60">Versão</span>
-                  <span className="text-white/90 font-semibold">{version}</span>
-                  {dateStr && <span className="text-white/20">·</span>}
+                  <span className="text-white/70">Versão</span>
+                  <span className="text-white/95 font-medium">{version}</span>
+                  {dateStr && <span className="text-white/40">·</span>}
                 </>
               )}
               {dateStr && (
                 <>
-                  <span className="text-white/60">Elaboração</span>
-                  <span className="text-white/90 font-semibold">{dateStr}</span>
+                  <span className="text-white/70">Elaboração</span>
+                  <span className="text-white/95 font-medium">{dateStr}</span>
                 </>
               )}
             </motion.div>
