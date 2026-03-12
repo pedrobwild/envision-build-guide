@@ -219,29 +219,29 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 <div className="flex items-center gap-2 text-sm font-body flex-wrap">
                   {neighborhood && (
                     <>
-                      <span className="text-white/60 text-xs">Bairro</span>
-                      <span className="text-white/90 font-semibold">{neighborhood}</span>
-                      {(area || version || dateStr) && <span className="text-white/20 text-xs">·</span>}
+                      <span className="text-white/70 text-xs">Bairro</span>
+                      <span className="text-white/95 font-medium">{neighborhood}</span>
+                      {(area || version || dateStr) && <span className="text-white/40">·</span>}
                     </>
                   )}
                   {area && (
                     <>
-                      <span className="text-white/60 text-xs">Área</span>
-                      <span className="text-white/90 font-semibold">{area}</span>
-                      {(version || dateStr) && <span className="text-white/20 text-xs">·</span>}
+                      <span className="text-white/70 text-xs">Área</span>
+                      <span className="text-white/95 font-medium">{area}</span>
+                      {(version || dateStr) && <span className="text-white/40">·</span>}
                     </>
                   )}
                   {version && (
                     <>
-                      <span className="text-white/60 text-xs">Versão</span>
-                      <span className="text-white/90 font-semibold">{version}</span>
-                      {dateStr && <span className="text-white/20 text-xs">·</span>}
+                      <span className="text-white/70 text-xs">Versão</span>
+                      <span className="text-white/95 font-medium">{version}</span>
+                      {dateStr && <span className="text-white/40">·</span>}
                     </>
                   )}
                   {dateStr && (
                     <>
-                      <span className="text-white/60 text-xs">Elaboração</span>
-                      <span className="text-white/90 font-semibold">{dateStr}</span>
+                      <span className="text-white/70 text-xs">Elaboração</span>
+                      <span className="text-white/95 font-medium">{dateStr}</span>
                     </>
                   )}
                 </div>
