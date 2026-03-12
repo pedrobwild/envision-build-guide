@@ -216,7 +216,7 @@ export function MobileBottomBar({
                   </p>
                 </motion.div>
                 <p className="text-xs text-muted-foreground font-body mt-2 text-center">
-                  Consultar condições com sua consultora comercial
+                  Condições sob consulta com sua consultora
                 </p>
               </div>
 
