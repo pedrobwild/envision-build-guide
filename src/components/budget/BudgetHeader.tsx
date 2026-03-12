@@ -115,10 +115,10 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </div>
         </motion.div>
 
-        {/* ─── Company info strip ─── */}
+        {/* ─── Company info strip — desktop only ─── */}
         <motion.div
           variants={fadeUp} custom={0} initial="hidden" animate="visible"
-          className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3"
+          className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3 hidden lg:block"
         >
           <div className="py-2 border-b border-white/[0.08]">
             <p className="text-xs font-body text-white/60 leading-relaxed">
