@@ -43,7 +43,7 @@ const NEIGHBORHOOD_DATA: Neighborhood[] = [
   { id: "vila-guilhermina", name: "Vila Guilhermina", count: 1, avgSqm: null, lat: -23.5274, lng: -46.5580 },
 ];
 
-const TOTAL_PROJECTS = 99;
+const TOTAL_PROJECTS = 102;
 const TOTAL_NEIGHBORHOODS = 26;
 
 const TOP_5 = [
