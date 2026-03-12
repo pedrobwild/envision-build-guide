@@ -129,8 +129,8 @@ export function MobileBottomBar({
                   )}
                 >
                   {validity.expired
-                    ? "Valores expirados — solicite atualização."
-                    : `Válido até ${formatDateLong(validity.expiresAt)}`}
+                    ? "Condições expiradas — solicite valores atualizados."
+                    : `Condições válidas até ${formatDateLong(validity.expiresAt)}`}
                 </p>
               </div>
 
