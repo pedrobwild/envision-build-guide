@@ -343,14 +343,14 @@ function NeighborhoodDetail({
 
 
 
-      {/* Empreendimentos with project cards */}
-      {empreendimentos.length > 0 && (
+      {/* Individual project cards */}
+      {projects.length > 0 && (
         <div className="space-y-3 pt-2 border-t border-border">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Empreendimentos
           </p>
-          {empreendimentos.map((emp, i) => (
-            <EmpreendimentoCard key={i} group={emp} />
+          {projects.map((proj) => (
+            <IndividualProjectCard key={proj.id} project={proj} />
           ))}
         </div>
       )}
