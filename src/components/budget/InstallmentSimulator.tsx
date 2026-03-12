@@ -36,7 +36,7 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
           className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors text-sm font-body"
         >
           <span className="text-foreground font-medium">
-            {selectedOption.label} — {formatBRL(total / selected)}
+            {selectedOption.label}
           </span>
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
