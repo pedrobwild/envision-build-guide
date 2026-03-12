@@ -248,29 +248,24 @@ export default function PublicBudget() {
 
                 {categorizedGroups.filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id)).map((group) => {
                   const groupSections = group.sections;
-                  return (
-                    <div key={group.category.id}>
-                      <CategoryHeader category={group.category} subtotal={group.subtotal} />
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 [&>*:only-child]:lg:col-start-2">
+                    return (
+                    <div key={group.category.id} className="lg:grid lg:grid-cols-2 lg:gap-3">
+                      <div /> {/* left spacer */}
+                      <div className="space-y-2 sm:space-y-3">
+                        <CategoryHeader category={group.category} subtotal={group.subtotal} />
                         {groupSections.map((section) => {
                           const currentIdx = globalSectionIdx++;
-
                           return (
-                            <div
-                              key={section.id}
-                              className="lg:col-span-1"
-                            >
-                              <AnimatedSection id={`section-${section.id}`} index={currentIdx + 1}>
-                                <SectionCard
-                                  section={section}
-                                  compact={false}
-                                  showItemQty={budget.show_item_qty ?? true}
-                                  showItemPrices={showPrices}
-                                  sectionIndex={currentIdx}
-                                  categoryColor={group.category}
-                                />
-                              </AnimatedSection>
-                            </div>
+                            <AnimatedSection key={section.id} id={`section-${section.id}`} index={currentIdx + 1}>
+                              <SectionCard
+                                section={section}
+                                compact={false}
+                                showItemQty={budget.show_item_qty ?? true}
+                                showItemPrices={showPrices}
+                                sectionIndex={currentIdx}
+                                categoryColor={group.category}
+                              />
+                            </AnimatedSection>
                           );
                         })}
                       </div>
