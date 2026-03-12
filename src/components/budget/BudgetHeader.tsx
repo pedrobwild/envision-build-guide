@@ -1,4 +1,4 @@
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, ShieldCheck } from "lucide-react";
 import { TestimonialVideoPreview } from "./TestimonialVideoModal";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
@@ -89,7 +89,19 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 flex items-center justify-between"
         >
           <img src={logoWhite} alt="Bwild" className="h-10 sm:h-12 lg:h-11" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* ReclameAqui seal */}
+            <a
+              href="https://www.reclameaqui.com.br/empresa/bwild-reformas/sobre/#info-rav"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 backdrop-blur-md transition-all text-xs font-body font-medium border border-emerald-400/20 group"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 group-hover:text-emerald-300" />
+              <span className="hidden sm:inline text-emerald-300 group-hover:text-emerald-200">
+                Nenhuma reclamação há 6 meses
+              </span>
+            </a>
             {!cfg.hide_consultora && budget.consultora_comercial && (
               <span className="hidden lg:inline text-xs text-white/80 font-body">
                 {budget.consultora_comercial}, sua consultora
