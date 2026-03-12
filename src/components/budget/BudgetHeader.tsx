@@ -128,7 +128,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
           {/* ── MOBILE (<lg) ── */}
-          <div className="lg:hidden py-5">
+          <div className="lg:hidden py-6 space-y-3">
             <motion.h1
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
               className="font-display font-extrabold text-2xl text-white leading-[1.05] tracking-tight"
@@ -136,10 +136,10 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {heroTitle}
             </motion.h1>
 
-            {/* Meta line: bairro · metragem · versão · data */}
+            {/* Meta line */}
             <motion.div
               variants={fadeUp} custom={0.8} initial="hidden" animate="visible"
-              className="mt-2 flex items-center gap-2 text-xs font-body flex-wrap"
+              className="flex items-center gap-2 text-xs font-body flex-wrap"
             >
               {neighborhood && (
                 <>
@@ -173,7 +173,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             {!cfg.hide_tagline && (
               <motion.p
                 variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                className="mt-2 text-xs font-body text-white/75 leading-relaxed"
+                className="text-xs font-body text-white/75 leading-relaxed"
               >
                 {tagline}
               </motion.p>
@@ -182,7 +182,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             {!cfg.hide_status_strip && (
               <motion.div
                 variants={fadeUp} custom={2} initial="hidden" animate="visible"
-                className="mt-2 flex items-center gap-2 text-xs text-white/60 font-body"
+                className="flex items-center gap-2 text-xs text-white/60 font-body"
               >
                 <span className="hidden" />
                 {!cfg.hide_validity && validityLabel && (
@@ -194,11 +194,9 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               </motion.div>
             )}
 
-            {/* Video testimonial CTA (mobile) */}
             {!cfg.hide_stat_badges && (
               <motion.div
                 variants={fadeUp} custom={2.5} initial="hidden" animate="visible"
-                className="mt-3"
               >
                 <TestimonialVideoPreview />
               </motion.div>
