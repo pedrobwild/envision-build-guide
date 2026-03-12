@@ -5,7 +5,7 @@ import { MapPin, ArrowLeft, MessageCircle, ChevronLeft, ChevronRight, Camera, Bu
 import { Badge } from "@/components/ui/badge";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
-import { groupByEmpreendimento, type EmpreendimentoGroup } from "@/data/brooklin-projects";
+import { getIndividualProjects, type IndividualProject } from "@/data/brooklin-projects";
 
 /* ── Data ── */
 type Neighborhood = {
