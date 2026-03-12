@@ -17,6 +17,7 @@ interface BudgetSummaryProps {
   validityDays?: number;
   activeSection?: string | null;
   categorizedGroups?: CategorizedGroup[];
+  budgetId?: string;
 }
 
 export function BudgetSummary({
@@ -28,6 +29,7 @@ export function BudgetSummary({
   validityDays = 30,
   activeSection,
   categorizedGroups,
+  budgetId,
 }: BudgetSummaryProps) {
   const validity = budgetDate ? getValidityInfo(budgetDate, validityDays) : null;
 
@@ -143,6 +145,7 @@ export function BudgetSummary({
         open={!!detailGroup}
         onClose={() => setDetailGroup(null)}
         group={detailGroup}
+        budgetId={budgetId}
       />
     </motion.div>
   );
