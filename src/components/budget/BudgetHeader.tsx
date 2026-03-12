@@ -60,6 +60,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const clientName = titleCase(budget.client_name || "");
 
   const projectTitle = budget.project_name || "Projeto e Reforma";
+  const heroTitle = clientName ? `Orçamento ${clientName}` : projectTitle;
   const showPersonalizedSubtitle = !cfg.hide_subtitle && (!budget.project_name || budget.project_name === "Projeto e Reforma");
 
   const tagline = cfg.custom_tagline || "Projeto personalizado · Gestão completa · Execução com garantia";
@@ -130,7 +131,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
               className="font-display font-extrabold text-2xl text-white leading-[1.05] tracking-tight"
             >
-              {clientName || projectTitle}
+              {heroTitle}
             </motion.h1>
 
             {/* Meta line: bairro · metragem · versão · data */}
@@ -203,7 +204,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
               >
                 <h1 className="font-display font-extrabold text-[1.85rem] xl:text-3xl text-white leading-[1.1] tracking-tight">
-                  {clientName || projectTitle}
+                  {heroTitle}
                 </h1>
 
                 {/* Labeled meta chips */}
