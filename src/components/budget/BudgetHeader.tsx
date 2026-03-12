@@ -3,7 +3,7 @@ import { TestimonialVideoPreview } from "./TestimonialVideoModal";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
-import seloReclameAqui from "@/assets/selo-reclame-aqui.png";
+import { ReclameAquiSeal } from "./ReclameAquiSeal";
 import { formatDate, getValidityInfo } from "@/lib/formatBRL";
 
 export interface HeaderConfig {
