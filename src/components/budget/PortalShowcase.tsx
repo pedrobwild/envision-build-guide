@@ -2,13 +2,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Smartphone, BarChart3, FileText, MessageSquare, Calendar, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 import portalDemoGif from "@/assets/portal-demo.gif";
+
 const features = [
   { icon: FileText, text: "Projetos e documentos" },
-  { icon: Calendar, text: "Cronograma atualizado" },
+  { icon: Calendar, text: "Cronograma em tempo real" },
   { icon: BarChart3, text: "Relatórios semanais" },
-  { icon: Smartphone, text: "Progresso da obra" },
-  { icon: CreditCard, text: "Fluxo de pagamentos" },
-  { icon: MessageSquare, text: "Canal direto com engenheiro" },
+  { icon: Smartphone, text: "Fotos do progresso" },
+  { icon: CreditCard, text: "Controle financeiro" },
+  { icon: MessageSquare, text: "Chat com engenheiro" },
 ];
 
 export function PortalShowcase() {
@@ -21,10 +22,10 @@ export function PortalShowcase() {
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-              Portal de Gestão Bwild
+              Portal Bwild
             </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5">
-              Sistema desenvolvido para que você possa acompanhar o andamento em tempo real da sua obra, da onde estiver, na palma da sua mão.
+            <p className="text-xs text-muted-foreground font-body mt-0.5">
+              Acompanhe sua obra de qualquer lugar, a qualquer momento.
             </p>
           </div>
         </div>
@@ -48,14 +49,14 @@ export function PortalShowcase() {
         <div className="rounded-lg overflow-hidden border border-border">
           <img
             src={portalDemoGif}
-            alt="Demonstração do Portal de Gestão Bwild"
+            alt="Portal Bwild — acompanhamento de obra em tempo real"
             className="w-full h-auto"
             loading="lazy"
           />
         </div>
 
         <p className="text-xs text-muted-foreground font-body text-center">
-          Sistema web e mobile disponível durante toda a obra.
+          Acesso web e mobile durante toda a obra.
         </p>
       </CardContent>
     </Card>

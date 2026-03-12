@@ -129,8 +129,8 @@ export function MobileBottomBar({
                   )}
                 >
                   {validity.expired
-                    ? "Valores expirados — solicite atualização."
-                    : `Válido até ${formatDateLong(validity.expiresAt)}`}
+                    ? "Condições expiradas — solicite valores atualizados."
+                    : `Condições válidas até ${formatDateLong(validity.expiresAt)}`}
                 </p>
               </div>
 
@@ -138,7 +138,7 @@ export function MobileBottomBar({
               {categorizedGroups.length > 0 && (
                 <div className="space-y-1">
                   <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Composição
+                    Composição do investimento
                   </p>
                   {categorizedGroups.map((group) => (
                     <div
@@ -183,7 +183,7 @@ export function MobileBottomBar({
                 <div className="flex items-center gap-2 mb-3">
                   <CreditCard className="h-4 w-4 text-primary" />
                   <span className="text-sm font-display font-bold text-foreground">
-                    Parcele em até 18×
+                    Simule o parcelamento
                   </span>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -216,7 +216,7 @@ export function MobileBottomBar({
                   </p>
                 </motion.div>
                 <p className="text-xs text-muted-foreground font-body mt-2 text-center">
-                  Consultar condições com sua consultora comercial
+                  Condições sob consulta com sua consultora
                 </p>
               </div>
 
@@ -239,7 +239,7 @@ export function MobileBottomBar({
                     className="w-full min-h-[44px] rounded-xl border border-border text-foreground font-body font-medium text-sm flex items-center justify-center gap-2 hover:bg-muted/50 transition-colors"
                   >
                     <Bookmark className="h-4 w-4 flex-shrink-0" />
-                    Salvar para revisar depois
+                    Receber por email
                   </button>
                 )}
               </div>

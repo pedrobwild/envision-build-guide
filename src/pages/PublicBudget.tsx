@@ -127,10 +127,10 @@ export default function PublicBudget() {
       const { exportBudgetPdf } = await import("@/lib/pdf-export");
       const filename = `${budget?.project_name || 'orcamento'}.pdf`;
       await exportBudgetPdf("budget-content", filename);
-      toast.success("PDF exportado com sucesso!");
+      toast.success("PDF gerado com sucesso.");
     } catch (err) {
       console.error("PDF export error:", err);
-      toast.error("Erro ao gerar PDF.");
+      toast.error("Não foi possível gerar o PDF. Tente novamente.");
     }
     setExporting(false);
   };
@@ -158,8 +158,8 @@ export default function PublicBudget() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">Orçamento não encontrado</h1>
-          <p className="text-sm text-muted-foreground font-body">O link pode estar expirado ou inválido.</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">Proposta não encontrada</h1>
+          <p className="text-sm text-muted-foreground font-body">Este link pode ter expirado ou estar incorreto. Entre em contato com sua consultora.</p>
         </div>
       </div>
     );
@@ -182,11 +182,11 @@ export default function PublicBudget() {
 
   // Mobile nav items
   const mobileNavItems = [
-    { id: "mobile-included", label: "Incluído", icon: "📋" },
-    { id: "mobile-scope", label: "Escopo", icon: "🪑" },
+    { id: "mobile-included", label: "Serviços", icon: "📋" },
+    { id: "mobile-scope", label: "Itens", icon: "🪑" },
     { id: "mobile-trust", label: "Portfólio", icon: "🏠" },
-    { id: "mobile-portal", label: "Garantia", icon: "🛡️" },
-    { id: "mobile-next-steps", label: "Próximos passos", icon: "🚀" },
+    { id: "mobile-portal", label: "Portal", icon: "🛡️" },
+    { id: "mobile-next-steps", label: "Jornada", icon: "🚀" },
     { id: "mobile-faq", label: "Dúvidas", icon: "❓" },
   ];
 
@@ -268,10 +268,10 @@ export default function PublicBudget() {
                   <div className="flex items-center justify-between pt-2 pb-2 gap-3">
                     <div className="min-w-0">
                       <h2 className="text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
-                        Detalhamento da Mobília e Eletros
+                        Mobília e eletrodomésticos
                       </h2>
                       <p className="text-muted-foreground text-xs mt-0.5 font-body hidden sm:block">
-                        Especificação completa dos itens selecionados
+                        Especificação completa dos itens do seu projeto
                       </p>
                     </div>
                     <label className="flex items-center gap-2 flex-shrink-0 min-h-[44px] cursor-pointer">

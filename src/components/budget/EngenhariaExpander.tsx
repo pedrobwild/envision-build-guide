@@ -3,10 +3,10 @@ import { HardHat, Truck, CalendarClock, Monitor } from "lucide-react";
 import { motion } from "framer-motion";
 
 const bullets = [
-  { icon: HardHat, text: "Toda a operação da obra sob gestão centralizada, do planejamento à execução.", highlight: "Coordenação completa" },
-  { icon: Truck, text: "Materiais, equipamentos e fornecedores sincronizados sob nosso controle, para manter o ritmo da obra.", highlight: "Logística integrada" },
-  { icon: CalendarClock, text: "Atuando como gestor da obra, realiza planejamento e acompanhamento técnico próximo, com gestão ativa de cronograma, da execução e vistorias técnicas de qualidade.", highlight: "Engenheiro sênior dedicado" },
-  { icon: Monitor, text: "Visibilidade contínua da evolução da obra, com atualizações frequentes por meio do aplicativo web da Bwild.", highlight: "Transparência total" },
+  { icon: HardHat, highlight: "Gestão centralizada", text: "Planejamento, execução e controle de qualidade sob uma única responsabilidade." },
+  { icon: Truck, highlight: "Logística integrada", text: "Materiais, fornecedores e entregas coordenados para manter o ritmo da obra." },
+  { icon: CalendarClock, highlight: "Engenheiro dedicado", text: "Planejamento técnico, vistorias e gestão ativa de cronograma." },
+  { icon: Monitor, highlight: "Visibilidade total", text: "Acompanhe cada etapa pelo portal Bwild, com atualizações frequentes." },
 ];
 
 export function EngenhariaExpander() {
@@ -19,10 +19,10 @@ export function EngenhariaExpander() {
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-              Engenharia e Gestão
+              Engenharia e gestão de obra
             </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5">
-              A experiência de ter a obra conduzida por você, sem nenhum esforço, com excelência, previsibilidade e total tranquilidade.
+            <p className="text-xs text-muted-foreground font-body mt-0.5">
+              Execução com previsibilidade, transparência e zero preocupação para você.
             </p>
           </div>
         </div>
@@ -30,7 +30,7 @@ export function EngenhariaExpander() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {bullets.map((b, i) => (
             <motion.div
-              key={b.text}
+              key={b.highlight}
               initial={{ opacity: 0, x: -8 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -44,12 +44,6 @@ export function EngenhariaExpander() {
               </div>
             </motion.div>
           ))}
-        </div>
-
-        <div className="rounded-lg bg-primary/5 border border-primary/10 px-3 py-2.5">
-          <p className="text-xs text-foreground font-body italic text-center">
-            "Você não contrata apenas uma gestão de obra. Contrata segurança, previsibilidade e um resultado à altura do seu investimento."
-          </p>
         </div>
       </CardContent>
     </Card>

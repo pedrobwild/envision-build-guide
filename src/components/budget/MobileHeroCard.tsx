@@ -69,10 +69,10 @@ export function MobileHeroCard({
         {/* Greeting + subtitle */}
         <div>
           <h2 className="font-display font-bold text-lg text-foreground leading-tight tracking-tight">
-            {displayName ? `${displayName}, seu orçamento está pronto` : "Seu orçamento está pronto"}
+            {displayName ? `${displayName}, sua proposta está pronta` : "Sua proposta está pronta"}
           </h2>
           <p className="text-sm font-body text-muted-foreground mt-0.5 leading-snug">
-            Projeto completo com gestão, execução e garantia.
+            Arquitetura, engenharia e gestão em um único contrato.
           </p>
         </div>
 
@@ -180,7 +180,7 @@ export function MobileHeroCard({
             className="w-full min-h-[44px] rounded-xl border border-border text-foreground font-body font-medium text-sm flex items-center justify-center gap-2 hover:bg-muted/50 transition-colors active:scale-[0.98]"
           >
             <Bookmark className="h-4 w-4 flex-shrink-0" />
-            Salvar para revisar depois
+            Receber por email
           </button>
         )}
       </div>

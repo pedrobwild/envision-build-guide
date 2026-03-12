@@ -63,7 +63,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
           lead_email: leadEmail.trim().substring(0, 255),
         }),
       });
-      toast.success("Link salvo! Você pode acessar a qualquer momento.");
+      toast.success("Pronto! Você pode acessar esta proposta a qualquer momento.");
       setSaveOpen(false);
     } catch {
       toast.error("Erro ao salvar. Tente novamente.");
@@ -75,9 +75,9 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
     return (
       <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-5 text-center space-y-3">
         <AlertTriangle className="h-6 w-6 text-destructive mx-auto" />
-        <p className="font-display font-semibold text-foreground text-sm">Orçamento expirado</p>
+        <p className="font-display font-semibold text-foreground text-sm">Condições expiradas</p>
         <p className="text-xs text-muted-foreground font-body">
-          Os valores e condições desta proposta não estão mais vigentes.
+          Os valores desta proposta não estão mais vigentes.
         </p>
         <a
           href={whatsappUpdateUrl}
@@ -114,7 +114,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
           className="w-full h-10 rounded-lg border border-border text-foreground font-body font-medium text-sm hover:bg-muted/50 transition-colors flex items-center justify-center gap-2"
         >
           <Bookmark className="h-4 w-4" />
-          Salvar para revisar depois
+          Receber por email
         </button>
       </div>
 
@@ -122,10 +122,10 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display">Salve este orçamento</DialogTitle>
+            <DialogTitle className="font-display">Receber esta proposta por email</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground font-body">
-            Enviaremos o link deste orçamento para seu email.
+            Enviaremos o link desta proposta para você acessar quando quiser.
           </p>
           <div className="space-y-3 mt-2">
             <Input

@@ -3,12 +3,12 @@ import { motion } from "framer-motion";
 import { Rocket } from "lucide-react";
 
 const steps = [
-  { num: 1, title: "Briefing com Arquitetura", desc: "Levantamento de informações para elaboração certeira do projeto." },
-  { num: 2, title: "Projeto 3D", desc: "Apresentação do projeto em maquete de alta definição com revisões." },
-  { num: 3, title: "Medição Técnica", desc: "Medição detalhada do ambiente, garantindo a correta execução do executivo." },
-  { num: 4, title: "Projeto Executivo", desc: "Plantas detalhadas com dimensões exatas, projeto elétrico, especificações de materiais e acabamentos." },
-  { num: 5, title: "Liberação da Obra", desc: "Emissão da ART no CREA e envio de toda documentação para que o condomínio libere a reforma." },
-  { num: 6, title: "Início da Obra", desc: "Elaboração do cronograma e mobilização da equipe técnica para darmos o start oficial." },
+  { num: 1, title: "Briefing", desc: "Alinhamento de expectativas, estilo e objetivos do projeto." },
+  { num: 2, title: "Projeto 3D", desc: "Maquete realista com revisões até sua aprovação." },
+  { num: 3, title: "Medição técnica", desc: "Levantamento preciso do espaço para o projeto executivo." },
+  { num: 4, title: "Projeto executivo", desc: "Plantas detalhadas com especificações de materiais e acabamentos." },
+  { num: 5, title: "Liberação", desc: "ART no CREA e documentação para o condomínio." },
+  { num: 6, title: "Início da obra", desc: "Cronograma definido, equipe mobilizada." },
 ];
 
 export function NextSteps() {
@@ -21,7 +21,7 @@ export function NextSteps() {
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-display font-bold text-foreground">
-              Sua jornada com a Bwild após assinatura do contrato
+              Próximos passos após a assinatura
             </h3>
           </div>
         </div>
@@ -47,8 +47,8 @@ export function NextSteps() {
           ))}
         </div>
 
-        <p className="text-xs text-muted-foreground font-body italic text-center pt-1">
-          Canal direto com engenheiro e gerente de relacionamento durante todo o processo.
+        <p className="text-xs text-muted-foreground font-body text-center pt-1">
+          Engenheiro e gerente de relacionamento dedicados do início ao fim.
         </p>
       </CardContent>
     </Card>
