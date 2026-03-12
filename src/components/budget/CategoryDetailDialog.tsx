@@ -238,9 +238,12 @@ interface CategoryDetailDialogProps {
   editable?: boolean;
 }
 
+const IMAGE_GALLERY_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
+
 export function CategoryDetailDialog({ open, onClose, group, budgetId, editable = false }: CategoryDetailDialogProps) {
   if (!group) return null;
 
+  const showImages = IMAGE_GALLERY_CATEGORIES.has(group.category.id);
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent side="left" className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0 overflow-y-auto">
@@ -276,7 +279,7 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
                   <div className="divide-y divide-border/30">
                     {items.map((item: any) => (
                       <div key={item.id} className="flex items-center gap-3 px-4 py-3 min-h-[56px]">
-                        {budgetId && <ItemImageGallery item={item} budgetId={budgetId} editable={editable} />}
+                        {showImages && budgetId && <ItemImageGallery item={item} budgetId={budgetId} editable={editable} />}
 
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-body font-medium text-foreground">{item.title}</p>
