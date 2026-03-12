@@ -365,6 +365,7 @@ export default function PublicBudget() {
                     activeSection={activeSection}
                     categorizedGroups={categorizedGroups}
                     budgetId={budget.id}
+                    editable={isAdmin}
                   />
                   <InstallmentSimulator total={total} />
                   <ROISimulator total={total} />
