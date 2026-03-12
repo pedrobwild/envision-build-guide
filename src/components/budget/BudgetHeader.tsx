@@ -269,25 +269,6 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </div>
         </div>
 
-        {/* ─── FAIXA 3 — Status strip (desktop) — sem "Início: Imediato" ─── */}
-        {!cfg.hide_status_strip && (
-          <motion.div
-            variants={fadeUp} custom={2} initial="hidden" animate="visible"
-            className="relative z-10 hidden lg:block border-t border-white/[0.06] bg-black/10"
-          >
-            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
-              <span className="hidden" />
-              {!cfg.hide_validity && validityLabel && (
-                <p className={`text-sm font-body ${validity?.expired ? 'text-destructive' : 'text-white/80'}`}>
-                  {validity?.expired
-                    ? "Orçamento expirado — solicite atualização"
-                    : `Validade do orçamento: ${formatDate(validity!.expiresAt)}`
-                  }
-                </p>
-              )}
-            </div>
-          </motion.div>
-        )}
       </div>
     </header>
   );
