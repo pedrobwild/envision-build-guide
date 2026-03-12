@@ -48,7 +48,7 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg shadow-lg overflow-hidden"
+              className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg shadow-lg overflow-y-auto max-h-60"
             >
               {options.map((opt) => (
                 <li key={opt.months}>
