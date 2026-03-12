@@ -1,6 +1,7 @@
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, Play, Smartphone, BarChart3, FileText, MessageSquare, Calendar, CreditCard } from "lucide-react";
+import { Smartphone, BarChart3, FileText, MessageSquare, Calendar, CreditCard } from "lucide-react";
+import { motion } from "framer-motion";
+import portalDemoGif from "@/assets/portal-demo.gif";
 import {
   Dialog,
   DialogContent,
