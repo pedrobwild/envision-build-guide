@@ -45,7 +45,7 @@ export function ClientJourney() {
   return (
     <div className="space-y-5">
       <h2 className="text-lg sm:text-xl font-display font-bold text-foreground">
-        Sua jornada com a Bwild — do briefing à entrega
+        Sua jornada com a Bwild após assinatura do contrato
       </h2>
 
       {/* Desktop: horizontal stepper */}
