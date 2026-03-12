@@ -38,11 +38,6 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
     }
   }, [activeSection]);
 
-  // Collapsible group state
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const toggleGroup = (groupId: string) => {
-    setCollapsedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
-  };
 
   // Dialog for non-displayed categories
   const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
