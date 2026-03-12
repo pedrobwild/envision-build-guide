@@ -295,7 +295,7 @@ function SummaryPanel({ onSelectNeighborhood }: { onSelectNeighborhood: (id: str
             <div className="flex items-center gap-2">
               <div
                 className="h-1.5 rounded-full bg-primary/20"
-                style={{ width: `${(b.count / 14) * 56}px` }}
+                style={{ width: `${(b.count / 17) * 56}px` }}
               />
               <span className="text-xs font-mono font-semibold text-primary w-8 text-right">
                 {b.count}
