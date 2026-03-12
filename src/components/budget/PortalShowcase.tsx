@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Smartphone, BarChart3, FileText, MessageSquare, Calendar, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
-import portalDemoGif from "@/assets/portal-demo.gif";
+
+const PORTAL_VIDEO_URL = "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media/portal-demo.mp4";
 
 const features = [
   { icon: FileText, text: "Projetos e documentos" },
@@ -47,11 +48,15 @@ export function PortalShowcase() {
         </div>
 
         <div className="rounded-lg overflow-hidden border border-border">
-          <img
-            src={portalDemoGif}
-            alt="Portal Bwild — acompanhamento de obra em tempo real"
+          <video
+            src={PORTAL_VIDEO_URL}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
             className="w-full h-auto"
-            loading="lazy"
+            aria-label="Portal Bwild — acompanhamento de obra em tempo real"
           />
         </div>
 
