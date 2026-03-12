@@ -9,6 +9,8 @@ import {
   Shield,
   CreditCard,
   Bookmark,
+  Award,
+  CheckCircle2,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
