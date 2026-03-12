@@ -134,11 +134,12 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                     {/* Group header */}
                     <button
                       onClick={() => {
-                        if (!isDisplayedInContent) {
-                          // Open popup for hidden categories
-                          setDetailGroup(group);
+                        if (isDisplayedInContent) {
+                          // Scroll to the first section in this category
+                          const firstId = `section-${group.sections[0]?.id}`;
+                          document.getElementById(firstId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         } else {
-                          toggleGroup(group.category.id);
+                          setDetailGroup(group);
                         }
                       }}
                       className="w-full flex items-center gap-2 py-1.5 min-h-[36px]"
