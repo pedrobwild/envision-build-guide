@@ -1,23 +1,22 @@
-import { useEffect, useRef } from "react";
+import seloReclameAqui from "@/assets/selo-reclame-aqui.png";
 
 export function ReclameAquiSeal() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    // Avoid duplicating
-    if (containerRef.current.querySelector("script")) return;
-
-    const script = document.createElement("script");
-    script.type = "text/javascript";
-    script.id = "ra-embed-verified-seal";
-    script.src = "https://s3.amazonaws.com/raichu-beta/ra-verified/bundle.js";
-    script.dataset.id = "SEpqak1Mcm9aM09nMm0wbDpid2lsZC1yZWZvcm1hcw==";
-    script.dataset.target = "ra-verified-seal";
-    script.dataset.model = "horizontal_1";
-
-    containerRef.current.appendChild(script);
-  }, []);
-
-  return <div id="ra-verified-seal" ref={containerRef} />;
+  return (
+    <a
+      href="https://www.reclameaqui.com.br/empresa/bwild-reformas/sobre/#info-rav"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 backdrop-blur-md transition-all text-xs font-body font-medium border border-emerald-400/20 group"
+    >
+      <img
+        src={seloReclameAqui}
+        alt="Selo RA Verificada - Reclame Aqui"
+        className="h-6 w-6 sm:h-7 sm:w-7 object-contain"
+      />
+      <span className="text-emerald-300 group-hover:text-emerald-200">
+        <span className="sm:hidden">0 reclamações</span>
+        <span className="hidden sm:inline">Nenhuma reclamação há 6 meses</span>
+      </span>
+    </a>
+  );
 }
