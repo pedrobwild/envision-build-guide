@@ -143,36 +143,30 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             >
               {neighborhood && (
                 <>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Bairro</span>
-                    <span className="text-white/90 font-semibold">{neighborhood}</span>
-                  </span>
-                  {(area || version || dateStr) && <span className="text-white/20">|</span>}
+                  <span className="text-white/60">Bairro</span>
+                  <span className="text-white/90 font-semibold">{neighborhood}</span>
+                  {(area || version || dateStr) && <span className="text-white/20">·</span>}
                 </>
               )}
               {area && (
                 <>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Área</span>
-                    <span className="text-white/90 font-semibold">{area}</span>
-                  </span>
-                  {(version || dateStr) && <span className="text-white/20">|</span>}
+                  <span className="text-white/60">Área</span>
+                  <span className="text-white/90 font-semibold">{area}</span>
+                  {(version || dateStr) && <span className="text-white/20">·</span>}
                 </>
               )}
               {version && (
                 <>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Versão</span>
-                    <span className="text-white/90 font-semibold">{version}</span>
-                  </span>
-                  {dateStr && <span className="text-white/20">|</span>}
+                  <span className="text-white/60">Versão</span>
+                  <span className="text-white/90 font-semibold">{version}</span>
+                  {dateStr && <span className="text-white/20">·</span>}
                 </>
               )}
               {dateStr && (
-                <span className="inline-flex items-center gap-1">
-                  <span className="text-white/60 text-[10px] uppercase tracking-wide font-medium">Elaboração</span>
+                <>
+                  <span className="text-white/60">Elaboração</span>
                   <span className="text-white/90 font-semibold">{dateStr}</span>
-                </span>
+                </>
               )}
             </motion.div>
 
@@ -223,39 +217,33 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 </h1>
 
                 {/* Labeled meta chips */}
-                <div className="mt-2 flex items-center gap-2.5 text-sm font-body flex-wrap">
+                <div className="mt-2 flex items-center gap-2 text-sm font-body flex-wrap">
                   {neighborhood && (
                     <>
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Bairro</span>
-                        <span className="text-white/90 font-semibold">{neighborhood}</span>
-                      </span>
-                      {(area || version || dateStr) && <span className="text-white/20 text-xs">|</span>}
+                      <span className="text-white/60 text-xs">Bairro</span>
+                      <span className="text-white/90 font-semibold">{neighborhood}</span>
+                      {(area || version || dateStr) && <span className="text-white/20 text-xs">·</span>}
                     </>
                   )}
                   {area && (
                     <>
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Área</span>
-                        <span className="text-white/90 font-semibold">{area}</span>
-                      </span>
-                      {(version || dateStr) && <span className="text-white/20 text-xs">|</span>}
+                      <span className="text-white/60 text-xs">Área</span>
+                      <span className="text-white/90 font-semibold">{area}</span>
+                      {(version || dateStr) && <span className="text-white/20 text-xs">·</span>}
                     </>
                   )}
                   {version && (
                     <>
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Versão</span>
-                        <span className="text-white/90 font-semibold">{version}</span>
-                      </span>
-                      {dateStr && <span className="text-white/20 text-xs">|</span>}
+                      <span className="text-white/60 text-xs">Versão</span>
+                      <span className="text-white/90 font-semibold">{version}</span>
+                      {dateStr && <span className="text-white/20 text-xs">·</span>}
                     </>
                   )}
                   {dateStr && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="text-white/60 text-xs uppercase tracking-wide font-medium">Elaboração</span>
+                    <>
+                      <span className="text-white/60 text-xs">Elaboração</span>
                       <span className="text-white/90 font-semibold">{dateStr}</span>
-                    </span>
+                    </>
                   )}
                 </div>
               </motion.div>
