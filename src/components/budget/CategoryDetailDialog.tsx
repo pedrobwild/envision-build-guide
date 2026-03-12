@@ -97,9 +97,10 @@ function ItemImageGallery({ item, budgetId, editable }: { item: any; budgetId: s
     }
   };
 
-  const canAdd = images.length < MAX_IMAGES;
+  const canAdd = editable && images.length < MAX_IMAGES;
 
   if (images.length === 0) {
+    if (!editable) return null;
     return (
       <div className="flex-shrink-0">
         <button
