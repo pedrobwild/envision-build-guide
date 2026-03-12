@@ -118,7 +118,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3"
         >
           <div className="py-2 border-b border-white/[0.08]">
-            <p className="text-[11px] font-body text-white/50 leading-relaxed">
+            <p className="text-xs font-body text-white/60 leading-relaxed">
               CNPJ: 47.350.338/0001-37 · Responsável Técnico: Thiago Dantas do Amor · CAU: A162437-7
             </p>
           </div>
