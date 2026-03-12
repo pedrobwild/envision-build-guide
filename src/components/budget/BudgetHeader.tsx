@@ -41,8 +41,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const validity = budget.date ? getValidityInfo(budget.date, budget.validity_days || 30) : null;
   const validityLabel = validity
     ? validity.expired
-      ? "Proposta expirada"
-      : `Válido até ${formatDate(validity.expiresAt)}`
+      ? "Orçamento expirado"
+      : `Validade: ${formatDate(validity.expiresAt)}`
     : null;
 
   const cfg: HeaderConfig = (budget.header_config as HeaderConfig) || {};
