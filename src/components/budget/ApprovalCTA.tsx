@@ -63,7 +63,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
           lead_email: leadEmail.trim().substring(0, 255),
         }),
       });
-      toast.success("Link salvo! Você pode acessar a qualquer momento.");
+      toast.success("Pronto! Você pode acessar esta proposta a qualquer momento.");
       setSaveOpen(false);
     } catch {
       toast.error("Erro ao salvar. Tente novamente.");
