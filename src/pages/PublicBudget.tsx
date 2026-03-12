@@ -226,7 +226,9 @@ export default function PublicBudget() {
           projectName={budget.project_name}
           clientName={budget.client_name}
           publicId={publicId || "demo"}
-          included={includedItems}
+          neighborhood={heroNeighborhood}
+          area={heroArea}
+          version={heroVersion}
         />
 
         {/* ═══ MOBILE SECTION NAV — sticky pills ═══ */}
