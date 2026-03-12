@@ -277,9 +277,15 @@ export default function PublicBudget() {
 
                   {categorizedGroups.filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id)).map((group) => {
                     const groupSections = group.sections;
+                    const totalItems = groupSections.reduce((sum, s) => sum + (s.items?.length || 0), 0);
                     return (
                       <div key={group.category.id} className="space-y-2 sm:space-y-3">
-                        <CategoryHeader category={group.category} subtotal={group.subtotal} />
+                        <CategoryHeader
+                          category={group.category}
+                          subtotal={group.subtotal}
+                          sectionCount={groupSections.length}
+                          itemCount={totalItems}
+                        />
                         {groupSections.map((section) => {
                           const currentIdx = globalSectionIdx++;
                           return (
