@@ -182,11 +182,11 @@ export default function PublicBudget() {
 
   // Mobile nav items
   const mobileNavItems = [
-    { id: "mobile-included", label: "Incluído", icon: "📋" },
-    { id: "mobile-scope", label: "Escopo", icon: "🪑" },
+    { id: "mobile-included", label: "Serviços", icon: "📋" },
+    { id: "mobile-scope", label: "Itens", icon: "🪑" },
     { id: "mobile-trust", label: "Portfólio", icon: "🏠" },
-    { id: "mobile-portal", label: "Garantia", icon: "🛡️" },
-    { id: "mobile-next-steps", label: "Próximos passos", icon: "🚀" },
+    { id: "mobile-portal", label: "Portal", icon: "🛡️" },
+    { id: "mobile-next-steps", label: "Jornada", icon: "🚀" },
     { id: "mobile-faq", label: "Dúvidas", icon: "❓" },
   ];
 
