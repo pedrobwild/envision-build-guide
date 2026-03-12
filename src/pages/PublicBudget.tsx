@@ -187,10 +187,7 @@ export default function PublicBudget() {
     { id: "mobile-portal", label: "Garantia" },
   ];
 
-  // Scrollspy for mobile nav
-  const mobileNavIds = mobileNavItems.map((n) => n.id);
-  const allScrollIds = useMemo(() => [...mobileNavIds, ...allSectionIds], [mobileNavIds.join(","), allSectionIds.join(",")]);
-  const activeMobileNav = useScrollspy(mobileNavIds);
+  // mobileNavIds and activeMobileNav already declared above early returns
 
   const handleRoomClick = (roomId: string | null) => {
     setActiveRoom(roomId || null);
