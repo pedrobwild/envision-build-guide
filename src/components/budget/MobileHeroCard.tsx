@@ -153,6 +153,11 @@ export function MobileHeroCard({
             <CheckCircle2 className="h-3.5 w-3.5 text-primary/50" />
             <span className="text-xs text-muted-foreground font-body">Garantia 5 anos</span>
           </div>
+          <span className="text-muted-foreground/30">·</span>
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-primary/50" />
+            <span className="text-xs text-muted-foreground font-body">ART no CREA</span>
+          </div>
         </div>
       </div>
 
