@@ -14,8 +14,7 @@ export function ReclameAquiSeal() {
         className="h-6 w-6 sm:h-7 sm:w-7 object-contain"
       />
       <span className="text-emerald-300 group-hover:text-emerald-200">
-        <span className="sm:hidden">0 reclamações</span>
-        <span className="hidden sm:inline">0 reclamações há 6 meses</span>
+        Selo ReclameAqui: 0 reclamações há 6 meses
       </span>
     </a>
   );
