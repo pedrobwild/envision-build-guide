@@ -5,51 +5,39 @@ import { Video, Box, RefreshCw, FileText, ShieldCheck, Hammer, Monitor, Award } 
 const steps = [
   {
     icon: Video,
-    title: "Briefing com a Lorena",
-    summary: "Videochamada para entender estilo, objetivos e referências.",
+    title: "Briefing com Arquitetura",
+    summary: "Levantamento de informações para elaboração certeira do projeto.",
     detail: "Primeira conversa para alinhar expectativas, estilo de vida, referências visuais e objetivos do projeto. Definimos juntos o escopo e prazos iniciais.",
   },
   {
     icon: Box,
     title: "Projeto 3D",
-    summary: "Layout, iluminação, marcenaria e decoração personalizados.",
+    summary: "Apresentação do projeto em maquete de alta definição com revisões.",
     detail: "Desenvolvimento completo de projeto em 3D com renders realistas. Inclui layout, especificação de materiais, iluminação e marcenaria sob medida.",
   },
   {
     icon: RefreshCw,
-    title: "Revisões e aprovação",
-    summary: "Ajustes até a aprovação final do projeto.",
-    detail: "Rodadas de ajustes para garantir que cada detalhe esteja perfeito antes de iniciar a execução. Sem surpresas, sem improvisos.",
+    title: "Medição Técnica",
+    summary: "Medição detalhada do ambiente, garantindo a correta execução do executivo.",
+    detail: "Medição precisa de todos os ambientes para garantir que o projeto executivo reflita fielmente as dimensões reais do espaço.",
   },
   {
     icon: FileText,
-    title: "Projeto executivo",
-    summary: "Documentação técnica completa para a obra.",
+    title: "Projeto Executivo",
+    summary: "Plantas detalhadas com dimensões exatas, projeto elétrico, especificações de materiais e acabamentos.",
     detail: "Memorial descritivo, plantas técnicas, detalhamentos e especificações para que a equipe de obra execute com precisão milimétrica.",
   },
   {
     icon: ShieldCheck,
-    title: "Liberação e burocracias",
-    summary: "Aprovação no CREA, ART e condomínio.",
+    title: "Liberação da Obra",
+    summary: "Emissão da ART no CREA e envio de toda documentação para que o condomínio libere a reforma.",
     detail: "Cuidamos de toda a documentação necessária: ART, aprovação no condomínio e demais burocracias para início da obra sem pendências.",
   },
   {
     icon: Hammer,
-    title: "Execução da obra",
-    summary: "Coordenação de mão de obra, materiais e fornecedores.",
+    title: "Início da Obra",
+    summary: "Elaboração do cronograma e mobilização da equipe técnica para darmos o start oficial.",
     detail: "Gestão completa do canteiro: cronograma, compras, entregas, qualidade e segurança. Você não precisa se preocupar com nada.",
-  },
-  {
-    icon: Monitor,
-    title: "Acompanhamento digital",
-    summary: "Portal com relatórios semanais e contato direto.",
-    detail: "Acesso ao portal Bwild com fotos da obra, relatórios de progresso, documentos financeiros e canal direto com o engenheiro responsável.",
-  },
-  {
-    icon: Award,
-    title: "Entrega e garantia",
-    summary: "Vistoria final, manual de obra e garantia de 5 anos.",
-    detail: "Vistoria detalhada com checklist completo. Entregamos manual de uso e manutenção, além de certificado de garantia estrutural de 5 anos.",
   },
 ];
 
