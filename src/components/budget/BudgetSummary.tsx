@@ -66,40 +66,46 @@ export function BudgetSummary({
       {/* Validity notice */}
       <ValidityNotice validity={validity} />
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-lg">
+      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xl">
+        {/* Header — clean, typographic */}
+        <div className="px-5 pt-5 pb-3">
+          <h3 className="font-display font-bold text-base text-foreground tracking-tight">
+            Resumo do Orçamento
+          </h3>
+          {sections.length > 0 && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[13px] text-muted-foreground font-body">
+                  {activeIndex >= 0 ? activeIndex + 1 : 0} de {sections.length} seções
+                </span>
+                <span className="text-[13px] text-muted-foreground font-body tabular-nums">
+                  {progressPercent}%
+                </span>
+              </div>
+              <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-primary"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPercent}%` }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Category distribution bar */}
         {hasCategorized && (
-          <div className="px-4 pt-4 pb-1">
+          <div className="px-5 pb-2">
             <CategoryDistributionBar groups={categorizedGroups} total={scopeTotal} />
           </div>
         )}
 
-        {/* Mini progress */}
-        {sections.length > 0 && (
-          <div className="px-4 pt-2 pb-1">
-            <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-primary"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              />
-            </div>
-            <p className="text-[13px] text-muted-foreground font-body mt-1.5 tabular-nums">
-              {activeIndex >= 0 ? activeIndex + 1 : 0} de {sections.length} seções
-            </p>
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="bg-primary mx-4 mt-2 rounded-lg px-4 py-3">
-          <h3 className="font-display font-bold text-sm text-primary-foreground tracking-wide">
-            Resumo do Orçamento
-          </h3>
-        </div>
+        {/* Divider */}
+        <div className="mx-5 border-t border-border" />
 
         {/* Categories list */}
-        <div className="px-4 pt-4 pb-2">
+        <div className="px-5 py-4">
           {hasCategorized ? (
             <CategorizedList
               groups={categorizedGroups}
@@ -125,8 +131,8 @@ export function BudgetSummary({
 
         {/* Footer */}
         {generatedAt && (
-          <div className="px-4 pb-4">
-            <p className="text-[13px] text-muted-foreground/70 text-center font-body">
+          <div className="px-5 pb-4 pt-1">
+            <p className="text-[13px] text-muted-foreground/60 text-center font-body">
               Gerado em {formatDate(generatedAt)}
             </p>
           </div>
@@ -150,10 +156,10 @@ function ValidityNotice({ validity }: { validity: ReturnType<typeof getValidityI
   return (
     <div
       className={cn(
-        "rounded-xl p-3 flex items-start gap-2.5",
+        "rounded-xl p-3.5 flex items-start gap-2.5",
         validity.expired
-          ? "bg-destructive/10 border border-destructive/20"
-          : "bg-warning/10 border border-warning/20"
+          ? "bg-destructive/8 border border-destructive/15"
+          : "bg-warning/8 border border-warning/15"
       )}
     >
       {validity.expired ? (
@@ -185,7 +191,7 @@ function CategorizedList({
   onDetailOpen: (g: CategorizedGroup) => void;
 }) {
   return (
-    <div className="divide-y divide-border/60">
+    <div className="space-y-1">
       {groups.map((group) => {
         const isDisplayed = displayedCategories.includes(group.category.id);
 
@@ -203,21 +209,21 @@ function CategorizedList({
               }
             }}
             className={cn(
-              "w-full flex items-center gap-3 py-3 first:pt-0 last:pb-0",
-              "group transition-colors duration-150",
-              "hover:bg-muted/30 rounded-md px-1 -mx-1"
+              "w-full flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg",
+              "group transition-all duration-200",
+              "hover:bg-muted/50"
             )}
           >
             {/* Color indicator */}
             <div
               className={cn(
-                "w-1 min-h-[28px] self-stretch rounded-full transition-all",
+                "w-1 h-6 rounded-full flex-shrink-0",
                 group.category.bgClass
               )}
             />
 
-            {/* Label — sentence case, no uppercase */}
-            <span className="flex-1 text-[13px] font-display font-semibold text-foreground text-left leading-snug">
+            {/* Label */}
+            <span className="flex-1 text-sm font-body font-medium text-foreground text-left leading-snug">
               {group.category.label}
             </span>
 
@@ -242,7 +248,7 @@ function FlatSectionList({
   activeRef: React.MutableRefObject<HTMLButtonElement | null>;
 }) {
   return (
-    <div className="divide-y divide-border/50">
+    <div className="space-y-0.5">
       {sections.map((section: any) => {
         const sectionElId = `section-${section.id}`;
         const isActive = activeSection === sectionElId;
@@ -258,15 +264,15 @@ function FlatSectionList({
                 ?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
             className={cn(
-              "w-full text-left group flex items-center justify-between py-2.5 px-2 rounded-md transition-all duration-200",
-              isActive && "border-l-2 border-primary bg-primary/5",
+              "w-full text-left group flex items-center justify-between py-2.5 px-3 rounded-lg transition-all duration-200",
+              isActive && "bg-primary/5 border-l-2 border-primary",
               !isActive && "border-l-2 border-transparent",
               "hover:bg-muted/40"
             )}
           >
             <span
               className={cn(
-                "text-[13px] font-body truncate mr-3",
+                "text-sm font-body truncate mr-3",
                 isActive ? "text-foreground font-medium" : "text-muted-foreground",
                 "group-hover:text-foreground"
               )}
@@ -291,20 +297,20 @@ function FlatSectionList({
 
 function AdjustmentsList({ adjustments }: { adjustments: any[] }) {
   return (
-    <div className="px-4 pt-1 pb-2 space-y-1">
-      <div className="border-t border-border pt-2 space-y-1.5">
+    <div className="px-5 pb-3">
+      <div className="border-t border-border pt-3 space-y-2">
         {adjustments.map((adj: any) => (
-          <div key={adj.id} className="flex items-center justify-between px-2">
+          <div key={adj.id} className="flex items-center justify-between">
             <span className="text-[13px] text-muted-foreground font-body">
               {adj.label}
             </span>
             <span
               className={cn(
-                "text-[13px] font-medium font-mono tabular-nums",
+                "text-sm font-medium font-mono tabular-nums",
                 adj.sign > 0 ? "text-foreground" : "text-success"
               )}
             >
-              {adj.sign > 0 ? "+" : "-"} {formatBRL(Math.abs(adj.amount))}
+              {adj.sign > 0 ? "+" : "−"} {formatBRL(Math.abs(adj.amount))}
             </span>
           </div>
         ))}
@@ -315,21 +321,21 @@ function AdjustmentsList({ adjustments }: { adjustments: any[] }) {
 
 function TotalCard({ total }: { total: number }) {
   return (
-    <div className="mx-4 mt-3 mb-3 rounded-xl bg-primary/5 border border-primary/15 p-4">
-      <p className="text-[13px] font-display font-medium text-muted-foreground tracking-wide mb-1">
+    <div className="mx-5 mb-4 rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-5">
+      <p className="text-[13px] font-body font-medium text-muted-foreground mb-1.5">
         Investimento Total
       </p>
       <motion.p
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.4, duration: 0.4 }}
-        className="font-display font-extrabold text-2xl text-primary tabular-nums leading-tight"
+        className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none"
       >
         {formatBRL(total)}
       </motion.p>
-      <div className="flex items-center gap-1.5 mt-2">
-        <Shield className="h-3.5 w-3.5 text-primary/50" />
-        <span className="text-[13px] text-muted-foreground font-body">
+      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/10">
+        <Shield className="h-3.5 w-3.5 text-primary/40" />
+        <span className="text-[13px] text-muted-foreground/80 font-body">
           Preço fixo · Sem custos ocultos
         </span>
       </div>
