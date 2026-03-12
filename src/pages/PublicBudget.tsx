@@ -353,12 +353,8 @@ export default function PublicBudget() {
               variant="strong"
             />
 
-            {/* ─── MOBILE ORDER 4: Portal + Garantia ─── */}
-            <div id="mobile-portal" className="scroll-mt-20">
-              <AnimatedSection id="portal-section" index={0.6}>
-                <PortalShowcase />
-              </AnimatedSection>
-            </div>
+            {/* mobile-portal anchor kept for nav */}
+            <div id="mobile-portal" className="scroll-mt-20" />
 
             <div id="mobile-next-steps" className="scroll-mt-20">
               <AnimatedSection id="next-steps" index={100}>
