@@ -134,11 +134,12 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                     {/* Group header */}
                     <button
                       onClick={() => {
-                        if (!isDisplayedInContent) {
-                          // Open popup for hidden categories
-                          setDetailGroup(group);
+                        if (isDisplayedInContent) {
+                          // Scroll to the first section in this category
+                          const firstId = `section-${group.sections[0]?.id}`;
+                          document.getElementById(firstId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         } else {
-                          toggleGroup(group.category.id);
+                          setDetailGroup(group);
                         }
                       }}
                       className="w-full flex items-center gap-2 py-1.5 min-h-[36px]"
@@ -153,7 +154,7 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                       <span className={`text-xs font-mono tabular-nums font-semibold ${group.category.colorClass}`}>
                         {formatBRL(group.subtotal)}
                       </span>
-                      {isDisplayedInContent && !isSingleRedundant && (
+                      {!isDisplayedInContent && !isCollapsed && group.sections.length > 1 && (
                         isCollapsed ? (
                           <ChevronDown className="h-3 w-3 text-muted-foreground" />
                         ) : (
@@ -162,8 +163,8 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                       )}
                     </button>
 
-                    {/* Group items — only for displayed categories with non-redundant sub-items */}
-                    {isDisplayedInContent && !isSingleRedundant && !isCollapsed && (
+                    {/* Group items — only for NON-displayed categories (popup ones) */}
+                    {!isDisplayedInContent && !isCollapsed && (
                       <div className="pl-3 space-y-0">
                         {group.sections.map((section) => {
                           const sectionElId = `section-${section.id}`;
