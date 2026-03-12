@@ -240,7 +240,7 @@ export default function PublicBudget() {
           <div className="min-w-0 space-y-3 sm:space-y-4">
 
             {/* ─── MOBILE ORDER 1: O que está incluído (Arq + Eng merged) ─── */}
-            <div id="mobile-included">
+            <div id="mobile-included" className="scroll-mt-20">
               <AnimatedSection id="arquitetonico-section" index={0}>
                 <ArquitetonicoExpander />
               </AnimatedSection>
