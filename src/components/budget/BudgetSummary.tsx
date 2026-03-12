@@ -131,6 +131,7 @@ export function BudgetSummary({
         onClose={() => setDetailGroup(null)}
         group={detailGroup}
         budgetId={budgetId}
+        editable={editable}
       />
     </motion.div>
   );
