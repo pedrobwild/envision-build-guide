@@ -404,7 +404,7 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
-      <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} />
+      <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} fileFilter={importType} />
     </div>
   );
 }
