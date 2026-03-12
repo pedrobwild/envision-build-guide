@@ -69,7 +69,9 @@ export default function PublicBudget() {
   const activeSection = useScrollspy(allSectionIds);
 
   // Mobile nav scrollspy — must be before early returns
-  const mobileNavIds = useMemo(() => ["mobile-included", "mobile-scope", "mobile-trust", "mobile-portal"], []);
+  const mobileNavIds = useMemo(() => [
+    "mobile-included", "mobile-scope", "mobile-trust", "mobile-portal", "mobile-next-steps", "mobile-faq"
+  ], []);
   const activeMobileNav = useScrollspy(mobileNavIds);
 
   useEffect(() => {
