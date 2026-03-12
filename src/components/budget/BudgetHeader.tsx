@@ -204,7 +204,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
               >
                 <h1 className="font-display font-extrabold text-[1.85rem] xl:text-3xl text-white leading-[1.1] tracking-tight">
-                  {clientName || projectTitle}
+                  {heroTitle}
                 </h1>
 
                 {/* Labeled meta chips */}
