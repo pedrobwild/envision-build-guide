@@ -145,6 +145,7 @@ export function BudgetSummary({
         open={!!detailGroup}
         onClose={() => setDetailGroup(null)}
         group={detailGroup}
+        budgetId={budgetId}
       />
     </motion.div>
   );
