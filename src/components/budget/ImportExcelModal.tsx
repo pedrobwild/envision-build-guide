@@ -12,6 +12,7 @@ import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, Loader2, 
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { matchAndCopyItemMedia } from "@/lib/item-media-matcher";
 
 interface ParsedRow {
   section: string;
@@ -389,6 +390,8 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter }: ImportExcel
       if (budgetErr || !budget) throw budgetErr;
 
       let sectionIdx = 0;
+      const createdSections: { id: string; title: string }[] = [];
+
       for (const [sectionTitle, items] of sectionMap.entries()) {
         const calculatedSectionTotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
         const parserSectionTotal = parsedSectionTotals[sectionTitle] || 0;
@@ -413,6 +416,8 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter }: ImportExcel
         if (secErr || !section) {
           throw secErr || new Error(`Falha ao criar seção: ${sectionTitle}`);
         }
+
+        createdSections.push({ id: section.id, title: sectionTitle });
 
         const itemInserts = items.map((item, i) => {
           const hasQty = typeof item.qty === "number" && Number.isFinite(item.qty) && item.qty > 0;
@@ -439,6 +444,16 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter }: ImportExcel
 
         const { error: itemsErr } = await supabase.from("items").insert(itemInserts);
         if (itemsErr) throw itemsErr;
+      }
+
+      // Auto-match images and descriptions from existing items in mobiliário/eletro/marcenaria
+      try {
+        const result = await matchAndCopyItemMedia(budget.id, createdSections);
+        if (result.matched > 0) {
+          console.log(`[Import] Auto-matched ${result.matched} items with existing media`);
+        }
+      } catch (matchErr) {
+        console.warn("[Import] Media matching failed (non-critical):", matchErr);
       }
 
       setCreatedBudgetId(budget.id);
