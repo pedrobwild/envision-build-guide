@@ -77,7 +77,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
         <AlertTriangle className="h-6 w-6 text-destructive mx-auto" />
         <p className="font-display font-semibold text-foreground text-sm">Condições expiradas</p>
         <p className="text-xs text-muted-foreground font-body">
-          Os valores e condições desta proposta não estão mais vigentes.
+          Os valores desta proposta não estão mais vigentes.
         </p>
         <a
           href={whatsappUpdateUrl}
