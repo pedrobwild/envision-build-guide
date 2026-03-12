@@ -44,7 +44,7 @@ interface ImportExcelModalProps {
 
 type ImportStep = "upload" | "parsing" | "preview" | "importing" | "done";
 
-export function ImportExcelModal({ open, onOpenChange, fileFilter }: ImportExcelModalProps) {
+export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetGroupId }: ImportExcelModalProps) {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
