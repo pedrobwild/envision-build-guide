@@ -153,7 +153,7 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                       <span className={`text-xs font-mono tabular-nums font-semibold ${group.category.colorClass}`}>
                         {formatBRL(group.subtotal)}
                       </span>
-                      {isDisplayedInContent && !isSingleRedundant && (
+                      {!isDisplayedInContent && !isCollapsed && group.sections.length > 1 && (
                         isCollapsed ? (
                           <ChevronDown className="h-3 w-3 text-muted-foreground" />
                         ) : (
@@ -162,8 +162,8 @@ export function BudgetSummary({ sections, adjustments, total, generatedAt, budge
                       )}
                     </button>
 
-                    {/* Group items — only for displayed categories with non-redundant sub-items */}
-                    {isDisplayedInContent && !isSingleRedundant && !isCollapsed && (
+                    {/* Group items — only for NON-displayed categories (popup ones) */}
+                    {!isDisplayedInContent && !isCollapsed && (
                       <div className="pl-3 space-y-0">
                         {group.sections.map((section) => {
                           const sectionElId = `section-${section.id}`;
