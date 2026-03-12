@@ -348,25 +348,29 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
   const handleImport = async () => {
     setStep("importing");
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
       const sectionMap = new Map<string, ParsedRow[]>();
       parsedRows.forEach((row) => {
-        const list = sectionMap.get(row.section) || [];
+        const key = row.section?.trim() || "Geral";
+        const list = sectionMap.get(key) || [];
         list.push(row);
-        sectionMap.set(row.section, list);
+        sectionMap.set(key, list);
       });
 
-      const projectName = parsedMeta.clientName
-        ? `Reforma ${parsedMeta.clientName}`
-        : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação";
+      const clientName = parsedMeta.clientName?.trim() || "Cliente";
+      const projectName =
+        parsedMeta.projectName?.trim() ||
+        (parsedMeta.clientName?.trim() ? `Reforma ${parsedMeta.clientName.trim()}` : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação");
 
       const { data: budget, error: budgetErr } = await supabase
         .from("budgets")
         .insert({
-          project_name: parsedMeta.projectName || projectName,
-          client_name: parsedMeta.clientName || "Cliente",
+          project_name: projectName,
+          client_name: clientName,
           metragem: parsedMeta.area || null,
           bairro: parsedMeta.bairro || null,
           versao: parsedMeta.version || null,
@@ -379,7 +383,14 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
 
       let sectionIdx = 0;
       for (const [sectionTitle, items] of sectionMap.entries()) {
-        const sectionTotal = items.reduce((s, i) => s + (i.total || 0), 0);
+        const calculatedSectionTotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
+        const parserSectionTotal = parsedSectionTotals[sectionTitle] || 0;
+        const finalSectionTotal =
+          calculatedSectionTotal > 0
+            ? calculatedSectionTotal
+            : parserSectionTotal > 0
+              ? parserSectionTotal
+              : null;
 
         const { data: section, error: secErr } = await supabase
           .from("sections")
@@ -387,25 +398,40 @@ export function ImportExcelModal({ open, onOpenChange }: ImportExcelModalProps) 
             budget_id: budget.id,
             title: sectionTitle,
             order_index: sectionIdx++,
-            section_price: sectionTotal > 0 ? sectionTotal : null,
+            section_price: finalSectionTotal,
           })
           .select()
           .single();
 
-        if (secErr || !section) continue;
+        if (secErr || !section) {
+          throw secErr || new Error(`Falha ao criar seção: ${sectionTitle}`);
+        }
 
-        const itemInserts = items.map((item, i) => ({
-          section_id: section.id,
-          title: item.title,
-          description: item.description || null,
-          qty: item.qty || null,
-          unit: item.unit || null,
-          internal_unit_price: item.unitPrice || null,
-          internal_total: item.total || null,
-          order_index: i,
-        }));
+        const itemInserts = items.map((item, i) => {
+          const hasQty = typeof item.qty === "number" && Number.isFinite(item.qty) && item.qty > 0;
+          const inferredTotal =
+            item.total ??
+            (hasQty && item.unitPrice ? item.qty! * item.unitPrice : undefined) ??
+            (items.length === 1 && finalSectionTotal ? finalSectionTotal : undefined);
 
-        await supabase.from("items").insert(itemInserts);
+          const inferredUnitPrice =
+            item.unitPrice ??
+            (hasQty && inferredTotal !== undefined ? inferredTotal / (item.qty as number) : undefined);
+
+          return {
+            section_id: section.id,
+            title: item.title,
+            description: item.description || null,
+            qty: item.qty || null,
+            unit: item.unit || null,
+            internal_unit_price: inferredUnitPrice ?? null,
+            internal_total: inferredTotal ?? null,
+            order_index: i,
+          };
+        });
+
+        const { error: itemsErr } = await supabase.from("items").insert(itemInserts);
+        if (itemsErr) throw itemsErr;
       }
 
       setCreatedBudgetId(budget.id);
