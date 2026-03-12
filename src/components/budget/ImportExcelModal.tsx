@@ -38,11 +38,13 @@ interface ImportExcelModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   fileFilter?: 'pdf' | 'excel';
+  /** If set, the imported budget will be assigned to this version group instead of being standalone. */
+  targetBudgetGroupId?: string;
 }
 
 type ImportStep = "upload" | "parsing" | "preview" | "importing" | "done";
 
-export function ImportExcelModal({ open, onOpenChange, fileFilter }: ImportExcelModalProps) {
+export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetGroupId }: ImportExcelModalProps) {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
@@ -454,6 +456,12 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter }: ImportExcel
         }
       } catch (matchErr) {
         console.warn("[Import] Media matching failed (non-critical):", matchErr);
+      }
+
+      // If importing into an existing budget group, assign to that group
+      if (targetBudgetGroupId) {
+        const { assignImportedBudgetToGroup } = await import("@/lib/budget-versioning");
+        await assignImportedBudgetToGroup(budget.id, targetBudgetGroupId);
       }
 
       setCreatedBudgetId(budget.id);

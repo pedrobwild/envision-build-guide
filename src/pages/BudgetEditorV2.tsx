@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
+import { ensureVersionGroup } from "@/lib/budget-versioning";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -52,6 +54,9 @@ export default function BudgetEditorV2() {
     setSaving(true);
 
     try {
+      // Ensure version tracking is initialized
+      await ensureVersionGroup(budgetId);
+
       const publicId = budget.public_id || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
       await supabase.from("budgets").update({
         status: "published",
@@ -127,7 +132,10 @@ export default function BudgetEditorV2() {
       </header>
 
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Version History */}
+        <VersionHistoryPanel budgetId={budgetId!} onVersionChange={loadBudget} />
+
         <MetadataStep
           budget={budget}
           onFieldChange={(field, value) => {
