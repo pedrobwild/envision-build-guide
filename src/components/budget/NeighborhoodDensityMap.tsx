@@ -18,7 +18,7 @@ type Neighborhood = {
 };
 
 const NEIGHBORHOOD_DATA: Neighborhood[] = [
-  { id: "brooklin", name: "Brooklin", count: 14, avgSqm: 25.7, lat: -23.6273, lng: -46.6957 },
+  { id: "brooklin", name: "Brooklin", count: 17, avgSqm: 25.7, lat: -23.6273, lng: -46.6957 },
   { id: "pinheiros", name: "Pinheiros", count: 11, avgSqm: 26.6, lat: -23.5614, lng: -46.6845 },
   { id: "perdizes", name: "Perdizes", count: 8, avgSqm: 28.0, lat: -23.5352, lng: -46.6698 },
   { id: "vila-clementino", name: "Vila Clementino", count: 6, avgSqm: 25.3, lat: -23.6069, lng: -46.6389 },
@@ -43,11 +43,11 @@ const NEIGHBORHOOD_DATA: Neighborhood[] = [
   { id: "vila-guilhermina", name: "Vila Guilhermina", count: 1, avgSqm: null, lat: -23.5274, lng: -46.5580 },
 ];
 
-const TOTAL_PROJECTS = 99;
+const TOTAL_PROJECTS = 102;
 const TOTAL_NEIGHBORHOODS = 26;
 
 const TOP_5 = [
-  { name: "Brooklin", id: "brooklin", count: 14 },
+  { name: "Brooklin", id: "brooklin", count: 17 },
   { name: "Pinheiros", id: "pinheiros", count: 11 },
   { name: "Perdizes", id: "perdizes", count: 8 },
   { name: "Vila Clementino", id: "vila-clementino", count: 6 },
@@ -219,7 +219,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     <div className="py-12 lg:py-16" data-pdf-hide>
       <div className="mb-6">
         <h2 className="text-2xl lg:text-3xl font-display font-bold text-foreground tracking-tight">
-          99 projetos realizados pela Bwild em São Paulo
+          102 projetos realizados pela Bwild em São Paulo
         </h2>
         <p className="text-muted-foreground text-sm mt-1 font-body">
           Estamos presentes em mais de {TOTAL_NEIGHBORHOODS} bairros na região metropolitana
@@ -295,7 +295,7 @@ function SummaryPanel({ onSelectNeighborhood }: { onSelectNeighborhood: (id: str
             <div className="flex items-center gap-2">
               <div
                 className="h-1.5 rounded-full bg-primary/20"
-                style={{ width: `${(b.count / 14) * 56}px` }}
+                style={{ width: `${(b.count / 17) * 56}px` }}
               />
               <span className="text-xs font-mono font-semibold text-primary w-8 text-right">
                 {b.count}
