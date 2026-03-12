@@ -1,8 +1,9 @@
-import { Download, Loader2, ShieldCheck } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { TestimonialVideoPreview } from "./TestimonialVideoModal";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
+import seloReclameAqui from "@/assets/selo-reclame-aqui.png";
 import { formatDate, getValidityInfo } from "@/lib/formatBRL";
 
 export interface HeaderConfig {
