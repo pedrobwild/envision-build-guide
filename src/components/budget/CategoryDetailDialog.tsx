@@ -238,7 +238,7 @@ interface CategoryDetailDialogProps {
   editable?: boolean;
 }
 
-export function CategoryDetailDialog({ open, onClose, group, budgetId }: CategoryDetailDialogProps) {
+export function CategoryDetailDialog({ open, onClose, group, budgetId, editable = false }: CategoryDetailDialogProps) {
   if (!group) return null;
 
   return (
