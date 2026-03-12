@@ -4,12 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Copy, Check, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { MetadataStep } from "@/components/editor/MetadataStep";
+import { SectionsEditor } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
   const [budget, setBudget] = useState<any>(null);
+  const [sections, setSections] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -22,6 +24,19 @@ export default function BudgetEditorV2() {
     const { data: b } = await supabase.from("budgets").select("*").eq("id", budgetId).single();
     if (!b) { navigate("/admin"); return; }
     setBudget(b);
+
+    // Load sections with items
+    const { data: secs } = await supabase
+      .from("sections")
+      .select("*, items(*)")
+      .eq("budget_id", budgetId)
+      .order("order_index", { ascending: true });
+
+    const sorted = (secs || []).map(s => ({
+      ...s,
+      items: (s.items || []).sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)),
+    }));
+    setSections(sorted);
   };
 
   const autoSaveBudgetField = useCallback((field: string, value: string) => {
@@ -121,6 +136,12 @@ export default function BudgetEditorV2() {
           }}
           onNext={handleSaveAndPublish}
           saving={saving}
+        />
+
+        <SectionsEditor
+          budgetId={budgetId!}
+          sections={sections}
+          onSectionsChange={setSections}
         />
       </main>
     </div>
