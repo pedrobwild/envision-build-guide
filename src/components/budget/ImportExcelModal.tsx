@@ -223,6 +223,15 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         const dataRows = nonEmptyRows.slice(headerRowIdx + 1);
         const indexCol = map.index !== undefined ? map.index : -1;
 
+        // Strip CPF/CNPJ patterns from a name string
+        const stripDocNumber = (name: string): string =>
+          name
+            .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "") // CPF
+            .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "") // CNPJ
+            .replace(/\b\d{11,14}\b/g, "") // raw digit sequences (CPF/CNPJ without punctuation)
+            .replace(/\s{2,}/g, " ")
+            .trim();
+
         // Extract metadata from rows before header
         const meta: ParsedMeta = {};
         for (let i = 0; i < headerRowIdx && i < nonEmptyRows.length; i++) {
@@ -232,7 +241,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           for (let j = 0; j < row.length; j++) {
             const cellText = String(row[j] ?? "").trim().toLowerCase();
             if (cellText.includes("cliente")) {
-              const val = String(row[j + 1] ?? row[j + 2] ?? "").trim();
+              const val = stripDocNumber(String(row[j + 1] ?? row[j + 2] ?? "").trim());
               if (val) meta.clientName = val;
             }
             if (cellText.includes("obra")) {

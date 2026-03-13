@@ -91,6 +91,17 @@ function extractJsonContent(content: string): string {
   return content.trim();
 }
 
+/** Strip CPF/CNPJ patterns from a name string */
+function stripDocNumber(name: string | null): string | null {
+  if (!name) return name;
+  return name
+    .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "")   // CPF
+    .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "") // CNPJ
+    .replace(/\b\d{11,14}\b/g, "")                        // raw digit sequences
+    .replace(/\s{2,}/g, " ")
+    .trim() || null;
+}
+
 function normalizeParsedResult(raw: any) {
   const meta = raw?.meta ?? {};
   const rawSections = Array.isArray(raw?.sections) ? raw.sections : [];
@@ -119,7 +130,7 @@ function normalizeParsedResult(raw: any) {
 
   return {
     meta: {
-      clientName: cleanText(meta?.clientName),
+      clientName: stripDocNumber(cleanText(meta?.clientName)),
       projectName: cleanText(meta?.projectName),
       area: cleanText(meta?.area),
       bairro: cleanText(meta?.bairro),
