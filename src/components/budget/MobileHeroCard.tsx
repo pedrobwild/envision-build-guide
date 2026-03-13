@@ -22,8 +22,25 @@ interface MobileHeroCardProps {
 
 const DEFAULT_PHONE = "5511911906183";
 
-function titleCase(str: string) {
-  return str.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+function normalizeClientName(value?: string): string {
+  if (!value) return "";
+
+  const cleaned = value
+    .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "")
+    .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "")
+    .replace(/\b\d{5,}\b/g, "")
+    .replace(/^\s*(?:nome\s+do\s+)?cliente\s*[:\-–]?\s*/i, "")
+    .replace(/^\s*(?:orçamento|orcamento|proposta)\s*(?:n[ºo°]\s*\d+)?\s*(?:para|de)?\s*/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (!cleaned) return "";
+
+  return cleaned
+    .toLocaleLowerCase("pt-BR")
+    .split(/\s+/)
+    .map((word) => word.replace(/^\p{L}/u, (letter) => letter.toLocaleUpperCase("pt-BR")))
+    .join(" ");
 }
 
 export function MobileHeroCard({
@@ -37,10 +54,10 @@ export function MobileHeroCard({
   version,
   onSaveForLater,
 }: MobileHeroCardProps) {
-  const displayName = clientName ? titleCase(clientName) : "";
+  const displayName = normalizeClientName(clientName);
 
   const whatsappMessage = encodeURIComponent(
-    `Olá! Sou ${clientName || "cliente"}, estou analisando o orçamento do projeto ${projectName || "do projeto"} (Ref: ${publicId}) e gostaria de conversar sobre os próximos passos.`
+    `Olá! Sou ${displayName || "cliente"}, estou analisando o orçamento do projeto ${projectName || "do projeto"} (Ref: ${publicId}) e gostaria de conversar sobre os próximos passos.`
   );
   const whatsappUrl = `https://wa.me/${DEFAULT_PHONE}?text=${whatsappMessage}`;
 
