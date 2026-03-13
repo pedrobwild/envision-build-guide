@@ -44,6 +44,36 @@ interface ImportExcelModalProps {
 
 type ImportStep = "upload" | "parsing" | "preview" | "importing" | "done";
 
+const normalizeClientName = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+
+  const raw = String(value).replace(/\s+/g, " ").trim();
+  if (!raw) return null;
+
+  const withoutDocs = raw
+    .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "")
+    .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "")
+    .replace(/\b\d{11,14}\b/g, "")
+    .replace(/\b(?:n[ºo°]\s*)?\d{5,}\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  const cleaned = withoutDocs
+    .replace(/^\s*(?:nome\s+do\s+)?cliente\s*[:\-–]?\s*/i, "")
+    .replace(/^\s*(?:orçamento|orcamento|proposta)\s*(?:n[ºo°]\s*\d+)?\s*(?:para|de)?\s*/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (!cleaned) return null;
+
+  return cleaned
+    .toLocaleLowerCase("pt-BR")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toLocaleUpperCase("pt-BR") + part.slice(1))
+    .join(" ");
+};
+
 export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetGroupId }: ImportExcelModalProps) {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
