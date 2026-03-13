@@ -35,6 +35,13 @@ const fadeUp = {
 };
 
 
+/** Normalise proper names: lowercase everything then capitalise each word start (handles accented chars) */
+function formatName(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/(^|\s)\S/g, (char) => char.toUpperCase());
+}
+
 export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderProps) {
   const validity = budget.date ? getValidityInfo(budget.date, budget.validity_days || 30) : null;
   const validityLabel = validity
@@ -56,7 +63,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
     { value: "5 anos", label: "garantia", accent: false },
   ];
 
-  const clientName = budget.client_name || "";
+  const clientName = budget.client_name ? formatName(budget.client_name) : "";
 
   const projectTitle = budget.project_name || "Projeto e Reforma";
   const heroTitle = clientName ? `Orçamento ${clientName}` : projectTitle;
