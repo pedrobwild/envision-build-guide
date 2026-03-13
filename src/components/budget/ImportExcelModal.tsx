@@ -452,7 +452,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
 
       if (parsedData?.meta) {
         setParsedMeta({
-          clientName: parsedData.meta.clientName || null,
+          clientName: normalizeClientName(parsedData.meta.clientName),
           projectName: parsedData.meta.projectName || null,
           area: parsedData.meta.area || null,
           bairro: parsedData.meta.bairro || null,
