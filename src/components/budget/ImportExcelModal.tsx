@@ -44,6 +44,36 @@ interface ImportExcelModalProps {
 
 type ImportStep = "upload" | "parsing" | "preview" | "importing" | "done";
 
+const normalizeClientName = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+
+  const raw = String(value).replace(/\s+/g, " ").trim();
+  if (!raw) return null;
+
+  const withoutDocs = raw
+    .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "")
+    .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "")
+    .replace(/\b\d{11,14}\b/g, "")
+    .replace(/\b(?:n[ºo°]\s*)?\d{5,}\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  const cleaned = withoutDocs
+    .replace(/^\s*(?:nome\s+do\s+)?cliente\s*[:\-–]?\s*/i, "")
+    .replace(/^\s*(?:orçamento|orcamento|proposta)\s*(?:n[ºo°]\s*\d+)?\s*(?:para|de)?\s*/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (!cleaned) return null;
+
+  return cleaned
+    .toLocaleLowerCase("pt-BR")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toLocaleUpperCase("pt-BR") + part.slice(1))
+    .join(" ");
+};
+
 export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetGroupId }: ImportExcelModalProps) {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
@@ -223,15 +253,6 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         const dataRows = nonEmptyRows.slice(headerRowIdx + 1);
         const indexCol = map.index !== undefined ? map.index : -1;
 
-        // Strip CPF/CNPJ patterns from a name string
-        const stripDocNumber = (name: string): string =>
-          name
-            .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "") // CPF
-            .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "") // CNPJ
-            .replace(/\b\d{11,14}\b/g, "") // raw digit sequences (CPF/CNPJ without punctuation)
-            .replace(/\s{2,}/g, " ")
-            .trim();
-
         // Extract metadata from rows before header
         const meta: ParsedMeta = {};
         for (let i = 0; i < headerRowIdx && i < nonEmptyRows.length; i++) {
@@ -241,7 +262,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           for (let j = 0; j < row.length; j++) {
             const cellText = String(row[j] ?? "").trim().toLowerCase();
             if (cellText.includes("cliente")) {
-              const val = stripDocNumber(String(row[j + 1] ?? row[j + 2] ?? "").trim());
+              const val = normalizeClientName(row[j + 1] ?? row[j + 2] ?? "");
               if (val) meta.clientName = val;
             }
             if (cellText.includes("obra")) {
@@ -431,7 +452,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
 
       if (parsedData?.meta) {
         setParsedMeta({
-          clientName: parsedData.meta.clientName || null,
+          clientName: normalizeClientName(parsedData.meta.clientName),
           projectName: parsedData.meta.projectName || null,
           area: parsedData.meta.area || null,
           bairro: parsedData.meta.bairro || null,
@@ -495,10 +516,11 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         sectionMap.set(key, list);
       });
 
-      const clientName = parsedMeta.clientName?.trim() || "Cliente";
+      const normalizedClientName = normalizeClientName(parsedMeta.clientName);
+      const clientName = normalizedClientName || "Cliente";
       const projectName =
         parsedMeta.projectName?.trim() ||
-        (parsedMeta.clientName?.trim() ? `Reforma ${parsedMeta.clientName.trim()}` : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação");
+        (normalizedClientName ? `Reforma ${normalizedClientName}` : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação");
 
       const { data: budget, error: budgetErr } = await supabase
         .from("budgets")

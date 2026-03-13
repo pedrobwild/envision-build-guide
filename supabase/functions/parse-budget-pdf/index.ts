@@ -91,15 +91,31 @@ function extractJsonContent(content: string): string {
   return content.trim();
 }
 
-/** Strip CPF/CNPJ patterns from a name string */
-function stripDocNumber(name: string | null): string | null {
-  if (!name) return name;
-  return name
-    .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "")   // CPF
-    .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "") // CNPJ
-    .replace(/\b\d{11,14}\b/g, "")                        // raw digit sequences
+function normalizeClientName(value: string | null): string | null {
+  if (!value) return null;
+
+  const withoutDocs = value
+    .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "")
+    .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "")
+    .replace(/\b\d{11,14}\b/g, "")
+    .replace(/\b(?:n[ºo°]\s*)?\d{5,}\b/gi, "")
     .replace(/\s{2,}/g, " ")
-    .trim() || null;
+    .trim();
+
+  const cleaned = withoutDocs
+    .replace(/^\s*(?:nome\s+do\s+)?cliente\s*[:\-–]?\s*/i, "")
+    .replace(/^\s*(?:orçamento|orcamento|proposta)\s*(?:n[ºo°]\s*\d+)?\s*(?:para|de)?\s*/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (!cleaned) return null;
+
+  return cleaned
+    .toLocaleLowerCase("pt-BR")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toLocaleUpperCase("pt-BR") + part.slice(1))
+    .join(" ");
 }
 
 function normalizeParsedResult(raw: any) {
@@ -130,7 +146,7 @@ function normalizeParsedResult(raw: any) {
 
   return {
     meta: {
-      clientName: stripDocNumber(cleanText(meta?.clientName)),
+      clientName: normalizeClientName(cleanText(meta?.clientName)),
       projectName: cleanText(meta?.projectName),
       area: cleanText(meta?.area),
       bairro: cleanText(meta?.bairro),
