@@ -35,6 +35,18 @@ const fadeUp = {
 };
 
 
+function sanitizeClientName(value: string): string {
+  return value
+    .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "")
+    .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "")
+    .replace(/\b\d{11,14}\b/g, "")
+    .replace(/\b(?:n[ºo°]\s*)?\d{5,}\b/gi, "")
+    .replace(/^\s*(?:nome\s+do\s+)?cliente\s*[:\-–]?\s*/i, "")
+    .replace(/^\s*(?:orçamento|orcamento|proposta)\s*(?:n[ºo°]\s*\d+)?\s*(?:para|de)?\s*/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 /** Normalise proper names: lowercase everything then capitalise each word start (handles accented chars) */
 function formatName(str: string): string {
   return str
