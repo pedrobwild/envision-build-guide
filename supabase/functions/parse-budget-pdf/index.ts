@@ -146,7 +146,7 @@ function normalizeParsedResult(raw: any) {
 
   return {
     meta: {
-      clientName: stripDocNumber(cleanText(meta?.clientName)),
+      clientName: normalizeClientName(cleanText(meta?.clientName)),
       projectName: cleanText(meta?.projectName),
       area: cleanText(meta?.area),
       bairro: cleanText(meta?.bairro),

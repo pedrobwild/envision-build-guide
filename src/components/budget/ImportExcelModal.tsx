@@ -516,10 +516,11 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         sectionMap.set(key, list);
       });
 
-      const clientName = parsedMeta.clientName?.trim() || "Cliente";
+      const normalizedClientName = normalizeClientName(parsedMeta.clientName);
+      const clientName = normalizedClientName || "Cliente";
       const projectName =
         parsedMeta.projectName?.trim() ||
-        (parsedMeta.clientName?.trim() ? `Reforma ${parsedMeta.clientName.trim()}` : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação");
+        (normalizedClientName ? `Reforma ${normalizedClientName}` : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação");
 
       const { data: budget, error: budgetErr } = await supabase
         .from("budgets")
