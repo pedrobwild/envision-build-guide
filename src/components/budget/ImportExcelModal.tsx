@@ -262,7 +262,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           for (let j = 0; j < row.length; j++) {
             const cellText = String(row[j] ?? "").trim().toLowerCase();
             if (cellText.includes("cliente")) {
-              const val = stripDocNumber(String(row[j + 1] ?? row[j + 2] ?? "").trim());
+              const val = normalizeClientName(row[j + 1] ?? row[j + 2] ?? "");
               if (val) meta.clientName = val;
             }
             if (cellText.includes("obra")) {
