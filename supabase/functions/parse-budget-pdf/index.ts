@@ -11,14 +11,23 @@ const systemPrompt = `Você é um parser especializado em orçamentos de reforma
 Analise o conteúdo completo e retorne um JSON estruturado com máxima fidelidade ao documento.
 
 REGRAS OBRIGATÓRIAS:
-- Extraia TODAS as seções principais e TODOS os itens listados em cada seção
-- Cada seção deve conter: title, total
-- Cada item deve conter: title, description (quando existir), qty, unit, unitPrice, total
-- Se item não tiver valor unitário/total explícito, mantenha unitPrice/total como null
-- Extraia metadados: clientName, projectName, area, bairro, version, date, grandTotal
-- Valores monetários devem ser retornados como número (ex: 17100.5)
-- Quantidades também devem ser número (ex: 1, 2, 4.5)
-- Itens com códigos (ex: 2.1.3) pertencem à seção principal do primeiro índice (2)
+1. Extraia ABSOLUTAMENTE TODAS as seções e TODOS os itens, sem exceção. Não pule nenhum item.
+2. Cada seção deve conter: title, total (o subtotal da seção)
+3. Cada item deve conter: title, description (quando existir), qty, unit, unitPrice, total
+
+REGRAS DE PREÇO CRÍTICAS:
+- MUITOS orçamentos colocam o SUBTOTAL DA SEÇÃO na coluna "Total venda" da PRIMEIRA LINHA de itens da seção, NÃO no cabeçalho da seção.
+- Se apenas o primeiro item de uma seção tem um valor na coluna "Total venda" e os demais itens não têm, esse valor é o SUBTOTAL DA SEÇÃO, não o preço do item individual.
+- Nesse caso: defina section.total = esse valor, e item.total = null para todos os itens da seção (incluindo o primeiro).
+- Se cada item tiver seu próprio valor, então são preços individuais de itens.
+- Procure o VALOR TOTAL GERAL (grandTotal) no final do documento — pode estar em uma linha separada, rodapé, ou campo "Valor (R$)".
+- A SOMA dos section.total DEVE ser igual (ou muito próxima) ao grandTotal. Se não for, revise os valores.
+
+METADADOS:
+- Extraia: clientName, projectName, area, bairro, version, date, grandTotal
+- Valores monetários brasileiros (ex: "20.188,80") devem ser convertidos para número (ex: 20188.80)
+- Quantidades também como número (ex: "23,6800" → 23.68)
+- Itens com códigos hierárquicos (ex: 002.01.01) pertencem à seção principal indicada pelo índice numérico (ex: "3 INFRAESTRUTURA E CIVIL")
 - Não invente dados: se não estiver no documento, retorne null
 
 Retorne APENAS JSON válido, sem markdown, neste formato:
