@@ -483,10 +483,16 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
 
       if (ext === "pdf") {
         parsePdf(f);
-      } else if (ext === "xlsx" || ext === "xls") {
+      } else if (ext === "xlsx" || ext === "xls" || ext === "csv") {
         parseExcel(f);
       } else {
-        setError("Formato não suportado. Use .xlsx, .xls ou .pdf");
+        setError(
+          fileFilter === 'pdf'
+            ? "Formato não suportado. Use apenas arquivos .pdf"
+            : fileFilter === 'excel'
+              ? "Formato não suportado. Use .xlsx, .xls ou .csv"
+              : "Formato não suportado. Use .xlsx, .xls, .csv ou .pdf"
+        );
       }
     },
     [parseExcel, parsePdf]
@@ -633,12 +639,16 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display pr-8">
-            {isPdf ? <FileText className="h-5 w-5 text-primary" /> : <FileSpreadsheet className="h-5 w-5 text-primary" />}
-            Importar Orçamento
+            {fileFilter === 'pdf' ? <FileText className="h-5 w-5 text-primary" /> : <FileSpreadsheet className="h-5 w-5 text-primary" />}
+            {fileFilter === 'pdf' ? 'Importar PDF' : fileFilter === 'excel' ? 'Importar Planilha' : 'Importar Orçamento'}
           </DialogTitle>
           <DialogDescription className="font-body">
-            Faça upload de um arquivo <strong>.xlsx</strong> ou <strong>.pdf</strong> com os dados do orçamento.
-            {" "}PDFs são processados com IA para extrair seções e itens automaticamente.
+            {fileFilter === 'pdf'
+              ? <>Faça upload de um arquivo <strong>.pdf</strong> com os dados do orçamento. PDFs são processados com IA para extrair seções e itens automaticamente.</>
+              : fileFilter === 'excel'
+                ? <>Faça upload de uma planilha <strong>.xlsx</strong>, <strong>.xls</strong> ou <strong>.csv</strong> com os dados do orçamento.</>
+                : <>Faça upload de um arquivo <strong>.xlsx</strong>, <strong>.xls</strong>, <strong>.csv</strong> ou <strong>.pdf</strong> com os dados do orçamento.</>
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -651,7 +661,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file";
-              input.accept = fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx,.xls' : '.xlsx,.xls,.pdf';
+              input.accept = fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx,.xls,.csv' : '.xlsx,.xls,.csv,.pdf';
               input.onchange = (e: any) => {
                 const f = e.target.files?.[0];
                 if (f) handleFile(f);
@@ -664,7 +674,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
               Arraste o arquivo aqui ou clique para selecionar
             </p>
             <p className="text-xs text-muted-foreground font-body">
-              .xlsx, .xls ou .pdf
+              {fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx, .xls ou .csv' : '.xlsx, .xls, .csv ou .pdf'}
             </p>
           </div>
         )}
