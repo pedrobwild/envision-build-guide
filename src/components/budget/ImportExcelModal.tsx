@@ -668,7 +668,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
               Arraste o arquivo aqui ou clique para selecionar
             </p>
             <p className="text-xs text-muted-foreground font-body">
-              .xlsx, .xls ou .pdf
+              {fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx, .xls ou .csv' : '.xlsx, .xls, .csv ou .pdf'}
             </p>
           </div>
         )}
