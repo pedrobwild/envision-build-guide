@@ -51,6 +51,10 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
       const newImg: ImageRecord = { id: inserted?.id || "", url, is_primary: isPrimary };
       setImages((prev) => [...prev, newImg]);
       setActiveIdx(images.length);
+      // Save to global photo library (fire-and-forget)
+      if (isPrimary && item.title) {
+        saveToPhotoLibrary(item.title, url);
+      }
       toast.success("Imagem adicionada");
     } catch (err) {
       console.error(err);
