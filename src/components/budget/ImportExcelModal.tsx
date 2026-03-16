@@ -669,9 +669,9 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
               input.click();
             }}
           >
-            <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <Upload className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground mb-3" />
             <p className="text-sm font-body text-foreground font-medium mb-1">
-              Arraste o arquivo aqui ou clique para selecionar
+              Toque para selecionar <span className="hidden sm:inline">ou arraste</span>
             </p>
             <p className="text-xs text-muted-foreground font-body">
               {fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx, .xls ou .csv' : '.xlsx, .xls, .csv ou .pdf'}
