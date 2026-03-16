@@ -636,13 +636,13 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[100dvh] sm:max-h-[85vh] overflow-y-auto w-[calc(100%-2rem)] sm:w-full rounded-2xl sm:rounded-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-display pr-8">
+          <DialogTitle className="flex items-center gap-2 font-display pr-8 text-base sm:text-lg">
             {fileFilter === 'pdf' ? <FileText className="h-5 w-5 text-primary" /> : <FileSpreadsheet className="h-5 w-5 text-primary" />}
             {fileFilter === 'pdf' ? 'Importar PDF' : fileFilter === 'excel' ? 'Importar Planilha' : 'Importar Orçamento'}
           </DialogTitle>
-          <DialogDescription className="font-body">
+          <DialogDescription className="font-body text-xs sm:text-sm">
             {fileFilter === 'pdf'
               ? <>Faça upload de um arquivo <strong>.pdf</strong> com os dados do orçamento. PDFs são processados com IA para extrair seções e itens automaticamente.</>
               : fileFilter === 'excel'
