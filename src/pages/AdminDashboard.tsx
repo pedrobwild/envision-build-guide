@@ -153,17 +153,17 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logoDark} alt="Bwild" className="h-7 dark:hidden" />
-            <img src={logoWhite} alt="Bwild" className="h-7 hidden dark:block" />
-            <div className="h-5 w-px bg-border" />
-            <div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <img src={logoDark} alt="Bwild" className="h-6 sm:h-7 dark:hidden flex-shrink-0" />
+            <img src={logoWhite} alt="Bwild" className="h-6 sm:h-7 hidden dark:block flex-shrink-0" />
+            <div className="h-5 w-px bg-border hidden sm:block" />
+            <div className="hidden sm:block">
               <h1 className="font-display font-semibold text-sm text-foreground leading-tight">Painel Admin</h1>
               {user && <p className="text-xs text-muted-foreground font-body truncate max-w-48">{user.email}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="relative">
               <button
                 onClick={() => {
@@ -172,7 +172,7 @@ export default function AdminDashboard() {
                     markNotificationsRead();
                   }
                 }}
-                className="relative p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                className="relative p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <Bell className="h-4 w-4" />
                 {notifications.filter(n => !n.read).length > 0 && (
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
               {showNotifications && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-80 rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
+                  <div className="absolute right-0 top-full mt-1 z-50 w-[calc(100vw-2rem)] sm:w-80 max-w-80 rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
                     <div className="p-3 border-b border-border">
                       <h3 className="font-display font-semibold text-sm text-foreground">Notificações</h3>
                     </div>
@@ -206,8 +206,8 @@ export default function AdminDashboard() {
               )}
             </div>
             <ThemeToggle />
-            <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-body">
-              <LogOut className="h-4 w-4" /> Sair
+            <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-body min-w-[44px] min-h-[44px] justify-center">
+              <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Sair</span>
             </button>
           </div>
         </div>
