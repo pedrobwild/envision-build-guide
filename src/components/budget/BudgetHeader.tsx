@@ -68,7 +68,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const neighborhood = budget.bairro || budget.condominio || "";
   const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
   const area = rawArea ? `${rawArea}m²` : "";
-  const version = budget.versao ? budget.versao.replace(/^v/i, '').padStart(2, '0') : "";
+  const versionNum = budget.version_number ?? (budget.versao ? budget.versao.replace(/^v/i, '') : "1");
+  const version = String(versionNum);
   const dateStr = budget.date ? formatDate(budget.date) : "";
 
   const statBadges = [
