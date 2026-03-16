@@ -486,7 +486,13 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       } else if (ext === "xlsx" || ext === "xls") {
         parseExcel(f);
       } else {
-        setError("Formato não suportado. Use .xlsx, .xls ou .pdf");
+        setError(
+          fileFilter === 'pdf'
+            ? "Formato não suportado. Use apenas arquivos .pdf"
+            : fileFilter === 'excel'
+              ? "Formato não suportado. Use .xlsx, .xls ou .csv"
+              : "Formato não suportado. Use .xlsx, .xls, .csv ou .pdf"
+        );
       }
     },
     [parseExcel, parsePdf]
