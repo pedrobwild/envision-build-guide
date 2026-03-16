@@ -76,9 +76,12 @@ export function ItemImageUpload({ images, onImagesChange, budgetId, itemLabel }:
   };
 
   const setPrimary = (id: string) => {
-    onImagesChange(
-      images.map(img => ({ ...img, isPrimary: img.id === id }))
-    );
+    const updated = images.map(img => ({ ...img, isPrimary: img.id === id }));
+    onImagesChange(updated);
+    const newPrimary = updated.find(i => i.isPrimary);
+    if (newPrimary && itemLabel) {
+      saveToPhotoLibrary(itemLabel, newPrimary.url);
+    }
   };
 
   return (

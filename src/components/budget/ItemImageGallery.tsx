@@ -96,6 +96,10 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
       setImages((prev) =>
         prev.map((im, i) => ({ ...im, is_primary: i === idx }))
       );
+      // Update library with new primary
+      if (item.title) {
+        saveToPhotoLibrary(item.title, img.url);
+      }
       toast.success("Imagem principal definida");
     } catch (err) {
       console.error(err);
