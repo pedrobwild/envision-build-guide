@@ -657,7 +657,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
-            className="border-2 border-dashed border-border rounded-xl p-10 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
+            className="border-2 border-dashed border-border rounded-xl p-6 sm:p-10 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 active:bg-primary/10 transition-all min-h-[160px] sm:min-h-0 flex flex-col items-center justify-center"
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file";
