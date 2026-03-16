@@ -655,7 +655,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file";
-              input.accept = fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx,.xls' : '.xlsx,.xls,.pdf';
+              input.accept = fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx,.xls,.csv' : '.xlsx,.xls,.csv,.pdf';
               input.onchange = (e: any) => {
                 const f = e.target.files?.[0];
                 if (f) handleFile(f);
