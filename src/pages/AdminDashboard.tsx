@@ -310,93 +310,112 @@ export default function AdminDashboard() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {filtered.map(budget => {
               const sectionTotal = getBudgetTotal(budget);
               const sectionCount = (budget.sections || []).length;
               return (
-                <div key={budget.id} className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card hover:shadow-sm transition-shadow group">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Link to={`/admin/budget/${budget.id}`} className="font-medium text-foreground hover:text-primary transition-colors font-body text-sm truncate">
-                        {budget.project_name || 'Sem nome'}
-                      </Link>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium font-body ${statusColors[budget.status]}`}>
-                        {statusLabels[budget.status]}
-                      </span>
+                <div key={budget.id} className="p-3 sm:p-4 rounded-lg border border-border bg-card hover:shadow-sm transition-shadow group">
+                  {/* Mobile: stacked layout */}
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <Link to={`/admin/budget/${budget.id}`} className="font-medium text-foreground hover:text-primary transition-colors font-body text-sm truncate">
+                          {budget.project_name || 'Sem nome'}
+                        </Link>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium font-body ${statusColors[budget.status]} flex-shrink-0`}>
+                          {statusLabels[budget.status]}
+                        </span>
+                      </div>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground font-body leading-relaxed">
+                        {budget.client_name}
+                        <span className="hidden sm:inline"> • {budget.date ? formatDate(budget.date) : '—'}</span>
+                        {' • '}{sectionCount} {sectionCount === 1 ? 'seção' : 'seções'}
+                        {budget.version_number > 1 && ` • V${budget.version_number}`}
+                        {budget.view_count > 0 && <span className="hidden sm:inline"> • {budget.view_count} visualização{budget.view_count !== 1 ? 'ões' : ''}</span>}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground font-body">
-                      {budget.client_name} • {budget.date ? formatDate(budget.date) : '—'} • {sectionCount} {sectionCount === 1 ? 'seção' : 'seções'}
-                      {budget.version_number > 1 && ` • V${budget.version_number}`}
-                      {budget.view_count > 0 && ` • ${budget.view_count} visualização${budget.view_count !== 1 ? 'ões' : ''}`}
-                    </p>
-                  </div>
 
-                  <span className="text-sm font-display font-semibold text-foreground whitespace-nowrap">
-                    {formatBRL(sectionTotal)}
-                  </span>
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                      <span className="text-sm font-display font-semibold text-foreground whitespace-nowrap">
+                        {formatBRL(sectionTotal)}
+                      </span>
 
-                  <div className="flex items-center gap-1">
-                    {budget.status === 'draft' && (
-                      <button
-                        onClick={() => publishBudget(budget.id)}
-                        className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                        title="Publicar"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </button>
-                    )}
-                    {budget.public_id && (
-                      <>
-                        <button
-                          onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), '_blank')}
-                          className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                          title="Ver público"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
-                            toast.success("Link copiado!");
-                          }}
-                          className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
-                          title="Copiar link"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </button>
-                      </>
-                    )}
-                    <div className="relative">
-                      <button
-                        onClick={() => setMenuOpen(menuOpen === budget.id ? null : budget.id)}
-                        className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                      {menuOpen === budget.id && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-lg border border-border bg-popover shadow-lg py-1">
-                            {budget.status !== 'archived' && (
-                              <button
-                                onClick={() => archiveBudget(budget.id)}
-                                className="w-full px-3 py-2 text-left text-sm font-body text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2"
-                              >
-                                <Archive className="h-3.5 w-3.5" /> Arquivar
-                              </button>
-                            )}
+                      <div className="flex items-center gap-0.5">
+                        {budget.status === 'draft' && (
+                          <button
+                            onClick={() => publishBudget(budget.id)}
+                            className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                            title="Publicar"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </button>
+                        )}
+                        {budget.public_id && (
+                          <>
+                            <button
+                              onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), '_blank')}
+                              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                              title="Ver público"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
                             <button
                               onClick={() => {
-                                if (confirm('Excluir este orçamento permanentemente?')) deleteBudget(budget.id);
+                                navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
+                                toast.success("Link copiado!");
                               }}
-                              className="w-full px-3 py-2 text-left text-sm font-body text-destructive hover:bg-destructive/10 flex items-center gap-2"
+                              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center hidden sm:flex"
+                              title="Copiar link"
                             >
-                              <Trash2 className="h-3.5 w-3.5" /> Excluir
+                              <Copy className="h-4 w-4" />
                             </button>
-                          </div>
-                        </>
-                      )}
+                          </>
+                        )}
+                        <div className="relative">
+                          <button
+                            onClick={() => setMenuOpen(menuOpen === budget.id ? null : budget.id)}
+                            className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                          {menuOpen === budget.id && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
+                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-lg border border-border bg-popover shadow-lg py-1">
+                                {budget.public_id && (
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
+                                      toast.success("Link copiado!");
+                                      setMenuOpen(null);
+                                    }}
+                                    className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2 sm:hidden"
+                                  >
+                                    <Copy className="h-3.5 w-3.5" /> Copiar link
+                                  </button>
+                                )}
+                                {budget.status !== 'archived' && (
+                                  <button
+                                    onClick={() => archiveBudget(budget.id)}
+                                    className="w-full px-3 py-2.5 text-left text-sm font-body text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2"
+                                  >
+                                    <Archive className="h-3.5 w-3.5" /> Arquivar
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    if (confirm('Excluir este orçamento permanentemente?')) deleteBudget(budget.id);
+                                  }}
+                                  className="w-full px-3 py-2.5 text-left text-sm font-body text-destructive hover:bg-destructive/10 flex items-center gap-2"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> Excluir
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
