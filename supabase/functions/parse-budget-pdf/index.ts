@@ -21,7 +21,13 @@ REGRAS DE PREÇO CRÍTICAS:
 - Nesse caso: defina section.total = esse valor, e item.total = null para todos os itens da seção (incluindo o primeiro).
 - Se cada item tiver seu próprio valor, então são preços individuais de itens.
 - Procure o VALOR TOTAL GERAL (grandTotal) no final do documento — pode estar em uma linha separada, rodapé, ou campo "Valor (R$)".
-- A SOMA dos section.total DEVE ser igual (ou muito próxima) ao grandTotal. Se não for, revise os valores.
+
+VALIDAÇÃO OBRIGATÓRIA:
+- A SOMA de TODOS os section.total DEVE ser EXATAMENTE IGUAL ao grandTotal.
+- Se a soma dos section.total encontrados for MENOR que o grandTotal, significa que você PERDEU o subtotal de alguma seção.
+- Nesse caso, EXAMINE A IMAGEM COM CUIDADO para encontrar os valores faltantes. Cada seção TEM um subtotal — pode estar parcialmente oculto, em fonte pequena, ou difícil de ler.
+- NUNCA retorne um resultado onde a soma das seções não bata com o grandTotal sem justificativa.
+- Se necessário, calcule: seção_faltante = grandTotal - soma_das_outras_seções.
 
 METADADOS:
 - Extraia: clientName, projectName, area, bairro, version, date, grandTotal
@@ -153,6 +159,32 @@ function normalizeParsedResult(raw: any) {
     })
     .filter((section: any) => section.title.length > 0 && (section.items.length > 0 || section.total !== null));
 
+  const grandTotal = parseBrazilianNumber(meta?.grandTotal);
+
+  // Post-processing: validate section totals sum against grandTotal
+  if (grandTotal && grandTotal > 0) {
+    const sectionSum = sections.reduce((sum: number, s: any) => sum + (s.total || 0), 0);
+    const diff = grandTotal - sectionSum;
+
+    console.log(`[parse-budget-pdf] grandTotal=${grandTotal}, sectionSum=${sectionSum}, diff=${diff}`);
+
+    // If there's a significant difference, find sections without totals and distribute
+    if (Math.abs(diff) > 1) {
+      const sectionsWithoutTotal = sections.filter((s: any) => !s.total || s.total === 0);
+      
+      if (sectionsWithoutTotal.length === 1) {
+        // Only one section missing a total — assign the difference
+        sectionsWithoutTotal[0].total = Math.round(diff * 100) / 100;
+        console.log(`[parse-budget-pdf] Assigned missing total ${sectionsWithoutTotal[0].total} to section "${sectionsWithoutTotal[0].title}"`);
+      } else if (sectionsWithoutTotal.length === 0) {
+        // All sections have totals but sum doesn't match — log warning
+        console.log(`[parse-budget-pdf] WARNING: All sections have totals but sum (${sectionSum}) != grandTotal (${grandTotal})`);
+      } else {
+        console.log(`[parse-budget-pdf] WARNING: ${sectionsWithoutTotal.length} sections missing totals, diff=${diff}`);
+      }
+    }
+  }
+
   return {
     meta: {
       clientName: normalizeClientName(cleanText(meta?.clientName)),
@@ -161,7 +193,7 @@ function normalizeParsedResult(raw: any) {
       bairro: cleanText(meta?.bairro),
       version: cleanText(meta?.version),
       date: cleanText(meta?.date),
-      grandTotal: parseBrazilianNumber(meta?.grandTotal),
+      grandTotal,
     },
     sections,
   };
@@ -196,9 +228,7 @@ serve(async (req) => {
       const contentParts: any[] = [
         {
           type: "text",
-          text: `Extraia os dados completos deste orçamento a partir das imagens.${hasText ? " Use também o texto extraído como apoio para não perder valores." : ""}${
-            hasText ? `\n\nTexto extraído:\n${textContent}` : ""
-          }`,
+          text: `Extraia os dados completos deste orçamento a partir das imagens. ATENÇÃO: o grandTotal está no final do documento. A soma de TODOS os section.total DEVE ser igual ao grandTotal. Se alguma seção não tem valor visível, examine a imagem com mais cuidado ou calcule a diferença.${hasText ? `\n\nTexto extraído (use como apoio):\n${textContent}` : ""}`,
         },
       ];
 
