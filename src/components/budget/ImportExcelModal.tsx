@@ -636,13 +636,13 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[100dvh] sm:max-h-[85vh] overflow-y-auto w-[calc(100%-2rem)] sm:w-full rounded-2xl sm:rounded-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-display pr-8">
+          <DialogTitle className="flex items-center gap-2 font-display pr-8 text-base sm:text-lg">
             {fileFilter === 'pdf' ? <FileText className="h-5 w-5 text-primary" /> : <FileSpreadsheet className="h-5 w-5 text-primary" />}
             {fileFilter === 'pdf' ? 'Importar PDF' : fileFilter === 'excel' ? 'Importar Planilha' : 'Importar Orçamento'}
           </DialogTitle>
-          <DialogDescription className="font-body">
+          <DialogDescription className="font-body text-xs sm:text-sm">
             {fileFilter === 'pdf'
               ? <>Faça upload de um arquivo <strong>.pdf</strong> com os dados do orçamento. PDFs são processados com IA para extrair seções e itens automaticamente.</>
               : fileFilter === 'excel'
@@ -657,7 +657,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
-            className="border-2 border-dashed border-border rounded-xl p-10 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
+            className="border-2 border-dashed border-border rounded-xl p-6 sm:p-10 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 active:bg-primary/10 transition-all min-h-[160px] sm:min-h-0 flex flex-col items-center justify-center"
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file";
@@ -669,9 +669,9 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
               input.click();
             }}
           >
-            <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <Upload className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground mb-3" />
             <p className="text-sm font-body text-foreground font-medium mb-1">
-              Arraste o arquivo aqui ou clique para selecionar
+              Toque para selecionar <span className="hidden sm:inline">ou arraste</span>
             </p>
             <p className="text-xs text-muted-foreground font-body">
               {fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx, .xls ou .csv' : '.xlsx, .xls, .csv ou .pdf'}
@@ -736,8 +736,10 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
               </div>
             )}
 
-            <div className="border border-border rounded-lg overflow-hidden max-h-80 overflow-y-auto">
-              <table className="w-full text-xs font-body">
+            {/* Mobile: card list / Desktop: table */}
+            <div className="border border-border rounded-lg overflow-hidden max-h-64 sm:max-h-80 overflow-y-auto">
+              {/* Desktop table */}
+              <table className="w-full text-xs font-body hidden sm:table">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">Seção</th>
@@ -759,9 +761,30 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
                   ))}
                 </tbody>
               </table>
+              {/* Mobile card list */}
+              <div className="sm:hidden divide-y divide-border">
+                {parsedRows.slice(0, 30).map((row, i) => (
+                  <div key={i} className="px-3 py-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-body font-medium text-foreground truncate">{row.title}</p>
+                        <p className="text-[10px] font-body text-muted-foreground truncate mt-0.5">{row.section}</p>
+                      </div>
+                      <span className="text-xs font-body font-medium text-foreground whitespace-nowrap">
+                        {row.total ? `R$ ${row.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
               {parsedRows.length > 50 && (
-                <p className="text-xs text-muted-foreground text-center py-2 font-body">
+                <p className="text-xs text-muted-foreground text-center py-2 font-body hidden sm:block">
                   Mostrando 50 de {parsedRows.length} itens
+                </p>
+              )}
+              {parsedRows.length > 30 && (
+                <p className="text-xs text-muted-foreground text-center py-2 font-body sm:hidden">
+                  Mostrando 30 de {parsedRows.length} itens
                 </p>
               )}
             </div>
@@ -787,17 +810,17 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
           {step === "preview" && (
             <>
-              <Button variant="outline" onClick={reset}>
+              <Button variant="outline" onClick={reset} className="w-full sm:w-auto min-h-[44px]">
                 Voltar
               </Button>
-              <Button onClick={handleImport}>Importar {parsedRows.length} itens</Button>
+              <Button onClick={handleImport} className="w-full sm:w-auto min-h-[44px]">Importar {parsedRows.length} itens</Button>
             </>
           )}
           {step === "done" && createdBudgetId && (
-            <Button onClick={() => navigate(`/admin/budget/${createdBudgetId}`)}>
+            <Button onClick={() => navigate(`/admin/budget/${createdBudgetId}`)} className="w-full sm:w-auto min-h-[44px]">
               Abrir Orçamento
             </Button>
           )}
