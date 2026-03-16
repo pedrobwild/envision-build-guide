@@ -201,6 +201,36 @@ export type Database = {
           },
         ]
       }
+      item_photo_library: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          item_name: string
+          item_name_normalized: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          item_name: string
+          item_name_normalized: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          item_name?: string
+          item_name_normalized?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       items: {
         Row: {
           coverage_type: string

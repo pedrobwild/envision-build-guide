@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getCategoryForSection } from "@/lib/scope-categories";
+import { lookupPhotosFromLibrary } from "@/lib/item-photo-library";
 
 const MATCHABLE_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
 
@@ -109,6 +110,24 @@ export async function matchAndCopyItemMedia(
     }
 
     matched++;
+  }
+
+  // 6b. For items that didn't get images from existing items, check the global photo library
+  const unmatchedItems = newItems.filter(
+    (ni) => !imageInserts.some((ins) => ins.item_id === ni.id)
+  );
+  if (unmatchedItems.length > 0) {
+    const libraryPhotos = await lookupPhotosFromLibrary(
+      unmatchedItems.map((i) => i.title)
+    );
+    for (const item of unmatchedItems) {
+      const key = item.title.trim().toLowerCase();
+      const url = libraryPhotos.get(key);
+      if (url) {
+        imageInserts.push({ item_id: item.id, url, is_primary: true });
+        matched++;
+      }
+    }
   }
 
   // 7. Batch insert images

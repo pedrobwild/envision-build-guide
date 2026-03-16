@@ -3,6 +3,7 @@ import { ImagePlus, X, Loader2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { saveToPhotoLibrary } from "@/lib/item-photo-library";
 
 export interface ItemImage {
   id: string;
@@ -53,6 +54,11 @@ export function ItemImageUpload({ images, onImagesChange, budgetId, itemLabel }:
         });
       }
       onImagesChange([...images, ...newImages]);
+      // Save primary to global library
+      const primary = newImages.find(i => i.isPrimary);
+      if (primary && itemLabel) {
+        saveToPhotoLibrary(itemLabel, primary.url);
+      }
       toast.success(`${newImages.length} imagem(ns) adicionada(s)`);
     } catch (err) {
       console.error("Upload error:", err);
@@ -70,9 +76,12 @@ export function ItemImageUpload({ images, onImagesChange, budgetId, itemLabel }:
   };
 
   const setPrimary = (id: string) => {
-    onImagesChange(
-      images.map(img => ({ ...img, isPrimary: img.id === id }))
-    );
+    const updated = images.map(img => ({ ...img, isPrimary: img.id === id }));
+    onImagesChange(updated);
+    const newPrimary = updated.find(i => i.isPrimary);
+    if (newPrimary && itemLabel) {
+      saveToPhotoLibrary(itemLabel, newPrimary.url);
+    }
   };
 
   return (

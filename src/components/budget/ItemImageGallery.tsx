@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Lightbox } from "./Lightbox";
+import { saveToPhotoLibrary } from "@/lib/item-photo-library";
 
 interface ImageRecord {
   id: string;
@@ -50,6 +51,10 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
       const newImg: ImageRecord = { id: inserted?.id || "", url, is_primary: isPrimary };
       setImages((prev) => [...prev, newImg]);
       setActiveIdx(images.length);
+      // Save to global photo library (fire-and-forget)
+      if (isPrimary && item.title) {
+        saveToPhotoLibrary(item.title, url);
+      }
       toast.success("Imagem adicionada");
     } catch (err) {
       console.error(err);
@@ -91,6 +96,10 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
       setImages((prev) =>
         prev.map((im, i) => ({ ...im, is_primary: i === idx }))
       );
+      // Update library with new primary
+      if (item.title) {
+        saveToPhotoLibrary(item.title, img.url);
+      }
       toast.success("Imagem principal definida");
     } catch (err) {
       console.error(err);
