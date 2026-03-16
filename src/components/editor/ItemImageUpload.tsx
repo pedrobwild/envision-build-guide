@@ -3,6 +3,7 @@ import { ImagePlus, X, Loader2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { saveToPhotoLibrary } from "@/lib/item-photo-library";
 
 export interface ItemImage {
   id: string;
