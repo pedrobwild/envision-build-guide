@@ -483,7 +483,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
 
       if (ext === "pdf") {
         parsePdf(f);
-      } else if (ext === "xlsx" || ext === "xls") {
+      } else if (ext === "xlsx" || ext === "xls" || ext === "csv") {
         parseExcel(f);
       } else {
         setError(
