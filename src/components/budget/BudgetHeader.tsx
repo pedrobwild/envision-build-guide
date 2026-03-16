@@ -79,7 +79,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const clientName = budget.client_name ? formatName(sanitizeClientName(budget.client_name)) : "";
 
   const projectTitle = budget.project_name || "Projeto e Reforma";
-  const heroTitle = clientName ? `Orçamento ${clientName}` : projectTitle;
+  const heroTitle = clientName || projectTitle;
   const showPersonalizedSubtitle = !cfg.hide_subtitle && (!budget.project_name || budget.project_name === "Projeto e Reforma");
 
   const tagline = cfg.custom_tagline || "Projeto personalizado · Gestão completa · Execução com garantia";
