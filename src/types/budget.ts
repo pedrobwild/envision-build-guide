@@ -59,6 +59,7 @@ export interface BudgetData {
   prazo_dias_uteis?: number | null;
   estimated_weeks?: number | null;
   versao?: string | null;
+  version_number?: number | null;
   consultora_comercial?: string | null;
   email_comercial?: string | null;
   status: string;
