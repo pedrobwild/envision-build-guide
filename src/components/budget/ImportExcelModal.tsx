@@ -810,17 +810,17 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
           {step === "preview" && (
             <>
-              <Button variant="outline" onClick={reset}>
+              <Button variant="outline" onClick={reset} className="w-full sm:w-auto min-h-[44px]">
                 Voltar
               </Button>
-              <Button onClick={handleImport}>Importar {parsedRows.length} itens</Button>
+              <Button onClick={handleImport} className="w-full sm:w-auto min-h-[44px]">Importar {parsedRows.length} itens</Button>
             </>
           )}
           {step === "done" && createdBudgetId && (
-            <Button onClick={() => navigate(`/admin/budget/${createdBudgetId}`)}>
+            <Button onClick={() => navigate(`/admin/budget/${createdBudgetId}`)} className="w-full sm:w-auto min-h-[44px]">
               Abrir Orçamento
             </Button>
           )}
