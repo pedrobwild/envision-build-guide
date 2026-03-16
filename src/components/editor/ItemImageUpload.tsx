@@ -54,6 +54,11 @@ export function ItemImageUpload({ images, onImagesChange, budgetId, itemLabel }:
         });
       }
       onImagesChange([...images, ...newImages]);
+      // Save primary to global library
+      const primary = newImages.find(i => i.isPrimary);
+      if (primary && itemLabel) {
+        saveToPhotoLibrary(itemLabel, primary.url);
+      }
       toast.success(`${newImages.length} imagem(ns) adicionada(s)`);
     } catch (err) {
       console.error("Upload error:", err);
