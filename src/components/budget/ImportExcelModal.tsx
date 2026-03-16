@@ -736,8 +736,10 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
               </div>
             )}
 
-            <div className="border border-border rounded-lg overflow-hidden max-h-80 overflow-y-auto">
-              <table className="w-full text-xs font-body">
+            {/* Mobile: card list / Desktop: table */}
+            <div className="border border-border rounded-lg overflow-hidden max-h-64 sm:max-h-80 overflow-y-auto">
+              {/* Desktop table */}
+              <table className="w-full text-xs font-body hidden sm:table">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
                     <th className="text-left px-3 py-2 font-medium text-muted-foreground">Seção</th>
@@ -759,9 +761,30 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
                   ))}
                 </tbody>
               </table>
+              {/* Mobile card list */}
+              <div className="sm:hidden divide-y divide-border">
+                {parsedRows.slice(0, 30).map((row, i) => (
+                  <div key={i} className="px-3 py-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-body font-medium text-foreground truncate">{row.title}</p>
+                        <p className="text-[10px] font-body text-muted-foreground truncate mt-0.5">{row.section}</p>
+                      </div>
+                      <span className="text-xs font-body font-medium text-foreground whitespace-nowrap">
+                        {row.total ? `R$ ${row.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
               {parsedRows.length > 50 && (
-                <p className="text-xs text-muted-foreground text-center py-2 font-body">
+                <p className="text-xs text-muted-foreground text-center py-2 font-body hidden sm:block">
                   Mostrando 50 de {parsedRows.length} itens
+                </p>
+              )}
+              {parsedRows.length > 30 && (
+                <p className="text-xs text-muted-foreground text-center py-2 font-body sm:hidden">
+                  Mostrando 30 de {parsedRows.length} itens
                 </p>
               )}
             </div>
