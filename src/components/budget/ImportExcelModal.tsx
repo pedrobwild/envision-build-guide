@@ -396,7 +396,9 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         const pageImages = await renderPdfPagesAsImages(pdf, 10);
         parsedData = await invokePdfParser({ pageImages });
       } else {
-        parsedData = await invokePdfParser({ textContent });
+        // Always send images alongside text for better table/value extraction
+        const pageImages = await renderPdfPagesAsImages(pdf, 10);
+        parsedData = await invokePdfParser({ textContent, pageImages });
       }
 
       const hasValues = (sections: any[]) =>
