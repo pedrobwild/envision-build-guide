@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getCategoryForSection } from "@/lib/scope-categories";
+import { lookupPhotosFromLibrary } from "@/lib/item-photo-library";
 
 const MATCHABLE_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
 
