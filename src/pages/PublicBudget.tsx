@@ -286,8 +286,8 @@ export default function PublicBudget() {
               </div>
             </div>
 
-            {/* ─── Escopo técnico detalhado ─── */}
-            <div id="mobile-scope" className="scroll-mt-20">
+            {/* ─── Escopo técnico detalhado (hidden on mobile, visible on desktop) ─── */}
+            <div id="mobile-scope" className="scroll-mt-20 hidden lg:block">
               {sections.length > 0 && (
                 <div className="rounded-xl">
                   <div className="flex items-center justify-between pt-2 pb-2 gap-3">
