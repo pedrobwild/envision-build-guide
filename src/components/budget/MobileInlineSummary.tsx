@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Clock,
   AlertTriangle,
   Shield,
   CreditCard,
+  MessageCircle,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
@@ -18,16 +19,50 @@ interface MobileInlineSummaryProps {
     expiresAt: Date;
   };
   categorizedGroups: CategorizedGroup[];
+  projectName?: string;
+  clientName?: string;
+  publicId: string;
+  onTotalCardVisibilityChange?: (visible: boolean) => void;
 }
 
 const INSTALLMENT_OPTIONS = [3, 6, 10, 12, 18];
+const DEFAULT_PHONE = "5511911906183";
 
 export function MobileInlineSummary({
   total,
   validity,
   categorizedGroups,
+  projectName,
+  clientName,
+  publicId,
+  onTotalCardVisibilityChange,
 }: MobileInlineSummaryProps) {
   const [installments, setInstallments] = useState(10);
+  const totalCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!totalCardRef.current || !onTotalCardVisibilityChange) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        onTotalCardVisibilityChange(entry.isIntersecting);
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(totalCardRef.current);
+    return () => observer.disconnect();
+  }, [onTotalCardVisibilityChange]);
+
+  const whatsappMessage = validity.expired
+    ? encodeURIComponent(
+        `Olá! O orçamento ${projectName || "do projeto"} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
+      )
+    : encodeURIComponent(
+        `Olá! Sou ${clientName || "cliente"}, estou analisando o orçamento do projeto ${projectName || "do projeto"} (Ref: ${publicId}) e gostaria de conversar sobre os próximos passos.`
+      );
+  const whatsappUrl = `https://wa.me/${DEFAULT_PHONE}?text=${whatsappMessage}`;
+  const ctaLabel = validity.expired ? "Solicitar atualização" : "Iniciar meu projeto";
 
   return (
     <div
@@ -107,8 +142,11 @@ export function MobileInlineSummary({
           </div>
         )}
 
-        {/* Total card */}
-        <div className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-5">
+        {/* Total card — observed by IntersectionObserver */}
+        <div
+          ref={totalCardRef}
+          className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-5"
+        >
           <p className="text-[13px] font-body font-medium text-muted-foreground mb-1">
             Investimento total
           </p>
@@ -164,6 +202,18 @@ export function MobileInlineSummary({
             Condições sob consulta com sua consultora
           </p>
         </div>
+
+        {/* Inline CTA — replaces bottom bar CTA when bar hides */}
+        <motion.a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          whileTap={{ scale: 0.98 }}
+          className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-semibold text-sm flex items-center justify-center gap-2"
+        >
+          <MessageCircle className="h-5 w-5 flex-shrink-0" />
+          {ctaLabel}
+        </motion.a>
       </motion.div>
     </div>
   );
