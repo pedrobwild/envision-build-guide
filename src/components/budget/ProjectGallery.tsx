@@ -1,21 +1,17 @@
 import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ZoomIn, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { ZoomIn, ChevronLeft, ChevronRight, Play, Camera } from "lucide-react";
 import { Lightbox } from "@/components/budget/Lightbox";
 import useEmblaCarousel from "embla-carousel-react";
 import ReactPlayer from "react-player";
 import { motion } from "framer-motion";
+import { BUDGET_MEDIA } from "@/lib/budget-media";
 
-type GalleryTab = "3d" | "exec";
-
-const tabs = [
-  { id: "3d", label: "Projeto 3D" },
-  { id: "exec", label: "Projeto Executivo" },
-] as const;
+type GalleryTab = "3d" | "exec" | "fotos";
 
 type MediaItem = { src: string; alt: string; type?: "video" | "image" };
 
-const gallery: Record<GalleryTab, MediaItem[]> = {
+const defaultGallery: Record<"3d" | "exec", MediaItem[]> = {
   "3d": [
     { src: "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media/videos/projeto-3d-tour.mp4", alt: "Projeto 3D — Vídeo Tour", type: "video" },
     { src: "/images/exemplo-projeto-3d-1.png", alt: "Projeto 3D — Planta humanizada" },
@@ -27,8 +23,74 @@ const gallery: Record<GalleryTab, MediaItem[]> = {
   ],
 };
 
-export function ProjectGallery() {
-  const [activeTab, setActiveTab] = useState<GalleryTab>("3d");
+function ImageWithFallback({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [error, setError] = useState(false);
+  if (error) {
+    return (
+      <div className={`bg-muted rounded-lg flex flex-col items-center justify-center gap-2 ${className}`}>
+        <Camera className="h-8 w-8 text-muted-foreground/50" />
+        <span className="text-xs text-muted-foreground font-body">Imagem indisponível</span>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      onError={() => setError(true)}
+    />
+  );
+}
+
+interface ProjectGalleryProps {
+  publicId?: string;
+}
+
+export function ProjectGallery({ publicId }: ProjectGalleryProps) {
+  const media = publicId ? BUDGET_MEDIA[publicId] : undefined;
+
+  // Build available tabs based on media override
+  const availableTabs: { id: GalleryTab; label: string }[] = [];
+  const galleryData: Record<GalleryTab, MediaItem[]> = { "3d": [], exec: [], fotos: [] };
+
+  // Projeto 3D tab
+  if (media && media.projeto3d.length > 0) {
+    const items: MediaItem[] = [];
+    if (media.video3d) {
+      items.push({ src: media.video3d, alt: "Projeto 3D — Vídeo Tour", type: "video" });
+    }
+    media.projeto3d.forEach((src, i) => {
+      items.push({ src, alt: `Projeto 3D — ${i + 1}` });
+    });
+    galleryData["3d"] = items;
+    availableTabs.push({ id: "3d", label: "Projeto 3D" });
+  } else {
+    galleryData["3d"] = defaultGallery["3d"];
+    availableTabs.push({ id: "3d", label: "Projeto 3D" });
+  }
+
+  // Projeto Executivo tab
+  if (media && media.projetoExecutivo.length > 0) {
+    galleryData.exec = media.projetoExecutivo.map((src, i) => ({
+      src, alt: `Projeto Executivo — ${i + 1}`,
+    }));
+    availableTabs.push({ id: "exec", label: "Projeto Executivo" });
+  } else {
+    galleryData.exec = defaultGallery.exec;
+    availableTabs.push({ id: "exec", label: "Projeto Executivo" });
+  }
+
+  // Fotos tab — only if override has photos
+  if (media && media.fotos.length > 0) {
+    galleryData.fotos = media.fotos.map((src, i) => ({
+      src, alt: `Foto da obra — ${i + 1}`,
+    }));
+    availableTabs.push({ id: "fotos", label: "Fotos" });
+  }
+
+  const [activeTab, setActiveTab] = useState<GalleryTab>(availableTabs[0]?.id ?? "3d");
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
@@ -53,7 +115,7 @@ export function ProjectGallery() {
     emblaApi.scrollTo(0, true);
   }, [activeTab, emblaApi]);
 
-  const images = gallery[activeTab];
+  const images = galleryData[activeTab] ?? [];
 
   return (
     <>
@@ -61,28 +123,34 @@ export function ProjectGallery() {
         <CardContent className="p-4 sm:p-5 md:p-6 space-y-3">
           <div>
             <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
-              Exemplo de entrega real
+              {media && (media.projeto3d.length > 0 || media.fotos.length > 0)
+                ? "Projeto real desta unidade"
+                : "Exemplo de entrega real"}
             </p>
             <p className="text-xs text-muted-foreground font-body mt-0.5">
-              Veja como é o resultado final de um projeto arquitetônico Bwild.
+              {activeTab === "fotos"
+                ? "Registro fotográfico da obra finalizada."
+                : "Veja como é o resultado final de um projeto arquitetônico Bwild."}
             </p>
           </div>
 
-          <div className="flex gap-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative px-3 py-1.5 rounded-md text-xs font-display font-semibold transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {availableTabs.length > 1 && (
+            <div className="flex gap-2">
+              {availableTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative px-3 py-1.5 rounded-md text-xs font-display font-semibold transition-colors ${
+                    activeTab === tab.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="relative">
             <div ref={emblaRef} className="overflow-hidden rounded-lg">
@@ -113,11 +181,10 @@ export function ProjectGallery() {
                         }}
                         className="group relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
                       >
-                        <img
+                        <ImageWithFallback
                           src={img.src}
                           alt={img.alt}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
                         />
                         <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
                           <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
