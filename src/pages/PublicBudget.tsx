@@ -346,6 +346,13 @@ export default function PublicBudget() {
               )}
             </div>
 
+            {/* ── Mobile inline summary ── */}
+            <MobileInlineSummary
+              total={total}
+              validity={validity}
+              categorizedGroups={categorizedGroups}
+            />
+
             {/* ── Strong CTA: after trust, before portal ── */}
             <InlineCTA
               publicId={publicId || "demo"}
