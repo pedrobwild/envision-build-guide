@@ -6,9 +6,11 @@ import {
   Shield,
   CreditCard,
   MessageCircle,
+  ChevronRight,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
+import { CategoryDetailDialog } from "./CategoryDetailDialog";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface MobileInlineSummaryProps {
