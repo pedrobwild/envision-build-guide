@@ -409,7 +409,7 @@ export default function PublicBudget() {
           </div>
         </div>
 
-        {/* Mobile sticky bottom bar + drawer */}
+        {/* Mobile sticky bottom bar */}
         <MobileBottomBar
           total={total}
           validity={validity}
@@ -417,6 +417,7 @@ export default function PublicBudget() {
           projectName={budget.project_name}
           clientName={budget.client_name}
           publicId={publicId || "demo"}
+          hidden={bottomBarHidden}
         />
 
         <div id="mobile-faq" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20">
