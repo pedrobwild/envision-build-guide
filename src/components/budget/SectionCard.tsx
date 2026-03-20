@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
-import { ChevronDown, ChevronUp, Check, X, ZoomIn, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, X, ZoomIn } from "lucide-react";
 import { Lightbox } from "./Lightbox";
-import { ItemImageGallery } from "./ItemImageGallery";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ExpandableItemRow } from "./ExpandableItemRow";
 import { motion, AnimatePresence } from "framer-motion";
 import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from "@/lib/section-icons";
 import { cn } from "@/lib/utils";
@@ -38,6 +37,7 @@ export function SectionCard({
 }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
   const [expanded, setExpanded] = useState(false);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<{ url: string; alt?: string }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -83,106 +83,7 @@ export function SectionCard({
     ? `${categoryColor.bgClass}/10 ${categoryColor.colorClass}`
     : SECTION_ICON_BG_COLORS[sectionIndex % SECTION_ICON_BG_COLORS.length];
 
-  // ── Render a single item row ──
-  const renderItem = (item: any, i: number, isLast: boolean) => {
-    const primaryImage =
-      item.images?.find((img: any) => img.is_primary) || item.images?.[0];
-    const isZoneMatch =
-      highlightZone &&
-      (() => {
-        const ct = item.coverage_type || "geral";
-        const inc: string[] = item.included_rooms || [];
-        const exc: string[] = item.excluded_rooms || [];
-        if (ct === "geral") return !exc.includes(highlightZone);
-        return inc.includes(highlightZone);
-      })();
-
-    const itemTotal = Number(item.internal_total) || 0;
-    const itemUnitPrice = Number(item.internal_unit_price) || 0;
-    const itemQty = Number(item.qty) || 0;
-
-    return (
-      <div
-        key={item.id}
-        className={cn(
-          "flex items-center gap-2.5 px-2 py-2 transition-colors min-h-[44px]",
-          isZoneMatch && "bg-primary/10 ring-1 ring-primary/20 rounded-lg",
-          !isLast && "border-b border-border/50",
-          i % 2 === 1 && "bg-muted/20"
-        )}
-      >
-        {categoryColor && IMAGE_GALLERY_CATEGORIES.has(categoryColor.id) && budgetId ? (
-          <ItemImageGallery item={item} budgetId={budgetId} editable={editable} />
-        ) : primaryImage ? (
-          <button
-            onClick={() => openLightbox(primaryImage.url)}
-            className="relative w-8 h-8 rounded-full overflow-hidden group cursor-zoom-in flex-shrink-0"
-          >
-            <img
-              src={primaryImage.url}
-              alt={item.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-              loading="lazy"
-            />
-          </button>
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-          </div>
-        )}
-
-        {/* Left: name + qty */}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <p className="text-sm font-medium text-foreground font-body truncate leading-relaxed">
-              {item.title}
-            </p>
-            {item.description && (
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="flex-shrink-0 text-muted-foreground/50 hover:text-primary transition-colors">
-                      <Info className="h-3 w-3" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs text-xs font-body">
-                    {item.description}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-          {showItemQty && item.qty && (
-            <p className="text-xs text-muted-foreground font-body">
-              {item.qty} {item.unit || "un"}
-            </p>
-          )}
-        </div>
-
-        {/* Right: prices */}
-        <AnimatePresence>
-          {showItemPrices && itemTotal > 0 && (
-            <motion.div
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              transition={{ duration: 0.25 }}
-              className="text-right flex-shrink-0"
-            >
-              <p className="text-sm font-mono font-semibold text-foreground tabular-nums">
-                {formatBRL(itemTotal)}
-              </p>
-              {itemQty > 1 && itemUnitPrice > 0 && (
-                <p className="text-xs text-muted-foreground font-body tabular-nums">
-                  ({formatBRL(itemUnitPrice)}/un)
-                </p>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  };
+  const showGallery = !!(categoryColor && IMAGE_GALLERY_CATEGORIES.has(categoryColor.id));
 
   return (
     <>
@@ -343,9 +244,23 @@ export function SectionCard({
               className="overflow-hidden"
             >
               <div className="px-4 py-3">
-                {items.map((item: any, i: number) =>
-                  renderItem(item, i, i === items.length - 1)
-                )}
+                {items.map((item: any, i: number) => (
+                  <ExpandableItemRow
+                    key={item.id}
+                    item={item}
+                    index={i}
+                    isLast={i === items.length - 1}
+                    isExpanded={expandedItemId === item.id}
+                    onToggle={() => setExpandedItemId(prev => prev === item.id ? null : item.id)}
+                    showItemQty={showItemQty}
+                    showItemPrices={showItemPrices}
+                    highlightZone={highlightZone}
+                    showImageGallery={showGallery}
+                    budgetId={budgetId}
+                    editable={editable}
+                    onOpenLightbox={openLightbox}
+                  />
+                ))}
 
                 {items.length > PREVIEW_COUNT && (
                   <button
