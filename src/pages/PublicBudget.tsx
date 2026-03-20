@@ -362,14 +362,6 @@ export default function PublicBudget() {
               onTotalCardVisibilityChange={handleTotalCardVisibility}
             />
 
-            {/* ── Strong CTA: after trust, before portal ── */}
-            <InlineCTA
-              publicId={publicId || "demo"}
-              projectName={budget.project_name}
-              clientName={budget.client_name}
-              expired={validity.expired}
-              variant="strong"
-            />
 
             {/* mobile-portal anchor kept for nav */}
             <div id="mobile-portal" className="scroll-mt-20" />
