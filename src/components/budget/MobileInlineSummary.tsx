@@ -6,9 +6,11 @@ import {
   Shield,
   CreditCard,
   MessageCircle,
+  ChevronRight,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
+import { CategoryDetailDialog } from "./CategoryDetailDialog";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface MobileInlineSummaryProps {
@@ -38,6 +40,7 @@ export function MobileInlineSummary({
   onTotalCardVisibilityChange,
 }: MobileInlineSummaryProps) {
   const [installments, setInstallments] = useState(10);
+  const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
   const totalCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -121,9 +124,10 @@ export function MobileInlineSummary({
               Composição do investimento
             </p>
             {categorizedGroups.map((group) => (
-              <div
+              <button
                 key={group.category.id}
-                className="flex items-center gap-3 py-2"
+                onClick={() => setDetailGroup(group)}
+                className="w-full flex items-center gap-3 py-2.5 px-1 rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div
                   className={cn(
@@ -131,13 +135,14 @@ export function MobileInlineSummary({
                     group.category.bgClass
                   )}
                 />
-                <span className="flex-1 text-sm font-body text-foreground leading-snug">
+                <span className="flex-1 text-sm font-body text-foreground leading-snug text-left">
                   {group.category.label}
                 </span>
                 <span className="text-sm font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
                   {formatBRL(group.subtotal)}
                 </span>
-              </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              </button>
             ))}
           </div>
         )}
@@ -215,6 +220,12 @@ export function MobileInlineSummary({
           {ctaLabel}
         </motion.a>
       </motion.div>
+
+      <CategoryDetailDialog
+        open={!!detailGroup}
+        onClose={() => setDetailGroup(null)}
+        group={detailGroup}
+      />
     </div>
   );
 }
