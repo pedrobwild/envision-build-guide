@@ -220,6 +220,12 @@ export function MobileInlineSummary({
           {ctaLabel}
         </motion.a>
       </motion.div>
+
+      <CategoryDetailDialog
+        open={!!detailGroup}
+        onClose={() => setDetailGroup(null)}
+        group={detailGroup}
+      />
     </div>
   );
 }
