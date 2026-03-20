@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
-import { ChevronDown, ChevronUp, Check, X, ZoomIn, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, Check, X, ZoomIn } from "lucide-react";
 import { Lightbox } from "./Lightbox";
-import { ItemImageGallery } from "./ItemImageGallery";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ExpandableItemRow } from "./ExpandableItemRow";
 import { motion, AnimatePresence } from "framer-motion";
 import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from "@/lib/section-icons";
 import { cn } from "@/lib/utils";
