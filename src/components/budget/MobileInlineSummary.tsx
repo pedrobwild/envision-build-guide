@@ -40,6 +40,7 @@ export function MobileInlineSummary({
   onTotalCardVisibilityChange,
 }: MobileInlineSummaryProps) {
   const [installments, setInstallments] = useState(10);
+  const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
   const totalCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
