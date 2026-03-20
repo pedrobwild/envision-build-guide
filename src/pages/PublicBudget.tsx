@@ -356,6 +356,10 @@ export default function PublicBudget() {
               total={total}
               validity={validity}
               categorizedGroups={categorizedGroups}
+              projectName={budget.project_name}
+              clientName={budget.client_name}
+              publicId={publicId || "demo"}
+              onTotalCardVisibilityChange={handleTotalCardVisibility}
             />
 
             {/* ── Strong CTA: after trust, before portal ── */}
