@@ -122,15 +122,11 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
       <Card className="border-border overflow-hidden">
         <CardContent className="p-4 sm:p-5 md:p-6 space-y-3">
           <div>
-            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
-              {media && (media.projeto3d.length > 0 || media.fotos.length > 0)
-                ? "Projeto real desta unidade"
-                : "Exemplo de entrega real"}
+          <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
+              Exemplo de entrega real
             </p>
             <p className="text-xs text-muted-foreground font-body mt-0.5">
-              {activeTab === "fotos"
-                ? "Registro fotográfico da obra finalizada."
-                : "Veja como é o resultado final de um projeto arquitetônico Bwild."}
+              Veja como é o resultado final de um projeto arquitetônico Bwild.
             </p>
           </div>
 
