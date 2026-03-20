@@ -244,9 +244,23 @@ export function SectionCard({
               className="overflow-hidden"
             >
               <div className="px-4 py-3">
-                {items.map((item: any, i: number) =>
-                  renderItem(item, i, i === items.length - 1)
-                )}
+                {items.map((item: any, i: number) => (
+                  <ExpandableItemRow
+                    key={item.id}
+                    item={item}
+                    index={i}
+                    isLast={i === items.length - 1}
+                    isExpanded={expandedItemId === item.id}
+                    onToggle={() => setExpandedItemId(prev => prev === item.id ? null : item.id)}
+                    showItemQty={showItemQty}
+                    showItemPrices={showItemPrices}
+                    highlightZone={highlightZone}
+                    showImageGallery={showGallery}
+                    budgetId={budgetId}
+                    editable={editable}
+                    onOpenLightbox={openLightbox}
+                  />
+                ))}
 
                 {items.length > PREVIEW_COUNT && (
                   <button
