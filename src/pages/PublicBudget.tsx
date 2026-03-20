@@ -53,6 +53,11 @@ export default function PublicBudget() {
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [bottomBarHidden, setBottomBarHidden] = useState(false);
+
+  const handleTotalCardVisibility = useCallback((visible: boolean) => {
+    setBottomBarHidden(visible);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
