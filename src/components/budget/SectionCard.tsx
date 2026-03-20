@@ -37,6 +37,7 @@ export function SectionCard({
 }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
   const [expanded, setExpanded] = useState(false);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<{ url: string; alt?: string }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
