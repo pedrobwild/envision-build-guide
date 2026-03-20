@@ -1,0 +1,170 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Clock,
+  AlertTriangle,
+  Shield,
+  CreditCard,
+} from "lucide-react";
+import { formatBRL, formatDateLong } from "@/lib/formatBRL";
+import { cn } from "@/lib/utils";
+import type { CategorizedGroup } from "@/lib/scope-categories";
+
+interface MobileInlineSummaryProps {
+  total: number;
+  validity: {
+    expired: boolean;
+    daysLeft: number;
+    expiresAt: Date;
+  };
+  categorizedGroups: CategorizedGroup[];
+}
+
+const INSTALLMENT_OPTIONS = [3, 6, 10, 12, 18];
+
+export function MobileInlineSummary({
+  total,
+  validity,
+  categorizedGroups,
+}: MobileInlineSummaryProps) {
+  const [installments, setInstallments] = useState(10);
+
+  return (
+    <div
+      id="resumo-mobile"
+      className="lg:hidden scroll-mt-24"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="space-y-4"
+      >
+        {/* Title */}
+        <h2 className="text-xl font-display font-bold text-foreground tracking-tight">
+          Resumo do investimento
+        </h2>
+
+        {/* Validity notice */}
+        <div
+          className={cn(
+            "rounded-xl px-3.5 py-3 flex items-center gap-2.5",
+            validity.expired
+              ? "bg-destructive/8 border border-destructive/15"
+              : validity.daysLeft <= 5
+                ? "bg-warning/8 border border-warning/15"
+                : "bg-success/8 border border-success/15"
+          )}
+        >
+          {validity.expired ? (
+            <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+          ) : (
+            <Clock
+              className={cn(
+                "h-4 w-4 flex-shrink-0",
+                validity.daysLeft <= 5 ? "text-warning" : "text-success"
+              )}
+            />
+          )}
+          <p
+            className={cn(
+              "text-[13px] font-body leading-snug",
+              validity.expired ? "text-destructive" : "text-foreground"
+            )}
+          >
+            {validity.expired
+              ? "Condições expiradas — solicite valores atualizados."
+              : `Condições válidas até ${formatDateLong(validity.expiresAt)}`}
+          </p>
+        </div>
+
+        {/* Category breakdown */}
+        {categorizedGroups.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4 space-y-1">
+            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Composição do investimento
+            </p>
+            {categorizedGroups.map((group) => (
+              <div
+                key={group.category.id}
+                className="flex items-center gap-3 py-2"
+              >
+                <div
+                  className={cn(
+                    "w-1 h-5 rounded-full flex-shrink-0",
+                    group.category.bgClass
+                  )}
+                />
+                <span className="flex-1 text-sm font-body text-foreground leading-snug">
+                  {group.category.label}
+                </span>
+                <span className="text-sm font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
+                  {formatBRL(group.subtotal)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Total card */}
+        <div className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-5">
+          <p className="text-[13px] font-body font-medium text-muted-foreground mb-1">
+            Investimento total
+          </p>
+          <p className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none">
+            {formatBRL(total)}
+          </p>
+          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/10">
+            <Shield className="h-3.5 w-3.5 text-primary/40" />
+            <span className="text-[13px] text-muted-foreground/80 font-body">
+              Preço fixo · Sem custos ocultos
+            </span>
+          </div>
+        </div>
+
+        {/* Installment simulator */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <CreditCard className="h-4 w-4 text-primary" />
+            <span className="text-sm font-display font-bold text-foreground">
+              Simule o parcelamento
+            </span>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {INSTALLMENT_OPTIONS.map((n) => (
+              <button
+                key={n}
+                onClick={() => setInstallments(n)}
+                className={cn(
+                  "min-h-[44px] min-w-[44px] px-3 py-2 rounded-lg text-sm font-body font-medium transition-all",
+                  installments === n
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/60 text-foreground hover:bg-muted"
+                )}
+              >
+                {n}×
+              </button>
+            ))}
+          </div>
+          <motion.div
+            key={installments}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3 text-center"
+          >
+            <p className="text-sm text-muted-foreground font-body">
+              {installments}× de{" "}
+              <span className="font-display font-bold text-lg text-primary tabular-nums">
+                {formatBRL(total / installments)}
+              </span>
+            </p>
+          </motion.div>
+          <p className="text-xs text-muted-foreground font-body mt-2 text-center">
+            Condições sob consulta com sua consultora
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

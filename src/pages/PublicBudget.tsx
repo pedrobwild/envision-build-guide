@@ -21,6 +21,7 @@ import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
 import { MobileHeroCard } from "@/components/budget/MobileHeroCard";
 import { MobileSectionNav } from "@/components/budget/MobileSectionNav";
 import { MobileBottomBar } from "@/components/budget/MobileBottomBar";
+import { MobileInlineSummary } from "@/components/budget/MobileInlineSummary";
 
 import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
@@ -344,6 +345,13 @@ export default function PublicBudget() {
                 </div>
               )}
             </div>
+
+            {/* ── Mobile inline summary ── */}
+            <MobileInlineSummary
+              total={total}
+              validity={validity}
+              categorizedGroups={categorizedGroups}
+            />
 
             {/* ── Strong CTA: after trust, before portal ── */}
             <InlineCTA
