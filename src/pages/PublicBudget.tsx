@@ -270,7 +270,7 @@ export default function PublicBudget() {
               {/* ─── Visual 3D + Portal logo após Engenharia ─── */}
               <div id="mobile-trust" className="space-y-3 mt-3 scroll-mt-20">
                 <AnimatedSection id="gallery-section" index={0.55}>
-                  <ProjectGallery />
+                  <ProjectGallery publicId={publicId} />
                 </AnimatedSection>
 
                 <AnimatedSection id="portal-section-inline" index={0.6}>
