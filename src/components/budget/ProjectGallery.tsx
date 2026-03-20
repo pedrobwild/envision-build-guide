@@ -77,7 +77,7 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
       src, alt: `Projeto Executivo — ${i + 1}`,
     }));
     availableTabs.push({ id: "exec", label: "Projeto Executivo" });
-  } else {
+  } else if (!media) {
     galleryData.exec = defaultGallery.exec;
     availableTabs.push({ id: "exec", label: "Projeto Executivo" });
   }
