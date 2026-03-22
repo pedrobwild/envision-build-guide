@@ -33,7 +33,7 @@ export const SCOPE_CATEGORIES: ScopeCategory[] = [
     colorClass: "text-accent-foreground",
     bgClass: "bg-accent-foreground",
     borderClass: "border-l-accent-foreground",
-    matches: ["revestimentos", "vinílico", "vinilic", "pinturas", "pintura", "vidros", "espelhos", "luminárias", "luminaria", "acessórios", "acessorios", "bancadas", "granito", "metais", "cortinas", "rodapé", "rodape"],
+    matches: ["revestimentos", "vinílico", "vinilic", "pinturas", "pintura", "vidros", "vidraçaria", "vidracaria", "espelhos", "luminárias", "luminaria", "acessórios", "acessorios", "bancadas", "granito", "metais", "cortinas", "rodapé", "rodape"],
   },
   {
     id: "marcenaria",
