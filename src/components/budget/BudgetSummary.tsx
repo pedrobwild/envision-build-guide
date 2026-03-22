@@ -56,7 +56,7 @@ export function BudgetSummary({
 
   const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
 
-  const DISPLAYED_CATEGORIES = ["marcenaria", "mobiliario", "eletro"];
+  const DISPLAYED_CATEGORIES = allCategoriesOpenSheet ? [] : ["marcenaria", "mobiliario", "eletro"];
 
   const hasCategorized = categorizedGroups && categorizedGroups.length > 0;
   const scopeTotal =
