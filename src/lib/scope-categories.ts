@@ -10,6 +10,15 @@ export interface ScopeCategory {
   matches: string[];
 }
 
+function normalizeCategoryText(value: string) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 export const SCOPE_CATEGORIES: ScopeCategory[] = [
   {
     id: "projetos",
@@ -62,9 +71,9 @@ export const SCOPE_CATEGORIES: ScopeCategory[] = [
 ];
 
 export function getCategoryForSection(sectionTitle: string): ScopeCategory {
-  const lower = (sectionTitle || "").toLowerCase();
+  const normalizedTitle = normalizeCategoryText(sectionTitle);
   for (const cat of SCOPE_CATEGORIES) {
-    if (cat.matches.some((m) => lower.includes(m))) return cat;
+    if (cat.matches.some((m) => normalizedTitle.includes(normalizeCategoryText(m)))) return cat;
   }
   return SCOPE_CATEGORIES[SCOPE_CATEGORIES.length - 1]; // fallback to last category
 }
