@@ -390,6 +390,7 @@ export default function PublicBudget() {
                 categorizedGroups={categorizedGroups}
                 budgetId={budget.id}
                 editable={isAdmin}
+                allCategoriesOpenSheet={["2aa034962039", "f865e54c9a5f"].includes(publicId || "")}
               />
               <InstallmentSimulator total={total} />
               <ApprovalCTA
