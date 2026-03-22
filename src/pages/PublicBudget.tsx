@@ -286,70 +286,72 @@ export default function PublicBudget() {
               </div>
             </div>
 
-            {/* ─── Escopo técnico detalhado (hidden on mobile, visible on desktop) ─── */}
-            <div id="mobile-scope" className={`scroll-mt-20 hidden ${["2aa034962039", "f865e54c9a5f"].includes(publicId || "") ? "hidden" : "lg:block"}`}>
-              {sections.length > 0 && (
-                <div className="rounded-xl">
-                  <div className="flex items-center justify-between pt-2 pb-2 gap-3">
-                    <div className="min-w-0">
-                      <h2 className="text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
-                        Mobília e eletrodomésticos
-                      </h2>
-                      <p className="text-muted-foreground text-xs mt-0.5 font-body hidden sm:block">
-                        Especificação completa dos itens do seu projeto
-                      </p>
-                    </div>
-                    <label className="flex items-center gap-2 flex-shrink-0 min-h-[44px] cursor-pointer">
-                      <span className="text-xs text-muted-foreground font-body hidden sm:inline">
-                        {showPrices ? "Valores" : "Valores"}
-                      </span>
-                      <Switch
-                        checked={showPrices}
-                        onCheckedChange={setShowPrices}
-                        aria-label="Mostrar ou ocultar valores"
-                      />
-                      {showPrices ? (
-                        <Eye className="h-3.5 w-3.5 text-primary sm:hidden" />
-                      ) : (
-                        <EyeOff className="h-3.5 w-3.5 text-muted-foreground sm:hidden" />
-                      )}
-                    </label>
-                  </div>
-
-                  {categorizedGroups.filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id)).map((group) => {
-                    const groupSections = group.sections;
-                    const totalItems = groupSections.reduce((sum, s) => sum + (s.items?.length || 0), 0);
-                    return (
-                      <div key={group.category.id} className="space-y-2 sm:space-y-3">
-                        <CategoryHeader
-                          category={group.category}
-                          subtotal={group.subtotal}
-                          sectionCount={groupSections.length}
-                          itemCount={totalItems}
-                        />
-                        {groupSections.map((section) => {
-                          const currentIdx = globalSectionIdx++;
-                          return (
-                            <AnimatedSection key={section.id} id={`section-${section.id}`} index={currentIdx + 1}>
-                              <SectionCard
-                                section={section}
-                                compact={false}
-                                showItemQty={budget.show_item_qty ?? true}
-                                showItemPrices={showPrices}
-                                sectionIndex={currentIdx}
-                                categoryColor={group.category}
-                                budgetId={budget.id}
-                                editable={isAdmin}
-                              />
-                            </AnimatedSection>
-                          );
-                        })}
+            {/* ─── Escopo técnico detalhado (hidden on mobile, visible on desktop — hidden entirely for specific projects) ─── */}
+            {!["2aa034962039", "f865e54c9a5f"].includes(publicId || "") && (
+              <div id="mobile-scope" className="scroll-mt-20 hidden lg:block">
+                {sections.length > 0 && (
+                  <div className="rounded-xl">
+                    <div className="flex items-center justify-between pt-2 pb-2 gap-3">
+                      <div className="min-w-0">
+                        <h2 className="text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
+                          Mobília e eletrodomésticos
+                        </h2>
+                        <p className="text-muted-foreground text-xs mt-0.5 font-body hidden sm:block">
+                          Especificação completa dos itens do seu projeto
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                      <label className="flex items-center gap-2 flex-shrink-0 min-h-[44px] cursor-pointer">
+                        <span className="text-xs text-muted-foreground font-body hidden sm:inline">
+                          {showPrices ? "Valores" : "Valores"}
+                        </span>
+                        <Switch
+                          checked={showPrices}
+                          onCheckedChange={setShowPrices}
+                          aria-label="Mostrar ou ocultar valores"
+                        />
+                        {showPrices ? (
+                          <Eye className="h-3.5 w-3.5 text-primary sm:hidden" />
+                        ) : (
+                          <EyeOff className="h-3.5 w-3.5 text-muted-foreground sm:hidden" />
+                        )}
+                      </label>
+                    </div>
+
+                    {categorizedGroups.filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id)).map((group) => {
+                      const groupSections = group.sections;
+                      const totalItems = groupSections.reduce((sum, s) => sum + (s.items?.length || 0), 0);
+                      return (
+                        <div key={group.category.id} className="space-y-2 sm:space-y-3">
+                          <CategoryHeader
+                            category={group.category}
+                            subtotal={group.subtotal}
+                            sectionCount={groupSections.length}
+                            itemCount={totalItems}
+                          />
+                          {groupSections.map((section) => {
+                            const currentIdx = globalSectionIdx++;
+                            return (
+                              <AnimatedSection key={section.id} id={`section-${section.id}`} index={currentIdx + 1}>
+                                <SectionCard
+                                  section={section}
+                                  compact={false}
+                                  showItemQty={budget.show_item_qty ?? true}
+                                  showItemPrices={showPrices}
+                                  sectionIndex={currentIdx}
+                                  categoryColor={group.category}
+                                  budgetId={budget.id}
+                                  editable={isAdmin}
+                                />
+                              </AnimatedSection>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* ── Mobile inline summary ── */}
             <MobileInlineSummary
