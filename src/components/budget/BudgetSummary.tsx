@@ -33,6 +33,7 @@ export function BudgetSummary({
   categorizedGroups,
   budgetId,
   editable = false,
+  allCategoriesOpenSheet = false,
 }: BudgetSummaryProps) {
   const validity = budgetDate ? getValidityInfo(budgetDate, validityDays) : null;
 
