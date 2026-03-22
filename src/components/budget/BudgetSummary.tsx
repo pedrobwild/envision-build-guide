@@ -19,6 +19,7 @@ interface BudgetSummaryProps {
   categorizedGroups?: CategorizedGroup[];
   budgetId?: string;
   editable?: boolean;
+  allCategoriesOpenSheet?: boolean;
 }
 
 export function BudgetSummary({
