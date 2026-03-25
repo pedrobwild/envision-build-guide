@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
   AlertTriangle,
@@ -7,6 +7,7 @@ import {
   CreditCard,
   MessageCircle,
   ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ export function MobileInlineSummary({
   onTotalCardVisibilityChange,
 }: MobileInlineSummaryProps) {
   const [installments, setInstallments] = useState(10);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
   const totalCardRef = useRef<HTMLDivElement>(null);
 
@@ -165,7 +167,7 @@ export function MobileInlineSummary({
           </div>
         </div>
 
-        {/* Installment simulator — scrollable list */}
+        {/* Installment simulator — dropdown selector */}
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2 mb-3">
             <CreditCard className="h-4 w-4 text-primary" />
@@ -173,23 +175,57 @@ export function MobileInlineSummary({
               Simule o parcelamento
             </span>
           </div>
-          <div className="h-[220px] overflow-y-auto rounded-lg border border-border/50 bg-muted/20 divide-y divide-border/30">
-            {Array.from({ length: 18 }, (_, i) => i + 1).map((n) => (
-              <button
-                key={n}
-                onClick={() => setInstallments(n)}
-                className={cn(
-                  "w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-body transition-colors min-h-[44px]",
-                  installments === n
-                    ? "bg-primary/10 text-primary font-semibold"
-                    : "text-foreground hover:bg-muted/50"
-                )}
+
+          {/* Clickable selector */}
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/50 transition-colors min-h-[48px]"
+          >
+            <span className="text-sm font-body font-medium text-foreground">
+              {installments}× {installments === 1 ? "parcela" : "parcelas"}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold tabular-nums text-primary">
+                {formatBRL(total / installments)}
+              </span>
+              <ChevronDown className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                dropdownOpen && "rotate-180"
+              )} />
+            </div>
+          </button>
+
+          {/* Dropdown list */}
+          <AnimatePresence>
+            {dropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="overflow-hidden"
               >
-                <span>{n}× {n === 1 ? "parcela" : "parcelas"}</span>
-                <span className="font-semibold tabular-nums">{formatBRL(total / n)}</span>
-              </button>
-            ))}
-          </div>
+                <div className="mt-2 max-h-[240px] overflow-y-auto rounded-xl border border-border/50 bg-muted/20 divide-y divide-border/30">
+                  {Array.from({ length: 18 }, (_, i) => i + 1).map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => { setInstallments(n); setDropdownOpen(false); }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-body transition-colors min-h-[44px]",
+                        installments === n
+                          ? "bg-primary/10 text-primary font-semibold"
+                          : "text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <span>{n}× {n === 1 ? "parcela" : "parcelas"}</span>
+                      <span className="font-semibold tabular-nums">{formatBRL(total / n)}</span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <p className="text-xs text-muted-foreground font-body mt-3 text-center">
             Condições sob consulta com sua consultora
           </p>
