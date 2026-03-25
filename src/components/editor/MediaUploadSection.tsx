@@ -195,7 +195,7 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
         )}
 
         <p className="text-[10px] text-muted-foreground font-body">
-          ⚠️ Após o upload, atualize o arquivo <code>budget-media.ts</code> para que as imagens apareçam na galeria pública.
+          ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública do orçamento.
         </p>
       </CardContent>
     </Card>
