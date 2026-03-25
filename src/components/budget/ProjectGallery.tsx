@@ -51,40 +51,42 @@ interface ProjectGalleryProps {
 export function ProjectGallery({ publicId }: ProjectGalleryProps) {
   const { media, loading: mediaLoading } = useBudgetMedia(publicId);
 
-  // Build available tabs based on media override
+  const hasMedia = media && (media.projeto3d.length > 0 || media.projetoExecutivo.length > 0 || media.fotos.length > 0 || !!media.video3d);
+
+  // Build available tabs based on dynamic media
   const availableTabs: { id: GalleryTab; label: string }[] = [];
   const galleryData: Record<GalleryTab, MediaItem[]> = { "3d": [], exec: [], fotos: [] };
 
   // Projeto 3D tab
-  if (media && media.projeto3d.length > 0) {
+  if (hasMedia && (media!.projeto3d.length > 0 || media!.video3d)) {
     const items: MediaItem[] = [];
-    if (media.video3d) {
-      items.push({ src: media.video3d, alt: "Projeto 3D — Vídeo Tour", type: "video" });
+    if (media!.video3d) {
+      items.push({ src: media!.video3d, alt: "Projeto 3D — Vídeo Tour", type: "video" });
     }
-    media.projeto3d.forEach((src, i) => {
+    media!.projeto3d.forEach((src, i) => {
       items.push({ src, alt: `Projeto 3D — ${i + 1}` });
     });
     galleryData["3d"] = items;
     availableTabs.push({ id: "3d", label: "Projeto 3D" });
-  } else {
+  } else if (!hasMedia && !mediaLoading) {
     galleryData["3d"] = defaultGallery["3d"];
     availableTabs.push({ id: "3d", label: "Projeto 3D" });
   }
 
   // Projeto Executivo tab
-  if (media && media.projetoExecutivo.length > 0) {
-    galleryData.exec = media.projetoExecutivo.map((src, i) => ({
+  if (hasMedia && media!.projetoExecutivo.length > 0) {
+    galleryData.exec = media!.projetoExecutivo.map((src, i) => ({
       src, alt: `Projeto Executivo — ${i + 1}`,
     }));
     availableTabs.push({ id: "exec", label: "Projeto Executivo" });
-  } else if (!media) {
+  } else if (!hasMedia && !mediaLoading) {
     galleryData.exec = defaultGallery.exec;
     availableTabs.push({ id: "exec", label: "Projeto Executivo" });
   }
 
-  // Fotos tab — only if override has photos
-  if (media && media.fotos.length > 0) {
-    galleryData.fotos = media.fotos.map((src, i) => ({
+  // Fotos tab — only if media has photos
+  if (hasMedia && media!.fotos.length > 0) {
+    galleryData.fotos = media!.fotos.map((src, i) => ({
       src, alt: `Foto da obra — ${i + 1}`,
     }));
     availableTabs.push({ id: "fotos", label: "Fotos" });
