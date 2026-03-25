@@ -28,7 +28,6 @@ interface MobileInlineSummaryProps {
 }
 
 const DEFAULT_PHONE = "5511911906183";
-const DEFAULT_PHONE = "5511911906183";
 
 export function MobileInlineSummary({
   total,
