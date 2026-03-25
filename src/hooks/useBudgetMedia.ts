@@ -18,7 +18,7 @@ async function listPublicUrls(folder: string): Promise<string[]> {
   if (error || !data) return [];
 
   return data
-    .filter(f => f.name !== ".emptyFolderPlaceholder")
+    .filter(f => f.name !== ".emptyFolderPlaceholder" && f.name !== ".lovkeep")
     .map(f => {
       const { data: urlData } = supabase.storage
         .from(BUCKET)
