@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { MessageCircle, Bookmark, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 
 interface MobileHeroCardProps {
   total: number;
