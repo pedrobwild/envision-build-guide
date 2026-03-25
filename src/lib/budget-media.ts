@@ -40,8 +40,15 @@ const media7d9a: BudgetMedia = {
   fotos: [],
 };
 
+const media2aa0: BudgetMedia = {
+  video3d: `${STORAGE_BASE}/2aa034962039/video/video-3d.mp4`,
+  projeto3d: f865Media.projeto3d,
+  projetoExecutivo: [],
+  fotos: f865Media.fotos,
+};
+
 export const BUDGET_MEDIA: Record<string, BudgetMedia> = {
   "f865e54c9a5f": f865Media,
-  "2aa034962039": f865Media,
+  "2aa034962039": media2aa0,
   "7d9a7b268320": media7d9a,
 };
