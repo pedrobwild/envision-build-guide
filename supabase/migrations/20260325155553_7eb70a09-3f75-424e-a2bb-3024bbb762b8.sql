@@ -1,0 +1,1 @@
+UPDATE budgets SET client_name = 'Leal Moreira - Collection', project_name = 'Leal Moreira - Collection' WHERE public_id = '7d9a7b268320';
