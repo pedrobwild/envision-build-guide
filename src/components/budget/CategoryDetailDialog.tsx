@@ -2,6 +2,7 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ItemImageGallery } from "./ItemImageGallery";
+import { ArrowLeft } from "lucide-react";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 const IMAGE_GALLERY_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
@@ -23,6 +24,13 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
       <SheetContent side="left" className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0 overflow-y-auto">
         <SheetHeader className="sticky top-0 z-10 bg-card border-b border-border px-5 py-4">
           <SheetTitle className="flex items-center gap-2 font-display">
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center h-8 w-8 rounded-lg hover:bg-muted/60 transition-colors flex-shrink-0 -ml-1"
+              aria-label="Voltar"
+            >
+              <ArrowLeft className="h-5 w-5 text-foreground" />
+            </button>
             <div className={`w-1.5 h-5 rounded-full ${group.category.bgClass}`} />
             <span className="truncate">{group.category.label}</span>
             <span className={`ml-auto text-base font-mono tabular-nums shrink-0 ${group.category.colorClass}`}>
