@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
   AlertTriangle,
@@ -7,6 +7,7 @@ import {
   CreditCard,
   MessageCircle,
   ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ export function MobileInlineSummary({
   onTotalCardVisibilityChange,
 }: MobileInlineSummaryProps) {
   const [installments, setInstallments] = useState(10);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
   const totalCardRef = useRef<HTMLDivElement>(null);
 
