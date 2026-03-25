@@ -47,7 +47,7 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
       const { data } = await supabase.storage.from("media").list(folder, { limit: 100, sortBy: { column: "name", order: "asc" } });
       if (data) {
         result[tab] = data
-          .filter(f => f.name !== ".emptyFolderPlaceholder")
+          .filter(f => f.name !== ".emptyFolderPlaceholder" && f.name !== ".lovkeep")
           .map(f => {
             const { data: urlData } = supabase.storage.from("media").getPublicUrl(`${folder}/${f.name}`);
             return { name: f.name, url: urlData.publicUrl };
