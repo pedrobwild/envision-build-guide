@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ZoomIn, ChevronLeft, ChevronRight, Play, Camera } from "lucide-react";
+import { ZoomIn, ChevronLeft, ChevronRight, Play, Camera, Loader2 } from "lucide-react";
 import { Lightbox } from "@/components/budget/Lightbox";
 import useEmblaCarousel from "embla-carousel-react";
 import ReactPlayer from "react-player";
 import { motion } from "framer-motion";
-import { BUDGET_MEDIA } from "@/lib/budget-media";
+import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 
 type GalleryTab = "3d" | "exec" | "fotos";
 
@@ -49,7 +49,7 @@ interface ProjectGalleryProps {
 }
 
 export function ProjectGallery({ publicId }: ProjectGalleryProps) {
-  const media = publicId ? BUDGET_MEDIA[publicId] : undefined;
+  const { media, loading: mediaLoading } = useBudgetMedia(publicId);
 
   // Build available tabs based on media override
   const availableTabs: { id: GalleryTab; label: string }[] = [];
