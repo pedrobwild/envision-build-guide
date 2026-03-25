@@ -287,7 +287,7 @@ export default function PublicBudget() {
             </div>
 
             {/* ─── Escopo técnico detalhado (hidden on mobile, visible on desktop — hidden entirely for specific projects) ─── */}
-            {!["2aa034962039", "f865e54c9a5f"].includes(publicId || "") && (
+            {!["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "") && (
               <div id="mobile-scope" className="scroll-mt-20 hidden lg:block">
                 {sections.length > 0 && (
                   <div className="rounded-xl">
@@ -390,7 +390,7 @@ export default function PublicBudget() {
                 categorizedGroups={categorizedGroups}
                 budgetId={budget.id}
                 editable={isAdmin}
-                allCategoriesOpenSheet={["2aa034962039", "f865e54c9a5f"].includes(publicId || "")}
+                allCategoriesOpenSheet={["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "")}
               />
               <InstallmentSimulator total={total} />
               <ApprovalCTA
