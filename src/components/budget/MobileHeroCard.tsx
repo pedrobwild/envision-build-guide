@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { MessageCircle, Bookmark, Clock, AlertTriangle, Shield, CheckCircle2 } from "lucide-react";
-import { formatBRL, formatDateLong } from "@/lib/formatBRL";
+import { MessageCircle, Bookmark, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MobileHeroCardProps {
@@ -114,68 +113,33 @@ export function MobileHeroCard({
         )}
       </div>
 
-      {/* ── Investment block ── */}
-      <div className="mx-4 rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-body text-muted-foreground mb-1">
-              Investimento total
-            </p>
-            <motion.p
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.25, duration: 0.4 }}
-              className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none"
-            >
-              {formatBRL(total)}
-            </motion.p>
-          </div>
-
-          {/* Validity badge */}
-          <motion.div
-            initial={{ opacity: 0, x: 6 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.45 }}
-            className={cn(
-              "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-body font-semibold flex-shrink-0",
-              validity.expired
-                ? "bg-destructive/10 text-destructive"
-                : validity.daysLeft <= 5
-                  ? "bg-warning/10 text-warning"
-                  : "bg-success/10 text-success"
-            )}
-          >
-            {validity.expired ? (
-              <>
-                <AlertTriangle className="h-3 w-3" />
-                Expirado
-              </>
-            ) : (
-              <>
-                <Clock className={cn("h-3 w-3", validity.daysLeft <= 5 && "animate-pulse")} />
-                {validity.daysLeft}d restantes
-              </>
-            )}
-          </motion.div>
-        </div>
-
-        {/* Trust micro-indicators */}
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-primary/10">
-          <div className="flex items-center gap-1.5">
-            <Shield className="h-3.5 w-3.5 text-primary/50" />
-            <span className="text-xs text-muted-foreground font-body">Preço fixo</span>
-          </div>
-          <span className="text-muted-foreground/30">·</span>
-          <div className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-3.5 w-3.5 text-primary/50" />
-            <span className="text-xs text-muted-foreground font-body">Garantia 5 anos</span>
-          </div>
-          <span className="text-muted-foreground/30">·</span>
-          <div className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5 text-primary/50" />
-            <span className="text-xs text-muted-foreground font-body">ART no CREA</span>
-          </div>
-        </div>
+      {/* ── Validity badge ── */}
+      <div className="mx-4">
+        <motion.div
+          initial={{ opacity: 0, x: 6 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.45 }}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-body font-semibold w-fit",
+            validity.expired
+              ? "bg-destructive/10 text-destructive"
+              : validity.daysLeft <= 5
+                ? "bg-warning/10 text-warning"
+                : "bg-success/10 text-success"
+          )}
+        >
+          {validity.expired ? (
+            <>
+              <AlertTriangle className="h-3 w-3" />
+              Condições expiradas
+            </>
+          ) : (
+            <>
+              <Clock className={cn("h-3 w-3", validity.daysLeft <= 5 && "animate-pulse")} />
+              {validity.daysLeft}d restantes
+            </>
+          )}
+        </motion.div>
       </div>
 
       {/* ── CTAs ── */}
