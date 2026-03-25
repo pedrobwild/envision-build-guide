@@ -166,7 +166,7 @@ export function MobileInlineSummary({
           </div>
         </div>
 
-        {/* Installment simulator */}
+        {/* Installment simulator — scrollable list */}
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2 mb-3">
             <CreditCard className="h-4 w-4 text-primary" />
@@ -174,36 +174,24 @@ export function MobileInlineSummary({
               Simule o parcelamento
             </span>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {INSTALLMENT_OPTIONS.map((n) => (
+          <div className="h-[220px] overflow-y-auto rounded-lg border border-border/50 bg-muted/20 divide-y divide-border/30">
+            {Array.from({ length: 18 }, (_, i) => i + 1).map((n) => (
               <button
                 key={n}
                 onClick={() => setInstallments(n)}
                 className={cn(
-                  "min-h-[44px] min-w-[44px] px-3 py-2 rounded-lg text-sm font-body font-medium transition-all",
+                  "w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-body transition-colors min-h-[44px]",
                   installments === n
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted/60 text-foreground hover:bg-muted"
+                    ? "bg-primary/10 text-primary font-semibold"
+                    : "text-foreground hover:bg-muted/50"
                 )}
               >
-                {n}×
+                <span>{n}× {n === 1 ? "parcela" : "parcelas"}</span>
+                <span className="font-semibold tabular-nums">{formatBRL(total / n)}</span>
               </button>
             ))}
           </div>
-          <motion.div
-            key={installments}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-3 text-center"
-          >
-            <p className="text-sm text-muted-foreground font-body">
-              {installments}× de{" "}
-              <span className="font-display font-bold text-lg text-primary tabular-nums">
-                {formatBRL(total / installments)}
-              </span>
-            </p>
-          </motion.div>
-          <p className="text-xs text-muted-foreground font-body mt-2 text-center">
+          <p className="text-xs text-muted-foreground font-body mt-3 text-center">
             Condições sob consulta com sua consultora
           </p>
         </div>
