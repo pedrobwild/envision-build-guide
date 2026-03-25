@@ -135,10 +135,7 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
         <CardContent className="p-4 sm:p-5 md:p-6 space-y-3">
           <div>
             <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
-              Exemplo de entrega real
-            </p>
-            <p className="text-xs text-muted-foreground font-body mt-0.5">
-              Veja como é o resultado final de um projeto arquitetônico Bwild.
+              Projeto 3D
             </p>
           </div>
 
