@@ -119,12 +119,22 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
 
   const images = galleryData[activeTab] ?? [];
 
+  if (mediaLoading) {
+    return (
+      <Card className="border-border overflow-hidden">
+        <CardContent className="p-4 sm:p-5 md:p-6 flex items-center justify-center py-12">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <>
       <Card className="border-border overflow-hidden">
         <CardContent className="p-4 sm:p-5 md:p-6 space-y-3">
           <div>
-          <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
+            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
               Exemplo de entrega real
             </p>
             <p className="text-xs text-muted-foreground font-body mt-0.5">
