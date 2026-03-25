@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { MessageCircle, Bookmark, Clock, AlertTriangle, Shield, CheckCircle2 } from "lucide-react";
-import { formatBRL, formatDateLong } from "@/lib/formatBRL";
+import { MessageCircle, Bookmark, Clock, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 interface MobileHeroCardProps {
