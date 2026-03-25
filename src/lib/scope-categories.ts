@@ -68,6 +68,14 @@ export const SCOPE_CATEGORIES: ScopeCategory[] = [
     borderClass: "border-l-warning",
     matches: ["eletroeletrônic", "eletroeletronico", "eletrodoméstic", "eletrodomestic"],
   },
+  {
+    id: "decoracao",
+    label: "Decoração",
+    colorClass: "text-rose-500",
+    bgClass: "bg-rose-500",
+    borderClass: "border-l-rose-500",
+    matches: ["decoração", "decoracao", "decoraçao", "decor"],
+  },
 ];
 
 export function getCategoryForSection(sectionTitle: string): ScopeCategory {
