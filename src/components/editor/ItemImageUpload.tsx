@@ -41,11 +41,16 @@ export function ItemImageUpload({ images, onImagesChange, budgetId, itemLabel }:
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    const MAX_SIZE = 500 * 1024 * 1024; // 500MB
     setUploading(true);
     try {
       const newImages: ItemImage[] = [];
       for (const file of Array.from(files).slice(0, 5)) {
         if (!file.type.startsWith("image/")) continue;
+        if (file.size > MAX_SIZE) {
+          toast.error(`Arquivo "${file.name}" excede o limite de 500MB.`);
+          continue;
+        }
         const url = await uploadFile(file);
         newImages.push({
           id: crypto.randomUUID(),

@@ -1,4 +1,7 @@
 project_id = "pieenhgjulsrjlioozsy"
 
+[storage]
+file_size_limit = "500MiB"
+
 [functions.notify-budget-view]
 verify_jwt = false
