@@ -458,11 +458,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   };
 
   const getSectionTotal = (section: SectionData) => {
+    const qty = Number(section.qty) || 1;
     if (section.items.length > 0) {
       const itemsSum = section.items.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
-      return itemsSum * (Number(section.qty) || 1);
+      if (itemsSum > 0) return itemsSum * qty;
     }
-    if (section.section_price) return Number(section.section_price) * (Number(section.qty) || 1);
+    if (section.section_price) return Number(section.section_price) * qty;
     return 0;
   };
 
