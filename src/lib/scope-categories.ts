@@ -76,14 +76,32 @@ export const SCOPE_CATEGORIES: ScopeCategory[] = [
     borderClass: "border-l-rose-500",
     matches: ["decoração", "decoracao", "decoraçao", "decor"],
   },
+  {
+    id: "utensilios",
+    label: "Utensílios",
+    colorClass: "text-cyan-600",
+    bgClass: "bg-cyan-600",
+    borderClass: "border-l-cyan-600",
+    matches: ["utensílios", "utensilios", "utensilio", "hospede", "enxoval"],
+  },
+  {
+    id: "outros",
+    label: "Outros",
+    colorClass: "text-muted-foreground",
+    bgClass: "bg-muted-foreground",
+    borderClass: "border-l-muted-foreground",
+    matches: [],
+  },
 ];
+
+const FALLBACK_CATEGORY = SCOPE_CATEGORIES[SCOPE_CATEGORIES.length - 1]; // "Outros"
 
 export function getCategoryForSection(sectionTitle: string): ScopeCategory {
   const normalizedTitle = normalizeCategoryText(sectionTitle);
   for (const cat of SCOPE_CATEGORIES) {
-    if (cat.matches.some((m) => normalizedTitle.includes(normalizeCategoryText(m)))) return cat;
+    if (cat.matches.length > 0 && cat.matches.some((m) => normalizedTitle.includes(normalizeCategoryText(m)))) return cat;
   }
-  return SCOPE_CATEGORIES[SCOPE_CATEGORIES.length - 1]; // fallback to last category
+  return FALLBACK_CATEGORY;
 }
 
 export interface CategorizedGroup {
