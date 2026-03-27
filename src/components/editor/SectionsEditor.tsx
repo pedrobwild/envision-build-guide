@@ -72,12 +72,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   const updateItem = (sectionId: string, itemId: string, field: string, value: any) => {
     const updated = sections.map(s => {
       if (s.id !== sectionId) return s;
-      return {
-        ...s,
-        items: s.items.map(i =>
-          i.id === itemId ? { ...i, [field]: value } : i
-        ),
-      };
+      const newItems = s.items.map(i =>
+        i.id === itemId ? { ...i, [field]: value } : i
+      );
+      // If internal_total changed, recalc section_price
+      if (field === "internal_total") {
+        const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
+        debouncedSave("sections", sectionId, { section_price: newTotal });
+        return { ...s, items: newItems, section_price: newTotal };
+      }
+      return { ...s, items: newItems };
     });
     onSectionsChange(updated);
     debouncedSave("items", itemId, { [field]: value });
