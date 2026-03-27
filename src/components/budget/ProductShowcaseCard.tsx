@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { ZoomIn, Camera, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { parseItemDescription, isDescriptionExpandable } from "@/lib/parse-item-description";
+import { ZoomIn } from "lucide-react";
+import { motion } from "framer-motion";
 import { Lightbox } from "./Lightbox";
 import { ItemImageGallery } from "./ItemImageGallery";
 
@@ -14,19 +12,11 @@ interface ProductShowcaseCardProps {
 }
 
 export function ProductShowcaseCard({ item, budgetId, editable = false, showGallery = false }: ProductShowcaseCardProps) {
-  const [expanded, setExpanded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  const expandable = isDescriptionExpandable(item.description);
-  const parsed = expanded ? parseItemDescription(item.description) : null;
   const hasImages = item.images && item.images.length > 0;
   const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
-
-  const shortDesc =
-    !expandable && item.description && item.description.trim().length > 0
-      ? item.description.trim()
-      : null;
 
   const itemImages = (item.images || []).map((img: any) => ({
     url: img.url,
@@ -103,36 +93,6 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
           </div>
         </div>
 
-        {/* Expanded description */}
-        <AnimatePresence>
-          {expanded && parsed && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="overflow-hidden"
-            >
-              <div className="px-4 pb-4 pt-1 border-t border-border/30 space-y-2.5">
-                {parsed.map((group, gi) => (
-                  <div key={gi}>
-                    {group.room && (
-                      <p className="text-sm font-semibold text-foreground font-body mb-1">{group.room}</p>
-                    )}
-                    <ul className="space-y-1 pl-1">
-                      {group.items.map((bullet, bi) => (
-                        <li key={bi} className="text-xs text-muted-foreground font-body leading-relaxed flex items-start gap-2">
-                          <span className="w-1 h-1 rounded-full bg-muted-foreground/40 mt-1.5 flex-shrink-0" />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.div>
     </>
   );

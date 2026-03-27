@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { ChevronDown, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { parseItemDescription, isDescriptionExpandable } from "@/lib/parse-item-description";
 import { formatBRL } from "@/lib/formatBRL";
 import { ItemImageGallery } from "./ItemImageGallery";
 import { Lightbox } from "./Lightbox";
@@ -38,11 +36,7 @@ export function ExpandableItemRow({
 }: ExpandableItemRowProps) {
   const [itemLightboxOpen, setItemLightboxOpen] = useState(false);
 
-  const expandable = isDescriptionExpandable(item.description);
-  const parsed = isExpanded ? parseItemDescription(item.description) : null;
-
   const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
-  const hasImages = item.images && item.images.length > 0;
 
   const isZoneMatch =
     highlightZone &&
@@ -57,11 +51,6 @@ export function ExpandableItemRow({
   const itemTotal = Number(item.internal_total) || 0;
   const itemUnitPrice = Number(item.internal_unit_price) || 0;
   const itemQty = Number(item.qty) || 0;
-
-  const shortDesc =
-    !expandable && item.description && item.description.trim().length > 0
-      ? item.description.trim()
-      : null;
 
   const itemImages = (item.images || []).map((img: any) => ({
     url: img.url,
@@ -88,14 +77,8 @@ export function ExpandableItemRow({
         )}
       >
         {/* ── Clickable header row ── */}
-        <button
-          onClick={expandable ? onToggle : undefined}
-          className={cn(
-            "w-full flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-2 sm:py-2.5 min-h-[44px] sm:min-h-[48px] text-left",
-            expandable && "cursor-pointer hover:bg-muted/30 transition-colors"
-          )}
-          disabled={!expandable}
-          type="button"
+        <div
+          className="w-full flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-2 sm:py-2.5 min-h-[44px] sm:min-h-[48px] text-left"
         >
           {/* Thumbnail */}
           {showImageGallery && budgetId ? (
@@ -134,11 +117,6 @@ export function ExpandableItemRow({
                 {item.qty} {item.unit || "un"}
               </p>
             )}
-            {shortDesc && (
-              <p className="text-xs text-muted-foreground font-body mt-0.5 line-clamp-1">
-                {shortDesc}
-              </p>
-            )}
           </div>
 
           {/* Prices */}
@@ -162,69 +140,8 @@ export function ExpandableItemRow({
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
 
-          {/* Chevron */}
-          {expandable && (
-            <motion.div
-              animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex-shrink-0"
-            >
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            </motion.div>
-          )}
-        </button>
-
-        {/* ── Expanded description ── */}
-        <AnimatePresence>
-          {isExpanded && parsed && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="overflow-hidden"
-            >
-              <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-border/30 bg-muted/20 space-y-2.5 sm:space-y-3">
-                {parsed.map((group, gi) => (
-                  <div key={gi}>
-                    {group.room && (
-                      <p className="text-sm font-semibold text-foreground font-body mb-1.5">
-                        {group.room}
-                      </p>
-                    )}
-                    <ul className="space-y-1 pl-1">
-                      {group.items.map((bullet, bi) => (
-                        <li
-                          key={bi}
-                          className="text-xs text-muted-foreground font-body leading-relaxed flex items-start gap-2"
-                        >
-                          <span className="w-1 h-1 rounded-full bg-muted-foreground/40 mt-1.5 flex-shrink-0" />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-
-                {/* View photos button */}
-                {hasImages && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setItemLightboxOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1.5 min-h-[44px]"
-                    type="button"
-                  >
-                    <Camera className="h-3.5 w-3.5" />
-                    Ver fotos ({item.images.length})
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </>
   );
