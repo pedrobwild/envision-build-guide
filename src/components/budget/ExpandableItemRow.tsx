@@ -134,11 +134,6 @@ export function ExpandableItemRow({
                 {item.qty} {item.unit || "un"}
               </p>
             )}
-            {shortDesc && (
-              <p className="text-xs text-muted-foreground font-body mt-0.5 line-clamp-1">
-                {shortDesc}
-              </p>
-            )}
           </div>
 
           {/* Prices */}
@@ -175,56 +170,6 @@ export function ExpandableItemRow({
           )}
         </button>
 
-        {/* ── Expanded description ── */}
-        <AnimatePresence>
-          {isExpanded && parsed && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="overflow-hidden"
-            >
-              <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-border/30 bg-muted/20 space-y-2.5 sm:space-y-3">
-                {parsed.map((group, gi) => (
-                  <div key={gi}>
-                    {group.room && (
-                      <p className="text-sm font-semibold text-foreground font-body mb-1.5">
-                        {group.room}
-                      </p>
-                    )}
-                    <ul className="space-y-1 pl-1">
-                      {group.items.map((bullet, bi) => (
-                        <li
-                          key={bi}
-                          className="text-xs text-muted-foreground font-body leading-relaxed flex items-start gap-2"
-                        >
-                          <span className="w-1 h-1 rounded-full bg-muted-foreground/40 mt-1.5 flex-shrink-0" />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-
-                {/* View photos button */}
-                {hasImages && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setItemLightboxOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1.5 min-h-[44px]"
-                    type="button"
-                  >
-                    <Camera className="h-3.5 w-3.5" />
-                    Ver fotos ({item.images.length})
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </>
   );

@@ -103,36 +103,6 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
           </div>
         </div>
 
-        {/* Expanded description */}
-        <AnimatePresence>
-          {expanded && parsed && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="overflow-hidden"
-            >
-              <div className="px-4 pb-4 pt-1 border-t border-border/30 space-y-2.5">
-                {parsed.map((group, gi) => (
-                  <div key={gi}>
-                    {group.room && (
-                      <p className="text-sm font-semibold text-foreground font-body mb-1">{group.room}</p>
-                    )}
-                    <ul className="space-y-1 pl-1">
-                      {group.items.map((bullet, bi) => (
-                        <li key={bi} className="text-xs text-muted-foreground font-body leading-relaxed flex items-start gap-2">
-                          <span className="w-1 h-1 rounded-full bg-muted-foreground/40 mt-1.5 flex-shrink-0" />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.div>
     </>
   );
