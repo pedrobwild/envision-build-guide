@@ -315,7 +315,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             <div className="sm:col-span-1 flex items-end justify-end gap-1">
                               {isItemSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
                               <button
-                                onClick={() => deleteItem(section.id, item.id)}
+                                onClick={() => {
+                                  if (confirm("Excluir este item?")) deleteItem(section.id, item.id);
+                                }}
                                 className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                                 title="Excluir item"
                               >
