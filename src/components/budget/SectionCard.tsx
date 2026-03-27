@@ -173,9 +173,11 @@ export function SectionCard({
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ""}
             {items.length} {items.length === 1 ? "item" : "itens"}
           </span>
-          <span className="font-display font-bold text-base text-foreground tabular-nums">
-            {formatBRL(subtotal)}
-          </span>
+          {showItemPrices && (
+            <span className="font-display font-bold text-base text-foreground tabular-nums">
+              {formatBRL(subtotal)}
+            </span>
+          )}
         </div>
 
         {/* ── Preview items (collapsed) — mobile-first: show top items ── */}
