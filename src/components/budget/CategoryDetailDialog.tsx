@@ -47,21 +47,23 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
         </SheetHeader>
 
         <div className="px-4 sm:px-5 py-5">
-          {/* Item count */}
-          <p className="text-xs text-muted-foreground font-body mb-4">
-            {allItems.length} {allItems.length === 1 ? "item" : "itens"} · Clique nas fotos para ampliar
+          <p className="text-xs text-muted-foreground font-body mb-3">
+            {allItems.length} {allItems.length === 1 ? "item" : "itens"}
           </p>
 
-          {/* Product grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="divide-y divide-border">
             {allItems.map((item: any) => (
-              <ProductShowcaseCard
-                key={item.id}
-                item={item}
-                budgetId={budgetId}
-                editable={editable}
-                showGallery={showGallery}
-              />
+              <div key={item.id} className="flex items-center gap-3 py-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0" />
+                <span className="flex-1 text-sm font-body text-foreground leading-snug">
+                  {item.title}
+                </span>
+                {item.qty && (
+                  <span className="text-xs text-muted-foreground font-body whitespace-nowrap">
+                    Qtd: {item.qty} {item.unit || "un"}
+                  </span>
+                )}
+              </div>
             ))}
           </div>
         </div>
