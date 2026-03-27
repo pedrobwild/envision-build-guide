@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { ChevronDown, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { parseItemDescription, isDescriptionExpandable } from "@/lib/parse-item-description";
 import { formatBRL } from "@/lib/formatBRL";
 import { ItemImageGallery } from "./ItemImageGallery";
 import { Lightbox } from "./Lightbox";
@@ -38,11 +36,7 @@ export function ExpandableItemRow({
 }: ExpandableItemRowProps) {
   const [itemLightboxOpen, setItemLightboxOpen] = useState(false);
 
-  const expandable = isDescriptionExpandable(item.description);
-  const parsed = isExpanded ? parseItemDescription(item.description) : null;
-
   const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
-  const hasImages = item.images && item.images.length > 0;
 
   const isZoneMatch =
     highlightZone &&
@@ -57,11 +51,6 @@ export function ExpandableItemRow({
   const itemTotal = Number(item.internal_total) || 0;
   const itemUnitPrice = Number(item.internal_unit_price) || 0;
   const itemQty = Number(item.qty) || 0;
-
-  const shortDesc =
-    !expandable && item.description && item.description.trim().length > 0
-      ? item.description.trim()
-      : null;
 
   const itemImages = (item.images || []).map((img: any) => ({
     url: img.url,

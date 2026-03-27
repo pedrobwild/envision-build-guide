@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { ZoomIn, Camera, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { parseItemDescription, isDescriptionExpandable } from "@/lib/parse-item-description";
+import { ZoomIn } from "lucide-react";
+import { motion } from "framer-motion";
 import { Lightbox } from "./Lightbox";
 import { ItemImageGallery } from "./ItemImageGallery";
 
@@ -14,19 +12,11 @@ interface ProductShowcaseCardProps {
 }
 
 export function ProductShowcaseCard({ item, budgetId, editable = false, showGallery = false }: ProductShowcaseCardProps) {
-  const [expanded, setExpanded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  const expandable = isDescriptionExpandable(item.description);
-  const parsed = expanded ? parseItemDescription(item.description) : null;
   const hasImages = item.images && item.images.length > 0;
   const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
-
-  const shortDesc =
-    !expandable && item.description && item.description.trim().length > 0
-      ? item.description.trim()
-      : null;
 
   const itemImages = (item.images || []).map((img: any) => ({
     url: img.url,
