@@ -208,7 +208,6 @@ function CategorizedList({
             <span className="flex-1 text-sm font-body font-medium text-foreground text-left leading-snug">
               {group.sections.length === 1 ? group.sections[0].title : group.category.label}
             </span>
-            </span>
 
             {/* Value */}
             <span className="text-sm font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
