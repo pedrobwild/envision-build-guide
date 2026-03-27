@@ -77,11 +77,14 @@ export function MobileHeroCard({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.1 }}
-      className="lg:hidden rounded-2xl border border-border bg-card overflow-hidden"
+      transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+      className="lg:hidden rounded-2xl border border-border bg-card overflow-hidden shadow-sm"
     >
+      {/* Accent border top */}
+      <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-primary/20" />
+
       {/* ── Top: context ── */}
-      <div className="px-4 pt-4 pb-3 space-y-2">
+      <div className="px-4 pt-3.5 pb-3 space-y-2.5">
         {/* Greeting + subtitle */}
         <div>
           <h2 className="font-display font-bold text-lg text-foreground leading-tight tracking-tight">
