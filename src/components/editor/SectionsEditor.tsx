@@ -4,7 +4,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, Loader2
+  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star
 } from "lucide-react";
 import {
   DndContext,
@@ -513,9 +513,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                     key={item.id}
                                     item={item}
                                     sectionId={section.id}
+                                    budgetId={budgetId}
                                     isItemSaving={savingIds.has(item.id)}
                                     onUpdate={updateItem}
                                     onDelete={deleteItem}
+                                    onImagesChange={handleImagesChange}
                                   />
                                 ))}
                               </div>
