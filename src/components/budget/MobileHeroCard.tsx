@@ -77,11 +77,14 @@ export function MobileHeroCard({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.1 }}
-      className="lg:hidden rounded-2xl border border-border bg-card overflow-hidden"
+      transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+      className="lg:hidden rounded-2xl border border-border bg-card overflow-hidden shadow-sm"
     >
+      {/* Accent border top */}
+      <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-primary/20" />
+
       {/* ── Top: context ── */}
-      <div className="px-4 pt-4 pb-3 space-y-2">
+      <div className="px-4 pt-3.5 pb-3 space-y-2.5">
         {/* Greeting + subtitle */}
         <div>
           <h2 className="font-display font-bold text-lg text-foreground leading-tight tracking-tight">
@@ -148,8 +151,8 @@ export function MobileHeroCard({
           href={ctaUrl}
           target="_blank"
           rel="noopener noreferrer"
-          whileTap={{ scale: 0.98 }}
-          className="w-full min-h-[48px] rounded-xl bg-primary text-primary-foreground font-display font-semibold text-sm flex items-center justify-center gap-2"
+          whileTap={{ scale: 0.97 }}
+          className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
         >
           <MessageCircle className="h-4.5 w-4.5 flex-shrink-0" />
           {ctaLabel}

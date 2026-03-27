@@ -53,7 +53,7 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
           ) : primaryImage ? (
             <button
               onClick={() => openLightbox(0)}
-              className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 overflow-hidden cursor-zoom-in bg-muted/30"
+              className="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 overflow-hidden cursor-zoom-in bg-muted/30"
               type="button"
             >
               <img
@@ -72,7 +72,7 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
               )}
             </button>
           ) : (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-muted/20 flex items-center justify-center">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 bg-muted/20 flex items-center justify-center">
               <div className="w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center">
                 <div className="w-2 h-2 rounded-full bg-muted-foreground/20" />
               </div>

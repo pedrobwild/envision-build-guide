@@ -58,10 +58,10 @@ export function MobileBottomBar({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-auto bg-card border-t border-border"
+            className="pointer-events-auto bg-card/80 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_20px_-4px_hsl(var(--foreground)/0.06)]"
           >
             {/* Trust micro-line */}
-            <div className="flex items-center justify-center gap-3 px-4 py-1 bg-muted/30 border-b border-border">
+            <div className="flex items-center justify-center gap-3 px-4 py-1 bg-muted/20">
               <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-body">
                 <Shield className="h-2.5 w-2.5" />
                 Preço fixo
@@ -98,7 +98,7 @@ export function MobileBottomBar({
                 target="_blank"
                 rel="noopener noreferrer"
                 whileTap={{ scale: 0.97 }}
-                className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap"
+                className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
               >
                 <MessageCircle className="h-4 w-4 flex-shrink-0" />
                 {ctaLabel}

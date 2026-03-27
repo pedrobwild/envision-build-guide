@@ -20,7 +20,7 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
     <div className="lg:hidden space-y-3">
       {/* Horizontal scroll chips */}
       <div
-        className="flex gap-2 overflow-x-auto scrollbar-none px-1 pb-1"
+        className="flex gap-2 overflow-x-auto scrollbar-none px-1 pb-1 snap-x snap-mandatory"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {/* Prazo chip — highlighted */}
@@ -28,7 +28,7 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/8 border border-primary/12"
+          className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/8 border border-primary/12 snap-start"
         >
           <Clock className="h-4 w-4 text-primary" />
           <div className="flex flex-col">
@@ -48,7 +48,7 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.04 }}
-            className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border"
+            className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border snap-start"
           >
             <s.icon className="h-3.5 w-3.5 text-muted-foreground" />
             <div className="flex flex-col">
