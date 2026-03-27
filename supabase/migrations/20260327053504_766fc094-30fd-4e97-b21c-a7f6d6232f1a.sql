@@ -1,0 +1,1 @@
+ALTER TABLE public.budgets ADD COLUMN show_optional_items boolean NOT NULL DEFAULT false;
