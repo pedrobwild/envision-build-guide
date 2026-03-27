@@ -342,7 +342,13 @@ export default function AdminDashboard() {
                       </span>
 
                       <div className="flex items-center gap-0.5">
-                        {budget.status === 'draft' && (
+                        <button
+                          onClick={() => navigate(`/admin/budget/${budget.id}`)}
+                          className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                          title="Editar orçamento"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
                           <button
                             onClick={() => publishBudget(budget.id)}
                             className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
