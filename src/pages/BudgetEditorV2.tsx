@@ -31,13 +31,18 @@ export default function BudgetEditorV2() {
     // Load sections with items
     const { data: secs } = await supabase
       .from("sections")
-      .select("*, items(*)")
+      .select("*, items(*, item_images(*))")
       .eq("budget_id", budgetId)
       .order("order_index", { ascending: true });
 
     const sorted = (secs || []).map(s => ({
       ...s,
-      items: (s.items || []).sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)),
+      items: (s.items || [])
+        .sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
+        .map((item: any) => ({
+          ...item,
+          images: item.item_images || [],
+        })),
     }));
     setSections(sorted);
   };
