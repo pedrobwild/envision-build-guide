@@ -351,6 +351,17 @@ export default function PublicBudget() {
               </div>
             )}
 
+            {/* ── Mobile optional items simulator ── */}
+            <div className="lg:hidden">
+              <OptionalItemsSimulator
+                budgetId={budget.id}
+                sections={sections as any}
+                baseTotal={total}
+                clientName={budget.client_name}
+                projectName={budget.project_name}
+              />
+            </div>
+
             {/* ── Mobile inline summary ── */}
             <MobileInlineSummary
               total={total}
