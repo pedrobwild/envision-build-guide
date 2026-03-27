@@ -89,7 +89,7 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
           <SheetTitle>{titleContent}</SheetTitle>
         </SheetHeader>
         <div className="px-4 sm:px-5 py-5">
-          <CategoryItemList group={group} />
+          <CategoryItemList group={group} budgetId={budgetId} editable={editable} />
         </div>
       </SheetContent>
     </Sheet>
