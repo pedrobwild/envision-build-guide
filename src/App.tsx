@@ -15,6 +15,7 @@ const BudgetEditor = lazy(() => import("./pages/BudgetEditor"));
 const PublicBudget = lazy(() => import("./pages/PublicBudget"));
 const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage"));
 const QAEvaluator = lazy(() => import("./pages/QAEvaluator"));
+const FinancialHistory = lazy(() => import("./pages/FinancialHistory"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
