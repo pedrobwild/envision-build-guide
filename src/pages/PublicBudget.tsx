@@ -288,9 +288,8 @@ export default function PublicBudget() {
             {!["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "") && (
               <div id="mobile-scope" className="scroll-mt-20 hidden lg:block">
                 {sections.length > 0 && (() => {
-                  // Filter to only show categories with items that have images
+                  // Filter ALL categories to only show items with images
                   const photoGroups = categorizedGroups
-                    .filter((g) => ["marcenaria", "mobiliario", "eletro"].includes(g.category.id))
                     .map(group => ({
                       ...group,
                       sections: group.sections.map(section => ({
@@ -307,7 +306,7 @@ export default function PublicBudget() {
                       <div className="flex items-center justify-between pt-2 pb-2 gap-3">
                         <div className="min-w-0">
                           <h2 className="text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
-                            Mobília e eletrodomésticos
+                            Itens do projeto
                           </h2>
                           <p className="text-muted-foreground text-xs mt-0.5 font-body hidden sm:block">
                             Especificação completa dos itens do seu projeto
