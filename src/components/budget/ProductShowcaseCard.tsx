@@ -97,42 +97,9 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
 
             {item.qty && (
               <p className="text-xs text-muted-foreground font-body mt-0.5">
-                {item.qty} {item.unit || "un"}
+                Qtd: {item.qty} {item.unit || "un"}
               </p>
             )}
-
-            {shortDesc && (
-              <p className="text-xs text-muted-foreground/80 font-body mt-1 leading-relaxed line-clamp-2">
-                {shortDesc}
-              </p>
-            )}
-
-            {/* Actions row */}
-            <div className="flex items-center gap-3 mt-2">
-              {hasImages && item.images.length > 1 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); openLightbox(0); }}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors"
-                  type="button"
-                >
-                  <Camera className="h-3 w-3" />
-                  {item.images.length} fotos
-                </button>
-              )}
-
-              {expandable && (
-                <button
-                  onClick={() => setExpanded(!expanded)}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-medium font-body transition-colors"
-                  type="button"
-                >
-                  <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                    <ChevronDown className="h-3 w-3" />
-                  </motion.div>
-                  {expanded ? "Menos" : "Detalhes"}
-                </button>
-              )}
-            </div>
           </div>
         </div>
 
