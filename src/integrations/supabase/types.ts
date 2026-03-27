@@ -49,6 +49,54 @@ export type Database = {
           },
         ]
       }
+      budget_optional_selections: {
+        Row: {
+          budget_id: string
+          client_email: string | null
+          client_name: string | null
+          confirmed: boolean
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          section_id: string
+        }
+        Insert: {
+          budget_id: string
+          client_email?: string | null
+          client_name?: string | null
+          confirmed?: boolean
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          section_id: string
+        }
+        Update: {
+          budget_id?: string
+          client_email?: string | null
+          client_name?: string | null
+          confirmed?: boolean
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          section_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_optional_selections_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_optional_selections_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budgets: {
         Row: {
           approved_at: string | null
@@ -401,6 +449,7 @@ export type Database = {
           excluded_bullets: Json | null
           id: string
           included_bullets: Json | null
+          is_optional: boolean
           notes: string | null
           order_index: number
           qty: number | null
@@ -416,6 +465,7 @@ export type Database = {
           excluded_bullets?: Json | null
           id?: string
           included_bullets?: Json | null
+          is_optional?: boolean
           notes?: string | null
           order_index?: number
           qty?: number | null
@@ -431,6 +481,7 @@ export type Database = {
           excluded_bullets?: Json | null
           id?: string
           included_bullets?: Json | null
+          is_optional?: boolean
           notes?: string | null
           order_index?: number
           qty?: number | null
