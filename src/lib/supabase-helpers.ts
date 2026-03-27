@@ -68,16 +68,21 @@ export async function fetchPublicBudget(publicId: string) {
 
 export function calculateSectionSubtotal(section: any): number {
   const items = section.items || [];
-  // When items exist, always sum from items so CRUD changes reflect in totals
+  const qty = section.qty || 1;
+
+  // Sum item-level totals when available
   if (items.length > 0) {
     const itemsSum = items.reduce(
       (sum: number, item: any) => sum + (Number(item.internal_total) || 0),
       0
     );
-    return itemsSum * (section.qty || 1);
+    // If items have totals, use them; otherwise fall back to section_price
+    if (itemsSum > 0) return itemsSum * qty;
   }
+
+  // Flat section price (no item-level breakdown or all items have null totals)
   if (section.section_price != null) {
-    return Number(section.section_price) * (section.qty || 1);
+    return Number(section.section_price) * qty;
   }
   return 0;
 }
