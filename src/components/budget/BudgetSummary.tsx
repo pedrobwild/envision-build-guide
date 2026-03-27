@@ -189,16 +189,7 @@ function CategorizedList({
         return (
           <button
             key={group.category.id}
-            onClick={() => {
-              if (isDisplayed) {
-                const firstId = `section-${group.sections[0]?.id}`;
-                document
-                  .getElementById(firstId)
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
-              } else {
-                onDetailOpen(group);
-              }
-            }}
+            onClick={() => onDetailOpen(group)}
             className={cn(
               "w-full flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg",
               "group transition-all duration-200",
