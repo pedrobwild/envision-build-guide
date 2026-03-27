@@ -30,20 +30,20 @@ const NEIGHBORHOOD_DATA: Neighborhood[] = [
   { id: "vila-nova-conceicao", name: "Vila Nova Conceição", count: 2, avgSqm: 25.0, lat: -23.5962, lng: -46.6735 },
   { id: "chacara-klabin", name: "Chácara Klabin", count: 2, avgSqm: 23.0, lat: -23.5881, lng: -46.6344 },
   { id: "liberdade", name: "Liberdade", count: 2, avgSqm: 26.0, lat: -23.5599, lng: -46.6378 },
-  { id: "jardim-paulista", name: "Jardim Paulista", count: 2, avgSqm: 31.0, lat: -23.5701, lng: -46.6659 },
+  { id: "jardim-paulista", name: "Jardim Paulista", count: 4, avgSqm: 31.0, lat: -23.5701, lng: -46.6659 },
   { id: "vila-mariana", name: "Vila Mariana", count: 2, avgSqm: 25.5, lat: -23.5887, lng: -46.6388 },
   { id: "vila-olimpia", name: "Vila Olímpia", count: 2, avgSqm: 26.5, lat: -23.5956, lng: -46.6858 },
-  { id: "consolacao", name: "Consolação", count: 2, avgSqm: 24.5, lat: -23.5518, lng: -46.6569 },
+  { id: "consolacao", name: "Consolação", count: 5, avgSqm: 24.5, lat: -23.5518, lng: -46.6569 },
   { id: "paraiso", name: "Paraíso", count: 2, avgSqm: 24.0, lat: -23.5726, lng: -46.6421 },
-  { id: "itaim", name: "Itaim Bibi", count: 1, avgSqm: 33.0, lat: -23.5858, lng: -46.6784 },
+  { id: "itaim", name: "Itaim Bibi", count: 5, avgSqm: 33.0, lat: -23.5858, lng: -46.6784 },
   { id: "ipiranga", name: "Ipiranga", count: 1, avgSqm: 28.0, lat: -23.5896, lng: -46.6079 },
-  { id: "cerqueira-cesar", name: "Cerqueira César", count: 1, avgSqm: 27.0, lat: -23.5570, lng: -46.6617 },
+  { id: "cerqueira-cesar", name: "Cerqueira César", count: 4, avgSqm: 27.0, lat: -23.5570, lng: -46.6617 },
   { id: "pompeia", name: "Pompeia", count: 1, avgSqm: null, lat: -23.5360, lng: -46.6760 },
   { id: "sumarezinho", name: "Sumarezinho", count: 1, avgSqm: null, lat: -23.5449, lng: -46.6831 },
   { id: "vila-guilhermina", name: "Vila Guilhermina", count: 1, avgSqm: null, lat: -23.5274, lng: -46.5580 },
 ];
 
-const TOTAL_PROJECTS = 102;
+const TOTAL_PROJECTS = 124;
 const TOTAL_NEIGHBORHOODS = 26;
 
 const TOP_5 = [
@@ -219,7 +219,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     <div className="py-12 lg:py-16" data-pdf-hide>
       <div className="mb-6">
         <h2 className="text-2xl lg:text-3xl font-display font-bold text-foreground tracking-tight">
-          102 projetos realizados pela Bwild em São Paulo
+          124 projetos realizados pela Bwild em São Paulo
         </h2>
         <p className="text-muted-foreground text-sm mt-1 font-body">
           Estamos presentes em mais de {TOTAL_NEIGHBORHOODS} bairros na região metropolitana
