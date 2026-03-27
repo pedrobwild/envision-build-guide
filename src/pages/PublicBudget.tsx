@@ -5,6 +5,7 @@ import { fetchPublicBudget, calculateBudgetTotal, calculateSectionSubtotal } fro
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { SectionCard } from "@/components/budget/SectionCard";
+import { ProductShowcaseCard } from "@/components/budget/ProductShowcaseCard";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
 import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
 import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
