@@ -7,7 +7,7 @@ import { formatBRL, formatDate } from "@/lib/formatBRL";
 import {
   Plus, Copy, ExternalLink, LogOut, FileText, Upload, FileSpreadsheet,
   Search, Filter, TrendingUp, FolderOpen, CheckCircle, Clock,
-  MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil
+  MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil, ShoppingBag
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
@@ -336,6 +336,11 @@ export default function AdminDashboard() {
                         <span className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium font-body ${statusColors[budget.status]} flex-shrink-0`}>
                           {statusLabels[budget.status]}
                         </span>
+                        {budget.show_optional_items && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-warning/10 text-warning text-[10px] font-medium font-body flex items-center gap-1 flex-shrink-0">
+                            <ShoppingBag className="h-2.5 w-2.5" /> Opcionais
+                          </span>
+                        )}
                       </div>
                       <p className="text-[11px] sm:text-xs text-muted-foreground font-body leading-relaxed">
                         {budget.client_name}
@@ -412,6 +417,19 @@ export default function AdminDashboard() {
                                     <Copy className="h-3.5 w-3.5" /> Copiar link
                                   </button>
                                 )}
+                                <button
+                                  onClick={async () => {
+                                    const newVal = !budget.show_optional_items;
+                                    await supabase.from('budgets').update({ show_optional_items: newVal }).eq('id', budget.id);
+                                    setBudgets(prev => prev.map(b => b.id === budget.id ? { ...b, show_optional_items: newVal } : b));
+                                    toast.success(newVal ? "Opcionais ativados" : "Opcionais desativados");
+                                    setMenuOpen(null);
+                                  }}
+                                  className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
+                                >
+                                  <ShoppingBag className="h-3.5 w-3.5 text-warning" />
+                                  {budget.show_optional_items ? "Desativar opcionais" : "Incluir opcionais"}
+                                </button>
                                 {budget.status !== 'archived' && (
                                   <button
                                     onClick={() => archiveBudget(budget.id)}
