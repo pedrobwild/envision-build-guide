@@ -9,9 +9,8 @@ import {
 } from "@/components/ui/drawer";
 import { ArrowLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ProductShowcaseCard } from "./ProductShowcaseCard";
 import type { CategorizedGroup } from "@/lib/scope-categories";
-
-// All categories now show image galleries
 
 interface CategoryDetailDialogProps {
   open: boolean;
@@ -21,7 +20,7 @@ interface CategoryDetailDialogProps {
   editable?: boolean;
 }
 
-function CategoryItemList({ group }: { group: CategorizedGroup }) {
+function CategoryItemList({ group, budgetId, editable }: { group: CategorizedGroup; budgetId?: string; editable?: boolean }) {
   const allItems = group.sections.flatMap(section =>
     (section.items || []).map((item: any) => ({ ...item, _sectionTitle: section.title }))
   );
@@ -31,19 +30,15 @@ function CategoryItemList({ group }: { group: CategorizedGroup }) {
       <p className="text-xs text-muted-foreground font-body mb-3">
         {allItems.length} {allItems.length === 1 ? "item" : "itens"}
       </p>
-      <div className="divide-y divide-border">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {allItems.map((item: any) => (
-          <div key={item.id} className="flex items-center gap-3 py-3.5 min-h-[44px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0" />
-            <span className="flex-1 text-sm font-body text-foreground leading-snug">
-              {item.title}
-            </span>
-            {item.qty && (
-              <span className="text-xs text-muted-foreground font-body whitespace-nowrap">
-                Qtd: {item.qty} {item.unit || "un"}
-              </span>
-            )}
-          </div>
+          <ProductShowcaseCard
+            key={item.id}
+            item={item}
+            budgetId={budgetId}
+            editable={editable}
+            showGallery={true}
+          />
         ))}
       </div>
     </>
@@ -80,7 +75,7 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
             <DrawerTitle>{titleContent}</DrawerTitle>
           </DrawerHeader>
           <div className="px-5 py-4 overflow-y-auto">
-            <CategoryItemList group={group} />
+            <CategoryItemList group={group} budgetId={budgetId} editable={editable} />
           </div>
         </DrawerContent>
       </Drawer>
@@ -94,7 +89,7 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
           <SheetTitle>{titleContent}</SheetTitle>
         </SheetHeader>
         <div className="px-4 sm:px-5 py-5">
-          <CategoryItemList group={group} />
+          <CategoryItemList group={group} budgetId={budgetId} editable={editable} />
         </div>
       </SheetContent>
     </Sheet>
