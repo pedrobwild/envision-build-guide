@@ -417,6 +417,19 @@ export default function AdminDashboard() {
                                     <Copy className="h-3.5 w-3.5" /> Copiar link
                                   </button>
                                 )}
+                                <button
+                                  onClick={async () => {
+                                    const newVal = !budget.show_optional_items;
+                                    await supabase.from('budgets').update({ show_optional_items: newVal }).eq('id', budget.id);
+                                    setBudgets(prev => prev.map(b => b.id === budget.id ? { ...b, show_optional_items: newVal } : b));
+                                    toast.success(newVal ? "Opcionais ativados" : "Opcionais desativados");
+                                    setMenuOpen(null);
+                                  }}
+                                  className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
+                                >
+                                  <ShoppingBag className="h-3.5 w-3.5 text-warning" />
+                                  {budget.show_optional_items ? "Desativar opcionais" : "Incluir opcionais"}
+                                </button>
                                 {budget.status !== 'archived' && (
                                   <button
                                     onClick={() => archiveBudget(budget.id)}
