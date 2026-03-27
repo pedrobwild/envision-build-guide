@@ -47,7 +47,7 @@ export default function BudgetEditorV2() {
     setSections(sorted);
   };
 
-  const autoSaveBudgetField = useCallback((field: string, value: string) => {
+  const autoSaveBudgetField = useCallback((field: string, value: any) => {
     if (!budgetId) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
