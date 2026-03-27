@@ -349,6 +349,7 @@ export default function AdminDashboard() {
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
+                        {budget.status === 'draft' && (
                           <button
                             onClick={() => publishBudget(budget.id)}
                             className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
