@@ -7,7 +7,8 @@ import { formatBRL, formatDate } from "@/lib/formatBRL";
 import {
   Plus, Copy, ExternalLink, LogOut, FileText, Upload, FileSpreadsheet,
   Search, Filter, TrendingUp, FolderOpen, CheckCircle, Clock,
-  MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil, ShoppingBag
+  MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil, ShoppingBag,
+  Handshake, DollarSign, BarChart3
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
@@ -80,6 +81,16 @@ export default function AdminDashboard() {
     loadBudgets();
   };
 
+  const markAsClosed = async (id: string) => {
+    await supabase.from('budgets').update({
+      status: 'contrato_fechado',
+      closed_at: new Date().toISOString(),
+    } as any).eq('id', id);
+    toast.success("Contrato marcado como fechado!");
+    setMenuOpen(null);
+    loadBudgets();
+  };
+
   const archiveBudget = async (id: string) => {
     await supabase.from('budgets').update({ status: 'archived' }).eq('id', id);
     toast.success("Orçamento arquivado");
@@ -88,7 +99,6 @@ export default function AdminDashboard() {
   };
 
   const deleteBudget = async (id: string) => {
-    // Delete related data first
     const { data: sections } = await supabase.from('sections').select('id').eq('budget_id', id);
     if (sections && sections.length > 0) {
       const sIds = sections.map(s => s.id);
@@ -125,8 +135,32 @@ export default function AdminDashboard() {
     const total = budgets.length;
     const published = budgets.filter(b => b.status === 'published').length;
     const drafts = budgets.filter(b => b.status === 'draft').length;
+    const closed = budgets.filter(b => b.status === 'contrato_fechado').length;
     const totalValue = budgets.reduce((sum, b) => sum + getBudgetTotal(b), 0);
-    return { total, published, drafts, totalValue };
+    return { total, published, drafts, closed, totalValue };
+  }, [budgets]);
+
+  // Monthly billing
+  const monthlyBilling = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const monthName = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+    const closedThisMonth = budgets.filter(b => {
+      if (b.status !== 'contrato_fechado') return false;
+      const closedAt = (b as any).closed_at;
+      if (!closedAt) return false;
+      const d = new Date(closedAt);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    const revenue = closedThisMonth.reduce((sum, b) => sum + getBudgetTotal(b), 0);
+    const cost = closedThisMonth.reduce((sum, b) => sum + (Number((b as any).internal_cost) || 0), 0);
+    const profit = revenue - cost;
+    const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+
+    return { monthName, count: closedThisMonth.length, revenue, cost, profit, margin };
   }, [budgets]);
 
   // Filtered
@@ -144,6 +178,7 @@ export default function AdminDashboard() {
   const statusColors: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
     published: 'bg-success/10 text-success',
+    contrato_fechado: 'bg-primary/10 text-primary',
     approved: 'bg-primary/10 text-primary',
     expired: 'bg-destructive/10 text-destructive',
     archived: 'bg-muted text-muted-foreground',
@@ -152,6 +187,7 @@ export default function AdminDashboard() {
   const statusLabels: Record<string, string> = {
     draft: 'Rascunho',
     published: 'Publicado',
+    contrato_fechado: 'Contrato Fechado',
     approved: 'Aprovado',
     expired: 'Expirado',
     archived: 'Arquivado',
@@ -221,15 +257,16 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        {/* Metrics */}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 mb-4 sm:mb-8">
+        {/* Metrics - 5 cards */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3 mb-4 sm:mb-6">
           {[
             { icon: FolderOpen, label: "Total", value: metrics.total, color: "text-foreground" },
             { icon: CheckCircle, label: "Publicados", value: metrics.published, color: "text-success" },
             { icon: Clock, label: "Rascunhos", value: metrics.drafts, color: "text-muted-foreground" },
+            { icon: Handshake, label: "Contratos Fechados", value: metrics.closed, color: "text-primary" },
             { icon: TrendingUp, label: "Valor total", value: formatBRL(metrics.totalValue), color: "text-primary" },
           ].map((m, i) => (
-            <div key={i} className="p-3 sm:p-4 rounded-lg border border-border bg-card">
+            <div key={i} className={`p-3 sm:p-4 rounded-lg border border-border bg-card ${i === 4 ? 'col-span-2 sm:col-span-1' : ''}`}>
               <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
                 <m.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${m.color}`} />
                 <span className="text-[10px] sm:text-xs text-muted-foreground font-body">{m.label}</span>
@@ -238,6 +275,59 @@ export default function AdminDashboard() {
             </div>
           ))}
         </div>
+
+        {/* Monthly Billing Section */}
+        {monthlyBilling.count > 0 && (
+          <div className="mb-4 sm:mb-6">
+            <h2 className="font-display font-bold text-sm text-foreground mb-3 flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              Faturamento do Mês
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+              {/* Revenue */}
+              <div className="p-4 rounded-lg border border-border bg-card">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-base">🤝</span>
+                  <span className="text-xs text-muted-foreground font-body">
+                    Contratos Fechados — {monthlyBilling.monthName}
+                  </span>
+                </div>
+                <p className="text-xl font-display font-bold text-foreground">{formatBRL(monthlyBilling.revenue)}</p>
+                <p className="text-xs text-muted-foreground font-body mt-1">
+                  {monthlyBilling.count} contrato{monthlyBilling.count !== 1 ? 's' : ''} fechado{monthlyBilling.count !== 1 ? 's' : ''} este mês
+                </p>
+              </div>
+              {/* Cost */}
+              <div className="p-4 rounded-lg border border-border bg-card">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-base">🧱</span>
+                  <span className="text-xs text-muted-foreground font-body">
+                    Custo das Obras — {monthlyBilling.monthName}
+                  </span>
+                </div>
+                <p className="text-xl font-display font-bold text-foreground">{formatBRL(monthlyBilling.cost)}</p>
+                <p className="text-xs text-muted-foreground font-body mt-1">
+                  Custo total das obras em andamento
+                </p>
+              </div>
+              {/* Profit */}
+              <div className="p-4 rounded-lg border border-border bg-card">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-base">📈</span>
+                  <span className="text-xs text-muted-foreground font-body">
+                    Lucro do Mês — {monthlyBilling.monthName}
+                  </span>
+                </div>
+                <p className={`text-xl font-display font-bold ${monthlyBilling.profit >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  {formatBRL(monthlyBilling.profit)}
+                </p>
+                <p className="text-xs text-muted-foreground font-body mt-1">
+                  Margem: {monthlyBilling.margin.toFixed(0)}%
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Controls */}
         <div className="flex flex-col gap-3 mb-4 sm:mb-6">
@@ -260,6 +350,7 @@ export default function AdminDashboard() {
               <option value="all">Todos</option>
               <option value="draft">Rascunhos</option>
               <option value="published">Publicados</option>
+              <option value="contrato_fechado">Contratos Fechados</option>
               <option value="archived">Arquivados</option>
             </select>
           </div>
@@ -324,9 +415,13 @@ export default function AdminDashboard() {
             {filtered.map(budget => {
               const sectionTotal = getBudgetTotal(budget);
               const sectionCount = (budget.sections || []).length;
+              const internalCost = Number((budget as any).internal_cost) || 0;
+              const isClosed = budget.status === 'contrato_fechado';
+              const profit = sectionTotal - internalCost;
+              const profitMargin = sectionTotal > 0 ? (profit / sectionTotal) * 100 : 0;
+
               return (
                 <div key={budget.id} className="p-3 sm:p-4 rounded-lg border border-border bg-card hover:shadow-sm transition-shadow group">
-                  {/* Mobile: stacked layout */}
                   <div className="flex items-start sm:items-center gap-3 sm:gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -334,7 +429,7 @@ export default function AdminDashboard() {
                           {budget.project_name || 'Sem nome'}
                         </Link>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium font-body ${statusColors[budget.status]} flex-shrink-0`}>
-                          {statusLabels[budget.status]}
+                          {statusLabels[budget.status] || budget.status}
                         </span>
                         {budget.show_optional_items && (
                           <span className="px-1.5 py-0.5 rounded-full bg-warning/10 text-warning text-[10px] font-medium font-body flex items-center gap-1 flex-shrink-0">
@@ -349,6 +444,17 @@ export default function AdminDashboard() {
                         {budget.version_number > 1 && ` • V${budget.version_number}`}
                         {budget.view_count > 0 && <span className="hidden sm:inline"> • {budget.view_count} visualização{budget.view_count !== 1 ? 'ões' : ''}</span>}
                       </p>
+
+                      {/* Profit info for closed contracts */}
+                      {isClosed && internalCost > 0 && (
+                        <div className="flex items-center gap-3 mt-1.5 text-[11px] font-body">
+                          <span className="text-muted-foreground">Custo: {formatBRL(internalCost)}</span>
+                          <span className={profit >= 0 ? 'text-success' : 'text-destructive'}>
+                            Lucro: {formatBRL(profit)}
+                          </span>
+                          <span className="text-muted-foreground">Margem: {profitMargin.toFixed(0)}%</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
@@ -404,7 +510,7 @@ export default function AdminDashboard() {
                           {menuOpen === budget.id && (
                             <>
                               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-lg border border-border bg-popover shadow-lg py-1">
+                              <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-lg border border-border bg-popover shadow-lg py-1">
                                 {budget.public_id && (
                                   <button
                                     onClick={() => {
@@ -415,6 +521,16 @@ export default function AdminDashboard() {
                                     className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2 sm:hidden"
                                   >
                                     <Copy className="h-3.5 w-3.5" /> Copiar link
+                                  </button>
+                                )}
+                                {/* Mark as closed */}
+                                {(budget.status === 'published' || budget.status === 'approved') && (
+                                  <button
+                                    onClick={() => markAsClosed(budget.id)}
+                                    className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
+                                  >
+                                    <Handshake className="h-3.5 w-3.5 text-primary" />
+                                    Marcar como Contrato Fechado
                                   </button>
                                 )}
                                 <button
