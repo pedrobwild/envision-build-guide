@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
+import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { useAuth } from "@/hooks/useAuth";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import {
@@ -37,7 +38,7 @@ export default function AdminDashboard() {
   const loadBudgets = async () => {
     const { data } = await supabase
       .from('budgets')
-      .select('*, sections(id, title, section_price, qty, items(id, internal_total))')
+      .select('*, sections(id, title, section_price, qty, items(id, internal_total)), adjustments(id, sign, amount)')
       .order('created_at', { ascending: false });
     setBudgets(data || []);
     setLoading(false);
@@ -107,10 +108,15 @@ export default function AdminDashboard() {
   };
 
   const getBudgetTotal = (budget: any) => {
-    return (budget.sections || []).reduce((sum: number, s: any) => {
-      if (s.section_price) return sum + Number(s.section_price) * (s.qty || 1);
-      return sum + (s.items || []).reduce((is: number, i: any) => is + (Number(i.internal_total) || 0), 0);
-    }, 0);
+    const sectionsTotal = (budget.sections || []).reduce(
+      (sum: number, s: any) => sum + calculateSectionSubtotal(s),
+      0
+    );
+    const adjustmentsTotal = (budget.adjustments || []).reduce(
+      (sum: number, adj: any) => sum + (adj.sign * Number(adj.amount)),
+      0
+    );
+    return sectionsTotal + adjustmentsTotal;
   };
 
   // Metrics
