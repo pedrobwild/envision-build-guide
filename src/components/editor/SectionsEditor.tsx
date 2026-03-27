@@ -445,6 +445,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     toast.success("Seção removida");
   };
 
+  const handleImagesChange = (sectionId: string, itemId: string, images: ItemData["images"]) => {
+    const updated = sections.map(s => {
+      if (s.id !== sectionId) return s;
+      return {
+        ...s,
+        items: s.items.map(i => i.id === itemId ? { ...i, images } : i),
+      };
+    });
+    onSectionsChange(updated);
+  };
+
   const getSectionTotal = (section: SectionData) => {
     if (section.items.length > 0) {
       const itemsSum = section.items.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
