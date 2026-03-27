@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Save, Copy, Check, Loader2, User } from "lucide-react";
+import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
@@ -9,6 +9,8 @@ import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { ensureVersionGroup } from "@/lib/budget-versioning";
 import { MediaUploadSection } from "@/components/editor/MediaUploadSection";
+import { formatBRL } from "@/lib/formatBRL";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -16,6 +18,7 @@ export default function BudgetEditorV2() {
   const [budget, setBudget] = useState<any>(null);
   const [sections, setSections] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [internalDataOpen, setInternalDataOpen] = useState(false);
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -28,7 +31,6 @@ export default function BudgetEditorV2() {
     if (!b) { navigate("/admin"); return; }
     setBudget(b);
 
-    // Load sections with items
     const { data: secs } = await supabase
       .from("sections")
       .select("*, items(*, item_images(*))")
@@ -51,7 +53,7 @@ export default function BudgetEditorV2() {
     if (!budgetId) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      await supabase.from("budgets").update({ [field]: value }).eq("id", budgetId);
+      await supabase.from("budgets").update({ [field]: value } as any).eq("id", budgetId);
     }, 800);
   }, [budgetId]);
 
@@ -60,7 +62,6 @@ export default function BudgetEditorV2() {
     setSaving(true);
 
     try {
-      // Ensure version tracking is initialized
       await ensureVersionGroup(budgetId);
 
       const publicId = budget.public_id || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
@@ -151,6 +152,50 @@ export default function BudgetEditorV2() {
           onNext={handleSaveAndPublish}
           saving={saving}
         />
+
+        {/* Internal Data - Collapsible */}
+        <Collapsible open={internalDataOpen} onOpenChange={setInternalDataOpen}>
+          <div className="rounded-xl border border-dashed border-border bg-card overflow-hidden">
+            <CollapsibleTrigger className="w-full px-5 py-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <span className="font-display font-semibold text-sm text-foreground">Dados Internos</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-body">Uso interno</span>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${internalDataOpen ? 'rotate-180' : ''}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-5 pb-5 pt-2 border-t border-border space-y-4">
+                <div className="max-w-sm">
+                  <label className="block text-xs text-muted-foreground mb-1.5 font-body">
+                    Custo da Obra (interno) — R$
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={(budget as any).internal_cost ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value ? Number(e.target.value) : null;
+                      setBudget({ ...budget, internal_cost: val });
+                      autoSaveBudgetField("internal_cost", val);
+                    }}
+                    placeholder="0.00"
+                    className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    style={{ fontVariantNumeric: "tabular-nums" }}
+                  />
+                  <p className="text-[11px] text-muted-foreground font-body mt-1.5">
+                    Custo real de execução (mão de obra, materiais, marcenaria). Nunca exposto ao cliente.
+                  </p>
+                </div>
+                {(budget as any).internal_cost > 0 && (
+                  <div className="flex items-center gap-4 text-sm font-body">
+                    <span className="text-muted-foreground">Custo: {formatBRL((budget as any).internal_cost)}</span>
+                  </div>
+                )}
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
 
         {budget.public_id && (
           <MediaUploadSection publicId={budget.public_id} />
