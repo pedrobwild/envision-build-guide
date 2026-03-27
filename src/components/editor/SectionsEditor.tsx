@@ -119,7 +119,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     await supabase.from("items").delete().eq("id", itemId);
     const updated = sections.map(s => {
       if (s.id !== sectionId) return s;
-      return { ...s, items: s.items.filter(i => i.id !== itemId) };
+      const newItems = s.items.filter(i => i.id !== itemId);
+      const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
+      // Sync section_price so public view reflects the change
+      supabase.from("sections").update({ section_price: newTotal }).eq("id", sectionId);
+      return { ...s, items: newItems, section_price: newTotal };
     });
     onSectionsChange(updated);
     toast.success("Item removido");
