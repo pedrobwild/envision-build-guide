@@ -9,7 +9,7 @@ import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from
 import { cn } from "@/lib/utils";
 import type { ScopeCategory } from "@/lib/scope-categories";
 
-const IMAGE_GALLERY_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
+
 const PREVIEW_COUNT = 3;
 
 interface SectionCardProps {
