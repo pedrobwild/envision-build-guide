@@ -138,7 +138,7 @@ export function ExpandableItemRow({
                   </p>
                 )}
               </motion.div>
-            )}
+          </AnimatePresence>
         </div>
 
       </div>
