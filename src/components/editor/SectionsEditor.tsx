@@ -137,8 +137,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   };
 
   const getSectionTotal = (section: SectionData) => {
+    // Always sum from items when items exist, so adding/removing/editing items reflects immediately
+    if (section.items.length > 0) {
+      const itemsSum = section.items.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
+      return itemsSum * (Number(section.qty) || 1);
+    }
     if (section.section_price) return Number(section.section_price) * (Number(section.qty) || 1);
-    return section.items.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
+    return 0;
   };
 
   const grandTotal = sections.reduce((sum, s) => sum + getSectionTotal(s), 0);
