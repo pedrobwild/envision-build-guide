@@ -135,19 +135,19 @@ export function SectionCard({
         ) : (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="w-full text-left px-4 pt-4 pb-0 min-h-[44px]"
+            className="w-full text-left px-3 sm:px-4 pt-3 sm:pt-4 pb-0 min-h-[44px]"
           >
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2.5 sm:gap-3">
               <div
                 className={cn(
-                  "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+                  "w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0",
                   iconColors
                 )}
               >
-                <SectionIcon className="h-4 w-4" />
+                <SectionIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="font-display text-base sm:text-lg font-bold text-foreground leading-tight">
+                <h2 className="font-display text-sm sm:text-base lg:text-lg font-bold text-foreground leading-tight">
                   {section.title}
                 </h2>
                 {section.subtitle && (
@@ -168,8 +168,8 @@ export function SectionCard({
         )}
 
         {/* ── Subtotal strip — always visible ── */}
-        <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground font-body">
+        <div className="px-3 sm:px-4 py-1.5 sm:py-2 border-b border-border bg-muted/30 flex items-center justify-between">
+          <span className="text-[11px] sm:text-xs text-muted-foreground font-body">
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ""}
             {items.length} {items.length === 1 ? "item" : "itens"}
           </span>
@@ -182,29 +182,28 @@ export function SectionCard({
 
         {/* ── Preview items (collapsed) — mobile-first: show top items ── */}
         {!expanded && items.length > 0 && (
-          <div className="px-4 py-2">
+          <div className="px-3 sm:px-4 py-1.5 sm:py-2">
             {previewItems.map((item: any, i: number) => {
               const thumb = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
               return (
                 <div
                   key={item.id}
                   className={cn(
-                    "flex items-center gap-2.5 py-2",
+                    "flex items-center gap-2 sm:gap-2.5 py-1.5 sm:py-2",
                     i < previewItems.length - 1 && "border-b border-border/30"
                   )}
                 >
-                  {/* Thumbnail or bullet */}
                   {thumb ? (
                     <img
                       src={thumb.url}
                       alt={item.title}
-                      className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-border/50"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg object-cover flex-shrink-0 border border-border/50"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0 ml-3 mr-2.5" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 flex-shrink-0 ml-2.5 sm:ml-3 mr-2 sm:mr-2.5" />
                   )}
-                  <span className="text-sm font-body text-foreground flex-1 truncate">
+                  <span className="text-xs sm:text-sm font-body text-foreground flex-1 truncate">
                     {item.title}
                   </span>
                   <AnimatePresence>
@@ -245,7 +244,7 @@ export function SectionCard({
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="overflow-hidden"
             >
-              <div className="px-4 py-3">
+              <div className="px-3 sm:px-4 py-2.5 sm:py-3">
                 {items.map((item: any, i: number) => (
                   <ExpandableItemRow
                     key={item.id}
