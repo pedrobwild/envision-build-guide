@@ -206,7 +206,13 @@ export default function AdminDashboard() {
               {user && <p className="text-xs text-muted-foreground font-body truncate max-w-48">{user.email}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={() => navigate("/admin/financeiro")}
+              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              title="Histórico Financeiro"
+            >
+              <BarChart3 className="h-4 w-4" />
+            </button>
             <div className="relative">
               <button
                 onClick={() => {
