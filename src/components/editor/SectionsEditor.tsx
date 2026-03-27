@@ -46,6 +46,7 @@ interface ItemData {
   internal_unit_price?: number | null;
   internal_total?: number | null;
   order_index: number;
+  images?: { id: string; url: string; is_primary?: boolean | null }[];
 }
 
 interface SectionsEditorProps {
@@ -91,15 +92,19 @@ function SortableSectionCard({
 function SortableItemRow({
   item,
   sectionId,
+  budgetId,
   isItemSaving,
   onUpdate,
   onDelete,
+  onImagesChange,
 }: {
   item: ItemData;
   sectionId: string;
+  budgetId: string;
   isItemSaving: boolean;
   onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
   onDelete: (sectionId: string, itemId: string) => void;
+  onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
 }) {
   const {
     attributes,
@@ -211,6 +216,15 @@ function SortableItemRow({
           </button>
         </div>
       </div>
+
+      {/* Item image management */}
+      <ItemImageInline
+        itemId={item.id}
+        itemTitle={item.title}
+        budgetId={budgetId}
+        images={item.images || []}
+        onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
+      />
     </div>
   );
 }
