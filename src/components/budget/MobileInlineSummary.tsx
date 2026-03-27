@@ -78,17 +78,17 @@ export function MobileInlineSummary({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="space-y-4"
+        className="space-y-3.5"
       >
         {/* Title */}
-        <h2 className="text-xl font-display font-bold text-foreground tracking-tight">
+        <h2 className="text-lg font-display font-bold text-foreground tracking-tight">
           Resumo do investimento
         </h2>
 
         {/* Validity notice */}
         <div
           className={cn(
-            "rounded-xl px-3.5 py-3 flex items-center gap-2.5",
+            "rounded-lg px-3 py-2.5 flex items-center gap-2",
             validity.expired
               ? "bg-destructive/8 border border-destructive/15"
               : validity.daysLeft <= 5
@@ -108,7 +108,7 @@ export function MobileInlineSummary({
           )}
           <p
             className={cn(
-              "text-[13px] font-body leading-snug",
+              "text-xs font-body leading-snug",
               validity.expired ? "text-destructive" : "text-foreground"
             )}
           >
@@ -120,29 +120,29 @@ export function MobileInlineSummary({
 
         {/* Category breakdown */}
         {categorizedGroups.length > 0 && (
-          <div className="rounded-xl border border-border bg-card p-4 space-y-1">
-            <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <div className="rounded-xl border border-border bg-card px-3 py-3 space-y-0.5">
+            <p className="text-[11px] font-display font-semibold text-muted-foreground uppercase tracking-wider mb-2">
               Composição do investimento
             </p>
             {categorizedGroups.map((group) => (
               <button
                 key={group.category.id}
                 onClick={() => setDetailGroup(group)}
-                className="w-full flex items-center gap-3 py-2.5 px-1 rounded-lg hover:bg-muted/50 transition-colors"
+                className="w-full flex items-center gap-2.5 py-2 px-1 rounded-lg hover:bg-muted/50 transition-colors min-h-[40px]"
               >
                 <div
                   className={cn(
-                    "w-1 h-5 rounded-full flex-shrink-0",
+                    "w-1 h-4 rounded-full flex-shrink-0",
                     group.category.bgClass
                   )}
                 />
-                <span className="flex-1 text-sm font-body text-foreground leading-snug text-left">
+                <span className="flex-1 text-[13px] font-body text-foreground leading-snug text-left">
                   {group.category.label}
                 </span>
-                <span className="text-sm font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
+                <span className="text-[13px] font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
                   {formatBRL(group.subtotal)}
                 </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
               </button>
             ))}
           </div>
@@ -151,27 +151,27 @@ export function MobileInlineSummary({
         {/* Total card — observed by IntersectionObserver */}
         <div
           ref={totalCardRef}
-          className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-5"
+          className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 px-4 py-4"
         >
-          <p className="text-[13px] font-body font-medium text-muted-foreground mb-1">
+          <p className="text-xs font-body font-medium text-muted-foreground mb-1">
             Investimento total
           </p>
-          <p className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none">
+          <p className="font-display font-extrabold text-xl text-primary tabular-nums leading-none">
             {formatBRL(total)}
           </p>
-          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/10">
-            <Shield className="h-3.5 w-3.5 text-primary/40" />
-            <span className="text-[13px] text-muted-foreground/80 font-body">
+          <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-primary/10">
+            <Shield className="h-3 w-3 text-primary/40" />
+            <span className="text-xs text-muted-foreground/80 font-body">
               Preço fixo · Sem custos ocultos
             </span>
           </div>
         </div>
 
         {/* Installment simulator — dropdown selector */}
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <CreditCard className="h-4 w-4 text-primary" />
-            <span className="text-sm font-display font-bold text-foreground">
+        <div className="rounded-xl border border-border bg-card px-3 py-3">
+          <div className="flex items-center gap-2 mb-2.5">
+            <CreditCard className="h-3.5 w-3.5 text-primary" />
+            <span className="text-[13px] font-display font-bold text-foreground">
               Simule o parcelamento
             </span>
           </div>
@@ -179,17 +179,17 @@ export function MobileInlineSummary({
           {/* Clickable selector */}
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/50 transition-colors min-h-[48px]"
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors min-h-[44px]"
           >
-            <span className="text-sm font-body font-medium text-foreground">
+            <span className="text-[13px] font-body font-medium text-foreground">
               {installments}× {installments === 1 ? "parcela" : "parcelas"}
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold tabular-nums text-primary">
+              <span className="text-[13px] font-semibold tabular-nums text-primary">
                 {formatBRL(total / installments)}
               </span>
               <ChevronDown className={cn(
-                "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
                 dropdownOpen && "rotate-180"
               )} />
             </div>
@@ -205,13 +205,13 @@ export function MobileInlineSummary({
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 className="overflow-hidden"
               >
-                <div className="mt-2 max-h-[240px] overflow-y-auto rounded-xl border border-border/50 bg-muted/20 divide-y divide-border/30">
+                <div className="mt-1.5 max-h-[220px] overflow-y-auto rounded-lg border border-border/50 bg-muted/20 divide-y divide-border/30">
                   {Array.from({ length: 18 }, (_, i) => i + 1).map((n) => (
                     <button
                       key={n}
                       onClick={() => { setInstallments(n); setDropdownOpen(false); }}
                       className={cn(
-                        "w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-body transition-colors min-h-[44px]",
+                        "w-full flex items-center justify-between px-3 py-2 text-[13px] font-body transition-colors min-h-[40px]",
                         installments === n
                           ? "bg-primary/10 text-primary font-semibold"
                           : "text-foreground hover:bg-muted/50"
@@ -226,7 +226,7 @@ export function MobileInlineSummary({
             )}
           </AnimatePresence>
 
-          <p className="text-xs text-muted-foreground font-body mt-3 text-center">
+          <p className="text-[11px] text-muted-foreground font-body mt-2.5 text-center">
             Condições sob consulta com sua consultora
           </p>
         </div>
@@ -237,9 +237,9 @@ export function MobileInlineSummary({
           target="_blank"
           rel="noopener noreferrer"
           whileTap={{ scale: 0.98 }}
-          className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-semibold text-sm flex items-center justify-center gap-2"
+          className="w-full min-h-[48px] rounded-xl bg-primary text-primary-foreground font-display font-semibold text-[13px] flex items-center justify-center gap-2"
         >
-          <MessageCircle className="h-5 w-5 flex-shrink-0" />
+          <MessageCircle className="h-4 w-4 flex-shrink-0" />
           {ctaLabel}
         </motion.a>
       </motion.div>
