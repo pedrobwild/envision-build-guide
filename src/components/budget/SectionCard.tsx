@@ -9,7 +9,7 @@ import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from
 import { cn } from "@/lib/utils";
 import type { ScopeCategory } from "@/lib/scope-categories";
 
-const IMAGE_GALLERY_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
+
 const PREVIEW_COUNT = 3;
 
 interface SectionCardProps {
@@ -83,7 +83,7 @@ export function SectionCard({
     ? `${categoryColor.bgClass}/10 ${categoryColor.colorClass}`
     : SECTION_ICON_BG_COLORS[sectionIndex % SECTION_ICON_BG_COLORS.length];
 
-  const showGallery = !!(categoryColor && IMAGE_GALLERY_CATEGORIES.has(categoryColor.id));
+  const showGallery = true;
 
   return (
     <>
