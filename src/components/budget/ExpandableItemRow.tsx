@@ -77,14 +77,8 @@ export function ExpandableItemRow({
         )}
       >
         {/* ── Clickable header row ── */}
-        <button
-          onClick={expandable ? onToggle : undefined}
-          className={cn(
-            "w-full flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-2 sm:py-2.5 min-h-[44px] sm:min-h-[48px] text-left",
-            expandable && "cursor-pointer hover:bg-muted/30 transition-colors"
-          )}
-          disabled={!expandable}
-          type="button"
+        <div
+          className="w-full flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-2 sm:py-2.5 min-h-[44px] sm:min-h-[48px] text-left"
         >
           {/* Thumbnail */}
           {showImageGallery && budgetId ? (
@@ -145,19 +139,7 @@ export function ExpandableItemRow({
                 )}
               </motion.div>
             )}
-          </AnimatePresence>
-
-          {/* Chevron */}
-          {expandable && (
-            <motion.div
-              animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex-shrink-0"
-            >
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            </motion.div>
-          )}
-        </button>
+        </div>
 
       </div>
     </>
