@@ -12,6 +12,7 @@ import {
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { toast } from "sonner";
+import { OptionalSelectionsPanel } from "@/components/admin/OptionalSelectionsPanel";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import logoDark from "@/assets/logo-bwild-dark.png";
 import logoWhite from "@/assets/logo-bwild-white.png";
@@ -297,6 +298,9 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+
+        {/* Optional selections */}
+        <OptionalSelectionsPanel />
 
         {/* List */}
         {loading ? (
