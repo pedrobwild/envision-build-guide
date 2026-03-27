@@ -6,7 +6,7 @@ import { formatBRL, formatDate } from "@/lib/formatBRL";
 import {
   Plus, Copy, ExternalLink, LogOut, FileText, Upload, FileSpreadsheet,
   Search, Filter, TrendingUp, FolderOpen, CheckCircle, Clock,
-  MoreHorizontal, Trash2, Archive, Eye, Bell
+  MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
@@ -342,6 +342,13 @@ export default function AdminDashboard() {
                       </span>
 
                       <div className="flex items-center gap-0.5">
+                        <button
+                          onClick={() => navigate(`/admin/budget/${budget.id}`)}
+                          className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                          title="Editar orçamento"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
                         {budget.status === 'draft' && (
                           <button
                             onClick={() => publishBudget(budget.id)}
