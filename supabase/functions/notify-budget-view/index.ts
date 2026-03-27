@@ -12,7 +12,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { budget_id, public_id } = await req.json();
+    const body = await req.json();
+    const { budget_id, public_id, type } = body;
+
     if (!budget_id && !public_id) {
       return new Response(JSON.stringify({ error: "Missing budget_id or public_id" }), {
         status: 400,
@@ -24,7 +26,81 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Get budget info
+    // ── Handle optional item selection notification ──
+    if (type === "optional_selection") {
+      const { client_name, selected_sections, selected_total } = body;
+
+      // Get budget info
+      const { data: budget, error: budgetError } = await supabase
+        .from("budgets")
+        .select("id, project_name, client_name, created_by")
+        .eq("id", budget_id)
+        .single();
+
+      if (budgetError || !budget) {
+        return new Response(JSON.stringify({ error: "Budget not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const sectionsList = (selected_sections || []).join(", ");
+      const totalFormatted = new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(selected_total || 0);
+
+      // Create in-app notification
+      await supabase.from("notifications").insert({
+        user_id: budget.created_by,
+        budget_id: budget.id,
+        type: "optional_selection",
+        title: "Itens opcionais selecionados!",
+        message: `${client_name || budget.client_name || "Cliente"} selecionou itens opcionais no orçamento "${budget.project_name}": ${sectionsList} (${totalFormatted}).`,
+      });
+
+      // Try sending email
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      if (resendKey && budget.created_by) {
+        const { data: userData } = await supabase.auth.admin.getUserById(budget.created_by);
+        const userEmail = userData?.user?.email;
+        if (userEmail) {
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${resendKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: Deno.env.get("RESEND_FROM_EMAIL") || "Bwild <onboarding@resend.dev>",
+              to: [userEmail],
+              subject: `🛒 ${client_name || "Cliente"} selecionou opcionais no orçamento`,
+              html: `
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
+                  <h2 style="color: #1a1a1a; margin-bottom: 8px;">Itens opcionais selecionados! 🛒</h2>
+                  <p style="color: #666; line-height: 1.6;">
+                    <strong>${client_name || budget.client_name || ""}</strong> selecionou itens opcionais no orçamento
+                    <strong>"${budget.project_name}"</strong>:
+                  </p>
+                  <ul style="color: #333; line-height: 1.8;">${(selected_sections || []).map((s: string) => `<li>${s}</li>`).join("")}</ul>
+                  <p style="color: #1a1a1a; font-weight: bold; font-size: 16px; margin-top: 16px;">
+                    Adicional: ${totalFormatted}
+                  </p>
+                  <p style="color: #999; font-size: 13px; margin-top: 24px;">— Bwild Budget</p>
+                </div>
+              `,
+            }),
+          }).catch((e) => console.error("Resend error:", e));
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Original first-view notification ──
     let query = supabase.from("budgets").select("id, project_name, client_name, created_by, view_count");
     if (budget_id) query = query.eq("id", budget_id);
     else query = query.eq("public_id", public_id);
@@ -37,7 +113,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Only notify on first view (view_count was 0 before increment, so now it's 1)
     if (budget.view_count > 1) {
       return new Response(JSON.stringify({ skipped: true, reason: "not_first_view" }), {
         status: 200,
@@ -45,7 +120,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create in-app notification
     await supabase.from("notifications").insert({
       user_id: budget.created_by,
       budget_id: budget.id,
@@ -54,15 +128,12 @@ Deno.serve(async (req) => {
       message: `O cliente ${budget.client_name || ""} abriu o orçamento "${budget.project_name}" pela primeira vez.`,
     });
 
-    // Try sending email via Resend (optional - only if RESEND_API_KEY is configured)
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey && budget.created_by) {
-      // Get user email
       const { data: userData } = await supabase.auth.admin.getUserById(budget.created_by);
       const userEmail = userData?.user?.email;
-
       if (userEmail) {
-        const emailRes = await fetch("https://api.resend.com/emails", {
+        await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${resendKey}`,
@@ -79,17 +150,11 @@ Deno.serve(async (req) => {
                   O cliente <strong>${budget.client_name || ""}</strong> acabou de abrir o orçamento
                   <strong>"${budget.project_name}"</strong> pela primeira vez.
                 </p>
-                <p style="color: #999; font-size: 13px; margin-top: 24px;">
-                  — Bwild Budget
-                </p>
+                <p style="color: #999; font-size: 13px; margin-top: 24px;">— Bwild Budget</p>
               </div>
             `,
           }),
-        });
-
-        if (!emailRes.ok) {
-          console.error("Resend error:", await emailRes.text());
-        }
+        }).catch((e) => console.error("Resend error:", e));
       }
     }
 

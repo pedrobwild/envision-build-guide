@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
+import { OptionalItemsSimulator } from "@/components/budget/OptionalItemsSimulator";
 import { MobileHeroCard } from "@/components/budget/MobileHeroCard";
 import { MobileSectionNav } from "@/components/budget/MobileSectionNav";
 import { MobileBottomBar } from "@/components/budget/MobileBottomBar";
@@ -350,6 +351,17 @@ export default function PublicBudget() {
               </div>
             )}
 
+            {/* ── Mobile optional items simulator ── */}
+            <div className="lg:hidden">
+              <OptionalItemsSimulator
+                budgetId={budget.id}
+                sections={sections as any}
+                baseTotal={total}
+                clientName={budget.client_name}
+                projectName={budget.project_name}
+              />
+            </div>
+
             {/* ── Mobile inline summary ── */}
             <MobileInlineSummary
               total={total}
@@ -388,6 +400,13 @@ export default function PublicBudget() {
                 budgetId={budget.id}
                 editable={isAdmin}
                 allCategoriesOpenSheet={["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "")}
+              />
+              <OptionalItemsSimulator
+                budgetId={budget.id}
+                sections={sections as any}
+                baseTotal={total}
+                clientName={budget.client_name}
+                projectName={budget.project_name}
               />
               <InstallmentSimulator total={total} />
               <ApprovalCTA
