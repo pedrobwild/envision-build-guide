@@ -91,7 +91,7 @@ export function ExpandableItemRow({
         <button
           onClick={expandable ? onToggle : undefined}
           className={cn(
-            "w-full flex items-center gap-2.5 px-2 py-2 min-h-[48px] text-left",
+            "w-full flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-2 sm:py-2.5 min-h-[44px] sm:min-h-[48px] text-left",
             expandable && "cursor-pointer hover:bg-muted/30 transition-colors"
           )}
           disabled={!expandable}
@@ -108,7 +108,7 @@ export function ExpandableItemRow({
                 e.stopPropagation();
                 onOpenLightbox(primaryImage.url);
               }}
-              className="relative w-8 h-8 rounded-full overflow-hidden group cursor-zoom-in flex-shrink-0"
+              className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden group cursor-zoom-in flex-shrink-0"
               type="button"
             >
               <img
@@ -119,14 +119,14 @@ export function ExpandableItemRow({
               />
             </button>
           ) : (
-            <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0">
+              <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-primary/40" />
             </div>
           )}
 
           {/* Name + qty */}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground font-body truncate leading-relaxed">
+            <p className="text-xs sm:text-sm font-medium text-foreground font-body truncate leading-relaxed">
               {item.title}
             </p>
             {showItemQty && item.qty && (
@@ -151,7 +151,7 @@ export function ExpandableItemRow({
                 transition={{ duration: 0.25 }}
                 className="text-right flex-shrink-0"
               >
-                <p className="text-sm font-mono font-semibold text-foreground tabular-nums">
+                <p className="text-xs sm:text-sm font-mono font-semibold text-foreground tabular-nums">
                   {formatBRL(itemTotal)}
                 </p>
                 {itemQty > 1 && itemUnitPrice > 0 && (
@@ -185,7 +185,7 @@ export function ExpandableItemRow({
               transition={{ duration: 0.2, ease: "easeOut" }}
               className="overflow-hidden"
             >
-              <div className="px-4 py-3 border-t border-border/30 bg-muted/20 space-y-3">
+              <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-border/30 bg-muted/20 space-y-2.5 sm:space-y-3">
                 {parsed.map((group, gi) => (
                   <div key={gi}>
                     {group.room && (
