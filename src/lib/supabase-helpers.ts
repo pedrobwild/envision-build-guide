@@ -67,13 +67,19 @@ export async function fetchPublicBudget(publicId: string) {
 }
 
 export function calculateSectionSubtotal(section: any): number {
+  const items = section.items || [];
+  // When items exist, always sum from items so CRUD changes reflect in totals
+  if (items.length > 0) {
+    const itemsSum = items.reduce(
+      (sum: number, item: any) => sum + (Number(item.internal_total) || 0),
+      0
+    );
+    return itemsSum * (section.qty || 1);
+  }
   if (section.section_price != null) {
     return Number(section.section_price) * (section.qty || 1);
   }
-  return (section.items || []).reduce(
-    (sum: number, item: any) => sum + (Number(item.internal_total) || 0),
-    0
-  );
+  return 0;
 }
 
 export function calculateBudgetTotal(sections: any[], adjustments: any[]): number {

@@ -72,12 +72,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   const updateItem = (sectionId: string, itemId: string, field: string, value: any) => {
     const updated = sections.map(s => {
       if (s.id !== sectionId) return s;
-      return {
-        ...s,
-        items: s.items.map(i =>
-          i.id === itemId ? { ...i, [field]: value } : i
-        ),
-      };
+      const newItems = s.items.map(i =>
+        i.id === itemId ? { ...i, [field]: value } : i
+      );
+      // If internal_total changed, recalc section_price
+      if (field === "internal_total") {
+        const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
+        debouncedSave("sections", sectionId, { section_price: newTotal });
+        return { ...s, items: newItems, section_price: newTotal };
+      }
+      return { ...s, items: newItems };
     });
     onSectionsChange(updated);
     debouncedSave("items", itemId, { [field]: value });
@@ -119,7 +123,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     await supabase.from("items").delete().eq("id", itemId);
     const updated = sections.map(s => {
       if (s.id !== sectionId) return s;
-      return { ...s, items: s.items.filter(i => i.id !== itemId) };
+      const newItems = s.items.filter(i => i.id !== itemId);
+      const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
+      // Sync section_price so public view reflects the change
+      supabase.from("sections").update({ section_price: newTotal }).eq("id", sectionId);
+      return { ...s, items: newItems, section_price: newTotal };
     });
     onSectionsChange(updated);
     toast.success("Item removido");
@@ -137,8 +145,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   };
 
   const getSectionTotal = (section: SectionData) => {
+    // Always sum from items when items exist, so adding/removing/editing items reflects immediately
+    if (section.items.length > 0) {
+      const itemsSum = section.items.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
+      return itemsSum * (Number(section.qty) || 1);
+    }
     if (section.section_price) return Number(section.section_price) * (Number(section.qty) || 1);
-    return section.items.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
+    return 0;
   };
 
   const grandTotal = sections.reduce((sum, s) => sum + getSectionTotal(s), 0);
