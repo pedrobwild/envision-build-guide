@@ -128,7 +128,7 @@ export function MobileInlineSummary({
               <button
                 key={group.category.id}
                 onClick={() => setDetailGroup(group)}
-                className="w-full flex items-center gap-2.5 py-2 px-1 rounded-lg hover:bg-muted/50 transition-colors min-h-[40px]"
+                className="w-full flex items-center gap-2.5 py-2.5 px-1.5 rounded-lg hover:bg-muted/50 active:bg-muted/70 transition-colors min-h-[44px]"
               >
                 <div
                   className={cn(
@@ -151,12 +151,12 @@ export function MobileInlineSummary({
         {/* Total card — observed by IntersectionObserver */}
         <div
           ref={totalCardRef}
-          className="rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 px-4 py-4"
+          className="rounded-xl bg-gradient-to-br from-primary/10 to-primary/4 border border-primary/15 px-4 py-5 shadow-sm"
         >
           <p className="text-xs font-body font-medium text-muted-foreground mb-1">
             Investimento total
           </p>
-          <p className="font-display font-extrabold text-xl text-primary tabular-nums leading-none">
+          <p className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none">
             {formatBRL(total)}
           </p>
           <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-primary/10">
@@ -236,8 +236,8 @@ export function MobileInlineSummary({
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          whileTap={{ scale: 0.98 }}
-          className="w-full min-h-[48px] rounded-xl bg-primary text-primary-foreground font-display font-semibold text-[13px] flex items-center justify-center gap-2"
+          whileTap={{ scale: 0.97 }}
+          className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
         >
           <MessageCircle className="h-4 w-4 flex-shrink-0" />
           {ctaLabel}
