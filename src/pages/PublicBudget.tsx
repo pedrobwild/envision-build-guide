@@ -305,44 +305,47 @@ export default function PublicBudget() {
 
                   return (
                     <div className="rounded-xl">
-                      <div className="flex items-center justify-between pt-1 sm:pt-2 pb-1.5 sm:pb-2 gap-2 sm:gap-3">
+                      <div className="flex items-center justify-between pt-1 sm:pt-2 pb-2 sm:pb-3 gap-2 sm:gap-3">
                         <div className="min-w-0">
                          <h2 className="text-base sm:text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
-                            Detalhamento do Orçamento
+                            Itens do Projeto
                           </h2>
                           <p className="text-muted-foreground text-[11px] sm:text-xs mt-0.5 font-body hidden sm:block">
-                            Especificação completa dos itens do seu projeto
+                            Clique nas fotos para ampliar
                           </p>
                         </div>
                       </div>
 
                       {photoGroups.map((group) => {
-                        const totalItems = group.sections.reduce((sum, s) => sum + (s.items?.length || 0), 0);
+                        // Flatten all items from all sections in this category
+                        const allItems = group.sections.flatMap(s => (s.items || []).map((item: any) => ({ ...item, _sectionTitle: s.title })));
+                        if (allItems.length === 0) return null;
+
                         return (
-                          <div key={group.category.id} className="space-y-3 sm:space-y-5 mb-6">
-                            <CategoryHeader
-                              category={group.category}
-                              subtotal={group.subtotal}
-                              sectionCount={group.sections.length}
-                              itemCount={totalItems}
-                            />
-                            {group.sections.map((section) => {
-                              const currentIdx = globalSectionIdx++;
-                              return (
-                                <AnimatedSection key={section.id} id={`section-${section.id}`} index={currentIdx + 1}>
-                                  <SectionCard
-                                    section={section}
-                                    compact={false}
-                                    showItemQty={budget.show_item_qty ?? true}
-                                    showItemPrices={false}
-                                    sectionIndex={currentIdx}
-                                    categoryColor={group.category}
-                                    budgetId={budget.id}
-                                    editable={isAdmin}
-                                  />
-                                </AnimatedSection>
-                              );
-                            })}
+                          <div key={group.category.id} className="mb-8 last:mb-0">
+                            {/* Category label — minimal, no redundancy */}
+                            <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
+                              <div className={cn("w-1 h-5 rounded-full", group.category.bgClass)} />
+                              <span className={cn("text-sm sm:text-base font-display font-bold tracking-tight", group.category.colorClass)}>
+                                {group.category.label}
+                              </span>
+                              <span className="text-xs text-muted-foreground font-body">
+                                {allItems.length} {allItems.length === 1 ? 'item' : 'itens'}
+                              </span>
+                            </div>
+
+                            {/* Product grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                              {allItems.map((item: any) => (
+                                <ProductShowcaseCard
+                                  key={item.id}
+                                  item={item}
+                                  budgetId={budget.id}
+                                  editable={isAdmin}
+                                  showGallery={IMAGE_GALLERY_CATEGORIES.has(group.category.id)}
+                                />
+                              ))}
+                            </div>
                           </div>
                         );
                       })}
