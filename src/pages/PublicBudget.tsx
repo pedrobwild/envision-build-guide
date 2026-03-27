@@ -303,12 +303,12 @@ export default function PublicBudget() {
 
                   return (
                     <div className="rounded-xl">
-                      <div className="flex items-center justify-between pt-2 pb-2 gap-3">
+                      <div className="flex items-center justify-between pt-1 sm:pt-2 pb-1.5 sm:pb-2 gap-2 sm:gap-3">
                         <div className="min-w-0">
-                          <h2 className="text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
+                          <h2 className="text-base sm:text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
                             Itens do projeto
                           </h2>
-                          <p className="text-muted-foreground text-xs mt-0.5 font-body hidden sm:block">
+                          <p className="text-muted-foreground text-[11px] sm:text-xs mt-0.5 font-body hidden sm:block">
                             Especificação completa dos itens do seu projeto
                           </p>
                         </div>
@@ -317,7 +317,7 @@ export default function PublicBudget() {
                       {photoGroups.map((group) => {
                         const totalItems = group.sections.reduce((sum, s) => sum + (s.items?.length || 0), 0);
                         return (
-                          <div key={group.category.id} className="space-y-2 sm:space-y-3">
+                          <div key={group.category.id} className="space-y-1.5 sm:space-y-3">
                             <CategoryHeader
                               category={group.category}
                               subtotal={group.subtotal}
