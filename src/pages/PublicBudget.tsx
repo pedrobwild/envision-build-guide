@@ -345,7 +345,7 @@ export default function PublicBudget() {
                                   item={item}
                                   budgetId={budget.id}
                                   editable={isAdmin}
-                                  showGallery={IMAGE_GALLERY_CATEGORIES.has(group.category.id)}
+                                  showGallery={true}
                                 />
                               ))}
                             </div>

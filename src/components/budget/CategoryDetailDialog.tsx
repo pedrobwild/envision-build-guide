@@ -11,7 +11,7 @@ import { ArrowLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
-const IMAGE_GALLERY_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
+// All categories now show image galleries
 
 interface CategoryDetailDialogProps {
   open: boolean;

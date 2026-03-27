@@ -83,7 +83,7 @@ export function SectionCard({
     ? `${categoryColor.bgClass}/10 ${categoryColor.colorClass}`
     : SECTION_ICON_BG_COLORS[sectionIndex % SECTION_ICON_BG_COLORS.length];
 
-  const showGallery = !!(categoryColor && IMAGE_GALLERY_CATEGORIES.has(categoryColor.id));
+  const showGallery = true;
 
   return (
     <>
