@@ -103,6 +103,7 @@ export type Database = {
           approved_by_name: string | null
           bairro: string | null
           client_name: string
+          closed_at: string | null
           condominio: string | null
           consultora_comercial: string | null
           created_at: string | null
@@ -115,6 +116,7 @@ export type Database = {
           generated_at: string | null
           header_config: Json | null
           id: string
+          internal_cost: number | null
           is_current_version: boolean | null
           last_viewed_at: string | null
           lead_email: string | null
@@ -143,6 +145,7 @@ export type Database = {
           approved_by_name?: string | null
           bairro?: string | null
           client_name?: string
+          closed_at?: string | null
           condominio?: string | null
           consultora_comercial?: string | null
           created_at?: string | null
@@ -155,6 +158,7 @@ export type Database = {
           generated_at?: string | null
           header_config?: Json | null
           id?: string
+          internal_cost?: number | null
           is_current_version?: boolean | null
           last_viewed_at?: string | null
           lead_email?: string | null
@@ -183,6 +187,7 @@ export type Database = {
           approved_by_name?: string | null
           bairro?: string | null
           client_name?: string
+          closed_at?: string | null
           condominio?: string | null
           consultora_comercial?: string | null
           created_at?: string | null
@@ -195,6 +200,7 @@ export type Database = {
           generated_at?: string | null
           header_config?: Json | null
           id?: string
+          internal_cost?: number | null
           is_current_version?: boolean | null
           last_viewed_at?: string | null
           lead_email?: string | null
