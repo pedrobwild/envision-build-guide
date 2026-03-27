@@ -75,7 +75,7 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
             <DrawerTitle>{titleContent}</DrawerTitle>
           </DrawerHeader>
           <div className="px-5 py-4 overflow-y-auto">
-            <CategoryItemList group={group} />
+            <CategoryItemList group={group} budgetId={budgetId} editable={editable} />
           </div>
         </DrawerContent>
       </Drawer>
