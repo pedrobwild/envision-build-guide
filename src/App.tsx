@@ -15,6 +15,7 @@ const BudgetEditor = lazy(() => import("./pages/BudgetEditor"));
 const PublicBudget = lazy(() => import("./pages/PublicBudget"));
 const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage"));
 const QAEvaluator = lazy(() => import("./pages/QAEvaluator"));
+const FinancialHistory = lazy(() => import("./pages/FinancialHistory"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/budget/:budgetId" element={<ProtectedRoute><BudgetEditorV2 /></ProtectedRoute>} />
             <Route path="/admin/budget/:budgetId/legacy" element={<ProtectedRoute><BudgetEditor /></ProtectedRoute>} />
+            <Route path="/admin/financeiro" element={<ProtectedRoute><FinancialHistory /></ProtectedRoute>} />
             <Route path="/o/:publicId" element={<PublicBudget />} />
             <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
             <Route path="/qa" element={<QAEvaluator />} />
