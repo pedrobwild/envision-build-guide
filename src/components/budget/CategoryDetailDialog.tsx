@@ -89,13 +89,8 @@ function DetailItem({ item, budgetId, editable, showGallery }: { item: any; budg
             )}
           </div>
 
-          {/* Price + chevron */}
+          {/* Chevron */}
           <div className="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
-            {Number(item.internal_total) > 0 && (
-              <span className="text-sm font-mono tabular-nums text-muted-foreground font-medium">
-                {formatBRL(Number(item.internal_total))}
-              </span>
-            )}
             {expandable && (
               <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -184,9 +179,6 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
                 <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b border-border/50">
                   <span className="text-sm font-display font-semibold text-foreground">
                     {section.qty && section.qty > 1 ? `${section.qty}× ` : ""}{section.title}
-                  </span>
-                  <span className="text-base font-mono tabular-nums text-foreground font-semibold">
-                    {formatBRL(subtotal)}
                   </span>
                 </div>
 

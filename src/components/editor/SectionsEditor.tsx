@@ -4,7 +4,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, Loader2
+  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star
 } from "lucide-react";
 import {
   DndContext,
@@ -26,6 +26,109 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+import { saveToPhotoLibrary } from "@/lib/item-photo-library";
+
+/* ── Inline image management for editor items ── */
+function ItemImageInline({
+  itemId,
+  itemTitle,
+  budgetId,
+  images,
+  onImagesChange,
+}: {
+  itemId: string;
+  itemTitle: string;
+  budgetId: string;
+  images: { id: string; url: string; is_primary?: boolean | null }[];
+  onImagesChange: (imgs: { id: string; url: string; is_primary?: boolean | null }[]) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files).slice(0, 5 - images.length)) {
+        if (!file.type.startsWith("image/")) continue;
+        const ext = file.name.split(".").pop();
+        const path = `${budgetId}/items/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from("budget-assets").upload(path, file, { upsert: true });
+        if (error) { toast.error("Erro no upload"); continue; }
+        const { data: urlData } = supabase.storage.from("budget-assets").getPublicUrl(path);
+        const isPrimary = images.length === 0;
+        const { data: imgRow } = await supabase.from("item_images").insert({
+          item_id: itemId,
+          url: urlData.publicUrl,
+          is_primary: isPrimary,
+        }).select().single();
+        if (imgRow) {
+          images = [...images, imgRow];
+          if (isPrimary) saveToPhotoLibrary(itemTitle, urlData.publicUrl);
+        }
+      }
+      onImagesChange(images);
+      toast.success("Imagem adicionada");
+    } catch { toast.error("Erro ao fazer upload"); }
+    setUploading(false);
+  };
+
+  const removeImage = async (imgId: string) => {
+    await supabase.from("item_images").delete().eq("id", imgId);
+    const updated = images.filter(i => i.id !== imgId);
+    if (updated.length > 0 && !updated.some(i => i.is_primary)) {
+      updated[0] = { ...updated[0], is_primary: true };
+      await supabase.from("item_images").update({ is_primary: true }).eq("id", updated[0].id);
+    }
+    onImagesChange(updated);
+  };
+
+  const setPrimary = async (imgId: string) => {
+    // Unset all, set new primary
+    for (const img of images) {
+      if (img.is_primary) await supabase.from("item_images").update({ is_primary: false }).eq("id", img.id);
+    }
+    await supabase.from("item_images").update({ is_primary: true }).eq("id", imgId);
+    const updated = images.map(i => ({ ...i, is_primary: i.id === imgId }));
+    onImagesChange(updated);
+    const primary = updated.find(i => i.is_primary);
+    if (primary) saveToPhotoLibrary(itemTitle, primary.url);
+  };
+
+  return (
+    <div className="mt-2 ml-7 flex items-center gap-1.5 flex-wrap">
+      {images.map(img => (
+        <div
+          key={img.id}
+          className={cn(
+            "relative group w-10 h-10 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0",
+            img.is_primary ? "border-primary" : "border-border"
+          )}
+        >
+          <img src={img.url} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5">
+            <button onClick={() => setPrimary(img.id)} className="p-0.5 rounded hover:bg-white/20" title="Principal">
+              <Star className={cn("h-2.5 w-2.5", img.is_primary ? "text-yellow-400 fill-yellow-400" : "text-white")} />
+            </button>
+            <button onClick={() => removeImage(img.id)} className="p-0.5 rounded hover:bg-white/20" title="Remover">
+              <X className="h-2.5 w-2.5 text-white" />
+            </button>
+          </div>
+        </div>
+      ))}
+      {images.length < 5 && (
+        <button
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="w-10 h-10 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center transition-all disabled:opacity-50 flex-shrink-0"
+        >
+          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />}
+        </button>
+      )}
+      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleUpload(e.target.files)} />
+    </div>
+  );
+}
 
 interface SectionData {
   id: string;
@@ -46,6 +149,7 @@ interface ItemData {
   internal_unit_price?: number | null;
   internal_total?: number | null;
   order_index: number;
+  images?: { id: string; url: string; is_primary?: boolean | null }[];
 }
 
 interface SectionsEditorProps {
@@ -91,15 +195,19 @@ function SortableSectionCard({
 function SortableItemRow({
   item,
   sectionId,
+  budgetId,
   isItemSaving,
   onUpdate,
   onDelete,
+  onImagesChange,
 }: {
   item: ItemData;
   sectionId: string;
+  budgetId: string;
   isItemSaving: boolean;
   onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
   onDelete: (sectionId: string, itemId: string) => void;
+  onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
 }) {
   const {
     attributes,
@@ -211,6 +319,15 @@ function SortableItemRow({
           </button>
         </div>
       </div>
+
+      {/* Item image management */}
+      <ItemImageInline
+        itemId={item.id}
+        itemTitle={item.title}
+        budgetId={budgetId}
+        images={item.images || []}
+        onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
+      />
     </div>
   );
 }
@@ -326,6 +443,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     await supabase.from("sections").delete().eq("id", sectionId);
     onSectionsChange(sections.filter(s => s.id !== sectionId));
     toast.success("Seção removida");
+  };
+
+  const handleImagesChange = (sectionId: string, itemId: string, images: ItemData["images"]) => {
+    const updated = sections.map(s => {
+      if (s.id !== sectionId) return s;
+      return {
+        ...s,
+        items: s.items.map(i => i.id === itemId ? { ...i, images } : i),
+      };
+    });
+    onSectionsChange(updated);
   };
 
   const getSectionTotal = (section: SectionData) => {
@@ -499,9 +627,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                     key={item.id}
                                     item={item}
                                     sectionId={section.id}
+                                    budgetId={budgetId}
                                     isItemSaving={savingIds.has(item.id)}
                                     onUpdate={updateItem}
                                     onDelete={deleteItem}
+                                    onImagesChange={handleImagesChange}
                                   />
                                 ))}
                               </div>
