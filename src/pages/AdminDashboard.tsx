@@ -6,7 +6,7 @@ import { formatBRL, formatDate } from "@/lib/formatBRL";
 import {
   Plus, Copy, ExternalLink, LogOut, FileText, Upload, FileSpreadsheet,
   Search, Filter, TrendingUp, FolderOpen, CheckCircle, Clock,
-  MoreHorizontal, Trash2, Archive, Eye, Bell
+  MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
