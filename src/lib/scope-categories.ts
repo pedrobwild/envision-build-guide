@@ -30,7 +30,7 @@ export const SCOPE_CATEGORIES: ScopeCategory[] = [
   },
   {
     id: "infraestrutura",
-    label: "Infraestrutura",
+    label: "Infraestrutura e Civil",
     colorClass: "text-charcoal-light",
     bgClass: "bg-charcoal-light",
     borderClass: "border-l-charcoal-light",
