@@ -60,7 +60,7 @@ function SortableSectionCard({
   children,
 }: {
   section: SectionData;
-  children: React.ReactNode;
+  children: (listeners: any) => React.ReactNode;
 }) {
   const {
     attributes,
@@ -81,10 +81,7 @@ function SortableSectionCard({
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <div className="border border-border rounded-xl bg-card overflow-hidden">
-        {/* Inject drag handle via render prop pattern */}
-        {typeof children === "function"
-          ? (children as any)(listeners)
-          : children}
+        {children(listeners)}
       </div>
     </div>
   );
