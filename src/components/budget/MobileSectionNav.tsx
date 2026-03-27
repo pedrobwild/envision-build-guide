@@ -94,7 +94,7 @@ export function MobileSectionNav({ items, activeId }: MobileSectionNavProps) {
                 ref={isActive ? activeRef : undefined}
                 onClick={() => scrollTo(item.id)}
                 className={cn(
-                  "relative flex-shrink-0 min-h-[36px] px-3.5 py-1.5 rounded-full text-xs font-body font-medium transition-colors whitespace-nowrap",
+                  "relative flex-shrink-0 min-h-[40px] px-4 py-2 rounded-full text-[13px] font-body font-medium transition-colors whitespace-nowrap",
                   isActive
                     ? "text-primary-foreground"
                     : isPast

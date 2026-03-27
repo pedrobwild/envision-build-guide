@@ -148,8 +148,8 @@ export function MobileHeroCard({
           href={ctaUrl}
           target="_blank"
           rel="noopener noreferrer"
-          whileTap={{ scale: 0.98 }}
-          className="w-full min-h-[48px] rounded-xl bg-primary text-primary-foreground font-display font-semibold text-sm flex items-center justify-center gap-2"
+          whileTap={{ scale: 0.97 }}
+          className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
         >
           <MessageCircle className="h-4.5 w-4.5 flex-shrink-0" />
           {ctaLabel}
