@@ -4,7 +4,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star
+  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight
 } from "lucide-react";
 import {
   DndContext,
@@ -137,6 +137,7 @@ interface SectionData {
   order_index: number;
   qty?: number | null;
   section_price?: number | null;
+  is_optional?: boolean;
   items: ItemData[];
 }
 
@@ -571,6 +572,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                 {section.title || "Sem título"}
                               </span>
                               {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                              {section.is_optional && (
+                                <span className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-warning/15 text-warning border border-warning/20">
+                                  Opcional
+                                </span>
+                              )}
                             </div>
                             <span className="text-xs text-muted-foreground font-body">
                               {section.items.length} {section.items.length === 1 ? "item" : "itens"}
@@ -608,6 +614,23 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                 className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                                 style={{ fontVariantNumeric: "tabular-nums" }}
                               />
+                            </div>
+                            <div className="space-y-1 flex items-end">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateSection(section.id, "is_optional", !section.is_optional);
+                                }}
+                                className={cn(
+                                  "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-body transition-all",
+                                  section.is_optional
+                                    ? "bg-warning/10 border-warning/30 text-warning"
+                                    : "bg-background border-border text-muted-foreground hover:border-warning/30 hover:text-warning"
+                                )}
+                              >
+                                <ToggleRight className="h-4 w-4" />
+                                {section.is_optional ? "Opcional ✓" : "Marcar opcional"}
+                              </button>
                             </div>
                           </div>
 
