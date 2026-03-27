@@ -352,15 +352,17 @@ export default function PublicBudget() {
             )}
 
             {/* ── Mobile optional items simulator ── */}
-            <div className="lg:hidden">
-              <OptionalItemsSimulator
-                budgetId={budget.id}
-                sections={sections as any}
-                baseTotal={total}
-                clientName={budget.client_name}
-                projectName={budget.project_name}
-              />
-            </div>
+            {(budget as any).show_optional_items && (
+              <div className="lg:hidden">
+                <OptionalItemsSimulator
+                  budgetId={budget.id}
+                  sections={sections as any}
+                  baseTotal={total}
+                  clientName={budget.client_name}
+                  projectName={budget.project_name}
+                />
+              </div>
+            )}
 
             {/* ── Mobile inline summary ── */}
             <MobileInlineSummary
@@ -401,13 +403,15 @@ export default function PublicBudget() {
                 editable={isAdmin}
                 allCategoriesOpenSheet={["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "")}
               />
-              <OptionalItemsSimulator
-                budgetId={budget.id}
-                sections={sections as any}
-                baseTotal={total}
-                clientName={budget.client_name}
-                projectName={budget.project_name}
-              />
+              {(budget as any).show_optional_items && (
+                <OptionalItemsSimulator
+                  budgetId={budget.id}
+                  sections={sections as any}
+                  baseTotal={total}
+                  clientName={budget.client_name}
+                  projectName={budget.project_name}
+                />
+              )}
               <InstallmentSimulator total={total} />
               <ApprovalCTA
                 budgetId={budget.id}
