@@ -37,8 +37,6 @@ import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
 import { InlineCTA } from "@/components/budget/InlineCTA";
 import { TrustStrip } from "@/components/budget/TrustStrip";
 import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
-import { } from "lucide-react";
-import { } from "@/components/ui/switch";
 import { useScrollspy } from "@/hooks/useScrollspy";
 import { categorizeSections } from "@/lib/scope-categories";
 import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
