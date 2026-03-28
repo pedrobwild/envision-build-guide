@@ -71,7 +71,16 @@ export default function AdminDashboard() {
       .insert({ project_name: 'Novo Projeto', client_name: 'Cliente', created_by: user.id })
       .select()
       .single();
-    if (data) navigate(`/admin/budget/${data.id}`);
+    if (data) {
+      // Append Utensílios template as last section
+      try {
+        const { appendUtensiliosTemplate } = await import("@/lib/utensilios-template");
+        await appendUtensiliosTemplate(data.id, 0);
+      } catch (e) {
+        console.warn("[CreateBudget] Utensílios template failed (non-critical):", e);
+      }
+      navigate(`/admin/budget/${data.id}`);
+    }
   };
 
   const publishBudget = async (id: string) => {
