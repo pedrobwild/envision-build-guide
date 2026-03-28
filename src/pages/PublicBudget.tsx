@@ -243,6 +243,7 @@ export default function PublicBudget() {
           projectName={budget.project_name}
           clientName={budget.client_name}
           publicId={publicId || "demo"}
+          budgetId={budget.id}
           neighborhood={heroNeighborhood}
           area={heroArea}
           version={heroVersion}
@@ -379,6 +380,7 @@ export default function PublicBudget() {
               projectName={budget.project_name}
               clientName={budget.client_name}
               publicId={publicId || "demo"}
+              budgetId={budget.id}
               onTotalCardVisibilityChange={handleTotalCardVisibility}
             />
 
