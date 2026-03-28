@@ -43,7 +43,7 @@ export function MobileBottomBar({
       );
   const whatsappUrl = `https://wa.me/${DEFAULT_PHONE}?text=${whatsappMessage}`;
 
-  const ctaLabel = validity.expired ? "Solicitar atualização" : "Iniciar meu projeto";
+  const ctaLabel = validity.expired ? "Solicitar atualização" : "Solicitar Contrato";
 
   const scrollToSummary = () => {
     document.getElementById("resumo-mobile")?.scrollIntoView({ behavior: "smooth", block: "start" });
