@@ -187,6 +187,7 @@ export default function AdminDashboard() {
   const statusColors: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
     published: 'bg-success/10 text-success',
+    minuta_solicitada: 'bg-amber-500/10 text-amber-600',
     contrato_fechado: 'bg-primary/10 text-primary',
     approved: 'bg-primary/10 text-primary',
     expired: 'bg-destructive/10 text-destructive',
@@ -196,6 +197,7 @@ export default function AdminDashboard() {
   const statusLabels: Record<string, string> = {
     draft: 'Rascunho',
     published: 'Publicado',
+    minuta_solicitada: 'Minuta Solicitada',
     contrato_fechado: 'Contrato Fechado',
     approved: 'Aprovado',
     expired: 'Expirado',

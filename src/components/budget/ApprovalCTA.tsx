@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { MessageCircle, Bookmark, Loader2, AlertTriangle } from "lucide-react";
+import { FileSignature, Bookmark, Loader2, AlertTriangle, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ContractRequestDialog } from "./ContractRequestDialog";
 
 interface ApprovalCTAProps {
   budgetId: string;
@@ -19,19 +20,16 @@ interface ApprovalCTAProps {
   expired?: boolean;
   projectName?: string;
   clientName?: string;
+  total?: number;
 }
 
 const DEFAULT_PHONE = "5511911906183";
 
-export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientName }: ApprovalCTAProps) {
+export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientName, total = 0 }: ApprovalCTAProps) {
   const [saveOpen, setSaveOpen] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
   const [leadEmail, setLeadEmail] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const whatsappMessage = encodeURIComponent(
-    `Olá! Sou ${clientName || 'cliente'}, estou analisando o orçamento do projeto ${projectName || 'do projeto'} (Ref: ${publicId}) e gostaria de conversar sobre os próximos passos.`
-  );
-  const whatsappUrl = `https://wa.me/${DEFAULT_PHONE}?text=${whatsappMessage}`;
 
   const whatsappUpdateUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(
     `Olá! O orçamento ${projectName || 'do projeto'} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
@@ -95,18 +93,16 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
   return (
     <>
       <div className="space-y-2">
-        {/* Primary — Falar com especialista */}
-        <motion.a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        {/* Primary — Solicitar Contrato */}
+        <motion.button
+          onClick={() => setContractOpen(true)}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-display font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
-          <MessageCircle className="h-5 w-5" />
-          Iniciar meu projeto
-        </motion.a>
+          <FileSignature className="h-5 w-5" />
+          Solicitar Contrato
+        </motion.button>
 
         {/* Secondary — Salvar para revisar depois */}
         <button
@@ -117,6 +113,16 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
           Receber por email
         </button>
       </div>
+
+      {/* Contract Request Dialog */}
+      <ContractRequestDialog
+        open={contractOpen}
+        onOpenChange={setContractOpen}
+        budgetId={budgetId}
+        publicId={publicId}
+        projectName={projectName}
+        total={total}
+      />
 
       {/* Save Dialog */}
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>

@@ -426,6 +426,7 @@ export default function PublicBudget() {
                 expired={validity.expired}
                 projectName={budget.project_name}
                 clientName={budget.client_name}
+                total={total}
               />
             </div>
           </div>
@@ -439,6 +440,7 @@ export default function PublicBudget() {
           projectName={budget.project_name}
           clientName={budget.client_name}
           publicId={publicId || "demo"}
+          budgetId={budget.id}
           hidden={bottomBarHidden}
         />
 
