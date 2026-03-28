@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle2, Calendar, MessageCircle } from "lucide-react";
+import { CheckCircle2, FileSignature, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { BudgetMeta } from "@/lib/orcamento-types";
@@ -69,8 +69,8 @@ export function StickyBudgetSummary({ meta, included }: StickyBudgetSummaryProps
 
         <div className="space-y-2 pt-2">
           <Button className="w-full gap-2" size="sm">
-            <Calendar className="h-3.5 w-3.5" />
-            Agendar briefing
+            <FileSignature className="h-3.5 w-3.5" />
+            Solicitar Contrato
           </Button>
           <Button variant="outline" className="w-full gap-2" size="sm">
             <MessageCircle className="h-3.5 w-3.5" />

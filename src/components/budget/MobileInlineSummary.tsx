@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
@@ -6,12 +6,14 @@ import {
   Shield,
   CreditCard,
   MessageCircle,
+  FileSignature,
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 import { CategoryDetailDialog } from "./CategoryDetailDialog";
+import { ContractRequestDialog } from "./ContractRequestDialog";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface MobileInlineSummaryProps {
@@ -25,6 +27,7 @@ interface MobileInlineSummaryProps {
   projectName?: string;
   clientName?: string;
   publicId: string;
+  budgetId?: string;
   onTotalCardVisibilityChange?: (visible: boolean) => void;
 }
 
@@ -37,11 +40,13 @@ export function MobileInlineSummary({
   projectName,
   clientName,
   publicId,
+  budgetId,
   onTotalCardVisibilityChange,
 }: MobileInlineSummaryProps) {
   const [installments, setInstallments] = useState(10);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
+  const [contractOpen, setContractOpen] = useState(false);
   const totalCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,15 +63,9 @@ export function MobileInlineSummary({
     return () => observer.disconnect();
   }, [onTotalCardVisibilityChange]);
 
-  const whatsappMessage = validity.expired
-    ? encodeURIComponent(
-        `Olá! O orçamento ${projectName || "do projeto"} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
-      )
-    : encodeURIComponent(
-        `Olá! Sou ${clientName || "cliente"}, estou analisando o orçamento do projeto ${projectName || "do projeto"} (Ref: ${publicId}) e gostaria de conversar sobre os próximos passos.`
-      );
-  const whatsappUrl = `https://wa.me/${DEFAULT_PHONE}?text=${whatsappMessage}`;
-  const ctaLabel = validity.expired ? "Solicitar atualização" : "Iniciar meu projeto";
+  const whatsappUpdateUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(
+    `Olá! O orçamento ${projectName || "do projeto"} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
+  )}`;
 
   return (
     <div
@@ -80,12 +79,10 @@ export function MobileInlineSummary({
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="space-y-3.5"
       >
-        {/* Title */}
         <h2 className="text-lg font-display font-bold text-foreground tracking-tight">
           Resumo do investimento
         </h2>
 
-        {/* Validity notice */}
         <div
           className={cn(
             "rounded-lg px-3 py-2.5 flex items-center gap-2",
@@ -118,7 +115,6 @@ export function MobileInlineSummary({
           </p>
         </div>
 
-        {/* Category breakdown */}
         {categorizedGroups.length > 0 && (
           <div className="rounded-xl border border-border bg-card px-3 py-3 space-y-0.5">
             <p className="text-[11px] font-display font-semibold text-muted-foreground tracking-wider mb-2">
@@ -148,7 +144,6 @@ export function MobileInlineSummary({
           </div>
         )}
 
-        {/* Total card — observed by IntersectionObserver */}
         <div
           ref={totalCardRef}
           className="rounded-xl bg-gradient-to-br from-primary/10 to-primary/4 border border-primary/15 px-4 py-5 shadow-sm"
@@ -167,7 +162,6 @@ export function MobileInlineSummary({
           </div>
         </div>
 
-        {/* Installment simulator — dropdown selector */}
         <div className="rounded-xl border border-border bg-card px-3 py-3">
           <div className="flex items-center gap-2 mb-2.5">
             <CreditCard className="h-3.5 w-3.5 text-primary" />
@@ -176,7 +170,6 @@ export function MobileInlineSummary({
             </span>
           </div>
 
-          {/* Clickable selector */}
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors min-h-[44px]"
@@ -195,7 +188,6 @@ export function MobileInlineSummary({
             </div>
           </button>
 
-          {/* Dropdown list */}
           <AnimatePresence>
             {dropdownOpen && (
               <motion.div
@@ -231,23 +223,43 @@ export function MobileInlineSummary({
           </p>
         </div>
 
-        {/* Inline CTA — replaces bottom bar CTA when bar hides */}
-        <motion.a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          whileTap={{ scale: 0.97 }}
-          className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
-        >
-          <MessageCircle className="h-4 w-4 flex-shrink-0" />
-          {ctaLabel}
-        </motion.a>
+        {/* Inline CTA */}
+        {validity.expired ? (
+          <motion.a
+            href={whatsappUpdateUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            whileTap={{ scale: 0.97 }}
+            className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
+          >
+            <MessageCircle className="h-4 w-4 flex-shrink-0" />
+            Solicitar atualização
+          </motion.a>
+        ) : (
+          <motion.button
+            onClick={() => setContractOpen(true)}
+            whileTap={{ scale: 0.97 }}
+            className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
+          >
+            <FileSignature className="h-4 w-4 flex-shrink-0" />
+            Solicitar Contrato
+          </motion.button>
+        )}
       </motion.div>
 
       <CategoryDetailDialog
         open={!!detailGroup}
         onClose={() => setDetailGroup(null)}
         group={detailGroup}
+      />
+
+      <ContractRequestDialog
+        open={contractOpen}
+        onOpenChange={setContractOpen}
+        budgetId={budgetId || ""}
+        publicId={publicId}
+        projectName={projectName}
+        total={total}
       />
     </div>
   );
