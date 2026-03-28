@@ -612,6 +612,14 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         console.warn("[Import] Media matching failed (non-critical):", matchErr);
       }
 
+      // Append Utensílios template as last section
+      try {
+        const { appendUtensiliosTemplate } = await import("@/lib/utensilios-template");
+        await appendUtensiliosTemplate(budget.id, sectionIdx);
+      } catch (e) {
+        console.warn("[Import] Utensílios template failed (non-critical):", e);
+      }
+
       // If importing into an existing budget group, assign to that group
       if (targetBudgetGroupId) {
         const { assignImportedBudgetToGroup } = await import("@/lib/budget-versioning");
