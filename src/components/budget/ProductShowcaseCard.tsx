@@ -44,62 +44,49 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         className="group rounded-xl border border-border bg-card overflow-hidden hover:border-border/80 hover:shadow-md transition-all duration-300"
       >
-        {/* Admin: show editable gallery */}
-        {showGallery && budgetId && editable ? (
-          <div className="flex gap-0">
-            <div className="flex-shrink-0 p-3 sm:p-4" onClick={(e) => e.stopPropagation()}>
-              <ItemImageGallery item={item} budgetId={budgetId} editable={editable} />
+        {/* Always show clean public card — single image + title */}
+        <div className="flex gap-0">
+          {primaryImage ? (
+            <button
+              onClick={() => openLightbox(0)}
+              className="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 overflow-hidden cursor-zoom-in bg-muted/30"
+              type="button"
+            >
+              <img
+                src={primaryImage.url}
+                alt={item.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors duration-300 flex items-center justify-center">
+                <ZoomIn className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
+              </div>
+            </button>
+          ) : (
+            <div className="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 bg-muted/20 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground/20" />
+              </div>
             </div>
-            <div className="flex-1 min-w-0 p-3 sm:p-4 flex flex-col justify-center">
-              <h4 className="text-sm sm:text-[15px] font-body font-semibold text-foreground leading-snug">
-                {item.title}
-              </h4>
-              {item.qty && (
-                <p className="text-xs text-muted-foreground font-body mt-0.5">
-                  Qtd: {item.qty} {item.unit || "un"}
-                </p>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* Public: single image + info */
-          <div className="flex gap-0">
-            {primaryImage ? (
-              <button
-                onClick={() => openLightbox(0)}
-                className="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 overflow-hidden cursor-zoom-in bg-muted/30"
-                type="button"
-              >
-                <img
-                  src={primaryImage.url}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors duration-300 flex items-center justify-center">
-                  <ZoomIn className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
-                </div>
-              </button>
-            ) : (
-              <div className="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 bg-muted/20 flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/20" />
-                </div>
+          )}
+
+          <div className="flex-1 min-w-0 p-3 sm:p-4 flex flex-col justify-center">
+            <h4 className="text-sm sm:text-[15px] font-body font-semibold text-foreground leading-snug">
+              {item.title}
+            </h4>
+            {item.qty && (
+              <p className="text-xs text-muted-foreground font-body mt-0.5">
+                Qtd: {item.qty} {item.unit || "un"}
+              </p>
+            )}
+            {/* Admin: inline edit button */}
+            {editable && budgetId && (
+              <div className="mt-1.5" onClick={(e) => e.stopPropagation()}>
+                <ItemImageGallery item={item} budgetId={budgetId} editable={editable} />
               </div>
             )}
-
-            <div className="flex-1 min-w-0 p-3 sm:p-4 flex flex-col justify-center">
-              <h4 className="text-sm sm:text-[15px] font-body font-semibold text-foreground leading-snug">
-                {item.title}
-              </h4>
-              {item.qty && (
-                <p className="text-xs text-muted-foreground font-body mt-0.5">
-                  Qtd: {item.qty} {item.unit || "un"}
-                </p>
-              )}
-            </div>
           </div>
-        )}
+        </div>
       </motion.div>
     </>
   );
