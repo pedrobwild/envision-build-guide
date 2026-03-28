@@ -121,7 +121,7 @@ export function MobileInlineSummary({
         {/* Category breakdown */}
         {categorizedGroups.length > 0 && (
           <div className="rounded-xl border border-border bg-card px-3 py-3 space-y-0.5">
-            <p className="text-[11px] font-display font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            <p className="text-[11px] font-display font-semibold text-muted-foreground tracking-wider mb-2">
               Composição do investimento
             </p>
             {categorizedGroups.map((group) => (
