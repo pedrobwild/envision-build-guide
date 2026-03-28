@@ -57,13 +57,17 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
   const availableTabs: { id: GalleryTab; label: string }[] = [];
   const galleryData: Record<GalleryTab, MediaItem[]> = { "3d": [], exec: [], fotos: [] };
 
-  // Projeto 3D tab
-  if (hasMedia && (media!.projeto3d.length > 0 || media!.video3d)) {
+  // Projeto 3D tab — fallback to fotos/ when 3d/ is empty
+  const has3dImages = hasMedia && (media!.projeto3d.length > 0 || media!.video3d);
+  const fallbackToFotos = hasMedia && !has3dImages && media!.fotos.length > 0;
+
+  if (has3dImages || fallbackToFotos) {
     const items: MediaItem[] = [];
     if (media!.video3d) {
       items.push({ src: media!.video3d, alt: "Projeto 3D — Vídeo Tour", type: "video" });
     }
-    media!.projeto3d.forEach((src, i) => {
+    const sourceImages = has3dImages ? media!.projeto3d : media!.fotos;
+    sourceImages.forEach((src, i) => {
       items.push({ src, alt: `Projeto 3D — ${i + 1}` });
     });
     galleryData["3d"] = items;
