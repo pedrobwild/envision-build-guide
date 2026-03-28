@@ -206,7 +206,7 @@ function CategorizedList({
 
             {/* Label — use actual section title when group has only 1 section */}
             <span className="flex-1 text-sm font-body font-medium text-foreground text-left leading-snug">
-              {group.sections.length === 1 ? group.sections[0].title : group.category.label}
+              {group.category.label}
             </span>
 
             {/* Value */}
