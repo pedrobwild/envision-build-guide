@@ -344,8 +344,8 @@ export default function PublicBudget() {
                                   key={item.id}
                                   item={item}
                                   budgetId={budget.id}
-                                  editable={isAdmin}
-                                  showGallery={true}
+                                  editable={false}
+                                  showGallery={false}
                                 />
                               ))}
                             </div>
