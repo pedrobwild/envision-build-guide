@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/drawer";
 import { ArrowLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ProductShowcaseCard } from "./ProductShowcaseCard";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface CategoryDetailDialogProps {
@@ -30,15 +29,22 @@ function CategoryItemList({ group, budgetId, editable }: { group: CategorizedGro
       <p className="text-xs text-muted-foreground font-body mb-3">
         {allItems.length} {allItems.length === 1 ? "item" : "itens"}
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <div className="space-y-1">
         {allItems.map((item: any) => (
-          <ProductShowcaseCard
+          <div
             key={item.id}
-            item={item}
-            budgetId={budgetId}
-            editable={editable}
-            showGallery={true}
-          />
+            className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-muted/40 transition-colors"
+          >
+            <span className="text-sm font-body text-foreground leading-snug mr-3">
+              {item.qty && item.qty > 1 ? `${item.qty}× ` : ""}
+              {item.title}
+            </span>
+            {item.unit && (
+              <span className="text-xs text-muted-foreground font-body whitespace-nowrap">
+                {item.unit}
+              </span>
+            )}
+          </div>
         ))}
       </div>
     </>
