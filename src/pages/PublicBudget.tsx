@@ -187,7 +187,7 @@ export default function PublicBudget() {
   const heroNeighborhood = budget.bairro || budget.condominio || "";
   const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
   const heroArea = rawArea ? `${rawArea}m²` : "";
-  const heroVersionNum = budget.version_number ?? (budget.versao ? budget.versao.replace(/^v/i, '') : "1");
+  const heroVersionNum = budget.versao ? budget.versao.replace(/^v/i, '') : (budget.version_number ?? "1");
   const heroVersion = `v${String(heroVersionNum)}`;
 
   // Mobile nav items
