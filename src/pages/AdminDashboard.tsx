@@ -684,7 +684,7 @@ export default function AdminDashboard() {
                                   {budget.show_optional_items ? "Desativar opcionais" : "Incluir opcionais"}
                                 </button>
                                 <button
-                                  onClick={() => { setMenuOpen(null); duplicateAsNew(budget.id); }}
+                                  onClick={() => { if (confirm('Duplicar este orçamento como um novo projeto? O escopo será copiado, mas os dados do cliente ficarão em branco.')) { setMenuOpen(null); duplicateAsNew(budget.id); } }}
                                   className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
                                 >
                                   <Copy className="h-3.5 w-3.5 text-muted-foreground" /> Duplicar como novo
