@@ -122,6 +122,125 @@ export default function AdminDashboard() {
     loadBudgets();
   };
 
+  const duplicateAsNew = async (sourceBudgetId: string) => {
+    if (!user) return;
+    try {
+      // 1. Load source budget
+      const { data: source } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('id', sourceBudgetId)
+        .single();
+      if (!source) throw new Error('Orçamento não encontrado');
+
+      // 2. Create new budget with reset client data
+      const { id, created_at, updated_at, public_id, public_token_hash, view_count, last_viewed_at,
+        approved_at, approved_by_name, generated_at, client_name, project_name, condominio, bairro,
+        unit, metragem, lead_email, lead_name, closed_at, version_group_id, version_number,
+        is_current_version, versao, status, ...keepMeta } = source;
+
+      const { data: newBudget, error: budgetErr } = await supabase
+        .from('budgets')
+        .insert({
+          ...keepMeta,
+          project_name: 'Novo Projeto (cópia)',
+          client_name: '',
+          status: 'draft',
+          created_by: user.id,
+          view_count: 0,
+          version_number: 1,
+          is_current_version: true,
+          versao: '1',
+        })
+        .select()
+        .single();
+
+      if (budgetErr || !newBudget) throw budgetErr || new Error('Falha ao duplicar');
+
+      // 3. Copy sections + items + item_images
+      const { data: sections } = await supabase
+        .from('sections')
+        .select('*')
+        .eq('budget_id', sourceBudgetId)
+        .order('order_index');
+
+      for (const sec of sections || []) {
+        const { id: oldSecId, created_at: _ca, budget_id: _bid, ...secData } = sec;
+        const { data: newSec } = await supabase
+          .from('sections')
+          .insert({ ...secData, budget_id: newBudget.id })
+          .select()
+          .single();
+        if (!newSec) continue;
+
+        const { data: items } = await supabase
+          .from('items')
+          .select('*')
+          .eq('section_id', oldSecId)
+          .order('order_index');
+
+        for (const item of items || []) {
+          const { id: oldItemId, created_at: _ica, section_id: _sid, ...itemData } = item;
+          const { data: newItem } = await supabase
+            .from('items')
+            .insert({ ...itemData, section_id: newSec.id })
+            .select()
+            .single();
+          if (!newItem) continue;
+
+          const { data: images } = await supabase
+            .from('item_images')
+            .select('*')
+            .eq('item_id', oldItemId);
+
+          if (images && images.length > 0) {
+            await supabase.from('item_images').insert(
+              images.map(({ id, created_at, item_id, ...imgData }) => ({
+                ...imgData,
+                item_id: newItem.id,
+              }))
+            );
+          }
+        }
+      }
+
+      // 4. Copy adjustments
+      const { data: adjustments } = await supabase
+        .from('adjustments')
+        .select('*')
+        .eq('budget_id', sourceBudgetId);
+
+      if (adjustments && adjustments.length > 0) {
+        await supabase.from('adjustments').insert(
+          adjustments.map(({ id, created_at, budget_id, ...adjData }) => ({
+            ...adjData,
+            budget_id: newBudget.id,
+          }))
+        );
+      }
+
+      // 5. Copy rooms
+      const { data: rooms } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('budget_id', sourceBudgetId);
+
+      if (rooms && rooms.length > 0) {
+        await supabase.from('rooms').insert(
+          rooms.map(({ id, created_at, budget_id, ...roomData }) => ({
+            ...roomData,
+            budget_id: newBudget.id,
+          }))
+        );
+      }
+
+      toast.success('Orçamento duplicado! Preencha os dados do novo cliente.');
+      navigate(`/admin/budget/${newBudget.id}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao duplicar orçamento');
+    }
+  };
+
   const handleLogout = async () => {
     await signOut();
     navigate("/login");
@@ -563,6 +682,12 @@ export default function AdminDashboard() {
                                 >
                                   <ShoppingBag className="h-3.5 w-3.5 text-warning" />
                                   {budget.show_optional_items ? "Desativar opcionais" : "Incluir opcionais"}
+                                </button>
+                                <button
+                                  onClick={() => { setMenuOpen(null); duplicateAsNew(budget.id); }}
+                                  className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
+                                >
+                                  <Copy className="h-3.5 w-3.5 text-muted-foreground" /> Duplicar como novo
                                 </button>
                                 {budget.status !== 'archived' && (
                                   <button
