@@ -82,7 +82,15 @@ export const SCOPE_CATEGORIES: ScopeCategory[] = [
     colorClass: "text-cyan-600",
     bgClass: "bg-cyan-600",
     borderClass: "border-l-cyan-600",
-    matches: ["utensílios", "utensilios", "utensilio", "hospede", "enxoval"],
+    matches: ["utensílios", "utensilios", "utensilio", "hospede"],
+  },
+  {
+    id: "enxoval",
+    label: "Enxoval",
+    colorClass: "text-pink-500",
+    bgClass: "bg-pink-500",
+    borderClass: "border-l-pink-500",
+    matches: ["enxoval"],
   },
   {
     id: "outros",
