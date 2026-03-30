@@ -314,18 +314,40 @@ export default function PublicBudget() {
                               </span>
                             </div>
 
-                            {/* Product grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                              {allItems.map((item: any) => (
-                                <ProductShowcaseCard
-                                  key={item.id}
-                                  item={item}
-                                  budgetId={budget.id}
-                                  editable={false}
-                                  showGallery={false}
-                                />
-                              ))}
-                            </div>
+                            {/* Product grid (cards) or list (PDF export) */}
+                            {exporting ? (
+                              <ul className="space-y-1">
+                                {allItems.map((item: any, idx: number) => (
+                                  <li
+                                    key={item.id}
+                                    className={cn(
+                                      "flex items-center gap-2 py-1.5 text-sm font-body text-foreground",
+                                      idx < allItems.length - 1 && "border-b border-border/30"
+                                    )}
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />
+                                    <span className="flex-1">{item.title}</span>
+                                    {item.qty && (
+                                      <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
+                                        {item.qty} {item.unit || "un"}
+                                      </span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                {allItems.map((item: any) => (
+                                  <ProductShowcaseCard
+                                    key={item.id}
+                                    item={item}
+                                    budgetId={budget.id}
+                                    editable={false}
+                                    showGallery={false}
+                                  />
+                                ))}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
