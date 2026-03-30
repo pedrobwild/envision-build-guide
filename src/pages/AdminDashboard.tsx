@@ -335,6 +335,12 @@ export default function AdminDashboard() {
     });
   }, [budgets, searchQuery, statusFilter]);
 
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   const statusColors: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
     published: 'bg-success/10 text-success',
