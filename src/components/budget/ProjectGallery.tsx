@@ -168,8 +168,8 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
             </div>
           )}
 
-          {activeTab === "tour3d" && tour3dConfig ? (
-            <Tour3DViewer rooms={tour3dConfig.rooms} />
+          {activeTab === "tour3d" && tourRooms.length > 0 ? (
+            <Tour3DViewer rooms={tourRooms} />
           ) : (
             <div className="relative">
               <div ref={emblaRef} className="overflow-hidden rounded-lg">
