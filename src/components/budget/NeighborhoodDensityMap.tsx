@@ -101,6 +101,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const markersRef = useRef<Map<string, { marker: maplibregl.Marker; el: HTMLDivElement }>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
   const autoSelectedRef = useRef(false);
+  const userInitiatedSelectionRef = useRef(false);
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
   const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
   const styleCandidates = useMemo<(string | maplibregl.StyleSpecification)[]>(() => {
@@ -120,7 +121,8 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
 
-  const handleSelect = useCallback((id: string | null) => {
+  const handleSelect = useCallback((id: string | null, options?: { userInitiated?: boolean }) => {
+    userInitiatedSelectionRef.current = !!options?.userInitiated;
     setSelected((prev) => (prev === id ? null : id));
   }, []);
 
