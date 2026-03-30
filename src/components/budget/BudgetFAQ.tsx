@@ -51,7 +51,7 @@ export function BudgetFAQ() {
       <Accordion type="single" collapsible className="space-y-1">
         {faqs.map((faq, i) => (
           <AccordionItem key={i} value={`faq-${i}`} className="border-border">
-            <AccordionTrigger className="text-sm font-body font-medium text-foreground hover:no-underline text-left py-4 min-h-[48px]">
+            <AccordionTrigger className="text-sm font-body font-medium text-foreground hover:no-underline text-left py-4 min-h-[48px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-md focus-visible:outline-none">
               {faq.q}
             </AccordionTrigger>
             <AccordionContent className="text-sm font-body text-muted-foreground leading-relaxed">

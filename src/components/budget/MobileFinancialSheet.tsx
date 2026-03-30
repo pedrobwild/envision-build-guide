@@ -33,7 +33,7 @@ interface MobileFinancialSheetProps {
 }
 
 const DEFAULT_PHONE = "5511911906183";
-const SNAP_POINTS = [0.4, 0.85] as const;
+const SNAP_POINTS = [0.45, 0.88] as const;
 
 export function MobileFinancialSheet({
   open,

@@ -1,3 +1,4 @@
+import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Shield, Clock, Award, Users, FileCheck, Headphones } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,51 +17,83 @@ const signals = [
 ];
 
 export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const check = () => {
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+    };
+
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    return () => el.removeEventListener("scroll", check);
+  }, []);
+
   return (
     <div className="lg:hidden space-y-3">
-      {/* Horizontal scroll chips */}
-      <div
-        className="flex gap-2 overflow-x-auto scrollbar-none px-1 pb-1 snap-x snap-mandatory"
-        style={{ WebkitOverflowScrolling: "touch" }}
-      >
-        {/* Prazo chip — highlighted */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/8 border border-primary/12 snap-start"
+      {/* Horizontal scroll chips with fade indicator */}
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="flex gap-2 overflow-x-auto scrollbar-none px-1 pb-1 snap-x snap-mandatory"
+          style={{ WebkitOverflowScrolling: "touch" }}
+          role="list"
+          aria-label="Garantias e diferenciais"
         >
-          <Clock className="h-4 w-4 text-primary" />
-          <div className="flex flex-col">
-            <span className="text-sm font-display font-bold text-primary tabular-nums leading-none">
-              {prazoDiasUteis} dias úteis
-            </span>
-            <span className="text-xs text-muted-foreground font-body leading-none mt-0.5">
-              prazo de execução
-            </span>
-          </div>
-        </motion.div>
-
-        {signals.map((s, i) => (
+          {/* Prazo chip — highlighted */}
           <motion.div
-            key={s.label}
-            initial={{ opacity: 0, x: 8 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            role="listitem"
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.04 }}
-            className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border snap-start"
+            className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/8 border border-primary/12 snap-start"
           >
-            <s.icon className="h-3.5 w-3.5 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-primary" aria-hidden="true" />
             <div className="flex flex-col">
-              <span className="text-xs font-display font-semibold text-foreground leading-none">
-                {s.label}
+              <span className="text-sm font-display font-bold text-primary tabular-nums leading-none">
+                {prazoDiasUteis} dias úteis
               </span>
               <span className="text-xs text-muted-foreground font-body leading-none mt-0.5">
-                {s.sublabel}
+                prazo de execução
               </span>
             </div>
           </motion.div>
-        ))}
+
+          {signals.map((s, i) => (
+            <motion.div
+              key={s.label}
+              role="listitem"
+              initial={{ opacity: 0, x: 8 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.04 }}
+              className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border snap-start"
+            >
+              <s.icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+              <div className="flex flex-col">
+                <span className="text-xs font-display font-semibold text-foreground leading-none">
+                  {s.label}
+                </span>
+                <span className="text-xs text-muted-foreground font-body leading-none mt-0.5">
+                  {s.sublabel}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Fade-out gradient — right edge scroll hint */}
+        <div
+          className={cn(
+            "absolute right-0 top-0 bottom-1 w-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-l from-background to-transparent",
+            canScrollRight ? "opacity-100" : "opacity-0"
+          )}
+          aria-hidden="true"
+        />
       </div>
 
       {/* ReclameAqui seal — compact */}
@@ -76,6 +109,8 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
         <img
           src={seloReclameAqui}
           alt="Selo RA Verificada"
+          width={20}
+          height={20}
           className="h-5 w-5 object-contain"
         />
         <span className="text-xs font-body text-success font-medium">

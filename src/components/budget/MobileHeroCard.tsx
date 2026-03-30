@@ -113,10 +113,10 @@ export function MobileHeroCard({
             className={cn(
               "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-body font-semibold w-fit",
               validity.expired
-                ? "bg-destructive/10 text-destructive"
+                ? "bg-destructive/15 text-destructive"
                 : validity.daysLeft <= 5
-                  ? "bg-warning/10 text-warning"
-                  : "bg-success/10 text-success"
+                  ? "bg-warning/15 text-warning-foreground"
+                  : "bg-success/15 text-success-foreground"
             )}
           >
             {validity.expired ? (
