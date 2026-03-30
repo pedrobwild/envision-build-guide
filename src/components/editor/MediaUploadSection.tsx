@@ -254,6 +254,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
+    if (activeTab === "tour3d") return;
     const currentFiles = files[activeTab];
     const oldIndex = currentFiles.findIndex(f => f.name === active.id);
     const newIndex = currentFiles.findIndex(f => f.name === over.id);
