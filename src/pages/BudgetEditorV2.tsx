@@ -197,7 +197,7 @@ export default function BudgetEditorV2() {
           </div>
         </Collapsible>
 
-        <MediaUploadSection publicId={budget.public_id || budget.id} />
+        <MediaUploadSection publicId={budget.public_id || budget.id} budgetId={budgetId!} />
 
         <SectionsEditor
           budgetId={budgetId!}
