@@ -195,8 +195,6 @@ export default function PublicBudget() {
 
   const activeRoomData = rooms.find((r) => r.id === activeRoom);
 
-  let globalSectionIdx = 0;
-
   return (
     <div className="min-h-screen bg-background">
       <ReadingProgressBar />
