@@ -33,6 +33,8 @@ export default function AdminDashboard() {
   const [importType, setImportType] = useState<'pdf' | 'excel'>('pdf');
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     loadBudgets();
@@ -579,7 +581,7 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div className="space-y-2 sm:space-y-3">
-            {filtered.map(budget => {
+            {paginated.map(budget => {
               const sectionTotal = getBudgetTotal(budget);
               const sectionCount = (budget.sections || []).length;
               const internalCost = Number((budget as any).internal_cost) || 0;
@@ -746,6 +748,31 @@ export default function AdminDashboard() {
               );
             })}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
+              <p className="text-xs text-muted-foreground font-body">
+                {filtered.length} orçamento{filtered.length !== 1 ? 's' : ''} • Página {currentPage} de {totalPages}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 text-xs font-body rounded-md border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 text-xs font-body rounded-md border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
+          )}
         )}
       </main>
       <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} fileFilter={importType} />
