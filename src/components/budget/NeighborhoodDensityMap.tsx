@@ -86,6 +86,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const panelRef = useRef<HTMLDivElement>(null);
   const autoSelectedRef = useRef(false);
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
+  const styleCandidates = [
+    apiKey ? `${MAPTILER_STYLE}?key=${apiKey}` : null,
+    FALLBACK_STYLE,
+    SECONDARY_FALLBACK_STYLE,
+  ].filter((value, index, arr): value is string => Boolean(value) && arr.indexOf(value) === index);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
