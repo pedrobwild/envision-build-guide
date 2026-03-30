@@ -28,6 +28,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const [duplicateConfirmId, setDuplicateConfirmId] = useState<string | null>(null);
   const [importType, setImportType] = useState<'pdf' | 'excel'>('pdf');
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -684,7 +685,7 @@ export default function AdminDashboard() {
                                   {budget.show_optional_items ? "Desativar opcionais" : "Incluir opcionais"}
                                 </button>
                                 <button
-                                  onClick={() => { if (confirm('Duplicar este orçamento como um novo projeto? O escopo será copiado, mas os dados do cliente ficarão em branco.')) { setMenuOpen(null); duplicateAsNew(budget.id); } }}
+                                  onClick={() => { setMenuOpen(null); setDuplicateConfirmId(budget.id); }}
                                   className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
                                 >
                                   <Copy className="h-3.5 w-3.5 text-muted-foreground" /> Duplicar como novo
@@ -719,6 +720,20 @@ export default function AdminDashboard() {
         )}
       </main>
       <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} fileFilter={importType} />
+
+      {/* Duplicate confirmation dialog */}
+      {duplicateConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDuplicateConfirmId(null)}>
+          <div className="bg-card rounded-xl shadow-xl p-6 max-w-md mx-4 border border-border" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-heading font-semibold text-foreground mb-2">Duplicar orçamento?</h3>
+            <p className="text-sm text-muted-foreground mb-6">O escopo será copiado, mas os dados do cliente ficarão em branco para preenchimento.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDuplicateConfirmId(null)} className="px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">Cancelar</button>
+              <button onClick={() => { const id = duplicateConfirmId; setDuplicateConfirmId(null); duplicateAsNew(id); }} className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-colors">Duplicar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
