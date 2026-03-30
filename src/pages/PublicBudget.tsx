@@ -12,7 +12,7 @@ import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
 import { AnimatedSection } from "@/components/budget/AnimatedSection";
 import { ScopeTransitionZone } from "@/components/budget/ScopeTransitionZone";
 import { CategoryHeader } from "@/components/budget/CategoryHeader";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PublicBudgetSkeleton } from "@/components/budget/PublicBudgetSkeleton";
 import { demoBudget } from "@/lib/demo-budget-data";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -145,22 +145,7 @@ export default function PublicBudget() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <Skeleton className="h-14 w-full mb-4" />
-          <Skeleton className="h-24 w-full mb-4" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-48 w-full rounded-xl" />
-              ))}
-            </div>
-            <Skeleton className="h-80 w-full rounded-xl" />
-          </div>
-        </div>
-      </div>
-    );
+    return <PublicBudgetSkeleton />;
   }
 
   if (!budget) {
