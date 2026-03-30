@@ -112,7 +112,7 @@ export function MobileSectionNav({ items, activeId }: MobileSectionNavProps) {
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-1">
-                  {item.icon && <span className="text-[10px]">{item.icon}</span>}
+                  {item.icon && <span className="text-xs">{item.icon}</span>}
                   {item.label}
                 </span>
               </button>
