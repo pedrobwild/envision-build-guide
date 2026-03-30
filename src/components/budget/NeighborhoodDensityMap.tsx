@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MapPin, ArrowLeft, MessageCircle, ChevronLeft, ChevronRight, Camera, Building2 } from "lucide-react";
+import { MapPin, ArrowLeft, ChevronLeft, ChevronRight, Camera, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
@@ -324,9 +324,6 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     };
   }, [handleSelect, styleCandidates]);
 
-  const whatsappUrl = selectedData
-    ? `https://wa.me/5511911906183?text=${encodeURIComponent(`Olá! Tenho um imóvel no ${selectedData.name} e gostaria de um orçamento.`)}`
-    : "#";
 
   return (
     <div className="py-12 lg:py-16" data-pdf-hide>
@@ -353,7 +350,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         </div>
         <div className="flex-[2] md:max-h-[600px] overflow-y-auto" ref={panelRef}>
           {selectedData ? (
-            <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} whatsappUrl={whatsappUrl} />
+            <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} />
           ) : (
             <SummaryPanel onSelectNeighborhood={handleSelect} />
           )}
@@ -429,11 +426,9 @@ function SummaryPanel({ onSelectNeighborhood }: { onSelectNeighborhood: (id: str
 function NeighborhoodDetail({
   data,
   onBack,
-  whatsappUrl,
 }: {
   data: Neighborhood;
   onBack: () => void;
-  whatsappUrl: string;
 }) {
   const projects = getIndividualProjects(data.name);
 
@@ -454,9 +449,6 @@ function NeighborhoodDetail({
         </Badge>
       </div>
 
-
-
-
       {/* Individual project cards */}
       {projects.length > 0 && (
         <div className="space-y-3 pt-2 border-t border-border">
@@ -473,16 +465,6 @@ function NeighborhoodDetail({
         Já entregamos {data.count} {data.count === 1 ? "studio reformado" : "studios reformados"} no{" "}
         {data.name}, um dos bairros com maior demanda de short stay em SP.
       </p>
-
-      <a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm py-3 px-4 min-h-[44px] hover:bg-primary/90 transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
-      >
-        <MessageCircle className="h-4 w-4 shrink-0" />
-        <span className="truncate">Tenho um imóvel no {data.name}</span>
-      </a>
     </div>
   );
 }
