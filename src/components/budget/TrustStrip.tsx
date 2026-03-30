@@ -35,7 +35,7 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
             <span className="text-sm font-display font-bold text-primary tabular-nums leading-none">
               {prazoDiasUteis} dias úteis
             </span>
-            <span className="text-[10px] text-muted-foreground font-body leading-none mt-0.5">
+            <span className="text-xs text-muted-foreground font-body leading-none mt-0.5">
               prazo de execução
             </span>
           </div>
@@ -55,7 +55,7 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
               <span className="text-xs font-display font-semibold text-foreground leading-none">
                 {s.label}
               </span>
-              <span className="text-[10px] text-muted-foreground font-body leading-none mt-0.5">
+              <span className="text-xs text-muted-foreground font-body leading-none mt-0.5">
                 {s.sublabel}
               </span>
             </div>

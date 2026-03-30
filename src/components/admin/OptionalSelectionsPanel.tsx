@@ -158,7 +158,7 @@ export function OptionalSelectionsPanel() {
                     <span className="font-body font-medium text-sm text-foreground truncate">
                       {group.budgetName}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-success/10 text-success text-[10px] font-medium">
+                    <span className="px-1.5 py-0.5 rounded-full bg-success/10 text-success text-xs font-medium">
                       Confirmado
                     </span>
                   </div>

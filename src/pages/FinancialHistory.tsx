@@ -254,26 +254,26 @@ export default function FinancialHistory() {
                 <div className="p-3 sm:p-4 rounded-lg border border-border bg-card">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Award className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-[10px] sm:text-xs text-muted-foreground font-body">Melhor Mês</span>
+                    <span className="text-xs text-muted-foreground font-body">Melhor Mês</span>
                   </div>
                   <p className="text-sm sm:text-base font-display font-bold text-foreground truncate">{kpis.bestMonth.value}</p>
-                  <p className="text-[10px] text-muted-foreground font-body">{kpis.bestMonth.label}</p>
+                  <p className="text-xs text-muted-foreground font-body">{kpis.bestMonth.label}</p>
                 </div>
                 <div className="p-3 sm:p-4 rounded-lg border border-border bg-card">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Percent className="h-3.5 w-3.5 text-success" />
-                    <span className="text-[10px] sm:text-xs text-muted-foreground font-body">Maior Margem</span>
+                    <span className="text-xs text-muted-foreground font-body">Maior Margem</span>
                   </div>
                   <p className="text-sm sm:text-base font-display font-bold text-success">{kpis.bestMargin.value}</p>
-                  <p className="text-[10px] text-muted-foreground font-body">{kpis.bestMargin.label}</p>
+                  <p className="text-xs text-muted-foreground font-body">{kpis.bestMargin.label}</p>
                 </div>
                 <div className="p-3 sm:p-4 rounded-lg border border-border bg-card">
                   <div className="flex items-center gap-1.5 mb-1">
                     <BarChart3 className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-[10px] sm:text-xs text-muted-foreground font-body">Média Mensal</span>
+                    <span className="text-xs text-muted-foreground font-body">Média Mensal</span>
                   </div>
                   <p className="text-sm sm:text-base font-display font-bold text-foreground truncate">{kpis.avgMonthly}</p>
-                  <p className="text-[10px] text-muted-foreground font-body">Últimos 6 meses</p>
+                  <p className="text-xs text-muted-foreground font-body">Últimos 6 meses</p>
                 </div>
                 <div className="p-3 sm:p-4 rounded-lg border border-border bg-card">
                   <div className="flex items-center gap-1.5 mb-1">
@@ -281,12 +281,12 @@ export default function FinancialHistory() {
                       ? <ArrowUpRight className="h-3.5 w-3.5 text-success" />
                       : <ArrowDownRight className="h-3.5 w-3.5 text-destructive" />
                     }
-                    <span className="text-[10px] sm:text-xs text-muted-foreground font-body">Crescimento MoM</span>
+                    <span className="text-xs text-muted-foreground font-body">Crescimento MoM</span>
                   </div>
                   <p className={`text-sm sm:text-base font-display font-bold ${kpis.momGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
                     {kpis.momGrowth >= 0 ? '+' : ''}{kpis.momGrowth}%
                   </p>
-                  <p className="text-[10px] text-muted-foreground font-body">vs. mês anterior</p>
+                  <p className="text-xs text-muted-foreground font-body">vs. mês anterior</p>
                 </div>
               </div>
             )}

@@ -118,8 +118,8 @@ export function SectionCard({
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent" />
-            <div className="absolute top-3 right-3 p-1.5 rounded-full bg-card/20 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-opacity">
-              <ZoomIn className="h-3.5 w-3.5" />
+            <div className="absolute top-3 right-3 p-1.5 rounded-full bg-card/20 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-opacity" aria-label="Ampliar imagem">
+              <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" />
             </div>
             <div className="absolute bottom-0 left-0 right-0 px-4 pb-3">
               <h2 className="font-display text-lg sm:text-xl font-bold text-white leading-tight">
@@ -158,9 +158,9 @@ export function SectionCard({
               </div>
               <div className="flex-shrink-0 pt-1">
                 {expanded ? (
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 )}
               </div>
             </div>
@@ -169,7 +169,7 @@ export function SectionCard({
 
         {/* ── Subtotal strip — always visible ── */}
         <div className="px-3 sm:px-4 py-1.5 sm:py-2 border-b border-border bg-muted/30 flex items-center justify-between">
-          <span className="text-[11px] sm:text-xs text-muted-foreground font-body">
+          <span className="text-xs text-muted-foreground font-body">
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ""}
             {items.length} {items.length === 1 ? "item" : "itens"}
           </span>

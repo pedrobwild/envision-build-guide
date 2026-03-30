@@ -574,7 +574,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               </span>
                               {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
                               {section.is_optional && (
-                                <span className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-warning/15 text-warning border border-warning/20">
+                                <span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-warning/15 text-warning border border-warning/20">
                                   Opcional
                                 </span>
                               )}

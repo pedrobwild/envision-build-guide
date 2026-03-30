@@ -24,7 +24,7 @@ export function CategoryHeader({ category, subtotal, sectionCount, itemCount }: 
             </span>
           </div>
           {(sectionCount || itemCount) && (
-            <p className="text-[11px] sm:text-xs text-muted-foreground font-body mt-0.5">
+            <p className="text-xs text-muted-foreground font-body mt-0.5">
               {sectionCount && sectionCount > 0 && `${sectionCount} ${sectionCount === 1 ? 'seção' : 'seções'}`}
               {sectionCount && itemCount ? ' · ' : ''}
               {itemCount && itemCount > 0 && `${itemCount} ${itemCount === 1 ? 'item' : 'itens'}`}

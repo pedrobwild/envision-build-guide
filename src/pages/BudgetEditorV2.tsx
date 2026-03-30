@@ -160,7 +160,7 @@ export default function BudgetEditorV2() {
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <span className="font-display font-semibold text-sm text-foreground">Dados Internos</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-body">Uso interno</span>
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-body">Uso interno</span>
               </div>
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${internalDataOpen ? 'rotate-180' : ''}`} />
             </CollapsibleTrigger>
@@ -183,7 +183,7 @@ export default function BudgetEditorV2() {
                     className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   />
-                  <p className="text-[11px] text-muted-foreground font-body mt-1.5">
+                  <p className="text-xs text-muted-foreground font-body mt-1.5">
                     Custo real de execução (mão de obra, materiais, marcenaria). Nunca exposto ao cliente.
                   </p>
                 </div>

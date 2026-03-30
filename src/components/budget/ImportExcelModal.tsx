@@ -778,7 +778,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-body font-medium text-foreground truncate">{row.title}</p>
-                        <p className="text-[10px] font-body text-muted-foreground truncate mt-0.5">{row.section}</p>
+                        <p className="text-xs font-body text-muted-foreground truncate mt-0.5">{row.section}</p>
                       </div>
                       <span className="text-xs font-body font-medium text-foreground whitespace-nowrap">
                         {row.total ? `R$ ${row.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}

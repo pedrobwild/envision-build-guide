@@ -90,7 +90,7 @@ function SortableMediaItem({
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
-        <span className="text-[10px] text-white/80 font-body px-2 text-center truncate max-w-full">
+        <span className="text-xs text-white/80 font-body px-2 text-center truncate max-w-full">
           {file.name}
         </span>
       </div>
@@ -347,7 +347,7 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
               {tab.icon}
               {tab.label}
               {files[tab.id].length > 0 && (
-                <span className="ml-1 bg-background/30 rounded px-1 text-[10px]">
+                <span className="ml-1 bg-background/30 rounded px-1 text-xs">
                   {files[tab.id].length}
                 </span>
               )}
@@ -368,7 +368,7 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
             {uploading ? "Enviando..." : "Adicionar arquivos"}
           </Button>
           <span className="text-xs text-muted-foreground font-body">
-            Pasta: <code className="bg-muted px-1 py-0.5 rounded text-[10px]">{folderMap[activeTab]}</code>
+            Pasta: <code className="bg-muted px-1 py-0.5 rounded text-xs">{folderMap[activeTab]}</code>
           </span>
         </div>
 
@@ -409,7 +409,7 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
           </DndContext>
         )}
 
-        <p className="text-[10px] text-muted-foreground font-body">
+        <p className="text-xs text-muted-foreground font-body">
           ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública do orçamento. Arraste os thumbnails para definir a ordem de exibição.
         </p>
       </CardContent>

@@ -36,7 +36,7 @@ export function TestimonialVideoPreview({
             </div>
           </div>
         </div>
-        <span className="text-[11px] leading-snug text-white/80 font-body group-hover:text-white transition-colors">
+        <span className="text-xs leading-snug text-white/80 font-body group-hover:text-white transition-colors">
           {label}
         </span>
       </button>
@@ -71,8 +71,9 @@ export function TestimonialVideoPreview({
               <button
                 onClick={() => setOpen(false)}
                 className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors z-10"
+                aria-label="Fechar vídeo"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </motion.div>
           </motion.div>

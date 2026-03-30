@@ -444,7 +444,7 @@ export default function AdminDashboard() {
             <div key={i} className={`p-3 sm:p-4 rounded-lg border border-border bg-card ${i === 4 ? 'col-span-2 sm:col-span-1' : ''}`}>
               <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
                 <m.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${m.color}`} />
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-body">{m.label}</span>
+                <span className="text-xs text-muted-foreground font-body">{m.label}</span>
               </div>
               <p className={`text-base sm:text-lg font-display font-bold ${m.color} truncate`}>{m.value}</p>
             </div>
@@ -604,16 +604,16 @@ export default function AdminDashboard() {
                         <Link to={`/admin/budget/${budget.id}`} className="font-medium text-foreground hover:text-primary transition-colors font-body text-sm truncate">
                           {budget.project_name || 'Sem nome'}
                         </Link>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium font-body ${statusColors[budget.status]} flex-shrink-0`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium font-body ${statusColors[budget.status]} flex-shrink-0`}>
                           {statusLabels[budget.status] || budget.status}
                         </span>
                         {budget.show_optional_items && (
-                          <span className="px-1.5 py-0.5 rounded-full bg-warning/10 text-warning text-[10px] font-medium font-body flex items-center gap-1 flex-shrink-0">
-                            <ShoppingBag className="h-2.5 w-2.5" /> Opcionais
+                          <span className="px-1.5 py-0.5 rounded-full bg-warning/10 text-warning text-xs font-medium font-body flex items-center gap-1 flex-shrink-0">
+                            <ShoppingBag className="h-2.5 w-2.5" aria-hidden="true" /> Opcionais
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] sm:text-xs text-muted-foreground font-body leading-relaxed">
+                      <p className="text-xs text-muted-foreground font-body leading-relaxed">
                         {budget.client_name}
                         <span className="hidden sm:inline"> • {budget.date ? formatDate(budget.date) : '—'}</span>
                         {' • '}{sectionCount} {sectionCount === 1 ? 'seção' : 'seções'}
@@ -623,7 +623,7 @@ export default function AdminDashboard() {
 
                       {/* Profit info for closed contracts */}
                       {isClosed && internalCost > 0 && (
-                        <div className="flex items-center gap-3 mt-1.5 text-[11px] font-body">
+                        <div className="flex items-center gap-3 mt-1.5 text-xs font-body">
                           <span className="text-muted-foreground">Custo: {formatBRL(internalCost)}</span>
                           <span className={profit >= 0 ? 'text-success' : 'text-destructive'}>
                             Lucro: {formatBRL(profit)}
@@ -643,16 +643,18 @@ export default function AdminDashboard() {
                           onClick={() => navigate(`/admin/budget/${budget.id}`)}
                           className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                           title="Editar orçamento"
+                          aria-label="Editar orçamento"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" aria-hidden="true" />
                         </button>
                         {budget.status === 'draft' && (
                           <button
                             onClick={() => publishBudget(budget.id)}
                             className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                             title="Publicar"
+                            aria-label="Publicar orçamento"
                           >
-                            <ExternalLink className="h-4 w-4" />
+                            <ExternalLink className="h-4 w-4" aria-hidden="true" />
                           </button>
                         )}
                         {budget.public_id && (
@@ -661,8 +663,9 @@ export default function AdminDashboard() {
                               onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), '_blank')}
                               className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                               title="Ver público"
+                              aria-label="Ver orçamento público"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-4 w-4" aria-hidden="true" />
                             </button>
                             <button
                               onClick={() => {
@@ -671,8 +674,9 @@ export default function AdminDashboard() {
                               }}
                               className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center hidden sm:flex"
                               title="Copiar link"
+                              aria-label="Copiar link público"
                             >
-                              <Copy className="h-4 w-4" />
+                              <Copy className="h-4 w-4" aria-hidden="true" />
                             </button>
                           </>
                         )}
@@ -680,8 +684,9 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => setMenuOpen(menuOpen === budget.id ? null : budget.id)}
                             className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                            aria-label="Mais opções"
                           >
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                           </button>
                           {menuOpen === budget.id && (
                             <>

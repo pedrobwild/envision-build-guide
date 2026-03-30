@@ -63,18 +63,18 @@ export function MobileBottomBar({
             >
               {/* Trust micro-line */}
               <div className="flex items-center justify-center gap-3 px-4 py-1 bg-muted/20">
-                <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-body">
-                  <Shield className="h-2.5 w-2.5" />
+                <span className="flex items-center gap-1 text-xs text-muted-foreground font-body">
+                  <Shield className="h-3 w-3" aria-hidden="true" />
                   Preço fixo
                 </span>
-                <span className="text-muted-foreground/20">·</span>
-                <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-body">
-                  <Award className="h-2.5 w-2.5" />
+                <span className="text-muted-foreground/20" aria-hidden="true">·</span>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground font-body">
+                  <Award className="h-3 w-3" aria-hidden="true" />
                   Garantia 5 anos
                 </span>
-                <span className="text-muted-foreground/20">·</span>
-                <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-body">
-                  <CheckCircle2 className="h-2.5 w-2.5" />
+                <span className="text-muted-foreground/20" aria-hidden="true">·</span>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground font-body">
+                  <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                   Sem custos ocultos
                 </span>
               </div>
@@ -87,8 +87,8 @@ export function MobileBottomBar({
                   <span className="font-display font-bold text-foreground text-base tabular-nums">
                     {formatBRL(total)}
                   </span>
-                  <span className="text-[11px] text-muted-foreground font-body flex items-center gap-1">
-                    <ChevronDown className="h-3 w-3" />
+                  <span className="text-xs text-muted-foreground font-body flex items-center gap-1">
+                    <ChevronDown className="h-3 w-3" aria-hidden="true" />
                     Ver resumo ↓
                   </span>
                 </button>
