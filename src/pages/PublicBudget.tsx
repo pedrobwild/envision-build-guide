@@ -197,16 +197,18 @@ export default function PublicBudget() {
 
       {/* Room Detail Modal */}
       {activeRoom && activeRoomData && (
-        <RoomDetailModal
-          open={roomModalOpen}
-          onClose={() => {
-            setRoomModalOpen(false);
-            setActiveRoom(null);
-          }}
-          roomName={activeRoomData.name}
-          sections={sections}
-          roomId={activeRoom}
-        />
+        <Suspense fallback={null}>
+          <RoomDetailModal
+            open={roomModalOpen}
+            onClose={() => {
+              setRoomModalOpen(false);
+              setActiveRoom(null);
+            }}
+            roomName={activeRoomData.name}
+            sections={sections}
+            roomId={activeRoom}
+          />
+        </Suspense>
       )}
 
       <main id="budget-content" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
@@ -249,17 +251,23 @@ export default function PublicBudget() {
               {/* ─── Visual 3D + Portal logo após Engenharia ─── */}
               <div id="mobile-trust" className="space-y-3 mt-3 scroll-mt-20">
                 <AnimatedSection id="gallery-section" index={0.55}>
-                  <ProjectGallery publicId={publicId} />
+                  <Suspense fallback={<LazyFallback />}>
+                    <ProjectGallery publicId={publicId} />
+                  </Suspense>
                 </AnimatedSection>
 
                 <AnimatedSection id="portal-section-inline" index={0.6}>
-                  <PortalShowcase />
+                  <Suspense fallback={<LazyFallback />}>
+                    <PortalShowcase />
+                  </Suspense>
                 </AnimatedSection>
 
                 {/* Map */}
                 <div>
                   <AnimatedSection id="projetos-regiao" index={0.7}>
-                    <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
+                    <Suspense fallback={<LazyFallback />}>
+                      <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
+                    </Suspense>
                   </AnimatedSection>
                 </div>
               </div>
