@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DndContext,
