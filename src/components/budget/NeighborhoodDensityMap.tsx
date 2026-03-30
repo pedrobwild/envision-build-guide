@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin, ArrowLeft, MessageCircle, ChevronLeft, ChevronRight, Camera, Building2 } from "lucide-react";
@@ -64,6 +64,8 @@ const DEFAULT_CENTER: [number, number] = [-46.6679, -23.5874];
 const DEFAULT_ZOOM = 11.5;
 const MAPTILER_STYLE = "https://api.maptiler.com/maps/streets-v2/style.json";
 const FALLBACK_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+const SECONDARY_FALLBACK_STYLE = "https://demotiles.maplibre.org/style.json";
+const STYLE_LOAD_TIMEOUT_MS = 8000;
 
 function normalize(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -83,9 +85,13 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const markersRef = useRef<Map<string, { marker: maplibregl.Marker; el: HTMLDivElement }>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
   const autoSelectedRef = useRef(false);
-  const fallbackStyleTriedRef = useRef(false);
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
-  const styleUrl = apiKey ? `${MAPTILER_STYLE}?key=${apiKey}` : FALLBACK_STYLE;
+  const styleCandidates = useMemo(
+    () =>
+      [apiKey ? `${MAPTILER_STYLE}?key=${apiKey}` : null, FALLBACK_STYLE, SECONDARY_FALLBACK_STYLE]
+        .filter((value, index, arr): value is string => Boolean(value) && arr.indexOf(value) === index),
+    [apiKey]
+  );
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
@@ -139,43 +145,28 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     if (!mapContainer.current) return;
 
     let map: maplibregl.Map | null = null;
+    let disposed = false;
+    let styleIndex = 0;
+    let styleLoadTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    try {
-      map = new maplibregl.Map({
-        container: mapContainer.current,
-        style: styleUrl,
-        center: DEFAULT_CENTER,
-        zoom: DEFAULT_ZOOM,
-        pitch: 0,
-        bearing: 0,
-        minZoom: 10,
-        maxZoom: 16,
-        maxBounds: [[-47.0, -23.85], [-46.3, -23.35]],
-      });
-    } catch {
-      setMapFailed(true);
-      return;
-    }
+    const clearStyleLoadTimeout = () => {
+      if (styleLoadTimeout) {
+        clearTimeout(styleLoadTimeout);
+        styleLoadTimeout = null;
+      }
+    };
 
     const safeResize = () => map?.resize();
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    const clearMarkers = () => {
+      markersRef.current.forEach(({ marker }) => marker.remove());
+      markersRef.current.clear();
+    };
 
-    map.on("error", (event: any) => {
-      const message = String(event?.error?.message ?? "").toLowerCase();
-      const isMapTilerError = message.includes("maptiler") || message.includes("403") || message.includes("401");
+    const renderMarkers = () => {
+      if (!map) return;
+      clearMarkers();
 
-      if (!fallbackStyleTriedRef.current && apiKey && isMapTilerError) {
-        fallbackStyleTriedRef.current = true;
-        map?.setStyle(FALLBACK_STYLE);
-        return;
-      }
-
-      setMapFailed(true);
-    });
-
-    map.on("load", () => {
-      safeResize();
       const mobile = window.innerWidth < 768;
       NEIGHBORHOOD_DATA.forEach((n) => {
         const style = getPinStyle(n.count);
@@ -199,9 +190,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         el.addEventListener("mouseenter", () => {
           el.style.transform = "scale(1.12)";
         });
+
         el.addEventListener("mouseleave", () => {
-          if (selected !== n.id) el.style.transform = "scale(1)";
+          el.style.transform = "scale(1)";
         });
+
         el.addEventListener("click", (e) => {
           e.stopPropagation();
           handleSelect(n.id);
@@ -227,8 +220,89 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
         markersRef.current.set(n.id, { marker, el });
       });
+    };
 
+    const setStyleByIndex = (nextIndex: number) => {
+      if (!map) return false;
+      if (nextIndex < 0 || nextIndex >= styleCandidates.length) return false;
+
+      styleIndex = nextIndex;
+      clearStyleLoadTimeout();
+      styleLoadTimeout = setTimeout(() => {
+        const switched = setStyleByIndex(styleIndex + 1);
+        if (!switched && !disposed) {
+          setMapLoaded(false);
+          setMapFailed(true);
+          clearMarkers();
+        }
+      }, STYLE_LOAD_TIMEOUT_MS);
+
+      map.setStyle(styleCandidates[styleIndex]);
+      return true;
+    };
+
+    try {
+      map = new maplibregl.Map({
+        container: mapContainer.current,
+        style: styleCandidates[0],
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        pitch: 0,
+        bearing: 0,
+        minZoom: 10,
+        maxZoom: 16,
+        maxBounds: [[-47.0, -23.85], [-46.3, -23.35]],
+      });
+    } catch {
+      setMapLoaded(false);
+      setMapFailed(true);
+      return;
+    }
+
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+
+    styleLoadTimeout = setTimeout(() => {
+      const switched = setStyleByIndex(styleIndex + 1);
+      if (!switched && !disposed) {
+        setMapLoaded(false);
+        setMapFailed(true);
+        clearMarkers();
+      }
+    }, STYLE_LOAD_TIMEOUT_MS);
+
+    map.on("style.load", () => {
+      clearStyleLoadTimeout();
+      setMapFailed(false);
       setMapLoaded(true);
+      renderMarkers();
+      requestAnimationFrame(() => safeResize());
+    });
+
+    map.on("error", (event: any) => {
+      const message = String(event?.error?.message ?? "").toLowerCase();
+      const isStyleError =
+        message.includes("style") ||
+        message.includes("maptiler") ||
+        message.includes("401") ||
+        message.includes("403") ||
+        message.includes("failed to fetch") ||
+        message.includes("networkerror");
+
+      if (!isStyleError || disposed) return;
+
+      const switched = setStyleByIndex(styleIndex + 1);
+      if (!switched) {
+        clearStyleLoadTimeout();
+        setMapLoaded(false);
+        setMapFailed(true);
+        clearMarkers();
+      }
+    });
+
+    map.on("webglcontextlost", () => {
+      setMapLoaded(false);
+      setMapFailed(true);
+      clearMarkers();
     });
 
     const resizeObserver = new ResizeObserver(() => safeResize());
@@ -239,15 +313,16 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     mapRef.current = map;
 
     return () => {
+      disposed = true;
+      clearStyleLoadTimeout();
       resizeObserver.disconnect();
       window.removeEventListener("resize", safeResize);
       window.removeEventListener("orientationchange", safeResize);
-      markersRef.current.clear();
+      clearMarkers();
       map?.remove();
       mapRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKey, styleUrl]);
+  }, [handleSelect, styleCandidates]);
 
   const whatsappUrl = selectedData
     ? `https://wa.me/5511911906183?text=${encodeURIComponent(`Olá! Tenho um imóvel no ${selectedData.name} e gostaria de um orçamento.`)}`
