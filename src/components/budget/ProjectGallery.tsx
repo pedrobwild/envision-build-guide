@@ -176,7 +176,6 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
           )}
 
           {activeTab === "tour3d" ? null : (
-          ) : (
             <div className="relative">
               <div ref={emblaRef} className="overflow-hidden rounded-lg">
                 <div className="flex">
