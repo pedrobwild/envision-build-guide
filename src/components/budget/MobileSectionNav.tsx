@@ -102,7 +102,7 @@ export function MobileSectionNav({ items, activeId }: MobileSectionNavProps) {
                       : "text-muted-foreground bg-muted/50 active:bg-muted"
                 )}
                 style={{ scrollSnapAlign: "start" }}
-                aria-current={isActive ? "true" : undefined}
+                aria-current={isActive ? "step" : undefined}
               >
                 {isActive && (
                   <motion.div
