@@ -217,7 +217,9 @@ export default function PublicBudget() {
 
 
         {/* ═══ TRUST STRIP — scannable confidence chips ═══ */}
-        <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
+        <div data-pdf-section>
+          <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 lg:gap-8 mt-3 lg:mt-0">
           {/* Content column */}
