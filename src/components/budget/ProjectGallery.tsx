@@ -52,7 +52,7 @@ interface ProjectGalleryProps {
 
 export function ProjectGallery({ publicId }: ProjectGalleryProps) {
   const { media, loading: mediaLoading } = useBudgetMedia(publicId);
-  const tour3dConfig = getTour3DConfig(publicId);
+  const { rooms: tourRooms, loading: toursLoading } = useBudgetTours(publicId);
 
   const hasMedia = media && (media.projeto3d.length > 0 || media.projetoExecutivo.length > 0 || media.fotos.length > 0 || !!media.video3d);
 
