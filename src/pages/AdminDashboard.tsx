@@ -262,6 +262,8 @@ export default function AdminDashboard() {
       navigate(`/admin/budget/${newBudget.id}`);
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao duplicar orçamento');
+    } finally {
+      setDuplicating(false);
     }
   };
 
