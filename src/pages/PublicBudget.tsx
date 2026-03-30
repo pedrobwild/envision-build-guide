@@ -457,7 +457,7 @@ export default function PublicBudget() {
           activeSection={null}
         />
 
-        <div id="mobile-faq" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20">
+        <div id="mobile-faq" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20" data-pdf-section>
           <BudgetFAQ />
         </div>
 
