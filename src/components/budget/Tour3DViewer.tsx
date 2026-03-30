@@ -30,11 +30,13 @@ function TourHint() {
 export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
   const [activeRoom, setActiveRoom] = useState(rooms[0]?.id ?? "");
   const [fullscreen, setFullscreen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loadedRooms, setLoadedRooms] = useState<Set<string>>(new Set());
 
   const currentRoom = rooms.find((r) => r.id === activeRoom) ?? rooms[0];
 
-  const handleIframeLoad = useCallback(() => setLoading(false), []);
+  const handleIframeLoad = useCallback((roomId: string) => {
+    setLoadedRooms((prev) => new Set(prev).add(roomId));
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     setFullscreen((prev) => !prev);
@@ -42,17 +44,16 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
 
   const handleRoomChange = useCallback((id: string) => {
     setActiveRoom(id);
-    setLoading(true);
   }, []);
 
   if (!currentRoom) return null;
 
-  const iframeContent = (
+  const renderIframe = (room: Tour3DRoom, isFullscreen: boolean) => (
     <div className={cn(
       "relative w-full bg-muted",
-      fullscreen ? "h-full" : "aspect-[16/10] rounded-lg overflow-hidden border border-border"
+      isFullscreen ? "h-full" : "aspect-[16/10] rounded-lg overflow-hidden border border-border"
     )}>
-      {loading && (
+      {!loadedRooms.has(room.id) && activeRoom === room.id && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-muted">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span className="text-sm font-body text-muted-foreground animate-pulse">
@@ -61,14 +62,24 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
         </div>
       )}
       <iframe
-        key={currentRoom.id}
-        src={currentRoom.url}
-        title={`Tour 3D — ${currentRoom.label}`}
-        className="w-full h-full border-0"
+        src={room.url}
+        title={`Tour 3D — ${room.label}`}
+        className={cn("w-full h-full border-0", activeRoom !== room.id && "hidden")}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; xr-spatial-tracking; fullscreen"
         allowFullScreen
-        onLoad={handleIframeLoad}
+        onLoad={() => handleIframeLoad(room.id)}
       />
+    </div>
+  );
+
+  // Preload all iframes (hidden) so they're warm when user switches
+  const allIframes = (isFullscreen: boolean) => (
+    <div className={cn("relative w-full", isFullscreen ? "h-full" : "")}>
+      {rooms.map((room) => (
+        <div key={room.id} className={cn(activeRoom === room.id ? (isFullscreen ? "h-full" : "") : "hidden")}>
+          {renderIframe(room, isFullscreen)}
+        </div>
+      ))}
     </div>
   );
 
@@ -102,7 +113,7 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
         </div>
         <TourHint />
         <div className="flex-1 min-h-0">
-          {iframeContent}
+          {allIframes(true)}
         </div>
       </div>
     );
@@ -138,7 +149,7 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
       </div>
 
       <TourHint />
-      {iframeContent}
+      {allIframes(false)}
     </div>
   );
 }
