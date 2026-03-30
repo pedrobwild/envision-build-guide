@@ -28,6 +28,7 @@ function TourHint() {
 }
 
 export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
+  const isMobile = useIsMobile();
   const [activeRoom, setActiveRoom] = useState(rooms[0]?.id ?? "");
   const [fullscreen, setFullscreen] = useState(false);
   const [loadedRooms, setLoadedRooms] = useState<Set<string>>(new Set());
@@ -62,7 +63,8 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
   const handleRoomChange = useCallback((id: string) => {
     setActiveRoom(id);
     setMountedRooms((prev) => new Set(prev).add(id));
-  }, []);
+    if (isMobile) setFullscreen(true);
+  }, [isMobile]);
 
   const handleIframeLoad = useCallback((roomId: string) => {
     setLoadedRooms((prev) => new Set(prev).add(roomId));
