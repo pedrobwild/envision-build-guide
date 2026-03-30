@@ -16,6 +16,8 @@ const PublicBudget = lazy(() => import("./pages/PublicBudget"));
 const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage"));
 const QAEvaluator = lazy(() => import("./pages/QAEvaluator"));
 const FinancialHistory = lazy(() => import("./pages/FinancialHistory"));
+const BudgetRequestsList = lazy(() => import("./pages/BudgetRequestsList"));
+const NewBudgetRequest = lazy(() => import("./pages/NewBudgetRequest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -44,6 +46,8 @@ const App = () => (
             <Route path="/admin/budget/:budgetId" element={<ProtectedRoute><BudgetEditorV2 /></ProtectedRoute>} />
             <Route path="/admin/budget/:budgetId/legacy" element={<ProtectedRoute><BudgetEditor /></ProtectedRoute>} />
             <Route path="/admin/financeiro" element={<ProtectedRoute><FinancialHistory /></ProtectedRoute>} />
+            <Route path="/admin/solicitacoes" element={<ProtectedRoute><BudgetRequestsList /></ProtectedRoute>} />
+            <Route path="/admin/solicitacoes/nova" element={<ProtectedRoute><NewBudgetRequest /></ProtectedRoute>} />
             <Route path="/o/:publicId" element={<PublicBudget />} />
             <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
             <Route path="/qa" element={<ProtectedRoute><QAEvaluator /></ProtectedRoute>} />
