@@ -1,0 +1,564 @@
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Search,
+  Calendar,
+  User,
+  Building2,
+  ArrowLeft,
+  Loader2,
+  Inbox,
+  Clock,
+  AlertTriangle,
+  MoreVertical,
+  FileText,
+  ExternalLink,
+  CheckCircle2,
+  PauseCircle,
+  ArrowUpDown,
+  Flame,
+} from "lucide-react";
+import {
+  INTERNAL_STATUSES,
+  PRIORITIES,
+  type InternalStatus,
+  type Priority,
+} from "@/lib/role-constants";
+import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+
+// Statuses relevant for the estimator's active queue
+const ESTIMATOR_ACTIVE_STATUSES: InternalStatus[] = [
+  "assigned",
+  "in_progress",
+  "waiting_info",
+  "ready_for_review",
+];
+
+type SortOption = "urgente" | "recente" | "prazo";
+
+interface BudgetRow {
+  id: string;
+  client_name: string;
+  project_name: string;
+  property_type: string | null;
+  city: string | null;
+  bairro: string | null;
+  internal_status: string;
+  priority: string;
+  due_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  commercial_owner_id: string | null;
+  estimator_owner_id: string | null;
+  briefing: string | null;
+  demand_context: string | null;
+}
+
+interface ProfileRow {
+  id: string;
+  full_name: string;
+}
+
+export default function EstimatorDashboard() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { profile } = useUserProfile();
+  const [budgets, setBudgets] = useState<BudgetRow[]>([]);
+  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [commercialFilter, setCommercialFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("urgente");
+
+  useEffect(() => {
+    if (!user) return;
+    loadData();
+  }, [user]);
+
+  async function loadData() {
+    setLoading(true);
+
+    const [budgetsRes, profilesRes] = await Promise.all([
+      supabase
+        .from("budgets")
+        .select(
+          "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context"
+        )
+        .eq("estimator_owner_id", user!.id)
+        .order("created_at", { ascending: false }),
+      supabase.from("profiles").select("id, full_name"),
+    ]);
+
+    if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetRow[]);
+    if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
+    setLoading(false);
+  }
+
+  const getProfileName = useCallback(
+    (id: string | null) => {
+      if (!id) return "—";
+      return profiles.find((p) => p.id === id)?.full_name || "—";
+    },
+    [profiles]
+  );
+
+  const commercialOptions = useMemo(() => {
+    const ids = new Set(budgets.map((b) => b.commercial_owner_id).filter(Boolean));
+    return Array.from(ids).map((id) => ({
+      id: id!,
+      name: getProfileName(id!),
+    }));
+  }, [budgets, getProfileName]);
+
+  // Deadline helpers
+  const getDueInfo = (dueAt: string | null) => {
+    if (!dueAt) return { label: null, variant: "default" as const };
+    const dueDate = new Date(dueAt);
+    const days = differenceInCalendarDays(dueDate, new Date());
+
+    if (isPast(dueDate) && !isToday(dueDate))
+      return {
+        label: `${Math.abs(days)}d atrasado`,
+        variant: "overdue" as const,
+      };
+    if (isToday(dueDate))
+      return { label: "Vence hoje", variant: "today" as const };
+    if (days <= 2)
+      return { label: `${days}d restante${days > 1 ? "s" : ""}`, variant: "soon" as const };
+    return {
+      label: format(dueDate, "dd MMM", { locale: ptBR }),
+      variant: "default" as const,
+    };
+  };
+
+  // Summary counts
+  const counts = useMemo(() => {
+    const now = new Date();
+    return {
+      total: budgets.length,
+      overdue: budgets.filter(
+        (b) => b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) &&
+          ESTIMATOR_ACTIVE_STATUSES.includes(b.internal_status as InternalStatus)
+      ).length,
+      dueToday: budgets.filter(
+        (b) => b.due_at && isToday(new Date(b.due_at)) &&
+          ESTIMATOR_ACTIVE_STATUSES.includes(b.internal_status as InternalStatus)
+      ).length,
+      inProgress: budgets.filter((b) => b.internal_status === "in_progress").length,
+      waitingInfo: budgets.filter((b) => b.internal_status === "waiting_info").length,
+      readyForReview: budgets.filter((b) => b.internal_status === "ready_for_review").length,
+      assigned: budgets.filter((b) => b.internal_status === "assigned").length,
+    };
+  }, [budgets]);
+
+  // Filter + sort
+  const filtered = useMemo(() => {
+    let result = budgets.filter((b) => {
+      const q = search.toLowerCase();
+      const matchSearch =
+        !q ||
+        b.client_name.toLowerCase().includes(q) ||
+        b.project_name.toLowerCase().includes(q) ||
+        (b.bairro ?? "").toLowerCase().includes(q);
+      const matchStatus = statusFilter === "all" || b.internal_status === statusFilter;
+      const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
+      const matchCommercial =
+        commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
+      return matchSearch && matchStatus && matchPriority && matchCommercial;
+    });
+
+    const priorityOrder: Record<string, number> = { urgente: 0, alta: 1, normal: 2, baixa: 3 };
+
+    result.sort((a, b) => {
+      if (sortBy === "urgente") {
+        const pa = priorityOrder[a.priority] ?? 2;
+        const pb = priorityOrder[b.priority] ?? 2;
+        if (pa !== pb) return pa - pb;
+        // Then by due_at ascending (nulls last)
+        if (a.due_at && b.due_at) return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
+        if (a.due_at) return -1;
+        if (b.due_at) return 1;
+        return 0;
+      }
+      if (sortBy === "prazo") {
+        if (a.due_at && b.due_at) return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
+        if (a.due_at) return -1;
+        if (b.due_at) return 1;
+        return 0;
+      }
+      // recente
+      return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
+    });
+
+    return result;
+  }, [budgets, search, statusFilter, priorityFilter, commercialFilter, sortBy]);
+
+  // Quick status change
+  async function changeStatus(budgetId: string, newStatus: InternalStatus) {
+    const { error } = await supabase
+      .from("budgets")
+      .update({ internal_status: newStatus, updated_at: new Date().toISOString() } as any)
+      .eq("id", budgetId);
+
+    if (error) {
+      toast.error("Erro ao atualizar status.");
+      return;
+    }
+
+    setBudgets((prev) =>
+      prev.map((b) =>
+        b.id === budgetId
+          ? { ...b, internal_status: newStatus, updated_at: new Date().toISOString() }
+          : b
+      )
+    );
+
+    const statusLabel = INTERNAL_STATUSES[newStatus]?.label ?? newStatus;
+    toast.success(`Status atualizado para "${statusLabel}"`);
+  }
+
+  const dueVariantStyles = {
+    overdue: "bg-destructive/10 text-destructive border-destructive/20",
+    today: "bg-warning/10 text-warning border-warning/20",
+    soon: "bg-amber-50 text-amber-700 border-amber-200",
+    default: "text-muted-foreground",
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border bg-card sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-lg font-semibold font-display text-foreground">
+                Minha Fila de Orçamentos
+              </h1>
+              <p className="text-sm text-muted-foreground font-body">
+                {profile?.full_name || "Orçamentista"} · {counts.total} demanda{counts.total !== 1 ? "s" : ""}
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <SummaryCard
+            label="Atrasadas"
+            count={counts.overdue}
+            icon={<AlertTriangle className="h-4 w-4" />}
+            accent="text-destructive"
+            onClick={() => { setStatusFilter("all"); }}
+          />
+          <SummaryCard
+            label="Vence hoje"
+            count={counts.dueToday}
+            icon={<Flame className="h-4 w-4" />}
+            accent="text-warning"
+          />
+          <SummaryCard
+            label="Atribuídos"
+            count={counts.assigned}
+            icon={<User className="h-4 w-4" />}
+            accent="text-indigo-600"
+            onClick={() => setStatusFilter("assigned")}
+          />
+          <SummaryCard
+            label="Em Produção"
+            count={counts.inProgress}
+            icon={<Clock className="h-4 w-4" />}
+            accent="text-yellow-600"
+            onClick={() => setStatusFilter("in_progress")}
+          />
+          <SummaryCard
+            label="Aguardando Info"
+            count={counts.waitingInfo}
+            icon={<PauseCircle className="h-4 w-4" />}
+            accent="text-amber-600"
+            onClick={() => setStatusFilter("waiting_info")}
+          />
+          <SummaryCard
+            label="Revisão"
+            count={counts.readyForReview}
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            accent="text-orange-600"
+            onClick={() => setStatusFilter("ready_for_review")}
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por cliente, projeto, bairro..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              {Object.entries(INTERNAL_STATUSES).map(([key, { label }]) => (
+                <SelectItem key={key} value={key}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Prioridade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {Object.entries(PRIORITIES).map(([key, { label }]) => (
+                <SelectItem key={key} value={key}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {commercialOptions.length > 1 && (
+            <Select value={commercialFilter} onValueChange={setCommercialFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Comercial" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {commercialOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <SelectTrigger className="w-full sm:w-[170px]">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="urgente">Mais urgente</SelectItem>
+              <SelectItem value="prazo">Prazo mais próximo</SelectItem>
+              <SelectItem value="recente">Mais recente</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && filtered.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Inbox className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-lg font-semibold font-display text-foreground mb-1">
+              {search || statusFilter !== "all" || priorityFilter !== "all"
+                ? "Nenhum resultado"
+                : "Nenhuma demanda atribuída"}
+            </h2>
+            <p className="text-sm text-muted-foreground font-body max-w-sm">
+              {search || statusFilter !== "all" || priorityFilter !== "all"
+                ? "Ajuste os filtros para encontrar o que procura."
+                : "Quando um orçamento for atribuído a você, ele aparecerá aqui."}
+            </p>
+          </div>
+        )}
+
+        {/* List */}
+        {!loading && filtered.length > 0 && (
+          <div className="space-y-2">
+            {filtered.map((b) => {
+              const status =
+                INTERNAL_STATUSES[b.internal_status as InternalStatus] ??
+                INTERNAL_STATUSES.assigned;
+              const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
+              const due = getDueInfo(b.due_at);
+
+              return (
+                <Card
+                  key={b.id}
+                  className="p-4 hover:shadow-md transition-shadow border group"
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Main content */}
+                    <div
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => navigate(`/admin/budget/${b.id}`)}
+                    >
+                      {/* Row 1: Project + badges */}
+                      <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                        <span className="font-semibold font-display text-foreground truncate">
+                          {b.project_name || "Sem nome"}
+                        </span>
+                        <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
+                          {status.icon} {status.label}
+                        </Badge>
+                        {b.priority !== "normal" && (
+                          <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>
+                            {prio.label}
+                          </Badge>
+                        )}
+                        {due.label && (
+                          <span
+                            className={`inline-flex items-center gap-1 text-xs font-medium font-body px-2 py-0.5 rounded-full border ${dueVariantStyles[due.variant]}`}
+                          >
+                            <Calendar className="h-3 w-3" />
+                            {due.label}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Row 2: Meta */}
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <User className="h-3.5 w-3.5" />
+                          {b.client_name}
+                        </span>
+                        {(b.bairro || b.city) && (
+                          <span className="flex items-center gap-1">
+                            <Building2 className="h-3.5 w-3.5" />
+                            {[b.bairro, b.city].filter(Boolean).join(", ")}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1" title="Comercial responsável">
+                          <User className="h-3.5 w-3.5" />
+                          {getProfileName(b.commercial_owner_id)}
+                        </span>
+                        {b.created_at && (
+                          <span className="text-xs">
+                            Criado {format(new Date(b.created_at), "dd/MM/yy")}
+                          </span>
+                        )}
+                        {b.updated_at && (
+                          <span className="text-xs">
+                            Atualizado {format(new Date(b.updated_at), "dd/MM HH:mm")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Quick actions */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`)}>
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Abrir orçamento
+                        </DropdownMenuItem>
+                        {b.briefing && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              toast.info(b.briefing, {
+                                duration: 10000,
+                                description: `Briefing — ${b.project_name}`,
+                              });
+                            }}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Ver briefing
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        {b.internal_status !== "in_progress" && (
+                          <DropdownMenuItem onClick={() => changeStatus(b.id, "in_progress")}>
+                            <Clock className="h-4 w-4 mr-2" />
+                            Iniciar produção
+                          </DropdownMenuItem>
+                        )}
+                        {b.internal_status !== "waiting_info" && (
+                          <DropdownMenuItem onClick={() => changeStatus(b.id, "waiting_info")}>
+                            <PauseCircle className="h-4 w-4 mr-2" />
+                            Sinalizar bloqueio
+                          </DropdownMenuItem>
+                        )}
+                        {b.internal_status !== "ready_for_review" && (
+                          <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Pronto para revisão
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* Small summary card component */
+function SummaryCard({
+  label,
+  count,
+  icon,
+  accent,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  icon: React.ReactNode;
+  accent: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Card
+      className={`p-3 flex flex-col gap-1 ${onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
+      onClick={onClick}
+    >
+      <div className={`flex items-center gap-1.5 text-xs font-body ${accent}`}>
+        {icon}
+        {label}
+      </div>
+      <span className="text-2xl font-bold font-display text-foreground">{count}</span>
+    </Card>
+  );
+}
