@@ -586,6 +586,7 @@ export default function AdminDashboard() {
             </p>
           </div>
         ) : (
+          <>
           <div className="space-y-2 sm:space-y-3">
             {paginated.map(budget => {
               const sectionTotal = getBudgetTotal(budget);
