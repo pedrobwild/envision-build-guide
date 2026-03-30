@@ -44,7 +44,7 @@ export function MobileFinancialSheet({
   projectName,
   publicId,
   budgetId,
-}: Omit<MobileFinancialSheetProps, 'clientName'> & { clientName?: string }) {
+}: MobileFinancialSheetProps & { clientName?: string }) {
   const [snap, setSnap] = useState<number | string | null>(SNAP_POINTS[0]);
   const [installments, setInstallments] = useState(10);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -63,7 +63,7 @@ export function MobileFinancialSheet({
         snapPoints={[...SNAP_POINTS]}
         activeSnapPoint={snap}
         setActiveSnapPoint={setSnap}
-        modal={false}
+        modal={true}
       >
         <VaulDrawer.Portal>
           <VaulDrawer.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />
