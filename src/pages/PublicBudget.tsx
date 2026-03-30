@@ -106,7 +106,7 @@ export default function PublicBudget() {
         setLoading(false);
         if (data && !viewTracked.current) {
           viewTracked.current = true;
-          supabase.rpc('increment_view_count', { p_public_id: publicId }).catch(() => {});
+          supabase.rpc('increment_view_count' as any, { p_public_id: publicId }).then(() => {}).catch(() => {});
           if ((data.view_count || 0) === 0) {
             supabase.functions.invoke('notify-budget-view', {
               body: { public_id: publicId },
