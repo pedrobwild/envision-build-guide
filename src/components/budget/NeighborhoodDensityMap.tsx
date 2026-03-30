@@ -225,7 +225,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
         el.addEventListener("click", (e) => {
           e.stopPropagation();
-          handleSelect(n.id);
+          handleSelect(n.id, { userInitiated: true });
         });
 
         wrapper.appendChild(el);
