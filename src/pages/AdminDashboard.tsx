@@ -747,15 +747,24 @@ export default function AdminDashboard() {
       <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} fileFilter={importType} />
 
       {/* Duplicate confirmation dialog */}
-      {duplicateConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDuplicateConfirmId(null)}>
+      {(duplicateConfirmId || duplicating) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !duplicating && setDuplicateConfirmId(null)}>
           <div className="bg-card rounded-xl shadow-xl p-6 max-w-md mx-4 border border-border" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-heading font-semibold text-foreground mb-2">Duplicar orçamento?</h3>
-            <p className="text-sm text-muted-foreground mb-6">O escopo será copiado, mas os dados do cliente ficarão em branco para preenchimento.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setDuplicateConfirmId(null)} className="px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">Cancelar</button>
-              <button onClick={() => { const id = duplicateConfirmId; setDuplicateConfirmId(null); duplicateAsNew(id); }} className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-colors">Duplicar</button>
-            </div>
+            {duplicating ? (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <p className="text-sm font-body text-muted-foreground">Duplicando orçamento…</p>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-lg font-heading font-semibold text-foreground mb-2">Duplicar orçamento?</h3>
+                <p className="text-sm text-muted-foreground mb-6">O escopo será copiado, mas os dados do cliente ficarão em branco para preenchimento.</p>
+                <div className="flex gap-3 justify-end">
+                  <button onClick={() => setDuplicateConfirmId(null)} className="px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">Cancelar</button>
+                  <button onClick={() => { const id = duplicateConfirmId; setDuplicateConfirmId(null); duplicateAsNew(id!); }} className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-colors">Duplicar</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
