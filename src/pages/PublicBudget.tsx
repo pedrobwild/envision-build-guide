@@ -80,6 +80,11 @@ export default function PublicBudget() {
 
   // Mobile nav scrollspy — must be before early returns
 
+  // Ensure page starts at top on mount (prevents map stealing scroll on mobile)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     if (budget) {
       document.title = budget.project_name
