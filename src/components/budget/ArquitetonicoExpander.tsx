@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil, Palette, FileCheck, FileText, Headset, Lightbulb } from "lucide-react";
 import { motion } from "framer-motion";
+import { CollapsingSectionHeader } from "./CollapsingSectionHeader";
 
 const bullets = [
   { icon: Lightbulb, highlight: "Consultoria", text: "Orientação para alcançar o melhor resultado com seu investimento." },
@@ -15,7 +16,15 @@ export function ArquitetonicoExpander() {
   return (
     <Card className="border-border overflow-hidden">
       <CardContent className="p-4 sm:p-5 md:p-6 space-y-4">
-        <div className="flex items-start gap-3">
+        {/* Mobile: collapsing sticky header */}
+        <CollapsingSectionHeader
+          title="Arquitetura"
+          subtitle="Projeto exclusivo para sua unidade — do conceito à documentação."
+          icon={<Pencil className="h-5 w-5" />}
+        />
+
+        {/* Desktop: static header */}
+        <div className="hidden lg:flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <Pencil className="h-5 w-5 text-primary" />
           </div>
