@@ -199,7 +199,119 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
           e.stopPropagation();
           handleSelect(n.id);
         });
-...
+
+        wrapper.appendChild(el);
+
+        if (style.showLabel) {
+          const labelEl = document.createElement("div");
+          labelEl.style.cssText = `
+            font-size:10px;font-weight:600;color:#004c7f;
+            white-space:nowrap;font-family:var(--font-body,'Inter',sans-serif);
+            text-shadow:0 0 3px white,0 0 3px white,0 0 3px white;
+            pointer-events:none;
+          `;
+          labelEl.textContent = n.name;
+          wrapper.appendChild(labelEl);
+        }
+
+        const marker = new maplibregl.Marker({ element: wrapper, anchor: "center" })
+          .setLngLat([n.lng, n.lat])
+          .addTo(map);
+
+        markersRef.current.set(n.id, { marker, el });
+      });
+    };
+
+    const setStyleByIndex = (nextIndex: number) => {
+      if (!map) return false;
+      if (nextIndex < 0 || nextIndex >= styleCandidates.length) return false;
+
+      styleIndex = nextIndex;
+      clearStyleLoadTimeout();
+      styleLoadTimeout = setTimeout(() => {
+        const switched = setStyleByIndex(styleIndex + 1);
+        if (!switched && !disposed) {
+          setMapLoaded(false);
+          setMapFailed(true);
+          clearMarkers();
+        }
+      }, STYLE_LOAD_TIMEOUT_MS);
+
+      map.setStyle(styleCandidates[styleIndex]);
+      return true;
+    };
+
+    try {
+      map = new maplibregl.Map({
+        container: mapContainer.current,
+        style: styleCandidates[0],
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        pitch: 0,
+        bearing: 0,
+        minZoom: 10,
+        maxZoom: 16,
+        maxBounds: [[-47.0, -23.85], [-46.3, -23.35]],
+      });
+    } catch {
+      setMapLoaded(false);
+      setMapFailed(true);
+      return;
+    }
+
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+
+    styleLoadTimeout = setTimeout(() => {
+      const switched = setStyleByIndex(styleIndex + 1);
+      if (!switched && !disposed) {
+        setMapLoaded(false);
+        setMapFailed(true);
+        clearMarkers();
+      }
+    }, STYLE_LOAD_TIMEOUT_MS);
+
+    map.on("style.load", () => {
+      clearStyleLoadTimeout();
+      setMapFailed(false);
+      setMapLoaded(true);
+      renderMarkers();
+      requestAnimationFrame(() => safeResize());
+    });
+
+    map.on("error", (event: any) => {
+      const message = String(event?.error?.message ?? "").toLowerCase();
+      const isStyleError =
+        message.includes("style") ||
+        message.includes("maptiler") ||
+        message.includes("401") ||
+        message.includes("403") ||
+        message.includes("failed to fetch") ||
+        message.includes("networkerror");
+
+      if (!isStyleError || disposed) return;
+
+      const switched = setStyleByIndex(styleIndex + 1);
+      if (!switched) {
+        clearStyleLoadTimeout();
+        setMapLoaded(false);
+        setMapFailed(true);
+        clearMarkers();
+      }
+    });
+
+    map.on("webglcontextlost", () => {
+      setMapLoaded(false);
+      setMapFailed(true);
+      clearMarkers();
+    });
+
+    const resizeObserver = new ResizeObserver(() => safeResize());
+    resizeObserver.observe(mapContainer.current);
+    window.addEventListener("resize", safeResize, { passive: true });
+    window.addEventListener("orientationchange", safeResize, { passive: true });
+
+    mapRef.current = map;
+
     return () => {
       disposed = true;
       clearStyleLoadTimeout();
