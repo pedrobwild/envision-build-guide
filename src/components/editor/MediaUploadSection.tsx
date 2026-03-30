@@ -166,7 +166,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     setLoading(true);
     const result: Record<StorageTab, MediaFile[]> = { "3d": [], fotos: [], exec: [], video: [] };
 
-    for (const tab of Object.keys(folderMap) as MediaTab[]) {
+    for (const tab of Object.keys(folderMap) as StorageTab[]) {
       const folder = folderMap[tab];
       const { data } = await supabase.storage.from("media").list(folder, { limit: 100, sortBy: { column: "name", order: "asc" } });
       if (data) {
