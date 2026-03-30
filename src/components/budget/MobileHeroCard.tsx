@@ -133,29 +133,7 @@ export function MobileHeroCard({
           </motion.div>
         </div>
 
-        <div className="px-4 pt-3 pb-4 space-y-2">
-          {validity.expired ? (
-            <motion.a
-              href={whatsappUpdateUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              whileTap={{ scale: 0.97 }}
-              className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
-            >
-              <MessageCircle className="h-4 w-4 flex-shrink-0" />
-              Solicitar atualização
-            </motion.a>
-          ) : (
-            <motion.button
-              onClick={() => setContractOpen(true)}
-              whileTap={{ scale: 0.97 }}
-              className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
-            >
-              <FileSignature className="h-4 w-4 flex-shrink-0" />
-              Solicitar Contrato
-            </motion.button>
-          )}
-
+        <div className="px-4 pt-1 pb-3">
           {onSaveForLater && (
             <button
               onClick={onSaveForLater}
