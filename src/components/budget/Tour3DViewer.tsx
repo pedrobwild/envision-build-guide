@@ -1,10 +1,30 @@
 import { useState, useCallback } from "react";
-import { Maximize2, Minimize2, Loader2 } from "lucide-react";
+import { Maximize2, Minimize2, Loader2, MousePointer, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Tour3DRoom } from "@/hooks/useBudgetTours";
 
 interface Tour3DViewerProps {
   rooms: Tour3DRoom[];
+}
+
+function TourHint() {
+  const isMobile = useIsMobile();
+  return (
+    <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-muted/60 text-xs text-muted-foreground font-body">
+      {isMobile ? (
+        <>
+          <Smartphone className="h-3.5 w-3.5 shrink-0" />
+          <span>Mova o celular ou arraste com o dedo para explorar o ambiente</span>
+        </>
+      ) : (
+        <>
+          <MousePointer className="h-3.5 w-3.5 shrink-0" />
+          <span>Clique e arraste com o cursor para explorar o ambiente</span>
+        </>
+      )}
+    </div>
+  );
 }
 
 export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
@@ -20,7 +40,6 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
     setFullscreen((prev) => !prev);
   }, []);
 
-  // Reset loading when room changes
   const handleRoomChange = useCallback((id: string) => {
     setActiveRoom(id);
     setLoading(true);
@@ -34,8 +53,11 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
       fullscreen ? "h-full" : "aspect-[16/10] rounded-lg overflow-hidden border border-border"
     )}>
       {loading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-muted">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="text-sm font-body text-muted-foreground animate-pulse">
+            Carregando tour 3D…
+          </span>
         </div>
       )}
       <iframe
@@ -50,11 +72,9 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
     </div>
   );
 
-  // Fullscreen overlay
   if (fullscreen) {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
-        {/* Fullscreen top bar */}
         <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2">
             {rooms.length > 1 && rooms.map((room) => (
@@ -80,6 +100,7 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
             <Minimize2 className="h-4 w-4 text-foreground" />
           </button>
         </div>
+        <TourHint />
         <div className="flex-1 min-h-0">
           {iframeContent}
         </div>
@@ -89,7 +110,6 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
 
   return (
     <div className="space-y-3">
-      {/* Room sub-tabs + fullscreen button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {rooms.length > 1 && rooms.map((room) => (
@@ -117,6 +137,7 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
         </button>
       </div>
 
+      <TourHint />
       {iframeContent}
     </div>
   );
