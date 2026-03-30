@@ -324,9 +324,6 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     };
   }, [handleSelect, styleCandidates]);
 
-  const whatsappUrl = selectedData
-    ? `https://wa.me/5511911906183?text=${encodeURIComponent(`Olá! Tenho um imóvel no ${selectedData.name} e gostaria de um orçamento.`)}`
-    : "#";
 
   return (
     <div className="py-12 lg:py-16" data-pdf-hide>
@@ -353,7 +350,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         </div>
         <div className="flex-[2] md:max-h-[600px] overflow-y-auto" ref={panelRef}>
           {selectedData ? (
-            <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} whatsappUrl={whatsappUrl} />
+            <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} />
           ) : (
             <SummaryPanel onSelectNeighborhood={handleSelect} />
           )}
