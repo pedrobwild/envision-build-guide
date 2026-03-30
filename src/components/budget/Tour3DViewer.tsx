@@ -128,7 +128,7 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
         >
           {room.label}
           {loadedRooms.has(room.id) && activeRoom !== room.id && (
-            <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-green-400" title="Carregado" />
+            <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-primary/50" title="Carregado" />
           )}
         </button>
       ))}
