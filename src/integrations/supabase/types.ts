@@ -140,6 +140,8 @@ export type Database = {
           approved_at: string | null
           approved_by_name: string | null
           bairro: string | null
+          briefing: string | null
+          city: string | null
           client_name: string
           closed_at: string | null
           commercial_owner_id: string | null
@@ -148,6 +150,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           date: string | null
+          demand_context: string | null
           disclaimer: string | null
           due_at: string | null
           email_comercial: string | null
@@ -158,6 +161,7 @@ export type Database = {
           header_config: Json | null
           id: string
           internal_cost: number | null
+          internal_notes: string | null
           internal_status: string
           is_current_version: boolean | null
           last_viewed_at: string | null
@@ -168,8 +172,10 @@ export type Database = {
           prazo_dias_uteis: number | null
           priority: string
           project_name: string
+          property_type: string | null
           public_id: string | null
           public_token_hash: string | null
+          reference_links: Json | null
           show_item_prices: boolean | null
           show_item_qty: boolean | null
           show_optional_items: boolean
@@ -187,6 +193,8 @@ export type Database = {
           approved_at?: string | null
           approved_by_name?: string | null
           bairro?: string | null
+          briefing?: string | null
+          city?: string | null
           client_name?: string
           closed_at?: string | null
           commercial_owner_id?: string | null
@@ -195,6 +203,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           date?: string | null
+          demand_context?: string | null
           disclaimer?: string | null
           due_at?: string | null
           email_comercial?: string | null
@@ -205,6 +214,7 @@ export type Database = {
           header_config?: Json | null
           id?: string
           internal_cost?: number | null
+          internal_notes?: string | null
           internal_status?: string
           is_current_version?: boolean | null
           last_viewed_at?: string | null
@@ -215,8 +225,10 @@ export type Database = {
           prazo_dias_uteis?: number | null
           priority?: string
           project_name?: string
+          property_type?: string | null
           public_id?: string | null
           public_token_hash?: string | null
+          reference_links?: Json | null
           show_item_prices?: boolean | null
           show_item_qty?: boolean | null
           show_optional_items?: boolean
@@ -234,6 +246,8 @@ export type Database = {
           approved_at?: string | null
           approved_by_name?: string | null
           bairro?: string | null
+          briefing?: string | null
+          city?: string | null
           client_name?: string
           closed_at?: string | null
           commercial_owner_id?: string | null
@@ -242,6 +256,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           date?: string | null
+          demand_context?: string | null
           disclaimer?: string | null
           due_at?: string | null
           email_comercial?: string | null
@@ -252,6 +267,7 @@ export type Database = {
           header_config?: Json | null
           id?: string
           internal_cost?: number | null
+          internal_notes?: string | null
           internal_status?: string
           is_current_version?: boolean | null
           last_viewed_at?: string | null
@@ -262,8 +278,10 @@ export type Database = {
           prazo_dias_uteis?: number | null
           priority?: string
           project_name?: string
+          property_type?: string | null
           public_id?: string | null
           public_token_hash?: string | null
+          reference_links?: Json | null
           show_item_prices?: boolean | null
           show_item_qty?: boolean | null
           show_optional_items?: boolean
