@@ -429,11 +429,9 @@ function SummaryPanel({ onSelectNeighborhood }: { onSelectNeighborhood: (id: str
 function NeighborhoodDetail({
   data,
   onBack,
-  whatsappUrl,
 }: {
   data: Neighborhood;
   onBack: () => void;
-  whatsappUrl: string;
 }) {
   const projects = getIndividualProjects(data.name);
 
@@ -454,9 +452,6 @@ function NeighborhoodDetail({
         </Badge>
       </div>
 
-
-
-
       {/* Individual project cards */}
       {projects.length > 0 && (
         <div className="space-y-3 pt-2 border-t border-border">
@@ -473,16 +468,6 @@ function NeighborhoodDetail({
         Já entregamos {data.count} {data.count === 1 ? "studio reformado" : "studios reformados"} no{" "}
         {data.name}, um dos bairros com maior demanda de short stay em SP.
       </p>
-
-      <a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm py-3 px-4 min-h-[44px] hover:bg-primary/90 transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
-      >
-        <MessageCircle className="h-4 w-4 shrink-0" />
-        <span className="truncate">Tenho um imóvel no {data.name}</span>
-      </a>
     </div>
   );
 }
