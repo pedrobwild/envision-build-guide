@@ -227,11 +227,13 @@ export default function PublicBudget() {
 
             {/* ─── MOBILE ORDER 1: O que está incluído (Arq + Eng merged) ─── */}
             <div id="mobile-included" className="scroll-mt-20">
+              <div data-pdf-section>
               <AnimatedSection id="arquitetonico-section" index={0}>
                 <ArquitetonicoExpander />
               </AnimatedSection>
+              </div>
 
-              <div className="mt-3">
+              <div className="mt-3" data-pdf-section>
                 <AnimatedSection id="engenharia-section" index={0.5}>
                   <EngenhariaExpander />
                 </AnimatedSection>
