@@ -165,42 +165,63 @@ export default function AdminDashboard() {
         .eq('budget_id', sourceBudgetId)
         .order('order_index');
 
-      for (const sec of sections || []) {
-        const { id: oldSecId, created_at: _ca, budget_id: _bid, ...secData } = sec;
-        const { data: newSec } = await supabase
-          .from('sections')
-          .insert({ ...secData, budget_id: newBudget.id })
-          .select()
-          .single();
-        if (!newSec) continue;
+      // Insert all sections in batch
+      const sectionMapping: Record<string, string> = {};
+      if (sections && sections.length > 0) {
+        for (const sec of sections) {
+          const { id: oldSecId, created_at: _ca, budget_id: _bid, ...secData } = sec;
+          const { data: newSec, error: secErr } = await supabase
+            .from('sections')
+            .insert({ ...secData, budget_id: newBudget.id })
+            .select('id')
+            .single();
+          if (secErr) { console.error('Erro ao copiar seção:', sec.title, secErr); continue; }
+          if (newSec) sectionMapping[oldSecId] = newSec.id;
+        }
+      }
 
-        const { data: items } = await supabase
+      // Copy items for all mapped sections
+      const oldSectionIds = Object.keys(sectionMapping);
+      if (oldSectionIds.length > 0) {
+        const { data: allItems } = await supabase
           .from('items')
           .select('*')
-          .eq('section_id', oldSecId)
+          .in('section_id', oldSectionIds)
           .order('order_index');
 
-        for (const item of items || []) {
-          const { id: oldItemId, created_at: _ica, section_id: _sid, ...itemData } = item;
-          const { data: newItem } = await supabase
+        const itemMapping: Record<string, string> = {};
+        for (const item of allItems || []) {
+          const { id: oldItemId, created_at: _ica, section_id: oldSid, ...itemData } = item;
+          const newSectionId = sectionMapping[oldSid];
+          if (!newSectionId) continue;
+          const { data: newItem, error: itemErr } = await supabase
             .from('items')
-            .insert({ ...itemData, section_id: newSec.id })
-            .select()
+            .insert({ ...itemData, section_id: newSectionId })
+            .select('id')
             .single();
-          if (!newItem) continue;
+          if (itemErr) { console.error('Erro ao copiar item:', item.title, itemErr); continue; }
+          if (newItem) itemMapping[oldItemId] = newItem.id;
+        }
 
-          const { data: images } = await supabase
+        // Copy all item_images in batch
+        const oldItemIds = Object.keys(itemMapping);
+        if (oldItemIds.length > 0) {
+          const { data: allImages } = await supabase
             .from('item_images')
             .select('*')
-            .eq('item_id', oldItemId);
+            .in('item_id', oldItemIds);
 
-          if (images && images.length > 0) {
-            await supabase.from('item_images').insert(
-              images.map(({ id, created_at, item_id, ...imgData }) => ({
+          if (allImages && allImages.length > 0) {
+            const newImages = allImages
+              .filter(img => itemMapping[img.item_id])
+              .map(({ id, created_at, item_id, ...imgData }) => ({
                 ...imgData,
-                item_id: newItem.id,
-              }))
-            );
+                item_id: itemMapping[item_id],
+              }));
+            if (newImages.length > 0) {
+              const { error: imgErr } = await supabase.from('item_images').insert(newImages);
+              if (imgErr) console.error('Erro ao copiar imagens:', imgErr);
+            }
           }
         }
       }
