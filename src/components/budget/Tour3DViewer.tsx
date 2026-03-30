@@ -63,7 +63,8 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
   const handleRoomChange = useCallback((id: string) => {
     setActiveRoom(id);
     setMountedRooms((prev) => new Set(prev).add(id));
-  }, []);
+    if (isMobile) setFullscreen(true);
+  }, [isMobile]);
 
   const handleIframeLoad = useCallback((roomId: string) => {
     setLoadedRooms((prev) => new Set(prev).add(roomId));
