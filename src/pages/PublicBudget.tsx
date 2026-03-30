@@ -416,7 +416,7 @@ export default function PublicBudget() {
           publicId={publicId || "demo"}
           budgetId={budget.id}
           hidden={bottomBarHidden}
-          activeSection={activeMobileNav}
+          activeSection={null}
         />
 
         <div id="mobile-faq" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20">
