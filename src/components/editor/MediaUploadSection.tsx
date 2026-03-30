@@ -60,18 +60,46 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
 
   useEffect(() => { loadFiles(); }, [publicId]);
 
+  const sanitizeFileName = (name: string) => {
+    // Remove accents, special chars, spaces → dashes
+    return name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  };
+
   const handleUpload = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
+
+    // Verify auth session before uploading
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session) {
+      toast.error("Sessão expirada. Faça login novamente.");
+      return;
+    }
+
     setUploading(true);
     const folder = folderMap[activeTab];
     let count = 0;
 
     for (const file of Array.from(fileList)) {
-      const path = `${folder}/${file.name}`;
-      const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true });
+      const safeName = sanitizeFileName(file.name);
+      const path = `${folder}/${safeName}`;
+      const { error } = await supabase.storage.from("media").upload(path, file, {
+        upsert: true,
+        contentType: file.type || "application/octet-stream",
+      });
       if (error) {
-        console.error("Upload error:", error);
-        toast.error(`Erro ao subir ${file.name}: ${error.message}`);
+        console.error("Upload error:", error.message, error);
+        if (error.message?.includes("row-level security")) {
+          toast.error("Sem permissão para upload. Verifique se está logado.");
+        } else if (error.message?.includes("Payload too large")) {
+          toast.error(`Arquivo ${file.name} muito grande.`);
+        } else {
+          toast.error(`Erro ao subir ${file.name}: ${error.message}`);
+        }
       } else {
         count++;
       }
