@@ -26,6 +26,10 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 8) {
+      toast.error("A senha deve ter no mínimo 8 caracteres.");
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
@@ -60,10 +64,13 @@ export default function ResetPassword() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               className="w-full px-4 py-2.5 rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 font-body text-sm"
               placeholder="••••••••"
             />
+            {password.length > 0 && password.length < 8 && (
+              <p className="text-xs text-destructive mt-1 font-body">Mínimo de 8 caracteres</p>
+            )}
           </div>
           <button
             type="submit"

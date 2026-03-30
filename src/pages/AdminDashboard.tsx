@@ -89,7 +89,9 @@ export default function AdminDashboard() {
   };
 
   const publishBudget = async (id: string) => {
-    const publicId = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+    // Preserve existing public_id if already set
+    const existing = budgets.find(b => b.id === id);
+    const publicId = existing?.public_id || crypto.randomUUID().replace(/-/g, '').slice(0, 12);
     await supabase.from('budgets').update({ status: 'published', public_id: publicId }).eq('id', id);
     toast.success("Orçamento publicado!");
     loadBudgets();
@@ -116,11 +118,18 @@ export default function AdminDashboard() {
     const { data: sections } = await supabase.from('sections').select('id').eq('budget_id', id);
     if (sections && sections.length > 0) {
       const sIds = sections.map(s => s.id);
+      // Delete item_images first (FK: item_images → items)
+      const { data: items } = await supabase.from('items').select('id').in('section_id', sIds);
+      if (items && items.length > 0) {
+        const itemIds = items.map(i => i.id);
+        await supabase.from('item_images').delete().in('item_id', itemIds);
+      }
       await supabase.from('items').delete().in('section_id', sIds);
       await supabase.from('sections').delete().eq('budget_id', id);
     }
     await supabase.from('rooms').delete().eq('budget_id', id);
     await supabase.from('adjustments').delete().eq('budget_id', id);
+    await supabase.from('budget_optional_selections').delete().eq('budget_id', id);
     await supabase.from('budgets').delete().eq('id', id);
     toast.success("Orçamento excluído");
     setMenuOpen(null);
