@@ -24,7 +24,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type MediaTab = "3d" | "fotos" | "exec" | "video" | "tour3d";
+type StorageTab = "3d" | "fotos" | "exec" | "video";
+type MediaTab = StorageTab | "tour3d";
 
 interface MediaFile {
   name: string;
