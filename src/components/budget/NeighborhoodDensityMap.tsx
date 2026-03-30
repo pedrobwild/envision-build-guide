@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MapPin, ArrowLeft, MessageCircle, ChevronLeft, ChevronRight, Camera, Building2 } from "lucide-react";
+import { MapPin, ArrowLeft, ChevronLeft, ChevronRight, Camera, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
