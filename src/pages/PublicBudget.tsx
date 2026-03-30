@@ -308,7 +308,7 @@ export default function PublicBudget() {
                         if (allItems.length === 0) return null;
 
                         return (
-                          <div key={group.category.id} className="mb-8 last:mb-0">
+                          <div key={group.category.id} className="mb-8 last:mb-0" data-pdf-section>
                             {/* Category label — minimal, no redundancy */}
                             <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
                               <div className={cn("w-1 h-5 rounded-full", group.category.bgClass)} />
