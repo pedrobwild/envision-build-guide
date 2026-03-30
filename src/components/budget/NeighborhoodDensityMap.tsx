@@ -132,7 +132,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     const match = NEIGHBORHOOD_DATA.find((n) => normalize(n.name) === normalize(clientNeighborhood));
     if (match) {
       autoSelectedRef.current = true;
-      setTimeout(() => handleSelect(match.id), 800);
+      setTimeout(() => handleSelect(match.id, { userInitiated: false }), 800);
     }
   }, [mapLoaded, clientNeighborhood, handleSelect]);
 
@@ -161,9 +161,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       entry.el.style.borderWidth = isActive ? "3px" : "2px";
     });
 
-    if (selected && isMobile && panelRef.current) {
+    if (selected && isMobile && userInitiatedSelectionRef.current && panelRef.current) {
       panelRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
+
+    userInitiatedSelectionRef.current = false;
   }, [selected, isMobile]);
 
   // Init map
