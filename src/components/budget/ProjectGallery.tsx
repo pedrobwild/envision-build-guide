@@ -168,9 +168,14 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
             </div>
           )}
 
-          {activeTab === "tour3d" && tourRooms.length > 0 ? (
-            <Tour3DViewer rooms={tourRooms} />
-          ) : (
+          {/* Preload Tour 3D hidden so iframe is warm when user switches tab */}
+          {tourRooms.length > 0 && (
+            <div className={activeTab === "tour3d" ? "" : "hidden"}>
+              <Tour3DViewer rooms={tourRooms} />
+            </div>
+          )}
+
+          {activeTab === "tour3d" ? null : (
             <div className="relative">
               <div ref={emblaRef} className="overflow-hidden rounded-lg">
                 <div className="flex">
