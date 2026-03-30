@@ -98,8 +98,8 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
     availableTabs.push({ id: "fotos", label: "Fotos" });
   }
 
-  // Tour 3D tab — only if config exists
-  if (tour3dConfig) {
+  // Tour 3D tab — only if tours exist in DB
+  if (tourRooms.length > 0) {
     availableTabs.push({ id: "tour3d", label: "Tour 3D" });
   }
 
