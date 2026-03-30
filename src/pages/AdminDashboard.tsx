@@ -126,6 +126,7 @@ export default function AdminDashboard() {
 
   const duplicateAsNew = async (sourceBudgetId: string) => {
     if (!user) return;
+    setDuplicating(true);
     try {
       // 1. Load source budget
       const { data: source } = await supabase
