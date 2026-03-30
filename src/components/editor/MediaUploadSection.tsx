@@ -203,8 +203,8 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
 
     setUploading(true);
-    const folder = folderMap[activeTab];
-    const existingCount = files[activeTab].length;
+    const folder = folderMap[activeTab as StorageTab];
+    const existingCount = files[activeTab as StorageTab].length;
     let count = 0;
 
     for (let i = 0; i < fileList.length; i++) {
