@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Maximize2, Minimize2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Tour3DRoom } from "@/lib/tour3d-config";
+import type { Tour3DRoom } from "@/hooks/useBudgetTours";
 
 interface Tour3DViewerProps {
   rooms: Tour3DRoom[];
