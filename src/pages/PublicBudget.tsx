@@ -394,7 +394,7 @@ export default function PublicBudget() {
             {/* mobile-portal anchor kept for nav */}
             <div id="mobile-portal" className="scroll-mt-20" />
 
-            <div id="mobile-next-steps" className="scroll-mt-20">
+            <div id="mobile-next-steps" className="scroll-mt-20" data-pdf-section>
               <AnimatedSection id="next-steps" index={100}>
                 <NextSteps />
               </AnimatedSection>
