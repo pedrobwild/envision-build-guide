@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, FileSignature, ChevronDown, Send } from "lucide-react";
+import { Loader2, FileSignature, ChevronDown, Send, ChevronRight, ChevronLeft, User, Home, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatBRL } from "@/lib/formatBRL";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface ContractRequestDialogProps {
   open: boolean;
@@ -37,6 +38,12 @@ const installmentOptions = Array.from({ length: 18 }, (_, i) => ({
 
 const DEFAULT_PHONE = "5511911906183";
 
+const STEPS = [
+  { label: "Contratante", icon: User },
+  { label: "Imóvel", icon: Home },
+  { label: "Pagamento", icon: CreditCard },
+] as const;
+
 /** Format CPF: 000.000.000-00 */
 function formatCpf(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -45,6 +52,53 @@ function formatCpf(value: string): string {
   if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
+
+/* ── Stepper indicator ── */
+function StepIndicator({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center justify-center gap-1.5 py-3" role="progressbar" aria-valuenow={current + 1} aria-valuemin={1} aria-valuemax={total}>
+      {STEPS.map((step, i) => {
+        const Icon = step.icon;
+        const isActive = i === current;
+        const isDone = i < current;
+        return (
+          <div key={step.label} className="flex items-center gap-1.5">
+            {i > 0 && (
+              <div className={cn("w-6 h-px transition-colors duration-300", isDone ? "bg-primary" : "bg-border")} />
+            )}
+            <div className="flex flex-col items-center gap-0.5">
+              <div
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 text-xs font-display font-bold",
+                  isActive
+                    ? "bg-primary text-primary-foreground scale-110 shadow-md shadow-primary/20"
+                    : isDone
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground"
+                )}
+              >
+                {isDone ? "✓" : <Icon className="h-3.5 w-3.5" />}
+              </div>
+              <span className={cn(
+                "text-[10px] font-body font-medium transition-colors duration-200",
+                isActive ? "text-primary" : isDone ? "text-primary/70" : "text-muted-foreground"
+              )}>
+                {step.label}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Slide animation variants ── */
+const slideVariants = {
+  enter: (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
+};
 
 function ContractForm({
   budgetId,
@@ -59,9 +113,12 @@ function ContractForm({
   total: number;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [sending, setSending] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
 
+  // Personal data
   const [nomeCompleto, setNomeCompleto] = useState("");
   const [nacionalidade, setNacionalidade] = useState("");
   const [estadoCivil, setEstadoCivil] = useState("");
@@ -71,11 +128,13 @@ function ContractForm({
   const [endereco, setEndereco] = useState("");
   const [email, setEmail] = useState("");
 
+  // Property
   const [unidade, setUnidade] = useState("");
   const [metragem, setMetragem] = useState("");
   const [empreendimento, setEmpreendimento] = useState("");
   const [enderecoImovel, setEnderecoImovel] = useState("");
 
+  // Payment
   const [parcelas, setParcelas] = useState(10);
 
   const selectedOption = installmentOptions.find((o) => o.months === parcelas)!;
@@ -84,20 +143,35 @@ function ContractForm({
     setCpf(formatCpf(e.target.value));
   }, []);
 
-  const validate = () => {
-    if (!nomeCompleto.trim()) { toast.error("Preencha o nome completo."); return false; }
-    if (!cpf.trim() || cpf.replace(/\D/g, "").length < 11) { toast.error("Preencha o CPF completo."); return false; }
-    if (!rg.trim()) { toast.error("Preencha o RG."); return false; }
-    if (!endereco.trim()) { toast.error("Preencha o endereço residencial."); return false; }
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { toast.error("Preencha um email válido."); return false; }
-    if (!unidade.trim()) { toast.error("Preencha a unidade do imóvel."); return false; }
-    if (!empreendimento.trim()) { toast.error("Preencha o nome do empreendimento."); return false; }
-    if (!enderecoImovel.trim()) { toast.error("Preencha o endereço do imóvel."); return false; }
+  const validateStep = (s: number): boolean => {
+    if (s === 0) {
+      if (!nomeCompleto.trim()) { toast.error("Preencha o nome completo."); return false; }
+      if (!cpf.trim() || cpf.replace(/\D/g, "").length < 11) { toast.error("Preencha o CPF completo."); return false; }
+      if (!rg.trim()) { toast.error("Preencha o RG."); return false; }
+      if (!endereco.trim()) { toast.error("Preencha o endereço residencial."); return false; }
+      if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { toast.error("Preencha um email válido."); return false; }
+    }
+    if (s === 1) {
+      if (!unidade.trim()) { toast.error("Preencha a unidade do imóvel."); return false; }
+      if (!empreendimento.trim()) { toast.error("Preencha o nome do empreendimento."); return false; }
+      if (!enderecoImovel.trim()) { toast.error("Preencha o endereço do imóvel."); return false; }
+    }
     return true;
   };
 
+  const goNext = () => {
+    if (!validateStep(step)) return;
+    setDirection(1);
+    setStep((s) => Math.min(s + 1, 2));
+  };
+
+  const goBack = () => {
+    setDirection(-1);
+    setStep((s) => Math.max(s - 1, 0));
+  };
+
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validateStep(0) || !validateStep(1)) return;
     setSending(true);
 
     try {
@@ -174,144 +248,193 @@ function ContractForm({
   };
 
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-muted-foreground font-body">
-        Preencha os dados abaixo para solicitar a elaboração do contrato.
-      </p>
+    <div className="space-y-4">
+      {/* Stepper */}
+      <StepIndicator current={step} total={3} />
 
-      {/* Section: Personal Data */}
-      <div className="space-y-3">
-        <h3 className="font-display font-semibold text-sm text-foreground border-b border-border pb-1">
-          Dados do Contratante
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="sm:col-span-2">
-            <Label htmlFor="cr-nome" className="text-xs font-body">Nome completo *</Label>
-            <Input id="cr-nome" value={nomeCompleto} onChange={(e) => setNomeCompleto(e.target.value)} maxLength={200} placeholder="Nome completo" autoComplete="name" />
-          </div>
-          <div>
-            <Label htmlFor="cr-nacionalidade" className="text-xs font-body">Nacionalidade</Label>
-            <Input id="cr-nacionalidade" value={nacionalidade} onChange={(e) => setNacionalidade(e.target.value)} maxLength={60} placeholder="Ex: brasileira" />
-          </div>
-          <div>
-            <Label htmlFor="cr-estado-civil" className="text-xs font-body">Estado civil</Label>
-            <Input id="cr-estado-civil" value={estadoCivil} onChange={(e) => setEstadoCivil(e.target.value)} maxLength={30} placeholder="Ex: casada" />
-          </div>
-          <div>
-            <Label htmlFor="cr-profissao" className="text-xs font-body">Profissão</Label>
-            <Input id="cr-profissao" value={profissao} onChange={(e) => setProfissao(e.target.value)} maxLength={80} placeholder="Ex: engenheira civil" />
-          </div>
-          <div>
-            <Label htmlFor="cr-cpf" className="text-xs font-body">CPF *</Label>
-            <Input id="cr-cpf" value={cpf} onChange={handleCpfChange} maxLength={14} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
-          </div>
-          <div>
-            <Label htmlFor="cr-rg" className="text-xs font-body">RG *</Label>
-            <Input id="cr-rg" value={rg} onChange={(e) => setRg(e.target.value)} maxLength={20} placeholder="0000.000" />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="cr-endereco" className="text-xs font-body">Endereço residencial *</Label>
-            <Input id="cr-endereco" value={endereco} onChange={(e) => setEndereco(e.target.value)} maxLength={300} placeholder="Rua, número, bairro, cidade/UF, CEP" autoComplete="street-address" />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="cr-email" className="text-xs font-body">E-mail *</Label>
-            <Input id="cr-email" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} placeholder="seu@email.com" autoComplete="email" />
-          </div>
-        </div>
-      </div>
-
-      {/* Section: Property */}
-      <div className="space-y-3">
-        <h3 className="font-display font-semibold text-sm text-foreground border-b border-border pb-1">
-          Dados do Imóvel
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <Label htmlFor="cr-unidade" className="text-xs font-body">Unidade / Apartamento *</Label>
-            <Input id="cr-unidade" value={unidade} onChange={(e) => setUnidade(e.target.value)} maxLength={20} placeholder="Ex: U0617" />
-          </div>
-          <div>
-            <Label htmlFor="cr-metragem" className="text-xs font-body">Metragem</Label>
-            <Input id="cr-metragem" value={metragem} onChange={(e) => setMetragem(e.target.value)} maxLength={20} placeholder="Ex: 31m²" />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="cr-empreendimento" className="text-xs font-body">Empreendimento *</Label>
-            <Input id="cr-empreendimento" value={empreendimento} onChange={(e) => setEmpreendimento(e.target.value)} maxLength={200} placeholder="Nome do empreendimento" />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="cr-endereco-imovel" className="text-xs font-body">Endereço do imóvel *</Label>
-            <Input id="cr-endereco-imovel" value={enderecoImovel} onChange={(e) => setEnderecoImovel(e.target.value)} maxLength={300} placeholder="Rua, número, bairro, cidade/UF, CEP" />
-          </div>
-        </div>
-      </div>
-
-      {/* Section: Payment */}
-      <div className="space-y-3">
-        <h3 className="font-display font-semibold text-sm text-foreground border-b border-border pb-1">
-          Forma de Pagamento
-        </h3>
-        <p className="text-xs text-muted-foreground font-body">
-          Cartão de crédito em até 18× sem juros.
-        </p>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setPaymentOpen(!paymentOpen)}
-            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors text-sm font-body min-h-[44px]"
-            aria-expanded={paymentOpen}
-            aria-haspopup="listbox"
+      {/* Step content with slide animation */}
+      <div className="relative overflow-hidden min-h-[280px]">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={step}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <span className="text-foreground font-medium">
-              {selectedOption.label} — {formatBRL(total / parcelas)}/mês
-            </span>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${paymentOpen ? "rotate-180" : ""}`} />
-          </button>
-
-          <AnimatePresence>
-            {paymentOpen && (
-              <motion.ul
-                role="listbox"
-                aria-label="Opções de parcelamento"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
-                className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg shadow-lg overflow-y-auto max-h-48"
-              >
-                {installmentOptions.map((opt) => (
-                  <li key={opt.months} role="option" aria-selected={parcelas === opt.months}>
-                    <button
-                      type="button"
-                      onClick={() => { setParcelas(opt.months); setPaymentOpen(false); }}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-sm font-body transition-colors min-h-[44px] ${
-                        parcelas === opt.months
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      <span>{opt.label}</span>
-                      <span className="font-semibold tabular-nums">{formatBRL(total / opt.months)}</span>
-                    </button>
-                  </li>
-                ))}
-              </motion.ul>
+            {step === 0 && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground font-body">
+                  Preencha os dados do contratante para a elaboração da minuta.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="cr-nome" className="text-xs font-body">Nome completo *</Label>
+                    <Input id="cr-nome" value={nomeCompleto} onChange={(e) => setNomeCompleto(e.target.value)} maxLength={200} placeholder="Nome completo" autoComplete="name" autoFocus />
+                  </div>
+                  <div>
+                    <Label htmlFor="cr-nacionalidade" className="text-xs font-body">Nacionalidade</Label>
+                    <Input id="cr-nacionalidade" value={nacionalidade} onChange={(e) => setNacionalidade(e.target.value)} maxLength={60} placeholder="Ex: brasileira" />
+                  </div>
+                  <div>
+                    <Label htmlFor="cr-estado-civil" className="text-xs font-body">Estado civil</Label>
+                    <Input id="cr-estado-civil" value={estadoCivil} onChange={(e) => setEstadoCivil(e.target.value)} maxLength={30} placeholder="Ex: casada" />
+                  </div>
+                  <div>
+                    <Label htmlFor="cr-profissao" className="text-xs font-body">Profissão</Label>
+                    <Input id="cr-profissao" value={profissao} onChange={(e) => setProfissao(e.target.value)} maxLength={80} placeholder="Ex: engenheira civil" />
+                  </div>
+                  <div>
+                    <Label htmlFor="cr-cpf" className="text-xs font-body">CPF *</Label>
+                    <Input id="cr-cpf" value={cpf} onChange={handleCpfChange} maxLength={14} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
+                  </div>
+                  <div>
+                    <Label htmlFor="cr-rg" className="text-xs font-body">RG *</Label>
+                    <Input id="cr-rg" value={rg} onChange={(e) => setRg(e.target.value)} maxLength={20} placeholder="0000.000" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="cr-endereco" className="text-xs font-body">Endereço residencial *</Label>
+                    <Input id="cr-endereco" value={endereco} onChange={(e) => setEndereco(e.target.value)} maxLength={300} placeholder="Rua, número, bairro, cidade/UF, CEP" autoComplete="street-address" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="cr-email" className="text-xs font-body">E-mail *</Label>
+                    <Input id="cr-email" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} placeholder="seu@email.com" autoComplete="email" />
+                  </div>
+                </div>
+              </div>
             )}
-          </AnimatePresence>
-        </div>
 
-        <div className="text-center pt-1">
-          <p className="font-display font-bold text-lg text-primary tabular-nums">
-            {parcelas}× de {formatBRL(total / parcelas)}
-          </p>
-          <p className="text-xs text-muted-foreground font-body">Total: {formatBRL(total)}</p>
-        </div>
+            {step === 1 && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground font-body">
+                  Informe os dados do imóvel que será reformado.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="cr-unidade" className="text-xs font-body">Unidade / Apartamento *</Label>
+                    <Input id="cr-unidade" value={unidade} onChange={(e) => setUnidade(e.target.value)} maxLength={20} placeholder="Ex: U0617" autoFocus />
+                  </div>
+                  <div>
+                    <Label htmlFor="cr-metragem" className="text-xs font-body">Metragem</Label>
+                    <Input id="cr-metragem" value={metragem} onChange={(e) => setMetragem(e.target.value)} maxLength={20} placeholder="Ex: 31m²" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="cr-empreendimento" className="text-xs font-body">Empreendimento *</Label>
+                    <Input id="cr-empreendimento" value={empreendimento} onChange={(e) => setEmpreendimento(e.target.value)} maxLength={200} placeholder="Nome do empreendimento" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="cr-endereco-imovel" className="text-xs font-body">Endereço do imóvel *</Label>
+                    <Input id="cr-endereco-imovel" value={enderecoImovel} onChange={(e) => setEnderecoImovel(e.target.value)} maxLength={300} placeholder="Rua, número, bairro, cidade/UF, CEP" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground font-body">
+                  Cartão de crédito em até 18× sem juros.
+                </p>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentOpen(!paymentOpen)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors text-sm font-body min-h-[44px]"
+                    aria-expanded={paymentOpen}
+                    aria-haspopup="listbox"
+                  >
+                    <span className="text-foreground font-medium">
+                      {selectedOption.label} — {formatBRL(total / parcelas)}/mês
+                    </span>
+                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", paymentOpen && "rotate-180")} />
+                  </button>
+
+                  <AnimatePresence>
+                    {paymentOpen && (
+                      <motion.ul
+                        role="listbox"
+                        aria-label="Opções de parcelamento"
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg shadow-lg overflow-y-auto max-h-48"
+                      >
+                        {installmentOptions.map((opt) => (
+                          <li key={opt.months} role="option" aria-selected={parcelas === opt.months}>
+                            <button
+                              type="button"
+                              onClick={() => { setParcelas(opt.months); setPaymentOpen(false); }}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 text-sm font-body transition-colors min-h-[44px]",
+                                parcelas === opt.months
+                                  ? "bg-primary/10 text-primary font-semibold"
+                                  : "text-foreground hover:bg-muted"
+                              )}
+                            >
+                              <span>{opt.label}</span>
+                              <span className="font-semibold tabular-nums">{formatBRL(total / opt.months)}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="text-center pt-2 pb-1">
+                  <p className="font-display font-bold text-xl text-primary tabular-nums">
+                    {parcelas}× de {formatBRL(total / parcelas)}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-body mt-0.5">Total: {formatBRL(total)}</p>
+                </div>
+
+                <p className="text-xs text-muted-foreground font-body text-center">
+                  Condições sob consulta com sua consultora
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* Submit */}
-      <Button onClick={handleSubmit} disabled={sending} className="w-full h-12 gap-2">
-        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        Enviar solicitação
-      </Button>
+      {/* Navigation buttons */}
+      <div className="flex items-center gap-3 pt-1">
+        {step > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={goBack}
+            className="gap-1.5 min-h-[48px] flex-1"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+        )}
+
+        {step < 2 ? (
+          <Button
+            type="button"
+            onClick={goNext}
+            className="gap-1.5 min-h-[48px] flex-1"
+          >
+            Próximo
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={sending}
+            className="gap-2 min-h-[48px] flex-1"
+          >
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Enviar solicitação
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
