@@ -148,7 +148,7 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
       </div>
 
       <TourHint />
-      {iframeContent}
+      {allIframes(false)}
     </div>
   );
 }
