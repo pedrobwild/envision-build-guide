@@ -18,7 +18,7 @@ import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
 import { OptionalItemsSimulator } from "@/components/budget/OptionalItemsSimulator";
 import { MobileHeroCard } from "@/components/budget/MobileHeroCard";
-import { MobileSectionNav } from "@/components/budget/MobileSectionNav";
+
 import { MobileBottomBar } from "@/components/budget/MobileBottomBar";
 import { MobileInlineSummary } from "@/components/budget/MobileInlineSummary";
 
@@ -79,10 +79,6 @@ export default function PublicBudget() {
   const activeSection = useScrollspy(allSectionIds);
 
   // Mobile nav scrollspy — must be before early returns
-  const mobileNavIds = useMemo(() => [
-    "mobile-included", "mobile-scope", "mobile-trust", "mobile-portal", "mobile-next-steps", "mobile-faq"
-  ], []);
-  const activeMobileNav = useScrollspy(mobileNavIds);
 
   useEffect(() => {
     if (budget) {
@@ -160,17 +156,6 @@ export default function PublicBudget() {
   const heroVersionNum = budget.versao ? budget.versao.replace(/^v/i, '') : (budget.version_number ?? "1");
   const heroVersion = `v${String(heroVersionNum)}`;
 
-  // Mobile nav items
-  const mobileNavItems = [
-    { id: "mobile-included", label: "Serviços", icon: "📋" },
-    { id: "mobile-scope", label: "Itens", icon: "🪑" },
-    { id: "mobile-trust", label: "Portfólio", icon: "🏠" },
-    { id: "mobile-portal", label: "Portal", icon: "🛡️" },
-    { id: "mobile-next-steps", label: "Jornada", icon: "🚀" },
-    { id: "mobile-faq", label: "Dúvidas", icon: "❓" },
-  ];
-
-  // mobileNavIds and activeMobileNav already declared above early returns
 
   const handleRoomClick = (roomId: string | null) => {
     setActiveRoom(roomId || null);
