@@ -46,7 +46,7 @@ const App = () => (
             <Route path="/admin/financeiro" element={<ProtectedRoute><FinancialHistory /></ProtectedRoute>} />
             <Route path="/o/:publicId" element={<PublicBudget />} />
             <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
-            <Route path="/qa" element={<QAEvaluator />} />
+            <Route path="/qa" element={<ProtectedRoute><QAEvaluator /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

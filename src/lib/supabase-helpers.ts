@@ -5,7 +5,7 @@ export async function fetchPublicBudget(publicId: string) {
     .from('budgets')
     .select('*')
     .eq('public_id', publicId)
-    .eq('status', 'published')
+    .in('status', ['published', 'minuta_solicitada'])
     .single();
 
   if (budgetError || !budget) return null;
