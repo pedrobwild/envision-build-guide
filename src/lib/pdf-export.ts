@@ -96,17 +96,21 @@ async function prepareForCapture(element: HTMLElement) {
 
   return {
     restore() {
-      // Restore hidden pdf elements
       hiddenEls.forEach(el => (el as HTMLElement).style.display = '');
-      // Restore forced styles
       savedStyles.forEach(({ el, opacity, transform, visibility }) => {
         el.style.opacity = opacity;
         el.style.transform = transform;
         el.style.visibility = visibility;
       });
-      // Restore hidden interactive elements
       hiddenInteractive.forEach(({ el, display }) => {
         el.style.display = display;
+      });
+      collapsedEls.forEach(({ el, maxHeight, overflow }) => {
+        el.style.maxHeight = maxHeight;
+        el.style.overflow = overflow;
+      });
+      stickyEls.forEach(({ el, position }) => {
+        el.style.position = position;
       });
     },
   };
