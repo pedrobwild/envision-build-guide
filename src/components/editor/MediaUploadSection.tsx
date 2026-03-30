@@ -129,20 +129,25 @@ function addPrefix(index: number, name: string) {
   return `${prefix}-${bare}`;
 }
 
-export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
+export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionProps) {
   const [activeTab, setActiveTab] = useState<MediaTab>("3d");
-  const [files, setFiles] = useState<Record<MediaTab, MediaFile[]>>({ "3d": [], fotos: [], exec: [], video: [] });
+  const [files, setFiles] = useState<Record<StorageTab, MediaFile[]>>({ "3d": [], fotos: [], exec: [], video: [] });
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reordering, setReordering] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Tour 3D state
+  const [tours, setTours] = useState<TourEntry[]>([]);
+  const [toursLoading, setToursLoading] = useState(false);
+  const [toursSaving, setToursSaving] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const folderMap: Record<MediaTab, string> = {
+  const folderMap: Record<StorageTab, string> = {
     "3d": `${publicId}/3d`,
     fotos: `${publicId}/fotos`,
     exec: `${publicId}/exec`,
@@ -154,11 +159,12 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
     { id: "fotos", label: "Fotos", icon: <ImageIcon className="h-4 w-4" />, accept: "image/*" },
     { id: "exec", label: "Projeto Executivo", icon: <FileText className="h-4 w-4" />, accept: "image/*" },
     { id: "video", label: "Vídeo 3D", icon: <Play className="h-4 w-4" />, accept: "video/*" },
+    { id: "tour3d", label: "Tour 3D", icon: <Compass className="h-4 w-4" />, accept: "" },
   ];
 
   const loadFiles = async () => {
     setLoading(true);
-    const result: Record<MediaTab, MediaFile[]> = { "3d": [], fotos: [], exec: [], video: [] };
+    const result: Record<StorageTab, MediaFile[]> = { "3d": [], fotos: [], exec: [], video: [] };
 
     for (const tab of Object.keys(folderMap) as MediaTab[]) {
       const folder = folderMap[tab];
