@@ -46,6 +46,8 @@ const App = () => (
             <Route path="/admin/budget/:budgetId" element={<ProtectedRoute><BudgetEditorV2 /></ProtectedRoute>} />
             <Route path="/admin/budget/:budgetId/legacy" element={<ProtectedRoute><BudgetEditor /></ProtectedRoute>} />
             <Route path="/admin/financeiro" element={<ProtectedRoute><FinancialHistory /></ProtectedRoute>} />
+            <Route path="/admin/solicitacoes" element={<ProtectedRoute><BudgetRequestsList /></ProtectedRoute>} />
+            <Route path="/admin/solicitacoes/nova" element={<ProtectedRoute><NewBudgetRequest /></ProtectedRoute>} />
             <Route path="/o/:publicId" element={<PublicBudget />} />
             <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
             <Route path="/qa" element={<ProtectedRoute><QAEvaluator /></ProtectedRoute>} />
