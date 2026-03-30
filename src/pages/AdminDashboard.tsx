@@ -68,9 +68,10 @@ export default function AdminDashboard() {
 
   const createBudget = async () => {
     if (!user) return;
+    const publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
     const { data } = await supabase
       .from('budgets')
-      .insert({ project_name: 'Novo Projeto', client_name: 'Cliente', created_by: user.id })
+      .insert({ project_name: 'Novo Projeto', client_name: 'Cliente', created_by: user.id, public_id: publicId })
       .select()
       .single();
     if (data) {
@@ -142,6 +143,7 @@ export default function AdminDashboard() {
         unit, metragem, lead_email, lead_name, closed_at, version_group_id, version_number,
         is_current_version, versao, status, ...keepMeta } = source;
 
+      const newPublicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
       const { data: newBudget, error: budgetErr } = await supabase
         .from('budgets')
         .insert({
@@ -154,6 +156,7 @@ export default function AdminDashboard() {
           version_number: 1,
           is_current_version: true,
           versao: '1',
+          public_id: newPublicId,
         })
         .select()
         .single();
