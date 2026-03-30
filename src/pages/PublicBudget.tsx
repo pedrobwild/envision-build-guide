@@ -377,6 +377,7 @@ export default function PublicBudget() {
             )}
 
             {/* ── Mobile inline summary ── */}
+            <div data-pdf-section>
             <MobileInlineSummary
               total={total}
               validity={validity}
@@ -387,6 +388,7 @@ export default function PublicBudget() {
               budgetId={budget.id}
               onTotalCardVisibilityChange={handleTotalCardVisibility}
             />
+            </div>
 
 
             {/* mobile-portal anchor kept for nav */}
