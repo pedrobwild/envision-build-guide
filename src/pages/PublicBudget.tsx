@@ -463,6 +463,7 @@ export default function PublicBudget() {
 
         {budget.disclaimer && (
           <motion.div
+            data-pdf-section
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
