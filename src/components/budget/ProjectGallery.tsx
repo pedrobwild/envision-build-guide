@@ -9,13 +9,15 @@ import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { useBudgetTours } from "@/hooks/useBudgetTours";
 import { Tour3DViewer } from "@/components/budget/Tour3DViewer";
 
-type GalleryTab = "video" | "fotos" | "tour3d";
+type GalleryTab = "video3d" | "fotos3d" | "fotos" | "tour3d";
 
 type MediaItem = { src: string; alt: string; type?: "video" | "image" };
 
-const defaultGallery: Record<"video" | "fotos", MediaItem[]> = {
-  video: [
+const defaultGallery: { video3d: MediaItem[]; fotos3d: MediaItem[]; fotos: MediaItem[] } = {
+  video3d: [
     { src: "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media/videos/projeto-3d-tour.mp4", alt: "Projeto 3D — Vídeo Tour", type: "video" },
+  ],
+  fotos3d: [
     { src: "/images/exemplo-projeto-3d-1.png", alt: "Projeto 3D — Planta humanizada" },
     { src: "/images/exemplo-projeto-3d-2.png", alt: "Projeto 3D — Sala e cozinha" },
   ],
@@ -58,29 +60,30 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
 
   // Build available tabs based on dynamic media
   const availableTabs: { id: GalleryTab; label: string }[] = [];
-  const galleryData: Record<GalleryTab, MediaItem[]> = { video: [], fotos: [], tour3d: [] };
+  const galleryData: Record<GalleryTab, MediaItem[]> = { video3d: [], fotos3d: [], fotos: [], tour3d: [] };
 
-  // Video tab — video + 3D images (or fallback to fotos)
-  const has3dImages = hasMedia && (media!.projeto3d.length > 0 || media!.video3d);
-  const fallbackToFotos = hasMedia && !has3dImages && media!.fotos.length > 0;
-
-  if (has3dImages || fallbackToFotos) {
-    const items: MediaItem[] = [];
-    if (media!.video3d) {
-      items.push({ src: media!.video3d, alt: "Projeto 3D — Vídeo Tour", type: "video" });
-    }
-    const sourceImages = has3dImages ? media!.projeto3d : media!.fotos;
-    sourceImages.forEach((src, i) => {
-      items.push({ src, alt: `Projeto 3D — ${i + 1}` });
-    });
-    galleryData.video = items;
-    availableTabs.push({ id: "video", label: "Vídeo" });
-  } else if (!hasMedia && !mediaLoading) {
-    galleryData.video = defaultGallery.video;
-    availableTabs.push({ id: "video", label: "Vídeo" });
+  // --- Vídeo 3D tab (only the video) ---
+  if (hasMedia && media!.video3d) {
+    galleryData.video3d = [{ src: media!.video3d, alt: "Projeto 3D — Vídeo Tour", type: "video" }];
+    availableTabs.push({ id: "video3d", label: "Vídeo 3D" });
+  } else if (!hasMedia && !mediaLoading && defaultGallery.video3d.length > 0) {
+    galleryData.video3d = defaultGallery.video3d;
+    availableTabs.push({ id: "video3d", label: "Vídeo 3D" });
   }
 
-  // Fotos tab — photos + executivo combined
+  // --- Fotos 3D tab (3D renders / images, fallback to fotos) ---
+  if (hasMedia) {
+    const source3d = media!.projeto3d.length > 0 ? media!.projeto3d : media!.fotos;
+    if (source3d.length > 0) {
+      galleryData.fotos3d = source3d.map((src, i) => ({ src, alt: `Projeto 3D — ${i + 1}` }));
+      availableTabs.push({ id: "fotos3d", label: "Fotos 3D" });
+    }
+  } else if (!hasMedia && !mediaLoading) {
+    galleryData.fotos3d = defaultGallery.fotos3d;
+    availableTabs.push({ id: "fotos3d", label: "Fotos 3D" });
+  }
+
+  // --- Fotos tab (photos + executivo combined) ---
   const allPhotos: MediaItem[] = [];
   if (hasMedia) {
     media!.fotos.forEach((src, i) => {
@@ -98,12 +101,12 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
     availableTabs.push({ id: "fotos", label: "Fotos" });
   }
 
-  // Tour 3D tab — only if tours exist in DB
+  // --- Tour 3D tab ---
   if (tourRooms.length > 0) {
     availableTabs.push({ id: "tour3d", label: "Tour 3D" });
   }
 
-  const [activeTab, setActiveTab] = useState<GalleryTab>(availableTabs[0]?.id ?? "video");
+  const [activeTab, setActiveTab] = useState<GalleryTab>(availableTabs[0]?.id ?? "video3d");
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
