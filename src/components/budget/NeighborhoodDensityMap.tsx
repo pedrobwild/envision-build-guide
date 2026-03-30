@@ -101,6 +101,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const markersRef = useRef<Map<string, { marker: maplibregl.Marker; el: HTMLDivElement }>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
   const autoSelectedRef = useRef(false);
+  const userInitiatedSelectionRef = useRef(false);
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
   const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
   const styleCandidates = useMemo<(string | maplibregl.StyleSpecification)[]>(() => {
@@ -120,7 +121,8 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
 
-  const handleSelect = useCallback((id: string | null) => {
+  const handleSelect = useCallback((id: string | null, options?: { userInitiated?: boolean }) => {
+    userInitiatedSelectionRef.current = !!options?.userInitiated;
     setSelected((prev) => (prev === id ? null : id));
   }, []);
 
@@ -130,7 +132,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     const match = NEIGHBORHOOD_DATA.find((n) => normalize(n.name) === normalize(clientNeighborhood));
     if (match) {
       autoSelectedRef.current = true;
-      setTimeout(() => handleSelect(match.id), 800);
+      setTimeout(() => handleSelect(match.id, { userInitiated: false }), 800);
     }
   }, [mapLoaded, clientNeighborhood, handleSelect]);
 
@@ -159,9 +161,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       entry.el.style.borderWidth = isActive ? "3px" : "2px";
     });
 
-    if (selected && isMobile && panelRef.current) {
+    if (selected && isMobile && userInitiatedSelectionRef.current && panelRef.current) {
       panelRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
+
+    userInitiatedSelectionRef.current = false;
   }, [selected, isMobile]);
 
   // Init map
@@ -221,7 +225,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
         el.addEventListener("click", (e) => {
           e.stopPropagation();
-          handleSelect(n.id);
+          handleSelect(n.id, { userInitiated: true });
         });
 
         wrapper.appendChild(el);
