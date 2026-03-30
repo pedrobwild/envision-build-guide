@@ -24,15 +24,24 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type MediaTab = "3d" | "fotos" | "exec" | "video";
+type MediaTab = "3d" | "fotos" | "exec" | "video" | "tour3d";
 
 interface MediaFile {
   name: string;
   url: string;
 }
 
+interface TourEntry {
+  id?: string;
+  room_id: string;
+  room_label: string;
+  tour_url: string;
+  order_index: number;
+}
+
 interface MediaUploadSectionProps {
   publicId: string;
+  budgetId: string;
 }
 
 /* ── Sortable thumbnail item ── */
