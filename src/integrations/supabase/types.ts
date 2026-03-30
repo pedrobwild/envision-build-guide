@@ -142,19 +142,23 @@ export type Database = {
           bairro: string | null
           client_name: string
           closed_at: string | null
+          commercial_owner_id: string | null
           condominio: string | null
           consultora_comercial: string | null
           created_at: string | null
           created_by: string | null
           date: string | null
           disclaimer: string | null
+          due_at: string | null
           email_comercial: string | null
           estimated_weeks: number | null
+          estimator_owner_id: string | null
           floor_plan_url: string | null
           generated_at: string | null
           header_config: Json | null
           id: string
           internal_cost: number | null
+          internal_status: string
           is_current_version: boolean | null
           last_viewed_at: string | null
           lead_email: string | null
@@ -162,6 +166,7 @@ export type Database = {
           metragem: string | null
           notes: string | null
           prazo_dias_uteis: number | null
+          priority: string
           project_name: string
           public_id: string | null
           public_token_hash: string | null
@@ -184,19 +189,23 @@ export type Database = {
           bairro?: string | null
           client_name?: string
           closed_at?: string | null
+          commercial_owner_id?: string | null
           condominio?: string | null
           consultora_comercial?: string | null
           created_at?: string | null
           created_by?: string | null
           date?: string | null
           disclaimer?: string | null
+          due_at?: string | null
           email_comercial?: string | null
           estimated_weeks?: number | null
+          estimator_owner_id?: string | null
           floor_plan_url?: string | null
           generated_at?: string | null
           header_config?: Json | null
           id?: string
           internal_cost?: number | null
+          internal_status?: string
           is_current_version?: boolean | null
           last_viewed_at?: string | null
           lead_email?: string | null
@@ -204,6 +213,7 @@ export type Database = {
           metragem?: string | null
           notes?: string | null
           prazo_dias_uteis?: number | null
+          priority?: string
           project_name?: string
           public_id?: string | null
           public_token_hash?: string | null
@@ -226,19 +236,23 @@ export type Database = {
           bairro?: string | null
           client_name?: string
           closed_at?: string | null
+          commercial_owner_id?: string | null
           condominio?: string | null
           consultora_comercial?: string | null
           created_at?: string | null
           created_by?: string | null
           date?: string | null
           disclaimer?: string | null
+          due_at?: string | null
           email_comercial?: string | null
           estimated_weeks?: number | null
+          estimator_owner_id?: string | null
           floor_plan_url?: string | null
           generated_at?: string | null
           header_config?: Json | null
           id?: string
           internal_cost?: number | null
+          internal_status?: string
           is_current_version?: boolean | null
           last_viewed_at?: string | null
           lead_email?: string | null
@@ -246,6 +260,7 @@ export type Database = {
           metragem?: string | null
           notes?: string | null
           prazo_dias_uteis?: number | null
+          priority?: string
           project_name?: string
           public_id?: string | null
           public_token_hash?: string | null
@@ -453,6 +468,30 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string
+          is_active: boolean
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          is_active?: boolean
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           budget_id: string
@@ -547,18 +586,47 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_access_budget: {
+        Args: { _budget_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       increment_view_count: {
         Args: { p_public_id: string }
         Returns: undefined
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "comercial" | "orcamentista"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -685,6 +753,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "comercial", "orcamentista"],
+    },
   },
 } as const
