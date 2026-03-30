@@ -35,7 +35,6 @@ interface MediaUploadSectionProps {
 }
 
 /* ── Sortable thumbnail item ── */
-import { forwardRef } from "react";
 
 const SortableMediaItem = forwardRef<HTMLDivElement, {
   file: MediaFile;
