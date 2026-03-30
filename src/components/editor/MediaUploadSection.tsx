@@ -266,7 +266,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     setFiles(prev => ({ ...prev, [activeTab]: reordered }));
     setReordering(true);
 
-    const folder = folderMap[activeTab];
+    const folder = folderMap[activeTab as StorageTab];
 
     try {
       // Collect files that need renaming
