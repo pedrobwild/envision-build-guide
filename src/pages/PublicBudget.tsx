@@ -106,21 +106,7 @@ export default function PublicBudget() {
         setLoading(false);
         if (data && !viewTracked.current) {
           viewTracked.current = true;
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-          fetch(`${supabaseUrl}/rest/v1/budgets?public_id=eq.${encodeURIComponent(publicId)}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': supabaseKey,
-              'Authorization': `Bearer ${supabaseKey}`,
-              'Prefer': 'return=minimal',
-            },
-            body: JSON.stringify({
-              view_count: (data.view_count || 0) + 1,
-              last_viewed_at: new Date().toISOString(),
-            }),
-          }).catch(() => {});
+          supabase.rpc('increment_view_count', { p_public_id: publicId }).catch(() => {});
           if ((data.view_count || 0) === 0) {
             supabase.functions.invoke('notify-budget-view', {
               body: { public_id: publicId },
