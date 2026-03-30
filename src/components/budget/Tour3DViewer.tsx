@@ -112,7 +112,7 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
         </div>
         <TourHint />
         <div className="flex-1 min-h-0">
-          {iframeContent}
+          {allIframes(true)}
         </div>
       </div>
     );
