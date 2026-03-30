@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Maximize2, Minimize2, Loader2, MousePointer, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,8 +31,38 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
   const [activeRoom, setActiveRoom] = useState(rooms[0]?.id ?? "");
   const [fullscreen, setFullscreen] = useState(false);
   const [loadedRooms, setLoadedRooms] = useState<Set<string>>(new Set());
+  // Staggered preload: mount active immediately, others after delay
+  const [mountedRooms, setMountedRooms] = useState<Set<string>>(
+    new Set(rooms[0] ? [rooms[0].id] : [])
+  );
 
   const currentRoom = rooms.find((r) => r.id === activeRoom) ?? rooms[0];
+
+  // Stagger preload of remaining rooms after first loads
+  useEffect(() => {
+    if (rooms.length <= 1) return;
+    const firstId = rooms[0]?.id;
+    if (!firstId) return;
+
+    // Wait for first room to load, then mount others one by one with delays
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const otherRooms = rooms.filter((r) => r.id !== firstId);
+
+    otherRooms.forEach((room, i) => {
+      const timer = setTimeout(() => {
+        setMountedRooms((prev) => new Set(prev).add(room.id));
+      }, 2000 + i * 1500); // stagger: 2s, 3.5s, 5s...
+      timers.push(timer);
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, [rooms]);
+
+  // When user clicks a room tab, mount it immediately
+  const handleRoomChange = useCallback((id: string) => {
+    setActiveRoom(id);
+    setMountedRooms((prev) => new Set(prev).add(id));
+  }, []);
 
   const handleIframeLoad = useCallback((roomId: string) => {
     setLoadedRooms((prev) => new Set(prev).add(roomId));
@@ -40,10 +70,6 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
 
   const toggleFullscreen = useCallback(() => {
     setFullscreen((prev) => !prev);
-  }, []);
-
-  const handleRoomChange = useCallback((id: string) => {
-    setActiveRoom(id);
   }, []);
 
   if (!currentRoom) return null;
@@ -67,18 +93,44 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
         className={cn("w-full h-full border-0", activeRoom !== room.id && "hidden")}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; xr-spatial-tracking; fullscreen"
         allowFullScreen
+        loading={room.id === activeRoom ? "eager" : "lazy"}
         onLoad={() => handleIframeLoad(room.id)}
       />
     </div>
   );
 
-  // Preload all iframes (hidden) so they're warm when user switches
+  // Render only mounted iframes (staggered preload)
   const allIframes = (isFullscreen: boolean) => (
     <div className={cn("relative w-full", isFullscreen ? "h-full" : "")}>
-      {rooms.map((room) => (
-        <div key={room.id} className={cn(activeRoom === room.id ? (isFullscreen ? "h-full" : "") : "hidden")}>
-          {renderIframe(room, isFullscreen)}
-        </div>
+      {rooms.map((room) => {
+        if (!mountedRooms.has(room.id)) return null;
+        return (
+          <div key={room.id} className={cn(activeRoom === room.id ? (isFullscreen ? "h-full" : "") : "hidden")}>
+            {renderIframe(room, isFullscreen)}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const roomTabs = (
+    <div className="flex items-center gap-2">
+      {rooms.length > 1 && rooms.map((room) => (
+        <button
+          key={room.id}
+          onClick={() => handleRoomChange(room.id)}
+          className={cn(
+            "px-3 py-1.5 rounded-md text-xs font-display font-semibold transition-colors",
+            activeRoom === room.id
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {room.label}
+          {loadedRooms.has(room.id) && activeRoom !== room.id && (
+            <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-primary/50" title="Carregado" />
+          )}
+        </button>
       ))}
     </div>
   );
@@ -87,22 +139,7 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
         <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border flex-shrink-0">
-          <div className="flex items-center gap-2">
-            {rooms.length > 1 && rooms.map((room) => (
-              <button
-                key={room.id}
-                onClick={() => handleRoomChange(room.id)}
-                className={cn(
-                  "px-3 py-1.5 rounded-md text-xs font-display font-semibold transition-colors",
-                  activeRoom === room.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {room.label}
-              </button>
-            ))}
-          </div>
+          {roomTabs}
           <button
             onClick={toggleFullscreen}
             className="p-2 rounded-md hover:bg-muted transition-colors"
@@ -122,22 +159,7 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {rooms.length > 1 && rooms.map((room) => (
-            <button
-              key={room.id}
-              onClick={() => handleRoomChange(room.id)}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-display font-semibold transition-colors",
-                activeRoom === room.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {room.label}
-            </button>
-          ))}
-        </div>
+        {roomTabs}
         <button
           onClick={toggleFullscreen}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display font-semibold bg-muted text-muted-foreground hover:text-foreground transition-colors"
