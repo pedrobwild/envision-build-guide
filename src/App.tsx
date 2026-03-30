@@ -18,6 +18,7 @@ const QAEvaluator = lazy(() => import("./pages/QAEvaluator"));
 const FinancialHistory = lazy(() => import("./pages/FinancialHistory"));
 const BudgetRequestsList = lazy(() => import("./pages/BudgetRequestsList"));
 const NewBudgetRequest = lazy(() => import("./pages/NewBudgetRequest"));
+const EstimatorDashboard = lazy(() => import("./pages/EstimatorDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
