@@ -135,37 +135,66 @@ export async function exportBudgetPdf(elementId: string, filename: string) {
       y: 0,
     });
 
-    const imgData = canvas.toDataURL("image/jpeg", 0.92);
     const pdf = new jsPDF("p", "mm", "a4");
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 10;
     const contentWidth = pageWidth - margin * 2;
-    const imgHeight = (canvas.height * contentWidth) / canvas.width;
+    const contentHeight = pageHeight - margin * 2;
+    const scale = contentWidth / canvas.width; // mm per canvas pixel
+    const maxSliceHeight = Math.floor(contentHeight / scale); // max canvas pixels per page
 
-    let yOffset = 0;
+    // Find a "safe" row to cut — scan for a row that is mostly background (white)
+    function findSafeCut(startY: number): number {
+      const ctx = canvas.getContext("2d")!;
+      const searchRange = Math.min(Math.floor(maxSliceHeight * 0.15), 200); // look back up to 15%
+      const sampleWidth = Math.min(canvas.width, 400); // sample center pixels
+      const xOffset = Math.floor((canvas.width - sampleWidth) / 2);
+
+      for (let row = startY; row > startY - searchRange && row > 0; row--) {
+        const data = ctx.getImageData(xOffset, row, sampleWidth, 1).data;
+        let whiteCount = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240) {
+            whiteCount++;
+          }
+        }
+        const ratio = whiteCount / (sampleWidth);
+        if (ratio > 0.92) return row; // found a mostly-white row
+      }
+      return startY; // fallback: cut at original position
+    }
+
+    let sourceY = 0;
     let page = 0;
 
-    while (yOffset < imgHeight) {
+    while (sourceY < canvas.height) {
       if (page > 0) pdf.addPage();
 
-      const sourceY = (yOffset / imgHeight) * canvas.height;
-      const sourceHeight = Math.min(
-        ((pageHeight - margin * 2) / imgHeight) * canvas.height,
-        canvas.height - sourceY
-      );
-      const destHeight = (sourceHeight / canvas.height) * imgHeight;
+      let idealEnd = sourceY + maxSliceHeight;
+      let sliceEnd: number;
+
+      if (idealEnd >= canvas.height) {
+        sliceEnd = canvas.height;
+      } else {
+        sliceEnd = findSafeCut(idealEnd);
+      }
+
+      const sliceHeight = sliceEnd - sourceY;
+      const destHeight = sliceHeight * scale;
 
       const pageCanvas = document.createElement("canvas");
       pageCanvas.width = canvas.width;
-      pageCanvas.height = sourceHeight;
+      pageCanvas.height = sliceHeight;
       const ctx = pageCanvas.getContext("2d")!;
-      ctx.drawImage(canvas, 0, sourceY, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+      ctx.drawImage(canvas, 0, sourceY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
 
       const pageImgData = pageCanvas.toDataURL("image/jpeg", 0.92);
       pdf.addImage(pageImgData, "JPEG", margin, margin, contentWidth, destHeight);
 
-      yOffset += pageHeight - margin * 2;
+      sourceY = sliceEnd;
       page++;
     }
 
