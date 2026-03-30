@@ -226,8 +226,6 @@ export default function PublicBudget() {
           version={heroVersion}
         />
 
-        {/* ═══ MOBILE SECTION NAV — sticky pills ═══ */}
-        <MobileSectionNav items={mobileNavItems} activeId={activeMobileNav} />
 
         {/* ═══ TRUST STRIP — scannable confidence chips ═══ */}
         <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
