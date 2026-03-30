@@ -201,6 +201,7 @@ export default function PublicBudget() {
       <main id="budget-content" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
         {/* ═══ MOBILE HERO CARD — price + validity + CTA above the fold ═══ */}
+        <div data-pdf-section>
         <MobileHeroCard
           total={total}
           validity={validity}
@@ -212,10 +213,13 @@ export default function PublicBudget() {
           area={heroArea}
           version={heroVersion}
         />
+        </div>
 
 
         {/* ═══ TRUST STRIP — scannable confidence chips ═══ */}
-        <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
+        <div data-pdf-section>
+          <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 lg:gap-8 mt-3 lg:mt-0">
           {/* Content column */}
@@ -223,11 +227,13 @@ export default function PublicBudget() {
 
             {/* ─── MOBILE ORDER 1: O que está incluído (Arq + Eng merged) ─── */}
             <div id="mobile-included" className="scroll-mt-20">
+              <div data-pdf-section>
               <AnimatedSection id="arquitetonico-section" index={0}>
                 <ArquitetonicoExpander />
               </AnimatedSection>
+              </div>
 
-              <div className="mt-3">
+              <div className="mt-3" data-pdf-section>
                 <AnimatedSection id="engenharia-section" index={0.5}>
                   <EngenhariaExpander />
                 </AnimatedSection>
@@ -235,20 +241,24 @@ export default function PublicBudget() {
 
               {/* ─── Visual 3D + Portal logo após Engenharia ─── */}
               <div id="mobile-trust" className="space-y-3 mt-3 scroll-mt-20">
+                <div data-pdf-section>
                 <AnimatedSection id="gallery-section" index={0.55}>
                   <Suspense fallback={<LazyFallback />}>
                     <ProjectGallery publicId={publicId} />
                   </Suspense>
                 </AnimatedSection>
+                </div>
 
+                <div data-pdf-section>
                 <AnimatedSection id="portal-section-inline" index={0.6}>
                   <Suspense fallback={<LazyFallback />}>
                     <PortalShowcase />
                   </Suspense>
                 </AnimatedSection>
+                </div>
 
                 {/* Map */}
-                <div>
+                <div data-pdf-section>
                   <AnimatedSection id="projetos-regiao" index={0.7}>
                     <Suspense fallback={<LazyFallback />}>
                       <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
@@ -302,7 +312,7 @@ export default function PublicBudget() {
                         if (allItems.length === 0) return null;
 
                         return (
-                          <div key={group.category.id} className="mb-8 last:mb-0">
+                          <div key={group.category.id} className="mb-8 last:mb-0" data-pdf-section>
                             {/* Category label — minimal, no redundancy */}
                             <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
                               <div className={cn("w-1 h-5 rounded-full", group.category.bgClass)} />
@@ -371,6 +381,7 @@ export default function PublicBudget() {
             )}
 
             {/* ── Mobile inline summary ── */}
+            <div data-pdf-section>
             <MobileInlineSummary
               total={total}
               validity={validity}
@@ -381,12 +392,13 @@ export default function PublicBudget() {
               budgetId={budget.id}
               onTotalCardVisibilityChange={handleTotalCardVisibility}
             />
+            </div>
 
 
             {/* mobile-portal anchor kept for nav */}
             <div id="mobile-portal" className="scroll-mt-20" />
 
-            <div id="mobile-next-steps" className="scroll-mt-20">
+            <div id="mobile-next-steps" className="scroll-mt-20" data-pdf-section>
               <AnimatedSection id="next-steps" index={100}>
                 <NextSteps />
               </AnimatedSection>
@@ -445,12 +457,13 @@ export default function PublicBudget() {
           activeSection={null}
         />
 
-        <div id="mobile-faq" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20">
+        <div id="mobile-faq" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20" data-pdf-section>
           <BudgetFAQ />
         </div>
 
         {budget.disclaimer && (
           <motion.div
+            data-pdf-section
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
