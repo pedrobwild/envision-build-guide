@@ -13,13 +13,13 @@ type GalleryTab = "video" | "fotos" | "tour3d";
 
 type MediaItem = { src: string; alt: string; type?: "video" | "image" };
 
-const defaultGallery: Record<"3d" | "exec", MediaItem[]> = {
-  "3d": [
+const defaultGallery: Record<"video" | "fotos", MediaItem[]> = {
+  video: [
     { src: "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media/videos/projeto-3d-tour.mp4", alt: "Projeto 3D — Vídeo Tour", type: "video" },
     { src: "/images/exemplo-projeto-3d-1.png", alt: "Projeto 3D — Planta humanizada" },
     { src: "/images/exemplo-projeto-3d-2.png", alt: "Projeto 3D — Sala e cozinha" },
   ],
-  exec: [
+  fotos: [
     { src: "/images/exemplo-executivo-1.jpg", alt: "Projeto Executivo — Vistas modificações" },
     { src: "/images/exemplo-executivo-2.jpg", alt: "Projeto Executivo — Detalhamento banheiro" },
   ],
