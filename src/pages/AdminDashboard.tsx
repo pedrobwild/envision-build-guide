@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const [duplicateConfirmId, setDuplicateConfirmId] = useState<string | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
   const [importType, setImportType] = useState<'pdf' | 'excel'>('pdf');
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
