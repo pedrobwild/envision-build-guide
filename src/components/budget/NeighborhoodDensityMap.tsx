@@ -62,6 +62,8 @@ function getPinStyle(count: number) {
 
 const DEFAULT_CENTER: [number, number] = [-46.6679, -23.5874];
 const DEFAULT_ZOOM = 11.5;
+const MAPTILER_STYLE = "https://api.maptiler.com/maps/streets-v2/style.json";
+const FALLBACK_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 
 function normalize(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -75,12 +77,15 @@ interface NeighborhoodDensityMapProps {
 export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensityMapProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<Map<string, { marker: maplibregl.Marker; el: HTMLDivElement }>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
   const autoSelectedRef = useRef(false);
-  const apiKey = (import.meta.env.VITE_MAPTILER_API_KEY as string) || "FQaugVdcxiB24tG5rETf";
+  const fallbackStyleTriedRef = useRef(false);
+  const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
+  const styleUrl = apiKey ? `${MAPTILER_STYLE}?key=${apiKey}` : FALLBACK_STYLE;
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
@@ -92,7 +97,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   // Auto-select client neighborhood on mount
   useEffect(() => {
     if (!mapLoaded || !clientNeighborhood || autoSelectedRef.current) return;
-    const match = NEIGHBORHOOD_DATA.find(n => normalize(n.name) === normalize(clientNeighborhood));
+    const match = NEIGHBORHOOD_DATA.find((n) => normalize(n.name) === normalize(clientNeighborhood));
     if (match) {
       autoSelectedRef.current = true;
       setTimeout(() => handleSelect(match.id), 800);
@@ -131,23 +136,46 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
   // Init map
   useEffect(() => {
-    if (!mapContainer.current || !apiKey) return;
+    if (!mapContainer.current) return;
 
-    const map = new maplibregl.Map({
-      container: mapContainer.current,
-      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
-      pitch: 0,
-      bearing: 0,
-      minZoom: 10,
-      maxZoom: 16,
-      maxBounds: [[-47.0, -23.85], [-46.3, -23.35]],
-    });
+    let map: maplibregl.Map | null = null;
+
+    try {
+      map = new maplibregl.Map({
+        container: mapContainer.current,
+        style: styleUrl,
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        pitch: 0,
+        bearing: 0,
+        minZoom: 10,
+        maxZoom: 16,
+        maxBounds: [[-47.0, -23.85], [-46.3, -23.35]],
+      });
+    } catch {
+      setMapFailed(true);
+      return;
+    }
+
+    const safeResize = () => map?.resize();
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 
+    map.on("error", (event: any) => {
+      const message = String(event?.error?.message ?? "").toLowerCase();
+      const isMapTilerError = message.includes("maptiler") || message.includes("403") || message.includes("401");
+
+      if (!fallbackStyleTriedRef.current && apiKey && isMapTilerError) {
+        fallbackStyleTriedRef.current = true;
+        map?.setStyle(FALLBACK_STYLE);
+        return;
+      }
+
+      setMapFailed(true);
+    });
+
     map.on("load", () => {
+      safeResize();
       const mobile = window.innerWidth < 768;
       NEIGHBORHOOD_DATA.forEach((n) => {
         const style = getPinStyle(n.count);
@@ -168,7 +196,9 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         `;
         el.textContent = String(n.count);
 
-        el.addEventListener("mouseenter", () => { el.style.transform = "scale(1.12)"; });
+        el.addEventListener("mouseenter", () => {
+          el.style.transform = "scale(1.12)";
+        });
         el.addEventListener("mouseleave", () => {
           if (selected !== n.id) el.style.transform = "scale(1)";
         });
@@ -201,15 +231,23 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       setMapLoaded(true);
     });
 
+    const resizeObserver = new ResizeObserver(() => safeResize());
+    resizeObserver.observe(mapContainer.current);
+    window.addEventListener("resize", safeResize, { passive: true });
+    window.addEventListener("orientationchange", safeResize, { passive: true });
+
     mapRef.current = map;
 
     return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", safeResize);
+      window.removeEventListener("orientationchange", safeResize);
       markersRef.current.clear();
-      map.remove();
+      map?.remove();
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKey]);
+  }, [apiKey, styleUrl]);
 
   const whatsappUrl = selectedData
     ? `https://wa.me/5511911906183?text=${encodeURIComponent(`Olá! Tenho um imóvel no ${selectedData.name} e gostaria de um orçamento.`)}`
@@ -228,13 +266,14 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-[3] min-w-0">
-          {apiKey ? (
+          {!mapFailed ? (
             <div
               ref={mapContainer}
               className="w-full h-[280px] md:h-[600px] rounded-xl overflow-hidden border border-border"
+              aria-label="Mapa de densidade por bairro"
             />
           ) : (
-            <MapFallback height="600px" />
+            <MapFallback height={isMobile ? "280px" : "600px"} />
           )}
         </div>
         <div className="flex-[2] md:max-h-[600px] overflow-y-auto" ref={panelRef}>
