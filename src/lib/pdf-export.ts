@@ -75,7 +75,7 @@ async function prepareForCapture(element: HTMLElement) {
     }
   });
 
-  // 4. Wait for all visible images to load
+  // 6. Wait for all visible images to load
   const images = element.querySelectorAll('img');
   const imagePromises: Promise<void>[] = [];
   images.forEach(img => {
