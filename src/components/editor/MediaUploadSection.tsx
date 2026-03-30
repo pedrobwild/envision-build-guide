@@ -49,8 +49,8 @@ interface MediaUploadSectionProps {
 
 const SortableMediaItem = forwardRef<HTMLDivElement, {
   file: MediaFile;
-  tab: MediaTab;
-  onDelete: (tab: MediaTab, name: string) => void;
+  tab: StorageTab;
+  onDelete: (tab: StorageTab, name: string) => void;
   reordering: boolean;
 }>(function SortableMediaItem({
   file,
