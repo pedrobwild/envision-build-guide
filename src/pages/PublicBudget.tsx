@@ -1,22 +1,18 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicBudget, calculateBudgetTotal, calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
-import { SectionCard } from "@/components/budget/SectionCard";
 import { ProductShowcaseCard } from "@/components/budget/ProductShowcaseCard";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
-import { FloorPlanViewer } from "@/components/budget/FloorPlanViewer";
 import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
 import { AnimatedSection } from "@/components/budget/AnimatedSection";
-import { ScopeTransitionZone } from "@/components/budget/ScopeTransitionZone";
-import { CategoryHeader } from "@/components/budget/CategoryHeader";
-import { PublicBudgetSkeleton } from "@/components/budget/PublicBudgetSkeleton";
 import { CollapsingSectionHeader } from "@/components/budget/CollapsingSectionHeader";
+import { PublicBudgetSkeleton } from "@/components/budget/PublicBudgetSkeleton";
 import { demoBudget } from "@/lib/demo-budget-data";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
@@ -29,20 +25,22 @@ import { MobileInlineSummary } from "@/components/budget/MobileInlineSummary";
 import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
 import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
-import { PortalShowcase } from "@/components/budget/PortalShowcase";
-import { NeighborhoodDensityMap } from "@/components/budget/NeighborhoodDensityMap";
-import { ProjectGallery } from "@/components/budget/ProjectGallery";
-import { ProjectConditions } from "@/components/budget/ProjectConditions";
 import { NextSteps } from "@/components/budget/NextSteps";
-import { TurnkeyComparison } from "@/components/budget/TurnkeyComparison";
-import { WhatIsIncluded } from "@/components/budget/WhatIsIncluded";
-import { InvestmentImpact } from "@/components/budget/InvestmentImpact";
-import { InlineCTA } from "@/components/budget/InlineCTA";
 import { TrustStrip } from "@/components/budget/TrustStrip";
-import { RoomDetailModal } from "@/components/budget/RoomDetailModal";
 import { useScrollspy } from "@/hooks/useScrollspy";
 import { categorizeSections } from "@/lib/scope-categories";
 import { cn } from "@/lib/utils";
+
+// ── Lazy-loaded heavy components (MapLibre, ReactPlayer, Lightbox, Embla) ──
+const NeighborhoodDensityMap = lazy(() => import("@/components/budget/NeighborhoodDensityMap").then(m => ({ default: m.NeighborhoodDensityMap })));
+const ProjectGallery = lazy(() => import("@/components/budget/ProjectGallery").then(m => ({ default: m.ProjectGallery })));
+const PortalShowcase = lazy(() => import("@/components/budget/PortalShowcase").then(m => ({ default: m.PortalShowcase })));
+const RoomDetailModal = lazy(() => import("@/components/budget/RoomDetailModal").then(m => ({ default: m.RoomDetailModal })));
+
+/** Lightweight placeholder while lazy chunks load */
+function LazyFallback() {
+  return <div className="rounded-xl bg-muted/30 animate-pulse h-48 w-full" />;
+}
 
 
 import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
