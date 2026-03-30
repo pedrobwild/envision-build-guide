@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronDown,
+  ChevronUp,
   FileSignature,
   MessageCircle,
   Shield,
@@ -11,6 +11,7 @@ import {
 import { formatBRL } from "@/lib/formatBRL";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 import { ContractRequestDialog } from "./ContractRequestDialog";
+import { MobileFinancialSheet } from "./MobileFinancialSheet";
 
 interface MobileBottomBarProps {
   total: number;
@@ -33,6 +34,7 @@ const DEFAULT_PHONE = "5511911906183";
 export function MobileBottomBar({
   total,
   validity,
+  categorizedGroups,
   projectName,
   clientName,
   publicId,
@@ -40,14 +42,11 @@ export function MobileBottomBar({
   hidden = false,
 }: MobileBottomBarProps) {
   const [contractOpen, setContractOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const whatsappUpdateUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(
     `Olá! O orçamento ${projectName || "do projeto"} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
   )}`;
-
-  const scrollToSummary = () => {
-    document.getElementById("resumo-mobile")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   return (
     <>
@@ -79,17 +78,18 @@ export function MobileBottomBar({
                 </span>
               </div>
               <div className="flex items-center justify-between px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]">
-                {/* Left: total + scroll trigger */}
+                {/* Left: total + sheet trigger */}
                 <button
-                  onClick={scrollToSummary}
+                  onClick={() => setSheetOpen(true)}
                   className="flex flex-col min-h-[44px] justify-center"
+                  aria-label="Ver resumo financeiro"
                 >
                   <span className="font-display font-bold text-foreground text-base tabular-nums">
                     {formatBRL(total)}
                   </span>
                   <span className="text-xs text-muted-foreground font-body flex items-center gap-1">
-                    <ChevronDown className="h-3 w-3" aria-hidden="true" />
-                    Ver resumo ↓
+                    <ChevronUp className="h-3 w-3" aria-hidden="true" />
+                    Ver resumo
                   </span>
                 </button>
 
@@ -102,7 +102,7 @@ export function MobileBottomBar({
                     whileTap={{ scale: 0.97 }}
                     className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
                   >
-                    <MessageCircle className="h-4 w-4 flex-shrink-0" />
+                    <MessageCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                     Solicitar atualização
                   </motion.a>
                 ) : (
@@ -111,7 +111,7 @@ export function MobileBottomBar({
                     whileTap={{ scale: 0.97 }}
                     className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
                   >
-                    <FileSignature className="h-4 w-4 flex-shrink-0" />
+                    <FileSignature className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                     Solicitar Contrato
                   </motion.button>
                 )}
@@ -120,6 +120,19 @@ export function MobileBottomBar({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Financial Summary Sheet */}
+      <MobileFinancialSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        total={total}
+        validity={validity}
+        categorizedGroups={categorizedGroups}
+        projectName={projectName}
+        clientName={clientName}
+        publicId={publicId}
+        budgetId={budgetId}
+      />
 
       {/* Contract Request Dialog */}
       <ContractRequestDialog
