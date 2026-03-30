@@ -250,34 +250,61 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
     const folder = folderMap[activeTab];
 
     try {
-      // Rename files with new prefixes by: download → upload with new name → delete old
+      // Two-pass rename to avoid collisions:
+      // Pass 1: rename all to temporary names (_tmp_XX-)
+      const tempNames: { oldName: string; tmpName: string; blob: Blob }[] = [];
+
       for (let i = 0; i < reordered.length; i++) {
         const file = reordered[i];
-        const newName = addPrefix(i, file.name);
-        if (newName === file.name) continue; // no change needed
+        const finalName = addPrefix(i, file.name);
+        if (finalName === file.name) continue;
 
         const oldPath = `${folder}/${file.name}`;
-        const newPath = `${folder}/${newName}`;
-
-        // Download the file
         const { data: blob, error: dlErr } = await supabase.storage.from("media").download(oldPath);
         if (dlErr || !blob) {
           console.error("Download error for reorder:", dlErr);
           continue;
         }
 
-        // Upload with new name
-        const { error: upErr } = await supabase.storage.from("media").upload(newPath, blob, {
+        const tmpName = `_tmp_${String(i).padStart(3, "0")}_${stripPrefix(file.name)}`;
+        const tmpPath = `${folder}/${tmpName}`;
+
+        const { error: upErr } = await supabase.storage.from("media").upload(tmpPath, blob, {
           upsert: true,
           contentType: blob.type || "application/octet-stream",
         });
         if (upErr) {
-          console.error("Re-upload error:", upErr);
+          console.error("Temp upload error:", upErr);
           continue;
         }
 
-        // Delete old file
+        // Delete original
         await supabase.storage.from("media").remove([oldPath]);
+        tempNames.push({ oldName: file.name, tmpName, blob });
+      }
+
+      // Pass 2: rename temp files to final names
+      for (let i = 0; i < reordered.length; i++) {
+        const file = reordered[i];
+        const finalName = addPrefix(i, file.name);
+        if (finalName === file.name) continue;
+
+        const entry = tempNames.find(t => t.oldName === file.name);
+        if (!entry) continue;
+
+        const tmpPath = `${folder}/${entry.tmpName}`;
+        const finalPath = `${folder}/${finalName}`;
+
+        const { error: upErr } = await supabase.storage.from("media").upload(finalPath, entry.blob, {
+          upsert: true,
+          contentType: entry.blob.type || "application/octet-stream",
+        });
+        if (upErr) {
+          console.error("Final upload error:", upErr);
+          continue;
+        }
+
+        await supabase.storage.from("media").remove([tmpPath]);
       }
 
       toast.success("Ordem atualizada!");
