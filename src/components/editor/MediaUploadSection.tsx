@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,17 +35,19 @@ interface MediaUploadSectionProps {
 }
 
 /* ── Sortable thumbnail item ── */
-function SortableMediaItem({
-  file,
-  tab,
-  onDelete,
-  reordering,
-}: {
+import { forwardRef } from "react";
+
+const SortableMediaItem = forwardRef<HTMLDivElement, {
   file: MediaFile;
   tab: MediaTab;
   onDelete: (tab: MediaTab, name: string) => void;
   reordering: boolean;
-}) {
+}>(function SortableMediaItem({
+  file,
+  tab,
+  onDelete,
+  reordering,
+}, _ref) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: file.name,
   });
@@ -102,7 +104,7 @@ function SortableMediaItem({
       )}
     </div>
   );
-}
+});
 
 /* ── Helpers ── */
 const PREFIX_REGEX = /^(\d{2})-/;

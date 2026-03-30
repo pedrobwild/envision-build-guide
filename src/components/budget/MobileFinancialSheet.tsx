@@ -28,7 +28,6 @@ interface MobileFinancialSheetProps {
   };
   categorizedGroups: CategorizedGroup[];
   projectName?: string;
-  clientName?: string;
   publicId: string;
   budgetId?: string;
 }
@@ -45,7 +44,7 @@ export function MobileFinancialSheet({
   projectName,
   publicId,
   budgetId,
-}: MobileFinancialSheetProps) {
+}: Omit<MobileFinancialSheetProps, 'clientName'> & { clientName?: string }) {
   const [snap, setSnap] = useState<number | string | null>(SNAP_POINTS[0]);
   const [installments, setInstallments] = useState(10);
   const [dropdownOpen, setDropdownOpen] = useState(false);
