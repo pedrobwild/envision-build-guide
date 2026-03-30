@@ -259,6 +259,7 @@ export default function AdminDashboard() {
       }
 
       toast.success('Orçamento duplicado! Preencha os dados do novo cliente.');
+      await loadBudgets();
       navigate(`/admin/budget/${newBudget.id}`);
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao duplicar orçamento');
