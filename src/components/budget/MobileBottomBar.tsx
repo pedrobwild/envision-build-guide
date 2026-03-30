@@ -135,18 +135,18 @@ export function MobileBottomBar({
               className="pointer-events-auto bg-card/80 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_20px_-4px_hsl(var(--foreground)/0.06)]"
             >
               {/* Trust micro-line */}
-              <div className="flex items-center justify-center gap-3 px-4 py-1 bg-muted/20">
-                <span className="flex items-center gap-1 text-xs text-muted-foreground font-body">
+              <div className="flex items-center justify-center gap-3 px-4 py-1 bg-muted/20" role="status" aria-label="Garantias do orçamento">
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground/90 font-body">
                   <Shield className="h-3 w-3" aria-hidden="true" />
                   Preço fixo
                 </span>
                 <span className="text-muted-foreground/20" aria-hidden="true">·</span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground font-body">
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground/90 font-body">
                   <Award className="h-3 w-3" aria-hidden="true" />
                   Garantia 5 anos
                 </span>
                 <span className="text-muted-foreground/20" aria-hidden="true">·</span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground font-body">
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground/90 font-body">
                   <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                   Sem custos ocultos
                 </span>

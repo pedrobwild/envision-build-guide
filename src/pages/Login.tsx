@@ -218,9 +218,14 @@ export default function Login() {
         <div className="mt-8 flex items-center justify-center gap-1.5 text-sm text-white/80 w-full font-body">
           <HelpCircle className="h-4 w-4 shrink-0" />
           <span>Problemas?</span>
-          <span className="text-white hover:underline font-medium cursor-pointer">
+          <a
+            href="https://wa.me/5511911906183?text=Preciso%20de%20ajuda%20com%20o%20acesso%20ao%20sistema."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white hover:underline font-medium"
+          >
             Falar com suporte
-          </span>
+          </a>
         </div>
 
         <div className="mt-6 flex flex-col items-center gap-1 w-full text-center">

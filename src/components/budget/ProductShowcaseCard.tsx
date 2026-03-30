@@ -55,6 +55,8 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
               <img
                 src={primaryImage.url}
                 alt={item.title}
+                width={112}
+                height={112}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 loading="lazy"
               />
