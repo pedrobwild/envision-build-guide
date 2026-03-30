@@ -780,6 +780,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+          </>
         )}
       </main>
       <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} fileFilter={importType} />
