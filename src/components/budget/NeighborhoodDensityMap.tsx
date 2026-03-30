@@ -276,7 +276,10 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         minZoom: 10,
         maxZoom: 16,
         maxBounds: [[-47.0, -23.85], [-46.3, -23.35]],
+        trackResize: true,
       });
+      // Prevent map canvas from stealing page scroll position on init
+      map.getCanvas().setAttribute("tabindex", "-1");
     } catch {
       setMapLoaded(false);
       setMapFailed(true);
