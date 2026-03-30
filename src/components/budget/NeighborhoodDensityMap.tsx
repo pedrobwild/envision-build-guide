@@ -102,14 +102,19 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const panelRef = useRef<HTMLDivElement>(null);
   const autoSelectedRef = useRef(false);
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
+  const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
   const styleCandidates = useMemo<(string | maplibregl.StyleSpecification)[]>(() => {
+    if (isMobileViewport) {
+      return [RASTER_FALLBACK_STYLE, FALLBACK_STYLE, SECONDARY_FALLBACK_STYLE];
+    }
+
     const candidates: (string | maplibregl.StyleSpecification)[] = [];
     if (apiKey) candidates.push(`${MAPTILER_STYLE}?key=${apiKey}`);
     candidates.push(SECONDARY_FALLBACK_STYLE);
     candidates.push(FALLBACK_STYLE);
     candidates.push(RASTER_FALLBACK_STYLE);
     return candidates;
-  }, [apiKey]);
+  }, [apiKey, isMobileViewport]);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
