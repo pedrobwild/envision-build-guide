@@ -64,6 +64,8 @@ const DEFAULT_CENTER: [number, number] = [-46.6679, -23.5874];
 const DEFAULT_ZOOM = 11.5;
 const MAPTILER_STYLE = "https://api.maptiler.com/maps/streets-v2/style.json";
 const FALLBACK_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+const SECONDARY_FALLBACK_STYLE = "https://demotiles.maplibre.org/style.json";
+const STYLE_LOAD_TIMEOUT_MS = 8000;
 
 function normalize(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -83,9 +85,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const markersRef = useRef<Map<string, { marker: maplibregl.Marker; el: HTMLDivElement }>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
   const autoSelectedRef = useRef(false);
-  const fallbackStyleTriedRef = useRef(false);
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
-  const styleUrl = apiKey ? `${MAPTILER_STYLE}?key=${apiKey}` : FALLBACK_STYLE;
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
