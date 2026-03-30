@@ -102,11 +102,11 @@ export default function OrcamentoPage() {
       {/* Mobile bottom CTA */}
       <div className="fixed bottom-0 inset-x-0 lg:hidden z-40 bg-card/95 backdrop-blur-md border-t border-border px-4 py-3">
         <div className="flex items-center gap-3 max-w-lg mx-auto">
-          <Button className="flex-1 gap-2" size="sm">
+          <Button className="flex-1 gap-2" size="sm" aria-label="Solicitar contrato do orçamento">
             <FileSignature className="h-3.5 w-3.5" />
             Solicitar Contrato
           </Button>
-          <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0">
+          <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" aria-label="Enviar mensagem via WhatsApp">
             <MessageCircle className="h-4 w-4" />
           </Button>
         </div>
