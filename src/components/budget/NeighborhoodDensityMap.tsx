@@ -63,8 +63,24 @@ function getPinStyle(count: number) {
 const DEFAULT_CENTER: [number, number] = [-46.6679, -23.5874];
 const DEFAULT_ZOOM = 11.5;
 const MAPTILER_STYLE = "https://api.maptiler.com/maps/streets-v2/style.json";
-const FALLBACK_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 const SECONDARY_FALLBACK_STYLE = "https://demotiles.maplibre.org/style.json";
+const FALLBACK_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+const RASTER_FALLBACK_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    "osm-raster": {
+      type: "raster",
+      tiles: [
+        "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      ],
+      tileSize: 256,
+      attribution: "© OpenStreetMap contributors",
+    },
+  },
+  layers: [{ id: "osm-raster-layer", type: "raster", source: "osm-raster" }],
+};
 const STYLE_LOAD_TIMEOUT_MS = 8000;
 
 function normalize(s: string) {
@@ -86,12 +102,14 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const panelRef = useRef<HTMLDivElement>(null);
   const autoSelectedRef = useRef(false);
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
-  const styleCandidates = useMemo(
-    () =>
-      [apiKey ? `${MAPTILER_STYLE}?key=${apiKey}` : null, FALLBACK_STYLE, SECONDARY_FALLBACK_STYLE]
-        .filter((value, index, arr): value is string => Boolean(value) && arr.indexOf(value) === index),
-    [apiKey]
-  );
+  const styleCandidates = useMemo<(string | maplibregl.StyleSpecification)[]>(() => {
+    const candidates: (string | maplibregl.StyleSpecification)[] = [];
+    if (apiKey) candidates.push(`${MAPTILER_STYLE}?key=${apiKey}`);
+    candidates.push(SECONDARY_FALLBACK_STYLE);
+    candidates.push(FALLBACK_STYLE);
+    candidates.push(RASTER_FALLBACK_STYLE);
+    return candidates;
+  }, [apiKey]);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
