@@ -104,15 +104,16 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
   const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
   const styleCandidates = useMemo<(string | maplibregl.StyleSpecification)[]>(() => {
-    if (isMobileViewport) {
-      return [RASTER_FALLBACK_STYLE, FALLBACK_STYLE, SECONDARY_FALLBACK_STYLE];
+    // Use the same resilient fallback chain for all devices: raster first (most reliable)
+    const candidates: (string | maplibregl.StyleSpecification)[] = [
+      RASTER_FALLBACK_STYLE,
+      FALLBACK_STYLE,
+      SECONDARY_FALLBACK_STYLE,
+    ];
+    // On desktop with API key, try MapTiler first for higher quality
+    if (!isMobileViewport && apiKey) {
+      candidates.unshift(`${MAPTILER_STYLE}?key=${apiKey}`);
     }
-
-    const candidates: (string | maplibregl.StyleSpecification)[] = [];
-    if (apiKey) candidates.push(`${MAPTILER_STYLE}?key=${apiKey}`);
-    candidates.push(SECONDARY_FALLBACK_STYLE);
-    candidates.push(FALLBACK_STYLE);
-    candidates.push(RASTER_FALLBACK_STYLE);
     return candidates;
   }, [apiKey, isMobileViewport]);
 
