@@ -324,7 +324,76 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   }, [files, activeTab, folderMap]);
 
   const currentTab = tabs.find(t => t.id === activeTab)!;
-  const currentFiles = files[activeTab];
+  const currentFiles = activeTab !== "tour3d" ? files[activeTab as StorageTab] : [];
+  const isStorageTab = activeTab !== "tour3d";
+
+  // ── Tour 3D management ──
+  const loadTours = useCallback(async () => {
+    setToursLoading(true);
+    const { data } = await (supabase as any)
+      .from("budget_tours")
+      .select("id, room_id, room_label, tour_url, order_index")
+      .eq("budget_id", budgetId)
+      .order("order_index", { ascending: true });
+    setTours((data ?? []).map((t: any) => ({
+      id: t.id,
+      room_id: t.room_id,
+      room_label: t.room_label,
+      tour_url: t.tour_url,
+      order_index: t.order_index,
+    })));
+    setToursLoading(false);
+  }, [budgetId]);
+
+  useEffect(() => { loadTours(); }, [loadTours]);
+
+  const addTourRow = () => {
+    setTours(prev => [...prev, {
+      room_id: `room-${Date.now()}`,
+      room_label: "",
+      tour_url: "",
+      order_index: prev.length,
+    }]);
+  };
+
+  const updateTourRow = (index: number, field: keyof TourEntry, value: string) => {
+    setTours(prev => prev.map((t, i) => i === index ? { ...t, [field]: value } : t));
+  };
+
+  const removeTourRow = (index: number) => {
+    setTours(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const saveTours = async () => {
+    setToursSaving(true);
+    try {
+      // Delete all existing tours for this budget
+      await (supabase as any).from("budget_tours").delete().eq("budget_id", budgetId);
+
+      // Insert all current tours
+      const toInsert = tours
+        .filter(t => t.room_label.trim() && t.tour_url.trim())
+        .map((t, i) => ({
+          budget_id: budgetId,
+          room_id: t.room_label.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+          room_label: t.room_label,
+          tour_url: t.tour_url,
+          order_index: i,
+        }));
+
+      if (toInsert.length > 0) {
+        const { error } = await (supabase as any).from("budget_tours").insert(toInsert);
+        if (error) throw error;
+      }
+
+      toast.success("Tours 3D salvos com sucesso!");
+      await loadTours();
+    } catch (err) {
+      console.error("Error saving tours:", err);
+      toast.error("Erro ao salvar tours.");
+    }
+    setToursSaving(false);
+  };
 
   return (
     <Card className="border-border">
@@ -351,72 +420,139 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
             >
               {tab.icon}
               {tab.label}
-              {files[tab.id].length > 0 && (
+              {tab.id !== "tour3d" && files[tab.id as StorageTab].length > 0 && (
                 <span className="ml-1 bg-background/30 rounded px-1 text-xs">
-                  {files[tab.id].length}
+                  {files[tab.id as StorageTab].length}
+                </span>
+              )}
+              {tab.id === "tour3d" && tours.length > 0 && (
+                <span className="ml-1 bg-background/30 rounded px-1 text-xs">
+                  {tours.length}
                 </span>
               )}
             </button>
           ))}
         </div>
 
-        {/* Upload button */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading || reordering}
-            className="gap-2"
-          >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-            {uploading ? "Enviando..." : "Adicionar arquivos"}
-          </Button>
-          <span className="text-xs text-muted-foreground font-body">
-            Pasta: <code className="bg-muted px-1 py-0.5 rounded text-xs">{folderMap[activeTab]}</code>
-          </span>
-        </div>
+        {/* Tour 3D management */}
+        {activeTab === "tour3d" ? (
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground font-body">
+              Adicione links de tours 3D interativos para cada cômodo. Eles aparecerão na aba "Tour 3D" da galeria pública.
+            </p>
 
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          accept={currentTab.accept}
-          className="hidden"
-          onChange={e => handleUpload(e.target.files)}
-        />
+            {toursLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tours.map((tour, index) => (
+                  <div key={index} className="flex items-start gap-2 p-3 rounded-lg border border-border bg-muted/30">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-display font-semibold text-muted-foreground w-16 flex-shrink-0">Cômodo</span>
+                        <Input
+                          value={tour.room_label}
+                          onChange={(e) => updateTourRow(index, "room_label", e.target.value)}
+                          placeholder="Ex: Dormitório, Cozinha, Banho..."
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-display font-semibold text-muted-foreground w-16 flex-shrink-0">Link</span>
+                        <Input
+                          value={tour.tour_url}
+                          onChange={(e) => updateTourRow(index, "tour_url", e.target.value)}
+                          placeholder="https://api2.enscape3d.com/v3/view/..."
+                          className="h-8 text-sm font-mono"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeTourRow(index)}
+                      className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors mt-1"
+                      title="Remover cômodo"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
 
-        {/* File grid */}
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : currentFiles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
-            <ImagePlus className="h-8 w-8 opacity-40" />
-            <p className="text-xs font-body">Nenhum arquivo na pasta {currentTab.label}</p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={addTourRow} className="gap-1.5">
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar cômodo
+                  </Button>
+                  <Button size="sm" onClick={saveTours} disabled={toursSaving} className="gap-1.5">
+                    {toursSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                    Salvar tours
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={currentFiles.map(f => f.name)} strategy={rectSortingStrategy}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {currentFiles.map(f => (
-                  <SortableMediaItem
-                    key={f.name}
-                    file={f}
-                    tab={activeTab}
-                    onDelete={handleDelete}
-                    reordering={reordering}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        )}
+          <>
+            {/* Upload button */}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading || reordering}
+                className="gap-2"
+              >
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                {uploading ? "Enviando..." : "Adicionar arquivos"}
+              </Button>
+              <span className="text-xs text-muted-foreground font-body">
+                Pasta: <code className="bg-muted px-1 py-0.5 rounded text-xs">{folderMap[activeTab as StorageTab]}</code>
+              </span>
+            </div>
 
-        <p className="text-xs text-muted-foreground font-body">
-          ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública do orçamento. Arraste os thumbnails para definir a ordem de exibição.
-        </p>
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept={currentTab.accept}
+              className="hidden"
+              onChange={e => handleUpload(e.target.files)}
+            />
+
+            {/* File grid */}
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : currentFiles.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
+                <ImagePlus className="h-8 w-8 opacity-40" />
+                <p className="text-xs font-body">Nenhum arquivo na pasta {currentTab.label}</p>
+              </div>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={currentFiles.map(f => f.name)} strategy={rectSortingStrategy}>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {currentFiles.map(f => (
+                      <SortableMediaItem
+                        key={f.name}
+                        file={f}
+                        tab={activeTab as StorageTab}
+                        onDelete={handleDelete}
+                        reordering={reordering}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+
+            <p className="text-xs text-muted-foreground font-body">
+              ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública do orçamento. Arraste os thumbnails para definir a ordem de exibição.
+            </p>
+          </>
+        )}
       </CardContent>
     </Card>
   );
