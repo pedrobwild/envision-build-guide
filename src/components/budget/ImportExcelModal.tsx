@@ -530,6 +530,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         parsedMeta.projectName?.trim() ||
         (normalizedClientName ? `Reforma ${normalizedClientName}` : file?.name.replace(/\.(xlsx|xls|pdf)$/i, "") || "Importação");
 
+      const importPublicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
       const { data: budget, error: budgetErr } = await supabase
         .from("budgets")
         .insert({
@@ -539,6 +540,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           bairro: parsedMeta.bairro || null,
           versao: parsedMeta.version || null,
           created_by: user.id,
+          public_id: importPublicId,
         })
         .select()
         .single();
