@@ -145,43 +145,28 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     if (!mapContainer.current) return;
 
     let map: maplibregl.Map | null = null;
+    let disposed = false;
+    let styleIndex = 0;
+    let styleLoadTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    try {
-      map = new maplibregl.Map({
-        container: mapContainer.current,
-        style: styleUrl,
-        center: DEFAULT_CENTER,
-        zoom: DEFAULT_ZOOM,
-        pitch: 0,
-        bearing: 0,
-        minZoom: 10,
-        maxZoom: 16,
-        maxBounds: [[-47.0, -23.85], [-46.3, -23.35]],
-      });
-    } catch {
-      setMapFailed(true);
-      return;
-    }
+    const clearStyleLoadTimeout = () => {
+      if (styleLoadTimeout) {
+        clearTimeout(styleLoadTimeout);
+        styleLoadTimeout = null;
+      }
+    };
 
     const safeResize = () => map?.resize();
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    const clearMarkers = () => {
+      markersRef.current.forEach(({ marker }) => marker.remove());
+      markersRef.current.clear();
+    };
 
-    map.on("error", (event: any) => {
-      const message = String(event?.error?.message ?? "").toLowerCase();
-      const isMapTilerError = message.includes("maptiler") || message.includes("403") || message.includes("401");
+    const renderMarkers = () => {
+      if (!map) return;
+      clearMarkers();
 
-      if (!fallbackStyleTriedRef.current && apiKey && isMapTilerError) {
-        fallbackStyleTriedRef.current = true;
-        map?.setStyle(FALLBACK_STYLE);
-        return;
-      }
-
-      setMapFailed(true);
-    });
-
-    map.on("load", () => {
-      safeResize();
       const mobile = window.innerWidth < 768;
       NEIGHBORHOOD_DATA.forEach((n) => {
         const style = getPinStyle(n.count);
@@ -205,9 +190,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         el.addEventListener("mouseenter", () => {
           el.style.transform = "scale(1.12)";
         });
+
         el.addEventListener("mouseleave", () => {
           if (selected !== n.id) el.style.transform = "scale(1)";
         });
+
         el.addEventListener("click", (e) => {
           e.stopPropagation();
           handleSelect(n.id);
@@ -233,8 +220,89 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
         markersRef.current.set(n.id, { marker, el });
       });
+    };
 
+    const setStyleByIndex = (nextIndex: number) => {
+      if (!map) return false;
+      if (nextIndex < 0 || nextIndex >= styleCandidates.length) return false;
+
+      styleIndex = nextIndex;
+      clearStyleLoadTimeout();
+      styleLoadTimeout = setTimeout(() => {
+        const switched = setStyleByIndex(styleIndex + 1);
+        if (!switched && !disposed) {
+          setMapLoaded(false);
+          setMapFailed(true);
+          clearMarkers();
+        }
+      }, STYLE_LOAD_TIMEOUT_MS);
+
+      map.setStyle(styleCandidates[styleIndex]);
+      return true;
+    };
+
+    try {
+      map = new maplibregl.Map({
+        container: mapContainer.current,
+        style: styleCandidates[0],
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        pitch: 0,
+        bearing: 0,
+        minZoom: 10,
+        maxZoom: 16,
+        maxBounds: [[-47.0, -23.85], [-46.3, -23.35]],
+      });
+    } catch {
+      setMapLoaded(false);
+      setMapFailed(true);
+      return;
+    }
+
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+
+    styleLoadTimeout = setTimeout(() => {
+      const switched = setStyleByIndex(styleIndex + 1);
+      if (!switched && !disposed) {
+        setMapLoaded(false);
+        setMapFailed(true);
+        clearMarkers();
+      }
+    }, STYLE_LOAD_TIMEOUT_MS);
+
+    map.on("style.load", () => {
+      clearStyleLoadTimeout();
+      setMapFailed(false);
       setMapLoaded(true);
+      renderMarkers();
+      requestAnimationFrame(() => safeResize());
+    });
+
+    map.on("error", (event: any) => {
+      const message = String(event?.error?.message ?? "").toLowerCase();
+      const isStyleError =
+        message.includes("style") ||
+        message.includes("maptiler") ||
+        message.includes("401") ||
+        message.includes("403") ||
+        message.includes("failed to fetch") ||
+        message.includes("networkerror");
+
+      if (!isStyleError || disposed) return;
+
+      const switched = setStyleByIndex(styleIndex + 1);
+      if (!switched) {
+        clearStyleLoadTimeout();
+        setMapLoaded(false);
+        setMapFailed(true);
+        clearMarkers();
+      }
+    });
+
+    map.on("webglcontextlost", () => {
+      setMapLoaded(false);
+      setMapFailed(true);
+      clearMarkers();
     });
 
     const resizeObserver = new ResizeObserver(() => safeResize());
@@ -245,15 +313,16 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     mapRef.current = map;
 
     return () => {
+      disposed = true;
+      clearStyleLoadTimeout();
       resizeObserver.disconnect();
       window.removeEventListener("resize", safeResize);
       window.removeEventListener("orientationchange", safeResize);
-      markersRef.current.clear();
+      clearMarkers();
       map?.remove();
       mapRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKey, styleUrl]);
+  }, [handleSelect, selected, styleCandidates]);
 
   const whatsappUrl = selectedData
     ? `https://wa.me/5511911906183?text=${encodeURIComponent(`Olá! Tenho um imóvel no ${selectedData.name} e gostaria de um orçamento.`)}`
