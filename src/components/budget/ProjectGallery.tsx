@@ -130,7 +130,7 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
 
   const images = galleryData[activeTab] ?? [];
 
-  if (mediaLoading) {
+  if (mediaLoading || toursLoading) {
     return (
       <Card className="border-border overflow-hidden">
         <CardContent className="p-4 sm:p-5 md:p-6 flex items-center justify-center py-12">
