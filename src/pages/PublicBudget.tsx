@@ -13,6 +13,7 @@ import { AnimatedSection } from "@/components/budget/AnimatedSection";
 import { ScopeTransitionZone } from "@/components/budget/ScopeTransitionZone";
 import { CategoryHeader } from "@/components/budget/CategoryHeader";
 import { PublicBudgetSkeleton } from "@/components/budget/PublicBudgetSkeleton";
+import { CollapsingSectionHeader } from "@/components/budget/CollapsingSectionHeader";
 import { demoBudget } from "@/lib/demo-budget-data";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -294,12 +295,18 @@ export default function PublicBudget() {
 
                   return (
                     <div className="rounded-xl">
-                      <div className="flex items-center justify-between pt-1 sm:pt-2 pb-2 sm:pb-3 gap-2 sm:gap-3">
+                      <CollapsingSectionHeader
+                        title="Itens do Projeto"
+                        subtitle="Clique nas fotos para ampliar"
+                      />
+
+                      {/* Desktop-only static header */}
+                      <div className="hidden lg:flex items-center justify-between pt-1 sm:pt-2 pb-2 sm:pb-3 gap-2 sm:gap-3">
                         <div className="min-w-0">
-                         <h2 className="text-base sm:text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
+                          <h2 className="text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
                             Itens do Projeto
                           </h2>
-                          <p className="text-muted-foreground text-xs mt-0.5 font-body hidden sm:block">
+                          <p className="text-muted-foreground text-xs mt-0.5 font-body">
                             Clique nas fotos para ampliar
                           </p>
                         </div>
