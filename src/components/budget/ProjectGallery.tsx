@@ -6,7 +6,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import ReactPlayer from "react-player";
 import { motion } from "framer-motion";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
-import { getTour3DConfig } from "@/lib/tour3d-config";
+import { useBudgetTours } from "@/hooks/useBudgetTours";
 import { Tour3DViewer } from "@/components/budget/Tour3DViewer";
 
 type GalleryTab = "video" | "fotos" | "tour3d";
