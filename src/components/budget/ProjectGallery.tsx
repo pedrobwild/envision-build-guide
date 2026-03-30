@@ -6,18 +6,20 @@ import useEmblaCarousel from "embla-carousel-react";
 import ReactPlayer from "react-player";
 import { motion } from "framer-motion";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
+import { getTour3DConfig } from "@/lib/tour3d-config";
+import { Tour3DViewer } from "@/components/budget/Tour3DViewer";
 
-type GalleryTab = "3d" | "exec" | "fotos";
+type GalleryTab = "video" | "fotos" | "tour3d";
 
 type MediaItem = { src: string; alt: string; type?: "video" | "image" };
 
-const defaultGallery: Record<"3d" | "exec", MediaItem[]> = {
-  "3d": [
+const defaultGallery: Record<"video" | "fotos", MediaItem[]> = {
+  video: [
     { src: "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media/videos/projeto-3d-tour.mp4", alt: "Projeto 3D — Vídeo Tour", type: "video" },
     { src: "/images/exemplo-projeto-3d-1.png", alt: "Projeto 3D — Planta humanizada" },
     { src: "/images/exemplo-projeto-3d-2.png", alt: "Projeto 3D — Sala e cozinha" },
   ],
-  exec: [
+  fotos: [
     { src: "/images/exemplo-executivo-1.jpg", alt: "Projeto Executivo — Vistas modificações" },
     { src: "/images/exemplo-executivo-2.jpg", alt: "Projeto Executivo — Detalhamento banheiro" },
   ],
@@ -50,14 +52,15 @@ interface ProjectGalleryProps {
 
 export function ProjectGallery({ publicId }: ProjectGalleryProps) {
   const { media, loading: mediaLoading } = useBudgetMedia(publicId);
+  const tour3dConfig = getTour3DConfig(publicId);
 
   const hasMedia = media && (media.projeto3d.length > 0 || media.projetoExecutivo.length > 0 || media.fotos.length > 0 || !!media.video3d);
 
   // Build available tabs based on dynamic media
   const availableTabs: { id: GalleryTab; label: string }[] = [];
-  const galleryData: Record<GalleryTab, MediaItem[]> = { "3d": [], exec: [], fotos: [] };
+  const galleryData: Record<GalleryTab, MediaItem[]> = { video: [], fotos: [], tour3d: [] };
 
-  // Projeto 3D tab — fallback to fotos/ when 3d/ is empty
+  // Video tab — video + 3D images (or fallback to fotos)
   const has3dImages = hasMedia && (media!.projeto3d.length > 0 || media!.video3d);
   const fallbackToFotos = hasMedia && !has3dImages && media!.fotos.length > 0;
 
@@ -70,33 +73,37 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
     sourceImages.forEach((src, i) => {
       items.push({ src, alt: `Projeto 3D — ${i + 1}` });
     });
-    galleryData["3d"] = items;
-    availableTabs.push({ id: "3d", label: "Projeto 3D" });
+    galleryData.video = items;
+    availableTabs.push({ id: "video", label: "Vídeo" });
   } else if (!hasMedia && !mediaLoading) {
-    galleryData["3d"] = defaultGallery["3d"];
-    availableTabs.push({ id: "3d", label: "Projeto 3D" });
+    galleryData.video = defaultGallery.video;
+    availableTabs.push({ id: "video", label: "Vídeo" });
   }
 
-  // Projeto Executivo tab
-  if (hasMedia && media!.projetoExecutivo.length > 0) {
-    galleryData.exec = media!.projetoExecutivo.map((src, i) => ({
-      src, alt: `Projeto Executivo — ${i + 1}`,
-    }));
-    availableTabs.push({ id: "exec", label: "Projeto Executivo" });
-  } else if (!hasMedia && !mediaLoading) {
-    galleryData.exec = defaultGallery.exec;
-    availableTabs.push({ id: "exec", label: "Projeto Executivo" });
+  // Fotos tab — photos + executivo combined
+  const allPhotos: MediaItem[] = [];
+  if (hasMedia) {
+    media!.fotos.forEach((src, i) => {
+      allPhotos.push({ src, alt: `Foto da obra — ${i + 1}` });
+    });
+    media!.projetoExecutivo.forEach((src, i) => {
+      allPhotos.push({ src, alt: `Projeto Executivo — ${i + 1}` });
+    });
   }
-
-  // Fotos tab — only if media has photos
-  if (hasMedia && media!.fotos.length > 0) {
-    galleryData.fotos = media!.fotos.map((src, i) => ({
-      src, alt: `Foto da obra — ${i + 1}`,
-    }));
+  if (allPhotos.length > 0) {
+    galleryData.fotos = allPhotos;
+    availableTabs.push({ id: "fotos", label: "Fotos" });
+  } else if (!hasMedia && !mediaLoading) {
+    galleryData.fotos = defaultGallery.fotos;
     availableTabs.push({ id: "fotos", label: "Fotos" });
   }
 
-  const [activeTab, setActiveTab] = useState<GalleryTab>(availableTabs[0]?.id ?? "3d");
+  // Tour 3D tab — only if config exists
+  if (tour3dConfig) {
+    availableTabs.push({ id: "tour3d", label: "Tour 3D" });
+  }
+
+  const [activeTab, setActiveTab] = useState<GalleryTab>(availableTabs[0]?.id ?? "video");
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
@@ -139,11 +146,11 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
         <CardContent className="p-4 sm:p-5 md:p-6 space-y-3">
           <div>
             <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
-              Projeto 3D
+              Galeria do Projeto
             </p>
           </div>
 
-          {availableTabs.length > 1 && (
+          {availableTabs.length > 0 && (
             <div className="flex gap-2">
               {availableTabs.map((tab) => (
                 <button
@@ -161,89 +168,93 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
             </div>
           )}
 
-          <div className="relative">
-            <div ref={emblaRef} className="overflow-hidden rounded-lg">
-              <div className="flex">
-                {images.map((img) => (
-                  <div key={img.src} className="min-w-0 shrink-0 grow-0 basis-full">
-                    {img.type === "video" ? (
-                      <div className="relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10]">
-                        <ReactPlayer
-                          src={img.src}
-                          controls
-                          playsInline
-                          width="100%"
-                          height="100%"
-                          style={{ position: "absolute", top: 0, left: 0 }}
-                        />
-                        <span className="absolute top-2 left-2 flex items-center gap-1 text-xs font-display font-semibold text-white bg-primary/80 backdrop-blur-sm rounded px-2 py-0.5 z-10 pointer-events-none">
-                          <Play className="h-3 w-3" /> Vídeo 3D
-                        </span>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          const imageOnly = images.filter(m => m.type !== "video");
-                          const realIdx = imageOnly.findIndex(m => m.src === img.src);
-                          setLightboxIndex(realIdx >= 0 ? realIdx : 0);
-                          setLightboxOpen(true);
-                        }}
-                        className="group relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
-                      >
-                        <ImageWithFallback
-                          src={img.src}
-                          alt={img.alt}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
-                          <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+          {activeTab === "tour3d" && tour3dConfig ? (
+            <Tour3DViewer rooms={tour3dConfig.rooms} />
+          ) : (
+            <div className="relative">
+              <div ref={emblaRef} className="overflow-hidden rounded-lg">
+                <div className="flex">
+                  {images.map((img) => (
+                    <div key={img.src} className="min-w-0 shrink-0 grow-0 basis-full">
+                      {img.type === "video" ? (
+                        <div className="relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10]">
+                          <ReactPlayer
+                            src={img.src}
+                            controls
+                            playsInline
+                            width="100%"
+                            height="100%"
+                            style={{ position: "absolute", top: 0, left: 0 }}
+                          />
+                          <span className="absolute top-2 left-2 flex items-center gap-1 text-xs font-display font-semibold text-white bg-primary/80 backdrop-blur-sm rounded px-2 py-0.5 z-10 pointer-events-none">
+                            <Play className="h-3 w-3" /> Vídeo 3D
+                          </span>
                         </div>
-                        <span className="absolute bottom-1.5 left-1.5 right-1.5 text-xs font-body text-white bg-foreground/60 backdrop-blur-sm rounded px-2 py-0.5 sm:py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
-                          {img.alt}
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                ))}
+                      ) : (
+                        <button
+                          onClick={() => {
+                            const imageOnly = images.filter(m => m.type !== "video");
+                            const realIdx = imageOnly.findIndex(m => m.src === img.src);
+                            setLightboxIndex(realIdx >= 0 ? realIdx : 0);
+                            setLightboxOpen(true);
+                          }}
+                          className="group relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
+                        >
+                          <ImageWithFallback
+                            src={img.src}
+                            alt={img.alt}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
+                            <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                          </div>
+                          <span className="absolute bottom-1.5 left-1.5 right-1.5 text-xs font-body text-white bg-foreground/60 backdrop-blur-sm rounded px-2 py-0.5 sm:py-1 opacity-0 group-hover:opacity-100 transition-opacity truncate">
+                            {img.alt}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {images.length > 1 && (
-              <>
-                <button
-                  onClick={() => emblaApi?.scrollPrev()}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:bg-card transition-colors"
-                  aria-label="Anterior"
-                >
-                  <ChevronLeft className="h-4 w-4 text-foreground" />
-                </button>
-                <button
-                  onClick={() => emblaApi?.scrollNext()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:bg-card transition-colors"
-                  aria-label="Próxima"
-                >
-                  <ChevronRight className="h-4 w-4 text-foreground" />
-                </button>
-              </>
-            )}
-
-            {images.length > 1 && (
-              <div className="flex justify-center gap-1.5 mt-2">
-                {images.map((_, idx) => (
+              {images.length > 1 && (
+                <>
                   <button
-                    key={idx}
-                    onClick={() => emblaApi?.scrollTo(idx)}
-                    className={`h-1.5 rounded-full transition-all ${
-                      idx === currentSlide
-                        ? "w-4 bg-primary"
-                        : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                    }`}
-                    aria-label={`Slide ${idx + 1}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+                    onClick={() => emblaApi?.scrollPrev()}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:bg-card transition-colors"
+                    aria-label="Anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4 text-foreground" />
+                  </button>
+                  <button
+                    onClick={() => emblaApi?.scrollNext()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm border border-border shadow-sm hover:bg-card transition-colors"
+                    aria-label="Próxima"
+                  >
+                    <ChevronRight className="h-4 w-4 text-foreground" />
+                  </button>
+                </>
+              )}
+
+              {images.length > 1 && (
+                <div className="flex justify-center gap-1.5 mt-2">
+                  {images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => emblaApi?.scrollTo(idx)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        idx === currentSlide
+                          ? "w-4 bg-primary"
+                          : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                      }`}
+                      aria-label={`Slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
