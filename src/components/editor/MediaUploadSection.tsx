@@ -1,10 +1,27 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText } from "lucide-react";
+import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type MediaTab = "3d" | "fotos" | "exec" | "video";
 
@@ -17,12 +34,101 @@ interface MediaUploadSectionProps {
   publicId: string;
 }
 
+/* ── Sortable thumbnail item ── */
+function SortableMediaItem({
+  file,
+  tab,
+  onDelete,
+  reordering,
+}: {
+  file: MediaFile;
+  tab: MediaTab;
+  onDelete: (tab: MediaTab, name: string) => void;
+  reordering: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: file.name,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group relative rounded-lg overflow-hidden border border-border bg-muted aspect-square",
+        isDragging && "ring-2 ring-primary shadow-lg"
+      )}
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="absolute top-1 left-1 z-20 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+        title="Arrastar para reordenar"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+
+      {tab === "video" ? (
+        <video src={file.url} className="w-full h-full object-cover" muted />
+      ) : (
+        <img src={file.url} alt={file.name} className="w-full h-full object-cover" loading="lazy" />
+      )}
+
+      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+        <button
+          onClick={() => onDelete(tab, file.name)}
+          className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
+          title="Remover"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+        <span className="text-[10px] text-white/80 font-body px-2 text-center truncate max-w-full">
+          {file.name}
+        </span>
+      </div>
+
+      {reordering && (
+        <div className="absolute inset-0 bg-background/30 flex items-center justify-center pointer-events-none">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Helpers ── */
+const PREFIX_REGEX = /^(\d{2})-/;
+
+function stripPrefix(name: string) {
+  return name.replace(PREFIX_REGEX, "");
+}
+
+function addPrefix(index: number, name: string) {
+  const bare = stripPrefix(name);
+  const prefix = String(index + 1).padStart(2, "0");
+  return `${prefix}-${bare}`;
+}
+
 export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
   const [activeTab, setActiveTab] = useState<MediaTab>("3d");
   const [files, setFiles] = useState<Record<MediaTab, MediaFile[]>>({ "3d": [], fotos: [], exec: [], video: [] });
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [reordering, setReordering] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const folderMap: Record<MediaTab, string> = {
     "3d": `${publicId}/3d`,
@@ -61,7 +167,6 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
   useEffect(() => { loadFiles(); }, [publicId]);
 
   const sanitizeFileName = (name: string) => {
-    // Remove accents, special chars, spaces → dashes
     return name
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -73,7 +178,6 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
   const handleUpload = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
 
-    // Verify auth session before uploading
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData?.session) {
       toast.error("Sessão expirada. Faça login novamente.");
@@ -82,11 +186,15 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
 
     setUploading(true);
     const folder = folderMap[activeTab];
+    const existingCount = files[activeTab].length;
     let count = 0;
 
-    for (const file of Array.from(fileList)) {
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
       const safeName = sanitizeFileName(file.name);
-      const path = `${folder}/${safeName}`;
+      // Add prefix based on current position
+      const prefixed = addPrefix(existingCount + i, safeName);
+      const path = `${folder}/${prefixed}`;
       const { error } = await supabase.storage.from("media").upload(path, file, {
         upsert: true,
         contentType: file.type || "application/octet-stream",
@@ -123,6 +231,66 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
     }
   };
 
+  /* ── Drag-and-drop reorder ── */
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const currentFiles = files[activeTab];
+    const oldIndex = currentFiles.findIndex(f => f.name === active.id);
+    const newIndex = currentFiles.findIndex(f => f.name === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(currentFiles, oldIndex, newIndex);
+
+    // Optimistic update
+    setFiles(prev => ({ ...prev, [activeTab]: reordered }));
+    setReordering(true);
+
+    const folder = folderMap[activeTab];
+
+    try {
+      // Rename files with new prefixes by: download → upload with new name → delete old
+      for (let i = 0; i < reordered.length; i++) {
+        const file = reordered[i];
+        const newName = addPrefix(i, file.name);
+        if (newName === file.name) continue; // no change needed
+
+        const oldPath = `${folder}/${file.name}`;
+        const newPath = `${folder}/${newName}`;
+
+        // Download the file
+        const { data: blob, error: dlErr } = await supabase.storage.from("media").download(oldPath);
+        if (dlErr || !blob) {
+          console.error("Download error for reorder:", dlErr);
+          continue;
+        }
+
+        // Upload with new name
+        const { error: upErr } = await supabase.storage.from("media").upload(newPath, blob, {
+          upsert: true,
+          contentType: blob.type || "application/octet-stream",
+        });
+        if (upErr) {
+          console.error("Re-upload error:", upErr);
+          continue;
+        }
+
+        // Delete old file
+        await supabase.storage.from("media").remove([oldPath]);
+      }
+
+      toast.success("Ordem atualizada!");
+      await loadFiles();
+    } catch (err) {
+      console.error("Reorder error:", err);
+      toast.error("Erro ao reordenar. Tente novamente.");
+      await loadFiles();
+    }
+
+    setReordering(false);
+  }, [files, activeTab, folderMap]);
+
   const currentTab = tabs.find(t => t.id === activeTab)!;
   const currentFiles = files[activeTab];
 
@@ -132,7 +300,7 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
         <div>
           <h3 className="font-display font-bold text-sm text-foreground">Mídia do Projeto</h3>
           <p className="text-xs text-muted-foreground font-body mt-0.5">
-            Faça upload de renders 3D, fotos, projetos executivos e vídeos. Sem limite de tamanho (até 500MB por arquivo).
+            Faça upload de renders 3D, fotos, projetos executivos e vídeos. Arraste para reordenar.
           </p>
         </div>
 
@@ -166,7 +334,7 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
             variant="outline"
             size="sm"
             onClick={() => inputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || reordering}
             className="gap-2"
           >
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
@@ -197,33 +365,25 @@ export function MediaUploadSection({ publicId }: MediaUploadSectionProps) {
             <p className="text-xs font-body">Nenhum arquivo na pasta {currentTab.label}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {currentFiles.map(f => (
-              <div key={f.name} className="group relative rounded-lg overflow-hidden border border-border bg-muted aspect-square">
-                {activeTab === "video" ? (
-                  <video src={f.url} className="w-full h-full object-cover" muted />
-                ) : (
-                  <img src={f.url} alt={f.name} className="w-full h-full object-cover" loading="lazy" />
-                )}
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-                  <button
-                    onClick={() => handleDelete(activeTab, f.name)}
-                    className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
-                    title="Remover"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                  <span className="text-[10px] text-white/80 font-body px-2 text-center truncate max-w-full">
-                    {f.name}
-                  </span>
-                </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={currentFiles.map(f => f.name)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {currentFiles.map(f => (
+                  <SortableMediaItem
+                    key={f.name}
+                    file={f}
+                    tab={activeTab}
+                    onDelete={handleDelete}
+                    reordering={reordering}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
 
         <p className="text-[10px] text-muted-foreground font-body">
-          ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública do orçamento.
+          ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública do orçamento. Arraste os thumbnails para definir a ordem de exibição.
         </p>
       </CardContent>
     </Card>
