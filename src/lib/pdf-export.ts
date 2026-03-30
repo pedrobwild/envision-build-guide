@@ -2,23 +2,21 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 /**
- * Prepare the DOM for capture:
- * - Force all framer-motion animated elements to be visible
- * - Hide elements that don't render well (maps, video, carousels nav)
- * - Wait for images to load
+ * Prepare a single element for capture:
+ * - Force framer-motion elements visible
+ * - Hide maps, video, iframes
+ * - Expand collapsed sections
+ * - Wait for images
  */
-async function prepareForCapture(element: HTMLElement) {
-  // 1. Hide elements marked with data-pdf-hide
+async function prepareElement(element: HTMLElement) {
+  // Hide data-pdf-hide elements
   const hiddenEls = element.querySelectorAll('[data-pdf-hide]');
   hiddenEls.forEach(el => (el as HTMLElement).style.display = 'none');
 
-  // 2. Force all framer-motion elements to be fully visible
-  //    Motion elements use style with opacity/transform
   const allElements = element.querySelectorAll('*') as NodeListOf<HTMLElement>;
   const savedStyles: { el: HTMLElement; opacity: string; transform: string; visibility: string }[] = [];
 
   allElements.forEach(el => {
-    const style = el.style;
     const computed = window.getComputedStyle(el);
     if (
       computed.opacity !== '1' ||
@@ -27,24 +25,18 @@ async function prepareForCapture(element: HTMLElement) {
     ) {
       savedStyles.push({
         el,
-        opacity: style.opacity,
-        transform: style.transform,
-        visibility: style.visibility,
+        opacity: el.style.opacity,
+        transform: el.style.transform,
+        visibility: el.style.visibility,
       });
-      style.opacity = '1';
-      style.transform = 'none';
-      style.visibility = 'visible';
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+      el.style.visibility = 'visible';
     }
   });
 
-  // 3. Hide problematic interactive components that html2canvas can't render
-  const selectorsToHide = [
-    '.maplibregl-map',        // MapLibre maps
-    '[class*="maplibregl"]',
-    'iframe',                 // Embedded iframes
-    'video',                  // Video elements
-  ];
-  
+  // Hide interactive elements that html2canvas can't render
+  const selectorsToHide = ['.maplibregl-map', '[class*="maplibregl"]', 'iframe', 'video'];
   const hiddenInteractive: { el: HTMLElement; display: string }[] = [];
   selectorsToHide.forEach(selector => {
     element.querySelectorAll(selector).forEach(el => {
@@ -54,7 +46,7 @@ async function prepareForCapture(element: HTMLElement) {
     });
   });
 
-  // 4. Expand any collapsed elements (max-h-0, overflow-hidden)
+  // Expand collapsed elements
   const collapsedEls: { el: HTMLElement; maxHeight: string; overflow: string }[] = [];
   allElements.forEach(el => {
     const computed = window.getComputedStyle(el);
@@ -65,7 +57,7 @@ async function prepareForCapture(element: HTMLElement) {
     }
   });
 
-  // 5. Force all sticky elements to static so they render in-flow
+  // Force sticky/fixed to static
   const stickyEls: { el: HTMLElement; position: string }[] = [];
   allElements.forEach(el => {
     const computed = window.getComputedStyle(el);
@@ -75,7 +67,7 @@ async function prepareForCapture(element: HTMLElement) {
     }
   });
 
-  // 6. Wait for all visible images to load
+  // Wait for images
   const images = element.querySelectorAll('img');
   const imagePromises: Promise<void>[] = [];
   images.forEach(img => {
@@ -84,7 +76,6 @@ async function prepareForCapture(element: HTMLElement) {
         new Promise<void>(resolve => {
           img.onload = () => resolve();
           img.onerror = () => resolve();
-          // Timeout after 3s per image
           setTimeout(resolve, 3000);
         })
       );
@@ -116,90 +107,133 @@ async function prepareForCapture(element: HTMLElement) {
   };
 }
 
-export async function exportBudgetPdf(elementId: string, filename: string) {
-  const element = document.getElementById(elementId);
-  if (!element) throw new Error("Element not found");
+const A4_WIDTH_MM = 210;
+const A4_HEIGHT_MM = 297;
+const MARGIN_MM = 10;
+const CONTENT_WIDTH_MM = A4_WIDTH_MM - MARGIN_MM * 2;
+const CONTENT_HEIGHT_MM = A4_HEIGHT_MM - MARGIN_MM * 2;
+const SECTION_GAP_MM = 3;
 
-  const cleanup = await prepareForCapture(element);
+export async function exportBudgetPdf(elementId: string, filename: string) {
+  const container = document.getElementById(elementId);
+  if (!container) throw new Error("Element not found");
+
+  const cleanup = await prepareElement(container);
 
   try {
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      windowWidth: 900,
-      // Ensure we capture the full scrollable height
-      height: element.scrollHeight,
-      y: 0,
-    });
+    // Find all sections marked with data-pdf-section
+    const sectionEls = Array.from(
+      container.querySelectorAll('[data-pdf-section]')
+    ) as HTMLElement[];
 
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 10;
-    const contentWidth = pageWidth - margin * 2;
-    const contentHeight = pageHeight - margin * 2;
-    const scale = contentWidth / canvas.width; // mm per canvas pixel
-    const maxSliceHeight = Math.floor(contentHeight / scale); // max canvas pixels per page
-
-    // Find a "safe" row to cut — scan for a row that is mostly background (white)
-    function findSafeCut(startY: number): number {
-      const ctx = canvas.getContext("2d")!;
-      const searchRange = Math.min(Math.floor(maxSliceHeight * 0.15), 200); // look back up to 15%
-      const sampleWidth = Math.min(canvas.width, 400); // sample center pixels
-      const xOffset = Math.floor((canvas.width - sampleWidth) / 2);
-
-      for (let row = startY; row > startY - searchRange && row > 0; row--) {
-        const data = ctx.getImageData(xOffset, row, sampleWidth, 1).data;
-        let whiteCount = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          if (data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240) {
-            whiteCount++;
-          }
-        }
-        const ratio = whiteCount / (sampleWidth);
-        if (ratio > 0.92) return row; // found a mostly-white row
-      }
-      return startY; // fallback: cut at original position
+    // If no sections marked, fall back to capturing the whole container as one
+    if (sectionEls.length === 0) {
+      sectionEls.push(container);
     }
 
-    let sourceY = 0;
-    let page = 0;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    let currentY = MARGIN_MM;
+    let isFirstPage = true;
 
-    while (sourceY < canvas.height) {
-      if (page > 0) pdf.addPage();
+    for (const section of sectionEls) {
+      // Skip hidden or zero-height sections
+      if (section.offsetHeight === 0 || section.offsetWidth === 0) continue;
 
-      let idealEnd = sourceY + maxSliceHeight;
-      let sliceEnd: number;
+      const canvas = await html2canvas(section, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: 900,
+      });
 
-      if (idealEnd >= canvas.height) {
-        sliceEnd = canvas.height;
+      const scaleFactor = CONTENT_WIDTH_MM / (canvas.width / 2);
+      const heightMM = (canvas.height / 2) * scaleFactor;
+
+      // If section is taller than a full page, we need to slice it
+      if (heightMM > CONTENT_HEIGHT_MM) {
+        // Slice this tall section into page-sized chunks with smart breaks
+        const maxSlicePx = Math.floor(CONTENT_HEIGHT_MM / scaleFactor) * 2; // in canvas pixels (scale=2)
+
+        let sliceY = 0;
+        while (sliceY < canvas.height) {
+          const remaining = canvas.height - sliceY;
+          let sliceHeight: number;
+
+          if (remaining <= maxSlicePx) {
+            sliceHeight = remaining;
+          } else {
+            // Find a safe cut point (mostly white row)
+            sliceHeight = findSafeCut(canvas, sliceY + maxSlicePx, maxSlicePx);
+            sliceHeight = sliceHeight - sliceY;
+          }
+
+          const sliceHeightMM = (sliceHeight / 2) * scaleFactor;
+          const remainingSpace = A4_HEIGHT_MM - MARGIN_MM - currentY;
+
+          if (sliceHeightMM > remainingSpace && currentY > MARGIN_MM) {
+            pdf.addPage();
+            currentY = MARGIN_MM;
+          }
+
+          const pageCanvas = document.createElement("canvas");
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sliceHeight;
+          const ctx = pageCanvas.getContext("2d")!;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          ctx.drawImage(canvas, 0, sliceY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+
+          const imgData = pageCanvas.toDataURL("image/jpeg", 0.92);
+          pdf.addImage(imgData, "JPEG", MARGIN_MM, currentY, CONTENT_WIDTH_MM, sliceHeightMM);
+
+          currentY += sliceHeightMM + SECTION_GAP_MM;
+          sliceY += sliceHeight;
+        }
       } else {
-        sliceEnd = findSafeCut(idealEnd);
+        // Section fits on a page — check if there's room
+        const remainingSpace = A4_HEIGHT_MM - MARGIN_MM - currentY;
+
+        if (heightMM > remainingSpace && currentY > MARGIN_MM) {
+          pdf.addPage();
+          currentY = MARGIN_MM;
+        }
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.92);
+        pdf.addImage(imgData, "JPEG", MARGIN_MM, currentY, CONTENT_WIDTH_MM, heightMM);
+
+        currentY += heightMM + SECTION_GAP_MM;
       }
 
-      const sliceHeight = sliceEnd - sourceY;
-      const destHeight = sliceHeight * scale;
-
-      const pageCanvas = document.createElement("canvas");
-      pageCanvas.width = canvas.width;
-      pageCanvas.height = sliceHeight;
-      const ctx = pageCanvas.getContext("2d")!;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-      ctx.drawImage(canvas, 0, sourceY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
-
-      const pageImgData = pageCanvas.toDataURL("image/jpeg", 0.92);
-      pdf.addImage(pageImgData, "JPEG", margin, margin, contentWidth, destHeight);
-
-      sourceY = sliceEnd;
-      page++;
+      isFirstPage = false;
     }
 
     pdf.save(filename);
   } finally {
     cleanup.restore();
   }
+}
+
+/**
+ * Scan backwards from targetY to find a row that is mostly white (safe to cut).
+ * Returns the Y position of the safe cut in canvas pixels.
+ */
+function findSafeCut(canvas: HTMLCanvasElement, targetY: number, maxSlicePx: number): number {
+  const ctx = canvas.getContext("2d")!;
+  const searchRange = Math.min(Math.floor(maxSlicePx * 0.15), 300);
+  const sampleWidth = Math.min(canvas.width, 600);
+  const xOffset = Math.floor((canvas.width - sampleWidth) / 2);
+
+  for (let row = targetY; row > targetY - searchRange && row > 0; row--) {
+    const data = ctx.getImageData(xOffset, row, sampleWidth, 1).data;
+    let whiteCount = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240) {
+        whiteCount++;
+      }
+    }
+    if (whiteCount / sampleWidth > 0.92) return row;
+  }
+  return targetY;
 }
