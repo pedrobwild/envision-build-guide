@@ -146,11 +146,11 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
         <CardContent className="p-4 sm:p-5 md:p-6 space-y-3">
           <div>
             <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wide">
-              Projeto 3D
+              Galeria do Projeto
             </p>
           </div>
 
-          {availableTabs.length > 1 && (
+          {availableTabs.length > 0 && (
             <div className="flex gap-2">
               {availableTabs.map((tab) => (
                 <button
