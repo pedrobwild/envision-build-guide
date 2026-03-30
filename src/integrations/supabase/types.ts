@@ -97,6 +97,44 @@ export type Database = {
           },
         ]
       }
+      budget_tours: {
+        Row: {
+          budget_id: string
+          created_at: string | null
+          id: string
+          order_index: number
+          room_id: string
+          room_label: string
+          tour_url: string
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          room_id: string
+          room_label: string
+          tour_url: string
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          room_id?: string
+          room_label?: string
+          tour_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_tours_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budgets: {
         Row: {
           approved_at: string | null

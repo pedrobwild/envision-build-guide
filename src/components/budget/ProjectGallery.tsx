@@ -6,7 +6,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import ReactPlayer from "react-player";
 import { motion } from "framer-motion";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
-import { getTour3DConfig } from "@/lib/tour3d-config";
+import { useBudgetTours } from "@/hooks/useBudgetTours";
 import { Tour3DViewer } from "@/components/budget/Tour3DViewer";
 
 type GalleryTab = "video" | "fotos" | "tour3d";
@@ -52,7 +52,7 @@ interface ProjectGalleryProps {
 
 export function ProjectGallery({ publicId }: ProjectGalleryProps) {
   const { media, loading: mediaLoading } = useBudgetMedia(publicId);
-  const tour3dConfig = getTour3DConfig(publicId);
+  const { rooms: tourRooms, loading: toursLoading } = useBudgetTours(publicId);
 
   const hasMedia = media && (media.projeto3d.length > 0 || media.projetoExecutivo.length > 0 || media.fotos.length > 0 || !!media.video3d);
 
@@ -98,8 +98,8 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
     availableTabs.push({ id: "fotos", label: "Fotos" });
   }
 
-  // Tour 3D tab — only if config exists
-  if (tour3dConfig) {
+  // Tour 3D tab — only if tours exist in DB
+  if (tourRooms.length > 0) {
     availableTabs.push({ id: "tour3d", label: "Tour 3D" });
   }
 
@@ -130,7 +130,7 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
 
   const images = galleryData[activeTab] ?? [];
 
-  if (mediaLoading) {
+  if (mediaLoading || toursLoading) {
     return (
       <Card className="border-border overflow-hidden">
         <CardContent className="p-4 sm:p-5 md:p-6 flex items-center justify-center py-12">
@@ -168,8 +168,8 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
             </div>
           )}
 
-          {activeTab === "tour3d" && tour3dConfig ? (
-            <Tour3DViewer rooms={tour3dConfig.rooms} />
+          {activeTab === "tour3d" && tourRooms.length > 0 ? (
+            <Tour3DViewer rooms={tourRooms} />
           ) : (
             <div className="relative">
               <div ref={emblaRef} className="overflow-hidden rounded-lg">
