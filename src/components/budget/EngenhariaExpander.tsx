@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { HardHat, Truck, CalendarClock, Monitor } from "lucide-react";
 import { motion } from "framer-motion";
+import { CollapsingSectionHeader } from "./CollapsingSectionHeader";
 
 const bullets = [
   { icon: HardHat, highlight: "Gestão centralizada", text: "Planejamento, execução e controle de qualidade sob uma única responsabilidade." },
@@ -13,7 +14,15 @@ export function EngenhariaExpander() {
   return (
     <Card className="border-border overflow-hidden">
       <CardContent className="p-4 sm:p-5 md:p-6 space-y-4">
-        <div className="flex items-start gap-3">
+        {/* Mobile: collapsing sticky header */}
+        <CollapsingSectionHeader
+          title="Engenharia e gestão de obra"
+          subtitle="Execução com previsibilidade, transparência e zero preocupação para você."
+          icon={<HardHat className="h-5 w-5" />}
+        />
+
+        {/* Desktop: static header */}
+        <div className="hidden lg:flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <HardHat className="h-5 w-5 text-primary" />
           </div>
