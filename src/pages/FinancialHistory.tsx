@@ -286,7 +286,7 @@ export default function FinancialHistory() {
                   <p className={`text-sm sm:text-base font-display font-bold ${kpis.momGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
                     {kpis.momGrowth >= 0 ? '+' : ''}{kpis.momGrowth}%
                   </p>
-                  <p className="text-[10px] text-muted-foreground font-body">vs. mês anterior</p>
+                  <p className="text-xs text-muted-foreground font-body">vs. mês anterior</p>
                 </div>
               </div>
             )}
