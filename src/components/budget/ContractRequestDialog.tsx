@@ -80,23 +80,40 @@ export function ContractRequestDialog({
     setSending(true);
 
     try {
-      // Update budget status to minuta_solicitada
+      // Server-side validation + status update via edge function
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      await fetch(`${supabaseUrl}/rest/v1/budgets?id=eq.${encodeURIComponent(budgetId)}`, {
-        method: "PATCH",
+      const res = await fetch(`${supabaseUrl}/functions/v1/validate-contract-request`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
-          Prefer: "return=minimal",
         },
         body: JSON.stringify({
-          status: "minuta_solicitada",
-          lead_name: nomeCompleto.trim().substring(0, 255),
-          lead_email: email.trim().substring(0, 255),
+          budget_id: budgetId,
+          nome_completo: nomeCompleto.trim(),
+          cpf: cpf.trim(),
+          rg: rg.trim(),
+          endereco: endereco.trim(),
+          email: email.trim(),
+          unidade: unidade.trim(),
+          metragem: metragem.trim(),
+          empreendimento: empreendimento.trim(),
+          endereco_imovel: enderecoImovel.trim(),
+          nacionalidade: nacionalidade.trim(),
+          estado_civil: estadoCivil.trim(),
+          profissao: profissao.trim(),
+          parcelas,
         }),
       });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.details?.join(", ") || err.error || "Erro na validação.");
+        setSending(false);
+        return;
+      }
 
       // Build WhatsApp message
       const valorParcela = formatBRL(total / parcelas);
