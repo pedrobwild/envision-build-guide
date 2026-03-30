@@ -106,7 +106,7 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
     availableTabs.push({ id: "tour3d", label: "Tour 3D" });
   }
 
-  const [activeTab, setActiveTab] = useState<GalleryTab>(availableTabs[0]?.id ?? "video");
+  const [activeTab, setActiveTab] = useState<GalleryTab>(availableTabs[0]?.id ?? "video3d");
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
