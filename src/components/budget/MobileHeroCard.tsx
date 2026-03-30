@@ -111,12 +111,12 @@ export function MobileHeroCard({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.45 }}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-body font-semibold w-fit",
+              "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-body font-bold w-fit",
               validity.expired
                 ? "bg-destructive/15 text-destructive"
                 : validity.daysLeft <= 5
-                  ? "bg-warning/15 text-warning-foreground"
-                  : "bg-success/15 text-success-foreground"
+                  ? "bg-warning/15 text-warning"
+                  : "bg-success/15 text-success"
             )}
           >
             {validity.expired ? (
