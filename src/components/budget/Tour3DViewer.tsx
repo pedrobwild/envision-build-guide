@@ -75,10 +75,13 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
   if (!currentRoom) return null;
 
   const renderIframe = (room: Tour3DRoom, isFullscreen: boolean) => (
-    <div className={cn(
-      "relative w-full bg-muted",
-      isFullscreen ? "h-full" : "aspect-[16/10] rounded-lg overflow-hidden border border-border"
-    )}>
+    <div
+      className={cn(
+        "relative w-full bg-muted",
+        isFullscreen ? "h-full" : "aspect-[16/10] rounded-lg overflow-hidden border border-border"
+      )}
+      style={{ touchAction: "none" }}
+    >
       {!loadedRooms.has(room.id) && activeRoom === room.id && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-muted">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -91,7 +94,8 @@ export function Tour3DViewer({ rooms }: Tour3DViewerProps) {
         src={room.url}
         title={`Tour 3D — ${room.label}`}
         className={cn("w-full h-full border-0", activeRoom !== room.id && "hidden")}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; xr-spatial-tracking; fullscreen"
+        style={{ touchAction: "none" }}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; magnetometer; xr-spatial-tracking; fullscreen"
         allowFullScreen
         loading={room.id === activeRoom ? "eager" : "lazy"}
         onLoad={() => handleIframeLoad(room.id)}
