@@ -314,7 +314,7 @@ export default function PublicBudget() {
                          <h2 className="text-base sm:text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
                             Itens do Projeto
                           </h2>
-                          <p className="text-muted-foreground text-[11px] sm:text-xs mt-0.5 font-body hidden sm:block">
+                          <p className="text-muted-foreground text-xs mt-0.5 font-body hidden sm:block">
                             Clique nas fotos para ampliar
                           </p>
                         </div>
