@@ -241,20 +241,24 @@ export default function PublicBudget() {
 
               {/* ─── Visual 3D + Portal logo após Engenharia ─── */}
               <div id="mobile-trust" className="space-y-3 mt-3 scroll-mt-20">
+                <div data-pdf-section>
                 <AnimatedSection id="gallery-section" index={0.55}>
                   <Suspense fallback={<LazyFallback />}>
                     <ProjectGallery publicId={publicId} />
                   </Suspense>
                 </AnimatedSection>
+                </div>
 
+                <div data-pdf-section>
                 <AnimatedSection id="portal-section-inline" index={0.6}>
                   <Suspense fallback={<LazyFallback />}>
                     <PortalShowcase />
                   </Suspense>
                 </AnimatedSection>
+                </div>
 
                 {/* Map */}
-                <div>
+                <div data-pdf-section>
                   <AnimatedSection id="projetos-regiao" index={0.7}>
                     <Suspense fallback={<LazyFallback />}>
                       <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
