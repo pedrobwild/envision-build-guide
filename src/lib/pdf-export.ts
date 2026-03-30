@@ -54,7 +54,28 @@ async function prepareForCapture(element: HTMLElement) {
     });
   });
 
-  // 4. Wait for all visible images to load
+  // 4. Expand any collapsed elements (max-h-0, overflow-hidden)
+  const collapsedEls: { el: HTMLElement; maxHeight: string; overflow: string }[] = [];
+  allElements.forEach(el => {
+    const computed = window.getComputedStyle(el);
+    if (computed.maxHeight === '0px' && computed.overflow === 'hidden') {
+      collapsedEls.push({ el, maxHeight: el.style.maxHeight, overflow: el.style.overflow });
+      el.style.maxHeight = 'none';
+      el.style.overflow = 'visible';
+    }
+  });
+
+  // 5. Force all sticky elements to static so they render in-flow
+  const stickyEls: { el: HTMLElement; position: string }[] = [];
+  allElements.forEach(el => {
+    const computed = window.getComputedStyle(el);
+    if (computed.position === 'sticky' || computed.position === 'fixed') {
+      stickyEls.push({ el, position: el.style.position });
+      el.style.position = 'static';
+    }
+  });
+
+  // 6. Wait for all visible images to load
   const images = element.querySelectorAll('img');
   const imagePromises: Promise<void>[] = [];
   images.forEach(img => {
@@ -75,17 +96,21 @@ async function prepareForCapture(element: HTMLElement) {
 
   return {
     restore() {
-      // Restore hidden pdf elements
       hiddenEls.forEach(el => (el as HTMLElement).style.display = '');
-      // Restore forced styles
       savedStyles.forEach(({ el, opacity, transform, visibility }) => {
         el.style.opacity = opacity;
         el.style.transform = transform;
         el.style.visibility = visibility;
       });
-      // Restore hidden interactive elements
       hiddenInteractive.forEach(({ el, display }) => {
         el.style.display = display;
+      });
+      collapsedEls.forEach(({ el, maxHeight, overflow }) => {
+        el.style.maxHeight = maxHeight;
+        el.style.overflow = overflow;
+      });
+      stickyEls.forEach(({ el, position }) => {
+        el.style.position = position;
       });
     },
   };

@@ -113,6 +113,8 @@ export default function PublicBudget() {
 
   const handleExportPdf = async () => {
     setExporting(true);
+    // Wait for React to re-render with all items visible (exporting removes photo filter)
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     try {
       const { exportBudgetPdf } = await import("@/lib/pdf-export");
       const filename = `${budget?.project_name || 'orcamento'}.pdf`;
@@ -266,7 +268,9 @@ export default function PublicBudget() {
                       ...group,
                       sections: group.sections.map(section => ({
                         ...section,
-                        items: (section.items || []).filter((item: any) => item.images && item.images.length > 0),
+                        items: exporting
+                          ? (section.items || [])
+                          : (section.items || []).filter((item: any) => item.images && item.images.length > 0),
                       })).filter(section => section.items.length > 0),
                     }))
                     .filter(group => group.sections.length > 0);
