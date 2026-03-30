@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronUp,
@@ -7,6 +7,8 @@ import {
   Shield,
   Award,
   CheckCircle2,
+  Eye,
+  CreditCard,
 } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 import type { CategorizedGroup } from "@/lib/scope-categories";
@@ -27,9 +29,57 @@ interface MobileBottomBarProps {
   budgetId?: string;
   onSaveForLater?: () => void;
   hidden?: boolean;
+  activeSection?: string | null;
 }
 
 const DEFAULT_PHONE = "5511911906183";
+
+type CtaVariant = {
+  label: string;
+  icon: React.ElementType;
+  action: "scroll" | "sheet" | "contract";
+  scrollTarget?: string;
+};
+
+const CTA_MAP: Record<string, CtaVariant> = {
+  "mobile-included": {
+    label: "Ver escopo",
+    icon: Eye,
+    action: "scroll",
+    scrollTarget: "mobile-scope",
+  },
+  "mobile-scope": {
+    label: "Simular parcelas",
+    icon: CreditCard,
+    action: "sheet",
+  },
+  "mobile-trust": {
+    label: "Simular parcelas",
+    icon: CreditCard,
+    action: "sheet",
+  },
+  "mobile-portal": {
+    label: "Solicitar Contrato",
+    icon: FileSignature,
+    action: "contract",
+  },
+  "mobile-next-steps": {
+    label: "Solicitar Contrato",
+    icon: FileSignature,
+    action: "contract",
+  },
+  "mobile-faq": {
+    label: "Solicitar Contrato",
+    icon: FileSignature,
+    action: "contract",
+  },
+};
+
+const DEFAULT_CTA: CtaVariant = {
+  label: "Solicitar Contrato",
+  icon: FileSignature,
+  action: "contract",
+};
 
 export function MobileBottomBar({
   total,
@@ -40,6 +90,7 @@ export function MobileBottomBar({
   publicId,
   budgetId,
   hidden = false,
+  activeSection,
 }: MobileBottomBarProps) {
   const [contractOpen, setContractOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -47,6 +98,29 @@ export function MobileBottomBar({
   const whatsappUpdateUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(
     `Olá! O orçamento ${projectName || "do projeto"} (Ref: ${publicId}) expirou. Gostaria de solicitar uma atualização de valores.`
   )}`;
+
+  const currentCta = useMemo(() => {
+    if (!activeSection) return DEFAULT_CTA;
+    return CTA_MAP[activeSection] || DEFAULT_CTA;
+  }, [activeSection]);
+
+  const handleCtaClick = () => {
+    switch (currentCta.action) {
+      case "scroll":
+        if (currentCta.scrollTarget) {
+          document.getElementById(currentCta.scrollTarget)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        break;
+      case "sheet":
+        setSheetOpen(true);
+        break;
+      case "contract":
+        setContractOpen(true);
+        break;
+    }
+  };
+
+  const CtaIcon = currentCta.icon;
 
   return (
     <>
@@ -93,7 +167,7 @@ export function MobileBottomBar({
                   </span>
                 </button>
 
-                {/* Right: CTA */}
+                {/* Right: Dynamic CTA */}
                 {validity.expired ? (
                   <motion.a
                     href={whatsappUpdateUrl}
@@ -106,14 +180,21 @@ export function MobileBottomBar({
                     Solicitar atualização
                   </motion.a>
                 ) : (
-                  <motion.button
-                    onClick={() => setContractOpen(true)}
-                    whileTap={{ scale: 0.97 }}
-                    className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
-                  >
-                    <FileSignature className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                    Solicitar Contrato
-                  </motion.button>
+                  <AnimatePresence mode="wait">
+                    <motion.button
+                      key={currentCta.label}
+                      onClick={handleCtaClick}
+                      whileTap={{ scale: 0.97 }}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
+                    >
+                      <CtaIcon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                      {currentCta.label}
+                    </motion.button>
+                  </AnimatePresence>
                 )}
               </div>
             </motion.div>
