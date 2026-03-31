@@ -411,6 +411,11 @@ export default function CommercialDashboard() {
                             <Copy className="h-4 w-4 mr-2" />Copiar link público
                           </DropdownMenuItem>
                         )}
+                        {(b.version_number ?? 1) > 1 && b.version_group_id && (
+                          <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
+                            <GitCompare className="h-4 w-4 mr-2" />Comparar versões
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         {b.internal_status === "delivered_to_sales" && (
                           <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
