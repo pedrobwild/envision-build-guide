@@ -10,7 +10,8 @@ import {
   Search, TrendingUp, FolderOpen, CheckCircle, Clock,
   MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil, ShoppingBag,
   Handshake, BarChart3, Hammer, Briefcase, Settings, Users,
-  ArrowRight, GitCompare, Send,
+  ArrowRight, GitCompare, Send, LayoutDashboard, ClipboardList,
+  Settings2, DollarSign,
 } from "lucide-react";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { toast } from "sonner";
@@ -302,19 +303,56 @@ export default function AdminDashboard() {
 
   // Quick-access shortcuts based on role
   const shortcuts = useMemo(() => {
-    const items: { icon: React.ElementType; label: string; description: string; href: string; color: string }[] = [];
+    const items: { icon: React.ElementType; label: string; description: string; href: string; borderColor: string; iconColor: string; descColor?: string }[] = [];
 
     if (isAdmin || isOrcamentista) {
-      items.push({ icon: Hammer, label: "Produção", description: `${metrics.inProgress} em produção`, href: "/admin/producao", color: "text-amber-600" });
+      const inProd = metrics.inProgress;
+      items.push({
+        icon: Hammer, label: "Produção",
+        description: inProd > 0 ? `${inProd} em produção` : "Nada em produção",
+        href: "/admin/producao",
+        borderColor: inProd > 0 ? "border-l-blue-500" : "border-l-transparent",
+        iconColor: inProd > 0 ? "text-blue-500" : "text-muted-foreground",
+        descColor: inProd > 0 ? "text-blue-600 font-medium" : undefined,
+      });
     }
     if (isAdmin || isComercial) {
-      items.push({ icon: Briefcase, label: "Pipeline Comercial", description: `${metrics.published} publicados`, href: "/admin/comercial", color: "text-blue-600" });
-      items.push({ icon: FileText, label: "Solicitações", description: "Novas demandas", href: "/admin/solicitacoes", color: "text-violet-600" });
+      items.push({
+        icon: LayoutDashboard, label: "Pipeline Comercial",
+        description: `${metrics.published} publicados`,
+        href: "/admin/comercial",
+        borderColor: "border-l-green-500", iconColor: "text-green-500",
+        descColor: "text-green-600 font-medium",
+      });
+      items.push({
+        icon: ClipboardList, label: "Solicitações",
+        description: "Novas demandas",
+        href: "/admin/solicitacoes",
+        borderColor: "border-l-amber-500", iconColor: "text-amber-500",
+      });
     }
     if (isAdmin) {
-      items.push({ icon: Settings, label: "Operações", description: "Visão geral", href: "/admin/operacoes", color: "text-slate-600" });
-      items.push({ icon: BarChart3, label: "Financeiro", description: monthlyBilling.count > 0 ? formatBRL(monthlyBilling.revenue) : "Sem dados", href: "/admin/financeiro", color: "text-emerald-600" });
-      items.push({ icon: Users, label: "Usuários", description: "Gestão de equipe", href: "/admin/usuarios", color: "text-rose-600" });
+      items.push({
+        icon: Settings2, label: "Operações",
+        description: "Visão geral",
+        href: "/admin/operacoes",
+        borderColor: "border-l-transparent", iconColor: "text-muted-foreground",
+      });
+      const hasFinancial = monthlyBilling.count > 0;
+      items.push({
+        icon: DollarSign, label: "Financeiro",
+        description: hasFinancial ? formatBRL(monthlyBilling.revenue) : "Sem contratos fechados",
+        href: "/admin/financeiro",
+        borderColor: hasFinancial ? "border-l-emerald-500" : "border-l-transparent",
+        iconColor: hasFinancial ? "text-emerald-500" : "text-muted-foreground",
+        descColor: hasFinancial ? "text-emerald-600 font-medium" : "text-muted-foreground italic",
+      });
+      items.push({
+        icon: Users, label: "Usuários",
+        description: "Gestão de equipe",
+        href: "/admin/usuarios",
+        borderColor: "border-l-transparent", iconColor: "text-muted-foreground",
+      });
     }
 
     return items;
@@ -422,19 +460,19 @@ export default function AdminDashboard() {
 
       {/* Quick Access Shortcuts */}
       {shortcuts.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {shortcuts.map((s) => (
-            <button
-              key={s.href}
-              onClick={() => navigate(s.href)}
-              className="group flex flex-col gap-1 p-3 rounded-lg border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all text-left"
-            >
-              <div className="flex items-center gap-2">
-                <s.icon className={`h-4 w-4 ${s.color}`} />
-                <span className="text-sm font-medium font-body text-foreground group-hover:text-primary transition-colors">{s.label}</span>
-              </div>
-              <span className="text-xs text-muted-foreground font-body">{s.description}</span>
-            </button>
+            <Link key={s.href} to={s.href}>
+              <Card className={`cursor-pointer hover:bg-accent/50 transition-colors duration-150 border-l-4 ${s.borderColor} h-full`}>
+                <CardContent className="p-4 flex items-center gap-3">
+                  <s.icon className={`h-5 w-5 ${s.iconColor} shrink-0`} />
+                  <div>
+                    <p className="font-medium text-sm font-body text-foreground">{s.label}</p>
+                    <p className={`text-xs font-body ${s.descColor || "text-muted-foreground"}`}>{s.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
