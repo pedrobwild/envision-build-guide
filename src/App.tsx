@@ -23,6 +23,7 @@ const EstimatorDashboard = lazy(() => import("./pages/EstimatorDashboard"));
 const CommercialDashboard = lazy(() => import("./pages/CommercialDashboard"));
 const AdminOperationsDashboard = lazy(() => import("./pages/AdminOperationsDashboard"));
 const BudgetInternalDetail = lazy(() => import("./pages/BudgetInternalDetail"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
