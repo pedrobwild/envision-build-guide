@@ -33,13 +33,52 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
     return () => el.removeEventListener("scroll", check);
   }, []);
 
+  // Auto-scroll marquee effect
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    let rafId: number;
+    let paused = false;
+    let pauseTimeout: ReturnType<typeof setTimeout>;
+
+    const step = () => {
+      if (!paused && el.scrollLeft + el.clientWidth < el.scrollWidth - 2) {
+        el.scrollLeft += 0.5;
+      } else if (!paused) {
+        el.scrollLeft = 0;
+      }
+      rafId = requestAnimationFrame(step);
+    };
+
+    const handleTouch = () => {
+      paused = true;
+      clearTimeout(pauseTimeout);
+      pauseTimeout = setTimeout(() => { paused = false; }, 3000);
+    };
+
+    el.addEventListener("touchstart", handleTouch, { passive: true });
+    el.addEventListener("pointerdown", handleTouch, { passive: true });
+
+    // Start after a small delay
+    const startDelay = setTimeout(() => { rafId = requestAnimationFrame(step); }, 2000);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(startDelay);
+      clearTimeout(pauseTimeout);
+      el.removeEventListener("touchstart", handleTouch);
+      el.removeEventListener("pointerdown", handleTouch);
+    };
+  }, []);
+
   return (
     <div className="lg:hidden space-y-3">
-      {/* Horizontal scroll chips with fade indicator */}
+      {/* Horizontal scroll chips with auto-marquee */}
       <div className="relative">
         <div
           ref={scrollRef}
-          className="flex gap-2 overflow-x-auto scrollbar-none px-1 pb-1 snap-x snap-mandatory"
+          className="flex gap-2 overflow-x-auto scrollbar-none px-1 pb-1"
           style={{ WebkitOverflowScrolling: "touch" }}
           role="list"
           aria-label="Garantias e diferenciais"

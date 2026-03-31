@@ -14,26 +14,11 @@ function Shimmer({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) 
   );
 }
 
-/** Mobile Hero Card skeleton */
-function HeroSkeleton() {
+/** Header skeleton — matches BudgetHeader mobile layout */
+function HeaderSkeleton() {
   return (
-    <div className="lg:hidden rounded-2xl border border-border bg-card overflow-hidden">
-      <div className="h-1 bg-muted" />
-      <div className="px-4 pt-3.5 pb-3 space-y-3">
-        <div className="space-y-2">
-          <Shimmer className="h-6 w-3/4" />
-          <Shimmer className="h-4 w-full" />
-        </div>
-        <div className="flex gap-1.5">
-          <Shimmer className="h-7 w-20 rounded-md" />
-          <Shimmer className="h-7 w-16 rounded-md" />
-          <Shimmer className="h-7 w-14 rounded-md" />
-        </div>
-        <Shimmer className="h-8 w-36 rounded-xl" />
-      </div>
-      <div className="px-4 pb-4 space-y-2">
-        <Shimmer className="h-[52px] w-full rounded-xl" />
-      </div>
+    <div className="relative overflow-hidden">
+      <Shimmer className="h-28 w-full rounded-none" />
     </div>
   );
 }

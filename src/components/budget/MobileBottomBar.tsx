@@ -181,9 +181,13 @@ export function MobileBottomBar({
                   </motion.a>
                 ) : (
                   <AnimatePresence mode="wait">
-                    <motion.button
+                  <motion.button
                       key={currentCta.label}
-                      onClick={handleCtaClick}
+                      onClick={() => {
+                        // Haptic feedback
+                        if (navigator.vibrate) navigator.vibrate(10);
+                        handleCtaClick();
+                      }}
                       whileTap={{ scale: 0.97 }}
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
