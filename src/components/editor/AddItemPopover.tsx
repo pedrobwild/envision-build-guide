@@ -112,7 +112,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
         internal_unit_price: primaryPrice?.unit_price ?? null,
         internal_total: primaryPrice?.unit_price ?? null,
         catalog_item_id: item.id,
-        catalog_snapshot: snapshot ? { ...snapshot, item_type: item.item_type } : { item_type: item.item_type },
+        catalog_snapshot: snapshot ? { ...snapshot, item_type: item.item_type, image_url: item.image_url } : { item_type: item.item_type, image_url: item.image_url },
       });
       setOpen(false);
     } catch {
