@@ -1,10 +1,12 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AdminBreadcrumb } from "@/components/AdminBreadcrumb";
+import { GlobalLoadingBar } from "@/components/GlobalLoadingBar";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
+      <GlobalLoadingBar />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
