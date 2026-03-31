@@ -742,6 +742,13 @@ export default function BudgetInternalDetail() {
           </div>
         </div>
       </div>
+
+      <BlockingDialog
+        open={!!blockingTarget}
+        targetStatus={blockingTarget}
+        onConfirm={handleBlockingConfirm}
+        onCancel={() => setBlockingTarget(null)}
+      />
     </div>
   );
 }
