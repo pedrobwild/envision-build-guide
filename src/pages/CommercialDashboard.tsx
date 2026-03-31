@@ -29,6 +29,7 @@ import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { KanbanBoard } from "@/components/commercial/KanbanBoard";
 
 // Pipeline groups for the commercial view
 const PIPELINE_SECTIONS = {
