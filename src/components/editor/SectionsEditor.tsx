@@ -772,11 +772,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                     key={item.id}
                                     item={item}
                                     sectionId={section.id}
+                                    sectionTitle={section.title}
                                     budgetId={budgetId}
                                     isItemSaving={savingIds.has(item.id)}
                                     onUpdate={updateItem}
                                     onDelete={deleteItem}
                                     onImagesChange={handleImagesChange}
+                                    onPromoteToCatalog={promoteToCatalog}
                                   />
                                 ))}
                               </div>
