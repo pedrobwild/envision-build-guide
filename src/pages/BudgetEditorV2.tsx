@@ -153,6 +153,9 @@ export default function BudgetEditorV2() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Pipeline Progress */}
+        <PipelineProgress internalStatus={budget.internal_status ?? "requested"} />
+
         {/* Internal Workflow Bar */}
         <WorkflowBar
           budget={budget}
