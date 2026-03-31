@@ -120,6 +120,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
       internal_code: form.internal_code.trim() || null,
       default_supplier_id: form.default_supplier_id || null,
       is_active: form.is_active,
+      image_url: imageUrl,
     };
 
     let itemId = item?.id;
