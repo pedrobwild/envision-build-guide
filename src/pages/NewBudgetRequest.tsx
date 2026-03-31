@@ -300,6 +300,30 @@ export default function NewBudgetRequest() {
           </CardContent>
         </Card>
 
+        {/* Hubspot Deal URL */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-display flex items-center gap-2">
+              <LinkIcon className="h-4 w-4 text-primary" />
+              Negócio Hubspot
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1.5">
+              <Label className="font-body text-sm">URL do negócio no Hubspot</Label>
+              <Input
+                value={hubspotDealUrl}
+                onChange={(e) => setHubspotDealUrl(e.target.value)}
+                placeholder="https://app.hubspot.com/contacts/.../deal/..."
+                type="url"
+              />
+              <p className="text-xs text-muted-foreground font-body">
+                Cole o link do negócio no Hubspot para vincular este orçamento.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Responsáveis */}
         <Card>
           <CardHeader className="pb-4">
@@ -308,36 +332,43 @@ export default function NewBudgetRequest() {
               Responsáveis
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Comercial responsável</Label>
-              <Select value={commercialOwnerId} onValueChange={setCommercialOwnerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o comercial" />
-                </SelectTrigger>
-                <SelectContent>
-                  {comerciais.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Orçamentista responsável</Label>
-              <Select value={estimatorOwnerId} onValueChange={setEstimatorOwnerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o orçamentista" />
-                </SelectTrigger>
-                <SelectContent>
-                  {orcamentistas.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="font-body text-sm">Comercial responsável</Label>
+                <Select value={commercialOwnerId} onValueChange={setCommercialOwnerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o comercial" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {comerciais.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="font-body text-sm">Orçamentista responsável</Label>
+                <Select value={estimatorOwnerId} onValueChange={setEstimatorOwnerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o orçamentista" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {orcamentistas.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
+                  <p className="text-xs text-blue-600 font-body">
+                    ↻ Atribuído automaticamente por rodízio
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
