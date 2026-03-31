@@ -112,6 +112,33 @@ export function MetadataStep({ budget, onFieldChange, onNext, saving }: Metadata
         </div>
       </div>
 
+      {/* Hubspot Deal URL */}
+      <div className="mb-8 p-4 rounded-xl border border-border bg-card space-y-2">
+        <div className="flex items-center gap-2">
+          <ExternalLink className="h-4 w-4 text-primary" />
+          <span className="font-display font-semibold text-sm text-foreground">Negócio Hubspot</span>
+        </div>
+        <div className="flex gap-2 items-center">
+          <input
+            type="url"
+            value={budget.hubspot_deal_url || ""}
+            onChange={(e) => onFieldChange("hubspot_deal_url", e.target.value)}
+            placeholder="https://app.hubspot.com/contacts/.../deal/..."
+            className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+          />
+          {budget.hubspot_deal_url && (
+            <a
+              href={budget.hubspot_deal_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2.5 rounded-lg border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          )}
+        </div>
+      </div>
+
       {/* Project name (full width) */}
       <div className="space-y-1.5 mb-8">
         <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
