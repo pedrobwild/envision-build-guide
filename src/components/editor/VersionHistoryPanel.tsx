@@ -229,6 +229,13 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
                             <Copy className="h-3 w-3" /> Duplicar
                           </button>
                           <button
+                            onClick={() => navigate(`/admin/comparar?left=${v.id}&right=${budgetId}`)}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            title="Comparar com versão atual"
+                          >
+                            <GitCompare className="h-3 w-3" /> Comparar
+                          </button>
+                          <button
                             onClick={() => navigate(`/admin/budget/${v.id}`)}
                             className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                             title="Abrir esta versão"
