@@ -40,17 +40,26 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
     loadVersions();
   }, [budgetId]);
 
+  const [changeReasonInput, setChangeReasonInput] = useState("");
+  const [showReasonDialog, setShowReasonDialog] = useState<string | null>(null);
+
   const handleDuplicate = async (sourceId: string) => {
     if (!user) return;
     setDuplicating(true);
     try {
-      const newId = await duplicateBudgetAsVersion(sourceId, user.id);
+      const newId = await duplicateBudgetAsVersion(sourceId, user.id, changeReasonInput || undefined);
+      setChangeReasonInput("");
+      setShowReasonDialog(null);
       toast.success("Nova versão criada com sucesso!");
       navigate(`/admin/budget/${newId}`);
     } catch (err: any) {
       toast.error(err?.message || "Erro ao duplicar versão");
     }
     setDuplicating(false);
+  };
+
+  const promptDuplicate = (sourceId: string) => {
+    setShowReasonDialog(sourceId);
   };
 
   const handleSetCurrent = async (versionId: string) => {
