@@ -19,6 +19,7 @@ import {
   Clock, AlertTriangle, MoreVertical, ExternalLink, CheckCircle2,
   PauseCircle, ArrowUpDown, Flame, Copy, Send, RotateCcw,
   FileText, Eye, ThumbsUp, XCircle, Plus, GitCompare,
+  LayoutList, Columns3,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES, PRIORITIES,
@@ -28,6 +29,7 @@ import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { KanbanBoard } from "@/components/commercial/KanbanBoard";
 
 // Pipeline groups for the commercial view
 const PIPELINE_SECTIONS = {
@@ -105,6 +107,7 @@ export default function CommercialDashboard() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("urgente");
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
@@ -307,6 +310,25 @@ export default function CommercialDashboard() {
               <SelectItem value="recente">Mais recente</SelectItem>
             </SelectContent>
           </Select>
+          {/* View toggle */}
+          <div className="flex border border-border rounded-lg overflow-hidden">
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              className="rounded-none px-2.5"
+              onClick={() => setViewMode("list")}
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "kanban" ? "secondary" : "ghost"}
+              size="sm"
+              className="rounded-none px-2.5"
+              onClick={() => setViewMode("kanban")}
+            >
+              <Columns3 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Loading */}
@@ -339,8 +361,18 @@ export default function CommercialDashboard() {
           </div>
         )}
 
+        {/* Kanban view */}
+        {!loading && viewMode === "kanban" && budgets.length > 0 && (
+          <KanbanBoard
+            budgets={budgets}
+            onStatusChange={changeStatus}
+            onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
+            getProfileName={getProfileName}
+          />
+        )}
+
         {/* List */}
-        {!loading && filtered.length > 0 && (
+        {!loading && viewMode === "list" && filtered.length > 0 && (
           <div className="space-y-2">
             {filtered.map(b => {
               const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
