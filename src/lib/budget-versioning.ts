@@ -31,12 +31,29 @@ export async function getVersionHistory(budgetId: string) {
 
   const { data, error } = await supabase
     .from("budgets")
-    .select("id, version_number, is_current_version, is_published_version, status, created_at, versao, project_name, client_name, change_reason, parent_budget_id")
+    .select("id, version_number, is_current_version, is_published_version, status, created_at, versao, project_name, client_name, change_reason, parent_budget_id, created_by")
     .eq("version_group_id", groupId)
     .order("version_number", { ascending: false });
 
   if (error) throw error;
-  return { versions: data || [], groupId };
+
+  // Enrich with creator names
+  const creatorIds = [...new Set((data || []).map((v) => v.created_by).filter(Boolean))];
+  let profileMap: Record<string, string> = {};
+  if (creatorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", creatorIds);
+    profileMap = Object.fromEntries((profiles || []).map((p) => [p.id, p.full_name || ""]));
+  }
+
+  const versions = (data || []).map((v) => ({
+    ...v,
+    created_by_name: v.created_by ? profileMap[v.created_by] || "—" : "—",
+  }));
+
+  return { versions, groupId };
 }
 
 /**
