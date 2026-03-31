@@ -14,6 +14,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 import { ContractRequestDialog } from "./ContractRequestDialog";
 import { MobileFinancialSheet } from "./MobileFinancialSheet";
+import { StepProgressIndicator } from "./StepProgressIndicator";
 
 interface MobileBottomBarProps {
   total: number;
