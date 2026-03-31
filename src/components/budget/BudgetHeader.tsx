@@ -177,17 +177,6 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {version && (
                 <span className="text-white/95 font-medium">v{version}</span>
               )}
-              {validityLabel && (
-                <>
-                  <span className="text-white/40">·</span>
-                  <span className={cn(
-                    "font-medium",
-                    validity?.expired ? "text-red-300" : "text-white/95"
-                  )}>
-                    {validity?.expired ? "Expirado" : `${validity?.daysLeft}d restantes`}
-                  </span>
-                </>
-              )}
               {budget.prazo_dias_uteis && (
                 <>
                   <span className="text-white/40">·</span>
