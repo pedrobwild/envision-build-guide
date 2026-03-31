@@ -57,8 +57,11 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
     if (!user) return;
     setDuplicating(true);
     try {
-      const newId = await duplicateBudgetAsVersion(sourceId, user.id, changeReasonInput || undefined);
+      const categoryLabel = VERSION_CHANGE_REASONS.find((r) => r.value === changeCategory)?.label || "";
+      const fullReason = [categoryLabel, changeReasonInput].filter(Boolean).join(": ");
+      const newId = await duplicateBudgetAsVersion(sourceId, user.id, fullReason || undefined);
       setChangeReasonInput("");
+      setChangeCategory("");
       setShowReasonDialog(null);
       toast.success("Nova versão criada com sucesso!");
       navigate(`/admin/budget/${newId}`);
