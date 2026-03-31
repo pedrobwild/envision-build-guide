@@ -42,6 +42,10 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
       const result = await getVersionHistory(budgetId);
       setVersions(result.versions);
       setGroupId(result.groupId);
+      // Fetch audit events for all versions in the group
+      const allIds = result.versions.map((v: any) => v.id);
+      const events = await getVersionAuditEvents(allIds);
+      setAuditEvents(events);
     } catch (err) {
       console.error("Failed to load versions:", err);
     }
