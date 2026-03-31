@@ -110,12 +110,16 @@ export default function CommercialDashboard() {
 
   async function loadData() {
     setLoading(true);
+    const isAdmin = profile?.roles.includes("admin");
+    let budgetQuery = supabase
+      .from("budgets")
+      .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version")
+      .order("created_at", { ascending: false });
+    if (!isAdmin) {
+      budgetQuery = budgetQuery.eq("commercial_owner_id", user!.id);
+    }
     const [budgetsRes, profilesRes] = await Promise.all([
-      supabase
-        .from("budgets")
-        .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version")
-        .eq("commercial_owner_id", user!.id)
-        .order("created_at", { ascending: false }),
+      budgetQuery,
       supabase.from("profiles").select("id, full_name"),
     ]);
     if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetRow[]);
