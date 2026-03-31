@@ -62,12 +62,9 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
   const availableTabs: { id: GalleryTab; label: string }[] = [];
   const galleryData: Record<GalleryTab, MediaItem[]> = { video3d: [], fotos3d: [], fotos: [], tour3d: [] };
 
-  // --- Vídeo 3D tab (only the video) ---
-  if (hasMedia && media!.video3d) {
-    galleryData.video3d = [{ src: media!.video3d, alt: "Projeto 3D — Vídeo Tour", type: "video" }];
-    availableTabs.push({ id: "video3d", label: "Vídeo 3D" });
-  } else if (!hasMedia && !mediaLoading && defaultGallery.video3d.length > 0) {
-    galleryData.video3d = defaultGallery.video3d;
+  // --- Vídeo 3D tab (only if a real video was uploaded) ---
+  if (media?.video3d) {
+    galleryData.video3d = [{ src: media.video3d, alt: "Projeto 3D — Vídeo Tour", type: "video" }];
     availableTabs.push({ id: "video3d", label: "Vídeo 3D" });
   }
 
