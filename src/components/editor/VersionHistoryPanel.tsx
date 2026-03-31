@@ -41,6 +41,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
   }, [budgetId]);
 
   const [changeReasonInput, setChangeReasonInput] = useState("");
+  const [changeCategory, setChangeCategory] = useState("");
   const [showReasonDialog, setShowReasonDialog] = useState<string | null>(null);
 
   const handleDuplicate = async (sourceId: string) => {
