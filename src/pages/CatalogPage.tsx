@@ -18,10 +18,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import {
-  Search, Plus, Package, Wrench, Edit2, Trash2, Building2, FolderOpen, Filter,
+  Search, Plus, Package, Wrench, Edit2, Trash2, Building2, FolderOpen, Filter, DollarSign, ChevronDown,
 } from "lucide-react";
+import { SupplierPricesPanel } from "@/components/catalog/SupplierPricesPanel";
 
 // ─── Types ────────────────────────────────────────────────────────
 interface CatalogCategory {
