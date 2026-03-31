@@ -148,7 +148,7 @@ export default function BudgetInternalDetail() {
     setLoading(false);
   }
 
-  async function changeStatus(newStatus: InternalStatus) {
+  async function changeStatus(newStatus: InternalStatus, note?: string) {
     if (!budget || !user) return;
     const oldStatus = budget.internal_status;
 
@@ -169,7 +169,22 @@ export default function BudgetInternalDetail() {
       event_type: "status_change",
       from_status: oldStatus,
       to_status: newStatus,
+      note: note || null,
     } as any);
+
+    // If note provided, also save as comment
+    if (note) {
+      const commentBody = `[${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}] ${note}`;
+      await supabase.from("budget_comments").insert({
+        budget_id: budget.id,
+        user_id: user.id,
+        body: commentBody,
+      } as any);
+      setComments((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), body: commentBody, user_id: user.id, created_at: new Date().toISOString() },
+      ]);
+    }
 
     setBudget((prev) => prev ? { ...prev, internal_status: newStatus } : prev);
     setEvents((prev) => [
@@ -179,13 +194,18 @@ export default function BudgetInternalDetail() {
         event_type: "status_change",
         from_status: oldStatus,
         to_status: newStatus,
-        note: null,
+        note: note || null,
         user_id: user.id,
         created_at: new Date().toISOString(),
       },
     ]);
 
     toast.success(`Status → ${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}`);
+  }
+
+  async function handleBlockingConfirm(status: InternalStatus, note: string) {
+    await changeStatus(status, note);
+    setBlockingTarget(null);
   }
 
   async function addComment() {
