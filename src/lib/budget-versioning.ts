@@ -234,13 +234,14 @@ export async function setCurrentVersion(budgetId: string, groupId: string) {
  * Only one version per group can be published at a time.
  */
 export async function publishVersion(budgetId: string, groupId: string, publicId: string) {
-  // Remove published flag from all versions in group
+  // Remove published flag AND clear public_id from all versions in group
   await supabase
     .from("budgets")
-    .update({ is_published_version: false } as any)
-    .eq("version_group_id", groupId);
+    .update({ is_published_version: false, public_id: null, status: "superseded" } as any)
+    .eq("version_group_id", groupId)
+    .eq("is_published_version", true);
 
-  // Mark this version as published
+  // Mark this version as published with the public_id
   await supabase
     .from("budgets")
     .update({
