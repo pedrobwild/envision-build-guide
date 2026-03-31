@@ -257,7 +257,16 @@ export async function setCurrentVersion(budgetId: string, groupId: string, userI
  * Publish a specific version — marks it as the published one.
  * Only one version per group can be published at a time.
  */
-export async function publishVersion(budgetId: string, groupId: string, publicId: string) {
+export async function publishVersion(budgetId: string, groupId: string, publicId: string, userId?: string) {
+  // Find previously published version for audit
+  const { data: prevPublished } = await supabase
+    .from("budgets")
+    .select("id, version_number")
+    .eq("version_group_id", groupId)
+    .eq("is_published_version", true)
+    .limit(1)
+    .maybeSingle();
+
   // Remove published flag AND clear public_id from all versions in group
   await supabase
     .from("budgets")
@@ -266,14 +275,34 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     .eq("is_published_version", true);
 
   // Mark this version as published with the public_id
-  await supabase
+  const { data: published } = await supabase
     .from("budgets")
     .update({
       is_published_version: true,
       status: "published",
       public_id: publicId,
     } as any)
-    .eq("id", budgetId);
+    .eq("id", budgetId)
+    .select("version_number")
+    .single();
+
+  // Audit: superseded
+  if (prevPublished && prevPublished.id !== budgetId) {
+    await logVersionEvent({
+      event_type: "version_superseded",
+      budget_id: prevPublished.id,
+      user_id: userId ?? null,
+      metadata: { version_number: prevPublished.version_number, replaced_by: budgetId },
+    });
+  }
+
+  // Audit: published
+  await logVersionEvent({
+    event_type: "version_published",
+    budget_id: budgetId,
+    user_id: userId ?? null,
+    metadata: { version_number: published?.version_number ?? "?", public_id: publicId },
+  });
 }
 
 /**
