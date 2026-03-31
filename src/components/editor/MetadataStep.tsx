@@ -1,6 +1,8 @@
-import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, Save, Timer, Clock, Loader2, ShoppingBag } from "lucide-react";
+import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, Save, Timer, Clock, Loader2, ShoppingBag, Users } from "lucide-react";
 import { HeaderConfigStep } from "@/components/editor/HeaderConfigStep";
 import type { HeaderConfig } from "@/components/budget/BudgetHeader";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MetadataStepProps {
   budget: any;
@@ -26,6 +28,8 @@ const FIELDS = [
 export function MetadataStep({ budget, onFieldChange, onNext, saving }: MetadataStepProps) {
   const hasClientName = !!budget.client_name && budget.client_name !== "Cliente";
   const headerConfig: HeaderConfig = budget.header_config || {};
+  const { members: comerciais } = useTeamMembers("comercial");
+  const { members: orcamentistas } = useTeamMembers("orcamentista");
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -54,6 +58,58 @@ export function MetadataStep({ budget, onFieldChange, onNext, saving }: Metadata
             />
           </div>
         ))}
+      </div>
+
+      {/* Responsáveis */}
+      <div className="mb-8 p-4 rounded-xl border border-border bg-card space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Users className="h-4 w-4 text-primary" />
+          <span className="font-display font-semibold text-sm text-foreground">Responsáveis</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+              <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+              Comercial
+            </label>
+            <Select
+              value={budget.commercial_owner_id || ""}
+              onValueChange={(v) => onFieldChange("commercial_owner_id", v || null)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o comercial" />
+              </SelectTrigger>
+              <SelectContent>
+                {comerciais.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+              <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+              Orçamentista
+            </label>
+            <Select
+              value={budget.estimator_owner_id || ""}
+              onValueChange={(v) => onFieldChange("estimator_owner_id", v || null)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o orçamentista" />
+              </SelectTrigger>
+              <SelectContent>
+                {orcamentistas.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {/* Project name (full width) */}

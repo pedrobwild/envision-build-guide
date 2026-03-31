@@ -28,13 +28,19 @@ import {
   Plus,
   X,
   CheckCircle2,
+  UserCheck,
 } from "lucide-react";
 import { PRIORITIES, PROPERTY_TYPES, type Priority } from "@/lib/role-constants";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 
 export default function NewBudgetRequest() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  // Team members for assignment
+  const { members: comerciais } = useTeamMembers("comercial");
+  const { members: orcamentistas } = useTeamMembers("orcamentista");
 
   // Form state
   const [clientName, setClientName] = useState("");
@@ -49,6 +55,8 @@ export default function NewBudgetRequest() {
   const [priority, setPriority] = useState<Priority>("normal");
   const [internalNotes, setInternalNotes] = useState("");
   const [referenceLinks, setReferenceLinks] = useState<string[]>([""]);
+  const [commercialOwnerId, setCommercialOwnerId] = useState("");
+  const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
 
   const addLink = () => setReferenceLinks((prev) => [...prev, ""]);
   const removeLink = (i: number) =>
@@ -84,7 +92,8 @@ export default function NewBudgetRequest() {
       reference_links: links.length > 0 ? links : [],
       internal_status: "requested",
       status: "draft",
-      commercial_owner_id: user.id,
+      commercial_owner_id: commercialOwnerId || user.id,
+      estimator_owner_id: estimatorOwnerId || null,
       created_by: user.id,
     } as any);
 
@@ -252,6 +261,48 @@ export default function NewBudgetRequest() {
                 rows={5}
                 maxLength={5000}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Responsáveis */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-display flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-primary" />
+              Responsáveis
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="font-body text-sm">Comercial responsável</Label>
+              <Select value={commercialOwnerId} onValueChange={setCommercialOwnerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o comercial" />
+                </SelectTrigger>
+                <SelectContent>
+                  {comerciais.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-body text-sm">Orçamentista responsável</Label>
+              <Select value={estimatorOwnerId} onValueChange={setEstimatorOwnerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o orçamentista" />
+                </SelectTrigger>
+                <SelectContent>
+                  {orcamentistas.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
