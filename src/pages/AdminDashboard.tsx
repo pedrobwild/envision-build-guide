@@ -440,21 +440,56 @@ export default function AdminDashboard() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {[
-          { icon: FolderOpen, label: "Total", value: metrics.total, color: "text-foreground" },
-          { icon: CheckCircle, label: "Publicados", value: metrics.published, color: "text-green-600" },
-          { icon: Handshake, label: "Contratos", value: metrics.closed, color: "text-primary" },
-          { icon: TrendingUp, label: "Valor total", value: formatBRL(metrics.totalValue), color: "text-primary" },
-        ].map((m, i) => (
-          <div key={i} className="p-3 rounded-lg border border-border bg-card">
-            <div className="flex items-center gap-1.5 mb-1">
-              <m.icon className={`h-3.5 w-3.5 ${m.color}`} />
-              <span className="text-xs text-muted-foreground font-body">{m.label}</span>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total */}
+        <Card className="border bg-card">
+          <CardContent className="p-5 flex items-start gap-4">
+            <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+            <div>
+              <p className="text-2xl font-display font-bold text-foreground">{metrics.total}</p>
+              <p className="text-xs text-muted-foreground font-body">Total de orçamentos</p>
             </div>
-            <p className={`text-lg font-display font-bold ${m.color} truncate`}>{m.value}</p>
-          </div>
-        ))}
+          </CardContent>
+        </Card>
+
+        {/* Publicados */}
+        <Card className="border bg-card">
+          <CardContent className="p-5 flex items-start gap-4">
+            <Send className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-2xl font-display font-bold text-blue-600">{metrics.published}</p>
+              <p className="text-xs text-muted-foreground font-body">Publicados</p>
+              <p className="text-xs text-muted-foreground font-body">
+                ({metrics.total > 0 ? Math.round((metrics.published / metrics.total) * 100) : 0}% do total)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contratos */}
+        <Card className="border bg-card">
+          <CardContent className="p-5 flex items-start gap-4">
+            <Handshake className={`h-5 w-5 mt-0.5 shrink-0 ${metrics.closed > 0 ? "text-green-500" : "text-muted-foreground"}`} />
+            <div>
+              <p className={`text-2xl font-display font-bold ${metrics.closed > 0 ? "text-green-600" : "text-muted-foreground"}`}>{metrics.closed}</p>
+              <p className="text-xs text-muted-foreground font-body">Contratos fechados</p>
+              {metrics.closed === 0 && (
+                <p className="text-xs text-muted-foreground font-body">Nenhum contrato fechado ainda</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Valor Total — hero metric */}
+        <Card className="border bg-card border-l-4 border-l-emerald-500">
+          <CardContent className="p-5 flex items-start gap-4">
+            <TrendingUp className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xl font-display font-bold text-emerald-600 truncate">{formatBRL(metrics.totalValue)}</p>
+              <p className="text-xs text-muted-foreground font-body">Valor em carteira</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Monthly Billing (only if there's data) */}
