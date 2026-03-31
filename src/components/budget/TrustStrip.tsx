@@ -91,7 +91,7 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.04 }}
-              className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border snap-start"
+              className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border"
             >
               <s.icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
               <div className="flex flex-col">
