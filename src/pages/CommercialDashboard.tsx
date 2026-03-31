@@ -18,7 +18,7 @@ import {
   Search, Calendar, User, Building2, ArrowLeft, Loader2, Inbox,
   Clock, AlertTriangle, MoreVertical, ExternalLink, CheckCircle2,
   PauseCircle, ArrowUpDown, Flame, Copy, Send, RotateCcw,
-  FileText, Eye, ThumbsUp, XCircle, Plus,
+  FileText, Eye, ThumbsUp, XCircle, Plus, GitCompare,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES, PRIORITIES,
@@ -87,6 +87,10 @@ interface BudgetRow {
   estimator_owner_id: string | null;
   public_id: string | null;
   status: string;
+  version_number: number | null;
+  version_group_id: string | null;
+  is_current_version: boolean | null;
+  is_published_version: boolean | null;
 }
 
 interface ProfileRow { id: string; full_name: string; }
@@ -109,7 +113,7 @@ export default function CommercialDashboard() {
     const [budgetsRes, profilesRes] = await Promise.all([
       supabase
         .from("budgets")
-        .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status")
+        .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version")
         .eq("commercial_owner_id", user!.id)
         .order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, full_name"),
@@ -359,6 +363,21 @@ export default function CommercialDashboard() {
                             <Calendar className="h-3 w-3" />{due.label}
                           </span>
                         )}
+                        {(b.version_number ?? 1) > 1 && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                            V{b.version_number}
+                          </span>
+                        )}
+                        {b.is_published_version && (
+                          <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            Publicada
+                          </span>
+                        )}
+                        {!b.is_published_version && b.status === "draft" && (b.version_number ?? 1) > 1 && (
+                          <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                            Em elaboração
+                          </span>
+                        )}
                       </div>
                       {/* Row 2 */}
                       <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
@@ -390,6 +409,11 @@ export default function CommercialDashboard() {
                         {b.public_id && (
                           <DropdownMenuItem onClick={() => copyPublicLink(b.public_id)}>
                             <Copy className="h-4 w-4 mr-2" />Copiar link público
+                          </DropdownMenuItem>
+                        )}
+                        {(b.version_number ?? 1) > 1 && b.version_group_id && (
+                          <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
+                            <GitCompare className="h-4 w-4 mr-2" />Comparar versões
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />

@@ -38,6 +38,7 @@ import {
   PauseCircle,
   ArrowUpDown,
   Flame,
+  GitCompare,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -76,6 +77,9 @@ interface BudgetRow {
   estimator_owner_id: string | null;
   briefing: string | null;
   demand_context: string | null;
+  version_number: number | null;
+  version_group_id: string | null;
+  is_current_version: boolean | null;
 }
 
 interface ProfileRow {
@@ -108,7 +112,7 @@ export default function EstimatorDashboard() {
       supabase
         .from("budgets")
         .select(
-          "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context"
+          "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context, version_number, version_group_id, is_current_version"
         )
         .eq("estimator_owner_id", user!.id)
         .order("created_at", { ascending: false }),
@@ -444,6 +448,11 @@ export default function EstimatorDashboard() {
                             {due.label}
                           </span>
                         )}
+                        {(b.version_number ?? 1) > 1 && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                            V{b.version_number}
+                          </span>
+                        )}
                       </div>
 
                       {/* Row 2: Meta */}
@@ -502,6 +511,12 @@ export default function EstimatorDashboard() {
                           >
                             <FileText className="h-4 w-4 mr-2" />
                             Ver briefing
+                          </DropdownMenuItem>
+                        )}
+                        {(b.version_number ?? 1) > 1 && b.version_group_id && (
+                          <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
+                            <GitCompare className="h-4 w-4 mr-2" />
+                            Comparar versões
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
