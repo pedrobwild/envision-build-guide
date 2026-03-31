@@ -29,6 +29,7 @@ import {
   Edit3,
   MapPin,
   Ruler,
+  AlertOctagon,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
