@@ -242,9 +242,27 @@ function ItemDialog({
     default_supplier_id: item?.default_supplier_id ?? "",
     is_active: item?.is_active ?? true,
   });
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
+  const [sectionsLoaded, setSectionsLoaded] = useState(!item);
   const [saving, setSaving] = useState(false);
 
+  // Load existing sections for edit mode
+  useState(() => {
+    if (item) {
+      getItemSections(item.id).then((sections) => {
+        setSelectedSections(sections);
+        setSectionsLoaded(true);
+      });
+    }
+  });
+
   const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+
+  const toggleSection = (sectionId: string) => {
+    setSelectedSections((prev) =>
+      prev.includes(sectionId) ? prev.filter((s) => s !== sectionId) : [...prev, sectionId]
+    );
+  };
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
@@ -261,12 +279,25 @@ function ItemDialog({
       is_active: form.is_active,
     };
 
-    const { error } = item
-      ? await supabase.from("catalog_items").update(payload).eq("id", item.id)
-      : await supabase.from("catalog_items").insert(payload);
+    let itemId = item?.id;
+
+    if (item) {
+      const { error } = await supabase.from("catalog_items").update(payload).eq("id", item.id);
+      if (error) { toast.error("Erro ao salvar item"); setSaving(false); return; }
+    } else {
+      const { data, error } = await supabase.from("catalog_items").insert(payload).select("id").single();
+      if (error) { toast.error("Erro ao salvar item"); setSaving(false); return; }
+      itemId = data.id;
+    }
+
+    // Save section links
+    try {
+      await setItemSections(itemId!, selectedSections);
+    } catch {
+      toast.error("Item salvo, mas erro ao vincular seções");
+    }
 
     setSaving(false);
-    if (error) { toast.error("Erro ao salvar item"); console.error(error); return; }
     toast.success(item ? "Item atualizado" : "Item criado");
     onSaved();
     onOpenChange(false);
@@ -341,10 +372,29 @@ function ItemDialog({
               <Label htmlFor="item-active" className="cursor-pointer">Ativo</Label>
             </div>
           </div>
+
+          {/* Section linking */}
+          <div>
+            <Label className="mb-2 block">Seções permitidas do orçamento</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Selecione em quais seções este item pode ser inserido no orçamento.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {CATALOG_SECTION_OPTIONS.map((section) => (
+                <label key={section.id} className="flex items-center gap-2 text-sm cursor-pointer rounded-md border px-3 py-2 hover:bg-muted/50 transition-colors">
+                  <Checkbox
+                    checked={selectedSections.includes(section.id)}
+                    onCheckedChange={() => toggleSection(section.id)}
+                  />
+                  {section.label}
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+          <Button onClick={handleSave} disabled={saving || !sectionsLoaded}>{saving ? "Salvando..." : "Salvar"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
