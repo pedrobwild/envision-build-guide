@@ -24,6 +24,8 @@ import {
   Loader2,
   FileText,
   Inbox,
+  Hammer,
+  Briefcase,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
