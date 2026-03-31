@@ -475,6 +475,7 @@ export default function PublicBudget() {
         )}
       </main>
 
+      <ScrollToTopButton />
       <WhatsAppButton
         projectName={budget.project_name || "Orçamento"}
         publicId={publicId || "demo"}
