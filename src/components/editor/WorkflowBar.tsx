@@ -78,7 +78,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const overdue = dueAt ? isPast(dueAt) && !isToday(dueAt) : false;
   const dueToday = dueAt ? isToday(dueAt) : false;
 
-  async function changeStatus(newStatus: InternalStatus) {
+  async function changeStatus(newStatus: InternalStatus, note?: string) {
     const oldStatus = budget.internal_status;
 
     const { error } = await supabase
@@ -99,11 +99,26 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         event_type: "status_change",
         from_status: oldStatus,
         to_status: newStatus,
+        note: note || null,
       } as any);
+
+      // If note provided, also save as comment for thread visibility
+      if (note) {
+        await supabase.from("budget_comments").insert({
+          budget_id: budget.id,
+          user_id: user.id,
+          body: `[${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}] ${note}`,
+        } as any);
+      }
     }
 
     onBudgetUpdate({ internal_status: newStatus });
     toast.success(`Status → ${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}`);
+  }
+
+  async function handleBlockingConfirm(status: InternalStatus, note: string) {
+    await changeStatus(status, note);
+    setBlockingTarget(null);
   }
 
   return (
