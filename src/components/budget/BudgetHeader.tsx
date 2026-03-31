@@ -5,6 +5,7 @@ import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
 import { ReclameAquiSeal } from "./ReclameAquiSeal";
 import { formatDate, getValidityInfo } from "@/lib/formatBRL";
+import { cn } from "@/lib/utils";
 
 export interface HeaderConfig {
   hide_badge?: boolean;
@@ -175,6 +176,17 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               )}
               {version && (
                 <span className="text-white/95 font-medium">v{version}</span>
+              )}
+              {validityLabel && (
+                <>
+                  <span className="text-white/40">·</span>
+                  <span className={cn(
+                    "font-medium",
+                    validity?.expired ? "text-red-300" : "text-white/95"
+                  )}>
+                    {validity?.expired ? "Expirado" : `${validity?.daysLeft}d restantes`}
+                  </span>
+                </>
               )}
             </motion.div>
           </div>
