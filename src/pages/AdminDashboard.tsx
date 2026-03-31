@@ -620,51 +620,65 @@ export default function AdminDashboard() {
                 const profitMargin = total > 0 ? (profit / total) * 100 : 0;
 
                 return (
-                  <div key={budget.id} className="px-3 py-2.5 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors group">
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Link
-                            to={`/admin/budget/${budget.id}`}
-                            className="font-medium text-foreground hover:text-primary transition-colors font-body text-sm truncate"
-                          >
-                            {budget.project_name || "Sem nome"}
-                          </Link>
-                          <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-medium font-body ${statusColors[budget.status]}`}>
-                            {statusLabels[budget.status] || budget.status}
+                  <div key={budget.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
+                    {/* Status badge */}
+                    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium font-body border ${
+                      budget.status === "published" ? "border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30" :
+                      budget.status === "contrato_fechado" ? "border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30" :
+                      budget.status === "draft" ? "border-blue-400 text-blue-600 bg-blue-50 dark:bg-blue-950/30" :
+                      "border-amber-400 text-amber-600 bg-amber-50 dark:bg-amber-950/30"
+                    }`}>
+                      {statusLabels[budget.status] || budget.status}
+                    </span>
+
+                    {/* Title + metadata */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          to={`/admin/budget/${budget.id}`}
+                          className="font-medium text-sm text-foreground hover:text-primary transition-colors font-body truncate"
+                        >
+                          {budget.project_name || "Sem nome"}
+                        </Link>
+                        {(budget.version_number ?? 1) > 1 && (
+                          <span className="text-[10px] bg-muted border border-border rounded-full px-1.5 py-0.5 font-body">
+                            V{budget.version_number}
                           </span>
-                          {(budget.version_number ?? 1) > 1 && (
-                            <span className="text-[10px] bg-muted border border-border rounded-full px-1.5 py-0.5 font-body">
-                              V{budget.version_number}
-                            </span>
-                          )}
-                          {budget.is_published_version && (
-                            <span className="text-[10px] bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-full px-1.5 py-0.5 font-body">
-                              Publicada
-                            </span>
-                          )}
-                          {budget.show_optional_items && (
-                            <ShoppingBag className="h-3 w-3 text-amber-500" />
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground font-body mt-0.5">
-                          {budget.client_name}
-                          {budget.date && <> · {formatDate(budget.date)}</>}
-                          {" · "}{sectionCount} {sectionCount === 1 ? "seção" : "seções"}
-                          {budget.view_count > 0 && <> · {budget.view_count} view{budget.view_count !== 1 ? "s" : ""}</>}
-                        </p>
-                        {isClosed && internalCost > 0 && (
-                          <p className="text-xs font-body mt-0.5">
-                            <span className="text-muted-foreground">Custo: {formatBRL(internalCost)}</span>
-                            <span className={` ml-2 ${profit >= 0 ? "text-green-600" : "text-destructive"}`}>
-                              Lucro: {formatBRL(profit)} ({profitMargin.toFixed(0)}%)
-                            </span>
-                          </p>
+                        )}
+                        {budget.is_published_version && (
+                          <span className="text-[10px] bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-full px-1.5 py-0.5 font-body">
+                            Publicada
+                          </span>
+                        )}
+                        {budget.show_optional_items && (
+                          <ShoppingBag className="h-3 w-3 text-amber-500" />
                         )}
                       </div>
+                      <p className="text-xs text-muted-foreground font-body mt-0.5">
+                        {budget.client_name}
+                        {budget.date && <> · {formatDate(budget.date)}</>}
+                        {" · "}{sectionCount} {sectionCount === 1 ? "seção" : "seções"}
+                        {budget.view_count >= 5 && (
+                          <span className="inline-flex items-center gap-0.5 ml-1">
+                            · <Eye className="h-3 w-3 inline" /> {budget.view_count}
+                          </span>
+                        )}
+                        {budget.view_count > 0 && budget.view_count < 5 && <> · {budget.view_count} view{budget.view_count !== 1 ? "s" : ""}</>}
+                      </p>
+                      {isClosed && internalCost > 0 && (
+                        <p className="text-xs font-body mt-0.5">
+                          <span className="text-muted-foreground">Custo: {formatBRL(internalCost)}</span>
+                          <span className={` ml-2 ${profit >= 0 ? "text-green-600" : "text-destructive"}`}>
+                            Lucro: {formatBRL(profit)} ({profitMargin.toFixed(0)}%)
+                          </span>
+                        </p>
+                      )}
+                    </div>
 
-                      <span className="text-sm font-display font-semibold text-foreground whitespace-nowrap">{formatBRL(total)}</span>
+                    {/* Price */}
+                    <span className="text-sm font-display font-semibold text-foreground whitespace-nowrap text-right">{formatBRL(total)}</span>
 
+                    {/* Action icons with tooltips */}
                     <TooltipProvider delayDuration={300}>
                       <div className="flex items-center gap-0.5">
                         <Tooltip>
