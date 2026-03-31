@@ -665,30 +665,45 @@ export default function AdminDashboard() {
 
                       <span className="text-sm font-display font-semibold text-foreground whitespace-nowrap">{formatBRL(total)}</span>
 
+                    <TooltipProvider delayDuration={300}>
                       <div className="flex items-center gap-0.5">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/admin/budget/${budget.id}`)} title="Editar">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/admin/budget/${budget.id}`)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Editar orçamento</p></TooltipContent>
+                        </Tooltip>
                         {budget.status === "draft" && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => publishBudget(budget.id)} title="Publicar">
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => publishBudget(budget.id)}>
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Publicar</p></TooltipContent>
+                          </Tooltip>
                         )}
                         {budget.public_id && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank")}
-                            title="Ver público"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank")}>
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Visualizar página pública</p></TooltipContent>
+                          </Tooltip>
                         )}
                         <div className="relative">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMenuOpen(menuOpen === budget.id ? null : budget.id)}>
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMenuOpen(menuOpen === budget.id ? null : budget.id)}>
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Mais ações</p></TooltipContent>
+                          </Tooltip>
                           {menuOpen === budget.id && (
                             <>
                               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
@@ -702,7 +717,7 @@ export default function AdminDashboard() {
                                     }}
                                     className="w-full px-3 py-2 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
                                   >
-                                    <Copy className="h-3.5 w-3.5" /> Copiar link
+                                    <Copy className="h-3.5 w-3.5" /> Copiar link público
                                   </button>
                                 )}
                                 {budget.version_group_id && (
