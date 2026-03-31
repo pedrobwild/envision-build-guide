@@ -425,7 +425,7 @@ export default function EstimatorDashboard() {
                     {/* Main content */}
                     <div
                       className="flex-1 min-w-0 cursor-pointer"
-                      onClick={() => navigate(`/admin/budget/${b.id}`)}
+                      onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}
                     >
                       {/* Row 1: Project + badges */}
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
