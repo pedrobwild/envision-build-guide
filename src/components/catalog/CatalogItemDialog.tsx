@@ -216,6 +216,43 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
             </div>
           </div>
 
+          {/* Image */}
+          <div>
+            <Label className="mb-2 block">Imagem do item</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Esta imagem será exibida automaticamente no orçamento público ao selecionar este item.
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImageUpload(e.target.files)}
+            />
+            {imageUrl ? (
+              <div className="relative inline-block">
+                <img src={imageUrl} alt="Preview" className="h-24 w-24 object-cover rounded-lg border border-border" />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl(null)}
+                  className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:opacity-80"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingImage}
+                className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                {uploadingImage ? "Enviando..." : "Adicionar imagem"}
+              </button>
+            )}
+          </div>
+
           {/* Section linking */}
           <div>
             <Label className="mb-2 block">Seções permitidas do orçamento</Label>
