@@ -65,8 +65,8 @@ export default function BudgetEditorV2() {
     try {
       const groupId = await ensureVersionGroup(budgetId);
       const publicId = budget.public_id || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-      
-      await publishVersion(budgetId, groupId, publicId);
+      const { data: { session } } = await supabase.auth.getSession();
+      await publishVersion(budgetId, groupId, publicId, session?.user?.id);
 
       setBudget({ ...budget, status: "published", public_id: publicId, is_published_version: true });
       const publicUrl = getPublicBudgetUrl(publicId);
