@@ -242,12 +242,19 @@ export default function PublicBudget() {
                 </AnimatedSection>
                 </div>
 
-                {/* Map */}
+                {/* Map — with entrance animation */}
                 <div data-pdf-section>
                   <AnimatedSection id="projetos-regiao" index={0.7}>
-                    <Suspense fallback={<LazyFallback />}>
-                      <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
-                    </Suspense>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-40px" }}
+                      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <Suspense fallback={<LazyFallback />}>
+                        <NeighborhoodDensityMap clientNeighborhood={budget?.bairro ?? undefined} />
+                      </Suspense>
+                    </motion.div>
                   </AnimatedSection>
                 </div>
               </div>
