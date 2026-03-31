@@ -50,6 +50,7 @@ interface WorkflowBarProps {
 export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
 
   useEffect(() => {
     supabase
