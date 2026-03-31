@@ -142,15 +142,38 @@ export function AppSidebar() {
     }
   }, [isBudgetEditor]);
 
-  const principalItems = PRINCIPAL_ITEMS.filter(canSee);
-  const orcamentoItems = ORCAMENTO_ITEMS.filter(canSee);
-  const gestaoItems = GESTAO_ITEMS.filter(canSee);
+  const comercialItems = COMERCIAL_ITEMS.filter(canSee);
+  const projetosItems = PROJETOS_ITEMS.filter(canSee);
+  const dadosMestresItems = DADOS_MESTRES_ITEMS.filter(canSee);
+  const analiseItems = ANALISE_ITEMS.filter(canSee);
   const ferramentasItems = FERRAMENTAS_ITEMS.filter(canSee);
 
   async function handleSignOut() {
     await signOut();
     navigate("/login");
   }
+
+  // Helper to render a named group
+  const renderGroup = (label: string, items: NavItem[]) => {
+    if (items.length === 0) return null;
+    return (
+      <>
+        <Separator className="mx-2" />
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
+              {label}
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => renderNavItem(item, collapsed))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -174,80 +197,11 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Principal group */}
-        {principalItems.length > 0 && (
-          <>
-            <Separator className="mx-2" />
-            <SidebarGroup>
-              {!collapsed && (
-                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
-                  Principal
-                </SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {principalItems.map((item) => renderNavItem(item, collapsed))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
-
-        {/* Orçamento group */}
-        {orcamentoItems.length > 0 && (
-          <>
-            <Separator className="mx-2" />
-            <SidebarGroup>
-              {!collapsed && (
-                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
-                  Orçamento
-                </SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {orcamentoItems.map((item) => renderNavItem(item, collapsed))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
-        {/* Gestão group */}
-        {gestaoItems.length > 0 && (
-          <>
-            <Separator className="mx-2" />
-            <SidebarGroup>
-              {!collapsed && (
-                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
-                  Gestão
-                </SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {gestaoItems.map((item) => renderNavItem(item, collapsed))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
-
-        {/* Ferramentas group */}
-        {ferramentasItems.length > 0 && (
-          <>
-            <Separator className="mx-2" />
-            <SidebarGroup>
-              {!collapsed && (
-                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
-                  Ferramentas
-                </SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {ferramentasItems.map((item) => renderNavItem(item, collapsed))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
+        {renderGroup("Comercial", comercialItems)}
+        {renderGroup("Gestão de Projetos", projetosItems)}
+        {renderGroup("Dados Mestres", dadosMestresItems)}
+        {renderGroup("Análise & Relatórios", analiseItems)}
+        {renderGroup("Ferramentas", ferramentasItems)}
       </SidebarContent>
 
       <SidebarFooter className="p-2">
