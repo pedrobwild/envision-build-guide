@@ -56,6 +56,7 @@ export default function BudgetRequestsList() {
   const { user } = useAuth();
   const { isAdmin } = useUserProfile();
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
