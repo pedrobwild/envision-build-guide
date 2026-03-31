@@ -15,6 +15,7 @@ interface CatalogSuggestion {
   description: string | null;
   unit_of_measure: string | null;
   item_type: "product" | "service";
+  image_url: string | null;
 }
 
 interface AddItemResult {
