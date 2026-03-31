@@ -37,6 +37,17 @@ export default function BudgetEditorV2() {
     if (!b) { navigate("/admin"); return; }
     setBudget(b);
 
+    // Fetch version count for the group
+    if (b.version_group_id) {
+      const { count } = await supabase
+        .from("budgets")
+        .select("id", { count: "exact", head: true })
+        .eq("version_group_id", b.version_group_id);
+      setVersionCount(count ?? 1);
+    } else {
+      setVersionCount(1);
+    }
+
     const { data: secs } = await supabase
       .from("sections")
       .select("*, items(*, item_images(*))")
