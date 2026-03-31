@@ -513,6 +513,12 @@ export default function EstimatorDashboard() {
                             Ver briefing
                           </DropdownMenuItem>
                         )}
+                        {(b.version_number ?? 1) > 1 && b.version_group_id && (
+                          <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
+                            <GitCompare className="h-4 w-4 mr-2" />
+                            Comparar versões
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         {b.internal_status !== "in_progress" && (
                           <DropdownMenuItem onClick={() => changeStatus(b.id, "in_progress")}>
