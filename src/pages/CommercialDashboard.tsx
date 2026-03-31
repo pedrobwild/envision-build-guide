@@ -310,6 +310,25 @@ export default function CommercialDashboard() {
               <SelectItem value="recente">Mais recente</SelectItem>
             </SelectContent>
           </Select>
+          {/* View toggle */}
+          <div className="flex border border-border rounded-lg overflow-hidden">
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              className="rounded-none px-2.5"
+              onClick={() => setViewMode("list")}
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "kanban" ? "secondary" : "ghost"}
+              size="sm"
+              className="rounded-none px-2.5"
+              onClick={() => setViewMode("kanban")}
+            >
+              <Columns3 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Loading */}
