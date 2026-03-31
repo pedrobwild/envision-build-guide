@@ -196,12 +196,18 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
                                 Atual
                               </span>
                             )}
+                            {v.is_published_version && (
+                              <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full font-body font-medium">
+                                Publicada
+                              </span>
+                            )}
                             <span className={`text-xs font-body ${statusColors[v.status]}`}>
                               · {statusLabels[v.status] || v.status}
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground font-body">
                             {v.created_at ? formatDate(v.created_at) : "—"}
+                            {v.change_reason && <span className="ml-1 italic">— {v.change_reason}</span>}
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
