@@ -24,6 +24,8 @@ import {
   Search, Plus, Package, Wrench, Edit2, Trash2, Building2, FolderOpen, Filter, DollarSign, ChevronDown,
 } from "lucide-react";
 import { SupplierPricesPanel } from "@/components/catalog/SupplierPricesPanel";
+import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections } from "@/lib/catalog-helpers";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // ─── Types ────────────────────────────────────────────────────────
 interface CatalogCategory {
