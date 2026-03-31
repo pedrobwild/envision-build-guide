@@ -70,6 +70,7 @@ const GESTAO_ITEMS: NavItem[] = [
 ];
 
 const FERRAMENTAS_ITEMS: NavItem[] = [
+  { title: "Catálogo Mestre", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
   { title: "Avaliação QA", url: "/qa", icon: Shield, roles: ["admin"] },
 ];
 
