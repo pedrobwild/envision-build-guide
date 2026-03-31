@@ -492,6 +492,7 @@ export type Database = {
           default_supplier_id: string | null
           description: string | null
           id: string
+          image_url: string | null
           internal_code: string | null
           is_active: boolean
           item_type: Database["public"]["Enums"]["catalog_item_type"]
@@ -506,6 +507,7 @@ export type Database = {
           default_supplier_id?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           internal_code?: string | null
           is_active?: boolean
           item_type?: Database["public"]["Enums"]["catalog_item_type"]
@@ -520,6 +522,7 @@ export type Database = {
           default_supplier_id?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           internal_code?: string | null
           is_active?: boolean
           item_type?: Database["public"]["Enums"]["catalog_item_type"]

@@ -451,10 +451,22 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       .select()
       .single();
     if (data) {
+      // Auto-create item_images from catalog image_url
+      const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
+      let itemImages: any[] = [];
+      if (catalogImageUrl) {
+        const { data: imgRow } = await supabase.from("item_images").insert({
+          item_id: data.id,
+          url: catalogImageUrl,
+          is_primary: true,
+        }).select().single();
+        if (imgRow) itemImages = [imgRow];
+      }
+
       const updated = sections.map(s => {
         if (s.id !== sectionId) return s;
-        const newItems = [...s.items, data as ItemData];
-        // Recalculate section total
+        const newItem = { ...data, images: itemImages } as ItemData;
+        const newItems = [...s.items, newItem];
         const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
         if (newTotal > 0) {
           supabase.from("sections").update({ section_price: newTotal }).eq("id", sectionId);

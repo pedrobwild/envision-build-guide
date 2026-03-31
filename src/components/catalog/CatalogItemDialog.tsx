@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections } from "@/lib/catalog-helpers";
+import { ImagePlus, X, Loader2 } from "lucide-react";
 
 interface CatalogCategory {
   id: string;
@@ -39,6 +40,7 @@ export interface CatalogItem {
   internal_code: string | null;
   is_active: boolean;
   default_supplier_id: string | null;
+  image_url?: string | null;
   catalog_categories?: CatalogCategory | null;
   suppliers?: Supplier | null;
 }
@@ -63,18 +65,39 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     default_supplier_id: item?.default_supplier_id ?? "",
     is_active: item?.is_active ?? true,
   });
+  const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const [sectionsLoaded, setSectionsLoaded] = useState(!item);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (item) {
+      setImageUrl(item.image_url ?? null);
       getItemSections(item.id).then((sections) => {
         setSelectedSections(sections);
         setSectionsLoaded(true);
       });
     }
   }, [item]);
+
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem"); return; }
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `catalog/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("budget-assets").upload(path, file, { upsert: true });
+      if (error) { toast.error("Erro no upload"); setUploadingImage(false); return; }
+      const { data: urlData } = supabase.storage.from("budget-assets").getPublicUrl(path);
+      setImageUrl(urlData.publicUrl);
+      toast.success("Imagem carregada");
+    } catch { toast.error("Erro ao fazer upload"); }
+    setUploadingImage(false);
+  };
 
   const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -97,6 +120,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
       internal_code: form.internal_code.trim() || null,
       default_supplier_id: form.default_supplier_id || null,
       is_active: form.is_active,
+      image_url: imageUrl,
     };
 
     let itemId = item?.id;
@@ -190,6 +214,43 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
               <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} id="item-active" />
               <Label htmlFor="item-active" className="cursor-pointer">Ativo</Label>
             </div>
+          </div>
+
+          {/* Image */}
+          <div>
+            <Label className="mb-2 block">Imagem do item</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Esta imagem será exibida automaticamente no orçamento público ao selecionar este item.
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImageUpload(e.target.files)}
+            />
+            {imageUrl ? (
+              <div className="relative inline-block">
+                <img src={imageUrl} alt="Preview" className="h-24 w-24 object-cover rounded-lg border border-border" />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl(null)}
+                  className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:opacity-80"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingImage}
+                className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                {uploadingImage ? "Enviando..." : "Adicionar imagem"}
+              </button>
+            )}
           </div>
 
           {/* Section linking */}

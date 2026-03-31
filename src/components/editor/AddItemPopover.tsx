@@ -15,6 +15,7 @@ interface CatalogSuggestion {
   description: string | null;
   unit_of_measure: string | null;
   item_type: "product" | "service";
+  image_url: string | null;
 }
 
 interface AddItemResult {
@@ -72,7 +73,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
 
         let query = supabase
           .from("catalog_items")
-          .select("id, name, description, unit_of_measure, item_type")
+          .select("id, name, description, unit_of_measure, item_type, image_url")
           .eq("is_active", true)
           .ilike("search_text", `%${search.toLowerCase()}%`)
           .order("name")
@@ -111,7 +112,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
         internal_unit_price: primaryPrice?.unit_price ?? null,
         internal_total: primaryPrice?.unit_price ?? null,
         catalog_item_id: item.id,
-        catalog_snapshot: snapshot ? { ...snapshot, item_type: item.item_type } : { item_type: item.item_type },
+        catalog_snapshot: snapshot ? { ...snapshot, item_type: item.item_type, image_url: item.image_url } : { item_type: item.item_type, image_url: item.image_url },
       });
       setOpen(false);
     } catch {
@@ -124,7 +125,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
         internal_unit_price: null,
         internal_total: null,
         catalog_item_id: item.id,
-        catalog_snapshot: { item_type: item.item_type },
+        catalog_snapshot: { item_type: item.item_type, image_url: item.image_url },
       });
       setOpen(false);
     }
