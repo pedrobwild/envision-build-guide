@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections } from "@/lib/catalog-helpers";
+import { ImagePlus, X, Loader2 } from "lucide-react";
 
 interface CatalogCategory {
   id: string;
@@ -39,6 +40,7 @@ export interface CatalogItem {
   internal_code: string | null;
   is_active: boolean;
   default_supplier_id: string | null;
+  image_url?: string | null;
   catalog_categories?: CatalogCategory | null;
   suppliers?: Supplier | null;
 }
@@ -63,6 +65,9 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     default_supplier_id: item?.default_supplier_id ?? "",
     is_active: item?.is_active ?? true,
   });
+  const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const [sectionsLoaded, setSectionsLoaded] = useState(!item);
   const [saving, setSaving] = useState(false);
