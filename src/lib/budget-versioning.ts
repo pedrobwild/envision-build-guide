@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logVersionEvent } from "@/lib/version-audit";
 
 /**
  * Ensure a budget has a version_group_id. If it doesn't, set it to its own id.
@@ -127,6 +128,20 @@ export async function duplicateBudgetAsVersion(
 
   if (budgetErr || !newBudget) throw budgetErr || new Error("Falha ao criar versão");
 
+  // Log audit events
+  await logVersionEvent({
+    event_type: "version_created",
+    budget_id: newBudget.id,
+    user_id: userId,
+    metadata: { version_number: nextVersion, change_reason: changeReason || null, source_budget_id: sourceBudgetId },
+  });
+  await logVersionEvent({
+    event_type: "version_cloned_from_previous",
+    budget_id: newBudget.id,
+    user_id: userId,
+    metadata: { source_budget_id: sourceBudgetId, source_version: source.version_number ?? 1 },
+  });
+
   // 4. Copy sections
   const { data: sections } = await supabase
     .from("sections")
@@ -217,23 +232,41 @@ export async function duplicateBudgetAsVersion(
  * Set a specific version as the current one.
  * Demotes all others in the group.
  */
-export async function setCurrentVersion(budgetId: string, groupId: string) {
+export async function setCurrentVersion(budgetId: string, groupId: string, userId?: string) {
   await supabase
     .from("budgets")
     .update({ is_current_version: false } as any)
     .eq("version_group_id", groupId);
 
-  await supabase
+  const { data } = await supabase
     .from("budgets")
     .update({ is_current_version: true } as any)
-    .eq("id", budgetId);
+    .eq("id", budgetId)
+    .select("version_number")
+    .single();
+
+  await logVersionEvent({
+    event_type: "version_activated",
+    budget_id: budgetId,
+    user_id: userId ?? null,
+    metadata: { version_number: data?.version_number ?? "?" },
+  });
 }
 
 /**
  * Publish a specific version — marks it as the published one.
  * Only one version per group can be published at a time.
  */
-export async function publishVersion(budgetId: string, groupId: string, publicId: string) {
+export async function publishVersion(budgetId: string, groupId: string, publicId: string, userId?: string) {
+  // Find previously published version for audit
+  const { data: prevPublished } = await supabase
+    .from("budgets")
+    .select("id, version_number")
+    .eq("version_group_id", groupId)
+    .eq("is_published_version", true)
+    .limit(1)
+    .maybeSingle();
+
   // Remove published flag AND clear public_id from all versions in group
   await supabase
     .from("budgets")
@@ -242,14 +275,34 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     .eq("is_published_version", true);
 
   // Mark this version as published with the public_id
-  await supabase
+  const { data: published } = await supabase
     .from("budgets")
     .update({
       is_published_version: true,
       status: "published",
       public_id: publicId,
     } as any)
-    .eq("id", budgetId);
+    .eq("id", budgetId)
+    .select("version_number")
+    .single();
+
+  // Audit: superseded
+  if (prevPublished && prevPublished.id !== budgetId) {
+    await logVersionEvent({
+      event_type: "version_superseded",
+      budget_id: prevPublished.id,
+      user_id: userId ?? null,
+      metadata: { version_number: prevPublished.version_number, replaced_by: budgetId },
+    });
+  }
+
+  // Audit: published
+  await logVersionEvent({
+    event_type: "version_published",
+    budget_id: budgetId,
+    user_id: userId ?? null,
+    metadata: { version_number: published?.version_number ?? "?", public_id: publicId },
+  });
 }
 
 /**

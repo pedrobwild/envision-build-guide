@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Plus, Minus, RefreshCw, Equal, Eye, EyeOff, TrendingUp, TrendingDown } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { logVersionEvent } from "@/lib/version-audit";
 
 interface CompareSection {
   id: string;
@@ -160,10 +161,18 @@ export default function VersionCompare() {
     if (!leftId || !rightId) return;
     setLoading(true);
     Promise.all([loadVersion(leftId), loadVersion(rightId)])
-      .then(([l, r]) => {
+      .then(async ([l, r]) => {
         setLeftData(l);
         setRightData(r);
         setDiffs(diffSections(l.sections, r.sections));
+        // Fire-and-forget audit log
+        const { data: { session } } = await supabase.auth.getSession();
+        logVersionEvent({
+          event_type: "version_compared",
+          budget_id: rightId,
+          user_id: session?.user?.id ?? null,
+          metadata: { left_version: l.meta.version_number, right_version: r.meta.version_number, left_id: leftId, right_id: rightId },
+        });
       })
       .catch(console.error)
       .finally(() => setLoading(false));
