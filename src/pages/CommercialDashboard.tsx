@@ -363,6 +363,21 @@ export default function CommercialDashboard() {
                             <Calendar className="h-3 w-3" />{due.label}
                           </span>
                         )}
+                        {(b.version_number ?? 1) > 1 && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                            V{b.version_number}
+                          </span>
+                        )}
+                        {b.is_published_version && (
+                          <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            Publicada
+                          </span>
+                        )}
+                        {!b.is_published_version && b.status === "draft" && (b.version_number ?? 1) > 1 && (
+                          <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                            Em elaboração
+                          </span>
+                        )}
                       </div>
                       {/* Row 2 */}
                       <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
