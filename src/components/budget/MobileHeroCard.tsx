@@ -18,6 +18,7 @@ interface MobileHeroCardProps {
   neighborhood?: string;
   area?: string;
   version?: string;
+  prazoDiasUteis?: number;
   onSaveForLater?: () => void;
 }
 
