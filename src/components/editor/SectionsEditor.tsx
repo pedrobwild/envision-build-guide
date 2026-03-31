@@ -152,6 +152,8 @@ interface ItemData {
   internal_unit_price?: number | null;
   internal_total?: number | null;
   order_index: number;
+  catalog_item_id?: string | null;
+  catalog_snapshot?: Record<string, any> | null;
   images?: { id: string; url: string; is_primary?: boolean | null }[];
 }
 
