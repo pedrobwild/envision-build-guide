@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logVersionEvent } from "@/lib/version-audit";
 
 /**
  * Ensure a budget has a version_group_id. If it doesn't, set it to its own id.
