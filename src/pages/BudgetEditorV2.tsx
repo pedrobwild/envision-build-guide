@@ -63,15 +63,12 @@ export default function BudgetEditorV2() {
     setSaving(true);
 
     try {
-      await ensureVersionGroup(budgetId);
-
+      const groupId = await ensureVersionGroup(budgetId);
       const publicId = budget.public_id || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-      await supabase.from("budgets").update({
-        status: "published",
-        public_id: publicId,
-      }).eq("id", budgetId);
+      
+      await publishVersion(budgetId, groupId, publicId);
 
-      setBudget({ ...budget, status: "published", public_id: publicId });
+      setBudget({ ...budget, status: "published", public_id: publicId, is_published_version: true });
       const publicUrl = getPublicBudgetUrl(publicId);
       toast.success("Orçamento publicado com sucesso!", {
         description: "O link público foi copiado para a área de transferência.",
