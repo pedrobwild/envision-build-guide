@@ -91,17 +91,6 @@ function ProductGridSkeleton({ count = 4 }: { count?: number }) {
   );
 }
 
-/** Mobile nav pills skeleton */
-function NavPillsSkeleton() {
-  return (
-    <div className="lg:hidden flex gap-1.5 px-3 py-2">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Shimmer key={i} className="h-10 w-20 rounded-full flex-shrink-0" />
-      ))}
-    </div>
-  );
-}
-
 /** Desktop sidebar skeleton */
 function SidebarSkeleton() {
   return (
