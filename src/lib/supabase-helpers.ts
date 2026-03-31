@@ -14,7 +14,7 @@ export async function fetchPublicBudget(publicId: string) {
     .select(PUBLIC_BUDGET_SELECT)
     .eq('public_id', publicId)
     .in('status', ['published', 'minuta_solicitada'])
-    .single();
+    .single() as { data: any; error: any };
 
   if (budgetError || !budget) return null;
 
@@ -22,7 +22,7 @@ export async function fetchPublicBudget(publicId: string) {
     .from('sections')
     .select(PUBLIC_SECTION_SELECT)
     .eq('budget_id', budget.id)
-    .order('order_index');
+    .order('order_index') as { data: any[]; error: any };
 
   const sectionIds = (sections || []).map(s => s.id);
 
