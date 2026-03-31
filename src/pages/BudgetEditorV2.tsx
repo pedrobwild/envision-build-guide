@@ -124,9 +124,33 @@ export default function BudgetEditorV2() {
                 <span className="font-display font-bold text-sm text-foreground leading-tight truncate">
                   {budget.project_name || "Sem nome"}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-muted text-muted-foreground border border-border">
-                  V{budget.version_number || 1}
-                </span>
+                {versionCount > 1 ? (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to={`/admin/comparar?left=${budget.id}&right=${budget.id}`}
+                          onClick={(e) => {
+                            // Navigate to compare with group context
+                            e.preventDefault();
+                            navigate(`/admin/comparar?group=${budget.version_group_id}`);
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                        >
+                          <GitCompare className="h-3 w-3" />
+                          V{budget.version_number || 1}
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Este orçamento tem {versionCount} versões — clique para comparar</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-muted text-muted-foreground border border-border">
+                    V{budget.version_number || 1}
+                  </span>
+                )}
                 {budget.is_published_version && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                     Publicada
