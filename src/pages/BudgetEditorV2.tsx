@@ -11,6 +11,7 @@ import { ensureVersionGroup } from "@/lib/budget-versioning";
 import { MediaUploadSection } from "@/components/editor/MediaUploadSection";
 import { formatBRL } from "@/lib/formatBRL";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { WorkflowBar } from "@/components/editor/WorkflowBar";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -140,6 +141,12 @@ export default function BudgetEditorV2() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Internal Workflow Bar */}
+        <WorkflowBar
+          budget={budget}
+          onBudgetUpdate={(fields) => setBudget({ ...budget, ...fields })}
+        />
+
         {/* Version History */}
         <VersionHistoryPanel budgetId={budgetId!} onVersionChange={loadBudget} />
 
