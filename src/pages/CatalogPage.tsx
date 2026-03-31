@@ -528,6 +528,17 @@ export default function CatalogPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={sectionFilter} onValueChange={setSectionFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Seção" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas seções</SelectItem>
+                {CATALOG_SECTION_OPTIONS.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {isLoading ? (
