@@ -447,6 +447,11 @@ export default function EstimatorDashboard() {
                             {due.label}
                           </span>
                         )}
+                        {(b.version_number ?? 1) > 1 && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                            V{b.version_number}
+                          </span>
+                        )}
                       </div>
 
                       {/* Row 2: Meta */}
