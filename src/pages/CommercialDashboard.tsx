@@ -311,6 +311,18 @@ export default function CommercialDashboard() {
               <SelectItem value="recente">Mais recente</SelectItem>
             </SelectContent>
           </Select>
+          {/* Due filter */}
+          <Select value={dueFilter} onValueChange={v => setDueFilter(v as DueFilter)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os prazos</SelectItem>
+              <SelectItem value="overdue">🔴 Vencidos / Hoje</SelectItem>
+              <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
+            </SelectContent>
+          </Select>
           {/* View toggle */}
           <div className="flex border border-border rounded-lg overflow-hidden">
             <Button
