@@ -17,7 +17,7 @@ export async function ensureVersionGroup(budgetId: string): Promise<string> {
   // First version — use the budget's own id as group id
   await supabase
     .from("budgets")
-    .update({ version_group_id: budgetId, version_number: 1, is_current_version: true })
+    .update({ version_group_id: budgetId, version_number: 1, is_current_version: true } as any)
     .eq("id", budgetId);
 
   return budgetId;
@@ -31,7 +31,7 @@ export async function getVersionHistory(budgetId: string) {
 
   const { data, error } = await supabase
     .from("budgets")
-    .select("id, version_number, is_current_version, status, created_at, versao, project_name, client_name")
+    .select("id, version_number, is_current_version, is_published_version, status, created_at, versao, project_name, client_name, change_reason, parent_budget_id")
     .eq("version_group_id", groupId)
     .order("version_number", { ascending: false });
 
@@ -54,13 +54,15 @@ async function getNextVersionNumber(groupId: string): Promise<number> {
 }
 
 /**
- * Deep-duplicate a budget as a new version in the same group.
+ * Deep-duplicate a budget as a new FORMAL version in the same group.
+ * This is an EXPLICIT action — not triggered by auto-save.
  * Copies: sections, items, item_images, adjustments, rooms.
  * The new version becomes the current one; old current is demoted.
  */
 export async function duplicateBudgetAsVersion(
   sourceBudgetId: string,
-  userId: string
+  userId: string,
+  changeReason?: string
 ): Promise<string> {
   const groupId = await ensureVersionGroup(sourceBudgetId);
   const nextVersion = await getNextVersionNumber(groupId);
@@ -77,11 +79,16 @@ export async function duplicateBudgetAsVersion(
   // 2. Demote all current versions in this group
   await supabase
     .from("budgets")
-    .update({ is_current_version: false })
+    .update({ is_current_version: false } as any)
     .eq("version_group_id", groupId);
 
   // 3. Create new budget (copy metadata)
-  const { id, created_at, updated_at, public_id, public_token_hash, view_count, last_viewed_at, approved_at, approved_by_name, generated_at, ...meta } = source;
+  const {
+    id, created_at, updated_at, public_id, public_token_hash,
+    view_count, last_viewed_at, approved_at, approved_by_name,
+    generated_at, is_published_version,
+    ...meta
+  } = source;
 
   const { data: newBudget, error: budgetErr } = await supabase
     .from("budgets")
@@ -90,11 +97,14 @@ export async function duplicateBudgetAsVersion(
       version_group_id: groupId,
       version_number: nextVersion,
       is_current_version: true,
+      is_published_version: false,
+      parent_budget_id: sourceBudgetId,
+      change_reason: changeReason || null,
       versao: `${nextVersion}`,
       status: "draft",
       created_by: userId,
       view_count: 0,
-    })
+    } as any)
     .select()
     .single();
 
@@ -193,13 +203,63 @@ export async function duplicateBudgetAsVersion(
 export async function setCurrentVersion(budgetId: string, groupId: string) {
   await supabase
     .from("budgets")
-    .update({ is_current_version: false })
+    .update({ is_current_version: false } as any)
     .eq("version_group_id", groupId);
 
   await supabase
     .from("budgets")
-    .update({ is_current_version: true })
+    .update({ is_current_version: true } as any)
     .eq("id", budgetId);
+}
+
+/**
+ * Publish a specific version — marks it as the published one.
+ * Only one version per group can be published at a time.
+ */
+export async function publishVersion(budgetId: string, groupId: string, publicId: string) {
+  // Remove published flag from all versions in group
+  await supabase
+    .from("budgets")
+    .update({ is_published_version: false } as any)
+    .eq("version_group_id", groupId);
+
+  // Mark this version as published
+  await supabase
+    .from("budgets")
+    .update({
+      is_published_version: true,
+      status: "published",
+      public_id: publicId,
+    } as any)
+    .eq("id", budgetId);
+}
+
+/**
+ * Get the currently published version for a group (if any).
+ */
+export async function getPublishedVersion(groupId: string) {
+  const { data } = await supabase
+    .from("budgets")
+    .select("id, version_number, versao, public_id")
+    .eq("version_group_id", groupId)
+    .eq("is_published_version", true)
+    .limit(1)
+    .single();
+
+  return data;
+}
+
+/**
+ * Compare two versions — returns sections/items from both for side-by-side diff.
+ */
+export async function loadVersionForComparison(budgetId: string) {
+  const { data: sections } = await supabase
+    .from("sections")
+    .select("id, title, order_index, section_price, qty, items(id, title, description, qty, unit, internal_total)")
+    .eq("budget_id", budgetId)
+    .order("order_index");
+
+  return sections || [];
 }
 
 /**
@@ -216,7 +276,7 @@ export async function assignImportedBudgetToGroup(
   // Demote current
   await supabase
     .from("budgets")
-    .update({ is_current_version: false })
+    .update({ is_current_version: false } as any)
     .eq("version_group_id", groupId);
 
   // Assign the imported budget to this group
@@ -226,7 +286,9 @@ export async function assignImportedBudgetToGroup(
       version_group_id: groupId,
       version_number: nextVersion,
       is_current_version: true,
+      is_published_version: false,
+      parent_budget_id: existingBudgetId,
       versao: `${nextVersion}`,
-    })
+    } as any)
     .eq("id", newBudgetId);
 }
