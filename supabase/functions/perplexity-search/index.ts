@@ -24,13 +24,21 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const tokenMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    const token = tokenMatch?.[1]?.trim();
+
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Invalid token", detail: "Missing bearer token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // User-context client to validate the caller's token
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
       auth: { autoRefreshToken: false, persistSession: false },
     });
-    const { data: { user: caller }, error: userError } = await userClient.auth.getUser();
+    const { data: { user: caller }, error: userError } = await userClient.auth.getUser(token);
     if (userError || !caller) {
       return new Response(JSON.stringify({ error: "Invalid token", detail: userError?.message }), {
         status: 401,
