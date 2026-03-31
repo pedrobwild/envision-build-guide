@@ -19,6 +19,7 @@ import {
   Clock, AlertTriangle, MoreVertical, ExternalLink, CheckCircle2,
   PauseCircle, ArrowUpDown, Flame, Copy, Send, RotateCcw,
   FileText, Eye, ThumbsUp, XCircle, Plus, GitCompare,
+  LayoutList, Columns3,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES, PRIORITIES,
