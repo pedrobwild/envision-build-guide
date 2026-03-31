@@ -19,6 +19,7 @@ const FinancialHistory = lazy(() => import("./pages/FinancialHistory"));
 const BudgetRequestsList = lazy(() => import("./pages/BudgetRequestsList"));
 const NewBudgetRequest = lazy(() => import("./pages/NewBudgetRequest"));
 const EstimatorDashboard = lazy(() => import("./pages/EstimatorDashboard"));
+const CommercialDashboard = lazy(() => import("./pages/CommercialDashboard"));
 const BudgetInternalDetail = lazy(() => import("./pages/BudgetInternalDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
