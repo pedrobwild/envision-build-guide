@@ -250,10 +250,10 @@ export function AppSidebar() {
         )}
         {!collapsed && profile && (
           <div className="px-2 py-1.5 mb-1">
-            <p className="text-xs font-medium font-body text-foreground truncate">
+            <p className="text-xs font-medium font-body text-sidebar-foreground truncate">
               {profile.full_name || "Usuário"}
             </p>
-            <p className="text-[11px] text-muted-foreground font-body truncate">
+            <p className="text-[11px] text-sidebar-foreground/50 font-body truncate">
               {userRoles.join(", ") || "sem perfil"}
             </p>
           </div>
