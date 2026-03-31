@@ -6,6 +6,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const decodeJwtPayload = (token: string) => {
+  const [, payload = ""] = token.split(".");
+  const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  return JSON.parse(atob(padded)) as { sub?: string; exp?: number };
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -23,35 +30,47 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const tokenMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    const token = tokenMatch?.[1]?.trim();
 
-    // User-context client to validate the caller's token
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-    const { data: { user: caller }, error: userError } = await userClient.auth.getUser();
-    if (userError || !caller) {
-      return new Response(JSON.stringify({ error: "Invalid token", detail: userError?.message }), {
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Invalid token", detail: "Missing bearer token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Service role client for admin operations (bypasses RLS)
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+    // User-context client to validate the caller's token
+    let callerId: string | undefined;
+    try {
+      const payload = decodeJwtPayload(token);
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      if (!payload.sub || (payload.exp && payload.exp < nowInSeconds)) {
+        throw new Error("Expired or malformed token");
+      }
+      callerId = payload.sub;
+    } catch (error) {
+      return new Response(JSON.stringify({ error: "Invalid token", detail: error instanceof Error ? error.message : "Malformed JWT" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // User-context client to validate access via RLS
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
     // Check admin role
-    const { data: roleData } = await adminClient
+    const { data: roleData, error: roleError } = await userClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", caller.id)
+      .eq("user_id", callerId)
       .eq("role", "admin")
       .maybeSingle();
 
-    if (!roleData) {
+    if (roleError || !roleData) {
       return new Response(JSON.stringify({ error: "Admin access required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
