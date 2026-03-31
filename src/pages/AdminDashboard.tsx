@@ -565,6 +565,9 @@ export default function AdminDashboard() {
       {/* Optional selections */}
       <OptionalSelectionsPanel />
 
+      {/* Team Metrics (admin only) */}
+      {isAdmin && <TeamMetricsPanel />}
+
       {/* Budget List */}
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
