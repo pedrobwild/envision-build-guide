@@ -23,6 +23,7 @@ const EstimatorDashboard = lazy(() => import("./pages/EstimatorDashboard"));
 const CommercialDashboard = lazy(() => import("./pages/CommercialDashboard"));
 const AdminOperationsDashboard = lazy(() => import("./pages/AdminOperationsDashboard"));
 const BudgetInternalDetail = lazy(() => import("./pages/BudgetInternalDetail"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/admin/producao" element={<AdminPage><EstimatorDashboard /></AdminPage>} />
             <Route path="/admin/comercial" element={<AdminPage><CommercialDashboard /></AdminPage>} />
             <Route path="/admin/operacoes" element={<AdminPage><AdminOperationsDashboard /></AdminPage>} />
+            <Route path="/admin/usuarios" element={<AdminPage><UserManagement /></AdminPage>} />
             <Route path="/admin/demanda/:budgetId" element={<AdminPage><BudgetInternalDetail /></AdminPage>} />
             <Route path="/o/:publicId" element={<PublicBudget />} />
             <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
