@@ -422,7 +422,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     const section = sections.find(s => s.id === sectionId);
     const order = section?.items.length || 0;
 
-    const insertPayload: Record<string, any> = {
+    const insertPayload = {
       section_id: sectionId,
       title: itemData?.title || "Novo Item",
       description: itemData?.description || null,
@@ -432,7 +432,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       internal_total: itemData?.internal_total || null,
       order_index: order,
       catalog_item_id: itemData?.catalog_item_id || null,
-      catalog_snapshot: itemData?.catalog_snapshot || null,
+      catalog_snapshot: (itemData?.catalog_snapshot || null) as any,
     };
 
     const { data } = await supabase
