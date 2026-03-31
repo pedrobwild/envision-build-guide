@@ -1,4 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
+import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
+
+/** Standard section titles used for catalog item linking */
+export const CATALOG_SECTION_OPTIONS = SCOPE_CATEGORIES
+  .filter((c) => c.id !== "outros")
+  .map((c) => ({ id: c.id, label: c.label }));
 
 export interface SupplierPrice {
   id: string;
