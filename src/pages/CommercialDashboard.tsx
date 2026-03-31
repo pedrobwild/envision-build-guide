@@ -113,7 +113,7 @@ export default function CommercialDashboard() {
     const [budgetsRes, profilesRes] = await Promise.all([
       supabase
         .from("budgets")
-        .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status")
+        .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version")
         .eq("commercial_owner_id", user!.id)
         .order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, full_name"),
