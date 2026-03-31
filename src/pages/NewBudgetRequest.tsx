@@ -30,11 +30,16 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { PRIORITIES, PROPERTY_TYPES, type Priority } from "@/lib/role-constants";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 
 export default function NewBudgetRequest() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  // Team members for assignment
+  const { members: comerciais } = useTeamMembers("comercial");
+  const { members: orcamentistas } = useTeamMembers("orcamentista");
 
   // Form state
   const [clientName, setClientName] = useState("");
@@ -49,6 +54,8 @@ export default function NewBudgetRequest() {
   const [priority, setPriority] = useState<Priority>("normal");
   const [internalNotes, setInternalNotes] = useState("");
   const [referenceLinks, setReferenceLinks] = useState<string[]>([""]);
+  const [commercialOwnerId, setCommercialOwnerId] = useState("");
+  const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
 
   const addLink = () => setReferenceLinks((prev) => [...prev, ""]);
   const removeLink = (i: number) =>
