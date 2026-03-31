@@ -1,0 +1,290 @@
+import { useState } from "react";
+import {
+  Trash2,
+  Activity,
+  Sparkles,
+  BookOpen,
+  History,
+  Lightbulb,
+  Loader2,
+  ExternalLink,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+type SearchMode = "ux" | "references" | "benchmarking";
+
+interface ToolCard {
+  id: string;
+  icon: React.ElementType;
+  iconBg: string;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  mode?: SearchMode;
+  defaultQuery?: string;
+  action?: "cleanup" | "health" | "audit";
+}
+
+const TOOL_CARDS: ToolCard[] = [
+  {
+    id: "cleanup",
+    icon: Trash2,
+    iconBg: "bg-muted",
+    title: "Limpeza de Arquivos",
+    description:
+      "Remove fisicamente arquivos expirados ou deletados há mais de 7 dias do armazenamento. Esta operação é executada automaticamente por cron, mas pode ser disparada manualmente.",
+    buttonLabel: "Executar Limpeza Agora",
+    action: "cleanup",
+  },
+  {
+    id: "health",
+    icon: Activity,
+    iconBg: "bg-green-100 dark:bg-green-900/30",
+    title: "Health & Diagnostics",
+    description: "Status do sistema, latência e ferramentas de debug",
+    buttonLabel: "Ver Status",
+    action: "health",
+  },
+  {
+    id: "ux",
+    icon: Sparkles,
+    iconBg: "bg-purple-100 dark:bg-purple-900/30",
+    title: "UX Insights com IA",
+    description: "Sugestões de melhorias de hierarquia, copy e UX",
+    buttonLabel: "Gerar Insights",
+    mode: "ux",
+    defaultQuery:
+      "Analise as melhores práticas de UX para um sistema de orçamentos de reformas residenciais. Sugira melhorias para: navegação, apresentação de valores, fluxo de aprovação do cliente e experiência mobile.",
+  },
+  {
+    id: "references",
+    icon: BookOpen,
+    iconBg: "bg-blue-100 dark:bg-blue-900/30",
+    title: "Pesquisa de Referências",
+    description: "Pesquise funcionalidades de softwares de gestão de obras com IA",
+    buttonLabel: "Pesquisar",
+    mode: "references",
+    defaultQuery:
+      "Quais são as funcionalidades mais inovadoras dos principais softwares de gestão de obras e reformas em 2026? Inclua tendências de IA, automação e experiência do cliente.",
+  },
+  {
+    id: "audit",
+    icon: History,
+    iconBg: "bg-orange-100 dark:bg-orange-900/30",
+    title: "Auditoria do Sistema",
+    description: "Visualize todas as alterações do sistema",
+    buttonLabel: "Ver Registros",
+    action: "audit",
+  },
+  {
+    id: "benchmarking",
+    icon: Lightbulb,
+    iconBg: "bg-amber-100 dark:bg-amber-900/30",
+    title: "Sugestões de Funcionalidades",
+    description:
+      "Benchmarking de softwares de gestão de obras para identificar oportunidades de diferenciação e novas funcionalidades",
+    buttonLabel: "Gerar Sugestões",
+    mode: "benchmarking",
+    defaultQuery:
+      "Faça um benchmarking detalhado dos principais softwares de gestão de obras (Houzz Pro, Buildertrend, CoConstruct, Procore, Veja Obra, Obra Prima, Sienge). Liste as funcionalidades mais relevantes que um sistema de orçamentos de reformas residenciais deveria ter, organizando por: 1) Experiência do Cliente, 2) Gestão Financeira, 3) Automação e IA, 4) Comunicação, 5) Relatórios e Analytics. Destaque oportunidades de diferenciação.",
+  },
+];
+
+export default function SystemToolsPage() {
+  const [activeDialog, setActiveDialog] = useState<ToolCard | null>(null);
+  const [query, setQuery] = useState("");
+  const [result, setResult] = useState("");
+  const [citations, setCitations] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleOpenTool = (card: ToolCard) => {
+    if (card.action) {
+      toast({
+        title: "Em breve",
+        description: `A funcionalidade "${card.title}" será implementada em breve.`,
+      });
+      return;
+    }
+    setActiveDialog(card);
+    setQuery(card.defaultQuery ?? "");
+    setResult("");
+    setCitations([]);
+  };
+
+  const handleSearch = async () => {
+    if (!activeDialog?.mode || !query.trim()) return;
+    setLoading(true);
+    setResult("");
+    setCitations([]);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "Erro", description: "Sessão expirada. Faça login novamente.", variant: "destructive" });
+        return;
+      }
+
+      const res = await supabase.functions.invoke("perplexity-search", {
+        body: { query: query.trim(), mode: activeDialog.mode },
+      });
+
+      if (res.error) {
+        throw new Error(res.error.message || "Erro na busca");
+      }
+
+      setResult(res.data?.content ?? "Sem resultados.");
+      setCitations(res.data?.citations ?? []);
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Erro na pesquisa",
+        description: err.message || "Não foi possível completar a pesquisa.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-4">
+      <div>
+        <h1 className="text-2xl font-display font-bold text-foreground">Sistema</h1>
+        <p className="text-sm text-muted-foreground font-body">
+          Ferramentas de manutenção, diagnóstico e pesquisa com IA
+        </p>
+      </div>
+
+      {/* Cleanup card — full width like reference */}
+      <Card className="border bg-card">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-3 mb-4">
+            <div className={`${TOOL_CARDS[0].iconBg} p-2.5 rounded-lg`}>
+              <Trash2 className="h-5 w-5 text-foreground/70" />
+            </div>
+            <div>
+              <h2 className="text-lg font-display font-semibold text-foreground">
+                {TOOL_CARDS[0].title}
+              </h2>
+              <p className="text-sm text-muted-foreground font-body mt-1">
+                {TOOL_CARDS[0].description}
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => handleOpenTool(TOOL_CARDS[0])}
+          >
+            <Trash2 className="h-4 w-4" />
+            {TOOL_CARDS[0].buttonLabel}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Remaining cards */}
+      <div className="space-y-3">
+        {TOOL_CARDS.slice(1).map((card) => (
+          <Card key={card.id} className="border bg-card">
+            <CardContent className="p-4 sm:p-5 flex items-center gap-4">
+              <div className={`${card.iconBg} p-2.5 rounded-full shrink-0`}>
+                <card.icon className="h-5 w-5 text-foreground/70" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display font-semibold text-foreground text-sm">
+                  {card.title}
+                </h3>
+                <p className="text-xs text-muted-foreground font-body mt-0.5">
+                  {card.description}
+                </p>
+              </div>
+              <Button
+                variant={card.id === "audit" ? "default" : "outline"}
+                size="sm"
+                className="shrink-0"
+                onClick={() => handleOpenTool(card)}
+              >
+                {card.buttonLabel}
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Dialog for AI-powered tools */}
+      <Dialog open={!!activeDialog?.mode} onOpenChange={(open) => !open && setActiveDialog(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              {activeDialog && <activeDialog.icon className="h-5 w-5" />}
+              {activeDialog?.title}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+            <div className="space-y-2">
+              <Textarea
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Digite sua pesquisa..."
+                rows={3}
+                className="font-body text-sm resize-none"
+              />
+              <Button
+                onClick={handleSearch}
+                disabled={loading || !query.trim()}
+                className="gap-2"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                {loading ? "Pesquisando..." : "Pesquisar com IA"}
+              </Button>
+            </div>
+
+            {result && (
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="prose prose-sm dark:prose-invert max-w-none font-body whitespace-pre-wrap text-sm">
+                  {result}
+                </div>
+                {citations.length > 0 && (
+                  <div className="mt-4 pt-3 border-t">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Fontes:</p>
+                    <div className="space-y-1">
+                      {citations.map((url, i) => (
+                        <a
+                          key={i}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-xs text-primary hover:underline truncate"
+                        >
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                          {url}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </ScrollArea>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
