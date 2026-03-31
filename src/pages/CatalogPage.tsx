@@ -488,54 +488,72 @@ export default function CatalogPage() {
                 </TableHeader>
                 <TableBody>
                   {items.map((item) => (
-                    <TableRow key={item.id} className={!item.is_active ? "opacity-50" : ""}>
-                      <TableCell>
-                        <div>
-                          <span className="font-medium text-foreground">{item.name}</span>
-                          {item.internal_code && (
-                            <span className="ml-2 text-xs text-muted-foreground">#{item.internal_code}</span>
-                          )}
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{item.description}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {item.item_type === "product" ? (
-                            <><Package className="h-3 w-3 mr-1" />Produto</>
-                          ) : (
-                            <><Wrench className="h-3 w-3 mr-1" />Serviço</>
-                          )}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {(item.catalog_categories as CatalogCategory | null)?.name ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {item.unit_of_measure ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {(item.suppliers as Supplier | null)?.name ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={item.is_active ? "default" : "secondary"} className="text-xs">
-                          {item.is_active ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          <Button variant="ghost" size="icon" className="h-8 w-8"
-                            onClick={() => { setEditingItem(item); setItemDialogOpen(true); }}>
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"
-                            onClick={() => handleDeleteItem(item.id)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                    <>
+                      <TableRow key={item.id} className={!item.is_active ? "opacity-50" : ""}>
+                        <TableCell>
+                          <div>
+                            <span className="font-medium text-foreground">{item.name}</span>
+                            {item.internal_code && (
+                              <span className="ml-2 text-xs text-muted-foreground">#{item.internal_code}</span>
+                            )}
+                            {item.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{item.description}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {item.item_type === "product" ? (
+                              <><Package className="h-3 w-3 mr-1" />Produto</>
+                            ) : (
+                              <><Wrench className="h-3 w-3 mr-1" />Serviço</>
+                            )}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {(item.catalog_categories as CatalogCategory | null)?.name ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {item.unit_of_measure ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {(item.suppliers as Supplier | null)?.name ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={item.is_active ? "default" : "secondary"} className="text-xs">
+                            {item.is_active ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button variant="ghost" size="icon" className="h-8 w-8"
+                              onClick={() => setExpandedPricesItemId(expandedPricesItemId === item.id ? null : item.id)}
+                              title="Preços por fornecedor">
+                              <DollarSign className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8"
+                              onClick={() => { setEditingItem(item); setItemDialogOpen(true); }}>
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"
+                              onClick={() => handleDeleteItem(item.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {expandedPricesItemId === item.id && (
+                        <TableRow key={`${item.id}-prices`}>
+                          <TableCell colSpan={7} className="bg-muted/30 p-4">
+                            <SupplierPricesPanel
+                              catalogItemId={item.id}
+                              catalogItemName={item.name}
+                              suppliers={suppliers}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
                   ))}
                 </TableBody>
               </Table>
