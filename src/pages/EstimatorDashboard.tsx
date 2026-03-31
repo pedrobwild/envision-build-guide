@@ -76,6 +76,9 @@ interface BudgetRow {
   estimator_owner_id: string | null;
   briefing: string | null;
   demand_context: string | null;
+  version_number: number | null;
+  version_group_id: string | null;
+  is_current_version: boolean | null;
 }
 
 interface ProfileRow {
