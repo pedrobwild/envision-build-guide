@@ -87,6 +87,10 @@ interface BudgetRow {
   estimator_owner_id: string | null;
   public_id: string | null;
   status: string;
+  version_number: number | null;
+  version_group_id: string | null;
+  is_current_version: boolean | null;
+  is_published_version: boolean | null;
 }
 
 interface ProfileRow { id: string; full_name: string; }
