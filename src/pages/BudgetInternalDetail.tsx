@@ -345,7 +345,14 @@ export default function BudgetInternalDetail() {
             {/* Quick status change */}
             <Select
               value={budget.internal_status}
-              onValueChange={(v) => changeStatus(v as InternalStatus)}
+              onValueChange={(v) => {
+                const s = v as InternalStatus;
+                if (s === "waiting_info" || s === "blocked") {
+                  setBlockingTarget(s);
+                } else {
+                  changeStatus(s);
+                }
+              }}
             >
               <SelectTrigger className="h-7 w-auto text-xs gap-1 border-dashed">
                 <SelectValue />
@@ -361,6 +368,38 @@ export default function BudgetInternalDetail() {
           </div>
         </div>
       </header>
+
+      {/* Pending action banner */}
+      {(budget.internal_status === "waiting_info" || budget.internal_status === "blocked") && (
+        <div className={`border-b px-4 sm:px-6 py-3 ${
+          budget.internal_status === "blocked"
+            ? "bg-destructive/5 border-destructive/20"
+            : "bg-amber-50 border-amber-200"
+        }`}>
+          <div className="max-w-6xl mx-auto flex items-center gap-3">
+            {budget.internal_status === "blocked" ? (
+              <AlertOctagon className="h-4 w-4 text-destructive shrink-0" />
+            ) : (
+              <PauseCircle className="h-4 w-4 text-amber-600 shrink-0" />
+            )}
+            <p className={`text-sm font-body font-medium flex-1 ${
+              budget.internal_status === "blocked" ? "text-destructive" : "text-amber-800"
+            }`}>
+              {budget.internal_status === "blocked"
+                ? "Esta demanda está bloqueada. Verifique as notas internas para detalhes."
+                : "Aguardando informação. Verifique as notas internas para detalhes."}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs shrink-0"
+              onClick={() => changeStatus("in_progress")}
+            >
+              Retomar produção
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
