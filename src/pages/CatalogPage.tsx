@@ -85,10 +85,21 @@ function useSuppliers() {
   });
 }
 
-function useCatalogItems(search: string, typeFilter: string, categoryFilter: string) {
+function useCatalogItems(search: string, typeFilter: string, categoryFilter: string, sectionFilter: string) {
   return useQuery({
-    queryKey: ["catalog_items", search, typeFilter, categoryFilter],
+    queryKey: ["catalog_items", search, typeFilter, categoryFilter, sectionFilter],
     queryFn: async () => {
+      // If section filter active, get allowed item IDs first
+      let allowedItemIds: string[] | null = null;
+      if (sectionFilter && sectionFilter !== "all") {
+        const { data: links } = await supabase
+          .from("catalog_item_sections")
+          .select("catalog_item_id")
+          .eq("section_title", sectionFilter);
+        allowedItemIds = (links ?? []).map((l) => l.catalog_item_id);
+        if (allowedItemIds.length === 0) return [];
+      }
+
       let query = supabase
         .from("catalog_items")
         .select("*, catalog_categories(*), suppliers:default_supplier_id(*)")
@@ -102,6 +113,9 @@ function useCatalogItems(search: string, typeFilter: string, categoryFilter: str
       }
       if (categoryFilter && categoryFilter !== "all") {
         query = query.eq("category_id", categoryFilter);
+      }
+      if (allowedItemIds) {
+        query = query.in("id", allowedItemIds);
       }
 
       const { data, error } = await query;
