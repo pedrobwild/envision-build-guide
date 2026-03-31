@@ -23,8 +23,8 @@ import {
   CheckCircle2,
   PauseCircle,
   Send,
-  RotateCcw,
   FileText,
+  AlertOctagon,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -35,6 +35,7 @@ import {
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { BlockingDialog } from "./BlockingDialog";
 
 interface ProfileRow {
   id: string;
