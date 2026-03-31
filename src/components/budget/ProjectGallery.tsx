@@ -80,22 +80,25 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
     availableTabs.push({ id: "fotos3d", label: "Fotos 3D" });
   }
 
-  // --- Fotos tab (photos + executivo combined) ---
-  const allPhotos: MediaItem[] = [];
-  if (hasMedia) {
-    media!.fotos.forEach((src, i) => {
-      allPhotos.push({ src, alt: `Foto da obra — ${i + 1}` });
-    });
-    media!.projetoExecutivo.forEach((src, i) => {
-      allPhotos.push({ src, alt: `Projeto Executivo — ${i + 1}` });
-    });
-  }
-  if (allPhotos.length > 0) {
-    galleryData.fotos = allPhotos;
-    availableTabs.push({ id: "fotos", label: "Fotos" });
-  } else if (!hasMedia && !mediaLoading) {
-    galleryData.fotos = defaultGallery.fotos;
-    availableTabs.push({ id: "fotos", label: "Fotos" });
+  // --- Fotos tab (photos + executivo combined) — hidden if Fotos 3D already exists ---
+  const hasFotos3dTab = availableTabs.some(t => t.id === "fotos3d");
+  if (!hasFotos3dTab) {
+    const allPhotos: MediaItem[] = [];
+    if (hasMedia) {
+      media!.fotos.forEach((src, i) => {
+        allPhotos.push({ src, alt: `Foto da obra — ${i + 1}` });
+      });
+      media!.projetoExecutivo.forEach((src, i) => {
+        allPhotos.push({ src, alt: `Projeto Executivo — ${i + 1}` });
+      });
+    }
+    if (allPhotos.length > 0) {
+      galleryData.fotos = allPhotos;
+      availableTabs.push({ id: "fotos", label: "Fotos" });
+    } else if (!hasMedia && !mediaLoading) {
+      galleryData.fotos = defaultGallery.fotos;
+      availableTabs.push({ id: "fotos", label: "Fotos" });
+    }
   }
 
   // --- Tour 3D tab ---
