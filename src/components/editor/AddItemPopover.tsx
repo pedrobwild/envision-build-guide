@@ -73,7 +73,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
 
         let query = supabase
           .from("catalog_items")
-          .select("id, name, description, unit_of_measure, item_type")
+          .select("id, name, description, unit_of_measure, item_type, image_url")
           .eq("is_active", true)
           .ilike("search_text", `%${search.toLowerCase()}%`)
           .order("name")
