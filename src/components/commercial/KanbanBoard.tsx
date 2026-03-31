@@ -23,6 +23,7 @@ import {
   RotateCcw,
   AlertTriangle,
   Lock,
+  Pin,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -111,11 +112,14 @@ interface BudgetRow {
   is_published_version: boolean | null;
 }
 
+export type DueFilter = "all" | "overdue" | "due_soon";
+
 interface KanbanBoardProps {
   budgets: BudgetRow[];
   onStatusChange: (budgetId: string, newStatus: InternalStatus) => Promise<void>;
   onCardClick: (budgetId: string) => void;
   getProfileName: (id: string | null) => string;
+  dueFilter?: DueFilter;
 }
 
 function getColumnForBudget(internalStatus: string) {
@@ -124,23 +128,68 @@ function getColumnForBudget(internalStatus: string) {
   );
 }
 
-function getDueInfo(dueAt: string | null) {
+type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
+
+function getDueInfo(dueAt: string | null): { label: string; variant: DueVariant } | null {
   if (!dueAt) return null;
   const dueDate = new Date(dueAt);
   const days = differenceInCalendarDays(dueDate, new Date());
   if (isPast(dueDate) && !isToday(dueDate))
-    return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" as const };
-  if (isToday(dueDate)) return { label: "Vence hoje", variant: "today" as const };
-  if (days <= 2) return { label: `${days}d`, variant: "soon" as const };
-  return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
+    return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" };
+  if (isToday(dueDate)) return { label: "Vence hoje", variant: "today" };
+  if (days <= 2) return { label: `${days}d`, variant: "soon" };
+  if (days <= 7) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "ok" };
+  return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" };
 }
 
-const dueVariantStyles = {
+const dueVariantStyles: Record<DueVariant, string> = {
   overdue: "bg-destructive/10 text-destructive",
   today: "bg-warning/10 text-warning",
   soon: "bg-amber-100/80 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
+  ok: "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
   default: "text-muted-foreground bg-muted/50",
 };
+
+/** Left border color based on due urgency */
+const dueBorderStyles: Record<DueVariant, string> = {
+  overdue: "border-l-destructive",
+  today: "border-l-warning",
+  soon: "border-l-amber-400 dark:border-l-amber-500",
+  ok: "border-l-emerald-400 dark:border-l-emerald-500",
+  default: "border-l-transparent",
+};
+
+function isHighPriority(priority: string): boolean {
+  return priority === "urgente" || priority === "alta";
+}
+
+/** Sort budgets: high priority first, then by due date urgency */
+function sortBudgetsForColumn(budgets: BudgetRow[]): BudgetRow[] {
+  const priorityOrder: Record<string, number> = { urgente: 0, alta: 1, normal: 2, baixa: 3 };
+  return [...budgets].sort((a, b) => {
+    const pa = priorityOrder[a.priority] ?? 2;
+    const pb = priorityOrder[b.priority] ?? 2;
+    // High priority cards pinned to top
+    const aHigh = pa <= 1 ? 0 : 1;
+    const bHigh = pb <= 1 ? 0 : 1;
+    if (aHigh !== bHigh) return aHigh - bHigh;
+    // Within same priority tier, sort by due date urgency
+    if (a.due_at && b.due_at) return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
+    if (a.due_at) return -1;
+    if (b.due_at) return 1;
+    // Then by priority
+    if (pa !== pb) return pa - pb;
+    return 0;
+  });
+}
+
+function matchesDueFilter(budget: BudgetRow, filter: DueFilter): boolean {
+  if (filter === "all") return true;
+  const due = getDueInfo(budget.due_at);
+  if (filter === "overdue") return due?.variant === "overdue" || due?.variant === "today";
+  if (filter === "due_soon") return due?.variant === "overdue" || due?.variant === "today" || due?.variant === "soon";
+  return true;
+}
 
 // --- Droppable Column ---
 function KanbanColumn({
@@ -148,14 +197,23 @@ function KanbanColumn({
   budgets,
   onCardClick,
   getProfileName,
+  dueFilter,
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
+  dueFilter: DueFilter;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
+
+  const filteredBudgets = budgets.filter(b => matchesDueFilter(b, dueFilter));
+  const sorted = sortBudgetsForColumn(filteredBudgets);
+  const overdueCount = filteredBudgets.filter(b => {
+    const d = getDueInfo(b.due_at);
+    return d?.variant === "overdue" || d?.variant === "today";
+  }).length;
 
   return (
     <div
@@ -171,24 +229,46 @@ function KanbanColumn({
           {column.label}
           {column.locked && <Lock className="h-3 w-3 ml-0.5 opacity-50" />}
         </div>
-        <span className="text-xs font-bold font-display text-muted-foreground bg-background/80 rounded-full px-2 py-0.5">
-          {budgets.length}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {overdueCount > 0 && (
+            <span className="text-[10px] font-bold font-body bg-destructive/15 text-destructive rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+              <AlertTriangle className="h-2.5 w-2.5" />
+              {overdueCount}
+            </span>
+          )}
+          <span className="text-xs font-bold font-display text-muted-foreground bg-background/80 rounded-full px-2 py-0.5">
+            {sorted.length}
+          </span>
+        </div>
       </div>
 
       {/* Cards */}
       <ScrollArea className="flex-1 px-2 pb-2" style={{ maxHeight: "calc(100vh - 320px)" }}>
         <div className="space-y-2">
-          {budgets.map((b) => (
-            <DraggableCard
-              key={b.id}
-              budget={b}
-              locked={column.locked}
-              onClick={() => onCardClick(b.id)}
-              getProfileName={getProfileName}
-            />
-          ))}
-          {budgets.length === 0 && (
+          {sorted.map((b, idx) => {
+            const prevHighPrio = idx > 0 && isHighPriority(sorted[idx - 1].priority);
+            const currHighPrio = isHighPriority(b.priority);
+            const showDivider = idx > 0 && prevHighPrio && !currHighPrio;
+
+            return (
+              <div key={b.id}>
+                {showDivider && (
+                  <div className="flex items-center gap-2 py-1 px-1">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-body">Demais</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                )}
+                <DraggableCard
+                  budget={b}
+                  locked={column.locked}
+                  onClick={() => onCardClick(b.id)}
+                  getProfileName={getProfileName}
+                />
+              </div>
+            );
+          })}
+          {sorted.length === 0 && (
             <div className="py-8 text-center text-xs text-muted-foreground font-body">
               Nenhum orçamento
             </div>
@@ -244,12 +324,16 @@ function KanbanCard({
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at);
   const isRevision = b.internal_status === "sent_to_client" && b.status === "minuta_solicitada";
+  const highPrio = isHighPriority(b.priority);
+  const borderColor = due ? dueBorderStyles[due.variant] : "border-l-transparent";
 
   return (
     <Card
-      className={`p-3 text-left transition-all border ${
+      className={`p-3 text-left transition-all border border-l-[3px] ${borderColor} ${
         isDragging ? "opacity-60 shadow-xl rotate-2 scale-105" : "hover:shadow-md"
-      } ${locked ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
+      } ${locked ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${
+        highPrio ? "ring-1 ring-amber-300/50 dark:ring-amber-600/30" : ""
+      }`}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -257,6 +341,9 @@ function KanbanCard({
     >
       {/* Title + priority */}
       <div className="flex items-start gap-1.5 mb-1.5">
+        {highPrio && (
+          <Pin className="h-3 w-3 shrink-0 text-amber-500 mt-0.5 fill-amber-500" />
+        )}
         <span className="font-semibold font-display text-xs text-foreground leading-tight line-clamp-2 flex-1">
           {b.project_name || "Sem nome"}
         </span>
@@ -306,7 +393,7 @@ function KanbanCard({
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all" }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -363,6 +450,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             budgets={columnBudgets(col)}
             onCardClick={onCardClick}
             getProfileName={getProfileName}
+            dueFilter={dueFilter}
           />
         ))}
       </div>
