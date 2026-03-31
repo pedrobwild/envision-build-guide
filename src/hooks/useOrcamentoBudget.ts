@@ -3,24 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import type { BudgetSummary, BudgetMeta, ScopeCategory, ScopeItem } from "@/lib/orcamento-types";
 import { mockBudget } from "@/lib/orcamento-mock-data";
 import { format, addDays } from "date-fns";
+import { PUBLIC_BUDGET_SELECT, PUBLIC_SECTION_SELECT, PUBLIC_ITEM_SELECT } from "@/lib/public-columns";
 
 async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
-  // Fetch budget
+  // Fetch budget — public-safe columns only
   const { data: budget, error: budgetError } = await supabase
     .from("budgets")
-    .select("*")
+    .select(PUBLIC_BUDGET_SELECT)
     .eq("id", projectId)
-    .single();
+    .single() as { data: any; error: any };
 
   if (budgetError) throw new Error(`Erro ao carregar orçamento: ${budgetError.message}`);
   if (!budget) throw new Error("Orçamento não encontrado");
 
-  // Fetch sections ordered
+  // Fetch sections ordered — public-safe columns only
   const { data: sections, error: sectionsError } = await supabase
     .from("sections")
-    .select("*")
+    .select(PUBLIC_SECTION_SELECT)
     .eq("budget_id", projectId)
-    .order("order_index", { ascending: true });
+    .order("order_index", { ascending: true }) as { data: any[]; error: any };
 
   if (sectionsError) throw new Error(`Erro ao carregar seções: ${sectionsError.message}`);
 
@@ -30,9 +31,9 @@ async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
   if (sectionIds.length > 0) {
     const { data: itemsData, error: itemsError } = await supabase
       .from("items")
-      .select("*")
+      .select(PUBLIC_ITEM_SELECT)
       .in("section_id", sectionIds)
-      .order("order_index", { ascending: true });
+      .order("order_index", { ascending: true }) as { data: any[]; error: any };
 
     if (itemsError) throw new Error(`Erro ao carregar itens: ${itemsError.message}`);
     items = itemsData ?? [];
