@@ -24,6 +24,7 @@ export default function BudgetEditorV2() {
   const [sections, setSections] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [internalDataOpen, setInternalDataOpen] = useState(false);
+  const [versionCount, setVersionCount] = useState(0);
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
