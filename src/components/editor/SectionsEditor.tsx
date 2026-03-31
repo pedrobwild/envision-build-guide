@@ -4,8 +4,10 @@ import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight
+  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight,
+  PenLine, BookOpen,
 } from "lucide-react";
+import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
   DndContext,
   closestCenter,
