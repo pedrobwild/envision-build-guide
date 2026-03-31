@@ -362,9 +362,25 @@ function KanbanCard({
 
       {/* Location */}
       {(b.bairro || b.city) && (
-        <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1.5">
+        <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1">
           <Building2 className="h-3 w-3 shrink-0" />
           <span className="truncate">{[b.bairro, b.city].filter(Boolean).join(", ")}</span>
+        </div>
+      )}
+
+      {/* Owners */}
+      {(b.commercial_owner_id || b.estimator_owner_id) && (
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-body mb-1.5 flex-wrap">
+          {b.commercial_owner_id && (
+            <span className="inline-flex items-center gap-0.5 bg-muted/60 rounded px-1.5 py-0.5" title="Comercial">
+              💼 {getProfileName(b.commercial_owner_id)}
+            </span>
+          )}
+          {b.estimator_owner_id && (
+            <span className="inline-flex items-center gap-0.5 bg-muted/60 rounded px-1.5 py-0.5" title="Orçamentista">
+              📐 {getProfileName(b.estimator_owner_id)}
+            </span>
+          )}
         </div>
       )}
 

@@ -24,6 +24,8 @@ import {
   Loader2,
   FileText,
   Inbox,
+  Hammer,
+  Briefcase,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -54,6 +56,7 @@ export default function BudgetRequestsList() {
   const { user } = useAuth();
   const { isAdmin } = useUserProfile();
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -66,16 +69,22 @@ export default function BudgetRequestsList() {
 
   async function loadBudgets() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("budgets")
-      .select(
-        "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, commercial_owner_id, estimator_owner_id"
-      )
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: profs }] = await Promise.all([
+      supabase
+        .from("budgets")
+        .select(
+          "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, commercial_owner_id, estimator_owner_id"
+        )
+        .order("created_at", { ascending: false }),
+      supabase.from("profiles").select("id, full_name"),
+    ]);
 
     if (!error && data) {
       setBudgets(data as BudgetRow[]);
     }
+    const map: Record<string, string> = {};
+    (profs || []).forEach((p) => { map[p.id] = p.full_name || "(sem nome)"; });
+    setProfiles(map);
     setLoading(false);
   }
 
@@ -269,6 +278,23 @@ export default function BudgetRequestsList() {
                           </span>
                         )}
                       </div>
+                      {/* Owners */}
+                      {(b.commercial_owner_id || b.estimator_owner_id) && (
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground font-body mt-1 flex-wrap">
+                          {b.commercial_owner_id && (
+                            <span className="flex items-center gap-1">
+                              <Briefcase className="h-3 w-3" />
+                              {profiles[b.commercial_owner_id] || "—"}
+                            </span>
+                          )}
+                          {b.estimator_owner_id && (
+                            <span className="flex items-center gap-1">
+                              <Hammer className="h-3 w-3" />
+                              {profiles[b.estimator_owner_id] || "—"}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-col items-end gap-1 shrink-0">
