@@ -27,8 +27,10 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
   const { user } = useAuth();
   const navigate = useNavigate();
   const [versions, setVersions] = useState<any[]>([]);
+  const [auditEvents, setAuditEvents] = useState<any[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showAudit, setShowAudit] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
