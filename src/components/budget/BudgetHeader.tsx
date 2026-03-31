@@ -5,6 +5,7 @@ import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
 import { ReclameAquiSeal } from "./ReclameAquiSeal";
 import { formatDate, getValidityInfo } from "@/lib/formatBRL";
+import { cn } from "@/lib/utils";
 
 export interface HeaderConfig {
   hide_badge?: boolean;
