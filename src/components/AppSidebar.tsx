@@ -59,20 +59,23 @@ const DASHBOARD_ITEM: NavItem = {
   title: "Painel Geral", url: "/admin", icon: LayoutDashboard, roles: "all", end: true,
 };
 
-const PRINCIPAL_ITEMS: NavItem[] = [
+const COMERCIAL_ITEMS: NavItem[] = [
   { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
   { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"], actionUrl: "/admin/solicitacoes/nova", actionLabel: "Nova solicitação" },
 ];
 
-const ORCAMENTO_ITEMS: NavItem[] = [
-  { title: "Minha Produção", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
-  { title: "Catálogo Mestre", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
+const PROJETOS_ITEMS: NavItem[] = [
+  { title: "Workspace de Produção", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
 ];
 
-const GESTAO_ITEMS: NavItem[] = [
+const DADOS_MESTRES_ITEMS: NavItem[] = [
+  { title: "Catálogo", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
+  { title: "Usuários", url: "/admin/usuarios", icon: Users, roles: ["admin"] },
+];
+
+const ANALISE_ITEMS: NavItem[] = [
   { title: "Operações", url: "/admin/operacoes", icon: Settings, roles: ["admin"] },
   { title: "Financeiro", url: "/admin/financeiro", icon: DollarSign, roles: ["admin"] },
-  { title: "Usuários", url: "/admin/usuarios", icon: Users, roles: ["admin"] },
 ];
 
 const FERRAMENTAS_ITEMS: NavItem[] = [
