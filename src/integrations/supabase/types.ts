@@ -49,6 +49,69 @@ export type Database = {
           },
         ]
       }
+      budget_comments: {
+        Row: {
+          body: string
+          budget_id: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          budget_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          budget_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      budget_events: {
+        Row: {
+          budget_id: string
+          created_at: string
+          event_type: string
+          from_status: string | null
+          id: string
+          metadata: Json | null
+          note: string | null
+          to_status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string
+          event_type?: string
+          from_status?: string | null
+          id?: string
+          metadata?: Json | null
+          note?: string | null
+          to_status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string
+          event_type?: string
+          from_status?: string | null
+          id?: string
+          metadata?: Json | null
+          note?: string | null
+          to_status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       budget_optional_selections: {
         Row: {
           budget_id: string
