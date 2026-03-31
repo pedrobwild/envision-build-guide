@@ -11,7 +11,7 @@ async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
     .from("budgets")
     .select(PUBLIC_BUDGET_SELECT)
     .eq("id", projectId)
-    .single();
+    .single() as { data: any; error: any };
 
   if (budgetError) throw new Error(`Erro ao carregar orçamento: ${budgetError.message}`);
   if (!budget) throw new Error("Orçamento não encontrado");
@@ -21,7 +21,7 @@ async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
     .from("sections")
     .select(PUBLIC_SECTION_SELECT)
     .eq("budget_id", projectId)
-    .order("order_index", { ascending: true });
+    .order("order_index", { ascending: true }) as { data: any[]; error: any };
 
   if (sectionsError) throw new Error(`Erro ao carregar seções: ${sectionsError.message}`);
 
