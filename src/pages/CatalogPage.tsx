@@ -437,6 +437,7 @@ export default function CatalogPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
@@ -450,7 +451,7 @@ export default function CatalogPage() {
 
   const { data: categories = [] } = useCategories();
   const { data: suppliers = [] } = useSuppliers();
-  const { data: items = [], isLoading } = useCatalogItems(search, typeFilter, categoryFilter);
+  const { data: items = [], isLoading } = useCatalogItems(search, typeFilter, categoryFilter, sectionFilter);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["catalog_items"] });
