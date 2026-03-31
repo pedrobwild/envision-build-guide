@@ -361,8 +361,18 @@ export default function CommercialDashboard() {
           </div>
         )}
 
+        {/* Kanban view */}
+        {!loading && viewMode === "kanban" && budgets.length > 0 && (
+          <KanbanBoard
+            budgets={budgets}
+            onStatusChange={changeStatus}
+            onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
+            getProfileName={getProfileName}
+          />
+        )}
+
         {/* List */}
-        {!loading && filtered.length > 0 && (
+        {!loading && viewMode === "list" && filtered.length > 0 && (
           <div className="space-y-2">
             {filtered.map(b => {
               const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
