@@ -18,7 +18,7 @@ import {
   Search, Calendar, User, Building2, ArrowLeft, Loader2, Inbox,
   Clock, AlertTriangle, MoreVertical, ExternalLink, CheckCircle2,
   PauseCircle, ArrowUpDown, Flame, Copy, Send, RotateCcw,
-  FileText, Eye, ThumbsUp, XCircle, Plus,
+  FileText, Eye, ThumbsUp, XCircle, Plus, GitCompare,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES, PRIORITIES,
