@@ -22,6 +22,11 @@ import { Button } from "@/components/ui/button";
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isOrcamentista, isComercial } = useUserProfile();
+
+  const backPath = (location.state as any)?.from
+    || (isOrcamentista ? "/admin/producao" : isComercial ? "/admin/comercial" : "/admin");
   const [budget, setBudget] = useState<any>(null);
   const [sections, setSections] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
