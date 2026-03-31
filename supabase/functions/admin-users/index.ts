@@ -37,8 +37,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check admin role
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    // Check admin role (adminClient already created above)
     const { data: roleData } = await adminClient
       .from("user_roles")
       .select("role")
