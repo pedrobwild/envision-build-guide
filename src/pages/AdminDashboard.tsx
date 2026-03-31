@@ -759,7 +759,7 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </div>
-                    </div>
+                    </TooltipProvider>
                   </div>
                 );
               })}
