@@ -204,6 +204,7 @@ export type Database = {
           approved_by_name: string | null
           bairro: string | null
           briefing: string | null
+          change_reason: string | null
           city: string | null
           client_name: string
           closed_at: string | null
@@ -227,11 +228,13 @@ export type Database = {
           internal_notes: string | null
           internal_status: string
           is_current_version: boolean | null
+          is_published_version: boolean | null
           last_viewed_at: string | null
           lead_email: string | null
           lead_name: string | null
           metragem: string | null
           notes: string | null
+          parent_budget_id: string | null
           prazo_dias_uteis: number | null
           priority: string
           project_name: string
@@ -257,6 +260,7 @@ export type Database = {
           approved_by_name?: string | null
           bairro?: string | null
           briefing?: string | null
+          change_reason?: string | null
           city?: string | null
           client_name?: string
           closed_at?: string | null
@@ -280,11 +284,13 @@ export type Database = {
           internal_notes?: string | null
           internal_status?: string
           is_current_version?: boolean | null
+          is_published_version?: boolean | null
           last_viewed_at?: string | null
           lead_email?: string | null
           lead_name?: string | null
           metragem?: string | null
           notes?: string | null
+          parent_budget_id?: string | null
           prazo_dias_uteis?: number | null
           priority?: string
           project_name?: string
@@ -310,6 +316,7 @@ export type Database = {
           approved_by_name?: string | null
           bairro?: string | null
           briefing?: string | null
+          change_reason?: string | null
           city?: string | null
           client_name?: string
           closed_at?: string | null
@@ -333,11 +340,13 @@ export type Database = {
           internal_notes?: string | null
           internal_status?: string
           is_current_version?: boolean | null
+          is_published_version?: boolean | null
           last_viewed_at?: string | null
           lead_email?: string | null
           lead_name?: string | null
           metragem?: string | null
           notes?: string | null
+          parent_budget_id?: string | null
           prazo_dias_uteis?: number | null
           priority?: string
           project_name?: string

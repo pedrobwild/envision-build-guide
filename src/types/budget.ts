@@ -60,6 +60,9 @@ export interface BudgetData {
   estimated_weeks?: number | null;
   versao?: string | null;
   version_number?: number | null;
+  parent_budget_id?: string | null;
+  change_reason?: string | null;
+  is_published_version?: boolean | null;
   consultora_comercial?: string | null;
   email_comercial?: string | null;
   status: string;
