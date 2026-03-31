@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign } from "lucide-react";
+import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign, GitCompare } from "lucide-react";
 import { toast } from "sonner";
 import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
@@ -13,6 +13,9 @@ import { formatBRL } from "@/lib/formatBRL";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { WorkflowBar } from "@/components/editor/WorkflowBar";
 import { PipelineProgress } from "@/components/editor/PipelineProgress";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from "react-router-dom";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -21,6 +24,7 @@ export default function BudgetEditorV2() {
   const [sections, setSections] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [internalDataOpen, setInternalDataOpen] = useState(false);
+  const [versionCount, setVersionCount] = useState(0);
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -32,6 +36,17 @@ export default function BudgetEditorV2() {
     const { data: b } = await supabase.from("budgets").select("*").eq("id", budgetId).single();
     if (!b) { navigate("/admin"); return; }
     setBudget(b);
+
+    // Fetch version count for the group
+    if (b.version_group_id) {
+      const { count } = await supabase
+        .from("budgets")
+        .select("id", { count: "exact", head: true })
+        .eq("version_group_id", b.version_group_id);
+      setVersionCount(count ?? 1);
+    } else {
+      setVersionCount(1);
+    }
 
     const { data: secs } = await supabase
       .from("sections")
@@ -109,9 +124,33 @@ export default function BudgetEditorV2() {
                 <span className="font-display font-bold text-sm text-foreground leading-tight truncate">
                   {budget.project_name || "Sem nome"}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-muted text-muted-foreground border border-border">
-                  V{budget.version_number || 1}
-                </span>
+                {versionCount > 1 ? (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to={`/admin/comparar?left=${budget.id}&right=${budget.id}`}
+                          onClick={(e) => {
+                            // Navigate to compare with group context
+                            e.preventDefault();
+                            navigate(`/admin/comparar?group=${budget.version_group_id}`);
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                        >
+                          <GitCompare className="h-3 w-3" />
+                          V{budget.version_number || 1}
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Este orçamento tem {versionCount} versões — clique para comparar</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-muted text-muted-foreground border border-border">
+                    V{budget.version_number || 1}
+                  </span>
+                )}
                 {budget.is_published_version && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                     Publicada
