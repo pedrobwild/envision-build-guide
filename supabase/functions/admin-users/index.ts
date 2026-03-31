@@ -26,15 +26,12 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
 
-    // Verify caller using service client to validate the JWT
-    const anonClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user: caller }, error: userError } = await anonClient.auth.getUser();
+    // Use admin client to verify the user from token
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: { user: caller }, error: userError } = await adminClient.auth.getUser(token);
 
     if (userError || !caller) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
+      return new Response(JSON.stringify({ error: "Invalid token", detail: userError?.message }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
