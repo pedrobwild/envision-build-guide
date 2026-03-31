@@ -1,53 +1,125 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Mail, Lock, Eye, EyeOff,
   AlertCircle, ShieldCheck, HelpCircle, ArrowLeft,
 } from "lucide-react";
 import authBg from "@/assets/auth-bg.png";
 import bwildLogo from "@/assets/logo-bwild-white.png";
-import { toast as sonnerToast } from "sonner";
+import { z } from "zod";
 
-type Mode = "login" | "signup" | "forgot";
+const loginSchema = z.object({
+  email: z.string().trim().min(1, "Informe seu e-mail.").email("Digite um e-mail válido."),
+  password: z.string().min(1, "Informe sua senha."),
+});
+
+type Mode = "login" | "forgot";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [mode, setMode] = useState<Mode>("login");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let isMounted = true;
+    let sessionCheckTimeout: number | null = null;
+
+    const finishSessionCheck = () => {
+      if (!isMounted) return;
+      setCheckingSession(false);
+      if (sessionCheckTimeout !== null) {
+        window.clearTimeout(sessionCheckTimeout);
+        sessionCheckTimeout = null;
+      }
+    };
+
+    sessionCheckTimeout = window.setTimeout(() => {
+      if (!isMounted) return;
+      setCheckingSession(false);
+    }, 8000);
+
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!isMounted) return;
+      if (error) {
+        supabase.auth.signOut().catch(() => {});
+        finishSessionCheck();
+        return;
+      }
+      if (session?.user) {
+        navigate("/admin", { replace: true });
+      }
+      finishSessionCheck();
+    }).catch(() => {
+      finishSessionCheck();
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!isMounted) return;
+        if (event === "SIGNED_IN" && session?.user) {
+          setTimeout(() => {
+            if (isMounted) navigate("/admin", { replace: true });
+          }, 0);
+        }
+        if (event === "SIGNED_OUT") finishSessionCheck();
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      if (sessionCheckTimeout !== null) window.clearTimeout(sessionCheckTimeout);
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  function validate(): boolean {
+    if (mode === "forgot") {
+      const result = z.string().trim().min(1, "Informe seu e-mail.").email("Digite um e-mail válido.").safeParse(email);
+      if (result.success) { setFieldErrors({}); return true; }
+      setFieldErrors({ email: result.error.issues[0]?.message });
+      return false;
+    }
+    const result = loginSchema.safeParse({ email, password });
+    if (result.success) { setFieldErrors({}); return true; }
+    const errs: { email?: string; password?: string } = {};
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as "email" | "password";
+      if (!errs[field]) errs[field] = issue.message;
+    }
+    setFieldErrors(errs);
+    return false;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    if (!validate()) return;
     setLoading(true);
 
     if (mode === "forgot") {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
+      setLoading(false);
       if (error) setFormError(error.message);
       else {
-        sonnerToast.success("E-mail de recuperação enviado!", { description: "Verifique sua caixa de entrada." });
+        setFormError(null);
+        setFieldErrors({});
         setMode("login");
+        // Use a simple alert-style feedback via formError in green — or just switch back
+        setFormError("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
       }
-      setLoading(false);
-      return;
-    }
-
-    if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) setFormError(error.message);
-      else sonnerToast.success("Conta criada! Verifique seu e-mail para confirmar.", { duration: 6000 });
-      setLoading(false);
       return;
     }
 
@@ -65,6 +137,8 @@ export default function Login() {
           setFormError("Seu acesso ainda não foi ativado. Fale com o suporte para liberar.");
         } else if (/rate limit/i.test(error.message)) {
           setFormError("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+        } else if (/network|fetch|timeout/i.test(error.message)) {
+          setFormError("Sem conexão no momento. Verifique sua internet e tente novamente.");
         } else {
           setFormError("Não foi possível entrar. Tente novamente ou fale com o suporte.");
         }
@@ -83,6 +157,22 @@ export default function Login() {
     }
   };
 
+  if (checkingSession) {
+    return (
+      <div className="min-h-[100dvh] bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="h-12 w-12 rounded-full border-4 border-primary/20" />
+            <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          </div>
+          <p className="text-sm text-muted-foreground font-body">Verificando sessão...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isRecoverySuccess = mode === "login" && formError?.includes("recuperação enviado");
+
   return (
     <div
       className="min-h-[100dvh] flex relative bg-cover bg-center bg-no-repeat"
@@ -98,17 +188,21 @@ export default function Login() {
       {/* Form – centered on mobile, left on desktop */}
       <div className="flex flex-col justify-center items-center md:items-start w-full md:max-w-lg px-5 sm:px-12 md:px-16 py-10 sm:py-16 mx-auto md:mx-0">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-10 sm:mb-12 text-center md:text-left w-full font-display">
-          Orçamentos Bwild<span className="text-[#366478]">.</span>
+          OrçaBwild<span className="text-[#366478]">.</span>
         </h1>
 
         {formError && (
           <div
             role="alert"
             aria-live="assertive"
-            className="flex items-start gap-2.5 rounded-lg border border-red-400/30 bg-red-500/10 p-3.5 mb-6 w-full"
+            className={`flex items-start gap-2.5 rounded-lg border p-3.5 mb-6 w-full ${
+              isRecoverySuccess
+                ? "border-emerald-400/30 bg-emerald-500/10"
+                : "border-red-400/30 bg-red-500/10"
+            }`}
           >
-            <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
-            <p className="text-sm text-red-300 font-body">{formError}</p>
+            <AlertCircle className={`h-4 w-4 shrink-0 mt-0.5 ${isRecoverySuccess ? "text-emerald-400" : "text-red-400"}`} />
+            <p className={`text-sm font-body ${isRecoverySuccess ? "text-emerald-300" : "text-red-300"}`}>{formError}</p>
           </div>
         )}
 
@@ -127,11 +221,22 @@ export default function Login() {
               autoCorrect="off"
               placeholder="seu@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-12 bg-white/10 border-white/30 text-white placeholder:text-white/60 focus-visible:ring-white/40 focus-visible:border-white/50 text-base font-body"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
+              }}
+              onBlur={() => { if (fieldErrors.email) validate(); }}
+              className="h-12 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus-visible:ring-white/40 focus-visible:border-white/50 text-base font-body"
+              aria-invalid={!!fieldErrors.email}
+              aria-describedby={fieldErrors.email ? "login-email-error" : undefined}
               disabled={loading}
               autoFocus
             />
+            {fieldErrors.email && (
+              <p id="login-email-error" role="alert" className="text-xs text-red-400 mt-1 font-body">
+                {fieldErrors.email}
+              </p>
+            )}
           </div>
 
           {/* Password */}
@@ -147,10 +252,15 @@ export default function Login() {
                   autoComplete="current-password"
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                  }}
                   onKeyDown={handlePasswordKeyEvent}
                   onKeyUp={handlePasswordKeyEvent}
                   className="h-12 bg-white/10 border-white/30 text-white placeholder:text-white/50 pr-11 focus-visible:ring-white/40 focus-visible:border-white/50 text-base font-body"
+                  aria-invalid={!!fieldErrors.password}
+                  aria-describedby={fieldErrors.password ? "login-password-error" : undefined}
                   disabled={loading}
                 />
                 <button
@@ -163,6 +273,11 @@ export default function Login() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p id="login-password-error" role="alert" className="text-xs text-red-400 mt-1 font-body">
+                  {fieldErrors.password}
+                </p>
+              )}
               {capsLockOn && (
                 <p className="text-xs text-amber-400 flex items-center gap-1 mt-1 font-body">
                   <AlertCircle className="h-3 w-3" />
@@ -177,8 +292,8 @@ export default function Login() {
             <div className="flex justify-center pt-1">
               <button
                 type="button"
-                onClick={() => setMode("forgot")}
-                className="text-xs text-white/90 hover:text-white hover:underline font-medium font-body"
+                onClick={() => { setMode("forgot"); setFormError(null); setFieldErrors({}); }}
+                className="text-xs text-white/80 hover:text-white hover:underline font-medium font-body"
               >
                 Esqueci minha senha
               </button>
@@ -194,46 +309,48 @@ export default function Login() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {mode === "forgot" ? "Enviando..." : mode === "signup" ? "Criando..." : "Entrando..."}
+                {mode === "forgot" ? "Enviando..." : "Entrando..."}
               </>
             ) : (
-              mode === "forgot" ? "Enviar e-mail" : mode === "signup" ? "Criar conta" : "Entrar"
+              mode === "forgot" ? "Enviar e-mail de recuperação" : "Entrar"
             )}
           </Button>
 
-          {/* Toggle mode */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={() => setMode(mode === "signup" ? "login" : mode === "forgot" ? "login" : "signup")}
-              className="text-sm text-white/80 hover:text-white transition-colors font-body inline-flex items-center gap-1.5"
-            >
-              {mode === "forgot" && <ArrowLeft className="h-3.5 w-3.5" />}
-              {mode === "signup" ? "Já tem conta? Entrar" : mode === "forgot" ? "Voltar ao login" : "Não tem conta? Criar"}
-            </button>
-          </div>
+          {/* Back to login from forgot */}
+          {mode === "forgot" && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => { setMode("login"); setFormError(null); setFieldErrors({}); }}
+                className="text-sm text-white/80 hover:text-white transition-colors font-body inline-flex items-center gap-1.5"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Voltar ao login
+              </button>
+            </div>
+          )}
         </form>
 
         {/* Footer */}
-        <div className="mt-8 flex items-center justify-center gap-1.5 text-sm text-white/80 w-full font-body">
+        <div className="mt-8 flex items-center justify-center gap-1.5 text-sm text-white/70 w-full font-body">
           <HelpCircle className="h-4 w-4 shrink-0" />
           <span>Problemas?</span>
           <a
             href="https://wa.me/5511911906183?text=Preciso%20de%20ajuda%20com%20o%20acesso%20ao%20sistema."
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white hover:underline font-medium"
+            className="text-white/90 hover:text-white hover:underline font-medium"
           >
             Falar com suporte
           </a>
         </div>
 
         <div className="mt-6 flex flex-col items-center gap-1 w-full text-center">
-          <div className="flex items-center gap-1.5 text-xs text-white/70 font-body">
+          <div className="flex items-center gap-1.5 text-xs text-white/50 font-body">
             <ShieldCheck className="h-3.5 w-3.5" />
             <span>Acesso seguro · LGPD</span>
           </div>
-          <p className="text-xs text-white/60 font-body">
+          <p className="text-xs text-white/40 font-body">
             © {new Date().getFullYear()} Bwild · Todos os direitos reservados
           </p>
         </div>
