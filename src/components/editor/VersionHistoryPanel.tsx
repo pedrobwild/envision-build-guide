@@ -176,6 +176,10 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
                         </div>
                         <p className="text-xs text-muted-foreground font-body mt-0.5">
                           {currentVersion.created_at ? formatDate(currentVersion.created_at) : "—"}
+                          {currentVersion.created_by_name && currentVersion.created_by_name !== "—" && (
+                            <span className="ml-1">· por {currentVersion.created_by_name}</span>
+                          )}
+                          {currentVersion.change_reason && <span className="ml-1 italic">— {currentVersion.change_reason}</span>}
                         </p>
                       </div>
                       <button
