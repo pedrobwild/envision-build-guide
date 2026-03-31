@@ -134,6 +134,11 @@ export default function SystemToolsPage() {
   const [uxResult, setUxResult] = useState("");
   const [uxLoading, setUxLoading] = useState(false);
   const [showUxPanel, setShowUxPanel] = useState(false);
+  const [benchArea, setBenchArea] = useState("");
+  const [benchContext, setBenchContext] = useState("");
+  const [benchResult, setBenchResult] = useState("");
+  const [benchLoading, setBenchLoading] = useState(false);
+  const [showBenchPanel, setShowBenchPanel] = useState(false);
   const { toast } = useToast();
 
   const handleOpenTool = (card: ToolCard) => {
@@ -149,6 +154,13 @@ export default function SystemToolsPage() {
       setSelectedArea("");
       setUxContext("");
       setUxResult("");
+      return;
+    }
+    if (card.mode === "benchmarking") {
+      setShowBenchPanel(true);
+      setBenchArea("");
+      setBenchContext("");
+      setBenchResult("");
       return;
     }
     setActiveDialog(card);
@@ -213,6 +225,30 @@ export default function SystemToolsPage() {
       });
     } finally {
       setUxLoading(false);
+    }
+  };
+
+  const handleBenchSearch = async () => {
+    if (!benchArea) return;
+    setBenchLoading(true);
+    setBenchResult("");
+
+    try {
+      const res = await supabase.functions.invoke("feature-suggestions", {
+        body: { area: benchArea, context: benchContext.trim() || undefined },
+      });
+
+      if (res.error) throw new Error(res.error.message || "Erro na análise");
+      setBenchResult(res.data?.content ?? "Sem resultados.");
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Erro na análise",
+        description: err.message || "Não foi possível gerar as sugestões.",
+        variant: "destructive",
+      });
+    } finally {
+      setBenchLoading(false);
     }
   };
 
@@ -346,7 +382,7 @@ export default function SystemToolsPage() {
 
       {/* UX Results */}
       {uxResult && (
-        <Card className="border bg-card">
+        <Card className="border bg-card animate-in fade-in">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-display font-semibold text-foreground">Sugestões de UX</h3>
@@ -363,6 +399,88 @@ export default function SystemToolsPage() {
             </div>
             <div className="prose prose-sm dark:prose-invert max-w-none font-body">
               <ReactMarkdown>{uxResult}</ReactMarkdown>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Benchmarking Panel */}
+      {showBenchPanel && (
+        <Card className="border bg-card animate-in fade-in">
+          <CardContent className="p-6 space-y-5">
+            <div className="flex items-start gap-3">
+              <div className="bg-amber-100 dark:bg-amber-900/30 p-2.5 rounded-lg">
+                <Lightbulb className="h-5 w-5 text-foreground/70" />
+              </div>
+              <div>
+                <h2 className="text-lg font-display font-semibold text-foreground">Configurar Benchmarking</h2>
+                <p className="text-sm text-muted-foreground font-body mt-1">
+                  Selecione a área do sistema para receber sugestões de funcionalidades baseadas em concorrentes reais.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">Área do Sistema</label>
+              <Select value={benchArea} onValueChange={setBenchArea}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione uma área..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PORTAL_AREAS.map((area) => (
+                    <SelectItem key={area.value} value={area.value}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{area.label}</span>
+                        <span className="text-xs text-muted-foreground">{area.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Contexto adicional (opcional)</label>
+              <Textarea
+                value={benchContext}
+                onChange={(e) => setBenchContext(e.target.value)}
+                placeholder="Ex: Precisamos de funcionalidades de comunicação com o cliente em tempo real..."
+                rows={3}
+                className="font-body text-sm resize-none"
+              />
+            </div>
+
+            <Button
+              onClick={handleBenchSearch}
+              disabled={benchLoading || !benchArea}
+              className="gap-2"
+            >
+              {benchLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lightbulb className="h-4 w-4" />}
+              {benchLoading ? "Pesquisando concorrentes..." : "Gerar Sugestões"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Benchmarking Results */}
+      {benchResult && (
+        <Card className="border bg-card animate-in fade-in">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-display font-semibold text-foreground">Sugestões de Funcionalidades</h3>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleBenchSearch} disabled={benchLoading} className="gap-1.5">
+                  <RefreshCw className={`h-3.5 w-3.5 ${benchLoading ? "animate-spin" : ""}`} />
+                  Regenerar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleCopyResult(benchResult)} className="gap-1.5">
+                  <Copy className="h-3.5 w-3.5" />
+                  Copiar
+                </Button>
+              </div>
+            </div>
+            <div className="prose prose-sm dark:prose-invert max-w-none font-body">
+              <ReactMarkdown>{benchResult}</ReactMarkdown>
             </div>
           </CardContent>
         </Card>
