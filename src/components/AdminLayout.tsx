@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AdminBreadcrumb } from "@/components/AdminBreadcrumb";
+import { GlobalLoadingBar } from "@/components/GlobalLoadingBar";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
