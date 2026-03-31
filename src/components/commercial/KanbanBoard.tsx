@@ -1,0 +1,379 @@
+import { useState, useCallback } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { useDroppable } from "@dnd-kit/core";
+import { useDraggable } from "@dnd-kit/core";
+import {
+  Clock,
+  CheckCircle2,
+  Send,
+  ThumbsUp,
+  XCircle,
+  User,
+  Building2,
+  Calendar,
+  RotateCcw,
+  AlertTriangle,
+  Lock,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { INTERNAL_STATUSES, PRIORITIES, type InternalStatus, type Priority } from "@/lib/role-constants";
+import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+// Kanban column definitions
+const KANBAN_COLUMNS = [
+  {
+    id: "production",
+    label: "Em Produção",
+    icon: Clock,
+    statuses: ["requested", "triage", "assigned", "in_progress", "waiting_info", "blocked"] as InternalStatus[],
+    accent: "border-t-yellow-500",
+    headerColor: "text-yellow-700 dark:text-yellow-400",
+    bgColor: "bg-yellow-50/50 dark:bg-yellow-950/20",
+    locked: true,
+  },
+  {
+    id: "finished",
+    label: "Finalizado",
+    icon: CheckCircle2,
+    statuses: ["ready_for_review", "delivered_to_sales"] as InternalStatus[],
+    accent: "border-t-blue-500",
+    headerColor: "text-blue-700 dark:text-blue-400",
+    bgColor: "bg-blue-50/50 dark:bg-blue-950/20",
+    targetStatus: "delivered_to_sales" as InternalStatus,
+    locked: false,
+  },
+  {
+    id: "sent",
+    label: "Enviado",
+    icon: Send,
+    statuses: ["sent_to_client"] as InternalStatus[],
+    accent: "border-t-emerald-500",
+    headerColor: "text-emerald-700 dark:text-emerald-400",
+    bgColor: "bg-emerald-50/50 dark:bg-emerald-950/20",
+    targetStatus: "sent_to_client" as InternalStatus,
+    locked: false,
+  },
+  {
+    id: "won",
+    label: "Fechado",
+    icon: ThumbsUp,
+    statuses: ["approved"] as InternalStatus[],
+    accent: "border-t-green-500",
+    headerColor: "text-green-700 dark:text-green-400",
+    bgColor: "bg-green-50/50 dark:bg-green-950/20",
+    targetStatus: "approved" as InternalStatus,
+    locked: false,
+  },
+  {
+    id: "lost",
+    label: "Perdido",
+    icon: XCircle,
+    statuses: ["lost"] as InternalStatus[],
+    accent: "border-t-gray-400",
+    headerColor: "text-muted-foreground",
+    bgColor: "bg-muted/30",
+    targetStatus: "lost" as InternalStatus,
+    locked: false,
+  },
+] as const;
+
+interface BudgetRow {
+  id: string;
+  client_name: string;
+  project_name: string;
+  property_type: string | null;
+  city: string | null;
+  bairro: string | null;
+  internal_status: string;
+  priority: string;
+  due_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  commercial_owner_id: string | null;
+  estimator_owner_id: string | null;
+  public_id: string | null;
+  status: string;
+  version_number: number | null;
+  version_group_id: string | null;
+  is_current_version: boolean | null;
+  is_published_version: boolean | null;
+}
+
+interface KanbanBoardProps {
+  budgets: BudgetRow[];
+  onStatusChange: (budgetId: string, newStatus: InternalStatus) => Promise<void>;
+  onCardClick: (budgetId: string) => void;
+  getProfileName: (id: string | null) => string;
+}
+
+function getColumnForBudget(internalStatus: string) {
+  return KANBAN_COLUMNS.find((col) =>
+    (col.statuses as readonly string[]).includes(internalStatus)
+  );
+}
+
+function getDueInfo(dueAt: string | null) {
+  if (!dueAt) return null;
+  const dueDate = new Date(dueAt);
+  const days = differenceInCalendarDays(dueDate, new Date());
+  if (isPast(dueDate) && !isToday(dueDate))
+    return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" as const };
+  if (isToday(dueDate)) return { label: "Vence hoje", variant: "today" as const };
+  if (days <= 2) return { label: `${days}d`, variant: "soon" as const };
+  return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
+}
+
+const dueVariantStyles = {
+  overdue: "bg-destructive/10 text-destructive",
+  today: "bg-warning/10 text-warning",
+  soon: "bg-amber-100/80 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
+  default: "text-muted-foreground bg-muted/50",
+};
+
+// --- Droppable Column ---
+function KanbanColumn({
+  column,
+  budgets,
+  onCardClick,
+  getProfileName,
+}: {
+  column: (typeof KANBAN_COLUMNS)[number];
+  budgets: BudgetRow[];
+  onCardClick: (id: string) => void;
+  getProfileName: (id: string | null) => string;
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
+  const Icon = column.icon;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex flex-col min-w-[260px] w-[260px] lg:w-auto lg:flex-1 rounded-xl border border-border border-t-4 ${column.accent} ${column.bgColor} transition-shadow ${
+        isOver && !column.locked ? "ring-2 ring-primary shadow-lg" : ""
+      }`}
+    >
+      {/* Column header */}
+      <div className="px-3 py-2.5 flex items-center justify-between">
+        <div className={`flex items-center gap-1.5 text-xs font-semibold font-body ${column.headerColor}`}>
+          <Icon className="h-3.5 w-3.5" />
+          {column.label}
+          {column.locked && <Lock className="h-3 w-3 ml-0.5 opacity-50" />}
+        </div>
+        <span className="text-xs font-bold font-display text-muted-foreground bg-background/80 rounded-full px-2 py-0.5">
+          {budgets.length}
+        </span>
+      </div>
+
+      {/* Cards */}
+      <ScrollArea className="flex-1 px-2 pb-2" style={{ maxHeight: "calc(100vh - 320px)" }}>
+        <div className="space-y-2">
+          {budgets.map((b) => (
+            <DraggableCard
+              key={b.id}
+              budget={b}
+              locked={column.locked}
+              onClick={() => onCardClick(b.id)}
+              getProfileName={getProfileName}
+            />
+          ))}
+          {budgets.length === 0 && (
+            <div className="py-8 text-center text-xs text-muted-foreground font-body">
+              Nenhum orçamento
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
+// --- Draggable Card ---
+function DraggableCard({
+  budget,
+  locked,
+  onClick,
+  getProfileName,
+}: {
+  budget: BudgetRow;
+  locked: boolean;
+  onClick: () => void;
+  getProfileName: (id: string | null) => string;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: budget.id,
+    disabled: locked,
+    data: { budget },
+  });
+
+  const style = transform
+    ? { transform: `translate(${transform.x}px, ${transform.y}px)`, zIndex: 50 }
+    : undefined;
+
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} />
+    </div>
+  );
+}
+
+function KanbanCard({
+  budget: b,
+  isDragging,
+  locked,
+  onClick,
+  getProfileName,
+}: {
+  budget: BudgetRow;
+  isDragging?: boolean;
+  locked: boolean;
+  onClick: () => void;
+  getProfileName: (id: string | null) => string;
+}) {
+  const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
+  const due = getDueInfo(b.due_at);
+  const isRevision = b.internal_status === "sent_to_client" && b.status === "minuta_solicitada";
+
+  return (
+    <Card
+      className={`p-3 text-left transition-all border ${
+        isDragging ? "opacity-60 shadow-xl rotate-2 scale-105" : "hover:shadow-md"
+      } ${locked ? "cursor-default" : "cursor-grab active:cursor-grabbing"}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      {/* Title + priority */}
+      <div className="flex items-start gap-1.5 mb-1.5">
+        <span className="font-semibold font-display text-xs text-foreground leading-tight line-clamp-2 flex-1">
+          {b.project_name || "Sem nome"}
+        </span>
+        {b.priority !== "normal" && (
+          <Badge variant="outline" className={`text-[10px] px-1 py-0 shrink-0 ${prio.color}`}>
+            {prio.label}
+          </Badge>
+        )}
+      </div>
+
+      {/* Client */}
+      <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1">
+        <User className="h-3 w-3 shrink-0" />
+        <span className="truncate">{b.client_name}</span>
+      </div>
+
+      {/* Location */}
+      {(b.bairro || b.city) && (
+        <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1.5">
+          <Building2 className="h-3 w-3 shrink-0" />
+          <span className="truncate">{[b.bairro, b.city].filter(Boolean).join(", ")}</span>
+        </div>
+      )}
+
+      {/* Bottom row: due date + revision badge */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {due && (
+          <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium font-body px-1.5 py-0.5 rounded-full ${dueVariantStyles[due.variant]}`}>
+            <Calendar className="h-2.5 w-2.5" />
+            {due.label}
+          </span>
+        )}
+        {isRevision && (
+          <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold font-body px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800 animate-pulse">
+            <RotateCcw className="h-2.5 w-2.5" />
+            Revisão solicitada
+          </span>
+        )}
+        {(b.version_number ?? 1) > 1 && (
+          <span className="text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+            V{b.version_number}
+          </span>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+// --- Main Board ---
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName }: KanbanBoardProps) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const activeBudget = activeId ? budgets.find((b) => b.id === activeId) : null;
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  }, []);
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      setActiveId(null);
+      const { active, over } = event;
+      if (!over) return;
+
+      const budget = budgets.find((b) => b.id === active.id);
+      if (!budget) return;
+
+      const targetColumn = KANBAN_COLUMNS.find((col) => col.id === over.id);
+      if (!targetColumn || targetColumn.locked) return;
+
+      // Check if already in this column
+      const currentColumn = getColumnForBudget(budget.internal_status);
+      if (currentColumn?.id === targetColumn.id) return;
+
+      // Can't drag FROM production column
+      const sourceColumn = KANBAN_COLUMNS.find((col) =>
+        (col.statuses as readonly string[]).includes(budget.internal_status)
+      );
+      if (sourceColumn?.locked) return;
+
+      if (targetColumn.targetStatus) {
+        await onStatusChange(budget.id, targetColumn.targetStatus);
+      }
+    },
+    [budgets, onStatusChange]
+  );
+
+  const columnBudgets = useCallback(
+    (col: (typeof KANBAN_COLUMNS)[number]) =>
+      budgets.filter((b) => (col.statuses as readonly string[]).includes(b.internal_status)),
+    [budgets]
+  );
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+        {KANBAN_COLUMNS.map((col) => (
+          <KanbanColumn
+            key={col.id}
+            column={col}
+            budgets={columnBudgets(col)}
+            onCardClick={onCardClick}
+            getProfileName={getProfileName}
+          />
+        ))}
+      </div>
+
+      <DragOverlay>
+        {activeBudget && (
+          <div className="w-[260px]">
+            <KanbanCard budget={activeBudget} isDragging locked={false} onClick={() => {}} getProfileName={getProfileName} />
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
+  );
+}
