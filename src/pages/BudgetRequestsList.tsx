@@ -69,16 +69,22 @@ export default function BudgetRequestsList() {
 
   async function loadBudgets() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("budgets")
-      .select(
-        "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, commercial_owner_id, estimator_owner_id"
-      )
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: profs }] = await Promise.all([
+      supabase
+        .from("budgets")
+        .select(
+          "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, commercial_owner_id, estimator_owner_id"
+        )
+        .order("created_at", { ascending: false }),
+      supabase.from("profiles").select("id, full_name"),
+    ]);
 
     if (!error && data) {
       setBudgets(data as BudgetRow[]);
     }
+    const map: Record<string, string> = {};
+    (profs || []).forEach((p) => { map[p.id] = p.full_name || "(sem nome)"; });
+    setProfiles(map);
     setLoading(false);
   }
 
