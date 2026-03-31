@@ -28,6 +28,7 @@ import {
   Plus,
   X,
   CheckCircle2,
+  UserCheck,
 } from "lucide-react";
 import { PRIORITIES, PROPERTY_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
