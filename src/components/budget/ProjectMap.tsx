@@ -53,16 +53,43 @@ export function ProjectMap({
   }, [selectedProject, projects, getBounds]);
 
   useEffect(() => {
-    if (!mapContainer.current || !apiKey) return;
+    if (!mapContainer.current) return;
+
+    // Raster-first strategy: always works, no API key needed
+    const rasterStyle: maplibregl.StyleSpecification = {
+      version: 8,
+      sources: {
+        osm: {
+          type: "raster",
+          tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+          tileSize: 256,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        },
+      },
+      layers: [{ id: "osm", type: "raster", source: "osm" }],
+    };
+
+    const vectorStyle = apiKey
+      ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`
+      : null;
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
+      style: vectorStyle || rasterStyle,
       center,
       zoom: 14,
       pitch: 0,
       bearing: 0,
     });
+
+    // If vector fails, fall back to raster
+    if (vectorStyle) {
+      map.on("error", (e) => {
+        if (e?.error?.status === 403 || e?.error?.status === 401) {
+          map.setStyle(rasterStyle);
+        }
+      });
+    }
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 
@@ -85,7 +112,6 @@ export function ProjectMap({
           onSelectProject(selectedProject === proj.id ? null : proj.id);
         });
 
-        // Tooltip on hover
         const popup = new maplibregl.Popup({
           offset: 24,
           closeButton: false,
@@ -116,14 +142,6 @@ export function ProjectMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]);
 
-  if (!apiKey) {
-    return (
-      <div className="bg-muted rounded-xl h-[300px] lg:h-[600px] flex flex-col items-center justify-center gap-3">
-        <MapPin className="h-12 w-12 text-muted-foreground/30" />
-        <span className="text-sm text-muted-foreground font-body">Mapa indisponível</span>
-      </div>
-    );
-  }
 
   return (
     <div
