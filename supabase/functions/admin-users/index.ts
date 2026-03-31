@@ -24,25 +24,20 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
+    const token = authHeader.replace("Bearer ", "");
+
     // Verify caller with anon client
     const anonClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
-    
-    if (claimsError || !claimsData?.claims?.sub) {
-      // Fallback: try getUser for compatibility
-      const { data: { user: fallbackUser }, error: fallbackError } = await anonClient.auth.getUser(token);
-      if (fallbackError || !fallbackUser) {
-        return new Response(JSON.stringify({ error: "Invalid token" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      var caller = fallbackUser;
-    } else {
-      // Build a minimal caller object from claims
-      var caller = { id: claimsData.claims.sub, email: claimsData.claims.email } as any;
+
+    const { data: { user: caller }, error: userError } = await anonClient.auth.getUser(token);
+
+    if (userError || !caller) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Check admin role
