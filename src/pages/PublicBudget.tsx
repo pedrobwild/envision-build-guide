@@ -217,6 +217,7 @@ export default function PublicBudget() {
           neighborhood={heroNeighborhood}
           area={heroArea}
           version={heroVersion}
+          prazoDiasUteis={budget.prazo_dias_uteis ?? 55}
         />
         </div>
 
