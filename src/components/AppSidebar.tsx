@@ -82,8 +82,8 @@ function renderNavItem(item: NavItem, collapsed: boolean) {
         <NavLink
           to={item.url}
           end={item.end}
-          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-body text-muted-foreground hover:bg-muted/50 transition-colors"
-          activeClassName="bg-primary/10 text-primary font-medium"
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-body text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
         >
           <item.icon className="h-4 w-4 shrink-0" />
           {!collapsed && <span className="flex-1">{item.title}</span>}
@@ -184,7 +184,7 @@ export function AppSidebar() {
             <Separator className="mx-2" />
             <SidebarGroup>
               {!collapsed && (
-                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground font-body">
+                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
                   Trabalho
                 </SidebarGroupLabel>
               )}
@@ -203,7 +203,7 @@ export function AppSidebar() {
             <Separator className="mx-2" />
             <SidebarGroup>
               {!collapsed && (
-                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground font-body">
+                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
                   Gestão
                 </SidebarGroupLabel>
               )}
@@ -222,7 +222,7 @@ export function AppSidebar() {
             <Separator className="mx-2" />
             <SidebarGroup>
               {!collapsed && (
-                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground font-body">
+                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
                   Ferramentas
                 </SidebarGroupLabel>
               )}
@@ -250,10 +250,10 @@ export function AppSidebar() {
         )}
         {!collapsed && profile && (
           <div className="px-2 py-1.5 mb-1">
-            <p className="text-xs font-medium font-body text-foreground truncate">
+            <p className="text-xs font-medium font-body text-sidebar-foreground truncate">
               {profile.full_name || "Usuário"}
             </p>
-            <p className="text-[11px] text-muted-foreground font-body truncate">
+            <p className="text-[11px] text-sidebar-foreground/50 font-body truncate">
               {userRoles.join(", ") || "sem perfil"}
             </p>
           </div>
@@ -261,7 +261,7 @@ export function AppSidebar() {
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start gap-2 text-muted-foreground text-xs"
+          className="w-full justify-start gap-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent text-xs"
           onClick={handleSignOut}
         >
           <LogOut className="h-3.5 w-3.5" />
