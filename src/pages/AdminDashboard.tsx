@@ -10,7 +10,7 @@ import {
   Search, TrendingUp, FolderOpen, CheckCircle, Clock,
   MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil, ShoppingBag,
   Handshake, BarChart3, Hammer, Briefcase, Settings, Users,
-  ArrowRight, GitCompare,
+  ArrowRight, GitCompare, Send,
 } from "lucide-react";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { toast } from "sonner";
