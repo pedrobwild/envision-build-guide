@@ -206,20 +206,6 @@ export default function PublicBudget() {
       <main id="budget-content" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
         {/* ═══ MOBILE HERO CARD — price + validity + CTA above the fold ═══ */}
-        <div data-pdf-section>
-        <MobileHeroCard
-          total={total}
-          validity={validity}
-          projectName={budget.project_name}
-          clientName={budget.client_name}
-          publicId={publicId || "demo"}
-          budgetId={budget.id}
-          neighborhood={heroNeighborhood}
-          area={heroArea}
-          version={heroVersion}
-          prazoDiasUteis={budget.prazo_dias_uteis ?? 55}
-        />
-        </div>
 
 
         {/* ═══ TRUST STRIP — scannable confidence chips ═══ */}
