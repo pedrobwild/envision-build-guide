@@ -303,19 +303,56 @@ export default function AdminDashboard() {
 
   // Quick-access shortcuts based on role
   const shortcuts = useMemo(() => {
-    const items: { icon: React.ElementType; label: string; description: string; href: string; color: string }[] = [];
+    const items: { icon: React.ElementType; label: string; description: string; href: string; borderColor: string; iconColor: string; descColor?: string }[] = [];
 
     if (isAdmin || isOrcamentista) {
-      items.push({ icon: Hammer, label: "Produção", description: `${metrics.inProgress} em produção`, href: "/admin/producao", color: "text-amber-600" });
+      const inProd = metrics.inProgress;
+      items.push({
+        icon: Hammer, label: "Produção",
+        description: inProd > 0 ? `${inProd} em produção` : "Nada em produção",
+        href: "/admin/producao",
+        borderColor: inProd > 0 ? "border-l-blue-500" : "border-l-transparent",
+        iconColor: inProd > 0 ? "text-blue-500" : "text-muted-foreground",
+        descColor: inProd > 0 ? "text-blue-600 font-medium" : undefined,
+      });
     }
     if (isAdmin || isComercial) {
-      items.push({ icon: Briefcase, label: "Pipeline Comercial", description: `${metrics.published} publicados`, href: "/admin/comercial", color: "text-blue-600" });
-      items.push({ icon: FileText, label: "Solicitações", description: "Novas demandas", href: "/admin/solicitacoes", color: "text-violet-600" });
+      items.push({
+        icon: LayoutDashboard, label: "Pipeline Comercial",
+        description: `${metrics.published} publicados`,
+        href: "/admin/comercial",
+        borderColor: "border-l-green-500", iconColor: "text-green-500",
+        descColor: "text-green-600 font-medium",
+      });
+      items.push({
+        icon: ClipboardList, label: "Solicitações",
+        description: "Novas demandas",
+        href: "/admin/solicitacoes",
+        borderColor: "border-l-amber-500", iconColor: "text-amber-500",
+      });
     }
     if (isAdmin) {
-      items.push({ icon: Settings, label: "Operações", description: "Visão geral", href: "/admin/operacoes", color: "text-slate-600" });
-      items.push({ icon: BarChart3, label: "Financeiro", description: monthlyBilling.count > 0 ? formatBRL(monthlyBilling.revenue) : "Sem dados", href: "/admin/financeiro", color: "text-emerald-600" });
-      items.push({ icon: Users, label: "Usuários", description: "Gestão de equipe", href: "/admin/usuarios", color: "text-rose-600" });
+      items.push({
+        icon: Settings2, label: "Operações",
+        description: "Visão geral",
+        href: "/admin/operacoes",
+        borderColor: "border-l-transparent", iconColor: "text-muted-foreground",
+      });
+      const hasFinancial = monthlyBilling.count > 0;
+      items.push({
+        icon: DollarSign, label: "Financeiro",
+        description: hasFinancial ? formatBRL(monthlyBilling.revenue) : "Sem contratos fechados",
+        href: "/admin/financeiro",
+        borderColor: hasFinancial ? "border-l-emerald-500" : "border-l-transparent",
+        iconColor: hasFinancial ? "text-emerald-500" : "text-muted-foreground",
+        descColor: hasFinancial ? "text-emerald-600 font-medium" : "text-muted-foreground italic",
+      });
+      items.push({
+        icon: Users, label: "Usuários",
+        description: "Gestão de equipe",
+        href: "/admin/usuarios",
+        borderColor: "border-l-transparent", iconColor: "text-muted-foreground",
+      });
     }
 
     return items;
