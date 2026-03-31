@@ -340,7 +340,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
       );
       if (sourceColumn?.locked) return;
 
-      if (targetColumn.targetStatus) {
+      if ("targetStatus" in targetColumn && targetColumn.targetStatus) {
         await onStatusChange(budget.id, targetColumn.targetStatus);
       }
     },
