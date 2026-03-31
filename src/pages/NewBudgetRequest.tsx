@@ -41,6 +41,7 @@ export default function NewBudgetRequest() {
   // Team members for assignment
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
 
   // Form state
   const [clientName, setClientName] = useState("");
@@ -57,6 +58,39 @@ export default function NewBudgetRequest() {
   const [referenceLinks, setReferenceLinks] = useState<string[]>([""]);
   const [commercialOwnerId, setCommercialOwnerId] = useState("");
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
+  const [hubspotDealUrl, setHubspotDealUrl] = useState("");
+
+  // Round-robin: determine next estimator based on last assignment
+  useEffect(() => {
+    if (orcamentistas.length === 0) return;
+
+    async function findNextEstimator() {
+      // Get the most recently created budget that has an estimator assigned
+      const { data } = await supabase
+        .from("budgets")
+        .select("estimator_owner_id")
+        .not("estimator_owner_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      const lastEstimatorId = data?.[0]?.estimator_owner_id;
+
+      if (!lastEstimatorId) {
+        // No previous assignment, pick the first
+        setNextEstimatorId(orcamentistas[0].id);
+        setEstimatorOwnerId(orcamentistas[0].id);
+        return;
+      }
+
+      // Find the index of the last assigned estimator
+      const lastIdx = orcamentistas.findIndex((m) => m.id === lastEstimatorId);
+      const nextIdx = (lastIdx + 1) % orcamentistas.length;
+      setNextEstimatorId(orcamentistas[nextIdx].id);
+      setEstimatorOwnerId(orcamentistas[nextIdx].id);
+    }
+
+    findNextEstimator();
+  }, [orcamentistas]);
 
   const addLink = () => setReferenceLinks((prev) => [...prev, ""]);
   const removeLink = (i: number) =>
