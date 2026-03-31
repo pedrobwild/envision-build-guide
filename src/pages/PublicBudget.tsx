@@ -254,14 +254,6 @@ export default function PublicBudget() {
                 </AnimatedSection>
                 </div>
 
-                <div data-pdf-section>
-                <AnimatedSection id="portal-section-inline" index={0.6}>
-                  <Suspense fallback={<LazyFallback />}>
-                    <PortalShowcase />
-                  </Suspense>
-                </AnimatedSection>
-                </div>
-
                 {/* Map */}
                 <div data-pdf-section>
                   <AnimatedSection id="projetos-regiao" index={0.7}>
