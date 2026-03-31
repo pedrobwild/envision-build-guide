@@ -267,6 +267,42 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
         )}
       </div>
 
+      {/* Change reason dialog */}
+      {showReasonDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card border border-border rounded-xl shadow-lg p-5 w-full max-w-md mx-4 space-y-4">
+            <h3 className="font-display font-bold text-foreground">Nova versão formal</h3>
+            <p className="text-sm text-muted-foreground font-body">
+              Descreva brevemente o motivo da nova versão (opcional):
+            </p>
+            <input
+              type="text"
+              value={changeReasonInput}
+              onChange={(e) => setChangeReasonInput(e.target.value)}
+              placeholder="Ex: Cliente pediu revisão do escopo de marcenaria"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              autoFocus
+              onKeyDown={(e) => { if (e.key === "Enter") handleDuplicate(showReasonDialog); }}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setShowReasonDialog(null); setChangeReasonInput(""); }}
+                className="px-3 py-1.5 rounded-md text-sm font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDuplicate(showReasonDialog)}
+                disabled={duplicating}
+                className="px-4 py-1.5 rounded-md text-sm font-body font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {duplicating ? "Criando..." : "Criar versão"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ImportExcelModal
         open={importOpen}
         onOpenChange={handleImportClose}
