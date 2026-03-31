@@ -82,8 +82,8 @@ function renderNavItem(item: NavItem, collapsed: boolean) {
         <NavLink
           to={item.url}
           end={item.end}
-          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-body text-muted-foreground hover:bg-muted/50 transition-colors"
-          activeClassName="bg-primary/10 text-primary font-medium"
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-body text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
         >
           <item.icon className="h-4 w-4 shrink-0" />
           {!collapsed && <span className="flex-1">{item.title}</span>}
