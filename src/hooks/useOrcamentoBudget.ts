@@ -31,9 +31,9 @@ async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
   if (sectionIds.length > 0) {
     const { data: itemsData, error: itemsError } = await supabase
       .from("items")
-      .select("*")
+      .select(PUBLIC_ITEM_SELECT)
       .in("section_id", sectionIds)
-      .order("order_index", { ascending: true });
+      .order("order_index", { ascending: true }) as { data: any[]; error: any };
 
     if (itemsError) throw new Error(`Erro ao carregar itens: ${itemsError.message}`);
     items = itemsData ?? [];
