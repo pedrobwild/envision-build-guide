@@ -59,10 +59,14 @@ const DASHBOARD_ITEM: NavItem = {
   title: "Painel Geral", url: "/admin", icon: LayoutDashboard, roles: "all", end: true,
 };
 
-const TRABALHO_ITEMS: NavItem[] = [
-  { title: "Minha Produção", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
+const PRINCIPAL_ITEMS: NavItem[] = [
   { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
   { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"], actionUrl: "/admin/solicitacoes/nova", actionLabel: "Nova solicitação" },
+];
+
+const ORCAMENTO_ITEMS: NavItem[] = [
+  { title: "Minha Produção", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
+  { title: "Catálogo Mestre", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
 ];
 
 const GESTAO_ITEMS: NavItem[] = [
@@ -72,7 +76,6 @@ const GESTAO_ITEMS: NavItem[] = [
 ];
 
 const FERRAMENTAS_ITEMS: NavItem[] = [
-  { title: "Catálogo Mestre", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
   { title: "Avaliação QA", url: "/qa", icon: Shield, roles: ["admin"] },
   { title: "Sistema", url: "/admin/sistema", icon: Wrench, roles: ["admin"] },
 ];
@@ -136,20 +139,8 @@ export function AppSidebar() {
     }
   }, [isBudgetEditor]);
 
-  // Role-based ordering for Trabalho group
-  const orderedTrabalho = [...TRABALHO_ITEMS].filter(canSee);
-  if (userRoles.includes("orcamentista") && !userRoles.includes("admin")) {
-    // Produção first for orcamentista
-    orderedTrabalho.sort((a, b) =>
-      a.url === "/admin/producao" ? -1 : b.url === "/admin/producao" ? 1 : 0
-    );
-  } else if (userRoles.includes("comercial") && !userRoles.includes("admin")) {
-    // Pipeline first for comercial
-    orderedTrabalho.sort((a, b) =>
-      a.url === "/admin/comercial" ? -1 : b.url === "/admin/comercial" ? 1 : 0
-    );
-  }
-
+  const principalItems = PRINCIPAL_ITEMS.filter(canSee);
+  const orcamentoItems = ORCAMENTO_ITEMS.filter(canSee);
   const gestaoItems = GESTAO_ITEMS.filter(canSee);
   const ferramentasItems = FERRAMENTAS_ITEMS.filter(canSee);
 
@@ -180,25 +171,43 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Trabalho group */}
-        {orderedTrabalho.length > 0 && (
+        {/* Principal group */}
+        {principalItems.length > 0 && (
           <>
             <Separator className="mx-2" />
             <SidebarGroup>
               {!collapsed && (
                 <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
-                  Trabalho
+                  Principal
                 </SidebarGroupLabel>
               )}
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {orderedTrabalho.map((item) => renderNavItem(item, collapsed))}
+                  {principalItems.map((item) => renderNavItem(item, collapsed))}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </>
         )}
 
+        {/* Orçamento group */}
+        {orcamentoItems.length > 0 && (
+          <>
+            <Separator className="mx-2" />
+            <SidebarGroup>
+              {!collapsed && (
+                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
+                  Orçamento
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {orcamentoItems.map((item) => renderNavItem(item, collapsed))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
         {/* Gestão group */}
         {gestaoItems.length > 0 && (
           <>
