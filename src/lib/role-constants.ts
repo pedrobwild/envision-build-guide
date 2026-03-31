@@ -15,6 +15,7 @@ export const INTERNAL_STATUSES = {
   assigned: { label: 'Atribuído', color: 'bg-indigo-100 text-indigo-800', icon: '👤' },
   in_progress: { label: 'Em Produção', color: 'bg-yellow-100 text-yellow-800', icon: '🔨' },
   waiting_info: { label: 'Aguardando Info', color: 'bg-amber-100 text-amber-800', icon: '⏳' },
+  blocked: { label: 'Bloqueado', color: 'bg-red-100 text-red-800', icon: '🚫' },
   ready_for_review: { label: 'Revisão', color: 'bg-orange-100 text-orange-800', icon: '📋' },
   delivered_to_sales: { label: 'Entregue ao Comercial', color: 'bg-teal-100 text-teal-800', icon: '📤' },
   sent_to_client: { label: 'Enviado ao Cliente', color: 'bg-emerald-100 text-emerald-800', icon: '✉️' },

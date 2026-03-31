@@ -23,8 +23,8 @@ import {
   CheckCircle2,
   PauseCircle,
   Send,
-  RotateCcw,
   FileText,
+  AlertOctagon,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -35,6 +35,7 @@ import {
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { BlockingDialog } from "./BlockingDialog";
 
 interface ProfileRow {
   id: string;
@@ -49,6 +50,7 @@ interface WorkflowBarProps {
 export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
 
   useEffect(() => {
     supabase
@@ -76,7 +78,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const overdue = dueAt ? isPast(dueAt) && !isToday(dueAt) : false;
   const dueToday = dueAt ? isToday(dueAt) : false;
 
-  async function changeStatus(newStatus: InternalStatus) {
+  async function changeStatus(newStatus: InternalStatus, note?: string) {
     const oldStatus = budget.internal_status;
 
     const { error } = await supabase
@@ -97,11 +99,26 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         event_type: "status_change",
         from_status: oldStatus,
         to_status: newStatus,
+        note: note || null,
       } as any);
+
+      // If note provided, also save as comment for thread visibility
+      if (note) {
+        await supabase.from("budget_comments").insert({
+          budget_id: budget.id,
+          user_id: user.id,
+          body: `[${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}] ${note}`,
+        } as any);
+      }
     }
 
     onBudgetUpdate({ internal_status: newStatus });
     toast.success(`Status → ${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}`);
+  }
+
+  async function handleBlockingConfirm(status: InternalStatus, note: string) {
+    await changeStatus(status, note);
+    setBlockingTarget(null);
   }
 
   return (
@@ -209,10 +226,21 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               variant="ghost"
               size="sm"
               className="h-7 text-xs gap-1"
-              onClick={() => changeStatus("waiting_info")}
+              onClick={() => setBlockingTarget("waiting_info")}
             >
               <PauseCircle className="h-3 w-3" />
-              Bloqueio
+              Aguardar Info
+            </Button>
+          )}
+          {internalStatus !== "blocked" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
+              onClick={() => setBlockingTarget("blocked")}
+            >
+              <AlertOctagon className="h-3 w-3" />
+              Bloquear
             </Button>
           )}
           {internalStatus !== "ready_for_review" && (
@@ -254,6 +282,13 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           </Tooltip>
         </div>
       </div>
+
+      <BlockingDialog
+        open={!!blockingTarget}
+        targetStatus={blockingTarget}
+        onConfirm={handleBlockingConfirm}
+        onCancel={() => setBlockingTarget(null)}
+      />
     </div>
   );
 }
