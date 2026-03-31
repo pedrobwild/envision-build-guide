@@ -70,3 +70,72 @@ export function buildSupplierPriceSnapshot(price: SupplierPrice) {
     snapshot_at: new Date().toISOString(),
   };
 }
+
+// ─── Section linking helpers ──────────────────────────────────────
+
+/** Get allowed section titles for a catalog item */
+export async function getItemSections(catalogItemId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("catalog_item_sections")
+    .select("section_title")
+    .eq("catalog_item_id", catalogItemId);
+  if (error) throw error;
+  return (data ?? []).map((r) => r.section_title);
+}
+
+/** Set allowed sections for a catalog item (replaces all) */
+export async function setItemSections(catalogItemId: string, sectionTitles: string[]) {
+  // Delete existing
+  await supabase
+    .from("catalog_item_sections")
+    .delete()
+    .eq("catalog_item_id", catalogItemId);
+
+  if (sectionTitles.length === 0) return;
+
+  const rows = sectionTitles.map((t) => ({
+    catalog_item_id: catalogItemId,
+    section_title: t,
+  }));
+  const { error } = await supabase.from("catalog_item_sections").insert(rows);
+  if (error) throw error;
+}
+
+// ─── Autocomplete helper ──────────────────────────────────────────
+
+/** Search catalog items filtered by allowed section title, for autocomplete */
+export async function searchCatalogItemsBySection(
+  searchText: string,
+  sectionTitle: string,
+  limit = 10,
+): Promise<Array<{
+  id: string;
+  name: string;
+  description: string | null;
+  unit_of_measure: string | null;
+  item_type: string;
+}>> {
+  // Get item IDs allowed for this section
+  const { data: links } = await supabase
+    .from("catalog_item_sections")
+    .select("catalog_item_id")
+    .eq("section_title", sectionTitle);
+
+  const allowedIds = (links ?? []).map((l) => l.catalog_item_id);
+  if (allowedIds.length === 0) return [];
+
+  let query = supabase
+    .from("catalog_items")
+    .select("id, name, description, unit_of_measure, item_type")
+    .in("id", allowedIds)
+    .eq("is_active", true)
+    .limit(limit);
+
+  if (searchText) {
+    query = query.ilike("search_text", `%${searchText.toLowerCase()}%`);
+  }
+
+  const { data, error } = await query.order("name");
+  if (error) throw error;
+  return data ?? [];
+}
