@@ -103,6 +103,9 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
     published: "Publicado",
     approved: "Aprovado",
     archived: "Arquivado",
+    superseded: "Substituída",
+    in_progress: "Em produção",
+    ready: "Pronta",
   };
 
   const statusColors: Record<string, string> = {
@@ -110,6 +113,9 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
     published: "text-success",
     approved: "text-primary",
     archived: "text-muted-foreground",
+    superseded: "text-muted-foreground",
+    in_progress: "text-amber-600",
+    ready: "text-green-600",
   };
 
   return (
