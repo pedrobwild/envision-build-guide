@@ -14,6 +14,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 import { ContractRequestDialog } from "./ContractRequestDialog";
 import { MobileFinancialSheet } from "./MobileFinancialSheet";
+import { StepProgressIndicator } from "./StepProgressIndicator";
 
 interface MobileBottomBarProps {
   total: number;
@@ -134,7 +135,7 @@ export function MobileBottomBar({
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className="pointer-events-auto bg-card/80 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_20px_-4px_hsl(var(--foreground)/0.06)]"
             >
-              {/* Trust micro-line */}
+              {/* Trust micro-line + step indicator */}
               <div className="flex items-center justify-center gap-3 px-4 py-1 bg-muted/20" role="status" aria-label="Garantias do orçamento">
                 <span className="flex items-center gap-1 text-[11px] text-muted-foreground/90 font-body">
                   <Shield className="h-3 w-3" aria-hidden="true" />
@@ -146,15 +147,17 @@ export function MobileBottomBar({
                   Garantia 5 anos
                 </span>
                 <span className="text-muted-foreground/20" aria-hidden="true">·</span>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground/90 font-body">
-                  <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-                  Sem custos ocultos
-                </span>
+                <StepProgressIndicator
+                  sectionIds={["mobile-included", "mobile-scope", "mobile-trust", "mobile-portal", "mobile-next-steps", "mobile-faq"]}
+                />
               </div>
               <div className="flex items-center justify-between px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]">
                 {/* Left: total + sheet trigger */}
                 <button
-                  onClick={() => setSheetOpen(true)}
+                  onClick={() => {
+                    if (navigator.vibrate) navigator.vibrate(10);
+                    setSheetOpen(true);
+                  }}
                   className="flex flex-col min-h-[44px] justify-center"
                   aria-label="Ver resumo financeiro"
                 >
@@ -181,9 +184,13 @@ export function MobileBottomBar({
                   </motion.a>
                 ) : (
                   <AnimatePresence mode="wait">
-                    <motion.button
+                  <motion.button
                       key={currentCta.label}
-                      onClick={handleCtaClick}
+                      onClick={() => {
+                        // Haptic feedback
+                        if (navigator.vibrate) navigator.vibrate(10);
+                        handleCtaClick();
+                      }}
                       whileTap={{ scale: 0.97 }}
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}

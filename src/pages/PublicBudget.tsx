@@ -172,7 +172,7 @@ export default function PublicBudget() {
   const activeRoomData = rooms.find((r) => r.id === activeRoom);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={{ scrollSnapType: 'y proximity' }}>
       {/* Skip to content — keyboard/screen reader */}
       <a
         href="#budget-content"

@@ -14,26 +14,11 @@ function Shimmer({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) 
   );
 }
 
-/** Mobile Hero Card skeleton */
-function HeroSkeleton() {
+/** Header skeleton — matches BudgetHeader mobile layout */
+function HeaderSkeleton() {
   return (
-    <div className="lg:hidden rounded-2xl border border-border bg-card overflow-hidden">
-      <div className="h-1 bg-muted" />
-      <div className="px-4 pt-3.5 pb-3 space-y-3">
-        <div className="space-y-2">
-          <Shimmer className="h-6 w-3/4" />
-          <Shimmer className="h-4 w-full" />
-        </div>
-        <div className="flex gap-1.5">
-          <Shimmer className="h-7 w-20 rounded-md" />
-          <Shimmer className="h-7 w-16 rounded-md" />
-          <Shimmer className="h-7 w-14 rounded-md" />
-        </div>
-        <Shimmer className="h-8 w-36 rounded-xl" />
-      </div>
-      <div className="px-4 pb-4 space-y-2">
-        <Shimmer className="h-[52px] w-full rounded-xl" />
-      </div>
+    <div className="relative overflow-hidden">
+      <Shimmer className="h-28 w-full rounded-none" />
     </div>
   );
 }
@@ -106,17 +91,6 @@ function ProductGridSkeleton({ count = 4 }: { count?: number }) {
   );
 }
 
-/** Mobile nav pills skeleton */
-function NavPillsSkeleton() {
-  return (
-    <div className="lg:hidden flex gap-1.5 px-3 py-2">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Shimmer key={i} className="h-10 w-20 rounded-full flex-shrink-0" />
-      ))}
-    </div>
-  );
-}
-
 /** Desktop sidebar skeleton */
 function SidebarSkeleton() {
   return (
@@ -153,12 +127,6 @@ export function PublicBudgetSkeleton() {
       </div>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-3">
-        {/* Mobile Hero */}
-        <HeroSkeleton />
-
-        {/* Mobile Nav Pills */}
-        <NavPillsSkeleton />
-
         {/* Trust Strip */}
         <TrustStripSkeleton />
 
