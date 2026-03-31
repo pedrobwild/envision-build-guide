@@ -25,6 +25,7 @@ import {
   ExternalLink,
   Send,
   AlertTriangle,
+  PauseCircle,
   Link as LinkIcon,
   Edit3,
   MapPin,
