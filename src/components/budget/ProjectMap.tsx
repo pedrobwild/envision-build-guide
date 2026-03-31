@@ -142,14 +142,6 @@ export function ProjectMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]);
 
-  if (!apiKey) {
-    return (
-      <div className="bg-muted rounded-xl h-[300px] lg:h-[600px] flex flex-col items-center justify-center gap-3">
-        <MapPin className="h-12 w-12 text-muted-foreground/30" />
-        <span className="text-sm text-muted-foreground font-body">Mapa indisponível</span>
-      </div>
-    );
-  }
 
   return (
     <div
