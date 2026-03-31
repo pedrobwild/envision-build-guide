@@ -281,6 +281,43 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
                   </div>
                 )}
 
+                {/* Audit Trail */}
+                <div className="border-t border-border">
+                  <button
+                    onClick={() => setShowAudit(!showAudit)}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    <Clock className="h-3 w-3" />
+                    Trilha de auditoria
+                    {auditEvents.length > 0 && (
+                      <span className="text-[10px] bg-muted rounded-full px-1.5">{auditEvents.length}</span>
+                    )}
+                    {showAudit ? <ChevronUp className="h-3 w-3 ml-auto" /> : <ChevronDown className="h-3 w-3 ml-auto" />}
+                  </button>
+                  {showAudit && (
+                    <div className="px-4 pb-3 space-y-0">
+                      {auditEvents.length === 0 ? (
+                        <p className="text-xs text-muted-foreground font-body py-2">Nenhum evento registrado.</p>
+                      ) : (
+                        <div className="relative ml-2 border-l border-border">
+                          {auditEvents.map((evt) => (
+                            <div key={evt.id} className="pl-4 py-1.5 relative">
+                              <div className="absolute -left-[5px] top-[10px] w-2 h-2 rounded-full bg-muted-foreground/40" />
+                              <p className="text-xs font-body text-foreground leading-snug">{evt.note}</p>
+                              <p className="text-[10px] text-muted-foreground font-body">
+                                {evt.created_at ? formatDate(evt.created_at) : "—"}
+                                {evt.user_name && evt.user_name !== "—" && evt.user_name !== "Sistema" && (
+                                  <span className="ml-1">· {evt.user_name}</span>
+                                )}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Import as new version */}
                 <div className="px-4 py-3 border-t border-border bg-muted/30">
                   <p className="text-xs text-muted-foreground font-body mb-2">
