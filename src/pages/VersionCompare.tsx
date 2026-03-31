@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Plus, Minus, RefreshCw, Equal, Eye, EyeOff, TrendingUp, TrendingDown } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { logVersionEvent } from "@/lib/version-audit";
 
 interface CompareSection {
   id: string;
