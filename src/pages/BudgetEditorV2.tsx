@@ -12,6 +12,7 @@ import { MediaUploadSection } from "@/components/editor/MediaUploadSection";
 import { formatBRL } from "@/lib/formatBRL";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { WorkflowBar } from "@/components/editor/WorkflowBar";
+import { PipelineProgress } from "@/components/editor/PipelineProgress";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
