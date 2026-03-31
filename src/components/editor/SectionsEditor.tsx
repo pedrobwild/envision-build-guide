@@ -200,19 +200,23 @@ function SortableSectionCard({
 function SortableItemRow({
   item,
   sectionId,
+  sectionTitle,
   budgetId,
   isItemSaving,
   onUpdate,
   onDelete,
   onImagesChange,
+  onPromoteToCatalog,
 }: {
   item: ItemData;
   sectionId: string;
+  sectionTitle: string;
   budgetId: string;
   isItemSaving: boolean;
   onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
+  onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
 }) {
   const {
     attributes,
