@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign, GitCompare } from "lucide-react";
 import { toast } from "sonner";
@@ -16,10 +16,17 @@ import { PipelineProgress } from "@/components/editor/PipelineProgress";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "react-router-dom";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { Button } from "@/components/ui/button";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isOrcamentista, isComercial } = useUserProfile();
+
+  const backPath = (location.state as any)?.from
+    || (isOrcamentista ? "/admin/producao" : isComercial ? "/admin/comercial" : "/admin");
   const [budget, setBudget] = useState<any>(null);
   const [sections, setSections] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
@@ -113,12 +120,15 @@ export default function BudgetEditorV2() {
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <button
-              onClick={() => navigate("/admin")}
-              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(backPath)}
+              className="flex-shrink-0 gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-            </button>
+              <span className="hidden sm:inline">Voltar</span>
+            </Button>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-display font-bold text-sm text-foreground leading-tight truncate">
