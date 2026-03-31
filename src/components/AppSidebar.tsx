@@ -59,10 +59,14 @@ const DASHBOARD_ITEM: NavItem = {
   title: "Painel Geral", url: "/admin", icon: LayoutDashboard, roles: "all", end: true,
 };
 
-const TRABALHO_ITEMS: NavItem[] = [
-  { title: "Minha Produção", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
+const PRINCIPAL_ITEMS: NavItem[] = [
   { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
   { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"], actionUrl: "/admin/solicitacoes/nova", actionLabel: "Nova solicitação" },
+];
+
+const ORCAMENTO_ITEMS: NavItem[] = [
+  { title: "Minha Produção", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
+  { title: "Catálogo Mestre", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
 ];
 
 const GESTAO_ITEMS: NavItem[] = [
@@ -72,7 +76,6 @@ const GESTAO_ITEMS: NavItem[] = [
 ];
 
 const FERRAMENTAS_ITEMS: NavItem[] = [
-  { title: "Catálogo Mestre", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
   { title: "Avaliação QA", url: "/qa", icon: Shield, roles: ["admin"] },
   { title: "Sistema", url: "/admin/sistema", icon: Wrench, roles: ["admin"] },
 ];
