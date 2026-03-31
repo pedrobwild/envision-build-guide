@@ -91,7 +91,8 @@ export default function NewBudgetRequest() {
       reference_links: links.length > 0 ? links : [],
       internal_status: "requested",
       status: "draft",
-      commercial_owner_id: user.id,
+      commercial_owner_id: commercialOwnerId || user.id,
+      estimator_owner_id: estimatorOwnerId || null,
       created_by: user.id,
     } as any);
 
