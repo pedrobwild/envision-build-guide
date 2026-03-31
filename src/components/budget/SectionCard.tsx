@@ -36,7 +36,14 @@ export function SectionCard({
   editable = false,
 }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
-  const [expanded, setExpanded] = useState(false);
+  const items = section.items || [];
+
+  // Auto-expand section when any item has media attached
+  const hasItemMedia = useMemo(() => {
+    return items.some((item: any) => item.images && item.images.length > 0);
+  }, [items]);
+
+  const [expanded, setExpanded] = useState(hasItemMedia);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<{ url: string; alt?: string }[]>([]);
