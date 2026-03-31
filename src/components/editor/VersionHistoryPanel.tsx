@@ -166,16 +166,16 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
                         </p>
                       </div>
                       <button
-                        onClick={() => handleDuplicate(currentVersion.id)}
+                        onClick={() => promptDuplicate(currentVersion.id)}
                         disabled={duplicating}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-body font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors disabled:opacity-50"
                       >
-                        {duplicating ? (
+                        {duplicating && showReasonDialog === currentVersion.id ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
                           <Copy className="h-3 w-3" />
                         )}
-                        Duplicar como nova versão
+                        Nova versão formal
                       </button>
                     </div>
                   </div>
