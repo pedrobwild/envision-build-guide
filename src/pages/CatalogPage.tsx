@@ -94,7 +94,7 @@ function useCatalogItems(search: string, typeFilter: string, categoryFilter: str
         query = query.ilike("search_text", `%${search.toLowerCase()}%`);
       }
       if (typeFilter && typeFilter !== "all") {
-        query = query.eq("item_type", typeFilter);
+        query = query.eq("item_type", typeFilter as "product" | "service");
       }
       if (categoryFilter && categoryFilter !== "all") {
         query = query.eq("category_id", categoryFilter);
