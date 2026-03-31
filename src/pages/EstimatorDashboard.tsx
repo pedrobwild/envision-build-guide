@@ -38,6 +38,7 @@ import {
   PauseCircle,
   ArrowUpDown,
   Flame,
+  GitCompare,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
