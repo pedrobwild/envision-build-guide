@@ -18,6 +18,7 @@ interface MobileHeroCardProps {
   neighborhood?: string;
   area?: string;
   version?: string;
+  prazoDiasUteis?: number;
   onSaveForLater?: () => void;
 }
 
@@ -51,6 +52,7 @@ export function MobileHeroCard({
   neighborhood,
   area,
   version,
+  prazoDiasUteis,
   onSaveForLater,
 }: MobileHeroCardProps) {
   const [contractOpen, setContractOpen] = useState(false);
@@ -64,6 +66,7 @@ export function MobileHeroCard({
   if (neighborhood) metaChips.push({ label: "Bairro", value: neighborhood });
   if (area) metaChips.push({ label: "Área", value: area });
   if (version) metaChips.push({ label: "Versão", value: version });
+  if (prazoDiasUteis) metaChips.push({ label: "Prazo", value: `${prazoDiasUteis} dias úteis` });
 
   return (
     <>
