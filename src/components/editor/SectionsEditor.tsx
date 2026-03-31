@@ -250,6 +250,16 @@ function SortableItemRow({
             >
               <GripVertical className="h-3.5 w-3.5" />
             </button>
+            {/* Origin badge */}
+            {item.catalog_item_id ? (
+              <span className="flex-shrink-0" title="Item do catálogo">
+                <BookOpen className="h-3.5 w-3.5 text-primary" />
+              </span>
+            ) : (
+              <span className="flex-shrink-0" title="Item manual">
+                <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+              </span>
+            )}
             <input
               type="text"
               value={item.title}
