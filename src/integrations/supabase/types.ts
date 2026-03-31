@@ -369,6 +369,170 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      catalog_item_sections: {
+        Row: {
+          catalog_item_id: string
+          created_at: string | null
+          id: string
+          section_title: string
+        }
+        Insert: {
+          catalog_item_id: string
+          created_at?: string | null
+          id?: string
+          section_title: string
+        }
+        Update: {
+          catalog_item_id?: string
+          created_at?: string | null
+          id?: string
+          section_title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_item_sections_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_item_suppliers: {
+        Row: {
+          catalog_item_id: string
+          created_at: string | null
+          id: string
+          is_preferred: boolean
+          notes: string | null
+          supplier_id: string
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          catalog_item_id: string
+          created_at?: string | null
+          id?: string
+          is_preferred?: boolean
+          notes?: string | null
+          supplier_id: string
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          catalog_item_id?: string
+          created_at?: string | null
+          id?: string
+          is_preferred?: boolean
+          notes?: string | null
+          supplier_id?: string
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_item_suppliers_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_item_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_items: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          default_supplier_id: string | null
+          description: string | null
+          id: string
+          internal_code: string | null
+          is_active: boolean
+          item_type: Database["public"]["Enums"]["catalog_item_type"]
+          name: string
+          search_text: string | null
+          unit_of_measure: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          default_supplier_id?: string | null
+          description?: string | null
+          id?: string
+          internal_code?: string | null
+          is_active?: boolean
+          item_type?: Database["public"]["Enums"]["catalog_item_type"]
+          name?: string
+          search_text?: string | null
+          unit_of_measure?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          default_supplier_id?: string | null
+          description?: string | null
+          id?: string
+          internal_code?: string | null
+          is_active?: boolean
+          item_type?: Database["public"]["Enums"]["catalog_item_type"]
+          name?: string
+          search_text?: string | null
+          unit_of_measure?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_items_default_supplier_id_fkey"
+            columns: ["default_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_images: {
         Row: {
           created_at: string | null
@@ -676,6 +840,33 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          contact_info: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          contact_info?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string | null
+        }
+        Update: {
+          contact_info?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -717,6 +908,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "comercial" | "orcamentista"
+      catalog_item_type: "product" | "service"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -845,6 +1037,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "comercial", "orcamentista"],
+      catalog_item_type: ["product", "service"],
     },
   },
 } as const
