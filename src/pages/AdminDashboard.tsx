@@ -610,7 +610,7 @@ export default function AdminDashboard() {
           </Card>
         ) : (
           <>
-            <div className="space-y-1.5">
+            <div className="rounded-lg border border-border bg-card divide-y divide-border">
               {paginated.map((budget) => {
                 const total = getBudgetTotal(budget);
                 const sectionCount = (budget.sections || []).length;
