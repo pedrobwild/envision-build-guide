@@ -23,6 +23,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin/operacoes": "Operações",
   "/admin/financeiro": "Financeiro",
   "/qa": "Avaliação QA",
+  "/admin/sistema": "Sistema",
 };
 
 export function AdminBreadcrumb() {

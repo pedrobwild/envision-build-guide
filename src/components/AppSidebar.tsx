@@ -74,6 +74,7 @@ const GESTAO_ITEMS: NavItem[] = [
 const FERRAMENTAS_ITEMS: NavItem[] = [
   { title: "Catálogo Mestre", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
   { title: "Avaliação QA", url: "/qa", icon: Shield, roles: ["admin"] },
+  { title: "Sistema", url: "/admin/sistema", icon: Wrench, roles: ["admin"] },
 ];
 
 function renderNavItem(item: NavItem, collapsed: boolean) {
