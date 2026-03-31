@@ -2,10 +2,11 @@ import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
+import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight,
-  PenLine, BookOpen,
+  PenLine, BookOpen, BookmarkPlus,
 } from "lucide-react";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
@@ -200,19 +201,23 @@ function SortableSectionCard({
 function SortableItemRow({
   item,
   sectionId,
+  sectionTitle,
   budgetId,
   isItemSaving,
   onUpdate,
   onDelete,
   onImagesChange,
+  onPromoteToCatalog,
 }: {
   item: ItemData;
   sectionId: string;
+  sectionTitle: string;
   budgetId: string;
   isItemSaving: boolean;
   onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
+  onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
 }) {
   const {
     attributes,
@@ -323,6 +328,15 @@ function SortableItemRow({
         {/* Actions */}
         <div className="sm:col-span-1 flex items-end justify-end gap-1">
           {isItemSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+          {!item.catalog_item_id && (
+            <button
+              onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
+              className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+              title="Salvar no catálogo"
+            >
+              <BookmarkPlus className="h-3.5 w-3.5" />
+            </button>
+          )}
           <button
             onClick={() => {
               if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
@@ -512,6 +526,56 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       };
     });
     onSectionsChange(updated);
+  };
+
+  const promoteToCatalog = async (sectionId: string, item: ItemData, sectionTitle: string) => {
+    if (!item.title.trim()) { toast.error("Item precisa ter um nome"); return; }
+    try {
+      // Create catalog item
+      const { data: catalogItem, error } = await supabase.from("catalog_items").insert({
+        name: item.title.trim(),
+        description: item.description || null,
+        unit_of_measure: item.unit || null,
+        item_type: "product" as const,
+        is_active: true,
+      }).select("id").single();
+      if (error || !catalogItem) { toast.error("Erro ao salvar no catálogo"); return; }
+
+      // Link to current section
+      const { setItemSections } = await import("@/lib/catalog-helpers");
+      const sectionKey = SCOPE_CATEGORIES.find(c => c.label === sectionTitle)?.id;
+      if (sectionKey) {
+        await setItemSections(catalogItem.id, [sectionKey]);
+      }
+
+      // Copy primary image to catalog if exists
+      const primaryImage = item.images?.find(img => img.is_primary) || item.images?.[0];
+      if (primaryImage) {
+        await supabase.from("catalog_items").update({ image_url: primaryImage.url }).eq("id", catalogItem.id);
+      }
+
+      // Update the budget item to link to catalog
+      await supabase.from("items").update({
+        catalog_item_id: catalogItem.id,
+        catalog_snapshot: { item_type: "product", promoted_from_manual: true },
+      }).eq("id", item.id);
+
+      // Update local state
+      const updated = sections.map(s => {
+        if (s.id !== sectionId) return s;
+        return {
+          ...s,
+          items: s.items.map(i => i.id === item.id
+            ? { ...i, catalog_item_id: catalogItem.id, catalog_snapshot: { item_type: "product", promoted_from_manual: true } }
+            : i
+          ),
+        };
+      });
+      onSectionsChange(updated);
+      toast.success("Item salvo no catálogo para reuso futuro");
+    } catch {
+      toast.error("Erro ao promover item ao catálogo");
+    }
   };
 
   const getSectionTotal = (section: SectionData) => {
@@ -708,11 +772,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                     key={item.id}
                                     item={item}
                                     sectionId={section.id}
+                                    sectionTitle={section.title}
                                     budgetId={budgetId}
                                     isItemSaving={savingIds.has(item.id)}
                                     onUpdate={updateItem}
                                     onDelete={deleteItem}
                                     onImagesChange={handleImagesChange}
+                                    onPromoteToCatalog={promoteToCatalog}
                                   />
                                 ))}
                               </div>
