@@ -460,19 +460,19 @@ export default function AdminDashboard() {
 
       {/* Quick Access Shortcuts */}
       {shortcuts.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {shortcuts.map((s) => (
-            <button
-              key={s.href}
-              onClick={() => navigate(s.href)}
-              className="group flex flex-col gap-1 p-3 rounded-lg border border-border bg-card hover:border-primary/30 hover:shadow-sm transition-all text-left"
-            >
-              <div className="flex items-center gap-2">
-                <s.icon className={`h-4 w-4 ${s.color}`} />
-                <span className="text-sm font-medium font-body text-foreground group-hover:text-primary transition-colors">{s.label}</span>
-              </div>
-              <span className="text-xs text-muted-foreground font-body">{s.description}</span>
-            </button>
+            <Link key={s.href} to={s.href}>
+              <Card className={`cursor-pointer hover:bg-accent/50 transition-colors duration-150 border-l-4 ${s.borderColor} h-full`}>
+                <CardContent className="p-4 flex items-center gap-3">
+                  <s.icon className={`h-5 w-5 ${s.iconColor} shrink-0`} />
+                  <div>
+                    <p className="font-medium text-sm font-body text-foreground">{s.label}</p>
+                    <p className={`text-xs font-body ${s.descColor || "text-muted-foreground"}`}>{s.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
