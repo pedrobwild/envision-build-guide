@@ -222,7 +222,7 @@ export function AppSidebar() {
             <Separator className="mx-2" />
             <SidebarGroup>
               {!collapsed && (
-                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground font-body">
+                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
                   Ferramentas
                 </SidebarGroupLabel>
               )}
