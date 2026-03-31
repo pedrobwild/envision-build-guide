@@ -25,6 +25,7 @@ const AdminOperationsDashboard = lazy(() => import("./pages/AdminOperationsDashb
 const BudgetInternalDetail = lazy(() => import("./pages/BudgetInternalDetail"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const VersionCompare = lazy(() => import("./pages/VersionCompare"));
+const CatalogPage = lazy(() => import("./pages/CatalogPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
