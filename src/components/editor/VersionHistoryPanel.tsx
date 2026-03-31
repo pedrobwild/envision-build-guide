@@ -17,6 +17,7 @@ const VERSION_CHANGE_REASONS = [
   { value: "outro", label: "Outro" },
 ] as const;
 
+interface VersionHistoryPanelProps {
   budgetId: string;
   onVersionChange?: () => void;
 }
