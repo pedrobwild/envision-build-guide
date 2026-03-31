@@ -7,7 +7,7 @@ import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
-import { ensureVersionGroup } from "@/lib/budget-versioning";
+import { ensureVersionGroup, publishVersion } from "@/lib/budget-versioning";
 import { MediaUploadSection } from "@/components/editor/MediaUploadSection";
 import { formatBRL } from "@/lib/formatBRL";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
