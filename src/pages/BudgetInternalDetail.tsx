@@ -713,6 +713,9 @@ export default function BudgetInternalDetail() {
               </CardContent>
             </Card>
 
+            {/* Version History */}
+            <VersionHistoryPanel budgetId={budget.id} />
+
             {/* Quick links */}
             <Card>
               <CardHeader className="pb-3">
