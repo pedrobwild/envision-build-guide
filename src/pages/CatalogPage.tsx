@@ -24,6 +24,8 @@ import {
   Search, Plus, Package, Wrench, Edit2, Trash2, Building2, FolderOpen, Filter, DollarSign, ChevronDown,
 } from "lucide-react";
 import { SupplierPricesPanel } from "@/components/catalog/SupplierPricesPanel";
+import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections } from "@/lib/catalog-helpers";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // ─── Types ────────────────────────────────────────────────────────
 interface CatalogCategory {
@@ -83,10 +85,21 @@ function useSuppliers() {
   });
 }
 
-function useCatalogItems(search: string, typeFilter: string, categoryFilter: string) {
+function useCatalogItems(search: string, typeFilter: string, categoryFilter: string, sectionFilter: string) {
   return useQuery({
-    queryKey: ["catalog_items", search, typeFilter, categoryFilter],
+    queryKey: ["catalog_items", search, typeFilter, categoryFilter, sectionFilter],
     queryFn: async () => {
+      // If section filter active, get allowed item IDs first
+      let allowedItemIds: string[] | null = null;
+      if (sectionFilter && sectionFilter !== "all") {
+        const { data: links } = await supabase
+          .from("catalog_item_sections")
+          .select("catalog_item_id")
+          .eq("section_title", sectionFilter);
+        allowedItemIds = (links ?? []).map((l) => l.catalog_item_id);
+        if (allowedItemIds.length === 0) return [];
+      }
+
       let query = supabase
         .from("catalog_items")
         .select("*, catalog_categories(*), suppliers:default_supplier_id(*)")
@@ -100,6 +113,9 @@ function useCatalogItems(search: string, typeFilter: string, categoryFilter: str
       }
       if (categoryFilter && categoryFilter !== "all") {
         query = query.eq("category_id", categoryFilter);
+      }
+      if (allowedItemIds) {
+        query = query.in("id", allowedItemIds);
       }
 
       const { data, error } = await query;
@@ -240,9 +256,27 @@ function ItemDialog({
     default_supplier_id: item?.default_supplier_id ?? "",
     is_active: item?.is_active ?? true,
   });
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
+  const [sectionsLoaded, setSectionsLoaded] = useState(!item);
   const [saving, setSaving] = useState(false);
 
+  // Load existing sections for edit mode
+  useState(() => {
+    if (item) {
+      getItemSections(item.id).then((sections) => {
+        setSelectedSections(sections);
+        setSectionsLoaded(true);
+      });
+    }
+  });
+
   const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+
+  const toggleSection = (sectionId: string) => {
+    setSelectedSections((prev) =>
+      prev.includes(sectionId) ? prev.filter((s) => s !== sectionId) : [...prev, sectionId]
+    );
+  };
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
@@ -259,12 +293,25 @@ function ItemDialog({
       is_active: form.is_active,
     };
 
-    const { error } = item
-      ? await supabase.from("catalog_items").update(payload).eq("id", item.id)
-      : await supabase.from("catalog_items").insert(payload);
+    let itemId = item?.id;
+
+    if (item) {
+      const { error } = await supabase.from("catalog_items").update(payload).eq("id", item.id);
+      if (error) { toast.error("Erro ao salvar item"); setSaving(false); return; }
+    } else {
+      const { data, error } = await supabase.from("catalog_items").insert(payload).select("id").single();
+      if (error) { toast.error("Erro ao salvar item"); setSaving(false); return; }
+      itemId = data.id;
+    }
+
+    // Save section links
+    try {
+      await setItemSections(itemId!, selectedSections);
+    } catch {
+      toast.error("Item salvo, mas erro ao vincular seções");
+    }
 
     setSaving(false);
-    if (error) { toast.error("Erro ao salvar item"); console.error(error); return; }
     toast.success(item ? "Item atualizado" : "Item criado");
     onSaved();
     onOpenChange(false);
@@ -339,10 +386,29 @@ function ItemDialog({
               <Label htmlFor="item-active" className="cursor-pointer">Ativo</Label>
             </div>
           </div>
+
+          {/* Section linking */}
+          <div>
+            <Label className="mb-2 block">Seções permitidas do orçamento</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Selecione em quais seções este item pode ser inserido no orçamento.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {CATALOG_SECTION_OPTIONS.map((section) => (
+                <label key={section.id} className="flex items-center gap-2 text-sm cursor-pointer rounded-md border px-3 py-2 hover:bg-muted/50 transition-colors">
+                  <Checkbox
+                    checked={selectedSections.includes(section.id)}
+                    onCheckedChange={() => toggleSection(section.id)}
+                  />
+                  {section.label}
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+          <Button onClick={handleSave} disabled={saving || !sectionsLoaded}>{saving ? "Salvando..." : "Salvar"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -371,6 +437,7 @@ export default function CatalogPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
@@ -384,7 +451,7 @@ export default function CatalogPage() {
 
   const { data: categories = [] } = useCategories();
   const { data: suppliers = [] } = useSuppliers();
-  const { data: items = [], isLoading } = useCatalogItems(search, typeFilter, categoryFilter);
+  const { data: items = [], isLoading } = useCatalogItems(search, typeFilter, categoryFilter, sectionFilter);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["catalog_items"] });
@@ -458,6 +525,17 @@ export default function CatalogPage() {
                 <SelectItem value="all">Todas categorias</SelectItem>
                 {categories.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sectionFilter} onValueChange={setSectionFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Seção" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas seções</SelectItem>
+                {CATALOG_SECTION_OPTIONS.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
