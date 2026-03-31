@@ -223,6 +223,7 @@ export type Database = {
           floor_plan_url: string | null
           generated_at: string | null
           header_config: Json | null
+          hubspot_deal_url: string | null
           id: string
           internal_cost: number | null
           internal_notes: string | null
@@ -279,6 +280,7 @@ export type Database = {
           floor_plan_url?: string | null
           generated_at?: string | null
           header_config?: Json | null
+          hubspot_deal_url?: string | null
           id?: string
           internal_cost?: number | null
           internal_notes?: string | null
@@ -335,6 +337,7 @@ export type Database = {
           floor_plan_url?: string | null
           generated_at?: string | null
           header_config?: Json | null
+          hubspot_deal_url?: string | null
           id?: string
           internal_cost?: number | null
           internal_notes?: string | null
