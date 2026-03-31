@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { History, Copy, CheckCircle, Upload, FileText, FileSpreadsheet, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { History, Copy, CheckCircle, Upload, FileText, FileSpreadsheet, Loader2, ChevronDown, ChevronUp, GitCompare } from "lucide-react";
 import { formatDate } from "@/lib/formatBRL";
 import { getVersionHistory, duplicateBudgetAsVersion, setCurrentVersion } from "@/lib/budget-versioning";
 import { toast } from "sonner";
