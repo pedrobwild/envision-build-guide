@@ -8,7 +8,15 @@ import { useNavigate } from "react-router-dom";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { assignImportedBudgetToGroup } from "@/lib/budget-versioning";
 
-interface VersionHistoryPanelProps {
+const VERSION_CHANGE_REASONS = [
+  { value: "cliente", label: "Mudança do cliente" },
+  { value: "escopo", label: "Ajuste de escopo" },
+  { value: "preco", label: "Revisão de preço" },
+  { value: "comercial", label: "Ajuste comercial" },
+  { value: "tecnica", label: "Revisão técnica" },
+  { value: "outro", label: "Outro" },
+] as const;
+
   budgetId: string;
   onVersionChange?: () => void;
 }
