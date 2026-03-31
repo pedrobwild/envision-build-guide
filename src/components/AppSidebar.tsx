@@ -49,6 +49,7 @@ const NAV_ITEMS: NavItem[] = [
   { title: "Meu Pipeline", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
   { title: "Operações", url: "/admin/operacoes", icon: Settings, roles: ["admin"] },
   { title: "Financeiro", url: "/admin/financeiro", icon: DollarSign, roles: ["admin"] },
+  { title: "Usuários", url: "/admin/usuarios", icon: Users, roles: ["admin"] },
   { title: "QA", url: "/qa", icon: Shield, roles: ["admin"] },
 ];
 
