@@ -278,6 +278,23 @@ export default function BudgetRequestsList() {
                           </span>
                         )}
                       </div>
+                      {/* Owners */}
+                      {(b.commercial_owner_id || b.estimator_owner_id) && (
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground font-body mt-1 flex-wrap">
+                          {b.commercial_owner_id && (
+                            <span className="flex items-center gap-1">
+                              <Briefcase className="h-3 w-3" />
+                              {profiles[b.commercial_owner_id] || "—"}
+                            </span>
+                          )}
+                          {b.estimator_owner_id && (
+                            <span className="flex items-center gap-1">
+                              <Hammer className="h-3 w-3" />
+                              {profiles[b.estimator_owner_id] || "—"}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-col items-end gap-1 shrink-0">
