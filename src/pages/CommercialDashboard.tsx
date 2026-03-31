@@ -29,7 +29,7 @@ import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
-import { KanbanBoard } from "@/components/commercial/KanbanBoard";
+import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 
 // Pipeline groups for the commercial view
 const PIPELINE_SECTIONS = {
@@ -108,6 +108,7 @@ export default function CommercialDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("urgente");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [dueFilter, setDueFilter] = useState<DueFilter>("all");
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
@@ -310,6 +311,18 @@ export default function CommercialDashboard() {
               <SelectItem value="recente">Mais recente</SelectItem>
             </SelectContent>
           </Select>
+          {/* Due filter */}
+          <Select value={dueFilter} onValueChange={v => setDueFilter(v as DueFilter)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os prazos</SelectItem>
+              <SelectItem value="overdue">🔴 Vencidos / Hoje</SelectItem>
+              <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
+            </SelectContent>
+          </Select>
           {/* View toggle */}
           <div className="flex border border-border rounded-lg overflow-hidden">
             <Button
@@ -368,6 +381,7 @@ export default function CommercialDashboard() {
             onStatusChange={changeStatus}
             onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
             getProfileName={getProfileName}
+            dueFilter={dueFilter}
           />
         )}
 
