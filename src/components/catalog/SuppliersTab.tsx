@@ -1,0 +1,129 @@
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { toast } from "sonner";
+import {
+  Search, Plus, Edit2, Trash2, Building2, ToggleLeft, ToggleRight,
+} from "lucide-react";
+import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
+import type { Supplier } from "@/components/catalog/SupplierDialog";
+
+interface Props {
+  suppliers: Supplier[];
+  onNewSupplier: () => void;
+  onEditSupplier: (sup: Supplier) => void;
+  onRefresh: () => void;
+}
+
+export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefresh }: Props) {
+  const [search, setSearch] = useState("");
+
+  const filtered = suppliers.filter((s) =>
+    !search || s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.contact_info?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleToggleActive = async (sup: Supplier) => {
+    const { error } = await supabase
+      .from("suppliers")
+      .update({ is_active: !sup.is_active })
+      .eq("id", sup.id);
+    if (error) { toast.error("Erro ao atualizar"); return; }
+    toast.success(sup.is_active ? "Fornecedor desativado" : "Fornecedor ativado");
+    onRefresh();
+  };
+
+  const handleDelete = async (sup: Supplier) => {
+    if (!confirm(`Excluir o fornecedor "${sup.name}"? Itens vinculados perderão a referência.`)) return;
+    const { error } = await supabase.from("suppliers").delete().eq("id", sup.id);
+    if (error) {
+      toast.error("Erro ao excluir. Pode haver itens vinculados.");
+      return;
+    }
+    toast.success("Fornecedor excluído");
+    onRefresh();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar fornecedores..."
+            className="pl-9"
+          />
+        </div>
+        <Button size="sm" onClick={onNewSupplier}>
+          <Plus className="h-4 w-4 mr-1" /> Novo Fornecedor
+        </Button>
+      </div>
+
+      {filtered.length === 0 ? (
+        <CatalogEmptyState
+          icon={Building2}
+          title={search ? "Nenhum fornecedor encontrado" : "Nenhum fornecedor"}
+          description={search ? "Tente outro termo de busca." : "Cadastre fornecedores para vincular aos itens do catálogo."}
+          action={!search ? (
+            <Button size="sm" onClick={onNewSupplier}>
+              <Plus className="h-4 w-4 mr-1" /> Novo Fornecedor
+            </Button>
+          ) : undefined}
+        />
+      ) : (
+        <div className="border border-border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30">
+                <TableHead>Nome</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead className="w-20">Status</TableHead>
+                <TableHead className="w-24 text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((sup) => (
+                <TableRow key={sup.id} className={!sup.is_active ? "opacity-50" : ""}>
+                  <TableCell className="font-medium">{sup.name}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{sup.contact_info ?? "—"}</TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => handleToggleActive(sup)}
+                      className="group flex items-center gap-1.5"
+                      title={sup.is_active ? "Desativar" : "Ativar"}
+                    >
+                      {sup.is_active ? (
+                        <ToggleRight className="h-5 w-5 text-primary group-hover:text-primary/70 transition-colors" />
+                      ) : (
+                        <ToggleLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      )}
+                      <span className="text-xs">{sup.is_active ? "Ativo" : "Inativo"}</span>
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-0.5 justify-end">
+                      <Button variant="ghost" size="icon" className="h-8 w-8"
+                        onClick={() => onEditSupplier(sup)}>
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(sup)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}
