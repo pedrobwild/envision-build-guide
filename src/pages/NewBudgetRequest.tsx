@@ -124,6 +124,7 @@ export default function NewBudgetRequest() {
       priority: priority,
       internal_notes: internalNotes.trim() || null,
       reference_links: links.length > 0 ? links : [],
+      hubspot_deal_url: hubspotDealUrl.trim() || null,
       internal_status: "requested",
       status: "draft",
       commercial_owner_id: commercialOwnerId || user.id,
