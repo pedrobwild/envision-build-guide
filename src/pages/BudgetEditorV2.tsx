@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign, GitCompare } from "lucide-react";
 import { toast } from "sonner";
