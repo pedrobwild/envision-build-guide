@@ -121,9 +121,17 @@ function SidebarSkeleton() {
 export function PublicBudgetSkeleton() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Header skeleton */}
-      <div className="relative overflow-hidden">
-        <Shimmer className="h-28 lg:h-44 w-full rounded-none" />
+      {/* Header skeleton — dark gradient matching real header */}
+      <div className="relative overflow-hidden h-28 lg:h-44 bg-gradient-to-b from-[hsl(210,20%,18%)] via-[hsl(210,18%,22%)] to-[hsl(210,16%,26%)]">
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.8s_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex items-center justify-between">
+          <Shimmer className="h-10 w-24 rounded bg-white/10" />
+          <Shimmer className="h-8 w-14 rounded-lg bg-white/10" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 space-y-1.5">
+          <Shimmer className="h-6 w-40 rounded bg-white/10" />
+          <Shimmer className="h-3.5 w-52 rounded bg-white/10" />
+        </div>
       </div>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-3">
