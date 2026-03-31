@@ -104,9 +104,24 @@ export default function BudgetEditorV2() {
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="flex flex-col min-w-0">
-              <span className="font-display font-bold text-sm text-foreground leading-tight truncate">
-                {budget.project_name || "Sem nome"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-display font-bold text-sm text-foreground leading-tight truncate">
+                  {budget.project_name || "Sem nome"}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-muted text-muted-foreground border border-border">
+                  V{budget.version_number || 1}
+                </span>
+                {budget.is_published_version && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    Publicada
+                  </span>
+                )}
+                {!budget.is_published_version && budget.status === "draft" && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-body font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                    Rascunho
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground font-body flex-wrap">
                 {budget.client_name && budget.client_name !== "Cliente" && (
                   <span className="flex items-center gap-1">
@@ -117,7 +132,6 @@ export default function BudgetEditorV2() {
                 {budget.condominio && <span>• {budget.condominio}</span>}
                 {budget.bairro && <span>• {budget.bairro}</span>}
                 {budget.metragem && <span>• {budget.metragem}</span>}
-                {budget.versao && <span>• v{budget.versao}</span>}
               </div>
             </div>
           </div>
