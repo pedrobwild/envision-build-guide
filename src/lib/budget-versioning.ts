@@ -232,16 +232,25 @@ export async function duplicateBudgetAsVersion(
  * Set a specific version as the current one.
  * Demotes all others in the group.
  */
-export async function setCurrentVersion(budgetId: string, groupId: string) {
+export async function setCurrentVersion(budgetId: string, groupId: string, userId?: string) {
   await supabase
     .from("budgets")
     .update({ is_current_version: false } as any)
     .eq("version_group_id", groupId);
 
-  await supabase
+  const { data } = await supabase
     .from("budgets")
     .update({ is_current_version: true } as any)
-    .eq("id", budgetId);
+    .eq("id", budgetId)
+    .select("version_number")
+    .single();
+
+  await logVersionEvent({
+    event_type: "version_activated",
+    budget_id: budgetId,
+    user_id: userId ?? null,
+    metadata: { version_number: data?.version_number ?? "?" },
+  });
 }
 
 /**
