@@ -42,6 +42,7 @@ import { format, differenceInCalendarDays, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { BlockingDialog } from "@/components/editor/BlockingDialog";
+import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 
 interface BudgetDetail {
   id: string;
