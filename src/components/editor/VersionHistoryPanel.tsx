@@ -152,6 +152,11 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
                           <span className="text-xs text-primary font-body font-medium">
                             Atual
                           </span>
+                          {currentVersion.is_published_version && (
+                            <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full font-body font-medium">
+                              Publicada
+                            </span>
+                          )}
                           <span className={`text-xs font-body ${statusColors[currentVersion.status]}`}>
                             · {statusLabels[currentVersion.status] || currentVersion.status}
                           </span>
