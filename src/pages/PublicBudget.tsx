@@ -254,14 +254,6 @@ export default function PublicBudget() {
                 </AnimatedSection>
                 </div>
 
-                <div data-pdf-section>
-                <AnimatedSection id="portal-section-inline" index={0.6}>
-                  <Suspense fallback={<LazyFallback />}>
-                    <PortalShowcase />
-                  </Suspense>
-                </AnimatedSection>
-                </div>
-
                 {/* Map */}
                 <div data-pdf-section>
                   <AnimatedSection id="projetos-regiao" index={0.7}>
@@ -402,6 +394,14 @@ export default function PublicBudget() {
 
             {/* mobile-portal anchor kept for nav */}
             <div id="mobile-portal" className="scroll-mt-20" />
+
+            <div data-pdf-section>
+              <AnimatedSection id="portal-section-inline" index={99}>
+                <Suspense fallback={<LazyFallback />}>
+                  <PortalShowcase />
+                </Suspense>
+              </AnimatedSection>
+            </div>
 
             <div id="mobile-next-steps" className="scroll-mt-20" data-pdf-section>
               <AnimatedSection id="next-steps" index={100}>
