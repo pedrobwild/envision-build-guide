@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   LayoutDashboard,
   FileText,
@@ -9,6 +10,7 @@ import {
   Shield,
   LogOut,
   Users,
+  PanelLeftOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, Link } from "react-router-dom";
@@ -33,6 +35,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AppRole } from "@/lib/role-constants";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NavItem {
   title: string;
@@ -44,31 +47,107 @@ interface NavItem {
   actionLabel?: string;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { title: "Painel Geral", url: "/admin", icon: LayoutDashboard, roles: "all", end: true },
-  { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"], actionUrl: "/admin/solicitacoes/nova", actionLabel: "Nova solicitação" },
+// Grouped navigation structure
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const DASHBOARD_ITEM: NavItem = {
+  title: "Painel Geral", url: "/admin", icon: LayoutDashboard, roles: "all", end: true,
+};
+
+const TRABALHO_ITEMS: NavItem[] = [
   { title: "Minha Produção", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
-  { title: "Meu Pipeline", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
+  { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
+  { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"], actionUrl: "/admin/solicitacoes/nova", actionLabel: "Nova solicitação" },
+];
+
+const GESTAO_ITEMS: NavItem[] = [
   { title: "Operações", url: "/admin/operacoes", icon: Settings, roles: ["admin"] },
   { title: "Financeiro", url: "/admin/financeiro", icon: DollarSign, roles: ["admin"] },
   { title: "Usuários", url: "/admin/usuarios", icon: Users, roles: ["admin"] },
-  { title: "QA", url: "/qa", icon: Shield, roles: ["admin"] },
 ];
 
+const FERRAMENTAS_ITEMS: NavItem[] = [
+  { title: "Avaliação QA", url: "/qa", icon: Shield, roles: ["admin"] },
+];
+
+function renderNavItem(item: NavItem, collapsed: boolean) {
+  return (
+    <SidebarMenuItem key={item.url} className="group/action">
+      <SidebarMenuButton asChild>
+        <NavLink
+          to={item.url}
+          end={item.end}
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-body text-muted-foreground hover:bg-muted/50 transition-colors"
+          activeClassName="bg-primary/10 text-primary font-medium"
+        >
+          <item.icon className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="flex-1">{item.title}</span>}
+          {!collapsed && item.actionUrl && (
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to={item.actionUrl}
+                    onClick={(e) => e.stopPropagation()}
+                    className="opacity-0 group-hover/action:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right"><p>{item.actionLabel}</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </NavLink>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useUserProfile();
   const { signOut } = useAuth();
+  const isMobile = useIsMobile();
 
   const userRoles = profile?.roles ?? [];
 
-  const visibleItems = NAV_ITEMS.filter((item) => {
+  const canSee = (item: NavItem) => {
     if (item.roles === "all") return true;
-    return item.roles.some((r) => userRoles.includes(r));
-  });
+    return (item.roles as AppRole[]).some((r) => userRoles.includes(r));
+  };
+
+  // Auto-collapse on budget editor route for smaller screens
+  const isBudgetEditor = /^\/admin\/budget\//.test(location.pathname);
+
+  useEffect(() => {
+    if (isBudgetEditor && !collapsed && window.innerWidth < 1280) {
+      toggleSidebar();
+    }
+  }, [isBudgetEditor]);
+
+  // Role-based ordering for Trabalho group
+  const orderedTrabalho = [...TRABALHO_ITEMS].filter(canSee);
+  if (userRoles.includes("orcamentista") && !userRoles.includes("admin")) {
+    // Produção first for orcamentista
+    orderedTrabalho.sort((a, b) =>
+      a.url === "/admin/producao" ? -1 : b.url === "/admin/producao" ? 1 : 0
+    );
+  } else if (userRoles.includes("comercial") && !userRoles.includes("admin")) {
+    // Pipeline first for comercial
+    orderedTrabalho.sort((a, b) =>
+      a.url === "/admin/comercial" ? -1 : b.url === "/admin/comercial" ? 1 : 0
+    );
+  }
+
+  const gestaoItems = GESTAO_ITEMS.filter(canSee);
+  const ferramentasItems = FERRAMENTAS_ITEMS.filter(canSee);
 
   async function handleSignOut() {
     await signOut();
@@ -88,47 +167,85 @@ export function AppSidebar() {
       <Separator />
 
       <SidebarContent>
+        {/* Dashboard — always visible */}
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {visibleItems.map((item) => (
-                <SidebarMenuItem key={item.url} className="group/action">
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.end}
-                      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-body text-muted-foreground hover:bg-muted/50 transition-colors"
-                      activeClassName="bg-primary/10 text-primary font-medium"
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span className="flex-1">{item.title}</span>}
-                      {!collapsed && item.actionUrl && (
-                        <TooltipProvider delayDuration={300}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Link
-                                to={item.actionUrl}
-                                onClick={(e) => e.stopPropagation()}
-                                className="opacity-0 group-hover/action:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Link>
-                            </TooltipTrigger>
-                            <TooltipContent side="right"><p>{item.actionLabel}</p></TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {renderNavItem(DASHBOARD_ITEM, collapsed)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Trabalho group */}
+        {orderedTrabalho.length > 0 && (
+          <>
+            <Separator className="mx-2" />
+            <SidebarGroup>
+              {!collapsed && (
+                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground font-body">
+                  Trabalho
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {orderedTrabalho.map((item) => renderNavItem(item, collapsed))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
+
+        {/* Gestão group */}
+        {gestaoItems.length > 0 && (
+          <>
+            <Separator className="mx-2" />
+            <SidebarGroup>
+              {!collapsed && (
+                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground font-body">
+                  Gestão
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {gestaoItems.map((item) => renderNavItem(item, collapsed))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
+
+        {/* Ferramentas group */}
+        {ferramentasItems.length > 0 && (
+          <>
+            <Separator className="mx-2" />
+            <SidebarGroup>
+              {!collapsed && (
+                <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground font-body">
+                  Ferramentas
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {ferramentasItems.map((item) => renderNavItem(item, collapsed))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-2">
+        {/* Reopen button when collapsed on budget editor */}
+        {collapsed && isBudgetEditor && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-full h-8 mb-1"
+            onClick={toggleSidebar}
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </Button>
+        )}
         {!collapsed && profile && (
           <div className="px-2 py-1.5 mb-1">
             <p className="text-xs font-medium font-body text-foreground truncate">
