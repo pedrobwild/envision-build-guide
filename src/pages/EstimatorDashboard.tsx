@@ -54,6 +54,7 @@ const ESTIMATOR_ACTIVE_STATUSES: InternalStatus[] = [
   "assigned",
   "in_progress",
   "waiting_info",
+  "blocked",
   "ready_for_review",
 ];
 
