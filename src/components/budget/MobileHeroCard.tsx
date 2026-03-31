@@ -52,6 +52,7 @@ export function MobileHeroCard({
   neighborhood,
   area,
   version,
+  prazoDiasUteis,
   onSaveForLater,
 }: MobileHeroCardProps) {
   const [contractOpen, setContractOpen] = useState(false);
