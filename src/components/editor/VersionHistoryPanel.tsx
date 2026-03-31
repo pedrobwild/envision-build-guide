@@ -8,6 +8,15 @@ import { useNavigate } from "react-router-dom";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { assignImportedBudgetToGroup } from "@/lib/budget-versioning";
 
+const VERSION_CHANGE_REASONS = [
+  { value: "cliente", label: "Mudança do cliente" },
+  { value: "escopo", label: "Ajuste de escopo" },
+  { value: "preco", label: "Revisão de preço" },
+  { value: "comercial", label: "Ajuste comercial" },
+  { value: "tecnica", label: "Revisão técnica" },
+  { value: "outro", label: "Outro" },
+] as const;
+
 interface VersionHistoryPanelProps {
   budgetId: string;
   onVersionChange?: () => void;
@@ -41,14 +50,18 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
   }, [budgetId]);
 
   const [changeReasonInput, setChangeReasonInput] = useState("");
+  const [changeCategory, setChangeCategory] = useState("");
   const [showReasonDialog, setShowReasonDialog] = useState<string | null>(null);
 
   const handleDuplicate = async (sourceId: string) => {
     if (!user) return;
     setDuplicating(true);
     try {
-      const newId = await duplicateBudgetAsVersion(sourceId, user.id, changeReasonInput || undefined);
+      const categoryLabel = VERSION_CHANGE_REASONS.find((r) => r.value === changeCategory)?.label || "";
+      const fullReason = [categoryLabel, changeReasonInput].filter(Boolean).join(": ");
+      const newId = await duplicateBudgetAsVersion(sourceId, user.id, fullReason || undefined);
       setChangeReasonInput("");
+      setChangeCategory("");
       setShowReasonDialog(null);
       toast.success("Nova versão criada com sucesso!");
       navigate(`/admin/budget/${newId}`);
@@ -276,31 +289,50 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
 
       {/* Change reason dialog */}
       {showReasonDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card border border-border rounded-xl shadow-lg p-5 w-full max-w-md mx-4 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setShowReasonDialog(null); setChangeReasonInput(""); setChangeCategory(""); }}>
+          <div className="bg-card border border-border rounded-xl shadow-lg p-5 w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-display font-bold text-foreground">Nova versão formal</h3>
             <p className="text-sm text-muted-foreground font-body">
-              Descreva brevemente o motivo da nova versão (opcional):
+              A versão anterior será preservada. Selecione o motivo:
             </p>
+
+            {/* Category chips */}
+            <div className="flex flex-wrap gap-1.5">
+              {VERSION_CHANGE_REASONS.map((r) => (
+                <button
+                  key={r.value}
+                  onClick={() => setChangeCategory(r.value)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-body transition-colors border ${
+                    changeCategory === r.value
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted text-muted-foreground border-border hover:text-foreground"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Free-text detail */}
             <input
               type="text"
               value={changeReasonInput}
               onChange={(e) => setChangeReasonInput(e.target.value)}
-              placeholder="Ex: Cliente pediu revisão do escopo de marcenaria"
+              placeholder="Detalhe opcional (ex: Cliente pediu revisão da marcenaria)"
               className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-              autoFocus
               onKeyDown={(e) => { if (e.key === "Enter") handleDuplicate(showReasonDialog); }}
             />
+
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => { setShowReasonDialog(null); setChangeReasonInput(""); }}
+                onClick={() => { setShowReasonDialog(null); setChangeReasonInput(""); setChangeCategory(""); }}
                 className="px-3 py-1.5 rounded-md text-sm font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDuplicate(showReasonDialog)}
-                disabled={duplicating}
+                disabled={duplicating || !changeCategory}
                 className="px-4 py-1.5 rounded-md text-sm font-body font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {duplicating ? "Criando..." : "Criar versão"}
