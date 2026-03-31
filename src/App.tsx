@@ -20,6 +20,7 @@ const BudgetRequestsList = lazy(() => import("./pages/BudgetRequestsList"));
 const NewBudgetRequest = lazy(() => import("./pages/NewBudgetRequest"));
 const EstimatorDashboard = lazy(() => import("./pages/EstimatorDashboard"));
 const CommercialDashboard = lazy(() => import("./pages/CommercialDashboard"));
+const AdminOperationsDashboard = lazy(() => import("./pages/AdminOperationsDashboard"));
 const BudgetInternalDetail = lazy(() => import("./pages/BudgetInternalDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/admin/solicitacoes/nova" element={<ProtectedRoute><NewBudgetRequest /></ProtectedRoute>} />
             <Route path="/admin/producao" element={<ProtectedRoute><EstimatorDashboard /></ProtectedRoute>} />
             <Route path="/admin/comercial" element={<ProtectedRoute><CommercialDashboard /></ProtectedRoute>} />
+            <Route path="/admin/operacoes" element={<ProtectedRoute><AdminOperationsDashboard /></ProtectedRoute>} />
             <Route path="/admin/demanda/:budgetId" element={<ProtectedRoute><BudgetInternalDetail /></ProtectedRoute>} />
             <Route path="/o/:publicId" element={<PublicBudget />} />
             <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
