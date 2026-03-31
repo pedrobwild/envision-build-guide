@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Loader2, Plus, Minus, RefreshCw, Equal } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Minus, RefreshCw, Equal, Eye, EyeOff, TrendingUp, TrendingDown } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
+import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 
 interface CompareSection {
   id: string;
@@ -83,28 +84,15 @@ function diffSections(left: CompareSection[], right: CompareSection[]): SectionD
       matchedRight.add(rs.id);
       const items = diffItems(ls.items, rs.items);
       const hasChanges = items.some((i) => i.status !== "unchanged");
-      result.push({
-        status: hasChanges ? "changed" : "unchanged",
-        left: ls,
-        right: rs,
-        items,
-      });
+      result.push({ status: hasChanges ? "changed" : "unchanged", left: ls, right: rs, items });
     } else {
-      result.push({
-        status: "removed",
-        left: ls,
-        items: ls.items.map((i) => ({ status: "removed" as DiffStatus, left: i })),
-      });
+      result.push({ status: "removed", left: ls, items: ls.items.map((i) => ({ status: "removed" as DiffStatus, left: i })) });
     }
   }
 
   for (const rs of right) {
     if (!matchedRight.has(rs.id)) {
-      result.push({
-        status: "added",
-        right: rs,
-        items: rs.items.map((i) => ({ status: "added" as DiffStatus, right: i })),
-      });
+      result.push({ status: "added", right: rs, items: rs.items.map((i) => ({ status: "added" as DiffStatus, right: i })) });
     }
   }
 
@@ -137,6 +125,10 @@ function diffItems(left: CompareItem[], right: CompareItem[]): DiffRow[] {
   return result;
 }
 
+function calcTotal(sections: CompareSection[]): number {
+  return sections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
+}
+
 const statusConfig: Record<DiffStatus, { icon: typeof Equal; color: string; bg: string }> = {
   unchanged: { icon: Equal, color: "text-muted-foreground", bg: "" },
   changed: { icon: RefreshCw, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/10" },
@@ -162,6 +154,7 @@ export default function VersionCompare() {
   const [rightData, setRightData] = useState<{ meta: VersionMeta; sections: CompareSection[] } | null>(null);
   const [diffs, setDiffs] = useState<SectionDiff[]>([]);
   const [showUnchanged, setShowUnchanged] = useState(false);
+  const [clientView, setClientView] = useState(false);
 
   useEffect(() => {
     if (!leftId || !rightId) return;
@@ -200,6 +193,15 @@ export default function VersionCompare() {
     unchanged: diffs.filter((d) => d.status === "unchanged").length,
   };
 
+  // Executive summary calculations
+  const leftTotal = leftData ? calcTotal(leftData.sections) : 0;
+  const rightTotal = rightData ? calcTotal(rightData.sections) : 0;
+  const delta = rightTotal - leftTotal;
+  const deltaPercent = leftTotal > 0 ? (delta / leftTotal) * 100 : 0;
+  const totalItems = (side: CompareSection[]) => side.reduce((n, s) => n + s.items.length, 0);
+  const leftItemCount = leftData ? totalItems(leftData.sections) : 0;
+  const rightItemCount = rightData ? totalItems(rightData.sections) : 0;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -210,20 +212,71 @@ export default function VersionCompare() {
               <ArrowLeft className="h-4 w-4" />
             </button>
             <span className="font-display font-bold text-sm text-foreground">Comparação de Versões</span>
+            {clientView && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body font-medium">
+                Visão do cliente
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3 text-xs font-body">
-            <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><Plus className="h-3 w-3" />{stats.added} novas</span>
-            <span className="flex items-center gap-1 text-red-600 dark:text-red-400"><Minus className="h-3 w-3" />{stats.removed} removidas</span>
-            <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400"><RefreshCw className="h-3 w-3" />{stats.changed} alteradas</span>
+            <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><Plus className="h-3 w-3" />{stats.added}</span>
+            <span className="flex items-center gap-1 text-red-600 dark:text-red-400"><Minus className="h-3 w-3" />{stats.removed}</span>
+            <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400"><RefreshCw className="h-3 w-3" />{stats.changed}</span>
             <label className="flex items-center gap-1.5 text-muted-foreground cursor-pointer ml-2">
               <input type="checkbox" checked={showUnchanged} onChange={(e) => setShowUnchanged(e.target.checked)} className="rounded" />
-              Mostrar inalteradas ({stats.unchanged})
+              Inalteradas ({stats.unchanged})
             </label>
+            <button
+              onClick={() => setClientView(!clientView)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border transition-colors ml-2 ${
+                clientView
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted text-muted-foreground border-border hover:text-foreground"
+              }`}
+              title={clientView ? "Voltar à visão interna" : "Alternar para visão do cliente"}
+            >
+              {clientView ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+              {clientView ? "Interno" : "Cliente"}
+            </button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-4">
+        {/* Executive Summary */}
+        {!clientView && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <SummaryCard label="Total Anterior" value={formatBRL(leftTotal)} />
+            <SummaryCard label="Total Nova" value={formatBRL(rightTotal)} />
+            <SummaryCard
+              label="Variação"
+              value={`${delta >= 0 ? "+" : ""}${formatBRL(delta)}`}
+              accent={delta > 0 ? "up" : delta < 0 ? "down" : undefined}
+              sub={leftTotal > 0 ? `${deltaPercent >= 0 ? "+" : ""}${deltaPercent.toFixed(1)}%` : undefined}
+            />
+            <SummaryCard
+              label="Itens"
+              value={`${leftItemCount} → ${rightItemCount}`}
+              sub={`${leftData?.sections.length || 0} → ${rightData?.sections.length || 0} seções`}
+            />
+          </div>
+        )}
+
+        {/* Client-mode summary (no values, just scope changes) */}
+        {clientView && (
+          <div className="rounded-lg border border-border bg-card p-5">
+            <h2 className="font-display font-bold text-foreground mb-1">Resumo das alterações</h2>
+            <p className="text-sm text-muted-foreground font-body">
+              {stats.added > 0 && <span className="text-green-600 dark:text-green-400 font-medium">{stats.added} {stats.added === 1 ? "seção adicionada" : "seções adicionadas"}</span>}
+              {stats.added > 0 && (stats.removed > 0 || stats.changed > 0) && <span> · </span>}
+              {stats.removed > 0 && <span className="text-red-600 dark:text-red-400 font-medium">{stats.removed} {stats.removed === 1 ? "seção removida" : "seções removidas"}</span>}
+              {stats.removed > 0 && stats.changed > 0 && <span> · </span>}
+              {stats.changed > 0 && <span className="text-amber-600 dark:text-amber-400 font-medium">{stats.changed} {stats.changed === 1 ? "seção alterada" : "seções alteradas"}</span>}
+              {stats.added === 0 && stats.removed === 0 && stats.changed === 0 && <span>Nenhuma alteração de escopo.</span>}
+            </p>
+          </div>
+        )}
+
         {/* Version headers */}
         <div className="grid grid-cols-2 gap-4">
           {[leftData, rightData].map((d, idx) => (
@@ -235,7 +288,6 @@ export default function VersionCompare() {
                 <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-body">
                   {idx === 0 ? "Anterior" : "Nova"}
                 </span>
-                <span className="text-xs text-muted-foreground font-body">{d?.meta.status}</span>
               </div>
               <p className="text-xs text-muted-foreground font-body mt-1">
                 {d?.meta.project_name} — {d?.meta.client_name}
@@ -280,8 +332,8 @@ export default function VersionCompare() {
                         <th className="text-left px-4 py-2 font-medium">Item</th>
                         <th className="text-right px-4 py-2 font-medium">Qtd Anterior</th>
                         <th className="text-right px-4 py-2 font-medium">Qtd Nova</th>
-                        <th className="text-right px-4 py-2 font-medium">Valor Anterior</th>
-                        <th className="text-right px-4 py-2 font-medium">Valor Novo</th>
+                        {!clientView && <th className="text-right px-4 py-2 font-medium">Valor Anterior</th>}
+                        {!clientView && <th className="text-right px-4 py-2 font-medium">Valor Novo</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -293,23 +345,32 @@ export default function VersionCompare() {
                           return (
                             <tr key={ri} className={ic.bg}>
                               <td className="px-4 py-2"><RowIcon className={`h-3 w-3 ${ic.color}`} /></td>
-                              <td className="px-4 py-2 text-foreground">{row.left?.title || row.right?.title}</td>
+                              <td className="px-4 py-2 text-foreground">
+                                {row.left?.title || row.right?.title}
+                                {clientView && row.status === "changed" && row.left?.description !== row.right?.description && (
+                                  <span className="block text-[10px] text-muted-foreground mt-0.5 italic">Descrição atualizada</span>
+                                )}
+                              </td>
                               <td className="px-4 py-2 text-right text-muted-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
                                 {row.left ? `${row.left.qty ?? "—"} ${row.left.unit || ""}`.trim() : "—"}
                               </td>
                               <td className="px-4 py-2 text-right text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
                                 {row.right ? `${row.right.qty ?? "—"} ${row.right.unit || ""}`.trim() : "—"}
                               </td>
-                              <td className="px-4 py-2 text-right text-muted-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
-                                {row.left?.internal_total ? formatBRL(row.left.internal_total) : "—"}
-                              </td>
-                              <td className={`px-4 py-2 text-right font-medium ${
-                                row.status === "changed" && row.left?.internal_total && row.right?.internal_total
-                                  ? (row.right.internal_total > row.left.internal_total ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")
-                                  : "text-foreground"
-                              }`} style={{ fontVariantNumeric: "tabular-nums" }}>
-                                {row.right?.internal_total ? formatBRL(row.right.internal_total) : "—"}
-                              </td>
+                              {!clientView && (
+                                <td className="px-4 py-2 text-right text-muted-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
+                                  {row.left?.internal_total ? formatBRL(row.left.internal_total) : "—"}
+                                </td>
+                              )}
+                              {!clientView && (
+                                <td className={`px-4 py-2 text-right font-medium ${
+                                  row.status === "changed" && row.left?.internal_total && row.right?.internal_total
+                                    ? (row.right.internal_total > row.left.internal_total ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")
+                                    : "text-foreground"
+                                }`} style={{ fontVariantNumeric: "tabular-nums" }}>
+                                  {row.right?.internal_total ? formatBRL(row.right.internal_total) : "—"}
+                                </td>
+                              )}
                             </tr>
                           );
                         })}
@@ -321,6 +382,37 @@ export default function VersionCompare() {
           );
         })}
       </main>
+    </div>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  accent,
+  sub,
+}: {
+  label: string;
+  value: string;
+  accent?: "up" | "down";
+  sub?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <p className="text-[11px] text-muted-foreground font-body uppercase tracking-wide">{label}</p>
+      <div className="flex items-center gap-1.5 mt-1">
+        {accent === "up" && <TrendingUp className="h-4 w-4 text-red-500" />}
+        {accent === "down" && <TrendingDown className="h-4 w-4 text-green-500" />}
+        <span
+          className={`font-display font-bold text-lg ${
+            accent === "up" ? "text-red-600 dark:text-red-400" : accent === "down" ? "text-green-600 dark:text-green-400" : "text-foreground"
+          }`}
+          style={{ fontVariantNumeric: "tabular-nums" }}
+        >
+          {value}
+        </span>
+      </div>
+      {sub && <p className="text-[11px] text-muted-foreground font-body mt-0.5">{sub}</p>}
     </div>
   );
 }
