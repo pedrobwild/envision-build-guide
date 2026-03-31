@@ -49,7 +49,6 @@ export function SectionCard({
   const [lightboxImages, setLightboxImages] = useState<{ url: string; alt?: string }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  const items = section.items || [];
   const included = Array.isArray(section.included_bullets) ? section.included_bullets : [];
   const excluded = Array.isArray(section.excluded_bullets) ? section.excluded_bullets : [];
   const hasCover = !!section.cover_image_url;
