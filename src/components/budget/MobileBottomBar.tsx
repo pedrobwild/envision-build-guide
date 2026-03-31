@@ -154,7 +154,10 @@ export function MobileBottomBar({
               <div className="flex items-center justify-between px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]">
                 {/* Left: total + sheet trigger */}
                 <button
-                  onClick={() => setSheetOpen(true)}
+                  onClick={() => {
+                    if (navigator.vibrate) navigator.vibrate(10);
+                    setSheetOpen(true);
+                  }}
                   className="flex flex-col min-h-[44px] justify-center"
                   aria-label="Ver resumo financeiro"
                 >
