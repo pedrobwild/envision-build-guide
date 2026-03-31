@@ -1,30 +1,36 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Calendar,
   User,
   AlertTriangle,
-  Clock,
-  CheckCircle2,
-  PauseCircle,
-  Send,
+  MoreHorizontal,
   FileText,
-  AlertOctagon,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -47,10 +53,49 @@ interface WorkflowBarProps {
   onBudgetUpdate: (fields: Record<string, any>) => void;
 }
 
+// Status badge color mapping
+function getStatusBadgeClass(status: InternalStatus): string {
+  switch (status) {
+    case "in_progress":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "ready_for_review":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "sent_to_client":
+    case "delivered_to_sales":
+      return "bg-purple-100 text-purple-800 border-purple-200";
+    case "contrato_fechado":
+    case "approved":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "blocked":
+    case "waiting_info":
+      return "bg-red-100 text-red-800 border-red-200";
+    default:
+      return "bg-gray-100 text-gray-700 border-gray-200";
+  }
+}
+
+// Transition map
+type Transition = {
+  label: string;
+  newStatus: InternalStatus;
+  roles: ("admin" | "comercial" | "orcamentista")[];
+};
+
+const PRIMARY_TRANSITIONS: Record<string, Transition> = {
+  requested: { label: "Atribuir e Iniciar Produção", newStatus: "assigned", roles: ["admin"] },
+  triage: { label: "Atribuir e Iniciar Produção", newStatus: "assigned", roles: ["admin"] },
+  assigned: { label: "Iniciar Produção", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
+  in_progress: { label: "Enviar para Revisão", newStatus: "ready_for_review", roles: ["orcamentista", "admin"] },
+  ready_for_review: { label: "Aprovar e Publicar", newStatus: "sent_to_client", roles: ["comercial", "admin"] },
+  sent_to_client: { label: "Registrar Contrato Fechado", newStatus: "contrato_fechado" as InternalStatus, roles: ["comercial", "admin"] },
+};
+
 export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const { user } = useAuth();
+  const { profile, isAdmin, isComercial, isOrcamentista } = useUserProfile();
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
+  const [contractConfirmOpen, setContractConfirmOpen] = useState(false);
 
   useEffect(() => {
     supabase
@@ -78,6 +123,8 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const overdue = dueAt ? isPast(dueAt) && !isToday(dueAt) : false;
   const dueToday = dueAt ? isToday(dueAt) : false;
 
+  const userRoles = profile?.roles ?? [];
+
   async function changeStatus(newStatus: InternalStatus, note?: string) {
     const oldStatus = budget.internal_status;
 
@@ -91,7 +138,6 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
       return;
     }
 
-    // Log event
     if (user) {
       await supabase.from("budget_events").insert({
         budget_id: budget.id,
@@ -102,7 +148,6 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         note: note || null,
       } as any);
 
-      // If note provided, also save as comment for thread visibility
       if (note) {
         await supabase.from("budget_comments").insert({
           budget_id: budget.id,
@@ -121,30 +166,30 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
     setBlockingTarget(null);
   }
 
+  // Determine primary action
+  const primaryTransition = PRIMARY_TRANSITIONS[internalStatus];
+  const canDoPrimary = primaryTransition && primaryTransition.roles.some((r) => userRoles.includes(r));
+
+  // Secondary actions
+  const showSecondary = isAdmin || isComercial;
+  const isBlockedOrWaiting = internalStatus === "blocked" || internalStatus === "waiting_info";
+
+  function handlePrimaryClick() {
+    if (!primaryTransition) return;
+    if (primaryTransition.newStatus === "contrato_fechado") {
+      setContractConfirmOpen(true);
+    } else {
+      changeStatus(primaryTransition.newStatus);
+    }
+  }
+
   return (
     <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Status badge + selector */}
-        <div className="flex items-center gap-2">
-          <Badge className={`${statusInfo.color} text-xs font-body`}>
-            {statusInfo.icon} {statusInfo.label}
-          </Badge>
-          <Select
-            value={internalStatus}
-            onValueChange={(v) => changeStatus(v as InternalStatus)}
-          >
-            <SelectTrigger className="h-7 w-auto text-xs gap-1 border-dashed bg-background">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(INTERNAL_STATUSES).map(([key, { label, icon }]) => (
-                <SelectItem key={key} value={key}>
-                  {icon} {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Read-only status badge */}
+        <Badge className={`${getStatusBadgeClass(internalStatus)} text-xs font-body border`}>
+          {statusInfo.icon} {statusInfo.label}
+        </Badge>
 
         <div className="h-4 w-px bg-border hidden sm:block" />
 
@@ -208,72 +253,55 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Quick handoff actions */}
+        {/* Actions */}
         <div className="flex items-center gap-1.5">
-          {internalStatus !== "in_progress" && (
+          {/* Primary action button */}
+          {canDoPrimary && (
             <Button
-              variant="ghost"
+              variant="default"
               size="sm"
-              className="h-7 text-xs gap-1"
-              onClick={() => changeStatus("in_progress")}
+              className="h-7 text-xs"
+              onClick={handlePrimaryClick}
             >
-              <Clock className="h-3 w-3" />
-              Iniciar
+              {primaryTransition.label}
             </Button>
           )}
-          {internalStatus !== "waiting_info" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              onClick={() => setBlockingTarget("waiting_info")}
-            >
-              <PauseCircle className="h-3 w-3" />
-              Aguardar Info
-            </Button>
+
+          {/* Secondary overflow menu */}
+          {showSecondary && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {!isBlockedOrWaiting && (
+                  <>
+                    <DropdownMenuItem onClick={() => setBlockingTarget("blocked")}>
+                      🚫 Bloquear
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setBlockingTarget("waiting_info")}>
+                      ⏳ Aguardando Informação
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {isBlockedOrWaiting && (
+                  <DropdownMenuItem onClick={() => changeStatus("in_progress")}>
+                    🔨 Reabrir
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-          {internalStatus !== "blocked" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
-              onClick={() => setBlockingTarget("blocked")}
-            >
-              <AlertOctagon className="h-3 w-3" />
-              Bloquear
-            </Button>
-          )}
-          {internalStatus !== "ready_for_review" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              onClick={() => changeStatus("ready_for_review")}
-            >
-              <CheckCircle2 className="h-3 w-3" />
-              Revisão
-            </Button>
-          )}
-          {internalStatus !== "delivered_to_sales" && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1 border-primary text-primary"
-              onClick={() => changeStatus("delivered_to_sales")}
-            >
-              <Send className="h-3 w-3" />
-              Entregar ao Comercial
-            </Button>
-          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() =>
-                  window.open(`/admin/demanda/${budget.id}`, "_blank")
-                }
+                onClick={() => window.open(`/admin/demanda/${budget.id}`, "_blank")}
               >
                 <FileText className="h-3.5 w-3.5" />
               </Button>
@@ -282,6 +310,24 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           </Tooltip>
         </div>
       </div>
+
+      {/* Confirmation dialog for contract */}
+      <AlertDialog open={contractConfirmOpen} onOpenChange={setContractConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Registrar contrato fechado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação marca o orçamento como contrato fechado. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => changeStatus("contrato_fechado" as InternalStatus)}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BlockingDialog
         open={!!blockingTarget}
