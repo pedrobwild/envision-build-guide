@@ -376,6 +376,12 @@ export default function CatalogPage() {
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
   const [expandedPricesItemId, setExpandedPricesItemId] = useState<string | null>(null);
 
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CatalogCategory | null>(null);
+
+  const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+
   const { data: categories = [] } = useCategories();
   const { data: suppliers = [] } = useSuppliers();
   const { data: items = [], isLoading } = useCatalogItems(search, typeFilter, categoryFilter);
