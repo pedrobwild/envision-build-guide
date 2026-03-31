@@ -328,11 +328,18 @@ export default function AdminDashboard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold font-display text-foreground">
-            Olá, {profile?.full_name?.split(" ")[0] || "Usuário"} 👋
+            Olá, {profile?.full_name?.split(" ")[0] || user?.email || "Usuário"} 👋
           </h1>
-          <p className="text-sm text-muted-foreground font-body mt-0.5">
-            {metrics.total} orçamentos · {metrics.published} publicados · {metrics.closed} contratos fechados
-          </p>
+          <div className="flex flex-wrap gap-2 mt-1">
+            <Badge variant="secondary" className="text-xs font-body">📋 {metrics.total} orçamentos</Badge>
+            <Badge variant="secondary" className="text-xs font-body">✅ {metrics.published} publicados</Badge>
+            <Badge
+              variant={metrics.closed > 0 ? "default" : "outline"}
+              className={`text-xs font-body ${metrics.closed > 0 ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-muted-foreground"}`}
+            >
+              🤝 {metrics.closed} contratos fechados
+            </Badge>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
