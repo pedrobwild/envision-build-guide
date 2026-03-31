@@ -381,6 +381,7 @@ export default function CommercialDashboard() {
             onStatusChange={changeStatus}
             onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
             getProfileName={getProfileName}
+            dueFilter={dueFilter}
           />
         )}
 
