@@ -108,6 +108,7 @@ export default function CommercialDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("urgente");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [dueFilter, setDueFilter] = useState<DueFilter>("all");
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
