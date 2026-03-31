@@ -226,10 +226,21 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               variant="ghost"
               size="sm"
               className="h-7 text-xs gap-1"
-              onClick={() => changeStatus("waiting_info")}
+              onClick={() => setBlockingTarget("waiting_info")}
             >
               <PauseCircle className="h-3 w-3" />
-              Bloqueio
+              Aguardar Info
+            </Button>
+          )}
+          {internalStatus !== "blocked" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
+              onClick={() => setBlockingTarget("blocked")}
+            >
+              <AlertOctagon className="h-3 w-3" />
+              Bloquear
             </Button>
           )}
           {internalStatus !== "ready_for_review" && (
@@ -271,6 +282,13 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           </Tooltip>
         </div>
       </div>
+
+      <BlockingDialog
+        open={!!blockingTarget}
+        targetStatus={blockingTarget}
+        onConfirm={handleBlockingConfirm}
+        onCancel={() => setBlockingTarget(null)}
+      />
     </div>
   );
 }
