@@ -34,16 +34,10 @@ Deno.serve(async (req) => {
     const { data: { user: caller }, error: userError } = await anonClient.auth.getUser(token);
 
     if (userError || !caller) {
-      if (fallbackError || !fallbackUser) {
-        return new Response(JSON.stringify({ error: "Invalid token" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      var caller = fallbackUser;
-    } else {
-      // Build a minimal caller object from claims
-      var caller = { id: claimsData.claims.sub, email: claimsData.claims.email } as any;
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Check admin role
