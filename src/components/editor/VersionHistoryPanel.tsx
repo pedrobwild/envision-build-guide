@@ -76,9 +76,9 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
   };
 
   const handleSetCurrent = async (versionId: string) => {
-    if (!groupId) return;
+    if (!groupId || !user) return;
     try {
-      await setCurrentVersion(versionId, groupId);
+      await setCurrentVersion(versionId, groupId, user.id);
       toast.success("Versão ativada como atual");
       await loadVersions();
       onVersionChange?.();
