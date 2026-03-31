@@ -193,6 +193,62 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── SET PASSWORD ──
+    if (action === "set_password") {
+      const { user_id, password } = payload;
+
+      if (!user_id || !password) {
+        return new Response(JSON.stringify({ error: "user_id and password required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: updateError } = await adminClient.auth.admin.updateUserById(user_id, {
+        password,
+      });
+
+      if (updateError) {
+        return new Response(JSON.stringify({ error: updateError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── BULK SET PASSWORD ──
+    if (action === "bulk_set_password") {
+      const { password } = payload;
+
+      if (!password) {
+        return new Response(JSON.stringify({ error: "password required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: { users: authUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+      const results: { user_id: string; email: string; success: boolean; error?: string }[] = [];
+
+      for (const user of (authUsers || [])) {
+        const { error: updateError } = await adminClient.auth.admin.updateUserById(user.id, { password });
+        results.push({
+          user_id: user.id,
+          email: user.email ?? "—",
+          success: !updateError,
+          error: updateError?.message,
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
