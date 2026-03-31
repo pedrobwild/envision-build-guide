@@ -1,7 +1,7 @@
 import {
   LayoutDashboard,
   FileText,
-  PlusCircle,
+  Plus,
   Hammer,
   Briefcase,
   Settings,
@@ -11,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@/hooks/useAuth";
 import logoDark from "@/assets/logo-bwild-dark.png";
@@ -31,20 +31,22 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AppRole } from "@/lib/role-constants";
 
 interface NavItem {
   title: string;
   url: string;
   icon: React.ElementType;
-  roles: AppRole[] | "all"; // "all" = any authenticated user
+  roles: AppRole[] | "all";
   end?: boolean;
+  actionUrl?: string;
+  actionLabel?: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { title: "Painel Geral", url: "/admin", icon: LayoutDashboard, roles: "all", end: true },
-  { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"] },
-  { title: "Nova Solicitação", url: "/admin/solicitacoes/nova", icon: PlusCircle, roles: ["admin", "comercial"] },
+  { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"], actionUrl: "/admin/solicitacoes/nova", actionLabel: "Nova solicitação" },
   { title: "Minha Produção", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
   { title: "Meu Pipeline", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
   { title: "Operações", url: "/admin/operacoes", icon: Settings, roles: ["admin"] },
@@ -91,7 +93,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {visibleItems.map((item) => (
-                <SidebarMenuItem key={item.url}>
+                <SidebarMenuItem key={item.url} className="group/action">
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
@@ -100,7 +102,23 @@ export function AppSidebar() {
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span className="flex-1">{item.title}</span>}
+                      {!collapsed && item.actionUrl && (
+                        <TooltipProvider delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Link
+                                to={item.actionUrl}
+                                onClick={(e) => e.stopPropagation()}
+                                className="opacity-0 group-hover/action:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent side="right"><p>{item.actionLabel}</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
