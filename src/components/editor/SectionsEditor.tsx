@@ -327,6 +327,15 @@ function SortableItemRow({
         {/* Actions */}
         <div className="sm:col-span-1 flex items-end justify-end gap-1">
           {isItemSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+          {!item.catalog_item_id && (
+            <button
+              onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
+              className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+              title="Salvar no catálogo"
+            >
+              <BookmarkPlus className="h-3.5 w-3.5" />
+            </button>
+          )}
           <button
             onClick={() => {
               if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
