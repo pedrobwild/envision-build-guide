@@ -30,25 +30,25 @@ export async function fetchPublicBudget(publicId: string) {
     .from('items')
     .select(PUBLIC_ITEM_SELECT)
     .in('section_id', sectionIds.length ? sectionIds : ['__none__'])
-    .order('order_index');
+    .order('order_index') as { data: any[]; error: any };
 
-  const itemIds = (items || []).map(i => i.id);
+  const itemIds = (items || []).map((i: any) => i.id);
 
   const { data: itemImages } = await supabase
     .from('item_images')
     .select(PUBLIC_ITEM_IMAGE_SELECT)
-    .in('item_id', itemIds.length ? itemIds : ['__none__']);
+    .in('item_id', itemIds.length ? itemIds : ['__none__']) as { data: any[]; error: any };
 
   const { data: adjustments } = await supabase
     .from('adjustments')
     .select(PUBLIC_ADJUSTMENT_SELECT)
-    .eq('budget_id', budget.id);
+    .eq('budget_id', budget.id) as { data: any[]; error: any };
 
   const { data: rooms } = await supabase
     .from('rooms')
     .select(PUBLIC_ROOM_SELECT)
     .eq('budget_id', budget.id)
-    .order('order_index');
+    .order('order_index') as { data: any[]; error: any };
 
   // Attach items + images to sections
   const enrichedSections = (sections || []).map(section => {
