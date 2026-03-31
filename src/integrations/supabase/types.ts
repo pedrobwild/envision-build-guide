@@ -425,47 +425,59 @@ export type Database = {
           },
         ]
       }
-      catalog_item_suppliers: {
+      catalog_item_supplier_prices: {
         Row: {
           catalog_item_id: string
           created_at: string | null
+          currency: string
           id: string
-          is_preferred: boolean
-          notes: string | null
+          is_active: boolean
+          is_primary: boolean
+          lead_time_days: number | null
+          minimum_order_qty: number | null
           supplier_id: string
+          supplier_sku: string | null
           unit_price: number | null
           updated_at: string | null
         }
         Insert: {
           catalog_item_id: string
           created_at?: string | null
+          currency?: string
           id?: string
-          is_preferred?: boolean
-          notes?: string | null
+          is_active?: boolean
+          is_primary?: boolean
+          lead_time_days?: number | null
+          minimum_order_qty?: number | null
           supplier_id: string
+          supplier_sku?: string | null
           unit_price?: number | null
           updated_at?: string | null
         }
         Update: {
           catalog_item_id?: string
           created_at?: string | null
+          currency?: string
           id?: string
-          is_preferred?: boolean
-          notes?: string | null
+          is_active?: boolean
+          is_primary?: boolean
+          lead_time_days?: number | null
+          minimum_order_qty?: number | null
           supplier_id?: string
+          supplier_sku?: string | null
           unit_price?: number | null
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "catalog_item_suppliers_catalog_item_id_fkey"
+            foreignKeyName: "catalog_item_supplier_prices_catalog_item_id_fkey"
             columns: ["catalog_item_id"]
             isOneToOne: false
             referencedRelation: "catalog_items"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "catalog_item_suppliers_supplier_id_fkey"
+            foreignKeyName: "catalog_item_supplier_prices_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
