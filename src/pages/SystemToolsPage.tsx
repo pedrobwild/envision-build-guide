@@ -8,6 +8,8 @@ import {
   Lightbulb,
   Loader2,
   ExternalLink,
+  RefreshCw,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,8 +21,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
 
 type SearchMode = "ux" | "references" | "benchmarking";
 
@@ -35,6 +45,18 @@ interface ToolCard {
   defaultQuery?: string;
   action?: "cleanup" | "health" | "audit";
 }
+
+const PORTAL_AREAS = [
+  { value: "orcamento_publico", label: "Orçamento Público", description: "Página do cliente, escopo, preços, simulador" },
+  { value: "editor_orcamento", label: "Editor de Orçamento", description: "Importação, seções, itens, publicação" },
+  { value: "dashboard_admin", label: "Dashboard Administrativo", description: "KPIs, atalhos, listagem de orçamentos" },
+  { value: "pipeline_comercial", label: "Pipeline Comercial", description: "Kanban, demandas, solicitações" },
+  { value: "catalogo", label: "Catálogo", description: "Itens, categorias, fornecedores, preços" },
+  { value: "gestao_usuarios", label: "Gestão de Usuários", description: "Papéis, permissões, ativação" },
+  { value: "workspace_producao", label: "Workspace de Produção", description: "Briefing, timeline, comentários" },
+  { value: "navegacao_geral", label: "Navegação Geral", description: "Header, menus, rotas, mobile" },
+  { value: "financeiro", label: "Financeiro", description: "Histórico, margens, ajustes" },
+];
 
 const TOOL_CARDS: ToolCard[] = [
   {
@@ -107,6 +129,11 @@ export default function SystemToolsPage() {
   const [result, setResult] = useState("");
   const [citations, setCitations] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedArea, setSelectedArea] = useState("");
+  const [uxContext, setUxContext] = useState("");
+  const [uxResult, setUxResult] = useState("");
+  const [uxLoading, setUxLoading] = useState(false);
+  const [showUxPanel, setShowUxPanel] = useState(false);
   const { toast } = useToast();
 
   const handleOpenTool = (card: ToolCard) => {
@@ -115,6 +142,13 @@ export default function SystemToolsPage() {
         title: "Em breve",
         description: `A funcionalidade "${card.title}" será implementada em breve.`,
       });
+      return;
+    }
+    if (card.mode === "ux") {
+      setShowUxPanel(true);
+      setSelectedArea("");
+      setUxContext("");
+      setUxResult("");
       return;
     }
     setActiveDialog(card);
@@ -156,6 +190,35 @@ export default function SystemToolsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUxSearch = async () => {
+    if (!selectedArea) return;
+    setUxLoading(true);
+    setUxResult("");
+
+    try {
+      const res = await supabase.functions.invoke("ux-insights", {
+        body: { area: selectedArea, context: uxContext.trim() || undefined },
+      });
+
+      if (res.error) throw new Error(res.error.message || "Erro na análise");
+      setUxResult(res.data?.content ?? "Sem resultados.");
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Erro na análise",
+        description: err.message || "Não foi possível gerar as sugestões.",
+        variant: "destructive",
+      });
+    } finally {
+      setUxLoading(false);
+    }
+  };
+
+  const handleCopyResult = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copiado!", description: "Resultado copiado para a área de transferência." });
   };
 
   return (
@@ -223,8 +286,90 @@ export default function SystemToolsPage() {
         ))}
       </div>
 
+      {/* UX Insights Panel */}
+      {showUxPanel && (
+        <Card className="border bg-card">
+          <CardContent className="p-6 space-y-5">
+            <div className="flex items-start gap-3">
+              <div className="bg-purple-100 dark:bg-purple-900/30 p-2.5 rounded-lg">
+                <Sparkles className="h-5 w-5 text-foreground/70" />
+              </div>
+              <div>
+                <h2 className="text-lg font-display font-semibold text-foreground">Configurar Análise</h2>
+                <p className="text-sm text-muted-foreground font-body mt-1">
+                  Selecione a área do sistema e adicione contexto opcional para sugestões mais direcionadas.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">Área do Sistema</label>
+              <Select value={selectedArea} onValueChange={setSelectedArea}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione uma área..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PORTAL_AREAS.map((area) => (
+                    <SelectItem key={area.value} value={area.value}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{area.label}</span>
+                        <span className="text-xs text-muted-foreground">{area.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Contexto adicional (opcional)</label>
+              <Textarea
+                value={uxContext}
+                onChange={(e) => setUxContext(e.target.value)}
+                placeholder="Ex: Os clientes estão tendo dificuldade para encontrar o simulador de parcelas..."
+                rows={3}
+                className="font-body text-sm resize-none"
+              />
+            </div>
+
+            <Button
+              onClick={handleUxSearch}
+              disabled={uxLoading || !selectedArea}
+              className="gap-2"
+            >
+              {uxLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {uxLoading ? "Analisando..." : "Gerar Sugestões"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* UX Results */}
+      {uxResult && (
+        <Card className="border bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-display font-semibold text-foreground">Sugestões de UX</h3>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleUxSearch} disabled={uxLoading} className="gap-1.5">
+                  <RefreshCw className={`h-3.5 w-3.5 ${uxLoading ? "animate-spin" : ""}`} />
+                  Regenerar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleCopyResult(uxResult)} className="gap-1.5">
+                  <Copy className="h-3.5 w-3.5" />
+                  Copiar
+                </Button>
+              </div>
+            </div>
+            <div className="prose prose-sm dark:prose-invert max-w-none font-body">
+              <ReactMarkdown>{uxResult}</ReactMarkdown>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Dialog for AI-powered tools */}
-      <Dialog open={!!activeDialog?.mode} onOpenChange={(open) => !open && setActiveDialog(null)}>
+      <Dialog open={!!activeDialog && !!activeDialog.mode} onOpenChange={(open) => !open && setActiveDialog(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
@@ -258,8 +403,8 @@ export default function SystemToolsPage() {
 
             {result && (
               <ScrollArea className="flex-1 min-h-0">
-                <div className="prose prose-sm dark:prose-invert max-w-none font-body whitespace-pre-wrap text-sm">
-                  {result}
+                <div className="prose prose-sm dark:prose-invert max-w-none font-body">
+                  <ReactMarkdown>{result}</ReactMarkdown>
                 </div>
                 {citations.length > 0 && (
                   <div className="mt-4 pt-3 border-t">
