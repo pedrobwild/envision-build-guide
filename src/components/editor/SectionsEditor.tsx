@@ -4,8 +4,10 @@ import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight
+  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight,
+  PenLine, BookOpen,
 } from "lucide-react";
+import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
   DndContext,
   closestCenter,
@@ -150,6 +152,8 @@ interface ItemData {
   internal_unit_price?: number | null;
   internal_total?: number | null;
   order_index: number;
+  catalog_item_id?: string | null;
+  catalog_snapshot?: Record<string, any> | null;
   images?: { id: string; url: string; is_primary?: boolean | null }[];
 }
 
@@ -246,6 +250,16 @@ function SortableItemRow({
             >
               <GripVertical className="h-3.5 w-3.5" />
             </button>
+            {/* Origin badge */}
+            {item.catalog_item_id ? (
+              <span className="flex-shrink-0" title="Item do catálogo">
+                <BookOpen className="h-3.5 w-3.5 text-primary" />
+              </span>
+            ) : (
+              <span className="flex-shrink-0" title="Item manual">
+                <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+              </span>
+            )}
             <input
               type="text"
               value={item.title}
@@ -405,20 +419,51 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     }
   };
 
-  const addItem = async (sectionId: string) => {
+  const addItem = async (sectionId: string, itemData?: {
+    title: string;
+    description: string | null;
+    unit: string | null;
+    qty: number | null;
+    internal_unit_price: number | null;
+    internal_total: number | null;
+    catalog_item_id: string | null;
+    catalog_snapshot: Record<string, any> | null;
+  }) => {
     const section = sections.find(s => s.id === sectionId);
     const order = section?.items.length || 0;
+
+    const insertPayload = {
+      section_id: sectionId,
+      title: itemData?.title || "Novo Item",
+      description: itemData?.description || null,
+      unit: itemData?.unit || null,
+      qty: itemData?.qty || null,
+      internal_unit_price: itemData?.internal_unit_price || null,
+      internal_total: itemData?.internal_total || null,
+      order_index: order,
+      catalog_item_id: itemData?.catalog_item_id || null,
+      catalog_snapshot: (itemData?.catalog_snapshot || null) as any,
+    };
+
     const { data } = await supabase
       .from("items")
-      .insert({ section_id: sectionId, title: "Novo Item", order_index: order })
+      .insert(insertPayload)
       .select()
       .single();
     if (data) {
       const updated = sections.map(s => {
         if (s.id !== sectionId) return s;
-        return { ...s, items: [...s.items, data as ItemData] };
+        const newItems = [...s.items, data as ItemData];
+        // Recalculate section total
+        const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
+        if (newTotal > 0) {
+          supabase.from("sections").update({ section_price: newTotal }).eq("id", sectionId);
+        }
+        return { ...s, items: newItems, section_price: newTotal > 0 ? newTotal : s.section_price };
       });
       onSectionsChange(updated);
+      const origin = itemData?.catalog_item_id ? "Item do catálogo adicionado" : "Item manual adicionado";
+      toast.success(origin);
     }
   };
 
@@ -664,12 +709,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
                           {/* Add item + delete section */}
                           <div className="px-4 py-3 flex items-center justify-between border-t border-border bg-muted/20">
-                            <button
-                              onClick={() => addItem(section.id)}
-                              className="flex items-center gap-1.5 text-sm font-body text-primary hover:text-primary/80 transition-colors"
-                            >
-                              <Plus className="h-3.5 w-3.5" /> Adicionar item
-                            </button>
+                            <AddItemPopover
+                              sectionTitle={section.title}
+                              onAddItem={(itemData) => addItem(section.id, itemData)}
+                            />
                             <button
                               onClick={() => {
                                 if (confirm("Excluir esta seção e todos os seus itens?")) deleteSection(section.id);

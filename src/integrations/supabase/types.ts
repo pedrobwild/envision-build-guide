@@ -609,6 +609,8 @@ export type Database = {
       }
       items: {
         Row: {
+          catalog_item_id: string | null
+          catalog_snapshot: Json | null
           coverage_type: string
           created_at: string | null
           description: string | null
@@ -624,6 +626,8 @@ export type Database = {
           unit: string | null
         }
         Insert: {
+          catalog_item_id?: string | null
+          catalog_snapshot?: Json | null
           coverage_type?: string
           created_at?: string | null
           description?: string | null
@@ -639,6 +643,8 @@ export type Database = {
           unit?: string | null
         }
         Update: {
+          catalog_item_id?: string | null
+          catalog_snapshot?: Json | null
           coverage_type?: string
           created_at?: string | null
           description?: string | null
