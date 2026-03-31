@@ -228,7 +228,7 @@ export default function BudgetRequestsList() {
                 <Card
                   key={b.id}
                   className="p-4 hover:shadow-md transition-shadow cursor-pointer border"
-                  onClick={() => navigate(`/admin/budget/${b.id}`)}
+                  onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/solicitacoes" } })}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">

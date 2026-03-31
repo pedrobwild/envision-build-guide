@@ -403,7 +403,7 @@ export default function CommercialDashboard() {
                         <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
                           <FileText className="h-4 w-4 mr-2" />Ver detalhes
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`)}>
+                        <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/comercial" } })}>
                           <ExternalLink className="h-4 w-4 mr-2" />Abrir orçamento
                         </DropdownMenuItem>
                         {b.public_id && (

@@ -120,12 +120,15 @@ export default function BudgetEditorV2() {
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <button
-              onClick={() => navigate("/admin")}
-              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(backPath)}
+              className="flex-shrink-0 gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-            </button>
+              <span className="hidden sm:inline">Voltar</span>
+            </Button>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-display font-bold text-sm text-foreground leading-tight truncate">

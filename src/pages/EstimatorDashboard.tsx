@@ -496,7 +496,7 @@ export default function EstimatorDashboard() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`)}>
+                        <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}>
                           <ExternalLink className="h-4 w-4 mr-2" />
                           Abrir orçamento
                         </DropdownMenuItem>

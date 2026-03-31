@@ -536,7 +536,7 @@ export default function AdminOperationsDashboard() {
                           <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
                             <FileText className="h-4 w-4 mr-2" />Ver detalhes
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`)}>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/operacoes" } })}>
                             <ExternalLink className="h-4 w-4 mr-2" />Abrir editor
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
