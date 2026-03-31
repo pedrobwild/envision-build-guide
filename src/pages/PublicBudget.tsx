@@ -395,6 +395,14 @@ export default function PublicBudget() {
             {/* mobile-portal anchor kept for nav */}
             <div id="mobile-portal" className="scroll-mt-20" />
 
+            <div data-pdf-section>
+              <AnimatedSection id="portal-section-inline" index={99}>
+                <Suspense fallback={<LazyFallback />}>
+                  <PortalShowcase />
+                </Suspense>
+              </AnimatedSection>
+            </div>
+
             <div id="mobile-next-steps" className="scroll-mt-20" data-pdf-section>
               <AnimatedSection id="next-steps" index={100}>
                 <NextSteps />

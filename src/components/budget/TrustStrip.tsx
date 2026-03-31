@@ -44,25 +44,6 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
           role="list"
           aria-label="Garantias e diferenciais"
         >
-          {/* Prazo chip — highlighted */}
-          <motion.div
-            role="listitem"
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/8 border border-primary/12 snap-start"
-          >
-            <Clock className="h-4 w-4 text-primary" aria-hidden="true" />
-            <div className="flex flex-col">
-              <span className="text-sm font-display font-bold text-primary tabular-nums leading-none">
-                {prazoDiasUteis} dias úteis
-              </span>
-              <span className="text-xs text-muted-foreground font-body leading-none mt-0.5">
-                prazo de execução
-              </span>
-            </div>
-          </motion.div>
-
           {signals.map((s, i) => (
             <motion.div
               key={s.label}
