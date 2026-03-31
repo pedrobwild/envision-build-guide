@@ -1,9 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
+import {
+  PUBLIC_BUDGET_SELECT,
+  PUBLIC_SECTION_SELECT,
+  PUBLIC_ITEM_SELECT,
+  PUBLIC_ITEM_IMAGE_SELECT,
+  PUBLIC_ADJUSTMENT_SELECT,
+  PUBLIC_ROOM_SELECT,
+} from "@/lib/public-columns";
 
 export async function fetchPublicBudget(publicId: string) {
   const { data: budget, error: budgetError } = await supabase
     .from('budgets')
-    .select('*')
+    .select(PUBLIC_BUDGET_SELECT)
     .eq('public_id', publicId)
     .in('status', ['published', 'minuta_solicitada'])
     .single();
@@ -12,7 +20,7 @@ export async function fetchPublicBudget(publicId: string) {
 
   const { data: sections } = await supabase
     .from('sections')
-    .select('*')
+    .select(PUBLIC_SECTION_SELECT)
     .eq('budget_id', budget.id)
     .order('order_index');
 
@@ -20,7 +28,7 @@ export async function fetchPublicBudget(publicId: string) {
 
   const { data: items } = await supabase
     .from('items')
-    .select('*')
+    .select(PUBLIC_ITEM_SELECT)
     .in('section_id', sectionIds.length ? sectionIds : ['__none__'])
     .order('order_index');
 
@@ -28,17 +36,17 @@ export async function fetchPublicBudget(publicId: string) {
 
   const { data: itemImages } = await supabase
     .from('item_images')
-    .select('*')
+    .select(PUBLIC_ITEM_IMAGE_SELECT)
     .in('item_id', itemIds.length ? itemIds : ['__none__']);
 
   const { data: adjustments } = await supabase
     .from('adjustments')
-    .select('*')
+    .select(PUBLIC_ADJUSTMENT_SELECT)
     .eq('budget_id', budget.id);
 
   const { data: rooms } = await supabase
     .from('rooms')
-    .select('*')
+    .select(PUBLIC_ROOM_SELECT)
     .eq('budget_id', budget.id)
     .order('order_index');
 
