@@ -128,6 +128,20 @@ export async function duplicateBudgetAsVersion(
 
   if (budgetErr || !newBudget) throw budgetErr || new Error("Falha ao criar versão");
 
+  // Log audit events
+  await logVersionEvent({
+    event_type: "version_created",
+    budget_id: newBudget.id,
+    user_id: userId,
+    metadata: { version_number: nextVersion, change_reason: changeReason || null, source_budget_id: sourceBudgetId },
+  });
+  await logVersionEvent({
+    event_type: "version_cloned_from_previous",
+    budget_id: newBudget.id,
+    user_id: userId,
+    metadata: { source_budget_id: sourceBudgetId, source_version: source.version_number ?? 1 },
+  });
+
   // 4. Copy sections
   const { data: sections } = await supabase
     .from("sections")
