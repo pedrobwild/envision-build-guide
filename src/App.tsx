@@ -74,6 +74,7 @@ const App = () => (
             <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
             <Route path="/admin/catalogo" element={<AdminPage><CatalogPage /></AdminPage>} />
             <Route path="/admin/sistema" element={<AdminPage><SystemToolsPage /></AdminPage>} />
+            <Route path="/admin/biblioteca-fotos" element={<AdminPage><PhotoLibraryUpload /></AdminPage>} />
             <Route path="/o/:publicId" element={<PublicBudget />} />
             <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
             <Route path="/qa" element={<AdminPage><QAEvaluator /></AdminPage>} />
