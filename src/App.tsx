@@ -27,6 +27,7 @@ const UserManagement = lazy(() => import("./pages/UserManagement"));
 const VersionCompare = lazy(() => import("./pages/VersionCompare"));
 const CatalogPage = lazy(() => import("./pages/CatalogPage"));
 const SystemToolsPage = lazy(() => import("./pages/SystemToolsPage"));
+const PhotoLibraryUpload = lazy(() => import("./pages/PhotoLibraryUpload"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
