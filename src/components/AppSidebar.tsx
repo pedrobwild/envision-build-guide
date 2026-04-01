@@ -178,11 +178,11 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-3">
-        {!collapsed ? (
-          <img src={logoDark} alt="Bwild" className="h-6" />
-        ) : (
-          <img src={logoDark} alt="Bwild" className="h-5 mx-auto" />
-        )}
+        <img
+          src={logoDark}
+          alt="Bwild"
+          className={collapsed ? "h-5 mx-auto object-contain" : "h-6 object-contain"}
+        />
       </SidebarHeader>
 
       <Separator />
