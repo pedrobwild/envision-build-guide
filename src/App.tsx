@@ -27,6 +27,7 @@ const UserManagement = lazy(() => import("./pages/UserManagement"));
 const VersionCompare = lazy(() => import("./pages/VersionCompare"));
 const CatalogPage = lazy(() => import("./pages/CatalogPage"));
 const SystemToolsPage = lazy(() => import("./pages/SystemToolsPage"));
+const PhotoLibraryUpload = lazy(() => import("./pages/PhotoLibraryUpload"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
             <Route path="/admin/catalogo" element={<AdminPage><CatalogPage /></AdminPage>} />
             <Route path="/admin/sistema" element={<AdminPage><SystemToolsPage /></AdminPage>} />
+            <Route path="/admin/biblioteca-fotos" element={<AdminPage><PhotoLibraryUpload /></AdminPage>} />
             <Route path="/o/:publicId" element={<PublicBudget />} />
             <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
             <Route path="/qa" element={<AdminPage><QAEvaluator /></AdminPage>} />

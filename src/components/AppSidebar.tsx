@@ -13,6 +13,7 @@ import {
   PanelLeftOpen,
   Package,
   Wrench,
+  ImagePlus,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, Link } from "react-router-dom";
@@ -70,6 +71,7 @@ const PROJETOS_ITEMS: NavItem[] = [
 
 const DADOS_MESTRES_ITEMS: NavItem[] = [
   { title: "Catálogo", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
+  { title: "Biblioteca de Fotos", url: "/admin/biblioteca-fotos", icon: ImagePlus, roles: ["admin", "orcamentista"] },
   { title: "Usuários", url: "/admin/usuarios", icon: Users, roles: ["admin"] },
 ];
 
