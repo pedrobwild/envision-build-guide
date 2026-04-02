@@ -67,6 +67,14 @@ const ESTIMATOR_ACTIVE_STATUSES: InternalStatus[] = [
 
 type SortOption = "urgente" | "recente" | "prazo";
 
+function getEstimatorStage(status: string): "pending" | "in_progress" | "review" | "delivered" | "finished" {
+  if (["requested", "novo", "triage", "assigned"].includes(status)) return "pending";
+  if (["in_progress", "waiting_info", "blocked"].includes(status)) return "in_progress";
+  if (status === "ready_for_review") return "review";
+  if (["delivered_to_sales", "sent_to_client", "minuta_solicitada"].includes(status)) return "delivered";
+  return "finished";
+}
+
 interface BudgetRow {
   id: string;
   client_name: string;
