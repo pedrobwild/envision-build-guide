@@ -2,9 +2,9 @@ import jsPDF from "jspdf";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import type { BudgetData, BudgetSection } from "@/types/budget";
 
-function toSentenceCase(str: string): string {
+function toTitleCase(str: string): string {
   if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  return str.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 }
 
 const A4_W = 210;
