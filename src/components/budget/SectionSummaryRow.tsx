@@ -54,8 +54,9 @@ export function SectionSummaryRow({
         <div className={cn("w-1 rounded-full flex-shrink-0", compact ? "h-4" : "h-6", bgClass)} />
 
         {/* Section title */}
+        {/* Section title */}
         <span className={cn("flex-1 font-body font-medium text-foreground text-left leading-snug", textSize)}>
-          {toSentenceCase(section.title)}
+          {toTitleCase(section.title)}
         </span>
 
         {/* Item count badge */}
