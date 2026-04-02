@@ -52,18 +52,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const nextUserId = nextUser?.id ?? null;
       const sameUser = currentUserIdRef.current === nextUserId;
 
-      // Ao voltar para a aba, o refresh de token não deve provocar recarga visual
+      // Ignore token refreshes for the same user (tab focus)
       if (event === "TOKEN_REFRESHED" && sameUser) {
+        setSession(nextSession);
+        setLoading(false);
+        return;
+      }
+
+      // Keep same user reference when identity hasn't changed
+      if (sameUser && event !== "SIGNED_OUT" && event !== "USER_UPDATED") {
+        setSession(nextSession);
+        setLoading(false);
+        return;
+      }
+
+      // Only clear user on explicit sign-out; otherwise keep current user
+      if (event === "SIGNED_OUT") {
+        currentUserIdRef.current = null;
+        setSession(null);
+        setUser(null);
         setLoading(false);
         return;
       }
 
       currentUserIdRef.current = nextUserId;
       setSession(nextSession);
-      setUser((currentUser) => {
-        if (sameUser && event !== "USER_UPDATED") return currentUser;
-        return nextUser;
-      });
+      setUser(nextUser);
       setLoading(false);
     });
 
