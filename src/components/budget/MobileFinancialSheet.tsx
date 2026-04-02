@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { SectionSummaryRow } from "./SectionSummaryRow";
 import { Drawer as VaulDrawer } from "vaul";
 import { motion, AnimatePresence } from "framer-motion";
 import {
