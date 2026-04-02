@@ -6,7 +6,7 @@ import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight,
-  PenLine, BookOpen, BookmarkPlus,
+  PenLine, BookOpen, BookmarkPlus, Link as LinkIcon,
 } from "lucide-react";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
