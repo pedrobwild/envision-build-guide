@@ -185,7 +185,8 @@ function drawTable(pdf: jsPDF, budget: BudgetData, startY: number): number {
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(8.5);
       const titleLines = pdf.splitTextToSize(item.title || "", COL_ITEM - 4);
-      const descLines = item.description ? pdf.splitTextToSize(item.description, COL_DESC - 4) : [];
+      const cleanDesc = item.description ? item.description.replace(/https?:\/\/\S+/gi, "").replace(/\s{2,}/g, " ").trim() : "";
+      const descLines = cleanDesc ? pdf.splitTextToSize(cleanDesc, COL_DESC - 4) : [];
       const lineCount = Math.max(titleLines.length, descLines.length, 1);
       const rowH = Math.max(6, lineCount * 4 + 2);
 
