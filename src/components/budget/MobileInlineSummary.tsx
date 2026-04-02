@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
