@@ -27,7 +27,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, isAdmin, isComercial, isOrcamentista } = useUserProfile();
+  const { profile, loading: profileLoading, isAdmin, isComercial, isOrcamentista } = useUserProfile();
+
+  // Redirect orcamentistas to their dedicated workspace
+  useEffect(() => {
+    if (!profileLoading && profile && isOrcamentista && !isAdmin) {
+      navigate("/admin/producao", { replace: true });
+    }
+  }, [profileLoading, profile, isOrcamentista, isAdmin, navigate]);
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
