@@ -7,7 +7,7 @@ function toSentenceCase(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-const A4_H = 297;
+const A4_W = 210;
 const M = 12; // margin
 const CW = A4_W - M * 2; // content width
 
