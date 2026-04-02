@@ -120,27 +120,31 @@ export function MobileInlineSummary({
             <p className="text-xs font-display font-semibold text-muted-foreground tracking-wider mb-2">
               Composição do investimento
             </p>
-            {categorizedGroups.map((group) => (
-              <button
-                key={group.category.id}
-                onClick={() => setDetailGroup(group)}
-                className="w-full flex items-center gap-2.5 py-2.5 px-1.5 rounded-lg hover:bg-muted/50 active:bg-muted/70 transition-colors min-h-[44px]"
-              >
-                <div
-                  className={cn(
-                    "w-1 h-4 rounded-full flex-shrink-0",
-                    group.category.bgClass
-                  )}
-                />
-                <span className="flex-1 text-[13px] font-body text-foreground leading-snug text-left">
-                  {group.category.label}
-                </span>
-                <span className="text-[13px] font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
-                  {formatBRL(group.subtotal)}
-                </span>
-                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              </button>
-            ))}
+            {categorizedGroups.flatMap((group) =>
+              group.sections.map((section) => {
+                const { calculateSectionSubtotal } = require("@/lib/supabase-helpers");
+                const subtotal = calculateSectionSubtotal(section);
+                return (
+                  <div
+                    key={section.id}
+                    className="w-full flex items-center gap-2.5 py-2.5 px-1.5 rounded-lg min-h-[44px]"
+                  >
+                    <div
+                      className={cn(
+                        "w-1 h-4 rounded-full flex-shrink-0",
+                        group.category.bgClass
+                      )}
+                    />
+                    <span className="flex-1 text-[13px] font-body text-foreground leading-snug text-left">
+                      {section.title}
+                    </span>
+                    <span className="text-[13px] font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
+                      {formatBRL(subtotal)}
+                    </span>
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
 

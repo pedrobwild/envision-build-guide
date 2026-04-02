@@ -183,39 +183,44 @@ function CategorizedList({
 }) {
   return (
     <div className="space-y-1">
-      {groups.map((group) => {
-        const isDisplayed = displayedCategories.includes(group.category.id);
-
-        return (
-          <button
-            key={group.category.id}
-            onClick={() => onDetailOpen(group)}
-            className={cn(
-              "w-full flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg",
-              "group transition-all duration-200",
-              "hover:bg-muted/50"
-            )}
-          >
-            {/* Color indicator */}
-            <div
+      {groups.map((group) =>
+        group.sections.map((section) => {
+          const subtotal = calculateSectionSubtotal(section);
+          return (
+            <button
+              key={section.id}
+              onClick={() => {
+                document
+                  .getElementById(`section-${section.id}`)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
               className={cn(
-                "w-1 h-6 rounded-full flex-shrink-0",
-                group.category.bgClass
+                "w-full flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg",
+                "group transition-all duration-200",
+                "hover:bg-muted/50"
               )}
-            />
+            >
+              {/* Color indicator */}
+              <div
+                className={cn(
+                  "w-1 h-6 rounded-full flex-shrink-0",
+                  group.category.bgClass
+                )}
+              />
 
-            {/* Label — use actual section title when group has only 1 section */}
-            <span className="flex-1 text-sm font-body font-medium text-foreground text-left leading-snug">
-              {group.category.label}
-            </span>
+              {/* Section title */}
+              <span className="flex-1 text-sm font-body font-medium text-foreground text-left leading-snug">
+                {section.title}
+              </span>
 
-            {/* Value */}
-            <span className="text-sm font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
-              {formatBRL(group.subtotal)}
-            </span>
-          </button>
-        );
-      })}
+              {/* Value */}
+              <span className="text-sm font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
+                {formatBRL(subtotal)}
+              </span>
+            </button>
+          );
+        })
+      )}
     </div>
   );
 }
