@@ -41,6 +41,8 @@ import {
   GitCompare,
   LayoutList,
   Kanban,
+  Send,
+  FileSignature,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
