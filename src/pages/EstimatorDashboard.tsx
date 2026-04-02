@@ -67,6 +67,14 @@ const ESTIMATOR_ACTIVE_STATUSES: InternalStatus[] = [
 
 type SortOption = "urgente" | "recente" | "prazo";
 
+function getEstimatorStage(status: string): "pending" | "in_progress" | "review" | "delivered" | "finished" {
+  if (["requested", "novo", "triage", "assigned"].includes(status)) return "pending";
+  if (["in_progress", "waiting_info", "blocked"].includes(status)) return "in_progress";
+  if (status === "ready_for_review") return "review";
+  if (["delivered_to_sales", "sent_to_client", "minuta_solicitada"].includes(status)) return "delivered";
+  return "finished";
+}
+
 interface BudgetRow {
   id: string;
   client_name: string;
@@ -549,62 +557,97 @@ export default function EstimatorDashboard() {
                           </div>
                         </div>
 
-                        {/* Quick actions */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}>
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              Abrir orçamento
-                            </DropdownMenuItem>
-                            {b.briefing && (
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  toast.info(b.briefing, {
-                                    duration: 10000,
-                                    description: `Briefing — ${b.project_name}`,
-                                  });
-                                }}
+                        {/* Quick stage actions */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {(() => {
+                            const stage = getEstimatorStage(b.internal_status);
+                            const nextActions: { label: string; targetStatus: InternalStatus; icon: React.ReactNode; variant: "default" | "outline" | "secondary" }[] = [];
+
+                            if (stage === "pending") {
+                              nextActions.push({ label: "Iniciar", targetStatus: "in_progress", icon: <Clock className="h-3 w-3" />, variant: "default" });
+                            } else if (stage === "in_progress") {
+                              nextActions.push({ label: "Revisão", targetStatus: "ready_for_review", icon: <CheckCircle2 className="h-3 w-3" />, variant: "default" });
+                            } else if (stage === "review") {
+                              nextActions.push({ label: "Entregar", targetStatus: "delivered_to_sales", icon: <Send className="h-3 w-3" />, variant: "default" });
+                            }
+
+                            return nextActions.map((a) => (
+                              <Button
+                                key={a.targetStatus}
+                                variant={a.variant}
+                                size="sm"
+                                className="h-7 text-xs gap-1 px-2.5"
+                                onClick={(e) => { e.stopPropagation(); changeStatus(b.id, a.targetStatus); }}
                               >
-                                <FileText className="h-4 w-4 mr-2" />
-                                Ver briefing
+                                {a.icon}
+                                {a.label}
+                              </Button>
+                            ));
+                          })()}
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                              >
+                                <MoreVertical className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}>
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Abrir orçamento
                               </DropdownMenuItem>
-                            )}
-                            {(b.version_number ?? 1) > 1 && b.version_group_id && (
-                              <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
-                                <GitCompare className="h-4 w-4 mr-2" />
-                                Comparar versões
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            {b.internal_status !== "in_progress" && (
-                              <DropdownMenuItem onClick={() => changeStatus(b.id, "in_progress")}>
-                                <Clock className="h-4 w-4 mr-2" />
-                                Iniciar produção
-                              </DropdownMenuItem>
-                            )}
-                            {b.internal_status !== "waiting_info" && (
-                              <DropdownMenuItem onClick={() => changeStatus(b.id, "waiting_info")}>
-                                <PauseCircle className="h-4 w-4 mr-2" />
-                                Sinalizar bloqueio
-                              </DropdownMenuItem>
-                            )}
-                            {b.internal_status !== "ready_for_review" && (
-                              <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
-                                <CheckCircle2 className="h-4 w-4 mr-2" />
-                                Pronto para revisão
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              {b.briefing && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    toast.info(b.briefing, {
+                                      duration: 10000,
+                                      description: `Briefing — ${b.project_name}`,
+                                    });
+                                  }}
+                                >
+                                  <FileText className="h-4 w-4 mr-2" />
+                                  Ver briefing
+                                </DropdownMenuItem>
+                              )}
+                              {(b.version_number ?? 1) > 1 && b.version_group_id && (
+                                <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
+                                  <GitCompare className="h-4 w-4 mr-2" />
+                                  Comparar versões
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              {/* All 5 stage transitions in overflow */}
+                              {!PENDING_STATUSES.includes(b.internal_status) && (
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "assigned")}>
+                                  <Inbox className="h-4 w-4 mr-2" />
+                                  Mover p/ Pendente
+                                </DropdownMenuItem>
+                              )}
+                              {!IN_PROGRESS_STATUSES.includes(b.internal_status) && (
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "in_progress")}>
+                                  <Clock className="h-4 w-4 mr-2" />
+                                  Mover p/ Em Elaboração
+                                </DropdownMenuItem>
+                              )}
+                              {b.internal_status !== "ready_for_review" && (
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
+                                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                                  Mover p/ Em Revisão
+                                </DropdownMenuItem>
+                              )}
+                              {!DELIVERED_STATUSES.includes(b.internal_status) && (
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "delivered_to_sales")}>
+                                  <Send className="h-4 w-4 mr-2" />
+                                  Mover p/ Entregue
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     </Card>
                   );
