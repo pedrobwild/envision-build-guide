@@ -9,7 +9,7 @@ import {
   CreditCard,
   MessageCircle,
   FileSignature,
-  ChevronRight,
+  
   ChevronDown,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
