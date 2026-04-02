@@ -59,12 +59,6 @@ export function SectionSummaryRow({
           {toTitleCase(section.title)}
         </span>
 
-        {/* Item count badge */}
-        {hasItems && !forceExpanded && (
-          <span className="text-[10px] text-muted-foreground font-body tabular-nums flex-shrink-0">
-            {items.length}
-          </span>
-        )}
 
         {/* Chevron */}
         {hasItems && !forceExpanded && (
