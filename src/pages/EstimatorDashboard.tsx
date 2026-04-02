@@ -748,6 +748,40 @@ export default function EstimatorDashboard() {
           </>
         )}
       </div>
+
+      {/* Assignment Dialog (admin only) */}
+      <Dialog open={assignDialog.open} onOpenChange={(open) => {
+        if (!open) setAssignDialog({ open: false, budgetId: "", type: "estimator", currentValue: null });
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {assignDialog.type === "estimator" ? "Atribuir Orçamentista" : "Atribuir Comercial"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Select value={assignValue} onValueChange={setAssignValue}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                {getUsersByRole(assignDialog.type === "estimator" ? "orcamentista" : "comercial").map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.full_name || p.id}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignDialog({ open: false, budgetId: "", type: "estimator", currentValue: null })}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAssign} disabled={!assignValue || assigning}>
+              {assigning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Atribuir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
