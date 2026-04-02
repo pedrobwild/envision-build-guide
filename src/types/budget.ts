@@ -17,6 +17,7 @@ export interface BudgetItem {
   id: string;
   title: string;
   description?: string | null;
+  reference_url?: string | null;
   qty?: number | null;
   unit?: string | null;
   coverage_type?: string;
