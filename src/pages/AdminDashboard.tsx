@@ -569,8 +569,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Optional selections */}
-      <OptionalSelectionsPanel />
+
 
       {/* Team Metrics (admin only) */}
       {isAdmin && <TeamMetricsPanel />}
