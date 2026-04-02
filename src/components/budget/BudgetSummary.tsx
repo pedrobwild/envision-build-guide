@@ -21,6 +21,7 @@ interface BudgetSummaryProps {
   budgetId?: string;
   editable?: boolean;
   allCategoriesOpenSheet?: boolean;
+  forceExpandItems?: boolean;
 }
 
 export function BudgetSummary({
