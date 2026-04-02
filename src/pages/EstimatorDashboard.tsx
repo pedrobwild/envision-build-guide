@@ -22,6 +22,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Search,
   Calendar,
   User,
@@ -43,6 +50,8 @@ import {
   Kanban,
   Send,
   FileSignature,
+  UserCog,
+  Handshake,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -101,12 +110,18 @@ interface ProfileRow {
   full_name: string;
 }
 
+interface RoleRow {
+  user_id: string;
+  role: string;
+}
+
 export default function EstimatorDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, loading: profileLoading } = useUserProfile();
+  const { profile, loading: profileLoading, isAdmin } = useUserProfile();
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [userRoles, setUserRoles] = useState<RoleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -115,6 +130,16 @@ export default function EstimatorDashboard() {
   const [sortBy, setSortBy] = useState<SortOption>("urgente");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
+  // Assignment dialog state
+  const [assignDialog, setAssignDialog] = useState<{
+    open: boolean;
+    budgetId: string;
+    type: "estimator" | "commercial";
+    currentValue: string | null;
+  }>({ open: false, budgetId: "", type: "estimator", currentValue: null });
+  const [assignValue, setAssignValue] = useState<string>("");
+  const [assigning, setAssigning] = useState(false);
+
   useEffect(() => {
     if (!user || profileLoading) return;
     loadData();
@@ -122,24 +147,59 @@ export default function EstimatorDashboard() {
 
   async function loadData() {
     setLoading(true);
-    const isAdmin = profile?.roles.includes("admin");
+    const adminCheck = profile?.roles.includes("admin");
     let budgetQuery = supabase
       .from("budgets")
       .select(
         "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context, version_number, version_group_id, is_current_version"
       )
       .order("created_at", { ascending: false });
-    if (!isAdmin) {
+    if (!adminCheck) {
       budgetQuery = budgetQuery.eq("estimator_owner_id", user!.id);
     }
-    const [budgetsRes, profilesRes] = await Promise.all([
+    const [budgetsRes, profilesRes, rolesRes] = await Promise.all([
       budgetQuery,
       supabase.from("profiles").select("id, full_name"),
+      adminCheck ? supabase.from("user_roles").select("user_id, role") : Promise.resolve({ data: [] }),
     ]);
 
     if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetRow[]);
     if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
+    if (rolesRes.data) setUserRoles(rolesRes.data as RoleRow[]);
     setLoading(false);
+  }
+
+  // Get users by role for assignment
+  const getUsersByRole = useCallback(
+    (role: "orcamentista" | "comercial") => {
+      const userIds = userRoles.filter((r) => r.role === role).map((r) => r.user_id);
+      return profiles.filter((p) => userIds.includes(p.id));
+    },
+    [profiles, userRoles]
+  );
+
+  async function handleAssign() {
+    if (!assignValue) return;
+    setAssigning(true);
+    const field = assignDialog.type === "estimator" ? "estimator_owner_id" : "commercial_owner_id";
+    const { error } = await supabase
+      .from("budgets")
+      .update({ [field]: assignValue, updated_at: new Date().toISOString() } as any)
+      .eq("id", assignDialog.budgetId);
+
+    if (error) {
+      toast.error("Erro ao atribuir responsável.");
+    } else {
+      setBudgets((prev) =>
+        prev.map((b) =>
+          b.id === assignDialog.budgetId ? { ...b, [field]: assignValue, updated_at: new Date().toISOString() } : b
+        )
+      );
+      const name = profiles.find((p) => p.id === assignValue)?.full_name ?? "";
+      toast.success(`${assignDialog.type === "estimator" ? "Orçamentista" : "Comercial"} atribuído: ${name}`);
+    }
+    setAssigning(false);
+    setAssignDialog({ open: false, budgetId: "", type: "estimator", currentValue: null });
   }
 
   const getProfileName = useCallback(
@@ -655,6 +715,25 @@ export default function EstimatorDashboard() {
                                   Mover p/ Entregue
                                 </DropdownMenuItem>
                               )}
+                              {isAdmin && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => {
+                                    setAssignValue(b.estimator_owner_id ?? "");
+                                    setAssignDialog({ open: true, budgetId: b.id, type: "estimator", currentValue: b.estimator_owner_id });
+                                  }}>
+                                    <UserCog className="h-4 w-4 mr-2" />
+                                    Atribuir orçamentista
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    setAssignValue(b.commercial_owner_id ?? "");
+                                    setAssignDialog({ open: true, budgetId: b.id, type: "commercial", currentValue: b.commercial_owner_id });
+                                  }}>
+                                    <Handshake className="h-4 w-4 mr-2" />
+                                    Atribuir comercial
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -669,6 +748,40 @@ export default function EstimatorDashboard() {
           </>
         )}
       </div>
+
+      {/* Assignment Dialog (admin only) */}
+      <Dialog open={assignDialog.open} onOpenChange={(open) => {
+        if (!open) setAssignDialog({ open: false, budgetId: "", type: "estimator", currentValue: null });
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {assignDialog.type === "estimator" ? "Atribuir Orçamentista" : "Atribuir Comercial"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Select value={assignValue} onValueChange={setAssignValue}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                {getUsersByRole(assignDialog.type === "estimator" ? "orcamentista" : "comercial").map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.full_name || p.id}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignDialog({ open: false, budgetId: "", type: "estimator", currentValue: null })}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAssign} disabled={!assignValue || assigning}>
+              {assigning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Atribuir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
