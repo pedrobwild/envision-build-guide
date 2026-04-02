@@ -49,7 +49,7 @@ export function SectionSummaryRow({
 
         {/* Section title */}
         <span className={cn("flex-1 font-body font-medium text-foreground text-left leading-snug", textSize)}>
-          {section.title}
+          {toSentenceCase(section.title)}
         </span>
 
         {/* Item count badge */}
