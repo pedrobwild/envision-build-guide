@@ -166,7 +166,7 @@ function drawTable(pdf: jsPDF, budget: BudgetData, startY: number): number {
 
     const sy = y + 5;
     pdf.text(String(sectionNum), M + COL_CODE - 2, sy, { align: "right" });
-    pdf.text(toSentenceCase(section.title), M + COL_CODE + 2, sy);
+    pdf.text(toTitleCase(section.title), M + COL_CODE + 2, sy);
     pdf.text(fmtBRL(subtotal), M + CW - 2, sy, { align: "right" });
 
     y += sectionRowH;
