@@ -30,18 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const currentUserIdRef = useRef<string | null>(null);
+  const authHydratedRef = useRef(false);
 
   useEffect(() => {
     let active = true;
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!active) return;
-
-      currentUserIdRef.current = session?.user?.id ?? null;
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     const {
       data: { subscription },
@@ -52,22 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const nextUserId = nextUser?.id ?? null;
       const sameUser = currentUserIdRef.current === nextUserId;
 
-      // Ignore token refreshes for the same user (tab focus)
-      if (event === "TOKEN_REFRESHED" && sameUser) {
-        setSession(nextSession);
-        setLoading(false);
-        return;
+      // Durante a hidratação inicial, ignore sessões transitórias nulas
+      if (!authHydratedRef.current) {
+        if (event === "INITIAL_SESSION") return;
+        if (!nextSession && currentUserIdRef.current) return;
       }
 
-      // Keep same user reference when identity hasn't changed
-      if (sameUser && event !== "SIGNED_OUT" && event !== "USER_UPDATED") {
-        setSession(nextSession);
-        setLoading(false);
-        return;
-      }
-
-      // Only clear user on explicit sign-out; otherwise keep current user
       if (event === "SIGNED_OUT") {
+        authHydratedRef.current = true;
         currentUserIdRef.current = null;
         setSession(null);
         setUser(null);
@@ -75,11 +59,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Ao voltar para a aba, refresh/restore da mesma sessão não deve provocar recarga visual
+      if (sameUser && event !== "USER_UPDATED") {
+        setSession(nextSession);
+        setLoading(false);
+        return;
+      }
+
+      // Ignora sessões nulas transitórias enquanto a sessão válida é restaurada
+      if (!nextSession && currentUserIdRef.current) {
+        return;
+      }
+
+      authHydratedRef.current = true;
       currentUserIdRef.current = nextUserId;
       setSession(nextSession);
       setUser(nextUser);
       setLoading(false);
     });
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (!active) return;
+
+        authHydratedRef.current = true;
+        currentUserIdRef.current = session?.user?.id ?? null;
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!active) return;
+
+        authHydratedRef.current = true;
+        currentUserIdRef.current = null;
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      });
 
     return () => {
       active = false;
