@@ -180,10 +180,12 @@ function CategorizedList({
   groups,
   displayedCategories,
   onDetailOpen,
+  forceExpandItems = false,
 }: {
   groups: CategorizedGroup[];
   displayedCategories: string[];
   onDetailOpen: (g: CategorizedGroup) => void;
+  forceExpandItems?: boolean;
 }) {
   return (
     <div className="space-y-0.5">
@@ -194,6 +196,7 @@ function CategorizedList({
             section={section}
             colorClass={group.category.colorClass}
             bgClass={group.category.bgClass}
+            forceExpanded={forceExpandItems}
           />
         ))
       )}
