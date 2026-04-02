@@ -148,6 +148,7 @@ interface ItemData {
   id: string;
   title: string;
   description?: string | null;
+  reference_url?: string | null;
   qty?: number | null;
   unit?: string | null;
   internal_unit_price?: number | null;
