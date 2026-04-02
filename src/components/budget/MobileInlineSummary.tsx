@@ -46,7 +46,7 @@ export function MobileInlineSummary({
 }: MobileInlineSummaryProps) {
   const [installments, setInstallments] = useState(10);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
+  
   const [contractOpen, setContractOpen] = useState(false);
   const totalCardRef = useRef<HTMLDivElement>(null);
 
