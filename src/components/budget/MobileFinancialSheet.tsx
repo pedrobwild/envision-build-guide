@@ -142,7 +142,6 @@ export function MobileFinancialSheet({
                   </p>
                   {categorizedGroups.flatMap((group) =>
                     group.sections.map((section) => {
-                      const { calculateSectionSubtotal } = require("@/lib/supabase-helpers");
                       const subtotal = calculateSectionSubtotal(section);
                       return (
                         <div
