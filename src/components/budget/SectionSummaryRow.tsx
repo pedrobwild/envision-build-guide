@@ -6,10 +6,10 @@ import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 import type { BudgetSection } from "@/types/budget";
 
-/** Convert "SOME TITLE" → "Some title" */
-function toSentenceCase(str: string): string {
+/** Convert "SOME TITLE HERE" → "Some Título Here" (capitalize each word) */
+function toTitleCase(str: string): string {
   if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  return str.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 }
 
 interface SectionSummaryRowProps {
@@ -54,16 +54,11 @@ export function SectionSummaryRow({
         <div className={cn("w-1 rounded-full flex-shrink-0", compact ? "h-4" : "h-6", bgClass)} />
 
         {/* Section title */}
+        {/* Section title */}
         <span className={cn("flex-1 font-body font-medium text-foreground text-left leading-snug", textSize)}>
-          {toSentenceCase(section.title)}
+          {toTitleCase(section.title)}
         </span>
 
-        {/* Item count badge */}
-        {hasItems && !forceExpanded && (
-          <span className="text-[10px] text-muted-foreground font-body tabular-nums flex-shrink-0">
-            {items.length}
-          </span>
-        )}
 
         {/* Chevron */}
         {hasItems && !forceExpanded && (

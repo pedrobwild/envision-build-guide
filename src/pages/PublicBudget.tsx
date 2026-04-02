@@ -309,9 +309,6 @@ export default function PublicBudget() {
                               <span className={cn("text-sm sm:text-base font-display font-bold tracking-tight", group.category.colorClass)}>
                                 {group.category.label}
                               </span>
-                              <span className="text-xs text-muted-foreground font-body">
-                                {allItems.length} {allItems.length === 1 ? 'item' : 'itens'}
-                              </span>
                             </div>
 
                             {/* Product grid (cards) or list (PDF export) */}

@@ -2,9 +2,9 @@ import jsPDF from "jspdf";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import type { BudgetData, BudgetSection } from "@/types/budget";
 
-function toSentenceCase(str: string): string {
+function toTitleCase(str: string): string {
   if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  return str.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 }
 
 const A4_W = 210;
@@ -166,7 +166,7 @@ function drawTable(pdf: jsPDF, budget: BudgetData, startY: number): number {
 
     const sy = y + 5;
     pdf.text(String(sectionNum), M + COL_CODE - 2, sy, { align: "right" });
-    pdf.text(toSentenceCase(section.title), M + COL_CODE + 2, sy);
+    pdf.text(toTitleCase(section.title), M + COL_CODE + 2, sy);
     pdf.text(fmtBRL(subtotal), M + CW - 2, sy, { align: "right" });
 
     y += sectionRowH;
