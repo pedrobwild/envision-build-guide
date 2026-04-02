@@ -65,8 +65,9 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
   const cfg: HeaderConfig = (budget.header_config as HeaderConfig) || {};
 
-  // Unified meta line: bairro · metragem · versão · data
-  const neighborhood = budget.bairro || budget.condominio || "";
+  // Unified meta line: condomínio · bairro · metragem · versão · data
+  const condominio = budget.condominio || "";
+  const neighborhood = budget.bairro || "";
   const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
   const area = rawArea ? `${rawArea}m²` : "";
   const versionNum = budget.versao ? budget.versao.replace(/^v/i, '') : (budget.version_number ?? "1");
