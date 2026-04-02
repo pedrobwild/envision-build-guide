@@ -611,8 +611,12 @@ export default function EstimatorDashboard() {
                               </span>
                             )}
                             <span className="flex items-center gap-1" title="Comercial responsável">
-                              <User className="h-3.5 w-3.5" />
+                              <Handshake className="h-3.5 w-3.5" />
                               {getProfileName(b.commercial_owner_id)}
+                            </span>
+                            <span className="flex items-center gap-1" title="Orçamentista responsável">
+                              <UserCog className="h-3.5 w-3.5" />
+                              {getProfileName(b.estimator_owner_id)}
                             </span>
                             {b.created_at && (
                               <span className="text-xs">
