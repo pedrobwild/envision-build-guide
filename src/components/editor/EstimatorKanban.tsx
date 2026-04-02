@@ -342,11 +342,18 @@ function EstimatorCard({
         </div>
       )}
 
-      {b.commercial_owner_id && (
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-body mb-1.5">
-          <span className="inline-flex items-center gap-0.5 bg-muted/60 rounded px-1.5 py-0.5" title="Comercial">
-            💼 {getProfileName(b.commercial_owner_id)}
-          </span>
+      {(b.commercial_owner_id || b.estimator_owner_id) && (
+        <div className="flex items-center gap-1 flex-wrap text-[10px] text-muted-foreground font-body mb-1.5">
+          {b.commercial_owner_id && (
+            <span className="inline-flex items-center gap-0.5 bg-muted/60 rounded px-1.5 py-0.5" title="Comercial">
+              💼 {getProfileName(b.commercial_owner_id)}
+            </span>
+          )}
+          {b.estimator_owner_id && (
+            <span className="inline-flex items-center gap-0.5 bg-muted/60 rounded px-1.5 py-0.5" title="Orçamentista">
+              📐 {getProfileName(b.estimator_owner_id)}
+            </span>
+          )}
         </div>
       )}
 
