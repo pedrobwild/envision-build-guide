@@ -251,11 +251,6 @@ export function MobileInlineSummary({
         )}
       </motion.div>
 
-      <CategoryDetailDialog
-        open={!!detailGroup}
-        onClose={() => setDetailGroup(null)}
-        group={detailGroup}
-      />
 
       <ContractRequestDialog
         open={contractOpen}

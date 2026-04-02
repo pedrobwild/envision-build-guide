@@ -256,12 +256,6 @@ export function MobileFinancialSheet({
         </VaulDrawer.Portal>
       </VaulDrawer.Root>
 
-      {/* Category detail dialog */}
-      <CategoryDetailDialog
-        open={!!detailGroup}
-        onClose={() => setDetailGroup(null)}
-        group={detailGroup}
-      />
 
       {/* Contract request dialog */}
       <ContractRequestDialog
