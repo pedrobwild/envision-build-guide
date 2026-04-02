@@ -6,10 +6,10 @@ import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 import type { BudgetSection } from "@/types/budget";
 
-/** Convert "SOME TITLE" → "Some title" */
-function toSentenceCase(str: string): string {
+/** Convert "SOME TITLE HERE" → "Some Título Here" (capitalize each word) */
+function toTitleCase(str: string): string {
   if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  return str.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 }
 
 interface SectionSummaryRowProps {
