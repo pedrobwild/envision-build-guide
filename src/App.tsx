@@ -48,11 +48,18 @@ function AdminPage({ children }: { children: React.ReactNode }) {
   );
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 2, // 2 min
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+    <AuthProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
