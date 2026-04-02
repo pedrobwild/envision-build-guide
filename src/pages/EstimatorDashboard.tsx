@@ -117,8 +117,10 @@ export default function EstimatorDashboard() {
 
   useEffect(() => {
     if (!user) return;
+    // Wait for profile to finish loading before deciding admin vs filtered query
+    if (!profile) return;
     loadData();
-  }, [user]);
+  }, [user, profile]);
 
   async function loadData() {
     setLoading(true);
