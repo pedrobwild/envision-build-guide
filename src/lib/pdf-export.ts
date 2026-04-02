@@ -110,8 +110,10 @@ function drawHeroHeader(pdf: jsPDF, budget: BudgetData, logoDataUrl: string | nu
   pdf.text(clientName, M, y);
   y += 7;
 
-  // Meta line: Área · Versão · Elaboração
+  // Meta line: Condomínio · Bairro · Área · Versão · Elaboração
   const parts: string[] = [];
+  if (budget.condominio) parts.push(`Condomínio  ${budget.condominio}`);
+  if (budget.bairro) parts.push(`Bairro  ${budget.bairro}`);
   const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, "").replace(/m²?$/i, "") : "";
   if (rawArea) parts.push(`Área  ${rawArea}m²`);
   const vNum = budget.versao ? budget.versao.replace(/^v/i, "") : String(budget.version_number ?? "1");

@@ -65,8 +65,9 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
   const cfg: HeaderConfig = (budget.header_config as HeaderConfig) || {};
 
-  // Unified meta line: bairro · metragem · versão · data
-  const neighborhood = budget.bairro || budget.condominio || "";
+  // Unified meta line: condomínio · bairro · metragem · versão · data
+  const condominio = budget.condominio || "";
+  const neighborhood = budget.bairro || "";
   const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
   const area = rawArea ? `${rawArea}m²` : "";
   const versionNum = budget.versao ? budget.versao.replace(/^v/i, '') : (budget.version_number ?? "1");
@@ -162,6 +163,12 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
               className="flex items-center gap-1.5 text-xs font-body flex-wrap"
             >
+              {condominio && (
+                <>
+                  <span className="text-white/95 font-medium">{condominio}</span>
+                  {(neighborhood || area || version) && <span className="text-white/40">·</span>}
+                </>
+              )}
               {neighborhood && (
                 <>
                   <span className="text-white/95 font-medium">{neighborhood}</span>
@@ -200,6 +207,13 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
                 {/* Labeled meta chips */}
                 <div className="flex items-center gap-2 text-sm font-body flex-wrap">
+                  {condominio && (
+                    <>
+                      <span className="text-white/70 text-xs">Condomínio</span>
+                      <span className="text-white/95 font-medium">{condominio}</span>
+                      {(neighborhood || area || version || dateStr) && <span className="text-white/40">·</span>}
+                    </>
+                  )}
                   {neighborhood && (
                     <>
                       <span className="text-white/70 text-xs">Bairro</span>
