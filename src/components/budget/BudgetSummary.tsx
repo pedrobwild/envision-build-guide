@@ -182,44 +182,16 @@ function CategorizedList({
   onDetailOpen: (g: CategorizedGroup) => void;
 }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       {groups.map((group) =>
-        group.sections.map((section) => {
-          const subtotal = calculateSectionSubtotal(section);
-          return (
-            <button
-              key={section.id}
-              onClick={() => {
-                document
-                  .getElementById(`section-${section.id}`)
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-              className={cn(
-                "w-full flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg",
-                "group transition-all duration-200",
-                "hover:bg-muted/50"
-              )}
-            >
-              {/* Color indicator */}
-              <div
-                className={cn(
-                  "w-1 h-6 rounded-full flex-shrink-0",
-                  group.category.bgClass
-                )}
-              />
-
-              {/* Section title */}
-              <span className="flex-1 text-sm font-body font-medium text-foreground text-left leading-snug">
-                {section.title}
-              </span>
-
-              {/* Value */}
-              <span className="text-sm font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
-                {formatBRL(subtotal)}
-              </span>
-            </button>
-          );
-        })
+        group.sections.map((section) => (
+          <SectionSummaryRow
+            key={section.id}
+            section={section}
+            colorClass={group.category.colorClass}
+            bgClass={group.category.bgClass}
+          />
+        ))
       )}
     </div>
   );
