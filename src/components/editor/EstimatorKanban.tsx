@@ -13,9 +13,9 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import {
   Inbox,
   Hammer,
-  PauseCircle,
   CheckCircle2,
   Send,
+  FileSignature,
   User,
   Building2,
   Calendar,
@@ -35,13 +35,13 @@ import {
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-/* ── Column definitions for estimator production workflow ── */
+/* ── 5 columns matching the user's funnel ── */
 const ESTIMATOR_COLUMNS = [
   {
     id: "pending",
     label: "Pendente",
     icon: Inbox,
-    statuses: ["requested", "novo", "triage", "assigned"] as string[],
+    statuses: ["requested", "novo", "triage", "assigned"],
     accent: "border-t-indigo-500",
     headerColor: "text-indigo-700 dark:text-indigo-400",
     bgColor: "bg-indigo-50/50 dark:bg-indigo-950/20",
@@ -52,7 +52,7 @@ const ESTIMATOR_COLUMNS = [
     id: "in_progress",
     label: "Em Elaboração",
     icon: Hammer,
-    statuses: ["in_progress"] as string[],
+    statuses: ["in_progress", "waiting_info", "blocked"],
     accent: "border-t-yellow-500",
     headerColor: "text-yellow-700 dark:text-yellow-400",
     bgColor: "bg-yellow-50/50 dark:bg-yellow-950/20",
@@ -60,21 +60,10 @@ const ESTIMATOR_COLUMNS = [
     locked: false,
   },
   {
-    id: "blocked",
-    label: "Aguardando",
-    icon: PauseCircle,
-    statuses: ["waiting_info", "blocked"] as string[],
-    accent: "border-t-amber-500",
-    headerColor: "text-amber-700 dark:text-amber-400",
-    bgColor: "bg-amber-50/50 dark:bg-amber-950/20",
-    targetStatus: "waiting_info" as InternalStatus,
-    locked: false,
-  },
-  {
     id: "review",
     label: "Em Revisão",
     icon: CheckCircle2,
-    statuses: ["ready_for_review"] as string[],
+    statuses: ["ready_for_review"],
     accent: "border-t-orange-500",
     headerColor: "text-orange-700 dark:text-orange-400",
     bgColor: "bg-orange-50/50 dark:bg-orange-950/20",
@@ -85,14 +74,25 @@ const ESTIMATOR_COLUMNS = [
     id: "delivered",
     label: "Entregue",
     icon: Send,
-    statuses: ["delivered_to_sales", "sent_to_client", "minuta_solicitada", "approved", "contrato_fechado", "lost", "archived"] as string[],
+    statuses: ["delivered_to_sales", "sent_to_client", "minuta_solicitada"],
+    accent: "border-t-teal-500",
+    headerColor: "text-teal-700 dark:text-teal-400",
+    bgColor: "bg-teal-50/50 dark:bg-teal-950/20",
+    targetStatus: "delivered_to_sales" as InternalStatus,
+    locked: true, // estimator shouldn't drag into post-production
+  },
+  {
+    id: "closed",
+    label: "Finalizado",
+    icon: FileSignature,
+    statuses: ["contrato_fechado", "approved", "lost", "archived"],
     accent: "border-t-green-500",
     headerColor: "text-green-700 dark:text-green-400",
     bgColor: "bg-green-50/50 dark:bg-green-950/20",
     targetStatus: null,
-    locked: true, // estimator can't drag into post-delivery
+    locked: true,
   },
-] as const;
+];
 
 /* ── Types ── */
 interface BudgetRow {
@@ -181,7 +181,7 @@ function Column({
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
 }) {
-  const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: !!column.locked });
+  const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
   const sorted = sortBudgets(budgets);
   const overdueCount = budgets.filter((b) => {
@@ -192,7 +192,7 @@ function Column({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col min-w-[240px] w-[240px] lg:w-auto lg:flex-1 rounded-xl border border-border border-t-4 ${column.accent} ${column.bgColor} transition-shadow ${
+      className={`flex flex-col min-w-[220px] w-[220px] lg:w-auto lg:flex-1 rounded-xl border border-border border-t-4 ${column.accent} ${column.bgColor} transition-shadow ${
         isOver && !column.locked ? "ring-2 ring-primary shadow-lg" : ""
       }`}
     >
@@ -233,7 +233,7 @@ function Column({
                 )}
                 <DraggableCard
                   budget={b}
-                  locked={!!column.locked}
+                  locked={column.locked}
                   onClick={() => onCardClick(b.id)}
                   getProfileName={getProfileName}
                 />
@@ -333,7 +333,7 @@ function EstimatorCard({
         </div>
       )}
 
-      {/* Sub-status badge when column groups multiple statuses */}
+      {/* Sub-status badge */}
       {statusMeta && (
         <div className="mb-1.5">
           <Badge variant="secondary" className={`text-[10px] font-body ${statusMeta.color}`}>
@@ -342,7 +342,6 @@ function EstimatorCard({
         </div>
       )}
 
-      {/* Commercial owner */}
       {b.commercial_owner_id && (
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-body mb-1.5">
           <span className="inline-flex items-center gap-0.5 bg-muted/60 rounded px-1.5 py-0.5" title="Comercial">
@@ -419,7 +418,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
 
       <DragOverlay>
         {activeBudget && (
-          <div className="w-[240px]">
+          <div className="w-[220px]">
             <EstimatorCard budget={activeBudget} isDragging locked={false} onClick={() => {}} getProfileName={getProfileName} />
           </div>
         )}
