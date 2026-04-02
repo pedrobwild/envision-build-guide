@@ -22,6 +22,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Search,
   Calendar,
   User,
@@ -43,6 +50,8 @@ import {
   Kanban,
   Send,
   FileSignature,
+  UserCog,
+  Handshake,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
