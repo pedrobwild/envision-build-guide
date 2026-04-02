@@ -39,6 +39,8 @@ import {
   ArrowUpDown,
   Flame,
   GitCompare,
+  LayoutList,
+  Kanban,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
