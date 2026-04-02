@@ -103,6 +103,7 @@ export function BudgetSummary({
               groups={categorizedGroups}
               displayedCategories={DISPLAYED_CATEGORIES}
               onDetailOpen={setDetailGroup}
+              forceExpandItems={forceExpandItems}
             />
           ) : (
             <FlatSectionList
