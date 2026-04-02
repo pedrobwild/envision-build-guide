@@ -122,6 +122,8 @@ export default function BudgetEditor() {
     const { data } = await supabase.from('items').insert({
       section_id: sectionId,
       title: '',
+      description: null,
+      reference_url: null,
       order_index: (section?.items || []).length,
     }).select().single();
     if (data) {
