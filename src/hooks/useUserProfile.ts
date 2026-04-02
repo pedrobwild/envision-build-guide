@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { AppRole } from "@/lib/role-constants";
@@ -13,24 +13,31 @@ export interface UserProfile {
 /**
  * Fetches (and auto-creates) the current user's profile + roles.
  * Re-runs whenever the auth user changes.
+ * Does NOT flash loading on tab-focus token refreshes.
  */
 export function useUserProfile() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const prevUserId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) {
       setProfile(null);
       setLoading(false);
+      prevUserId.current = null;
       return;
+    }
+
+    // If we already loaded for this same user, skip the loading flash
+    const isNewUser = prevUserId.current !== user.id;
+    if (isNewUser) {
+      setLoading(true);
     }
 
     let cancelled = false;
 
     async function load() {
-      setLoading(true);
-
       // 1. Ensure profile exists (upsert)
       const { data: prof } = await supabase
         .from("profiles")
@@ -52,6 +59,8 @@ export function useUserProfile() {
         .eq("user_id", user!.id);
 
       if (cancelled) return;
+
+      prevUserId.current = user!.id;
 
       setProfile({
         id: user!.id,
