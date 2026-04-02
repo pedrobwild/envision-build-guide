@@ -1,0 +1,1 @@
+ALTER TABLE public.items ADD COLUMN reference_url text DEFAULT NULL;

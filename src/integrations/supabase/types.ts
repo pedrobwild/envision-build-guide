@@ -627,6 +627,7 @@ export type Database = {
           internal_unit_price: number | null
           order_index: number
           qty: number | null
+          reference_url: string | null
           section_id: string
           title: string
           unit: string | null
@@ -644,6 +645,7 @@ export type Database = {
           internal_unit_price?: number | null
           order_index?: number
           qty?: number | null
+          reference_url?: string | null
           section_id: string
           title?: string
           unit?: string | null
@@ -661,6 +663,7 @@ export type Database = {
           internal_unit_price?: number | null
           order_index?: number
           qty?: number | null
+          reference_url?: string | null
           section_id?: string
           title?: string
           unit?: string | null
