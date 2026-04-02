@@ -6,10 +6,15 @@ import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 import type { BudgetSection } from "@/types/budget";
 
-/** Convert "SOME TITLE HERE" → "Some Título Here" (capitalize each word) */
+const LOWERCASE_WORDS = new Set(["e", "de", "do", "da", "dos", "das", "em", "no", "na", "nos", "nas", "com", "por", "para", "ao", "aos"]);
+
 function toTitleCase(str: string): string {
   if (!str) return str;
-  return str.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+  return str
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word, i) => (i > 0 && LOWERCASE_WORDS.has(word)) ? word : word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 interface SectionSummaryRowProps {
