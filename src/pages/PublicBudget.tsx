@@ -421,6 +421,7 @@ export default function PublicBudget() {
                 budgetId={budget.id}
                 editable={isAdmin}
                 allCategoriesOpenSheet={["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "")}
+                forceExpandItems={exporting}
               />
               {(budget as any).show_optional_items && (
                 <OptionalItemsSimulator
