@@ -323,6 +323,16 @@ export default function EstimatorDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
+        {/* Full-page loading state */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground font-body">Carregando demandas...</p>
+          </div>
+        )}
+
+        {!loading && (
+          <>
         {/* Production Funnel */}
         <ProductionFunnel
           budgets={budgets}
