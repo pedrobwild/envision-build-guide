@@ -6,6 +6,12 @@ import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 import type { BudgetSection } from "@/types/budget";
 
+/** Convert "SOME TITLE" → "Some title" */
+function toSentenceCase(str: string): string {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
 interface SectionSummaryRowProps {
   section: BudgetSection;
   colorClass: string;
