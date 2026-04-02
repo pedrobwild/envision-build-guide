@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,7 +20,6 @@ import {
   Loader2,
   User,
   Building2,
-  MapPin,
   FileText,
   Calendar,
   AlertTriangle,
@@ -30,7 +29,7 @@ import {
   CheckCircle2,
   UserCheck,
 } from "lucide-react";
-import { PRIORITIES, PROPERTY_TYPES, type Priority } from "@/lib/role-constants";
+import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 
 export default function NewBudgetRequest() {
@@ -45,11 +44,12 @@ export default function NewBudgetRequest() {
 
   // Form state
   const [clientName, setClientName] = useState("");
-  const [projectName, setProjectName] = useState("");
-  const [propertyType, setPropertyType] = useState("");
-  const [city, setCity] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [condominio, setCondominio] = useState("");
   const [bairro, setBairro] = useState("");
-  const [metragem, setMetragem] = useState("");
+  const [metargemRaw, setMetragemRaw] = useState("");
+  const [locationType, setLocationType] = useState("");
   const [demandContext, setDemandContext] = useState("");
   const [briefing, setBriefing] = useState("");
   const [dueAt, setDueAt] = useState("");
@@ -60,12 +60,27 @@ export default function NewBudgetRequest() {
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
   const [hubspotDealUrl, setHubspotDealUrl] = useState("");
 
+  // Auto-generated project name
+  const projectName = useMemo(() => {
+    const parts = [
+      clientName.trim(),
+      condominio.trim(),
+      metargemRaw.trim() ? `${metargemRaw.trim()}m²` : "",
+    ].filter(Boolean);
+    return parts.join(" - ") || "";
+  }, [clientName, condominio, metargemRaw]);
+
+  // Handle metragem input — only allow numbers
+  const handleMetragemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/[^0-9.,]/g, "");
+    setMetragemRaw(val);
+  };
+
   // Round-robin: determine next estimator based on last assignment
   useEffect(() => {
     if (orcamentistas.length === 0) return;
 
     async function findNextEstimator() {
-      // Get the most recently created budget that has an estimator assigned
       const { data } = await supabase
         .from("budgets")
         .select("estimator_owner_id")
@@ -76,13 +91,11 @@ export default function NewBudgetRequest() {
       const lastEstimatorId = data?.[0]?.estimator_owner_id;
 
       if (!lastEstimatorId) {
-        // No previous assignment, pick the first
         setNextEstimatorId(orcamentistas[0].id);
         setEstimatorOwnerId(orcamentistas[0].id);
         return;
       }
 
-      // Find the index of the last assigned estimator
       const lastIdx = orcamentistas.findIndex((m) => m.id === lastEstimatorId);
       const nextIdx = (lastIdx + 1) % orcamentistas.length;
       setNextEstimatorId(orcamentistas[nextIdx].id);
@@ -102,22 +115,25 @@ export default function NewBudgetRequest() {
     e.preventDefault();
     if (!user) return;
 
-    if (!clientName.trim() || !projectName.trim()) {
-      toast.error("Preencha ao menos o nome do cliente e do projeto.");
+    if (!clientName.trim()) {
+      toast.error("Preencha ao menos o nome do cliente.");
       return;
     }
 
     setLoading(true);
 
     const links = referenceLinks.filter((l) => l.trim().length > 0);
+    const metragemFormatted = metargemRaw.trim() ? `${metargemRaw.trim()}m²` : null;
 
     const { error } = await supabase.from("budgets").insert({
       client_name: clientName.trim(),
-      project_name: projectName.trim(),
-      property_type: propertyType || null,
-      city: city.trim() || null,
+      project_name: projectName || clientName.trim(),
+      lead_email: clientEmail.trim() || null,
+      client_phone: clientPhone.trim() || null,
+      condominio: condominio.trim() || null,
       bairro: bairro.trim() || null,
-      metragem: metragem.trim() || null,
+      metragem: metragemFormatted,
+      location_type: locationType || null,
       demand_context: demandContext.trim() || null,
       briefing: briefing.trim() || null,
       due_at: dueAt || null,
@@ -173,7 +189,7 @@ export default function NewBudgetRequest() {
         onSubmit={handleSubmit}
         className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6"
       >
-        {/* Client & Project */}
+        {/* Client */}
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="text-base font-display flex items-center gap-2">
@@ -181,8 +197,8 @@ export default function NewBudgetRequest() {
               Cliente e Projeto
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5 md:col-span-1">
               <Label htmlFor="client_name" className="font-body text-sm">
                 Nome do cliente <span className="text-destructive">*</span>
               </Label>
@@ -196,21 +212,43 @@ export default function NewBudgetRequest() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="project_name" className="font-body text-sm">
-                Nome do projeto / imóvel{" "}
-                <span className="text-destructive">*</span>
+              <Label htmlFor="client_email" className="font-body text-sm">
+                E-mail
               </Label>
               <Input
-                id="project_name"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                placeholder="Ex: Apto 82 - Ed. Aurora"
+                id="client_email"
+                type="email"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+                placeholder="cliente@email.com"
                 maxLength={255}
-                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="client_phone" className="font-body text-sm">
+                Telefone
+              </Label>
+              <Input
+                id="client_phone"
+                type="tel"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                placeholder="(11) 99999-9999"
+                maxLength={20}
               />
             </div>
           </CardContent>
         </Card>
+
+        {/* Auto-generated project name preview */}
+        {projectName && (
+          <div className="px-1">
+            <p className="text-xs text-muted-foreground font-body">
+              Nome do projeto (gerado automaticamente):{" "}
+              <span className="font-medium text-foreground">{projectName}</span>
+            </p>
+          </div>
+        )}
 
         {/* Property details */}
         <Card>
@@ -220,31 +258,14 @@ export default function NewBudgetRequest() {
               Detalhes do Imóvel
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="font-body text-sm">Tipo de imóvel</Label>
-              <Select value={propertyType} onValueChange={setPropertyType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROPERTY_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" /> Cidade
-              </Label>
+              <Label className="font-body text-sm">Condomínio</Label>
               <Input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="São Paulo"
-                maxLength={100}
+                value={condominio}
+                onChange={(e) => setCondominio(e.target.value)}
+                placeholder="Ex: Ed. Aurora"
+                maxLength={255}
               />
             </div>
             <div className="space-y-1.5">
@@ -258,12 +279,35 @@ export default function NewBudgetRequest() {
             </div>
             <div className="space-y-1.5">
               <Label className="font-body text-sm">Metragem</Label>
-              <Input
-                value={metragem}
-                onChange={(e) => setMetragem(e.target.value)}
-                placeholder="82m²"
-                maxLength={20}
-              />
+              <div className="relative">
+                <Input
+                  value={metargemRaw}
+                  onChange={handleMetragemChange}
+                  placeholder="82"
+                  maxLength={10}
+                  className="pr-10"
+                />
+                {metargemRaw && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                    m²
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-body text-sm">Tipo de locação</Label>
+              <Select value={locationType} onValueChange={setLocationType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LOCATION_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
