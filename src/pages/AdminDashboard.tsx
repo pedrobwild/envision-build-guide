@@ -241,7 +241,7 @@ export default function AdminDashboard() {
     const published = budgets.filter((b) => b.status === "published").length;
     const drafts = budgets.filter((b) => b.status === "draft").length;
     const closed = budgets.filter((b) => b.status === "contrato_fechado").length;
-    const inProgress = budgets.filter((b) => b.internal_status === "in_progress").length;
+    const inProgress = budgets.filter((b) => ["requested", "novo", "triage", "assigned", "in_progress", "waiting_info", "blocked", "ready_for_review"].includes(b.internal_status)).length;
     const totalValue = budgets.reduce((sum, b) => sum + getBudgetTotal(b), 0);
     return { total, published, drafts, closed, inProgress, totalValue };
   }, [budgets]);
