@@ -207,6 +207,13 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
                 {/* Labeled meta chips */}
                 <div className="flex items-center gap-2 text-sm font-body flex-wrap">
+                  {condominio && (
+                    <>
+                      <span className="text-white/70 text-xs">Condomínio</span>
+                      <span className="text-white/95 font-medium">{condominio}</span>
+                      {(neighborhood || area || version || dateStr) && <span className="text-white/40">·</span>}
+                    </>
+                  )}
                   {neighborhood && (
                     <>
                       <span className="text-white/70 text-xs">Bairro</span>
