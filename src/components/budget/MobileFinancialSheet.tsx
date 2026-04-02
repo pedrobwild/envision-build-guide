@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { SectionSummaryRow } from "./SectionSummaryRow";
 import { Drawer as VaulDrawer } from "vaul";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -141,28 +141,15 @@ export function MobileFinancialSheet({
                     Composição do investimento
                   </p>
                   {categorizedGroups.flatMap((group) =>
-                    group.sections.map((section) => {
-                      const subtotal = calculateSectionSubtotal(section);
-                      return (
-                        <div
-                          key={section.id}
-                          className="w-full flex items-center gap-2.5 py-2.5 px-1.5 rounded-lg min-h-[44px]"
-                        >
-                          <div
-                            className={cn(
-                              "w-1 h-4 rounded-full flex-shrink-0",
-                              group.category.bgClass
-                            )}
-                          />
-                          <span className="flex-1 text-[13px] font-body text-foreground leading-snug text-left">
-                            {section.title}
-                          </span>
-                          <span className="text-[13px] font-mono tabular-nums font-semibold text-foreground whitespace-nowrap">
-                            {formatBRL(subtotal)}
-                          </span>
-                        </div>
-                      );
-                    })
+                    group.sections.map((section) => (
+                      <SectionSummaryRow
+                        key={section.id}
+                        section={section}
+                        colorClass={group.category.colorClass}
+                        bgClass={group.category.bgClass}
+                        compact
+                      />
+                    ))
                   )}
                 </div>
               )}
