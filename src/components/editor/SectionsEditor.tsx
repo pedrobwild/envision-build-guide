@@ -281,6 +281,16 @@ function SortableItemRow({
             placeholder="Descrição (opcional)"
             className="w-full px-2.5 py-1.5 rounded-md border border-border/60 bg-background text-foreground text-xs font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 ml-7"
           />
+          <div className="flex items-center gap-1.5 ml-7">
+            <LinkIcon className="h-3 w-3 text-muted-foreground shrink-0" />
+            <input
+              type="url"
+              value={item.reference_url || ""}
+              onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
+              placeholder="Link de referência (interno)"
+              className="w-full px-2.5 py-1.5 rounded-md border border-border/60 bg-background text-foreground text-xs font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
         </div>
         {/* Qty */}
         <div className="sm:col-span-2 space-y-1">
