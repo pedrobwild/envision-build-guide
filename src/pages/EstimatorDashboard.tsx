@@ -52,6 +52,7 @@ import { ProductionFunnel } from "@/components/editor/ProductionFunnel";
 import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { EstimatorKanban } from "@/components/editor/EstimatorKanban";
 
 // Statuses relevant for the estimator's active queue
 const ESTIMATOR_ACTIVE_STATUSES: InternalStatus[] = [
