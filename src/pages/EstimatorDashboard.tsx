@@ -41,6 +41,8 @@ import {
   GitCompare,
   LayoutList,
   Kanban,
+  Send,
+  FileSignature,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -169,23 +171,29 @@ export default function EstimatorDashboard() {
     };
   };
 
-  // Summary counts
+  // Summary counts aligned with the 5 funnel stages
+  const PENDING_STATUSES = ["requested", "novo", "triage", "assigned"];
+  const IN_PROGRESS_STATUSES = ["in_progress", "waiting_info", "blocked"];
+  const REVIEW_STATUSES = ["ready_for_review"];
+  const DELIVERED_STATUSES = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
+  const FINISHED_STATUSES = ["contrato_fechado", "approved", "lost", "archived"];
+
   const counts = useMemo(() => {
-    const now = new Date();
     return {
       total: budgets.length,
       overdue: budgets.filter(
         (b) => b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) &&
-          ESTIMATOR_ACTIVE_STATUSES.includes(b.internal_status as InternalStatus)
+          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES, ...REVIEW_STATUSES].includes(b.internal_status)
       ).length,
       dueToday: budgets.filter(
         (b) => b.due_at && isToday(new Date(b.due_at)) &&
-          ESTIMATOR_ACTIVE_STATUSES.includes(b.internal_status as InternalStatus)
+          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES, ...REVIEW_STATUSES].includes(b.internal_status)
       ).length,
-      inProgress: budgets.filter((b) => b.internal_status === "in_progress").length,
-      waitingInfo: budgets.filter((b) => b.internal_status === "waiting_info").length,
-      readyForReview: budgets.filter((b) => b.internal_status === "ready_for_review").length,
-      assigned: budgets.filter((b) => b.internal_status === "assigned").length,
+      pending: budgets.filter((b) => PENDING_STATUSES.includes(b.internal_status)).length,
+      inProgress: budgets.filter((b) => IN_PROGRESS_STATUSES.includes(b.internal_status)).length,
+      review: budgets.filter((b) => REVIEW_STATUSES.includes(b.internal_status)).length,
+      delivered: budgets.filter((b) => DELIVERED_STATUSES.includes(b.internal_status)).length,
+      finished: budgets.filter((b) => FINISHED_STATUSES.includes(b.internal_status)).length,
     };
   }, [budgets]);
 
@@ -319,13 +327,13 @@ export default function EstimatorDashboard() {
         />
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
           <SummaryCard
             label="Atrasadas"
             count={counts.overdue}
             icon={<AlertTriangle className="h-4 w-4" />}
             accent="text-destructive"
-            onClick={() => { setStatusFilter("all"); }}
+            onClick={() => setStatusFilter("all")}
           />
           <SummaryCard
             label="Vence hoje"
@@ -334,32 +342,39 @@ export default function EstimatorDashboard() {
             accent="text-warning"
           />
           <SummaryCard
-            label="Atribuídos"
-            count={counts.assigned}
-            icon={<User className="h-4 w-4" />}
+            label="Pendente"
+            count={counts.pending}
+            icon={<Inbox className="h-4 w-4" />}
             accent="text-indigo-600"
             onClick={() => setStatusFilter("assigned")}
           />
           <SummaryCard
-            label="Em Produção"
+            label="Em Elaboração"
             count={counts.inProgress}
             icon={<Clock className="h-4 w-4" />}
             accent="text-yellow-600"
             onClick={() => setStatusFilter("in_progress")}
           />
           <SummaryCard
-            label="Aguardando Info"
-            count={counts.waitingInfo}
-            icon={<PauseCircle className="h-4 w-4" />}
-            accent="text-amber-600"
-            onClick={() => setStatusFilter("waiting_info")}
-          />
-          <SummaryCard
-            label="Revisão"
-            count={counts.readyForReview}
+            label="Em Revisão"
+            count={counts.review}
             icon={<CheckCircle2 className="h-4 w-4" />}
             accent="text-orange-600"
             onClick={() => setStatusFilter("ready_for_review")}
+          />
+          <SummaryCard
+            label="Entregue"
+            count={counts.delivered}
+            icon={<Send className="h-4 w-4" />}
+            accent="text-teal-600"
+            onClick={() => setStatusFilter("delivered_to_sales")}
+          />
+          <SummaryCard
+            label="Finalizado"
+            count={counts.finished}
+            icon={<FileSignature className="h-4 w-4" />}
+            accent="text-green-600"
+            onClick={() => setStatusFilter("approved")}
           />
         </div>
 
