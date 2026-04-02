@@ -207,6 +207,7 @@ export type Database = {
           change_reason: string | null
           city: string | null
           client_name: string
+          client_phone: string | null
           closed_at: string | null
           commercial_owner_id: string | null
           condominio: string | null
@@ -233,6 +234,7 @@ export type Database = {
           last_viewed_at: string | null
           lead_email: string | null
           lead_name: string | null
+          location_type: string | null
           metragem: string | null
           notes: string | null
           parent_budget_id: string | null
@@ -264,6 +266,7 @@ export type Database = {
           change_reason?: string | null
           city?: string | null
           client_name?: string
+          client_phone?: string | null
           closed_at?: string | null
           commercial_owner_id?: string | null
           condominio?: string | null
@@ -290,6 +293,7 @@ export type Database = {
           last_viewed_at?: string | null
           lead_email?: string | null
           lead_name?: string | null
+          location_type?: string | null
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
@@ -321,6 +325,7 @@ export type Database = {
           change_reason?: string | null
           city?: string | null
           client_name?: string
+          client_phone?: string | null
           closed_at?: string | null
           commercial_owner_id?: string | null
           condominio?: string | null
@@ -347,6 +352,7 @@ export type Database = {
           last_viewed_at?: string | null
           lead_email?: string | null
           lead_name?: string | null
+          location_type?: string | null
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null

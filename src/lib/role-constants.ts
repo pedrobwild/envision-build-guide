@@ -44,3 +44,10 @@ export const PROPERTY_TYPES = [
   'Sala Comercial',
   'Outro',
 ] as const;
+
+export const LOCATION_TYPES = [
+  'Short Stay',
+  'Long Stay',
+  'Moradia Própria',
+  'Ainda está decidindo',
+] as const;
