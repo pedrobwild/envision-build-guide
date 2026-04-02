@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminLayout } from "@/components/AdminLayout";
+import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 import logoDark from "@/assets/logo-bwild-dark.png";
 
 const Login = lazy(() => import("./pages/Login"));
@@ -60,40 +61,43 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
-            <Route path="/admin/budget/:budgetId" element={<AdminPage><BudgetEditorV2 /></AdminPage>} />
-            <Route path="/admin/budget/:budgetId/legacy" element={<AdminPage><BudgetEditor /></AdminPage>} />
-            <Route path="/admin/financeiro" element={<AdminPage><FinancialHistory /></AdminPage>} />
-            <Route path="/admin/solicitacoes" element={<AdminPage><BudgetRequestsList /></AdminPage>} />
-            <Route path="/admin/solicitacoes/nova" element={<AdminPage><NewBudgetRequest /></AdminPage>} />
-            <Route path="/admin/producao" element={<AdminPage><EstimatorDashboard /></AdminPage>} />
-            <Route path="/admin/comercial" element={<AdminPage><CommercialDashboard /></AdminPage>} />
-            <Route path="/admin/operacoes" element={<AdminPage><AdminOperationsDashboard /></AdminPage>} />
-            <Route path="/admin/usuarios" element={<AdminPage><UserManagement /></AdminPage>} />
-            <Route path="/admin/demanda/:budgetId" element={<AdminPage><BudgetInternalDetail /></AdminPage>} />
-            <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
-            <Route path="/admin/catalogo" element={<AdminPage><CatalogPage /></AdminPage>} />
-            <Route path="/admin/sistema" element={<AdminPage><SystemToolsPage /></AdminPage>} />
-            <Route path="/admin/biblioteca-fotos" element={<AdminPage><PhotoLibraryUpload /></AdminPage>} />
-            <Route path="/o/:publicId" element={<PublicBudget />} />
-            <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
-            <Route path="/qa" element={<AdminPage><QAEvaluator /></AdminPage>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ChunkErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
+                <Route path="/admin/budget/:budgetId" element={<AdminPage><BudgetEditorV2 /></AdminPage>} />
+                <Route path="/admin/budget/:budgetId/legacy" element={<AdminPage><BudgetEditor /></AdminPage>} />
+                <Route path="/admin/financeiro" element={<AdminPage><FinancialHistory /></AdminPage>} />
+                <Route path="/admin/solicitacoes" element={<AdminPage><BudgetRequestsList /></AdminPage>} />
+                <Route path="/admin/solicitacoes/nova" element={<AdminPage><NewBudgetRequest /></AdminPage>} />
+                <Route path="/admin/producao" element={<AdminPage><EstimatorDashboard /></AdminPage>} />
+                <Route path="/admin/comercial" element={<AdminPage><CommercialDashboard /></AdminPage>} />
+                <Route path="/admin/operacoes" element={<AdminPage><AdminOperationsDashboard /></AdminPage>} />
+                <Route path="/admin/usuarios" element={<AdminPage><UserManagement /></AdminPage>} />
+                <Route path="/admin/demanda/:budgetId" element={<AdminPage><BudgetInternalDetail /></AdminPage>} />
+                <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
+                <Route path="/admin/catalogo" element={<AdminPage><CatalogPage /></AdminPage>} />
+                <Route path="/admin/sistema" element={<AdminPage><SystemToolsPage /></AdminPage>} />
+                <Route path="/admin/biblioteca-fotos" element={<AdminPage><PhotoLibraryUpload /></AdminPage>} />
+                <Route path="/o/:publicId" element={<PublicBudget />} />
+                <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
+                <Route path="/qa" element={<AdminPage><QAEvaluator /></AdminPage>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </ChunkErrorBoundary>
+        </BrowserRouter>
+      </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
 
 export default App;
+
