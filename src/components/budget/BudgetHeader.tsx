@@ -163,6 +163,12 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
               className="flex items-center gap-1.5 text-xs font-body flex-wrap"
             >
+              {condominio && (
+                <>
+                  <span className="text-white/95 font-medium">{condominio}</span>
+                  {(neighborhood || area || version) && <span className="text-white/40">·</span>}
+                </>
+              )}
               {neighborhood && (
                 <>
                   <span className="text-white/95 font-medium">{neighborhood}</span>
