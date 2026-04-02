@@ -104,7 +104,7 @@ interface ProfileRow {
 export default function EstimatorDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useUserProfile();
+  const { profile, loading: profileLoading } = useUserProfile();
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,11 +116,9 @@ export default function EstimatorDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
   useEffect(() => {
-    if (!user) return;
-    // Wait for profile to finish loading before deciding admin vs filtered query
-    if (!profile) return;
+    if (!user || profileLoading) return;
     loadData();
-  }, [user, profile]);
+  }, [user, profileLoading]);
 
   async function loadData() {
     setLoading(true);
