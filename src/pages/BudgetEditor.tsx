@@ -77,6 +77,7 @@ export default function BudgetEditor() {
         await supabase.from('items').update({
           title: item.title,
           description: item.description,
+          reference_url: item.reference_url,
           qty: item.qty,
           unit: item.unit,
           internal_unit_price: item.internal_unit_price,
