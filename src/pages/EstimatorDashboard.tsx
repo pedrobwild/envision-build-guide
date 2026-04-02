@@ -715,6 +715,25 @@ export default function EstimatorDashboard() {
                                   Mover p/ Entregue
                                 </DropdownMenuItem>
                               )}
+                              {isAdmin && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => {
+                                    setAssignValue(b.estimator_owner_id ?? "");
+                                    setAssignDialog({ open: true, budgetId: b.id, type: "estimator", currentValue: b.estimator_owner_id });
+                                  }}>
+                                    <UserCog className="h-4 w-4 mr-2" />
+                                    Atribuir orçamentista
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                    setAssignValue(b.commercial_owner_id ?? "");
+                                    setAssignDialog({ open: true, budgetId: b.id, type: "commercial", currentValue: b.commercial_owner_id });
+                                  }}>
+                                    <Handshake className="h-4 w-4 mr-2" />
+                                    Atribuir comercial
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
