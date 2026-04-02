@@ -46,6 +46,7 @@ import {
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
+import { ProductionFunnel } from "@/components/editor/ProductionFunnel";
 import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -279,6 +280,19 @@ export default function EstimatorDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
+        {/* Production Funnel */}
+        <ProductionFunnel
+          budgets={budgets}
+          onStageClick={(statuses) => {
+            // If a single status matches a filter option, use it; otherwise show all
+            if (statuses.length === 1) {
+              setStatusFilter(statuses[0]);
+            } else {
+              setStatusFilter("all");
+            }
+          }}
+        />
+
         {/* Summary cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <SummaryCard
