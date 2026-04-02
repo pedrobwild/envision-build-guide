@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
-import type { BudgetData, BudgetSection, BudgetAdjustment } from "@/types/budget";
+import type { BudgetData, BudgetSection } from "@/types/budget";
 
 const A4_W = 210;
 const A4_H = 297;
@@ -11,85 +11,128 @@ function fmtBRL(v: number) {
   return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function sanitizeClientName(value: string): string {
+  return value
+    .replace(/\d{3}\.?\d{3}\.?\d{3}[-.]?\d{2}/g, "")
+    .replace(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}[-.]?\d{2}/g, "")
+    .replace(/\b\d{11,14}\b/g, "")
+    .replace(/\b(?:n[ºo°]\s*)?\d{5,}\b/gi, "")
+    .replace(/^\s*(?:nome\s+do\s+)?cliente\s*[:\-–]?\s*/i, "")
+    .replace(/^\s*(?:orçamento|orcamento|proposta)\s*(?:n[ºo°]\s*\d+)?\s*(?:para|de)?\s*/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function formatName(str: string): string {
+  return str.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+}
+
+async function loadLogoAsDataUrl(): Promise<string | null> {
+  try {
+    const mod = await import("@/assets/logo-bwild-white.png");
+    const url = mod.default as string;
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Export budget as a clean table-based PDF.
- * Hero header at top, then a table: Código | Item | Descrição | Qtd. | R$ Total
- * Section rows show number + title + subtotal.
- * Item rows show sub-number + title + description + qty (no price).
+ * Export budget as a clean table-based PDF with dark hero header.
  */
 export async function exportBudgetPdf(_elementId: string, filename: string, budget?: BudgetData) {
   if (!budget) throw new Error("Budget data is required for PDF export");
 
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const logoDataUrl = await loadLogoAsDataUrl();
 
-  // ── Hero Header ──
-  let y = drawHeroHeader(pdf, budget);
-
-  // ── Table ──
+  let y = drawHeroHeader(pdf, budget, logoDataUrl);
   y = drawTable(pdf, budget, y);
-
-  // ── Adjustments + Total ──
   y = drawFooter(pdf, budget, y);
 
   pdf.save(filename);
 }
 
-function drawHeroHeader(pdf: jsPDF, budget: BudgetData): number {
-  let y = M;
+// ── Hero Header (dark background, matching the public budget hero) ──
 
-  // Title
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(18);
-  pdf.setTextColor(33, 33, 33);
-  pdf.text("Orçamento", M, y + 6);
+function drawHeroHeader(pdf: jsPDF, budget: BudgetData, logoDataUrl: string | null): number {
+  const headerH = 52;
+
+  // Dark background
+  pdf.setFillColor(30, 32, 38);
+  pdf.rect(0, 0, A4_W, headerH, "F");
+
+  let y = 8;
+
+  // Logo
+  if (logoDataUrl) {
+    try {
+      // Logo aspect ~383/128 ≈ 3:1, target height 8mm
+      pdf.addImage(logoDataUrl, "PNG", M, y, 24, 8);
+    } catch { /* skip logo on error */ }
+  }
   y += 12;
 
-  // Project info
+  // Company info line
   pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(10);
-  pdf.setTextColor(100, 100, 100);
+  pdf.setFontSize(6.5);
+  pdf.setTextColor(180, 180, 190);
+  pdf.text(
+    "CNPJ: 47.350.338/0001-37 · Responsável Técnico: Thiago Dantas do Amor · CAU: A162437-7",
+    M,
+    y
+  );
+  y += 8;
 
-  const infoParts: string[] = [];
-  if (budget.project_name) infoParts.push(budget.project_name);
-  if (budget.client_name) infoParts.push(`Cliente: ${budget.client_name}`);
-  if (budget.metragem) infoParts.push(`${budget.metragem}`);
-  if (budget.versao || budget.version_number) {
-    const v = budget.versao || `v${budget.version_number}`;
-    infoParts.push(v);
-  }
+  // Client name
+  const clientName = budget.client_name ? formatName(sanitizeClientName(budget.client_name)) : budget.project_name;
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(18);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text(clientName, M, y);
+  y += 7;
+
+  // Meta line: Área · Versão · Elaboração
+  const parts: string[] = [];
+  const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, "").replace(/m²?$/i, "") : "";
+  if (rawArea) parts.push(`Área  ${rawArea}m²`);
+  const vNum = budget.versao ? budget.versao.replace(/^v/i, "") : String(budget.version_number ?? "1");
+  parts.push(`Versão  ${vNum}`);
   if (budget.date) {
     const d = new Date(budget.date);
-    infoParts.push(
-      d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
-    );
+    parts.push(`Elaboração  ${d.toLocaleDateString("pt-BR")}`);
   }
 
-  if (infoParts.length > 0) {
-    pdf.text(infoParts.join("  •  "), M, y + 4);
-    y += 8;
-  }
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(200, 200, 210);
+  pdf.text(parts.join("  ·  "), M, y);
+  y += 6;
 
-  // Divider line
-  y += 2;
-  pdf.setDrawColor(200, 200, 200);
-  pdf.setLineWidth(0.3);
-  pdf.line(M, y, A4_W - M, y);
-  y += 4;
+  // Tagline
+  pdf.setFontSize(7);
+  pdf.setTextColor(150, 155, 165);
+  pdf.text("Projeto personalizado · Gestão completa · Execução com garantia", M, y);
 
-  return y;
+  return headerH + 6;
 }
 
-// Column widths (total = CW = 186mm)
+// ── Table ──
+
 const COL_CODE = 18;
 const COL_ITEM = 82;
 const COL_DESC = 44;
 const COL_QTY = 16;
-const COL_TOTAL = CW - COL_CODE - COL_ITEM - COL_DESC - COL_QTY; // 26
 
 function drawTable(pdf: jsPDF, budget: BudgetData, startY: number): number {
   let y = startY;
-
-  // Table header
   y = drawTableHeader(pdf, y);
 
   const sections = budget.sections || [];
@@ -98,14 +141,13 @@ function drawTable(pdf: jsPDF, budget: BudgetData, startY: number): number {
     const sectionNum = sIdx + 1;
     const subtotal = calculateSectionSubtotal(section);
 
-    // Check if we need a new page
     if (y > A4_H - M - 10) {
       pdf.addPage();
       y = M;
       y = drawTableHeader(pdf, y);
     }
 
-    // Section row (bold, light background)
+    // Section row
     const sectionRowH = 7;
     pdf.setFillColor(240, 240, 240);
     pdf.rect(M, y, CW, sectionRowH, "F");
@@ -120,39 +162,28 @@ function drawTable(pdf: jsPDF, budget: BudgetData, startY: number): number {
     const sy = y + 5;
     pdf.text(String(sectionNum), M + COL_CODE - 2, sy, { align: "right" });
     pdf.text(section.title, M + COL_CODE + 2, sy);
-    // R$ Total for section (right-aligned in last column)
-    pdf.text(
-      fmtBRL(subtotal),
-      M + CW - 2,
-      sy,
-      { align: "right" }
-    );
+    pdf.text(fmtBRL(subtotal), M + CW - 2, sy, { align: "right" });
 
     y += sectionRowH;
 
-    // Item rows
+    // Items
     const items = section.items || [];
     items.forEach((item, iIdx) => {
       const itemNum = `${sectionNum}.${iIdx + 1}`;
 
-      // Calculate row height based on text wrapping
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(8.5);
       const titleLines = pdf.splitTextToSize(item.title || "", COL_ITEM - 4);
-      const descLines = item.description
-        ? pdf.splitTextToSize(item.description, COL_DESC - 4)
-        : [];
+      const descLines = item.description ? pdf.splitTextToSize(item.description, COL_DESC - 4) : [];
       const lineCount = Math.max(titleLines.length, descLines.length, 1);
       const rowH = Math.max(6, lineCount * 4 + 2);
 
-      // Page break check
       if (y + rowH > A4_H - M - 5) {
         pdf.addPage();
         y = M;
         y = drawTableHeader(pdf, y);
       }
 
-      // Row border
       pdf.setDrawColor(220, 220, 220);
       pdf.setLineWidth(0.15);
       pdf.rect(M, y, CW, rowH, "S");
@@ -162,27 +193,14 @@ function drawTable(pdf: jsPDF, budget: BudgetData, startY: number): number {
       pdf.setTextColor(60, 60, 60);
 
       const iy = y + 4;
-
-      // Code
       pdf.text(itemNum, M + COL_CODE - 2, iy, { align: "right" });
-
-      // Item title
-      let x = M + COL_CODE + 2;
-      pdf.text(titleLines, x, iy);
-
-      // Description
+      pdf.text(titleLines, M + COL_CODE + 2, iy);
       if (descLines.length > 0) {
-        x = M + COL_CODE + COL_ITEM + 2;
-        pdf.text(descLines, x, iy);
+        pdf.text(descLines, M + COL_CODE + COL_ITEM + 2, iy);
       }
-
-      // Qty
       if (item.qty) {
-        const qtyX = M + COL_CODE + COL_ITEM + COL_DESC + COL_QTY / 2;
-        pdf.text(String(item.qty), qtyX, iy, { align: "center" });
+        pdf.text(String(item.qty), M + COL_CODE + COL_ITEM + COL_DESC + COL_QTY / 2, iy, { align: "center" });
       }
-
-      // No price for items — only sections show R$ Total
 
       y += rowH;
     });
@@ -201,33 +219,27 @@ function drawTableHeader(pdf: jsPDF, y: number): number {
   pdf.setTextColor(255, 255, 255);
 
   const hy = y + 5;
-  let x = M + 2;
-  pdf.text("Código", x, hy);
-  x = M + COL_CODE + 2;
-  pdf.text("Item", x, hy);
-  x = M + COL_CODE + COL_ITEM + 2;
-  pdf.text("Descrição", x, hy);
-  x = M + COL_CODE + COL_ITEM + COL_DESC + COL_QTY / 2;
-  pdf.text("Qtd.", x, hy, { align: "center" });
+  pdf.text("Código", M + 2, hy);
+  pdf.text("Item", M + COL_CODE + 2, hy);
+  pdf.text("Descrição", M + COL_CODE + COL_ITEM + 2, hy);
+  pdf.text("Qtd.", M + COL_CODE + COL_ITEM + COL_DESC + COL_QTY / 2, hy, { align: "center" });
   pdf.text("R$ Total", M + CW - 2, hy, { align: "right" });
 
-  y += headerH;
-  return y;
+  return y + headerH;
 }
+
+// ── Footer (adjustments + total) ──
 
 function drawFooter(pdf: jsPDF, budget: BudgetData, startY: number): number {
   let y = startY + 4;
-
   const sections = budget.sections || [];
   const adjustments = budget.adjustments || [];
 
-  // Page break check
   if (y > A4_H - M - 30) {
     pdf.addPage();
     y = M;
   }
 
-  // Adjustments
   if (adjustments.length > 0) {
     pdf.setDrawColor(200, 200, 200);
     pdf.setLineWidth(0.3);
@@ -245,7 +257,6 @@ function drawFooter(pdf: jsPDF, budget: BudgetData, startY: number): number {
     });
   }
 
-  // Total
   const total = sections.reduce((s, sec) => s + calculateSectionSubtotal(sec), 0) +
     adjustments.reduce((s, a) => s + a.amount * a.sign, 0);
 
@@ -260,7 +271,6 @@ function drawFooter(pdf: jsPDF, budget: BudgetData, startY: number): number {
 
   y += 14;
 
-  // Generated date
   if (budget.generated_at || budget.date) {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(7);
@@ -268,12 +278,7 @@ function drawFooter(pdf: jsPDF, budget: BudgetData, startY: number): number {
     const dateStr = budget.generated_at || budget.date || "";
     if (dateStr) {
       const d = new Date(dateStr);
-      pdf.text(
-        `Gerado em ${d.toLocaleDateString("pt-BR")}`,
-        A4_W / 2,
-        y,
-        { align: "center" }
-      );
+      pdf.text(`Gerado em ${d.toLocaleDateString("pt-BR")}`, A4_W / 2, y, { align: "center" });
     }
   }
 
