@@ -363,229 +363,246 @@ export default function EstimatorDashboard() {
           />
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por cliente, projeto, bairro..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              {Object.entries(INTERNAL_STATUSES).map(([key, { label }]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder="Prioridade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              {Object.entries(PRIORITIES).map(([key, { label }]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {commercialOptions.length > 1 && (
-            <Select value={commercialFilter} onValueChange={setCommercialFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Comercial" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {commercialOptions.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-            <SelectTrigger className="w-full sm:w-[170px]">
-              <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="urgente">Mais urgente</SelectItem>
-              <SelectItem value="prazo">Prazo mais próximo</SelectItem>
-              <SelectItem value="recente">Mais recente</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Kanban View */}
+        {viewMode === "kanban" && !loading && (
+          <EstimatorKanban
+            budgets={budgets}
+            onStatusChange={async (budgetId, newStatus) => {
+              await changeStatus(budgetId, newStatus);
+            }}
+            onCardClick={(id) => navigate(`/admin/budget/${id}`, { state: { from: "/admin/producao" } })}
+            getProfileName={getProfileName}
+          />
+        )}
+
+        {/* List View */}
+        {viewMode === "list" && (
+          <>
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por cliente, projeto, bairro..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  {Object.entries(INTERNAL_STATUSES).map(([key, { label }]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Prioridade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {Object.entries(PRIORITIES).map(([key, { label }]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {commercialOptions.length > 1 && (
+                <Select value={commercialFilter} onValueChange={setCommercialFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Comercial" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {commercialOptions.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                <SelectTrigger className="w-full sm:w-[170px]">
+                  <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="urgente">Mais urgente</SelectItem>
+                  <SelectItem value="prazo">Prazo mais próximo</SelectItem>
+                  <SelectItem value="recente">Mais recente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Empty state */}
+            {!loading && filtered.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Inbox className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h2 className="text-lg font-semibold font-display text-foreground mb-1">
+                  {search || statusFilter !== "all" || priorityFilter !== "all"
+                    ? "Nenhum resultado"
+                    : "Nenhuma demanda atribuída"}
+                </h2>
+                <p className="text-sm text-muted-foreground font-body max-w-sm">
+                  {search || statusFilter !== "all" || priorityFilter !== "all"
+                    ? "Ajuste os filtros para encontrar o que procura."
+                    : "Quando um orçamento for atribuído a você, ele aparecerá aqui."}
+                </p>
+              </div>
+            )}
+
+            {/* List */}
+            {!loading && filtered.length > 0 && (
+              <div className="space-y-2">
+                {filtered.map((b) => {
+                  const status =
+                    INTERNAL_STATUSES[b.internal_status as InternalStatus] ??
+                    INTERNAL_STATUSES.assigned;
+                  const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
+                  const due = getDueInfo(b.due_at);
+
+                  return (
+                    <Card
+                      key={b.id}
+                      className="p-4 hover:shadow-md transition-shadow border group"
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* Main content */}
+                        <div
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}
+                        >
+                          {/* Row 1: Project + badges */}
+                          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                            <span className="font-semibold font-display text-foreground truncate">
+                              {b.project_name || "Sem nome"}
+                            </span>
+                            <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
+                              {status.icon} {status.label}
+                            </Badge>
+                            {b.priority !== "normal" && (
+                              <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>
+                                {prio.label}
+                              </Badge>
+                            )}
+                            {due.label && (
+                              <span
+                                className={`inline-flex items-center gap-1 text-xs font-medium font-body px-2 py-0.5 rounded-full border ${dueVariantStyles[due.variant]}`}
+                              >
+                                <Calendar className="h-3 w-3" />
+                                {due.label}
+                              </span>
+                            )}
+                            {(b.version_number ?? 1) > 1 && (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                                V{b.version_number}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Row 2: Meta */}
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <User className="h-3.5 w-3.5" />
+                              {b.client_name}
+                            </span>
+                            {(b.bairro || b.city) && (
+                              <span className="flex items-center gap-1">
+                                <Building2 className="h-3.5 w-3.5" />
+                                {[b.bairro, b.city].filter(Boolean).join(", ")}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1" title="Comercial responsável">
+                              <User className="h-3.5 w-3.5" />
+                              {getProfileName(b.commercial_owner_id)}
+                            </span>
+                            {b.created_at && (
+                              <span className="text-xs">
+                                Criado {format(new Date(b.created_at), "dd/MM/yy")}
+                              </span>
+                            )}
+                            {b.updated_at && (
+                              <span className="text-xs">
+                                Atualizado {format(new Date(b.updated_at), "dd/MM HH:mm")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Quick actions */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Abrir orçamento
+                            </DropdownMenuItem>
+                            {b.briefing && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  toast.info(b.briefing, {
+                                    duration: 10000,
+                                    description: `Briefing — ${b.project_name}`,
+                                  });
+                                }}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Ver briefing
+                              </DropdownMenuItem>
+                            )}
+                            {(b.version_number ?? 1) > 1 && b.version_group_id && (
+                              <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
+                                <GitCompare className="h-4 w-4 mr-2" />
+                                Comparar versões
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            {b.internal_status !== "in_progress" && (
+                              <DropdownMenuItem onClick={() => changeStatus(b.id, "in_progress")}>
+                                <Clock className="h-4 w-4 mr-2" />
+                                Iniciar produção
+                              </DropdownMenuItem>
+                            )}
+                            {b.internal_status !== "waiting_info" && (
+                              <DropdownMenuItem onClick={() => changeStatus(b.id, "waiting_info")}>
+                                <PauseCircle className="h-4 w-4 mr-2" />
+                                Sinalizar bloqueio
+                              </DropdownMenuItem>
+                            )}
+                            {b.internal_status !== "ready_for_review" && (
+                              <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Pronto para revisão
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
 
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!loading && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Inbox className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h2 className="text-lg font-semibold font-display text-foreground mb-1">
-              {search || statusFilter !== "all" || priorityFilter !== "all"
-                ? "Nenhum resultado"
-                : "Nenhuma demanda atribuída"}
-            </h2>
-            <p className="text-sm text-muted-foreground font-body max-w-sm">
-              {search || statusFilter !== "all" || priorityFilter !== "all"
-                ? "Ajuste os filtros para encontrar o que procura."
-                : "Quando um orçamento for atribuído a você, ele aparecerá aqui."}
-            </p>
-          </div>
-        )}
-
-        {/* List */}
-        {!loading && filtered.length > 0 && (
-          <div className="space-y-2">
-            {filtered.map((b) => {
-              const status =
-                INTERNAL_STATUSES[b.internal_status as InternalStatus] ??
-                INTERNAL_STATUSES.assigned;
-              const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-              const due = getDueInfo(b.due_at);
-
-              return (
-                <Card
-                  key={b.id}
-                  className="p-4 hover:shadow-md transition-shadow border group"
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Main content */}
-                    <div
-                      className="flex-1 min-w-0 cursor-pointer"
-                      onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}
-                    >
-                      {/* Row 1: Project + badges */}
-                      <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                        <span className="font-semibold font-display text-foreground truncate">
-                          {b.project_name || "Sem nome"}
-                        </span>
-                        <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
-                          {status.icon} {status.label}
-                        </Badge>
-                        {b.priority !== "normal" && (
-                          <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>
-                            {prio.label}
-                          </Badge>
-                        )}
-                        {due.label && (
-                          <span
-                            className={`inline-flex items-center gap-1 text-xs font-medium font-body px-2 py-0.5 rounded-full border ${dueVariantStyles[due.variant]}`}
-                          >
-                            <Calendar className="h-3 w-3" />
-                            {due.label}
-                          </span>
-                        )}
-                        {(b.version_number ?? 1) > 1 && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                            V{b.version_number}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Row 2: Meta */}
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <User className="h-3.5 w-3.5" />
-                          {b.client_name}
-                        </span>
-                        {(b.bairro || b.city) && (
-                          <span className="flex items-center gap-1">
-                            <Building2 className="h-3.5 w-3.5" />
-                            {[b.bairro, b.city].filter(Boolean).join(", ")}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1" title="Comercial responsável">
-                          <User className="h-3.5 w-3.5" />
-                          {getProfileName(b.commercial_owner_id)}
-                        </span>
-                        {b.created_at && (
-                          <span className="text-xs">
-                            Criado {format(new Date(b.created_at), "dd/MM/yy")}
-                          </span>
-                        )}
-                        {b.updated_at && (
-                          <span className="text-xs">
-                            Atualizado {format(new Date(b.updated_at), "dd/MM HH:mm")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Quick actions */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}>
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Abrir orçamento
-                        </DropdownMenuItem>
-                        {b.briefing && (
-                          <DropdownMenuItem
-                            onClick={() => {
-                              toast.info(b.briefing, {
-                                duration: 10000,
-                                description: `Briefing — ${b.project_name}`,
-                              });
-                            }}
-                          >
-                            <FileText className="h-4 w-4 mr-2" />
-                            Ver briefing
-                          </DropdownMenuItem>
-                        )}
-                        {(b.version_number ?? 1) > 1 && b.version_group_id && (
-                          <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
-                            <GitCompare className="h-4 w-4 mr-2" />
-                            Comparar versões
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        {b.internal_status !== "in_progress" && (
-                          <DropdownMenuItem onClick={() => changeStatus(b.id, "in_progress")}>
-                            <Clock className="h-4 w-4 mr-2" />
-                            Iniciar produção
-                          </DropdownMenuItem>
-                        )}
-                        {b.internal_status !== "waiting_info" && (
-                          <DropdownMenuItem onClick={() => changeStatus(b.id, "waiting_info")}>
-                            <PauseCircle className="h-4 w-4 mr-2" />
-                            Sinalizar bloqueio
-                          </DropdownMenuItem>
-                        )}
-                        {b.internal_status !== "ready_for_review" && (
-                          <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                            Pronto para revisão
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </Card>
-              );
-            })}
           </div>
         )}
       </div>
