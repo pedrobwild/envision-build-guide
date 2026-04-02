@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CategoryDistributionBar } from "@/components/budget/CategoryDistributionBar";
 import { CategoryDetailDialog } from "@/components/budget/CategoryDetailDialog";
+import { SectionSummaryRow } from "@/components/budget/SectionSummaryRow";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface BudgetSummaryProps {
