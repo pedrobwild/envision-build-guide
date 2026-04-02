@@ -8,6 +8,7 @@ function toSentenceCase(str: string): string {
 }
 
 const A4_W = 210;
+const A4_H = 297;
 const M = 12; // margin
 const CW = A4_W - M * 2; // content width
 
