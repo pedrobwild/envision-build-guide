@@ -49,7 +49,7 @@ export function MobileFinancialSheet({
   const [snap, setSnap] = useState<number | string | null>(SNAP_POINTS[0]);
   const [installments, setInstallments] = useState(10);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
+  
   const [contractOpen, setContractOpen] = useState(false);
 
   const whatsappUpdateUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(
