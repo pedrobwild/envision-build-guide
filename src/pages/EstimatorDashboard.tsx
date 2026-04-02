@@ -325,13 +325,13 @@ export default function EstimatorDashboard() {
         />
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
           <SummaryCard
             label="Atrasadas"
             count={counts.overdue}
             icon={<AlertTriangle className="h-4 w-4" />}
             accent="text-destructive"
-            onClick={() => { setStatusFilter("all"); }}
+            onClick={() => setStatusFilter("all")}
           />
           <SummaryCard
             label="Vence hoje"
@@ -340,32 +340,39 @@ export default function EstimatorDashboard() {
             accent="text-warning"
           />
           <SummaryCard
-            label="Atribuídos"
-            count={counts.assigned}
-            icon={<User className="h-4 w-4" />}
+            label="Pendente"
+            count={counts.pending}
+            icon={<Inbox className="h-4 w-4" />}
             accent="text-indigo-600"
             onClick={() => setStatusFilter("assigned")}
           />
           <SummaryCard
-            label="Em Produção"
+            label="Em Elaboração"
             count={counts.inProgress}
             icon={<Clock className="h-4 w-4" />}
             accent="text-yellow-600"
             onClick={() => setStatusFilter("in_progress")}
           />
           <SummaryCard
-            label="Aguardando Info"
-            count={counts.waitingInfo}
-            icon={<PauseCircle className="h-4 w-4" />}
-            accent="text-amber-600"
-            onClick={() => setStatusFilter("waiting_info")}
-          />
-          <SummaryCard
-            label="Revisão"
-            count={counts.readyForReview}
+            label="Em Revisão"
+            count={counts.review}
             icon={<CheckCircle2 className="h-4 w-4" />}
             accent="text-orange-600"
             onClick={() => setStatusFilter("ready_for_review")}
+          />
+          <SummaryCard
+            label="Entregue"
+            count={counts.delivered}
+            icon={<Send className="h-4 w-4" />}
+            accent="text-teal-600"
+            onClick={() => setStatusFilter("delivered_to_sales")}
+          />
+          <SummaryCard
+            label="Finalizado"
+            count={counts.finished}
+            icon={<FileSignature className="h-4 w-4" />}
+            accent="text-green-600"
+            onClick={() => setStatusFilter("approved")}
           />
         </div>
 
