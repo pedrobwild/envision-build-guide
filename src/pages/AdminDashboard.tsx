@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { toast } from "sonner";
-import { OptionalSelectionsPanel } from "@/components/admin/OptionalSelectionsPanel";
+
 import { TeamMetricsPanel } from "@/components/admin/TeamMetricsPanel";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { Badge } from "@/components/ui/badge";
@@ -569,8 +569,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Optional selections */}
-      <OptionalSelectionsPanel />
+
 
       {/* Team Metrics (admin only) */}
       {isAdmin && <TeamMetricsPanel />}
