@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { formatBRL } from "@/lib/formatBRL";
-import { CreditCard, TrendingUp } from "lucide-react";
+import { CreditCard, TrendingUp, ChevronDown } from "lucide-react";
 
 interface MobilePriceAnchorProps {
   total: number;
@@ -10,6 +10,13 @@ interface MobilePriceAnchorProps {
 
 export function MobilePriceAnchor({ total, validityDaysLeft, expired }: MobilePriceAnchorProps) {
   const installment10x = total / 10;
+
+  const scrollToSummary = () => {
+    const el = document.getElementById("resumo-financeiro");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   return (
     <motion.div
@@ -52,6 +59,15 @@ export function MobilePriceAnchor({ total, validityDaysLeft, expired }: MobilePr
           )}
         </div>
       </div>
+
+      {/* CTA to scroll to full summary */}
+      <button
+        onClick={scrollToSummary}
+        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary/10 hover:bg-primary/15 active:bg-primary/20 text-primary text-xs font-medium font-body py-2 transition-colors"
+      >
+        Ver orçamento completo
+        <ChevronDown className="h-3.5 w-3.5" />
+      </button>
     </motion.div>
   );
 }
