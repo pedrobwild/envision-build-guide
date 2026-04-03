@@ -47,37 +47,37 @@ const PIPELINE_SECTIONS = {
     label: "Solicitado",
     statuses: ["requested"] as InternalStatus[],
     icon: FileText,
-    accent: "text-blue-600",
+    accent: "text-primary",
   },
   em_elaboracao: {
     label: "Em Elaboração",
     statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested"] as InternalStatus[],
     icon: Clock,
-    accent: "text-yellow-600",
+    accent: "text-warning",
   },
   entregue: {
     label: "Entregue",
     statuses: ["delivered_to_sales"] as InternalStatus[],
     icon: CheckCircle2,
-    accent: "text-teal-600",
+    accent: "text-success",
   },
   em_revisao: {
     label: "Em Revisão",
     statuses: ["ready_for_review"] as InternalStatus[],
     icon: Eye,
-    accent: "text-orange-600",
+    accent: "text-warning",
   },
   enviado: {
     label: "Enviado para o Cliente",
     statuses: ["sent_to_client"] as InternalStatus[],
     icon: Send,
-    accent: "text-emerald-600",
+    accent: "text-success",
   },
   fechado: {
     label: "Contrato Fechado",
     statuses: ["sent_to_client"] as InternalStatus[],
     icon: ThumbsUp,
-    accent: "text-green-600",
+    accent: "text-success",
   },
   perdido: {
     label: "Perdido",
@@ -254,7 +254,7 @@ export default function CommercialDashboard() {
   const dueVariantStyles = {
     overdue: "bg-destructive/10 text-destructive border-destructive/20",
     today: "bg-warning/10 text-warning border-warning/20",
-    soon: "bg-amber-50 text-amber-700 border-amber-200",
+    soon: "bg-warning/10 text-warning border-warning/20",
     default: "text-muted-foreground",
   };
 
@@ -305,11 +305,11 @@ export default function CommercialDashboard() {
           {/* Needs-action banner */}
           {counts.needsAction > 0 && statusFilter === "all" && (
             <div
-              className="flex items-center gap-3 px-4 py-3 rounded-lg border border-teal-200 bg-teal-50 dark:bg-teal-950/30 dark:border-teal-800 cursor-pointer hover:shadow-sm transition-shadow"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg border border-success/20 bg-success/5 cursor-pointer hover:shadow-sm transition-shadow"
               onClick={() => setStatusFilter("entregue")}
             >
-              <CheckCircle2 className="h-5 w-5 text-teal-600 shrink-0" />
-              <span className="text-sm font-medium text-teal-800 dark:text-teal-200">
+              <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+              <span className="text-sm font-medium text-success">
                 {counts.needsAction} orçamento{counts.needsAction > 1 ? "s" : ""} entregue{counts.needsAction > 1 ? "s" : ""} — pronto{counts.needsAction > 1 ? "s" : ""} para enviar ao cliente
               </span>
             </div>
@@ -428,12 +428,12 @@ export default function CommercialDashboard() {
                 const isEntregue = b.internal_status === "delivered_to_sales";
 
                 return (
-                  <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isEntregue ? "border-teal-300 dark:border-teal-700" : ""}`}>
+                  <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isEntregue ? "border-success/30" : ""}`}>
                     <div className="flex items-start gap-4">
                       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/admin/demanda/${b.id}`)}>
                         {/* Row 1 */}
                         <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                          {isEntregue && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
+                          {isEntregue && <span className="w-2 h-2 rounded-full bg-success shrink-0" />}
                           <span className="font-semibold font-display text-foreground truncate">{b.project_name || "Sem nome"}</span>
                           <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
                             {status.icon} {status.label}
@@ -452,12 +452,12 @@ export default function CommercialDashboard() {
                             </span>
                           )}
                           {b.is_published_version && (
-                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success">
                               Publicada
                             </span>
                           )}
                           {!b.is_published_version && b.status === "draft" && (b.version_number ?? 1) > 1 && (
-                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-warning/10 text-warning">
                               Em elaboração
                             </span>
                           )}
@@ -573,12 +573,12 @@ function SummaryCard({ label, count, icon, accent, active, onClick, alert }: {
 }) {
   return (
     <Card
-      className={`p-3 flex flex-col gap-1 transition-shadow ${onClick ? "cursor-pointer hover:shadow-md" : ""} ${active ? "ring-2 ring-primary" : ""} ${alert ? "border-amber-300 dark:border-amber-700" : ""}`}
+      className={`p-3 flex flex-col gap-1 transition-shadow ${onClick ? "cursor-pointer hover:shadow-md" : ""} ${active ? "ring-2 ring-primary" : ""} ${alert ? "border-warning/30" : ""}`}
       onClick={onClick}
     >
       <div className={`flex items-center gap-1.5 text-xs font-body ${accent}`}>
         {icon}{label}
-        {alert && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
+        {alert && <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />}
       </div>
       <span className="text-2xl font-bold font-display text-foreground">{count}</span>
     </Card>

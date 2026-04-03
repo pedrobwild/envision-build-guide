@@ -49,9 +49,9 @@ const KANBAN_COLUMNS = [
     label: "Solicitado",
     icon: FileText,
     statuses: ["requested"] as InternalStatus[],
-    accent: "border-t-blue-500",
-    headerColor: "text-blue-700 dark:text-blue-400",
-    bgColor: "bg-blue-50/50 dark:bg-blue-950/20",
+    accent: "border-t-primary",
+    headerColor: "text-primary",
+    bgColor: "bg-primary/5",
     locked: true,
   },
   {
@@ -59,9 +59,9 @@ const KANBAN_COLUMNS = [
     label: "Em Elaboração",
     icon: Hammer,
     statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested"] as InternalStatus[],
-    accent: "border-t-yellow-500",
-    headerColor: "text-yellow-700 dark:text-yellow-400",
-    bgColor: "bg-yellow-50/50 dark:bg-yellow-950/20",
+    accent: "border-t-warning",
+    headerColor: "text-warning",
+    bgColor: "bg-warning/5",
     locked: true,
   },
   {
@@ -69,9 +69,9 @@ const KANBAN_COLUMNS = [
     label: "Entregue",
     icon: CheckCircle2,
     statuses: ["delivered_to_sales"] as InternalStatus[],
-    accent: "border-t-teal-500",
-    headerColor: "text-teal-700 dark:text-teal-400",
-    bgColor: "bg-teal-50/50 dark:bg-teal-950/20",
+    accent: "border-t-success",
+    headerColor: "text-success",
+    bgColor: "bg-success/5",
     targetStatus: "delivered_to_sales" as InternalStatus,
     locked: false,
   },
@@ -80,9 +80,9 @@ const KANBAN_COLUMNS = [
     label: "Em Revisão",
     icon: Eye,
     statuses: ["ready_for_review"] as InternalStatus[],
-    accent: "border-t-orange-500",
-    headerColor: "text-orange-700 dark:text-orange-400",
-    bgColor: "bg-orange-50/50 dark:bg-orange-950/20",
+    accent: "border-t-warning",
+    headerColor: "text-warning",
+    bgColor: "bg-warning/5",
     targetStatus: "ready_for_review" as InternalStatus,
     locked: false,
   },
@@ -91,9 +91,9 @@ const KANBAN_COLUMNS = [
     label: "Enviado para o Cliente",
     icon: Send,
     statuses: ["sent_to_client"] as InternalStatus[],
-    accent: "border-t-emerald-500",
-    headerColor: "text-emerald-700 dark:text-emerald-400",
-    bgColor: "bg-emerald-50/50 dark:bg-emerald-950/20",
+    accent: "border-t-success",
+    headerColor: "text-success",
+    bgColor: "bg-success/5",
     targetStatus: "sent_to_client" as InternalStatus,
     locked: false,
   },
@@ -102,9 +102,9 @@ const KANBAN_COLUMNS = [
     label: "Contrato Fechado",
     icon: ThumbsUp,
     statuses: ["sent_to_client"] as InternalStatus[],
-    accent: "border-t-green-500",
-    headerColor: "text-green-700 dark:text-green-400",
-    bgColor: "bg-green-50/50 dark:bg-green-950/20",
+    accent: "border-t-success",
+    headerColor: "text-success",
+    bgColor: "bg-success/5",
     targetStatus: "sent_to_client" as InternalStatus,
     locked: false,
   },
@@ -113,7 +113,7 @@ const KANBAN_COLUMNS = [
     label: "Perdido",
     icon: XCircle,
     statuses: ["lost"] as InternalStatus[],
-    accent: "border-t-gray-400",
+    accent: "border-t-muted-foreground",
     headerColor: "text-muted-foreground",
     bgColor: "bg-muted/30",
     targetStatus: "lost" as InternalStatus,
@@ -176,16 +176,16 @@ function getDueInfo(dueAt: string | null): { label: string; variant: DueVariant 
 const dueVariantStyles: Record<DueVariant, string> = {
   overdue: "bg-destructive/10 text-destructive",
   today: "bg-warning/10 text-warning",
-  soon: "bg-amber-100/80 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
-  ok: "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
+  soon: "bg-warning/10 text-warning",
+  ok: "bg-success/10 text-success",
   default: "text-muted-foreground bg-muted/50",
 };
 
 const dueBorderStyles: Record<DueVariant, string> = {
   overdue: "border-l-destructive",
   today: "border-l-warning",
-  soon: "border-l-amber-400 dark:border-l-amber-500",
-  ok: "border-l-emerald-400 dark:border-l-emerald-500",
+  soon: "border-l-warning",
+  ok: "border-l-success",
   default: "border-l-transparent",
 };
 
@@ -232,24 +232,24 @@ const EM_ELABORACAO_SUBSECTIONS = [
     label: "Aguardando",
     statuses: ["waiting_info"],
     icon: Clock,
-    headerClass: "text-xs font-medium text-amber-600 uppercase tracking-wide",
-    cardBorderClass: "border-l-2 border-l-amber-400",
+    headerClass: "text-xs font-medium text-warning uppercase tracking-wide",
+    cardBorderClass: "border-l-2 border-l-warning",
   },
   {
     id: "bloqueado",
     label: "Bloqueado",
     statuses: ["blocked"],
     icon: AlertTriangle,
-    headerClass: "text-xs font-medium text-red-600 uppercase tracking-wide",
-    cardBorderClass: "border-l-2 border-l-red-400",
+    headerClass: "text-xs font-medium text-destructive uppercase tracking-wide",
+    cardBorderClass: "border-l-2 border-l-destructive",
   },
   {
     id: "revisao_solicitada",
     label: "Revisão Solicitada",
     statuses: ["revision_requested"],
     icon: RotateCcw,
-    headerClass: "text-xs font-medium text-orange-600 uppercase tracking-wide",
-    cardBorderClass: "border-l-2 border-l-orange-500",
+    headerClass: "text-xs font-medium text-warning uppercase tracking-wide",
+    cardBorderClass: "border-l-2 border-l-warning",
     tooltip: "Orçamento retornou para o orçamentista para revisão",
   },
 ] as const;
@@ -484,7 +484,7 @@ function KanbanCard({
       className={`p-3 text-left transition-all border border-l-[3px] ${borderColor} ${
         isDragging ? "opacity-60 shadow-xl rotate-2 scale-105" : "hover:shadow-md"
       } ${locked ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${
-        highPrio ? "ring-1 ring-amber-300/50 dark:ring-amber-600/30" : ""
+        highPrio ? "ring-1 ring-warning/30" : ""
       }`}
       onClick={(e) => {
         e.stopPropagation();
@@ -493,7 +493,7 @@ function KanbanCard({
     >
       <div className="flex items-start gap-1.5 mb-1.5">
         {highPrio && (
-          <Pin className="h-3 w-3 shrink-0 text-amber-500 mt-0.5 fill-amber-500" />
+          <Pin className="h-3 w-3 shrink-0 text-warning mt-0.5 fill-warning" />
         )}
         <span className="font-semibold font-display text-xs text-foreground leading-tight line-clamp-2 flex-1">
           {b.project_name || "Sem nome"}
