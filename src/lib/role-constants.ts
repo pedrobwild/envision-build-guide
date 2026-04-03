@@ -19,7 +19,7 @@ export const INTERNAL_STATUSES = {
   ready_for_review: { label: 'Revisão', color: 'bg-orange-100 text-orange-800', icon: '📋' },
   delivered_to_sales: { label: 'Entregue ao Comercial', color: 'bg-teal-100 text-teal-800', icon: '📤' },
   sent_to_client: { label: 'Enviado ao Cliente', color: 'bg-emerald-100 text-emerald-800', icon: '✉️' },
-  approved: { label: 'Aprovado', color: 'bg-green-100 text-green-800', icon: '✅' },
+  contrato_fechado: { label: 'Contrato Fechado', color: 'bg-green-100 text-green-800', icon: '✅' },
   lost: { label: 'Perdido', color: 'bg-gray-100 text-gray-600', icon: '❌' },
   archived: { label: 'Arquivado', color: 'bg-gray-100 text-gray-500', icon: '📦' },
 } as const;

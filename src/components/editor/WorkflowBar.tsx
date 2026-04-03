@@ -321,7 +321,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => changeStatus("approved")}>
+            <AlertDialogAction onClick={() => changeStatus("contrato_fechado")}>
               Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>

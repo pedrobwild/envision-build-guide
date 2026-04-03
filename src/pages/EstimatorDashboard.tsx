@@ -452,7 +452,7 @@ export default function EstimatorDashboard() {
             count={counts.finished}
             icon={<FileSignature className="h-4 w-4" />}
             accent="text-green-600"
-            onClick={() => setStatusFilter("approved")}
+            onClick={() => setStatusFilter("contrato_fechado")}
           />
         </div>
 

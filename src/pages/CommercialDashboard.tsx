@@ -532,7 +532,7 @@ export default function CommercialDashboard() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (confirmCloseBudgetId) { changeStatus(confirmCloseBudgetId, "approved"); setConfirmCloseBudgetId(null); } }}>
+            <AlertDialogAction onClick={() => { if (confirmCloseBudgetId) { changeStatus(confirmCloseBudgetId, "contrato_fechado"); setConfirmCloseBudgetId(null); } }}>
               Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>
