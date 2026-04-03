@@ -386,11 +386,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
           {!mapFailed ? (
             <div
               ref={mapContainer}
-              className="w-full h-[400px] md:h-[600px] rounded-xl overflow-hidden border border-border"
+              className="w-full h-[360px] md:h-[600px] rounded-xl overflow-hidden border border-border"
               aria-label="Mapa de densidade por bairro"
             />
           ) : (
-            <MapFallback height={isMobile ? "400px" : "600px"} />
+            <MapFallback height={isMobile ? "360px" : "600px"} />
           )}
         </div>
         <div className="flex-[2] md:max-h-[600px] overflow-y-auto" ref={panelRef}>
