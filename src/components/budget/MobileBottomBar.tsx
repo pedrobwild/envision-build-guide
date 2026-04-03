@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronUp,
   MessageCircle,
+  FileSignature,
   Shield,
   Award,
   Eye,
@@ -12,7 +13,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 import { MobileFinancialSheet } from "./MobileFinancialSheet";
 import { StepProgressIndicator } from "./StepProgressIndicator";
-import { WhatsAppCommentDialog } from "./WhatsAppCommentDialog";
+import { ContractRequestDialog } from "./ContractRequestDialog";
 
 interface MobileBottomBarProps {
   total: number;
