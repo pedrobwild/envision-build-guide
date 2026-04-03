@@ -287,7 +287,9 @@ export default function EstimatorDashboard() {
       const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
       const matchCommercial =
         commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
-      return matchSearch && matchStatus && matchPriority && matchCommercial;
+      const matchEstimator =
+        estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter;
+      return matchSearch && matchStatus && matchPriority && matchCommercial && matchEstimator;
     });
 
     const priorityOrder: Record<string, number> = { urgente: 0, alta: 1, normal: 2, baixa: 3 };
