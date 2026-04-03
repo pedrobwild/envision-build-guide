@@ -68,15 +68,9 @@ const PIPELINE_SECTIONS = {
   },
   enviado: {
     label: "Enviado para o Cliente",
-    statuses: ["sent_to_client"] as InternalStatus[],
+    statuses: ["sent_to_client", "approved"] as InternalStatus[],
     icon: Send,
     accent: "text-emerald-600",
-  },
-  fechado: {
-    label: "Contrato Fechado",
-    statuses: ["approved"] as InternalStatus[],
-    icon: ThumbsUp,
-    accent: "text-green-600",
   },
   perdido: {
     label: "Perdido",
@@ -269,7 +263,7 @@ export default function CommercialDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
         {/* Pipeline summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => {
             const Icon = sec.icon;
             return (
@@ -503,9 +497,9 @@ export default function CommercialDashboard() {
                                 <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
                               </DropdownMenuItem>
                             )}
-                            {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
+                            {b.internal_status !== "approved" && b.internal_status !== "lost" && (
                               <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
-                                <RotateCcw className="h-4 w-4 mr-2" />Pedir revisão
+                                <RotateCcw className="h-4 w-4 mr-2" />Solicitar revisão
                               </DropdownMenuItem>
                             )}
                           </>
