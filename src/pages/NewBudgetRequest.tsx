@@ -43,7 +43,9 @@ export default function NewBudgetRequest() {
   // Team members for assignment
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const { data: templates = [] } = useBudgetTemplates();
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
   // Form state
   const [clientName, setClientName] = useState("");
