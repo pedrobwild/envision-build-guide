@@ -108,6 +108,7 @@ export default function BudgetInternalDetail() {
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const getProfileName = useCallback(
     (id: string | null) => {
