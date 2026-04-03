@@ -81,6 +81,9 @@ export default function OrcamentoPage() {
             <motion.div id="portal-section" variants={sectionVariants} viewport={{ once: true, amount: 0.15 }} initial="hidden" whileInView="visible">
               <PortalWarrantyNextSteps portalTabs={resolvedBudget.portalTabs} />
             </motion.div>
+            <motion.div id="cronograma-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1 }} initial="hidden" whileInView="visible">
+              <ReformTimeline />
+            </motion.div>
 
             {/* Bottom spacer for mobile CTA */}
             <div className="h-20 lg:hidden" />
