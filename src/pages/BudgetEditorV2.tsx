@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign, GitCompare, Globe, Eye } from "lucide-react";
+import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign, GitCompare, Globe, Eye, RotateCcw, PackageCheck, Send, Handshake } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { MetadataStep } from "@/components/editor/MetadataStep";
@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { BriefingPanel } from "@/components/editor/BriefingPanel";
 import { RevisionBanner } from "@/components/editor/RevisionBanner";
 import { useAuth } from "@/hooks/useAuth";
+import { StickyEditorHeader, type SaveStatus } from "@/components/editor/StickyEditorHeader";
+import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
