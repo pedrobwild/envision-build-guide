@@ -8,13 +8,13 @@ import {
   CreditCard,
   MessageCircle,
   FileSignature,
-  
   ChevronDown,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 
 import { ContractRequestDialog } from "./ContractRequestDialog";
+import { WhatsAppCommentDialog } from "./WhatsAppCommentDialog";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface MobileInlineSummaryProps {
