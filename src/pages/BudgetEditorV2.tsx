@@ -37,7 +37,41 @@ export default function BudgetEditorV2() {
   const [saving, setSaving] = useState(false);
   const [internalDataOpen, setInternalDataOpen] = useState(false);
   const [versionCount, setVersionCount] = useState(0);
-  const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
+  const [startingRevision, setStartingRevision] = useState(false);
+
+  // Fetch latest revision request when status is revision_requested
+  const { data: revisionRequest } = useQuery({
+    queryKey: ["revision-request", budgetId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("budget_events")
+        .select("id, metadata, created_at, note")
+        .eq("budget_id", budgetId!)
+        .eq("event_type", "revision_requested")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      return data ?? null;
+    },
+    enabled: budget?.internal_status === "revision_requested",
+  });
+
+  const handleStartRevision = async () => {
+    if (!budgetId || !user) return;
+    setStartingRevision(true);
+    try {
+      const reason = revisionRequest?.metadata?.instructions
+        ? `Revisão: ${String(revisionRequest.metadata.instructions).slice(0, 80)}`
+        : "Revisão solicitada pelo comercial";
+      const newId = await duplicateBudgetAsVersion(budgetId, user.id, reason);
+      toast.success("Nova versão criada para revisão!");
+      navigate(`/admin/budget/${newId}`);
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao criar versão de revisão.");
+    }
+    setStartingRevision(false);
+  };
+
 
   useEffect(() => {
     loadBudget();
