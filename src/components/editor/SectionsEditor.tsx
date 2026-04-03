@@ -331,79 +331,63 @@ function SortableItemRow({
           </div>
         </div>
         {/* Qty */}
-        <div className="lg:col-span-1 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <Hash className="h-3 w-3" /> Qtd
-          </label>
+        <div className="lg:col-span-1 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Qtd</label>
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
           />
         </div>
         {/* $ Custo (unit) */}
-        <div className="lg:col-span-1 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Custo
-          </label>
+        <div className="lg:col-span-1 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
           />
         </div>
         {/* %BDI */}
-        <div className="lg:col-span-1 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            % BDI
-          </label>
+        <div className="lg:col-span-1 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI %</label>
           <input
             type="number"
             value={item.bdi_percentage ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
             placeholder="0"
             step="0.01"
-            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
           />
         </div>
         {/* $ Venda (auto) */}
-        <div className="lg:col-span-1 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Venda
-          </label>
-          <div className="w-full px-2 py-2 rounded-lg border border-border bg-muted/30 text-foreground text-sm font-body tabular-nums">
+        <div className="lg:col-span-1 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
+          <div className="w-full px-2 py-1.5 rounded-md text-sm font-body tabular-nums text-muted-foreground">
             {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
         {/* $ Total Custo */}
-        <div className="lg:col-span-2 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Total Custo
-          </label>
+        <div className="lg:col-span-2 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Custo</label>
           <input
             type="number"
             value={item.internal_total ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_total", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
           />
         </div>
         {/* $ Total Venda (auto) */}
-        <div className="lg:col-span-2 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Total Venda
-          </label>
-          <div className="w-full px-2 py-2 rounded-lg border border-border bg-muted/30 text-foreground text-sm font-body font-semibold tabular-nums">
+        <div className="lg:col-span-2 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Venda</label>
+          <div className="w-full px-2 py-1.5 rounded-md text-sm font-body font-semibold tabular-nums text-foreground">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
