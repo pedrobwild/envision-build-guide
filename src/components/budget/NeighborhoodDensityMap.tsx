@@ -62,6 +62,10 @@ function getPinStyle(count: number) {
 
 const DEFAULT_CENTER: [number, number] = [-46.6679, -23.5874];
 const DEFAULT_ZOOM = 11.5;
+const ALL_PINS_BOUNDS: [[number, number], [number, number]] = [
+  [-46.7302, -23.6536], // SW corner (Butantã lng, Santo Amaro lat)
+  [-46.5580, -23.5274], // NE corner (Vila Guilhermina lng/lat)
+];
 const MAPTILER_STYLE = "https://api.maptiler.com/maps/streets-v2/style.json";
 const SECONDARY_FALLBACK_STYLE = "https://demotiles.maplibre.org/style.json";
 const FALLBACK_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
@@ -142,6 +146,8 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     if (selected) {
       const n = NEIGHBORHOOD_DATA.find((d) => d.id === selected);
       if (n) mapRef.current.flyTo({ center: [n.lng, n.lat], zoom: 14, duration: 800 });
+    } else if (isMobile) {
+      mapRef.current.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 600 });
     } else {
       mapRef.current.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 600 });
     }
@@ -282,6 +288,14 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         maxBounds: [[-47.0, -23.85], [-46.3, -23.35]],
         trackResize: true,
       });
+
+      // On mobile, fit all pins after load
+      if (isMobileViewport) {
+        map.on("load", () => {
+          map?.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 0 });
+        });
+      }
+
       // Prevent map canvas from stealing page scroll position on init
       map.getCanvas().setAttribute("tabindex", "-1");
     } catch {
@@ -372,11 +386,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
           {!mapFailed ? (
             <div
               ref={mapContainer}
-              className="w-full h-[280px] md:h-[600px] rounded-xl overflow-hidden border border-border"
+              className="w-full h-[400px] md:h-[600px] rounded-xl overflow-hidden border border-border"
               aria-label="Mapa de densidade por bairro"
             />
           ) : (
-            <MapFallback height={isMobile ? "280px" : "600px"} />
+            <MapFallback height={isMobile ? "400px" : "600px"} />
           )}
         </div>
         <div className="flex-[2] md:max-h-[600px] overflow-y-auto" ref={panelRef}>
