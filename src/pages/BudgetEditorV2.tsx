@@ -1,13 +1,13 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, User, ChevronDown, DollarSign, RotateCcw, PackageCheck, Send, Handshake, MessageSquare, ClipboardList, Image as ImageIcon, ScrollText } from "lucide-react";
+import { Loader2, User, ChevronDown, DollarSign, RotateCcw, PackageCheck, Send, Handshake, MessageSquare, ClipboardList, Image as ImageIcon, ScrollText, AlertTriangle, Info, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
-import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
+import { VersionTimeline } from "@/components/editor/VersionTimeline";
 import { ensureVersionGroup, publishVersion, duplicateBudgetAsVersion } from "@/lib/budget-versioning";
 import { MediaUploadSection } from "@/components/editor/MediaUploadSection";
 import { formatBRL } from "@/lib/formatBRL";
@@ -23,6 +23,7 @@ import { StickyEditorHeader, type SaveStatus } from "@/components/editor/StickyE
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 export default function BudgetEditorV2() {
@@ -48,6 +49,23 @@ export default function BudgetEditorV2() {
   const [activeTab, setActiveTab] = useState("planilha");
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [mediaCount, setMediaCount] = useState(0);
+  const [creatingVersionFromBanner, setCreatingVersionFromBanner] = useState(false);
+
+  // Query current version id for "go to current" banner
+  const { data: currentVersionId } = useQuery({
+    queryKey: ["current-version", budget?.version_group_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("budgets")
+        .select("id")
+        .eq("version_group_id", budget.version_group_id)
+        .eq("is_current_version", true)
+        .limit(1)
+        .single();
+      return data?.id ?? null;
+    },
+    enabled: !!budget?.version_group_id && budget?.is_current_version === false,
+  });
 
   // Fetch latest revision request when status is revision_requested
   const { data: revisionRequest } = useQuery({
@@ -243,8 +261,62 @@ export default function BudgetEditorV2() {
           {/* Pipeline Progress — always visible */}
           <PipelineProgress internalStatus={budget.internal_status ?? "requested"} />
 
-          {/* Revision Banner — always visible */}
-          {budget.internal_status === "revision_requested" && revisionRequest && (
+          {/* ── Versioning context banners (priority: A > B > C) ── */}
+          {budget.is_published_version ? (
+            /* Scenario A — Editing published version */
+            <Alert className="mt-4 border-amber-500/40 bg-amber-500/10">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="flex items-center justify-between gap-4">
+                <span className="text-sm font-body text-amber-800 dark:text-amber-300">
+                  ⚠️ Esta é a versão publicada. O cliente pode ver suas edições em tempo real. Recomendamos criar uma nova versão para editar com segurança.
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1.5 border-amber-500/50 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                  disabled={creatingVersionFromBanner}
+                  onClick={async () => {
+                    if (!user) return;
+                    setCreatingVersionFromBanner(true);
+                    try {
+                      const newId = await duplicateBudgetAsVersion(budgetId!, user.id, "Edição pós-publicação");
+                      toast.success("Nova versão criada!");
+                      navigate(`/admin/budget/${newId}`);
+                    } catch (err: any) {
+                      toast.error(err?.message || "Erro ao criar versão");
+                    }
+                    setCreatingVersionFromBanner(false);
+                  }}
+                >
+                  {creatingVersionFromBanner ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+                  Criar Nova Versão
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : budget.is_current_version === false ? (
+            /* Scenario B — Viewing old version */
+            <Alert className="mt-4 border-blue-500/40 bg-blue-500/10">
+              <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="flex items-center justify-between gap-4">
+                <span className="text-sm font-body text-blue-800 dark:text-blue-300">
+                  📌 Você está visualizando a versão v{budget.version_number ?? "?"} (não é a versão atual). Edições aqui não afetam a versão em uso.
+                </span>
+                {currentVersionId && currentVersionId !== budgetId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 gap-1.5 border-blue-500/50 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20"
+                    onClick={() => navigate(`/admin/budget/${currentVersionId}`)}
+                  >
+                    Ir para versão atual
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {/* Revision Banner — Scenario C (only if A/B not shown) */}
+          {budget.internal_status === "revision_requested" && revisionRequest && !budget.is_published_version && budget.is_current_version !== false && (
             <div className="mt-4">
               <RevisionBanner
                 revisionData={revisionRequest}
@@ -459,7 +531,7 @@ export default function BudgetEditorV2() {
 
             {/* ── Tab: Versões ── */}
             <TabsContent value="versoes" className="mt-6">
-              <VersionHistoryPanel budgetId={budgetId!} onVersionChange={loadBudget} defaultExpanded />
+              <VersionTimeline budgetId={budgetId!} onVersionChange={loadBudget} />
             </TabsContent>
           </Tabs>
         </main>
