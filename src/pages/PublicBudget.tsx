@@ -258,6 +258,20 @@ export default function PublicBudget() {
               </div>
             </div>
 
+            {/* ── Mobile inline summary — before items ── */}
+            <div data-pdf-section>
+            <MobileInlineSummary
+              total={total}
+              validity={validity}
+              categorizedGroups={categorizedGroups}
+              projectName={budget.project_name}
+              clientName={budget.client_name}
+              publicId={publicId || "demo"}
+              budgetId={budget.id}
+              onTotalCardVisibilityChange={handleTotalCardVisibility}
+            />
+            </div>
+
             {/* ─── Escopo técnico detalhado — only items with photos, no values ─── */}
             {!["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "") && (
               <div id="mobile-scope" className="scroll-mt-20">
@@ -297,13 +311,11 @@ export default function PublicBudget() {
                       </div>
 
                       {photoGroups.map((group) => {
-                        // Flatten all items from all sections in this category
                         const allItems = group.sections.flatMap(s => (s.items || []).map((item: any) => ({ ...item, _sectionTitle: s.title })));
                         if (allItems.length === 0) return null;
 
                         return (
                           <div key={group.category.id} className="mb-8 last:mb-0" data-pdf-section>
-                            {/* Category label — minimal, no redundancy */}
                             <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
                               <div className={cn("w-1 h-5 rounded-full", group.category.bgClass)} />
                               <span className={cn("text-sm sm:text-base font-display font-bold tracking-tight", group.category.colorClass)}>
@@ -311,7 +323,6 @@ export default function PublicBudget() {
                               </span>
                             </div>
 
-                            {/* Product grid (cards) or list (PDF export) */}
                             {exporting ? (
                               <ul className="space-y-1">
                                 {allItems.map((item: any, idx: number) => (
@@ -366,20 +377,6 @@ export default function PublicBudget() {
                 />
               </div>
             )}
-
-            {/* ── Mobile inline summary ── */}
-            <div data-pdf-section>
-            <MobileInlineSummary
-              total={total}
-              validity={validity}
-              categorizedGroups={categorizedGroups}
-              projectName={budget.project_name}
-              clientName={budget.client_name}
-              publicId={publicId || "demo"}
-              budgetId={budget.id}
-              onTotalCardVisibilityChange={handleTotalCardVisibility}
-            />
-            </div>
 
 
             {/* mobile-portal anchor kept for nav */}
