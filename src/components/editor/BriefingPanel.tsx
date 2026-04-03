@@ -271,12 +271,20 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
           {/* Commercial instructions (briefing field) */}
           <FieldRow icon={FileText} label="Instruções comerciais">
             {canEditBriefing ? (
-              <Textarea
-                placeholder="Instruções do comercial para o orçamentista..."
-                value={budget.briefing ?? ""}
-                onChange={(e) => handleFieldChange("briefing", e.target.value)}
-                className="text-sm min-h-[80px] resize-y"
-              />
+              <div>
+                <CommentQuickTemplates
+                  value={budget.briefing ?? ""}
+                  onChange={(v) => handleFieldChange("briefing", v)}
+                  textareaRef={briefingTextareaRef}
+                />
+                <Textarea
+                  ref={briefingTextareaRef}
+                  placeholder="Instruções do comercial para o orçamentista... (digite / para templates)"
+                  value={budget.briefing ?? ""}
+                  onChange={(e) => handleFieldChange("briefing", e.target.value)}
+                  className="text-sm min-h-[80px] resize-y"
+                />
+              </div>
             ) : (
               <ReadOnlyBox text={budget.briefing} />
             )}
@@ -285,12 +293,20 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
           {/* Estimator notes (internal_notes field) */}
           <FieldRow icon={StickyNote} label="Notas do orçamentista">
             {canEditEstimatorNotes ? (
-              <Textarea
-                placeholder="Anotações do orçamentista..."
-                value={budget.internal_notes ?? ""}
-                onChange={(e) => handleFieldChange("internal_notes", e.target.value)}
-                className="text-sm min-h-[80px] resize-y"
-              />
+              <div>
+                <CommentQuickTemplates
+                  value={budget.internal_notes ?? ""}
+                  onChange={(v) => handleFieldChange("internal_notes", v)}
+                  textareaRef={estimatorTextareaRef}
+                />
+                <Textarea
+                  ref={estimatorTextareaRef}
+                  placeholder="Anotações do orçamentista... (digite / para templates)"
+                  value={budget.internal_notes ?? ""}
+                  onChange={(e) => handleFieldChange("internal_notes", e.target.value)}
+                  className="text-sm min-h-[80px] resize-y"
+                />
+              </div>
             ) : (
               <ReadOnlyBox text={budget.internal_notes} />
             )}
