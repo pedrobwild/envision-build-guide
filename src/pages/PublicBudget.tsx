@@ -60,8 +60,8 @@ export default function PublicBudget() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [bottomBarHidden, setBottomBarHidden] = useState(false);
 
-  const handleTotalCardVisibility = useCallback((visible: boolean) => {
-    setBottomBarHidden(visible);
+  const handleTotalCardVisibility = useCallback((_visible: boolean) => {
+    // Bottom bar is always visible now
   }, []);
 
   useEffect(() => {
