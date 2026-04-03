@@ -49,11 +49,11 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
 
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -96,7 +96,7 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Use Lovable AI to generate contextual suggestions
+    // Step 2: Use Claude (Anthropic) to generate contextual suggestions
     const systemPrompt = `Você é um Product Manager sênior especializado em software de gestão de obras e reformas residenciais. Você está analisando um sistema REAL em produção para sugerir NOVAS FUNCIONALIDADES baseadas em benchmarking de concorrentes.
 
 ## Sistema Atual
@@ -133,16 +133,18 @@ Para cada sugestão, siga EXATAMENTE este formato:
       ? `Gere sugestões de novas funcionalidades para a área descrita. Contexto adicional: "${context}"`
       : `Gere sugestões de novas funcionalidades para a área descrita, baseando-se em benchmarking de concorrentes.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system: systemPrompt,
         messages: [
-          { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
       }),
@@ -150,24 +152,28 @@ Para cada sugestão, siga EXATAMENTE este formato:
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
+      console.error("Claude API error:", response.status, errText);
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em alguns segundos." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
+      if (response.status === 402 || response.status === 403) {
+        return new Response(JSON.stringify({ error: "Créditos de IA esgotados ou chave inválida." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ error: "Erro na API de IA", detail: errText }), {
+      return new Response(JSON.stringify({ error: "Erro na API Claude", detail: errText }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content ?? "";
+    // Claude returns content as an array of content blocks
+    const content = data.content
+      ?.filter((block: any) => block.type === "text")
+      .map((block: any) => block.text)
+      .join("\n") ?? "";
 
     return new Response(JSON.stringify({ content }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
