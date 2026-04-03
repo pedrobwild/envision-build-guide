@@ -334,29 +334,60 @@ export default function BudgetRequestsList() {
                       )}
                     </div>
 
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      {b.due_at && (
-                        <span
-                          className={`text-xs font-body flex items-center gap-1 ${
-                            isOverdue(b.due_at)
-                              ? "text-destructive font-medium"
-                              : isDueSoon(b.due_at)
-                              ? "text-warning font-medium"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          <Calendar className="h-3 w-3" />
-                          {format(new Date(b.due_at), "dd MMM", {
-                            locale: ptBR,
-                          })}
-                          {isOverdue(b.due_at) && " (atrasado)"}
-                        </span>
-                      )}
-                      {b.created_at && (
-                        <span className="text-xs text-muted-foreground font-body">
-                          {format(new Date(b.created_at), "dd/MM/yy")}
-                        </span>
-                      )}
+                    <div className="flex items-start gap-2 shrink-0">
+                      <div className="flex flex-col items-end gap-1">
+                        {b.due_at && (
+                          <span
+                            className={`text-xs font-body flex items-center gap-1 ${
+                              isOverdue(b.due_at)
+                                ? "text-destructive font-medium"
+                                : isDueSoon(b.due_at)
+                                ? "text-warning font-medium"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            <Calendar className="h-3 w-3" />
+                            {format(new Date(b.due_at), "dd MMM", {
+                              locale: ptBR,
+                            })}
+                            {isOverdue(b.due_at) && " (atrasado)"}
+                          </span>
+                        )}
+                        {b.created_at && (
+                          <span className="text-xs text-muted-foreground font-body">
+                            {format(new Date(b.created_at), "dd/MM/yy")}
+                          </span>
+                        )}
+                      </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem
+                            onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/solicitacoes" } })}
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Editar solicitação
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setDeleteTarget(b)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </Card>
@@ -365,6 +396,30 @@ export default function BudgetRequestsList() {
           </div>
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir solicitação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir "{deleteTarget?.project_name || "Sem nome"}"?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
