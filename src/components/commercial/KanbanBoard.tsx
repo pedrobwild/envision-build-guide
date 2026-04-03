@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileSwipeableKanban } from "@/components/admin/MobileSwipeableKanban";
 import {
   DndContext,
   DragOverlay,
