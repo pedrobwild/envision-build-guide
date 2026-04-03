@@ -130,6 +130,7 @@ export default function EstimatorDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
+  const [estimatorFilter, setEstimatorFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("urgente");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
