@@ -1,4 +1,3 @@
-import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Shield, Clock, Award, Users, FileCheck, Headphones } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,129 +13,79 @@ const signals = [
   { icon: FileCheck, label: "ART registrada", sublabel: "no CREA" },
   { icon: Users, label: "Equipe própria", sublabel: "gestão direta" },
   { icon: Headphones, label: "Suporte pós-obra", sublabel: "canal direto" },
+  {
+    custom: true as const,
+    label: "0 reclamações",
+    sublabel: "há 6 meses",
+  },
 ];
 
 export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const check = () => {
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
-    };
-
-    check();
-    el.addEventListener("scroll", check, { passive: true });
-    return () => el.removeEventListener("scroll", check);
-  }, []);
-
-  // Auto-scroll marquee effect
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    let rafId: number;
-    let paused = false;
-    let pauseTimeout: ReturnType<typeof setTimeout>;
-
-    const step = () => {
-      if (!paused && el.scrollLeft + el.clientWidth < el.scrollWidth - 2) {
-        el.scrollLeft += 0.5;
-      } else if (!paused) {
-        el.scrollLeft = 0;
-      }
-      rafId = requestAnimationFrame(step);
-    };
-
-    const handleTouch = () => {
-      paused = true;
-      clearTimeout(pauseTimeout);
-      pauseTimeout = setTimeout(() => { paused = false; }, 3000);
-    };
-
-    el.addEventListener("touchstart", handleTouch, { passive: true });
-    el.addEventListener("pointerdown", handleTouch, { passive: true });
-
-    // Start after a small delay
-    const startDelay = setTimeout(() => { rafId = requestAnimationFrame(step); }, 2000);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      clearTimeout(startDelay);
-      clearTimeout(pauseTimeout);
-      el.removeEventListener("touchstart", handleTouch);
-      el.removeEventListener("pointerdown", handleTouch);
-    };
-  }, []);
-
   return (
-    <div className="lg:hidden space-y-3">
-      {/* Horizontal scroll chips with auto-marquee */}
-      <div className="relative">
-        <div
-          ref={scrollRef}
-          className="flex gap-2 overflow-x-auto scrollbar-none px-1 pb-1"
-          style={{ WebkitOverflowScrolling: "touch" }}
-          role="list"
-          aria-label="Garantias e diferenciais"
-        >
-          {signals.map((s, i) => (
-            <motion.div
-              key={s.label}
-              role="listitem"
-              initial={{ opacity: 0, x: 8 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.04 }}
-              className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border"
-            >
-              <s.icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-              <div className="flex flex-col">
-                <span className="text-xs font-display font-semibold text-foreground leading-none">
-                  {s.label}
-                </span>
-                <span className="text-xs text-muted-foreground font-body leading-none mt-0.5">
-                  {s.sublabel}
-                </span>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Fade-out gradient — right edge scroll hint */}
-        <div
-          className={cn(
-            "absolute right-0 top-0 bottom-1 w-10 pointer-events-none transition-opacity duration-300 bg-gradient-to-l from-background to-transparent",
-            canScrollRight ? "opacity-100" : "opacity-0"
-          )}
-          aria-hidden="true"
-        />
-      </div>
-
-      {/* ReclameAqui seal — compact */}
-      <motion.a
-        href="https://www.reclameaqui.com.br/empresa/bwild-reformas/sobre/#info-rav"
-        target="_blank"
-        rel="noopener noreferrer"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/5 border border-success/10 w-fit"
+    <div className="lg:hidden">
+      {/* 3×2 grid — all visible at once, no scroll */}
+      <div
+        className="grid grid-cols-3 gap-2"
+        role="list"
+        aria-label="Garantias e diferenciais"
       >
-        <img
-          src={seloReclameAqui}
-          alt="Selo RA Verificada"
-          width={20}
-          height={20}
-          className="h-5 w-5 object-contain"
-        />
-        <span className="text-xs font-body text-success font-medium">
-          0 reclamações há 6 meses
-        </span>
-      </motion.a>
+        {signals.map((s, i) => (
+          <motion.div
+            key={s.label}
+            role="listitem"
+            initial={{ opacity: 0, y: 6 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.04 }}
+            className={cn(
+              "flex flex-col items-center justify-center text-center gap-1.5 px-2 py-3 rounded-xl border",
+              "custom" in s
+                ? "bg-success/5 border-success/10"
+                : "bg-muted/40 border-border"
+            )}
+          >
+            {"custom" in s ? (
+              <a
+                href="https://www.reclameaqui.com.br/empresa/bwild-reformas/sobre/#info-rav"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1.5"
+              >
+                <img
+                  src={seloReclameAqui}
+                  alt="Selo RA Verificada"
+                  width={18}
+                  height={18}
+                  className="h-[18px] w-[18px] object-contain"
+                />
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-display font-semibold text-success leading-tight">
+                    {s.label}
+                  </span>
+                  <span className="text-[10px] text-success/70 font-body leading-tight mt-0.5">
+                    {s.sublabel}
+                  </span>
+                </div>
+              </a>
+            ) : (
+              <>
+                {"icon" in s && s.icon && (() => {
+                  const Icon = (s as any).icon;
+                  return <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />;
+                })()}
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-display font-semibold text-foreground leading-tight">
+                    {s.label}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-body leading-tight mt-0.5">
+                    {s.sublabel}
+                  </span>
+                </div>
+              </>
+            )}
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
