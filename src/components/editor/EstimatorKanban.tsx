@@ -42,9 +42,9 @@ const ESTIMATOR_COLUMNS = [
     label: "Pendente",
     icon: Inbox,
     statuses: ["requested", "novo", "triage", "assigned"],
-    accent: "border-t-indigo-500",
-    headerColor: "text-indigo-700 dark:text-indigo-400",
-    bgColor: "bg-indigo-50/50 dark:bg-indigo-950/20",
+    accent: "border-t-primary",
+    headerColor: "text-primary",
+    bgColor: "bg-primary/5",
     targetStatus: "assigned" as InternalStatus,
     locked: false,
   },
@@ -53,9 +53,9 @@ const ESTIMATOR_COLUMNS = [
     label: "Em Elaboração",
     icon: Hammer,
     statuses: ["in_progress", "waiting_info", "blocked"],
-    accent: "border-t-yellow-500",
-    headerColor: "text-yellow-700 dark:text-yellow-400",
-    bgColor: "bg-yellow-50/50 dark:bg-yellow-950/20",
+    accent: "border-t-warning",
+    headerColor: "text-warning",
+    bgColor: "bg-warning/5",
     targetStatus: "in_progress" as InternalStatus,
     locked: false,
   },
@@ -64,9 +64,9 @@ const ESTIMATOR_COLUMNS = [
     label: "Em Revisão",
     icon: CheckCircle2,
     statuses: ["ready_for_review"],
-    accent: "border-t-orange-500",
-    headerColor: "text-orange-700 dark:text-orange-400",
-    bgColor: "bg-orange-50/50 dark:bg-orange-950/20",
+    accent: "border-t-warning",
+    headerColor: "text-warning",
+    bgColor: "bg-warning/5",
     targetStatus: "ready_for_review" as InternalStatus,
     locked: false,
   },
@@ -75,20 +75,20 @@ const ESTIMATOR_COLUMNS = [
     label: "Entregue",
     icon: Send,
     statuses: ["delivered_to_sales", "sent_to_client", "minuta_solicitada"],
-    accent: "border-t-teal-500",
-    headerColor: "text-teal-700 dark:text-teal-400",
-    bgColor: "bg-teal-50/50 dark:bg-teal-950/20",
+    accent: "border-t-success",
+    headerColor: "text-success",
+    bgColor: "bg-success/5",
     targetStatus: "delivered_to_sales" as InternalStatus,
-    locked: true, // estimator shouldn't drag into post-production
+    locked: true,
   },
   {
     id: "closed",
     label: "Finalizado",
     icon: FileSignature,
     statuses: ["lost", "archived"],
-    accent: "border-t-green-500",
-    headerColor: "text-green-700 dark:text-green-400",
-    bgColor: "bg-green-50/50 dark:bg-green-950/20",
+    accent: "border-t-muted-foreground",
+    headerColor: "text-muted-foreground",
+    bgColor: "bg-muted/30",
     targetStatus: null,
     locked: true,
   },
@@ -139,16 +139,16 @@ function getDueInfo(dueAt: string | null): { label: string; variant: DueVariant 
 const dueVariantStyles: Record<DueVariant, string> = {
   overdue: "bg-destructive/10 text-destructive",
   today: "bg-warning/10 text-warning",
-  soon: "bg-amber-100/80 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
-  ok: "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
+  soon: "bg-warning/10 text-warning",
+  ok: "bg-success/10 text-success",
   default: "text-muted-foreground bg-muted/50",
 };
 
 const dueBorderStyles: Record<DueVariant, string> = {
   overdue: "border-l-destructive",
   today: "border-l-warning",
-  soon: "border-l-amber-400 dark:border-l-amber-500",
-  ok: "border-l-emerald-400 dark:border-l-emerald-500",
+  soon: "border-l-warning",
+  ok: "border-l-success",
   default: "border-l-transparent",
 };
 
@@ -305,12 +305,12 @@ function EstimatorCard({
       className={`p-3 text-left transition-all border border-l-[3px] ${borderColor} ${
         isDragging ? "opacity-60 shadow-xl rotate-2 scale-105" : "hover:shadow-md"
       } ${locked ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${
-        highPrio ? "ring-1 ring-amber-300/50 dark:ring-amber-600/30" : ""
+        highPrio ? "ring-1 ring-warning/30" : ""
       }`}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
     >
       <div className="flex items-start gap-1.5 mb-1.5">
-        {highPrio && <Pin className="h-3 w-3 shrink-0 text-amber-500 mt-0.5 fill-amber-500" />}
+        {highPrio && <Pin className="h-3 w-3 shrink-0 text-warning mt-0.5 fill-warning" />}
         <span className="font-semibold font-display text-xs text-foreground leading-tight line-clamp-2 flex-1">
           {b.project_name || "Sem nome"}
         </span>

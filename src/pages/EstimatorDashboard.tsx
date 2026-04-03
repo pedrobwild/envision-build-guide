@@ -338,7 +338,7 @@ export default function EstimatorDashboard() {
   const dueVariantStyles = {
     overdue: "bg-destructive/10 text-destructive border-destructive/20",
     today: "bg-warning/10 text-warning border-warning/20",
-    soon: "bg-amber-50 text-amber-700 border-amber-200",
+    soon: "bg-warning/10 text-warning border-warning/20",
     default: "text-muted-foreground",
   };
 
@@ -435,35 +435,35 @@ export default function EstimatorDashboard() {
             label="Pendente"
             count={counts.pending}
             icon={<Inbox className="h-4 w-4" />}
-            accent="text-indigo-600"
+            accent="text-primary"
             onClick={() => setStatusFilter("assigned")}
           />
           <SummaryCard
             label="Em Elaboração"
             count={counts.inProgress}
             icon={<Clock className="h-4 w-4" />}
-            accent="text-yellow-600"
+            accent="text-warning"
             onClick={() => setStatusFilter("in_progress")}
           />
           <SummaryCard
             label="Em Revisão"
             count={counts.review}
             icon={<CheckCircle2 className="h-4 w-4" />}
-            accent="text-orange-600"
+            accent="text-warning"
             onClick={() => setStatusFilter("ready_for_review")}
           />
           <SummaryCard
             label="Entregue"
             count={counts.delivered}
             icon={<Send className="h-4 w-4" />}
-            accent="text-teal-600"
+            accent="text-success"
             onClick={() => setStatusFilter("delivered_to_sales")}
           />
           <SummaryCard
             label="Finalizado"
             count={counts.finished}
             icon={<FileSignature className="h-4 w-4" />}
-            accent="text-green-600"
+            accent="text-success"
             onClick={() => setStatusFilter("sent_to_client")}
           />
         </div>
@@ -611,7 +611,7 @@ export default function EstimatorDashboard() {
                           </div>
                           {b.internal_status === "revision_requested" && (
                             <div className="flex items-center gap-1.5 mb-1">
-                              <Badge className="bg-amber-100 text-amber-800 border-amber-300 border text-xs font-body gap-1 px-2 py-0.5">
+                              <Badge className="bg-warning/10 text-warning border-warning/20 border text-xs font-body gap-1 px-2 py-0.5">
                                 <RotateCcw className="h-3 w-3" />
                                 Revisão solicitada
                               </Badge>
