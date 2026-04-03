@@ -18,7 +18,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin/solicitacoes/nova": "Nova Solicitação",
   "/admin/comparar": "Comparar Versões",
   "/admin/usuarios": "Usuários",
-  "/admin/producao": "Minha Produção",
+  "/admin/producao": "Pipeline Orçamentos",
   "/admin/comercial": "Pipeline Comercial",
   "/admin/operacoes": "Operações",
   "/admin/financeiro": "Financeiro",
