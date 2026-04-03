@@ -165,7 +165,7 @@ export default function CommercialDashboard() {
     }
     c.total = budgets.length;
     c.needsAction = budgets.filter(b =>
-      (["waiting_info", "delivered_to_sales"] as string[]).includes(b.internal_status)
+      (["delivered_to_sales"] as string[]).includes(b.internal_status)
     ).length;
     return c;
   }, [budgets]);
