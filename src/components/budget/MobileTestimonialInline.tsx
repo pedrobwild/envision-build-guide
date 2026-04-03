@@ -21,7 +21,7 @@ export function MobileTestimonialInline() {
         {/* Video thumbnail + play */}
         <button
           onClick={() => setOpen(true)}
-          className="relative w-full aspect-[16/9] bg-muted cursor-pointer group"
+          className="relative w-full aspect-[16/9] bg-muted cursor-pointer group overflow-hidden"
         >
           <video
             src={VIDEO_URL}
@@ -69,7 +69,7 @@ export function MobileTestimonialInline() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-[94vw] max-w-3xl aspect-video rounded-xl overflow-hidden shadow-2xl bg-black"
+              className="relative w-[85vw] max-w-[380px] aspect-[9/16] rounded-xl overflow-hidden shadow-2xl bg-black"
               onClick={(e) => e.stopPropagation()}
             >
               <video
@@ -78,7 +78,7 @@ export function MobileTestimonialInline() {
                 controls
                 autoPlay
                 playsInline
-                className="w-full h-full"
+                className="w-full h-full object-cover"
               />
               <button
                 onClick={() => setOpen(false)}
