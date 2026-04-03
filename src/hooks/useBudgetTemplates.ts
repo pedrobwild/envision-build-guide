@@ -18,7 +18,7 @@ export function useBudgetTemplates() {
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
-      return (data ?? []) as BudgetTemplate[];
+      return (data ?? []) as unknown as BudgetTemplate[];
     },
   });
 }
