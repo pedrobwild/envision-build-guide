@@ -85,7 +85,28 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
       }
     }
     load();
-    return () => { cancelled = true; };
+
+    // Realtime subscription
+    const channel = supabase
+      .channel(`budget-events-${budgetId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "budget_events",
+          filter: `budget_id=eq.${budgetId}`,
+        },
+        (payload) => {
+          setEvents((prev) => [payload.new as any, ...prev].slice(0, 50));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, [budgetId]);
 
   const debouncedSave = useCallback((field: string, value: any) => {
