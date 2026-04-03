@@ -9,7 +9,7 @@ interface MobilePriceAnchorProps {
 }
 
 export function MobilePriceAnchor({ total, validityDaysLeft, expired }: MobilePriceAnchorProps) {
-  const installment10x = total / 10;
+  const installment18x = total / 18;
 
   const scrollToSummary = () => {
     const el = document.getElementById("resumo-financeiro");
