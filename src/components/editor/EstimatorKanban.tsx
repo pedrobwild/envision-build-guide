@@ -305,7 +305,7 @@ function EstimatorCard({
       className={`p-3 text-left transition-all border border-l-[3px] ${borderColor} ${
         isDragging ? "opacity-60 shadow-xl rotate-2 scale-105" : "hover:shadow-md"
       } ${locked ? "cursor-default" : "cursor-grab active:cursor-grabbing"} ${
-        highPrio ? "ring-1 ring-amber-300/50 dark:ring-amber-600/30" : ""
+        highPrio ? "ring-1 ring-warning/30" : ""
       }`}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
     >
