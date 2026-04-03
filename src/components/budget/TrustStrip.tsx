@@ -69,9 +69,10 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
               </a>
             ) : (
               <>
-                {(s as any).icon && (
-                  <(s as any).icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                )}
+                {"icon" in s && s.icon && (() => {
+                  const Icon = (s as any).icon;
+                  return <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />;
+                })()}
                 <div className="flex flex-col">
                   <span className="text-[11px] font-display font-semibold text-foreground leading-tight">
                     {s.label}
