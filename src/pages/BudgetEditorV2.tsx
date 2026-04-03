@@ -37,6 +37,7 @@ export default function BudgetEditorV2() {
   const [saving, setSaving] = useState(false);
   const [internalDataOpen, setInternalDataOpen] = useState(false);
   const [versionCount, setVersionCount] = useState(0);
+  const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
   const [startingRevision, setStartingRevision] = useState(false);
 
   // Fetch latest revision request when status is revision_requested
