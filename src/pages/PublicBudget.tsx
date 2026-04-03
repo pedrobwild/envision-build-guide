@@ -7,6 +7,7 @@ import { BudgetHeader } from "@/components/budget/BudgetHeader";
 import { ProductShowcaseCard } from "@/components/budget/ProductShowcaseCard";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
 import { ReadingProgressBar } from "@/components/budget/ReadingProgressBar";
+import { MobileStepBreadcrumb } from "@/components/budget/MobileStepBreadcrumb";
 import { AnimatedSection } from "@/components/budget/AnimatedSection";
 import { CollapsingSectionHeader } from "@/components/budget/CollapsingSectionHeader";
 import { PublicBudgetSkeleton } from "@/components/budget/PublicBudgetSkeleton";
