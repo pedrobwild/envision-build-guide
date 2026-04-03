@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { CommentQuickTemplates } from "@/components/editor/CommentQuickTemplates";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -107,6 +108,7 @@ export default function BudgetInternalDetail() {
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const getProfileName = useCallback(
     (id: string | null) => {
@@ -536,9 +538,15 @@ export default function BudgetInternalDetail() {
                 <Separator />
 
                 {/* New comment form */}
+                <CommentQuickTemplates
+                  value={newComment}
+                  onChange={setNewComment}
+                  textareaRef={commentTextareaRef}
+                />
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder="Escreva uma nota interna..."
+                    ref={commentTextareaRef}
+                    placeholder="Escreva uma nota interna... (digite / para templates)"
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     rows={2}
