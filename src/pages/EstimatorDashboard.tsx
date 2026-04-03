@@ -130,6 +130,7 @@ export default function EstimatorDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
+  const [estimatorFilter, setEstimatorFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("urgente");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
@@ -215,12 +216,16 @@ export default function EstimatorDashboard() {
   );
 
   const commercialOptions = useMemo(() => {
-    const ids = new Set(budgets.map((b) => b.commercial_owner_id).filter(Boolean));
-    return Array.from(ids).map((id) => ({
-      id: id!,
-      name: getProfileName(id!),
-    }));
-  }, [budgets, getProfileName]);
+    if (!isAdmin) return [];
+    const ids = [...new Set(budgets.map((b) => b.commercial_owner_id).filter(Boolean))] as string[];
+    return ids.map((id) => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [isAdmin, budgets, getProfileName]);
+
+  const estimatorOptions = useMemo(() => {
+    if (!isAdmin) return [];
+    const ids = [...new Set(budgets.map((b) => b.estimator_owner_id).filter(Boolean))] as string[];
+    return ids.map((id) => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [isAdmin, budgets, getProfileName]);
 
   // Deadline helpers
   const getDueInfo = (dueAt: string | null) => {
@@ -282,7 +287,9 @@ export default function EstimatorDashboard() {
       const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
       const matchCommercial =
         commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
-      return matchSearch && matchStatus && matchPriority && matchCommercial;
+      const matchEstimator =
+        estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter;
+      return matchSearch && matchStatus && matchPriority && matchCommercial && matchEstimator;
     });
 
     const priorityOrder: Record<string, number> = { urgente: 0, alta: 1, normal: 2, baixa: 3 };
@@ -309,7 +316,7 @@ export default function EstimatorDashboard() {
     });
 
     return result;
-  }, [budgets, search, statusFilter, priorityFilter, commercialFilter, sortBy]);
+  }, [budgets, search, statusFilter, priorityFilter, commercialFilter, estimatorFilter, sortBy]);
 
   // Quick status change
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
@@ -471,7 +478,7 @@ export default function EstimatorDashboard() {
         {/* Kanban View */}
         {viewMode === "kanban" && !loading && (
           <EstimatorKanban
-            budgets={budgets}
+            budgets={budgets.filter(b => (commercialFilter === "all" || b.commercial_owner_id === commercialFilter) && (estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter))}
             onStatusChange={async (budgetId, newStatus) => {
               await changeStatus(budgetId, newStatus);
             }}
@@ -516,15 +523,30 @@ export default function EstimatorDashboard() {
                   ))}
                 </SelectContent>
               </Select>
-              {commercialOptions.length > 1 && (
+              {isAdmin && commercialOptions.length > 0 && (
                 <Select value={commercialFilter} onValueChange={setCommercialFilter}>
                   <SelectTrigger className="w-full sm:w-[180px]">
+                    <User className="h-3.5 w-3.5 mr-1.5" />
                     <SelectValue placeholder="Comercial" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="all">Todos os comerciais</SelectItem>
                     {commercialOptions.map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {isAdmin && estimatorOptions.length > 0 && (
+                <Select value={estimatorFilter} onValueChange={setEstimatorFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <UserCog className="h-3.5 w-3.5 mr-1.5" />
+                    <SelectValue placeholder="Orçamentista" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os orçamentistas</SelectItem>
+                    {estimatorOptions.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
