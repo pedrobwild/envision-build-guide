@@ -6,9 +6,10 @@ import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight,
+  Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight,
   PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
 } from "lucide-react";
+import { EmptyState } from "@/components/editor/EmptyState";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
   DndContext,
