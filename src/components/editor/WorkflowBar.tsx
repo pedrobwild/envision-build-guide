@@ -326,6 +326,17 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         onConfirm={handleBlockingConfirm}
         onCancel={() => setBlockingTarget(null)}
       />
+
+      <RevisionRequestDialog
+        open={revisionModalOpen}
+        onOpenChange={setRevisionModalOpen}
+        budgetId={budget.id}
+        currentStatus={internalStatus}
+        onSuccess={() => {
+          setRevisionModalOpen(false);
+          onBudgetUpdate({ internal_status: "revision_requested" });
+        }}
+      />
     </div>
   );
 }
