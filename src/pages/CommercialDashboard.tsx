@@ -573,12 +573,12 @@ function SummaryCard({ label, count, icon, accent, active, onClick, alert }: {
 }) {
   return (
     <Card
-      className={`p-3 flex flex-col gap-1 transition-shadow ${onClick ? "cursor-pointer hover:shadow-md" : ""} ${active ? "ring-2 ring-primary" : ""} ${alert ? "border-amber-300 dark:border-amber-700" : ""}`}
+      className={`p-3 flex flex-col gap-1 transition-shadow ${onClick ? "cursor-pointer hover:shadow-md" : ""} ${active ? "ring-2 ring-primary" : ""} ${alert ? "border-warning/30" : ""}`}
       onClick={onClick}
     >
       <div className={`flex items-center gap-1.5 text-xs font-body ${accent}`}>
         {icon}{label}
-        {alert && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />}
+        {alert && <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />}
       </div>
       <span className="text-2xl font-bold font-display text-foreground">{count}</span>
     </Card>
