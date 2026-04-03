@@ -194,9 +194,8 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
       return;
     }
 
-    // Seed default sections (Arquitetura + Administração) with items
     try {
-      await seedDefaultSections(data.id);
+      await seedFromTemplate(data.id, selectedTemplateId || null);
     } catch (seedErr) {
       console.error("Erro ao criar seções padrão:", seedErr);
     }
