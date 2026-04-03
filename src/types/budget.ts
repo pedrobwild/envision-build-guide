@@ -25,6 +25,7 @@ export interface BudgetItem {
   excluded_rooms?: string[];
   internal_total?: number | null;
   internal_unit_price?: number | null;
+  bdi_percentage?: number | null;
   images?: BudgetItemImage[];
 }
 

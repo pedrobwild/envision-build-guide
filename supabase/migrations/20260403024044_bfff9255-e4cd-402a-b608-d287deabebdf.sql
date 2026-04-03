@@ -1,0 +1,1 @@
+ALTER TABLE public.items ADD COLUMN bdi_percentage numeric DEFAULT 0;

@@ -153,10 +153,48 @@ interface ItemData {
   unit?: string | null;
   internal_unit_price?: number | null;
   internal_total?: number | null;
+  bdi_percentage?: number | null;
   order_index: number;
   catalog_item_id?: string | null;
   catalog_snapshot?: Record<string, any> | null;
   images?: { id: string; url: string; is_primary?: boolean | null }[];
+}
+
+/* ── BDI helpers ── */
+function calcSaleUnitPrice(cost: number | null | undefined, bdi: number | null | undefined): number {
+  const c = Number(cost) || 0;
+  const b = Number(bdi) || 0;
+  return c * (1 + b / 100);
+}
+
+function calcItemSaleTotal(item: ItemData): number {
+  const qty = Number(item.qty) || 1;
+  const saleUnit = calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage);
+  return saleUnit * qty;
+}
+
+function calcItemCostTotal(item: ItemData): number {
+  if (item.internal_total != null && Number(item.internal_total) > 0) return Number(item.internal_total);
+  const qty = Number(item.qty) || 1;
+  return (Number(item.internal_unit_price) || 0) * qty;
+}
+
+function calcSectionCostTotal(section: SectionData): number {
+  const qty = Number(section.qty) || 1;
+  if (section.items.length > 0) {
+    const sum = section.items.reduce((s, i) => s + calcItemCostTotal(i), 0);
+    if (sum > 0) return sum * qty;
+  }
+  return (Number(section.section_price) || 0) * qty;
+}
+
+function calcSectionSaleTotal(section: SectionData): number {
+  const qty = Number(section.qty) || 1;
+  if (section.items.length > 0) {
+    const sum = section.items.reduce((s, i) => s + calcItemSaleTotal(i), 0);
+    if (sum > 0) return sum * qty;
+  }
+  return (Number(section.section_price) || 0) * qty;
 }
 
 interface SectionsEditorProps {
@@ -245,9 +283,9 @@ function SortableItemRow({
         isDragging && "bg-muted/40 shadow-lg rounded-lg"
       )}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
         {/* Drag handle + Title + description */}
-        <div className="sm:col-span-5 space-y-1.5">
+        <div className="lg:col-span-3 space-y-1.5">
           <div className="flex items-center gap-2">
             <button
               {...listeners}
@@ -256,7 +294,6 @@ function SortableItemRow({
             >
               <GripVertical className="h-3.5 w-3.5" />
             </button>
-            {/* Origin badge */}
             {item.catalog_item_id ? (
               <span className="flex-shrink-0" title="Item do catálogo">
                 <BookOpen className="h-3.5 w-3.5 text-primary" />
@@ -293,7 +330,7 @@ function SortableItemRow({
           </div>
         </div>
         {/* Qty */}
-        <div className="sm:col-span-2 space-y-1">
+        <div className="lg:col-span-1 space-y-1">
           <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
             <Hash className="h-3 w-3" /> Qtd
           </label>
@@ -302,14 +339,14 @@ function SortableItemRow({
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             style={{ fontVariantNumeric: "tabular-nums" }}
           />
         </div>
-        {/* Unit price */}
-        <div className="sm:col-span-2 space-y-1">
+        {/* $ Custo (unit) */}
+        <div className="lg:col-span-1 space-y-1">
           <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Unitário
+            <DollarSign className="h-3 w-3" /> Custo
           </label>
           <input
             type="number"
@@ -317,14 +354,38 @@ function SortableItemRow({
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             style={{ fontVariantNumeric: "tabular-nums" }}
           />
         </div>
-        {/* Total */}
-        <div className="sm:col-span-2 space-y-1">
+        {/* %BDI */}
+        <div className="lg:col-span-1 space-y-1">
           <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Total
+            % BDI
+          </label>
+          <input
+            type="number"
+            value={item.bdi_percentage ?? ""}
+            onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
+            placeholder="0"
+            step="0.01"
+            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          />
+        </div>
+        {/* $ Venda (auto) */}
+        <div className="lg:col-span-1 space-y-1">
+          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
+            <DollarSign className="h-3 w-3" /> Venda
+          </label>
+          <div className="w-full px-2 py-2 rounded-lg border border-border bg-muted/30 text-foreground text-sm font-body tabular-nums">
+            {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+          </div>
+        </div>
+        {/* $ Total Custo */}
+        <div className="lg:col-span-2 space-y-1">
+          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
+            <DollarSign className="h-3 w-3" /> Total Custo
           </label>
           <input
             type="number"
@@ -332,12 +393,21 @@ function SortableItemRow({
             onChange={(e) => onUpdate(sectionId, item.id, "internal_total", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             style={{ fontVariantNumeric: "tabular-nums" }}
           />
         </div>
+        {/* $ Total Venda (auto) */}
+        <div className="lg:col-span-2 space-y-1">
+          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
+            <DollarSign className="h-3 w-3" /> Total Venda
+          </label>
+          <div className="w-full px-2 py-2 rounded-lg border border-border bg-muted/30 text-foreground text-sm font-body font-semibold tabular-nums">
+            {formatBRL(calcItemSaleTotal(item))}
+          </div>
+        </div>
         {/* Actions */}
-        <div className="sm:col-span-1 flex items-end justify-end gap-1">
+        <div className="lg:col-span-1 flex items-end justify-end gap-1">
           {isItemSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
           {!item.catalog_item_id && (
             <button
@@ -418,10 +488,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       const newItems = s.items.map(i =>
         i.id === itemId ? { ...i, [field]: value } : i
       );
-      if (field === "internal_total") {
-        const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
-        debouncedSave("sections", sectionId, { section_price: newTotal });
-        return { ...s, items: newItems, section_price: newTotal };
+      // Recalculate section_price as sale total whenever price-related fields change
+      const priceFields = ["internal_total", "internal_unit_price", "bdi_percentage", "qty"];
+      if (priceFields.includes(field)) {
+        const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
+        debouncedSave("sections", sectionId, { section_price: newSaleTotal });
+        return { ...s, items: newItems, section_price: newSaleTotal };
       }
       return { ...s, items: newItems };
     });
@@ -492,11 +564,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         if (s.id !== sectionId) return s;
         const newItem = { ...data, images: itemImages } as ItemData;
         const newItems = [...s.items, newItem];
-        const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
-        if (newTotal > 0) {
-          supabase.from("sections").update({ section_price: newTotal }).eq("id", sectionId);
+        const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
+        if (newSaleTotal > 0) {
+          supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
         }
-        return { ...s, items: newItems, section_price: newTotal > 0 ? newTotal : s.section_price };
+        return { ...s, items: newItems, section_price: newSaleTotal > 0 ? newSaleTotal : s.section_price };
       });
       onSectionsChange(updated);
       const origin = itemData?.catalog_item_id ? "Item do catálogo adicionado" : "Item manual adicionado";
@@ -509,9 +581,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     const updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.filter(i => i.id !== itemId);
-      const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
-      supabase.from("sections").update({ section_price: newTotal }).eq("id", sectionId);
-      return { ...s, items: newItems, section_price: newTotal };
+      const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
+      supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
+      return { ...s, items: newItems, section_price: newSaleTotal };
     });
     onSectionsChange(updated);
     toast.success("Item removido");
@@ -589,17 +661,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     }
   };
 
-  const getSectionTotal = (section: SectionData) => {
-    const qty = Number(section.qty) || 1;
-    if (section.items.length > 0) {
-      const itemsSum = section.items.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
-      if (itemsSum > 0) return itemsSum * qty;
-    }
-    if (section.section_price) return Number(section.section_price) * qty;
-    return 0;
-  };
-
-  const grandTotal = sections.reduce((sum, s) => sum + getSectionTotal(s), 0);
+  const grandTotalCost = sections.reduce((sum, s) => sum + calcSectionCostTotal(s), 0);
+  const grandTotalSale = sections.reduce((sum, s) => sum + calcSectionSaleTotal(s), 0);
+  const grandMargin = grandTotalSale - grandTotalCost;
+  const grandBdiPercent = grandTotalCost > 0 ? ((grandTotalSale / grandTotalCost) - 1) * 100 : 0;
 
   /* ── Drag handlers ── */
   const handleSectionDragEnd = (event: DragEndEvent) => {
@@ -641,13 +706,28 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-10">
+    <div className="max-w-5xl mx-auto mt-10">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-display text-2xl font-bold text-foreground">Seções e Itens</h2>
-          <p className="text-muted-foreground font-body text-sm mt-1">
-            Total geral: <span className="font-semibold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>{formatBRL(grandTotal)}</span>
-          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm font-body mt-1">
+            <div>
+              <span className="text-muted-foreground">Total Venda: </span>
+              <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalSale)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Total Custo: </span>
+              <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalCost)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">% BDI Total: </span>
+              <span className="font-semibold text-foreground tabular-nums">{grandBdiPercent.toFixed(1)}%</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Margem Líquida: </span>
+              <span className={cn("font-semibold tabular-nums", grandMargin >= 0 ? "text-green-600 dark:text-green-400" : "text-destructive")}>{formatBRL(grandMargin)}</span>
+            </div>
+          </div>
         </div>
         <button
           onClick={addSection}
@@ -673,7 +753,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           <div className="space-y-3">
             {sections.map((section) => {
               const isExpanded = expandedSections.has(section.id);
-              const sectionTotal = getSectionTotal(section);
+              const sectionCostTotal = calcSectionCostTotal(section);
+              const sectionSaleTotal = calcSectionSaleTotal(section);
               const isSaving = savingIds.has(section.id);
 
               return (
@@ -715,9 +796,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                             </span>
                           </div>
-                          <span className="font-display font-semibold text-sm text-foreground whitespace-nowrap" style={{ fontVariantNumeric: "tabular-nums" }}>
-                            {formatBRL(sectionTotal)}
-                          </span>
+                          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                            <span className="font-display font-semibold text-sm text-foreground whitespace-nowrap tabular-nums">
+                              Venda: {formatBRL(sectionSaleTotal)}
+                            </span>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums font-body">
+                              Custo: {formatBRL(sectionCostTotal)}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
