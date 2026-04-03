@@ -226,6 +226,37 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
 
         <ScrollArea className="max-h-[calc(90vh-180px)]">
           <form id="new-budget-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
+            {/* Template */}
+            {templates.length > 0 && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
+                  <LayoutTemplate className="h-4 w-4 text-primary" />
+                  Template do Orçamento
+                </h3>
+                <div className="space-y-1.5">
+                  <Label className="font-body text-xs">Modelo base</Label>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um template (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem template (seções padrão)</SelectItem>
+                      {templates.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedTemplateId && selectedTemplateId !== "none" && (
+                    <p className="text-xs text-muted-foreground font-body">
+                      {templates.find((t) => t.id === selectedTemplateId)?.description}
+                    </p>
+                  )}
+                </div>
+              </section>
+            )}
+
             {/* Cliente */}
             <section className="space-y-3">
               <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
