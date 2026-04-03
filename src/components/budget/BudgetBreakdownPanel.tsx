@@ -42,7 +42,7 @@ export function BudgetBreakdownPanel({ budgetId }: Props) {
       setLoading(true);
       const { data } = await supabase
         .from("sections")
-        .select("id, title, order_index, section_price, is_optional, items(id, title, qty, unit, internal_unit_price, bdi_percentage, order_index)")
+        .select("id, title, order_index, section_price, is_optional, items(id, title, qty, unit, internal_unit_price, internal_total, bdi_percentage, order_index)")
         .eq("budget_id", budgetId)
         .order("order_index", { ascending: true });
 
