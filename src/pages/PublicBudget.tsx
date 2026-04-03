@@ -19,6 +19,8 @@ import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
 import { OptionalItemsSimulator } from "@/components/budget/OptionalItemsSimulator";
 import { MobileHeroCard } from "@/components/budget/MobileHeroCard";
+import { MobilePriceAnchor } from "@/components/budget/MobilePriceAnchor";
+import { MobileTestimonialInline } from "@/components/budget/MobileTestimonialInline";
 
 import { MobileBottomBar } from "@/components/budget/MobileBottomBar";
 import { MobileInlineSummary } from "@/components/budget/MobileInlineSummary";
