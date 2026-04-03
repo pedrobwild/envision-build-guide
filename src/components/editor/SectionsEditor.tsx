@@ -892,11 +892,15 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       )}
 
       {sections.length === 0 && (
-        <div className="text-center py-16 border border-dashed border-border/50 rounded-lg">
-          <Package className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
-          <p className="text-muted-foreground/60 font-body text-sm">Nenhuma seção ainda.</p>
-          <p className="text-muted-foreground/40 font-body text-xs mt-1">Importe um PDF ou adicione manualmente.</p>
-        </div>
+        <EmptyState
+          icon={FileSpreadsheet}
+          title="Orçamento em branco"
+          subtitle="Comece criando a primeira seção do seu orçamento"
+          actions={[
+            { label: "+ Criar Primeira Seção", onClick: addSection, icon: Plus },
+            { label: "Ver templates disponíveis", onClick: () => {}, variant: "outline", disabled: true, tooltip: "Em breve" },
+          ]}
+        />
       )}
 
       <DndContext
