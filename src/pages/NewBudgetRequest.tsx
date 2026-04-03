@@ -127,7 +127,7 @@ export default function NewBudgetRequest() {
     const links = referenceLinks.filter((l) => l.trim().length > 0);
     const metragemFormatted = metargemRaw.trim() ? `${metargemRaw.trim()}m²` : null;
 
-    const { error } = await supabase.from("budgets").insert({
+    const { data: inserted, error } = await supabase.from("budgets").insert({
       client_name: clientName.trim(),
       project_name: projectName || clientName.trim(),
       lead_email: clientEmail.trim() || null,
@@ -150,20 +150,28 @@ export default function NewBudgetRequest() {
       commercial_owner_id: commercialOwnerId || user.id,
       estimator_owner_id: estimatorOwnerId || null,
       created_by: user.id,
-    } as any);
+    } as any).select("id").single();
 
     setLoading(false);
 
-    if (error) {
+    if (error || !inserted) {
       console.error(error);
       toast.error("Erro ao criar solicitação. Tente novamente.");
       return;
     }
 
-    toast.success("Solicitação criada com sucesso!", {
-      description: "O orçamento entrará na fila de triagem.",
+    const estimatorName = orcamentistas.find(m => m.id === estimatorOwnerId)?.full_name;
+    const newId = inserted.id;
+
+    toast.success("Solicitação criada!", {
+      description: estimatorName ? `Atribuída para ${estimatorName}` : "O orçamento entrará na fila de triagem.",
+      action: {
+        label: "Abrir orçamento",
+        onClick: () => navigate(`/admin/budget/${newId}`),
+      },
+      duration: 8000,
     });
-    navigate("/admin/solicitacoes");
+    setTimeout(() => navigate("/admin/solicitacoes"), 1000);
   };
 
   return (
@@ -437,12 +445,16 @@ export default function NewBudgetRequest() {
                   </SelectContent>
                 </Select>
                 {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
-                  <div className="flex items-center gap-1.5 mt-1 px-2 py-1 rounded-md bg-accent text-accent-foreground">
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                    <UserCheck className="h-3.5 w-3.5 text-green-500" />
+                    Rodízio: <span className="font-medium">{orcamentistas.find(m => m.id === nextEstimatorId)?.full_name}</span>
+                  </p>
+                )}
+                {nextEstimatorId && estimatorOwnerId && estimatorOwnerId !== nextEstimatorId && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     <UserCheck className="h-3.5 w-3.5 text-primary" />
-                    <p className="text-xs font-body">
-                      Atribuído por rodízio: <span className="font-medium">{orcamentistas.find(m => m.id === nextEstimatorId)?.full_name}</span>
-                    </p>
-                  </div>
+                    Seleção manual (rodízio seria: {orcamentistas.find(m => m.id === nextEstimatorId)?.full_name})
+                  </p>
                 )}
               </div>
             </div>
