@@ -28,6 +28,9 @@ export async function logVersionEvent({
   event_type,
   budget_id,
   user_id,
+  from_status,
+  to_status,
+  note,
   metadata = {},
 }: VersionEventPayload) {
   try {
@@ -35,8 +38,10 @@ export async function logVersionEvent({
       budget_id,
       event_type,
       user_id: user_id ?? null,
+      from_status: from_status ?? null,
+      to_status: to_status ?? null,
       metadata: metadata as any,
-      note: buildNote(event_type, metadata),
+      note: note ?? buildNote(event_type, metadata),
     });
   } catch (err) {
     console.warn("[version-audit] Failed to log event:", err);
