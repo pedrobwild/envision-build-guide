@@ -611,7 +611,7 @@ export default function EstimatorDashboard() {
                           </div>
                           {b.internal_status === "revision_requested" && (
                             <div className="flex items-center gap-1.5 mb-1">
-                              <Badge className="bg-amber-100 text-amber-800 border-amber-300 border text-xs font-body gap-1 px-2 py-0.5">
+                              <Badge className="bg-warning/10 text-warning border-warning/20 border text-xs font-body gap-1 px-2 py-0.5">
                                 <RotateCcw className="h-3 w-3" />
                                 Revisão solicitada
                               </Badge>
