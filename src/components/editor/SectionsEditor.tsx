@@ -1043,10 +1043,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                     sectionTitle={section.title}
                                     budgetId={budgetId}
                                     isItemSaving={savingIds.has(item.id)}
+                                    searchMatch={matchingItemIds?.has(item.id)}
                                     onUpdate={updateItem}
                                     onDelete={deleteItem}
                                     onImagesChange={handleImagesChange}
                                     onPromoteToCatalog={promoteToCatalog}
+                                  />
                                   />
                                 ))}
                               </div>
