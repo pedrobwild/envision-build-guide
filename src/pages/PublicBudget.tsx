@@ -183,6 +183,7 @@ export default function PublicBudget() {
         Ir para o conteúdo
       </a>
       <ReadingProgressBar />
+      <MobileStepBreadcrumb />
       <BudgetHeader
         budget={budget}
         onExportPdf={handleExportPdf}
