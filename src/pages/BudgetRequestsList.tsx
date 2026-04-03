@@ -85,6 +85,7 @@ export default function BudgetRequestsList() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [deleteTarget, setDeleteTarget] = useState<BudgetRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [newBudgetOpen, setNewBudgetOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
