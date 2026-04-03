@@ -160,6 +160,130 @@ export type Database = {
           },
         ]
       }
+      budget_template_items: {
+        Row: {
+          coverage_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          order_index: number
+          qty: number | null
+          reference_url: string | null
+          template_section_id: string
+          title: string
+          unit: string | null
+        }
+        Insert: {
+          coverage_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          qty?: number | null
+          reference_url?: string | null
+          template_section_id: string
+          title?: string
+          unit?: string | null
+        }
+        Update: {
+          coverage_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          qty?: number | null
+          reference_url?: string | null
+          template_section_id?: string
+          title?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_template_items_template_section_id_fkey"
+            columns: ["template_section_id"]
+            isOneToOne: false
+            referencedRelation: "budget_template_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_template_sections: {
+        Row: {
+          created_at: string | null
+          excluded_bullets: Json | null
+          id: string
+          included_bullets: Json | null
+          is_optional: boolean
+          notes: string | null
+          order_index: number
+          subtitle: string | null
+          tags: Json | null
+          template_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          excluded_bullets?: Json | null
+          id?: string
+          included_bullets?: Json | null
+          is_optional?: boolean
+          notes?: string | null
+          order_index?: number
+          subtitle?: string | null
+          tags?: Json | null
+          template_id: string
+          title?: string
+        }
+        Update: {
+          created_at?: string | null
+          excluded_bullets?: Json | null
+          id?: string
+          included_bullets?: Json | null
+          is_optional?: boolean
+          notes?: string | null
+          order_index?: number
+          subtitle?: string | null
+          tags?: Json | null
+          template_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_template_sections_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "budget_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       budget_tours: {
         Row: {
           budget_id: string

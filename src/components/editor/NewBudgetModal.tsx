@@ -38,7 +38,9 @@ import {
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
-import { seedDefaultSections } from "@/lib/default-budget-sections";
+import { seedFromTemplate } from "@/lib/seed-from-template";
+import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
+import { LayoutTemplate } from "lucide-react";
 
 interface NewBudgetModalProps {
   open: boolean;
@@ -53,7 +55,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
 
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const { data: templates = [] } = useBudgetTemplates();
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
   // Form state
   const [clientName, setClientName] = useState("");
@@ -127,6 +131,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
     setReferenceLinks([""]);
     setCommercialOwnerId("");
     setHubspotDealUrl("");
+    setSelectedTemplateId("");
     // Keep estimator from round-robin
     if (nextEstimatorId) setEstimatorOwnerId(nextEstimatorId);
   };
@@ -190,9 +195,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
       return;
     }
 
-    // Seed default sections (Arquitetura + Administração) with items
     try {
-      await seedDefaultSections(data.id);
+      const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
+      await seedFromTemplate(data.id, tplId);
     } catch (seedErr) {
       console.error("Erro ao criar seções padrão:", seedErr);
     }
@@ -222,6 +227,37 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
 
         <ScrollArea className="max-h-[calc(90vh-180px)]">
           <form id="new-budget-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
+            {/* Template */}
+            {templates.length > 0 && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
+                  <LayoutTemplate className="h-4 w-4 text-primary" />
+                  Template do Orçamento
+                </h3>
+                <div className="space-y-1.5">
+                  <Label className="font-body text-xs">Modelo base</Label>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um template (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem template (seções padrão)</SelectItem>
+                      {templates.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedTemplateId && selectedTemplateId !== "none" && (
+                    <p className="text-xs text-muted-foreground font-body">
+                      {templates.find((t) => t.id === selectedTemplateId)?.description}
+                    </p>
+                  )}
+                </div>
+              </section>
+            )}
+
             {/* Cliente */}
             <section className="space-y-3">
               <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">

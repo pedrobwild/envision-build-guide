@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { seedFromTemplate } from "@/lib/seed-from-template";
+import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +30,7 @@ import {
   X,
   CheckCircle2,
   UserCheck,
+  LayoutTemplate,
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -40,7 +43,9 @@ export default function NewBudgetRequest() {
   // Team members for assignment
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const { data: templates = [] } = useBudgetTemplates();
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
   // Form state
   const [clientName, setClientName] = useState("");
@@ -152,13 +157,22 @@ export default function NewBudgetRequest() {
       created_by: user.id,
     } as any).select("id").single();
 
-    setLoading(false);
-
     if (error || !inserted) {
       console.error(error);
       toast.error("Erro ao criar solicitação. Tente novamente.");
+      setLoading(false);
       return;
     }
+
+    // Seed sections from template or defaults
+    try {
+      const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
+      await seedFromTemplate(inserted.id, tplId);
+    } catch (seedErr) {
+      console.error("Erro ao criar seções:", seedErr);
+    }
+
+    setLoading(false);
 
     const estimatorName = orcamentistas.find(m => m.id === estimatorOwnerId)?.full_name;
     const newId = inserted.id;
@@ -201,6 +215,39 @@ export default function NewBudgetRequest() {
         onSubmit={handleSubmit}
         className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6"
       >
+        {/* Template selector */}
+        {templates.length > 0 && (
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-display flex items-center gap-2">
+                <LayoutTemplate className="h-4 w-4 text-primary" />
+                Template do Orçamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Label className="font-body text-sm">Modelo base</Label>
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um template (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem template (seções padrão)</SelectItem>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedTemplateId && selectedTemplateId !== "none" && (
+                <p className="text-xs text-muted-foreground font-body">
+                  {templates.find((t) => t.id === selectedTemplateId)?.description}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Client */}
         <Card>
           <CardHeader className="pb-4">
