@@ -34,6 +34,7 @@ import { TrustStrip } from "@/components/budget/TrustStrip";
 import { useScrollspy } from "@/hooks/useScrollspy";
 import { categorizeSections } from "@/lib/scope-categories";
 import { cn } from "@/lib/utils";
+import { SectionDivider } from "@/components/budget/SectionDivider";
 
 // ── Lazy-loaded heavy components (MapLibre, ReactPlayer, Lightbox, Embla) ──
 const NeighborhoodDensityMap = lazy(() => import("@/components/budget/NeighborhoodDensityMap").then(m => ({ default: m.NeighborhoodDensityMap })));
