@@ -243,6 +243,7 @@ export default function PublicBudget() {
               </div>
 
               {/* ─── Prova social inline — depoimento entre serviços e galeria ─── */}
+              <SectionDivider className="lg:hidden" />
               <div className="mt-3">
                 <MobileTestimonialInline />
               </div>
