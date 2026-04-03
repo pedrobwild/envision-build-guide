@@ -277,6 +277,7 @@ export default function PublicBudget() {
             </div>
 
             {/* ── Mobile inline summary — before items ── */}
+            <SectionDivider className="lg:hidden" />
             <div id="resumo-financeiro" className="scroll-mt-20" data-pdf-section>
             <MobileInlineSummary
               total={total}
