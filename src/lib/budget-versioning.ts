@@ -142,55 +142,73 @@ export async function duplicateBudgetAsVersion(
     metadata: { source_budget_id: sourceBudgetId, source_version: source.version_number ?? 1 },
   });
 
-  // 4. Copy sections
+  // 4. Copy sections (batch)
   const { data: sections } = await supabase
     .from("sections")
     .select("*")
     .eq("budget_id", sourceBudgetId)
     .order("order_index");
 
-  for (const sec of sections || []) {
-    const { id: oldSecId, created_at: _ca, budget_id: _bid, ...secData } = sec;
+  if (sections && sections.length > 0) {
+    const sectionInserts = sections.map(({ id, created_at, budget_id, ...secData }) => ({
+      ...secData,
+      budget_id: newBudget.id,
+    }));
 
-    const { data: newSec } = await supabase
+    const { data: newSections } = await supabase
       .from("sections")
-      .insert({ ...secData, budget_id: newBudget.id })
-      .select()
-      .single();
+      .insert(sectionInserts)
+      .select();
 
-    if (!newSec) continue;
+    if (newSections && newSections.length > 0) {
+      // Build old→new section ID map (order is preserved)
+      const sectionIdMap = new Map<string, string>();
+      sections.forEach((oldSec, i) => {
+        if (newSections[i]) sectionIdMap.set(oldSec.id, newSections[i].id);
+      });
 
-    // Copy items for this section
-    const { data: items } = await supabase
-      .from("items")
-      .select("*")
-      .eq("section_id", oldSecId)
-      .order("order_index");
-
-    for (const item of items || []) {
-      const { id: oldItemId, created_at: _ica, section_id: _sid, ...itemData } = item;
-
-      const { data: newItem } = await supabase
+      // Fetch ALL items for all old sections in one query
+      const oldSectionIds = sections.map((s) => s.id);
+      const { data: allItems } = await supabase
         .from("items")
-        .insert({ ...itemData, section_id: newSec.id })
-        .select()
-        .single();
-
-      if (!newItem) continue;
-
-      // Copy item images
-      const { data: images } = await supabase
-        .from("item_images")
         .select("*")
-        .eq("item_id", oldItemId);
+        .in("section_id", oldSectionIds)
+        .order("order_index");
 
-      if (images && images.length > 0) {
-        await supabase.from("item_images").insert(
-          images.map(({ id, created_at, item_id, ...imgData }) => ({
-            ...imgData,
-            item_id: newItem.id,
-          }))
-        );
+      if (allItems && allItems.length > 0) {
+        const itemInserts = allItems.map(({ id, created_at, section_id, ...itemData }) => ({
+          ...itemData,
+          section_id: sectionIdMap.get(section_id) || section_id,
+        }));
+
+        const { data: newItems } = await supabase
+          .from("items")
+          .insert(itemInserts)
+          .select();
+
+        if (newItems && newItems.length > 0) {
+          // Build old→new item ID map
+          const itemIdMap = new Map<string, string>();
+          allItems.forEach((oldItem, i) => {
+            if (newItems[i]) itemIdMap.set(oldItem.id, newItems[i].id);
+          });
+
+          // Fetch ALL item_images for all old items in one query
+          const oldItemIds = allItems.map((it) => it.id);
+          const { data: allImages } = await supabase
+            .from("item_images")
+            .select("*")
+            .in("item_id", oldItemIds);
+
+          if (allImages && allImages.length > 0) {
+            const imageInserts = allImages.map(({ id, created_at, item_id, ...imgData }) => ({
+              ...imgData,
+              item_id: itemIdMap.get(item_id) || item_id,
+            }));
+
+            await supabase.from("item_images").insert(imageInserts);
+          }
+        }
       }
     }
   }
