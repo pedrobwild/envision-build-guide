@@ -191,6 +191,16 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 </>
               )}
             </motion.div>
+
+            {/* Company info — mobile */}
+            <motion.p
+              variants={fadeUp} custom={0.7} initial="hidden" animate="visible"
+              className="text-[10px] font-body text-white/50 leading-relaxed pt-1"
+            >
+              Bwild Engenharia e Projetos Ltda · CNPJ 47.350.338/0001-37
+              <br />
+              RT: Thiago Dantas do Amor · CAU A162437-7
+            </motion.p>
           </div>
 
           {/* ── DESKTOP (lg+) ── */}
