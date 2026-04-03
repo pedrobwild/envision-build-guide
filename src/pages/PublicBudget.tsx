@@ -335,48 +335,13 @@ export default function PublicBudget() {
                         if (allItems.length === 0) return null;
 
                         return (
-                          <div key={group.category.id} className="mb-8 last:mb-0" data-pdf-section>
-                            <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
-                              <div className={cn("w-1 h-5 rounded-full", group.category.bgClass)} />
-                              <span className={cn("text-sm sm:text-base font-display font-bold tracking-tight", group.category.colorClass)}>
-                                {group.category.label}
-                              </span>
-                            </div>
-
-                            {exporting ? (
-                              <ul className="space-y-1">
-                                {allItems.map((item: any, idx: number) => (
-                                  <li
-                                    key={item.id}
-                                    className={cn(
-                                      "flex items-center gap-2 py-1.5 text-sm font-body text-foreground",
-                                      idx < allItems.length - 1 && "border-b border-border/30"
-                                    )}
-                                  >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />
-                                    <span className="flex-1">{item.title}</span>
-                                    {item.qty && (
-                                      <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-                                        {item.qty} {item.unit || "un"}
-                                      </span>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                {allItems.map((item: any) => (
-                                  <ProductShowcaseCard
-                                    key={item.id}
-                                    item={item}
-                                    budgetId={budget.id}
-                                    editable={false}
-                                    showGallery={false}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                          <CollapsiblePhotoGroup
+                            key={group.category.id}
+                            group={group}
+                            allItems={allItems}
+                            budgetId={budget.id}
+                            exporting={exporting}
+                          />
                         );
                       })}
                     </div>
