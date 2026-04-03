@@ -201,7 +201,7 @@ export function MobileInlineSummary({
                       )}
                     >
                       <span>{n}× {n === 1 ? "parcela" : "parcelas"}</span>
-                      <span className="font-semibold tabular-nums">{formatBRL(total / n)}</span>
+                      <span className="font-semibold tabular-nums">{formatBRL(total / n)} <span className="font-normal text-muted-foreground">sem juros</span></span>
                     </button>
                   ))}
                 </div>

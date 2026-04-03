@@ -61,7 +61,7 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
                     }`}
                   >
                     <span>{opt.label}</span>
-                    <span className="font-semibold tabular-nums">{formatBRL(total / opt.months)}</span>
+                    <span className="font-semibold tabular-nums">{formatBRL(total / opt.months)} <span className="font-normal text-muted-foreground">sem juros</span></span>
                   </button>
                 </li>
               ))}
