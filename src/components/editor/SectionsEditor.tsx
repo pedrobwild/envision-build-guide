@@ -316,17 +316,17 @@ function SortableItemRow({
             type="text"
             value={item.description || ""}
             onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
-            placeholder="Descrição (opcional)"
-            className="w-full px-2.5 py-1.5 rounded-md border border-border/60 bg-background text-foreground text-xs font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 ml-7"
+            placeholder="Descrição"
+            className="w-full px-2 py-1 rounded-md border border-transparent hover:border-border/60 focus:border-border bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 ml-6 transition-all"
           />
-          <div className="flex items-center gap-1.5 ml-7">
-            <LinkIcon className="h-3 w-3 text-muted-foreground shrink-0" />
+          <div className="flex items-center gap-1 ml-6">
+            <LinkIcon className="h-2.5 w-2.5 text-muted-foreground/40 shrink-0" />
             <input
               type="url"
               value={item.reference_url || ""}
               onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
-              placeholder="Link de referência (interno)"
-              className="w-full px-2.5 py-1.5 rounded-md border border-border/60 bg-background text-foreground text-xs font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              placeholder="Link de referência"
+              className="w-full px-2 py-1 rounded-md border border-transparent hover:border-border/60 focus:border-border bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
             />
           </div>
         </div>
