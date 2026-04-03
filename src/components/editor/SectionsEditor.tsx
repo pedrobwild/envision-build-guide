@@ -280,28 +280,28 @@ function SortableItemRow({
       style={style}
       {...attributes}
       className={cn(
-        "px-4 py-3 hover:bg-muted/20 transition-colors border-b border-border last:border-b-0",
+        "px-4 py-3 hover:bg-muted/20 transition-colors border-b border-border/40 last:border-b-0",
         isDragging && "bg-muted/40 shadow-lg rounded-lg"
       )}
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
         {/* Drag handle + Title + description */}
-        <div className="lg:col-span-3 space-y-1.5">
-          <div className="flex items-center gap-2">
+        <div className="lg:col-span-3 space-y-1">
+          <div className="flex items-center gap-1.5">
             <button
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/50 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
+              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover:opacity-100"
               title="Arrastar para reordenar"
             >
               <GripVertical className="h-3.5 w-3.5" />
             </button>
             {item.catalog_item_id ? (
               <span className="flex-shrink-0" title="Item do catálogo">
-                <BookOpen className="h-3.5 w-3.5 text-primary" />
+                <BookOpen className="h-3.5 w-3.5 text-primary/60" />
               </span>
             ) : (
               <span className="flex-shrink-0" title="Item manual">
-                <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+                <PenLine className="h-3 w-3 text-muted-foreground/40" />
               </span>
             )}
             <input
@@ -309,7 +309,7 @@ function SortableItemRow({
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full px-2 py-1 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
             />
           </div>
           <input
