@@ -706,7 +706,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-10">
+    <div className="max-w-5xl mx-auto mt-10">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-display text-2xl font-bold text-foreground">Seções e Itens</h2>
