@@ -246,6 +246,15 @@ export default function BudgetEditorV2() {
         {/* Pipeline Progress */}
         <PipelineProgress internalStatus={budget.internal_status ?? "requested"} />
 
+        {/* Revision Banner — visible when revision requested */}
+        {budget.internal_status === "revision_requested" && revisionRequest && (
+          <RevisionBanner
+            revisionData={revisionRequest}
+            onStartRevision={handleStartRevision}
+            startingRevision={startingRevision}
+          />
+        )}
+
         {/* Internal Workflow Bar */}
         <WorkflowBar
           budget={budget}
