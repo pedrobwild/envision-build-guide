@@ -31,6 +31,7 @@ import {
   AlertTriangle,
   MoreHorizontal,
   FileText,
+  RotateCcw,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -42,6 +43,7 @@ import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { BlockingDialog } from "./BlockingDialog";
+import { RevisionRequestDialog } from "./RevisionRequestDialog";
 
 interface ProfileRow {
   id: string;
@@ -93,7 +95,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const { profile, isAdmin, isComercial, isOrcamentista } = useUserProfile();
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
-  
+  const [revisionModalOpen, setRevisionModalOpen] = useState(false);
 
   useEffect(() => {
     supabase
@@ -261,6 +263,19 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
             </Button>
           )}
 
+          {/* Revision request button — comercial/admin only, sent_to_client only */}
+          {internalStatus === "sent_to_client" && (isComercial || isAdmin) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRevisionModalOpen(true)}
+              className="h-7 text-xs border-orange-400 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 gap-2"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Solicitar Revisão
+            </Button>
+          )}
+
           {/* Secondary overflow menu */}
           {showSecondary && (
             <DropdownMenu>
@@ -311,6 +326,17 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         targetStatus={blockingTarget}
         onConfirm={handleBlockingConfirm}
         onCancel={() => setBlockingTarget(null)}
+      />
+
+      <RevisionRequestDialog
+        open={revisionModalOpen}
+        onOpenChange={setRevisionModalOpen}
+        budgetId={budget.id}
+        currentStatus={internalStatus}
+        onSuccess={() => {
+          setRevisionModalOpen(false);
+          onBudgetUpdate({ internal_status: "revision_requested" });
+        }}
       />
     </div>
   );
