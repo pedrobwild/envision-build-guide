@@ -254,6 +254,7 @@ function SortableItemRow({
   sectionTitle: string;
   budgetId: string;
   isItemSaving: boolean;
+  searchMatch?: boolean;
   onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
