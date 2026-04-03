@@ -63,7 +63,7 @@ function getStatusBadgeClass(status: InternalStatus): string {
     case "sent_to_client":
     case "delivered_to_sales":
       return "bg-purple-100 text-purple-800 border-purple-200";
-    case "approved":
+    case "contrato_fechado":
       return "bg-green-100 text-green-800 border-green-200";
     case "blocked":
     case "waiting_info":
