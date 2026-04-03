@@ -66,7 +66,7 @@ const COMERCIAL_ITEMS: NavItem[] = [
 ];
 
 const PROJETOS_ITEMS: NavItem[] = [
-  { title: "Workspace de Produção", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
+  { title: "Pipeline Orçamentos", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
 ];
 
 const DADOS_MESTRES_ITEMS: NavItem[] = [

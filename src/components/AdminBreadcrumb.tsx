@@ -44,7 +44,7 @@ export function AdminBreadcrumb() {
 
     // Role-based origin
     if (roles.includes("orcamentista") && !roles.includes("admin")) {
-      crumbs.push({ label: "Minha Produção", href: "/admin/producao" });
+      crumbs.push({ label: "Pipeline Orçamentos", href: "/admin/producao" });
     } else if (roles.includes("comercial") && !roles.includes("admin")) {
       crumbs.push({ label: "Pipeline Comercial", href: "/admin/comercial" });
     }
