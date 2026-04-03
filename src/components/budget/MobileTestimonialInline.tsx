@@ -45,10 +45,10 @@ export function MobileTestimonialInline() {
             ))}
           </div>
           <p className="text-sm font-body text-foreground leading-relaxed italic">
-            "A reforma ficou incrível. A equipe da Bwild cuidou de tudo, desde o projeto até a entrega final."
+            "Tudo pontual, tudo excelente, logo logo tem outro e já é de vocês!"
           </p>
           <p className="text-xs text-muted-foreground font-body mt-2">
-            — Cliente Bwild
+            — Anne, Uberlândia/MG
           </p>
         </div>
       </motion.div>
