@@ -24,6 +24,9 @@ import {
   AlertTriangle,
   Lock,
   Pin,
+  FileText,
+  Eye,
+  Hammer,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -32,32 +35,53 @@ import { INTERNAL_STATUSES, PRIORITIES, type InternalStatus, type Priority } fro
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Kanban column definitions
+// Commercial Kanban column definitions
 const KANBAN_COLUMNS = [
   {
-    id: "production",
-    label: "Em Produção",
-    icon: Clock,
-    statuses: ["requested", "triage", "assigned", "in_progress", "waiting_info", "blocked"] as InternalStatus[],
+    id: "solicitado",
+    label: "Solicitado",
+    icon: FileText,
+    statuses: ["requested"] as InternalStatus[],
+    accent: "border-t-blue-500",
+    headerColor: "text-blue-700 dark:text-blue-400",
+    bgColor: "bg-blue-50/50 dark:bg-blue-950/20",
+    locked: true,
+  },
+  {
+    id: "em_elaboracao",
+    label: "Em Elaboração",
+    icon: Hammer,
+    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked"] as InternalStatus[],
     accent: "border-t-yellow-500",
     headerColor: "text-yellow-700 dark:text-yellow-400",
     bgColor: "bg-yellow-50/50 dark:bg-yellow-950/20",
     locked: true,
   },
   {
-    id: "finished",
-    label: "Finalizado",
+    id: "entregue",
+    label: "Entregue",
     icon: CheckCircle2,
-    statuses: ["ready_for_review", "delivered_to_sales"] as InternalStatus[],
-    accent: "border-t-blue-500",
-    headerColor: "text-blue-700 dark:text-blue-400",
-    bgColor: "bg-blue-50/50 dark:bg-blue-950/20",
+    statuses: ["delivered_to_sales"] as InternalStatus[],
+    accent: "border-t-teal-500",
+    headerColor: "text-teal-700 dark:text-teal-400",
+    bgColor: "bg-teal-50/50 dark:bg-teal-950/20",
     targetStatus: "delivered_to_sales" as InternalStatus,
     locked: false,
   },
   {
-    id: "sent",
-    label: "Enviado",
+    id: "em_revisao",
+    label: "Em Revisão",
+    icon: Eye,
+    statuses: ["ready_for_review"] as InternalStatus[],
+    accent: "border-t-orange-500",
+    headerColor: "text-orange-700 dark:text-orange-400",
+    bgColor: "bg-orange-50/50 dark:bg-orange-950/20",
+    targetStatus: "ready_for_review" as InternalStatus,
+    locked: false,
+  },
+  {
+    id: "enviado",
+    label: "Enviado para o Cliente",
     icon: Send,
     statuses: ["sent_to_client"] as InternalStatus[],
     accent: "border-t-emerald-500",
@@ -67,8 +91,8 @@ const KANBAN_COLUMNS = [
     locked: false,
   },
   {
-    id: "won",
-    label: "Fechado",
+    id: "fechado",
+    label: "Contrato Fechado",
     icon: ThumbsUp,
     statuses: ["approved"] as InternalStatus[],
     accent: "border-t-green-500",
@@ -78,7 +102,7 @@ const KANBAN_COLUMNS = [
     locked: false,
   },
   {
-    id: "lost",
+    id: "perdido",
     label: "Perdido",
     icon: XCircle,
     statuses: ["lost"] as InternalStatus[],
@@ -150,7 +174,6 @@ const dueVariantStyles: Record<DueVariant, string> = {
   default: "text-muted-foreground bg-muted/50",
 };
 
-/** Left border color based on due urgency */
 const dueBorderStyles: Record<DueVariant, string> = {
   overdue: "border-l-destructive",
   today: "border-l-warning",
@@ -163,21 +186,17 @@ function isHighPriority(priority: string): boolean {
   return priority === "urgente" || priority === "alta";
 }
 
-/** Sort budgets: high priority first, then by due date urgency */
 function sortBudgetsForColumn(budgets: BudgetRow[]): BudgetRow[] {
   const priorityOrder: Record<string, number> = { urgente: 0, alta: 1, normal: 2, baixa: 3 };
   return [...budgets].sort((a, b) => {
     const pa = priorityOrder[a.priority] ?? 2;
     const pb = priorityOrder[b.priority] ?? 2;
-    // High priority cards pinned to top
     const aHigh = pa <= 1 ? 0 : 1;
     const bHigh = pb <= 1 ? 0 : 1;
     if (aHigh !== bHigh) return aHigh - bHigh;
-    // Within same priority tier, sort by due date urgency
     if (a.due_at && b.due_at) return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
     if (a.due_at) return -1;
     if (b.due_at) return 1;
-    // Then by priority
     if (pa !== pb) return pa - pb;
     return 0;
   });
@@ -218,7 +237,7 @@ function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col min-w-[260px] w-[260px] lg:w-auto lg:flex-1 rounded-xl border border-border border-t-4 ${column.accent} ${column.bgColor} transition-shadow ${
+      className={`flex flex-col min-w-[220px] w-[220px] lg:w-auto lg:flex-1 rounded-xl border border-border border-t-4 ${column.accent} ${column.bgColor} transition-shadow ${
         isOver && !column.locked ? "ring-2 ring-primary shadow-lg" : ""
       }`}
     >
@@ -226,7 +245,7 @@ function KanbanColumn({
       <div className="px-3 py-2.5 flex items-center justify-between">
         <div className={`flex items-center gap-1.5 text-xs font-semibold font-body ${column.headerColor}`}>
           <Icon className="h-3.5 w-3.5" />
-          {column.label}
+          <span className="truncate">{column.label}</span>
           {column.locked && <Lock className="h-3 w-3 ml-0.5 opacity-50" />}
         </div>
         <div className="flex items-center gap-1.5">
@@ -323,7 +342,6 @@ function KanbanCard({
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at);
-  const isRevision = b.internal_status === "sent_to_client" && b.status === "minuta_solicitada";
   const highPrio = isHighPriority(b.priority);
   const borderColor = due ? dueBorderStyles[due.variant] : "border-l-transparent";
 
@@ -339,7 +357,6 @@ function KanbanCard({
         onClick();
       }}
     >
-      {/* Title + priority */}
       <div className="flex items-start gap-1.5 mb-1.5">
         {highPrio && (
           <Pin className="h-3 w-3 shrink-0 text-amber-500 mt-0.5 fill-amber-500" />
@@ -354,13 +371,11 @@ function KanbanCard({
         )}
       </div>
 
-      {/* Client */}
       <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1">
         <User className="h-3 w-3 shrink-0" />
         <span className="truncate">{b.client_name}</span>
       </div>
 
-      {/* Location */}
       {(b.bairro || b.city) && (
         <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1">
           <Building2 className="h-3 w-3 shrink-0" />
@@ -368,7 +383,6 @@ function KanbanCard({
         </div>
       )}
 
-      {/* Owners */}
       {(b.commercial_owner_id || b.estimator_owner_id) && (
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-body mb-1.5 flex-wrap">
           {b.commercial_owner_id && (
@@ -384,18 +398,11 @@ function KanbanCard({
         </div>
       )}
 
-      {/* Bottom row: due date + revision badge */}
       <div className="flex items-center gap-1.5 flex-wrap">
         {due && (
           <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium font-body px-1.5 py-0.5 rounded-full ${dueVariantStyles[due.variant]}`}>
             <Calendar className="h-2.5 w-2.5" />
             {due.label}
-          </span>
-        )}
-        {isRevision && (
-          <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold font-body px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800 animate-pulse">
-            <RotateCcw className="h-2.5 w-2.5" />
-            Revisão solicitada
           </span>
         )}
         {(b.version_number ?? 1) > 1 && (
@@ -433,11 +440,10 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
       const targetColumn = KANBAN_COLUMNS.find((col) => col.id === over.id);
       if (!targetColumn || targetColumn.locked) return;
 
-      // Check if already in this column
       const currentColumn = getColumnForBudget(budget.internal_status);
       if (currentColumn?.id === targetColumn.id) return;
 
-      // Can't drag FROM production column
+      // Can't drag FROM locked columns
       const sourceColumn = KANBAN_COLUMNS.find((col) =>
         (col.statuses as readonly string[]).includes(budget.internal_status)
       );
@@ -473,7 +479,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
 
       <DragOverlay>
         {activeBudget && (
-          <div className="w-[260px]">
+          <div className="w-[220px]">
             <KanbanCard budget={activeBudget} isDragging locked={false} onClick={() => {}} getProfileName={getProfileName} />
           </div>
         )}

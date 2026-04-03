@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Search, Calendar, User, Building2, ArrowLeft, Loader2, Inbox,
-  Clock, AlertTriangle, MoreVertical, ExternalLink, CheckCircle2,
-  PauseCircle, ArrowUpDown, Flame, Copy, Send, RotateCcw,
+  Clock, MoreVertical, ExternalLink, CheckCircle2,
+  ArrowUpDown, Copy, Send, RotateCcw, AlertTriangle,
   FileText, Eye, ThumbsUp, XCircle, Plus, GitCompare,
   LayoutList, Columns3,
 } from "lucide-react";
@@ -32,39 +32,50 @@ import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 
 // Pipeline groups for the commercial view
+// Statuses in "solicitado" and "em_elaboracao" are read-only for commercial
+const LOCKED_STATUSES: readonly string[] = [
+  "requested", "triage", "assigned", "in_progress", "waiting_info", "blocked",
+];
+
 const PIPELINE_SECTIONS = {
-  production: {
-    label: "Em Produção",
-    statuses: ["requested", "triage", "assigned", "in_progress"] as InternalStatus[],
+  solicitado: {
+    label: "Solicitado",
+    statuses: ["requested"] as InternalStatus[],
+    icon: FileText,
+    accent: "text-blue-600",
+  },
+  em_elaboracao: {
+    label: "Em Elaboração",
+    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked"] as InternalStatus[],
     icon: Clock,
     accent: "text-yellow-600",
   },
-  waiting_me: {
-    label: "Aguardando Minha Ação",
-    statuses: ["waiting_info", "delivered_to_sales"] as InternalStatus[],
-    icon: AlertTriangle,
-    accent: "text-amber-600",
+  entregue: {
+    label: "Entregue",
+    statuses: ["delivered_to_sales"] as InternalStatus[],
+    icon: CheckCircle2,
+    accent: "text-teal-600",
   },
-  review: {
+  em_revisao: {
     label: "Em Revisão",
     statuses: ["ready_for_review"] as InternalStatus[],
     icon: Eye,
     accent: "text-orange-600",
   },
-  sent: {
-    label: "Enviados ao Cliente",
+  enviado: {
+    label: "Enviado para o Cliente",
     statuses: ["sent_to_client"] as InternalStatus[],
     icon: Send,
     accent: "text-emerald-600",
   },
-  won: {
-    label: "Aprovados",
+  fechado: {
+    label: "Contrato Fechado",
     statuses: ["approved"] as InternalStatus[],
     icon: ThumbsUp,
     accent: "text-green-600",
   },
-  lost: {
-    label: "Perdidos",
+  perdido: {
+    label: "Perdido",
     statuses: ["lost"] as InternalStatus[],
     icon: XCircle,
     accent: "text-muted-foreground",
@@ -154,7 +165,7 @@ export default function CommercialDashboard() {
     }
     c.total = budgets.length;
     c.needsAction = budgets.filter(b =>
-      (["waiting_info", "delivered_to_sales"] as string[]).includes(b.internal_status)
+      (["delivered_to_sales"] as string[]).includes(b.internal_status)
     ).length;
     return c;
   }, [budgets]);
@@ -252,7 +263,7 @@ export default function CommercialDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
         {/* Pipeline summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => {
             const Icon = sec.icon;
             return (
@@ -264,7 +275,7 @@ export default function CommercialDashboard() {
                 accent={sec.accent}
                 active={statusFilter === key}
                 onClick={() => setStatusFilter(statusFilter === key ? "all" : key)}
-                alert={key === "waiting_me" && (counts[key] ?? 0) > 0}
+                alert={key === "entregue" && (counts[key] ?? 0) > 0}
               />
             );
           })}
@@ -273,12 +284,12 @@ export default function CommercialDashboard() {
         {/* Needs-action banner */}
         {counts.needsAction > 0 && statusFilter === "all" && (
           <div
-            className="flex items-center gap-3 px-4 py-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 cursor-pointer hover:shadow-sm transition-shadow"
-            onClick={() => setStatusFilter("waiting_me")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg border border-teal-200 bg-teal-50 dark:bg-teal-950/30 dark:border-teal-800 cursor-pointer hover:shadow-sm transition-shadow"
+            onClick={() => setStatusFilter("entregue")}
           >
-            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
-            <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-              {counts.needsAction} orçamento{counts.needsAction > 1 ? "s" : ""} aguardando sua ação
+            <CheckCircle2 className="h-5 w-5 text-teal-600 shrink-0" />
+            <span className="text-sm font-medium text-teal-800 dark:text-teal-200">
+              {counts.needsAction} orçamento{counts.needsAction > 1 ? "s" : ""} entregue{counts.needsAction > 1 ? "s" : ""} — pronto{counts.needsAction > 1 ? "s" : ""} para enviar ao cliente
             </span>
           </div>
         )}
@@ -392,15 +403,16 @@ export default function CommercialDashboard() {
               const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
               const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
               const due = getDueInfo(b.due_at);
-              const isWaitingAction = ["waiting_info", "delivered_to_sales"].includes(b.internal_status);
+              const isLocked = LOCKED_STATUSES.includes(b.internal_status);
+              const isEntregue = b.internal_status === "delivered_to_sales";
 
               return (
-                <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isWaitingAction ? "border-amber-300 dark:border-amber-700" : ""}`}>
+                <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isEntregue ? "border-teal-300 dark:border-teal-700" : ""}`}>
                   <div className="flex items-start gap-4">
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/admin/demanda/${b.id}`)}>
                       {/* Row 1 */}
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                        {isWaitingAction && <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />}
+                        {isEntregue && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
                         <span className="font-semibold font-display text-foreground truncate">{b.project_name || "Sem nome"}</span>
                         <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
                           {status.icon} {status.label}
@@ -466,26 +478,31 @@ export default function CommercialDashboard() {
                             <GitCompare className="h-4 w-4 mr-2" />Comparar versões
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuSeparator />
-                        {b.internal_status === "delivered_to_sales" && (
-                          <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
-                            <Send className="h-4 w-4 mr-2" />Marcar como enviado ao cliente
-                          </DropdownMenuItem>
-                        )}
-                        {b.internal_status === "sent_to_client" && (
+                        {/* Status actions only for unlocked statuses */}
+                        {!isLocked && (
                           <>
-                            <DropdownMenuItem onClick={() => changeStatus(b.id, "approved")}>
-                              <ThumbsUp className="h-4 w-4 mr-2" />Marcar como aprovado
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
-                              <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
-                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {b.internal_status === "delivered_to_sales" && (
+                              <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
+                                <Send className="h-4 w-4 mr-2" />Enviar ao cliente
+                              </DropdownMenuItem>
+                            )}
+                            {b.internal_status === "sent_to_client" && (
+                              <>
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "approved")}>
+                                  <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
+                                  <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
+                              <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
+                                <RotateCcw className="h-4 w-4 mr-2" />Pedir revisão
+                              </DropdownMenuItem>
+                            )}
                           </>
-                        )}
-                        {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
-                          <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
-                            <RotateCcw className="h-4 w-4 mr-2" />Pedir revisão
-                          </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
