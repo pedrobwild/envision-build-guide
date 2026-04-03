@@ -1,6 +1,4 @@
 import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, Save, Timer, Clock, Loader2, ShoppingBag, Users, ExternalLink } from "lucide-react";
-import { HeaderConfigStep } from "@/components/editor/HeaderConfigStep";
-import type { HeaderConfig } from "@/components/budget/BudgetHeader";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -27,7 +25,7 @@ const FIELDS = [
 
 export function MetadataStep({ budget, onFieldChange, onNext, saving }: MetadataStepProps) {
   const hasClientName = !!budget.client_name && budget.client_name !== "Cliente";
-  const headerConfig: HeaderConfig = budget.header_config || {};
+  // headerConfig removed — hidden from editor
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
 
