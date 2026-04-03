@@ -24,11 +24,9 @@ export function TestimonialVideoPreview({
         className="group flex items-center gap-3 text-left max-w-[260px] cursor-pointer"
       >
         <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border border-white/20 bg-white/5">
-          <video
-            src={VIDEO_URL}
-            preload="metadata"
-            muted
-            playsInline
+          <img
+            src={depoimentoCover}
+            alt="Depoimento de cliente Bwild"
             className="w-full h-full object-cover pointer-events-none"
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">

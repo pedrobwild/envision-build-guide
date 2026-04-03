@@ -24,11 +24,9 @@ export function MobileTestimonialInline() {
           onClick={() => setOpen(true)}
           className="relative w-full aspect-[16/9] bg-muted cursor-pointer group overflow-hidden"
         >
-          <video
-            src={VIDEO_URL}
-            preload="metadata"
-            muted
-            playsInline
+          <img
+            src={depoimentoCover}
+            alt="Depoimento de cliente Bwild"
             className="w-full h-full object-cover pointer-events-none"
           />
           <div className="absolute inset-0 bg-black/30 group-active:bg-black/20 transition-colors flex items-center justify-center">
