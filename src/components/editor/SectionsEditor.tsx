@@ -244,6 +244,7 @@ function SortableItemRow({
   sectionTitle,
   budgetId,
   isItemSaving,
+  searchMatch,
   onUpdate,
   onDelete,
   onImagesChange,
@@ -260,7 +261,6 @@ function SortableItemRow({
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
 }) {
-  const { item, sectionId, sectionTitle, budgetId, isItemSaving, searchMatch, onUpdate, onDelete, onImagesChange, onPromoteToCatalog } = arguments[0] as any;
   const {
     attributes,
     listeners,
@@ -284,6 +284,7 @@ function SortableItemRow({
       className={cn(
         "px-4 py-3 transition-colors border-b border-border/40 last:border-b-0 group/item",
         "even:bg-muted/20",
+        searchMatch && "ring-1 ring-yellow-400/50 bg-yellow-50/30 dark:bg-yellow-900/10",
         isDragging && "bg-muted/40 shadow-lg rounded-lg"
       )}
     >
