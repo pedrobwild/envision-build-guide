@@ -85,8 +85,7 @@ const PRIMARY_TRANSITIONS: Record<string, Transition> = {
   triage: { label: "Atribuir e Iniciar Produção", newStatus: "assigned", roles: ["admin"] },
   assigned: { label: "Iniciar Produção", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
   in_progress: { label: "Enviar para Revisão", newStatus: "ready_for_review", roles: ["orcamentista", "admin"] },
-  ready_for_review: { label: "Aprovar e Publicar", newStatus: "sent_to_client", roles: ["comercial", "admin"] },
-  sent_to_client: { label: "Registrar Contrato Fechado", newStatus: "contrato_fechado", roles: ["comercial", "admin"] },
+  ready_for_review: { label: "Enviar ao Cliente", newStatus: "sent_to_client", roles: ["comercial", "admin"] },
 };
 
 export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
