@@ -61,8 +61,9 @@ export default function BudgetEditorV2() {
     if (!budgetId || !user) return;
     setStartingRevision(true);
     try {
-      const reason = revisionRequest?.metadata?.instructions
-        ? `Revisão: ${String(revisionRequest.metadata.instructions).slice(0, 80)}`
+      const meta = revisionRequest?.metadata as Record<string, unknown> | null;
+      const reason = meta?.instructions
+        ? `Revisão: ${String(meta.instructions).slice(0, 80)}`
         : "Revisão solicitada pelo comercial";
       const newId = await duplicateBudgetAsVersion(budgetId, user.id, reason);
       toast.success("Nova versão criada para revisão!");
