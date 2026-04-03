@@ -261,8 +261,62 @@ export default function BudgetEditorV2() {
           {/* Pipeline Progress — always visible */}
           <PipelineProgress internalStatus={budget.internal_status ?? "requested"} />
 
-          {/* Revision Banner — always visible */}
-          {budget.internal_status === "revision_requested" && revisionRequest && (
+          {/* ── Versioning context banners (priority: A > B > C) ── */}
+          {budget.is_published_version ? (
+            /* Scenario A — Editing published version */
+            <Alert className="mt-4 border-amber-500/40 bg-amber-500/10">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="flex items-center justify-between gap-4">
+                <span className="text-sm font-body text-amber-800 dark:text-amber-300">
+                  ⚠️ Esta é a versão publicada. O cliente pode ver suas edições em tempo real. Recomendamos criar uma nova versão para editar com segurança.
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1.5 border-amber-500/50 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                  disabled={creatingVersionFromBanner}
+                  onClick={async () => {
+                    if (!user) return;
+                    setCreatingVersionFromBanner(true);
+                    try {
+                      const newId = await duplicateBudgetAsVersion(budgetId!, user.id, "Edição pós-publicação");
+                      toast.success("Nova versão criada!");
+                      navigate(`/admin/budget/${newId}`);
+                    } catch (err: any) {
+                      toast.error(err?.message || "Erro ao criar versão");
+                    }
+                    setCreatingVersionFromBanner(false);
+                  }}
+                >
+                  {creatingVersionFromBanner ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+                  Criar Nova Versão
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : budget.is_current_version === false ? (
+            /* Scenario B — Viewing old version */
+            <Alert className="mt-4 border-blue-500/40 bg-blue-500/10">
+              <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="flex items-center justify-between gap-4">
+                <span className="text-sm font-body text-blue-800 dark:text-blue-300">
+                  📌 Você está visualizando a versão v{budget.version_number ?? "?"} (não é a versão atual). Edições aqui não afetam a versão em uso.
+                </span>
+                {currentVersionId && currentVersionId !== budgetId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 gap-1.5 border-blue-500/50 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20"
+                    onClick={() => navigate(`/admin/budget/${currentVersionId}`)}
+                  >
+                    Ir para versão atual
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {/* Revision Banner — Scenario C (only if A/B not shown) */}
+          {budget.internal_status === "revision_requested" && revisionRequest && !budget.is_published_version && budget.is_current_version !== false && (
             <div className="mt-4">
               <RevisionBanner
                 revisionData={revisionRequest}
