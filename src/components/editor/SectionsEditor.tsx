@@ -810,10 +810,24 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     onSectionsChange(updated);
   };
 
+  // Highlight helper for search
+  const highlightText = (text: string) => {
+    if (!normalizedQuery || !text) return text;
+    const idx = text.toLowerCase().indexOf(normalizedQuery);
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark className="bg-yellow-200 dark:bg-yellow-800/60 rounded-sm px-0.5">{text.slice(idx, idx + normalizedQuery.length)}</mark>
+        {text.slice(idx + normalizedQuery.length)}
+      </>
+    );
+  };
+
   return (
     <div className="mt-10">
       {/* ── Financial summary strip ── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-display font-bold text-foreground">Seções e Itens</h2>
           <div className="flex items-center gap-4 text-xs font-body mt-1.5 text-muted-foreground">
@@ -833,6 +847,46 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           <Plus className="h-3.5 w-3.5" /> Seção
         </button>
       </div>
+
+      {/* ── Control bar: search + expand/collapse ── */}
+      {sections.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+            <input
+              ref={searchRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); e.currentTarget.blur(); } }}
+              placeholder="Buscar item..."
+              className="w-full pl-8 pr-7 py-1.5 rounded-md border border-input bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={expandAll}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <ChevronsUpDown className="h-3.5 w-3.5" /> Expandir
+            </button>
+            <button
+              onClick={collapseAll}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <ChevronsDownUp className="h-3.5 w-3.5" /> Colapsar
+            </button>
+          </div>
+        </div>
+      )}
 
       {sections.length === 0 && (
         <div className="text-center py-16 border border-dashed border-border/50 rounded-lg">
