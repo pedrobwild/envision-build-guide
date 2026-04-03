@@ -26,9 +26,6 @@ export function ItemImageLightbox({ images, initialIndex, open, onOpenChange, on
     setConfirmDelete(false);
   }, [initialIndex, open]);
 
-  const img = images[index];
-  if (!img) return null;
-
   const goNext = useCallback(() => {
     setIndex((i) => (i + 1) % images.length);
     setConfirmDelete(false);
