@@ -67,6 +67,8 @@ function buildNote(
       return `Versão V${meta.version_number ?? "?"} definida como atual`;
     case "change_reason_updated":
       return `Motivo atualizado: ${meta.change_reason ?? "—"}`;
+    case "revision_requested":
+      return `Revisão solicitada por ${meta.requested_by_name ?? "?"}: ${String(meta.instructions ?? "").slice(0, 100)}`;
     default:
       return event_type;
   }
