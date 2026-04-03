@@ -168,8 +168,27 @@ export default function BudgetEditorV2() {
     autoSaveTimer.current = setTimeout(async () => {
       const { error } = await supabase.from("budgets").update({ [field]: value } as any).eq("id", budgetId);
       if (error) {
+        saveErrorCount.current += 1;
         setSaveStatus("error");
+        // Dismiss previous error toast if any
+        if (errorToastId.current) toast.dismiss(errorToastId.current);
+        const persistent = saveErrorCount.current >= 2;
+        errorToastId.current = toast.error(
+          "Não foi possível salvar as alterações.",
+          {
+            duration: Infinity,
+            description: persistent
+              ? "Se o problema continuar, copie o orçamento e recarregue a página."
+              : undefined,
+            action: {
+              label: "Tentar novamente",
+              onClick: () => retrySave(),
+            },
+          }
+        );
       } else {
+        saveErrorCount.current = 0;
+        if (errorToastId.current) { toast.dismiss(errorToastId.current); errorToastId.current = null; }
         setSaveStatus("saved");
         setLastSavedAt(new Date());
       }
