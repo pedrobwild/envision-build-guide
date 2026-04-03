@@ -40,6 +40,10 @@ import {
   MoreHorizontal,
   FileText,
   RotateCcw,
+  PackageCheck,
+  Send,
+  Handshake,
+  Loader2,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -52,6 +56,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { BlockingDialog } from "./BlockingDialog";
 import { RevisionRequestDialog } from "./RevisionRequestDialog";
+import { publishVersion, ensureVersionGroup } from "@/lib/budget-versioning";
 
 interface ProfileRow {
   id: string;
@@ -70,11 +75,16 @@ function getStatusBadgeClass(status: InternalStatus): string {
       return "bg-blue-100 text-blue-800 border-blue-200";
     case "ready_for_review":
       return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    case "sent_to_client":
     case "delivered_to_sales":
       return "bg-purple-100 text-purple-800 border-purple-200";
     case "sent_to_client":
       return "bg-green-100 text-green-800 border-green-200";
+    case "revision_requested":
+      return "bg-orange-100 text-orange-700 border-orange-300";
+    case "minuta_solicitada":
+      return "bg-violet-100 text-violet-700 border-violet-300";
+    case "contrato_fechado":
+      return "bg-emerald-100 text-emerald-700 border-emerald-300";
     case "blocked":
     case "waiting_info":
       return "bg-red-100 text-red-800 border-red-200";
@@ -88,6 +98,8 @@ type Transition = {
   label: string;
   newStatus: InternalStatus;
   roles: ("admin" | "comercial" | "orcamentista")[];
+  confirmRequired?: boolean;
+  confirmMessage?: string;
 };
 
 const PRIMARY_TRANSITIONS: Record<string, Transition> = {
@@ -95,8 +107,21 @@ const PRIMARY_TRANSITIONS: Record<string, Transition> = {
   triage: { label: "Atribuir e Iniciar Produção", newStatus: "assigned", roles: ["admin"] },
   assigned: { label: "Iniciar Produção", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
   in_progress: { label: "Enviar para Revisão", newStatus: "ready_for_review", roles: ["orcamentista", "admin"] },
-  ready_for_review: { label: "Enviar ao Cliente", newStatus: "sent_to_client", roles: ["comercial", "admin"] },
+  ready_for_review: { label: "Entregar ao Comercial", newStatus: "delivered_to_sales", roles: ["orcamentista", "admin"] },
+  delivered_to_sales: {
+    label: "Enviar ao Cliente",
+    newStatus: "sent_to_client",
+    roles: ["comercial", "admin"],
+    confirmRequired: true,
+  },
   revision_requested: { label: "Iniciar Revisão", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
+  minuta_solicitada: {
+    label: "Registrar Contrato Fechado",
+    newStatus: "contrato_fechado",
+    roles: ["comercial", "admin"],
+    confirmRequired: true,
+    confirmMessage: "Confirmar contrato fechado? Esta ação marca o orçamento como convertido.",
+  },
 };
 
 export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
@@ -108,6 +133,8 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const [revisionInstructionsOpen, setRevisionInstructionsOpen] = useState(false);
   const [revisionInstructions, setRevisionInstructions] = useState<{ instructions: string; change_types: string[]; requested_by_name: string } | null>(null);
   const [loadingInstructions, setLoadingInstructions] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   useEffect(() => {
     supabase
@@ -188,11 +215,42 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
 
   function handlePrimaryClick() {
     if (!primaryTransition) return;
+    if (primaryTransition.confirmRequired) {
+      setConfirmDialogOpen(true);
+      return;
+    }
     const note = internalStatus === "revision_requested" ? "Revisão iniciada pelo orçamentista" : undefined;
     changeStatus(primaryTransition.newStatus, note);
     if (internalStatus === "revision_requested") {
       toast.success("Revisão iniciada. Realize as alterações e envie para revisão.");
     }
+  }
+
+  async function handleConfirmedTransition() {
+    if (!primaryTransition) return;
+    setConfirmLoading(true);
+
+    // For delivered_to_sales → sent_to_client, also publish
+    if (internalStatus === "delivered_to_sales" && primaryTransition.newStatus === "sent_to_client") {
+      try {
+        if (!budget.is_published_version) {
+          const groupId = await ensureVersionGroup(budget.id);
+          const publicId = budget.public_id || crypto.randomUUID().slice(0, 12);
+          await publishVersion(budget.id, groupId, publicId, user?.id);
+          onBudgetUpdate({ is_published_version: true, public_id: publicId, status: "published" });
+        }
+      } catch (err) {
+        console.error("Erro ao publicar:", err);
+        toast.error("Erro ao publicar o orçamento.");
+        setConfirmLoading(false);
+        setConfirmDialogOpen(false);
+        return;
+      }
+    }
+
+    await changeStatus(primaryTransition.newStatus);
+    setConfirmLoading(false);
+    setConfirmDialogOpen(false);
   }
 
   async function openRevisionInstructions() {
@@ -294,10 +352,18 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
             <Button
               variant="default"
               size="sm"
-              className={`h-7 text-xs gap-1.5 ${internalStatus === "revision_requested" ? "bg-orange-500 hover:bg-orange-600 text-white" : ""}`}
+              className={`h-7 text-xs gap-1.5 ${
+                internalStatus === "revision_requested" ? "bg-orange-500 hover:bg-orange-600 text-white" :
+                internalStatus === "minuta_solicitada" ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
+                internalStatus === "delivered_to_sales" ? "bg-teal-600 hover:bg-teal-700 text-white" :
+                ""
+              }`}
               onClick={handlePrimaryClick}
             >
               {internalStatus === "revision_requested" && <RotateCcw className="h-3.5 w-3.5" />}
+              {internalStatus === "ready_for_review" && <PackageCheck className="h-3.5 w-3.5" />}
+              {internalStatus === "delivered_to_sales" && <Send className="h-3.5 w-3.5" />}
+              {internalStatus === "minuta_solicitada" && <Handshake className="h-3.5 w-3.5" />}
               {primaryTransition.label}
             </Button>
           )}
@@ -431,6 +497,28 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirm transition dialog */}
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {primaryTransition?.label ?? "Confirmar"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {primaryTransition?.confirmMessage ??
+                `Confirmar envio do orçamento ao cliente "${budget.client_name}"? O link público será ativado.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={confirmLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmedTransition} disabled={confirmLoading}>
+              {confirmLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
