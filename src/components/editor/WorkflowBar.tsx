@@ -305,23 +305,6 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         </div>
       </div>
 
-      {/* Confirmation dialog for contract */}
-      <AlertDialog open={contractConfirmOpen} onOpenChange={setContractConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Registrar contrato fechado?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação marca o orçamento como contrato fechado. Deseja continuar?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => changeStatus("contrato_fechado")}>
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <BlockingDialog
         open={!!blockingTarget}
