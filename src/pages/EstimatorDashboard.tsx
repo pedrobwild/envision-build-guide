@@ -243,8 +243,8 @@ export default function EstimatorDashboard() {
   const PENDING_STATUSES = ["requested", "novo", "triage", "assigned"];
   const IN_PROGRESS_STATUSES = ["in_progress", "waiting_info", "blocked"];
   const REVIEW_STATUSES = ["ready_for_review"];
-  const DELIVERED_STATUSES = ["delivered_to_sales", "minuta_solicitada"];
-  const FINISHED_STATUSES = ["sent_to_client", "lost", "archived"];
+  const DELIVERED_STATUSES = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
+  const FINISHED_STATUSES = ["lost", "archived"];
 
   const counts = useMemo(() => {
     return {

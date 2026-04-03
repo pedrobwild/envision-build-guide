@@ -47,7 +47,7 @@ const FUNNEL_STAGES: FunnelStage[] = [
     key: "closed",
     label: "Finalizado",
     icon: FileSignature,
-    statuses: ["sent_to_client", "lost", "archived"],
+    statuses: ["lost", "archived"],
     color: "text-green-600",
     bgColor: "bg-green-500",
   },
