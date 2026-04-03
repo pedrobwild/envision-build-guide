@@ -37,7 +37,7 @@ const DEFAULT_PHONE = "5511911906183";
 type CtaVariant = {
   label: string;
   icon: React.ElementType;
-  action: "scroll" | "sheet" | "whatsapp";
+  action: "scroll" | "sheet" | "contract";
   scrollTarget?: string;
 };
 
