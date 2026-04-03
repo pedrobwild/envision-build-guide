@@ -25,7 +25,7 @@ const FIELDS = [
 
 export function MetadataStep({ budget, onFieldChange, onNext, saving }: MetadataStepProps) {
   const hasClientName = !!budget.client_name && budget.client_name !== "Cliente";
-  const headerConfig: HeaderConfig = budget.header_config || {};
+  // headerConfig removed — hidden from editor
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
 
