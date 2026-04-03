@@ -6,9 +6,10 @@ import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight,
+  Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight,
   PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
 } from "lucide-react";
+import { EmptyState } from "@/components/editor/EmptyState";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
   DndContext,
@@ -892,11 +893,15 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       )}
 
       {sections.length === 0 && (
-        <div className="text-center py-16 border border-dashed border-border/50 rounded-lg">
-          <Package className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
-          <p className="text-muted-foreground/60 font-body text-sm">Nenhuma seção ainda.</p>
-          <p className="text-muted-foreground/40 font-body text-xs mt-1">Importe um PDF ou adicione manualmente.</p>
-        </div>
+        <EmptyState
+          icon={FileSpreadsheet}
+          title="Orçamento em branco"
+          subtitle="Comece criando a primeira seção do seu orçamento"
+          actions={[
+            { label: "+ Criar Primeira Seção", onClick: addSection, icon: Plus },
+            { label: "Ver templates disponíveis", onClick: () => {}, variant: "outline", disabled: true, tooltip: "Em breve" },
+          ]}
+        />
       )}
 
       <DndContext
@@ -1035,21 +1040,31 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               strategy={verticalListSortingStrategy}
                             >
                               <div>
-                                {section.items.map((item) => (
-                                  <SortableItemRow
-                                    key={item.id}
-                                    item={item}
-                                    sectionId={section.id}
-                                    sectionTitle={section.title}
-                                    budgetId={budgetId}
-                                    isItemSaving={savingIds.has(item.id)}
-                                    searchMatch={matchingItemIds?.has(item.id)}
-                                    onUpdate={updateItem}
-                                    onDelete={deleteItem}
-                                    onImagesChange={handleImagesChange}
-                                    onPromoteToCatalog={promoteToCatalog}
-                                  />
-                                ))}
+                                {section.items.length === 0 ? (
+                                  <button
+                                    onClick={() => addItem(section.id)}
+                                    className="w-full py-6 border-2 border-dashed border-border/40 rounded-md text-sm font-body text-muted-foreground/50 hover:text-foreground hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer flex items-center justify-center gap-1.5 mx-auto my-2"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                    Adicionar primeiro item
+                                  </button>
+                                ) : (
+                                  section.items.map((item) => (
+                                    <SortableItemRow
+                                      key={item.id}
+                                      item={item}
+                                      sectionId={section.id}
+                                      sectionTitle={section.title}
+                                      budgetId={budgetId}
+                                      isItemSaving={savingIds.has(item.id)}
+                                      searchMatch={matchingItemIds?.has(item.id)}
+                                      onUpdate={updateItem}
+                                      onDelete={deleteItem}
+                                      onImagesChange={handleImagesChange}
+                                      onPromoteToCatalog={promoteToCatalog}
+                                    />
+                                  ))
+                                )}
                               </div>
                             </SortableContext>
                           </DndContext>

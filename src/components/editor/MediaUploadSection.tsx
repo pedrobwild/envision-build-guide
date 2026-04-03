@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save } from "lucide-react";
+import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DndContext,
@@ -526,9 +526,16 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : currentFiles.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
-                <ImagePlus className="h-8 w-8 opacity-40" />
-                <p className="text-xs font-body">Nenhum arquivo na pasta {currentTab.label}</p>
+              <div
+                className="flex flex-col items-center justify-center h-48 border-2 border-dashed border-border/50 rounded-lg text-muted-foreground gap-2 cursor-pointer hover:border-primary/30 hover:bg-primary/5 transition-all"
+                onClick={() => inputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleUpload(e.dataTransfer.files); }}
+              >
+                <Upload className="h-8 w-8 opacity-30" />
+                <p className="text-sm font-body font-medium text-foreground/60">Arraste imagens aqui</p>
+                <p className="text-xs font-body text-muted-foreground/50">ou clique para selecionar</p>
+                <p className="text-[10px] font-body text-muted-foreground/40 mt-1">Suporta JPG, PNG, MP4 e arquivos PDF até 50MB</p>
               </div>
             ) : (
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
