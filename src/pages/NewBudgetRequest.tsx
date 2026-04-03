@@ -49,6 +49,8 @@ export default function NewBudgetRequest() {
   const [condominio, setCondominio] = useState("");
   const [bairro, setBairro] = useState("");
   const [metargemRaw, setMetragemRaw] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [city, setCity] = useState("");
   const [locationType, setLocationType] = useState("");
   const [demandContext, setDemandContext] = useState("");
   const [briefing, setBriefing] = useState("");
