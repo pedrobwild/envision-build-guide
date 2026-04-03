@@ -179,7 +179,7 @@ export default function BudgetRequestsList() {
             </div>
           </div>
           <Button
-            onClick={() => navigate("/admin/solicitacoes/nova")}
+            onClick={() => setNewBudgetOpen(true)}
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
