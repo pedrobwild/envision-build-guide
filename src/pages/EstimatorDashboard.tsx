@@ -64,6 +64,8 @@ import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { EstimatorKanban } from "@/components/editor/EstimatorKanban";
+import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
+import { Plus } from "lucide-react";
 
 // Statuses relevant for the estimator's active queue
 const ESTIMATOR_ACTIVE_STATUSES: InternalStatus[] = [
