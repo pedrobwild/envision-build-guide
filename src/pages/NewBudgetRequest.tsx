@@ -445,12 +445,16 @@ export default function NewBudgetRequest() {
                   </SelectContent>
                 </Select>
                 {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
-                  <div className="flex items-center gap-1.5 mt-1 px-2 py-1 rounded-md bg-accent text-accent-foreground">
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                    <UserCheck className="h-3.5 w-3.5 text-green-500" />
+                    Rodízio: <span className="font-medium">{orcamentistas.find(m => m.id === nextEstimatorId)?.full_name}</span>
+                  </p>
+                )}
+                {nextEstimatorId && estimatorOwnerId && estimatorOwnerId !== nextEstimatorId && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     <UserCheck className="h-3.5 w-3.5 text-primary" />
-                    <p className="text-xs font-body">
-                      Atribuído por rodízio: <span className="font-medium">{orcamentistas.find(m => m.id === nextEstimatorId)?.full_name}</span>
-                    </p>
-                  </div>
+                    Seleção manual (rodízio seria: {orcamentistas.find(m => m.id === nextEstimatorId)?.full_name})
+                  </p>
                 )}
               </div>
             </div>
