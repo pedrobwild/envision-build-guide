@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { INTERNAL_STATUSES } from "@/lib/role-constants";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { BudgetListCard, BudgetListSkeleton } from "@/components/admin/BudgetListCard";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
