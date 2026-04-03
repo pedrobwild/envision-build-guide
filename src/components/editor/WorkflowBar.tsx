@@ -492,6 +492,28 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirm transition dialog */}
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {primaryTransition?.label ?? "Confirmar"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {primaryTransition?.confirmMessage ??
+                `Confirmar envio do orçamento ao cliente "${budget.client_name}"? O link público será ativado.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={confirmLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmedTransition} disabled={confirmLoading}>
+              {confirmLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
