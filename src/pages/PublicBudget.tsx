@@ -19,6 +19,8 @@ import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
 import { OptionalItemsSimulator } from "@/components/budget/OptionalItemsSimulator";
 import { MobileHeroCard } from "@/components/budget/MobileHeroCard";
+import { MobilePriceAnchor } from "@/components/budget/MobilePriceAnchor";
+import { MobileTestimonialInline } from "@/components/budget/MobileTestimonialInline";
 
 import { MobileBottomBar } from "@/components/budget/MobileBottomBar";
 import { MobileInlineSummary } from "@/components/budget/MobileInlineSummary";
@@ -207,8 +209,15 @@ export default function PublicBudget() {
         {/* ═══ MOBILE HERO CARD — price + validity + CTA above the fold ═══ */}
 
 
+        {/* ═══ MOBILE PRICE ANCHOR — above the fold before TrustStrip ═══ */}
+        <MobilePriceAnchor
+          total={total}
+          validityDaysLeft={validity.daysLeft}
+          expired={validity.expired}
+        />
+
         {/* ═══ TRUST STRIP — scannable confidence chips ═══ */}
-        <div data-pdf-section>
+        <div className="mt-3" data-pdf-section>
           <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
         </div>
 
@@ -230,7 +239,12 @@ export default function PublicBudget() {
                 </AnimatedSection>
               </div>
 
-              {/* ─── Visual 3D + Portal logo após Engenharia ─── */}
+              {/* ─── Prova social inline — depoimento entre serviços e galeria ─── */}
+              <div className="mt-3">
+                <MobileTestimonialInline />
+              </div>
+
+              {/* ─── Visual 3D + Portal logo após depoimento ─── */}
               <div id="mobile-trust" className="space-y-3 mt-3 scroll-mt-20">
                 <div data-pdf-section>
                 <AnimatedSection id="gallery-section" index={0.55}>
