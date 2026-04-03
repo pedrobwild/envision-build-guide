@@ -659,17 +659,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     }
   };
 
-  const getSectionTotal = (section: SectionData) => {
-    const qty = Number(section.qty) || 1;
-    if (section.items.length > 0) {
-      const itemsSum = section.items.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
-      if (itemsSum > 0) return itemsSum * qty;
-    }
-    if (section.section_price) return Number(section.section_price) * qty;
-    return 0;
-  };
-
-  const grandTotal = sections.reduce((sum, s) => sum + getSectionTotal(s), 0);
+  const grandTotalCost = sections.reduce((sum, s) => sum + calcSectionCostTotal(s), 0);
+  const grandTotalSale = sections.reduce((sum, s) => sum + calcSectionSaleTotal(s), 0);
+  const grandMargin = grandTotalSale - grandTotalCost;
+  const grandBdiPercent = grandTotalCost > 0 ? ((grandTotalSale / grandTotalCost) - 1) * 100 : 0;
 
   /* ── Drag handlers ── */
   const handleSectionDragEnd = (event: DragEndEvent) => {
