@@ -262,6 +262,19 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
             </Button>
           )}
 
+          {/* Revision request button — comercial/admin only, sent_to_client only */}
+          {internalStatus === "sent_to_client" && (isComercial || isAdmin) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRevisionModalOpen(true)}
+              className="h-7 text-xs border-orange-400 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 gap-2"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Solicitar Revisão
+            </Button>
+          )}
+
           {/* Secondary overflow menu */}
           {showSecondary && (
             <DropdownMenu>
