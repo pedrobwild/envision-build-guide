@@ -7,7 +7,7 @@ import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight,
-  PenLine, BookOpen, BookmarkPlus, Link as LinkIcon,
+  PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock,
 } from "lucide-react";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
@@ -280,7 +280,8 @@ function SortableItemRow({
       style={style}
       {...attributes}
       className={cn(
-        "px-4 py-3 hover:bg-muted/20 transition-colors border-b border-border/40 last:border-b-0",
+        "px-4 py-3 transition-colors border-b border-border/40 last:border-b-0 group/item",
+        "even:bg-muted/20",
         isDragging && "bg-muted/40 shadow-lg rounded-lg"
       )}
     >
@@ -290,7 +291,7 @@ function SortableItemRow({
           <div className="flex items-center gap-1.5">
             <button
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover:opacity-100"
+              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover/item:opacity-100"
               title="Arrastar para reordenar"
             >
               <GripVertical className="h-3.5 w-3.5" />
@@ -309,7 +310,7 @@ function SortableItemRow({
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full px-2 py-1 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+              className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
             />
           </div>
           <input
@@ -317,7 +318,7 @@ function SortableItemRow({
             value={item.description || ""}
             onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
             placeholder="Descrição"
-            className="w-full px-2 py-1 rounded-md border border-transparent hover:border-border/60 focus:border-border bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 ml-6 transition-all"
+            className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 ml-6 transition-all cursor-text"
           />
           <div className="flex items-center gap-1 ml-6">
             <LinkIcon className="h-2.5 w-2.5 text-muted-foreground/40 shrink-0" />
@@ -326,11 +327,11 @@ function SortableItemRow({
               value={item.reference_url || ""}
               onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
               placeholder="Link de referência"
-              className="w-full px-2 py-1 rounded-md border border-transparent hover:border-border/60 focus:border-border bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+              className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
             />
           </div>
         </div>
-        {/* Qty */}
+        {/* Qty — editable */}
         <div className="lg:col-span-1 space-y-0.5">
           <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Qtd</label>
           <input
@@ -338,10 +339,10 @@ function SortableItemRow({
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
+            className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
           />
         </div>
-        {/* $ Custo (unit) */}
+        {/* $ Custo (unit) — editable */}
         <div className="lg:col-span-1 space-y-0.5">
           <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>
           <input
@@ -350,10 +351,10 @@ function SortableItemRow({
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
+            className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
           />
         </div>
-        {/* %BDI */}
+        {/* %BDI — editable */}
         <div className="lg:col-span-1 space-y-0.5">
           <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI %</label>
           <input
@@ -362,17 +363,21 @@ function SortableItemRow({
             onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
             placeholder="0"
             step="0.01"
-            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
+            className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
           />
         </div>
-        {/* $ Venda (auto) */}
+        {/* $ Venda (calculated) */}
         <div className="lg:col-span-1 space-y-0.5">
           <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
-          <div className="w-full px-2 py-1.5 rounded-md text-sm font-body tabular-nums text-muted-foreground">
-            {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+          <div
+            className="group/cell w-full px-2 py-1.5 rounded-md bg-muted/40 text-sm font-body tabular-nums text-muted-foreground cursor-default flex items-center justify-between"
+            title="Campo calculado automaticamente"
+          >
+            <span>{formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}</span>
+            <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
           </div>
         </div>
-        {/* $ Total Custo */}
+        {/* $ Total Custo — editable override */}
         <div className="lg:col-span-2 space-y-0.5">
           <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Custo</label>
           <input
@@ -381,14 +386,18 @@ function SortableItemRow({
             onChange={(e) => onUpdate(sectionId, item.id, "internal_total", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
+            className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
           />
         </div>
-        {/* $ Total Venda (auto) */}
+        {/* $ Total Venda (calculated — special treatment) */}
         <div className="lg:col-span-2 space-y-0.5">
           <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Venda</label>
-          <div className="w-full px-2 py-1.5 rounded-md text-sm font-body font-semibold tabular-nums text-foreground">
-            {formatBRL(calcItemSaleTotal(item))}
+          <div
+            className="group/cell w-full px-2 py-1.5 rounded-md bg-primary/5 text-sm font-body font-semibold tabular-nums text-foreground cursor-default flex items-center justify-between"
+            title="Campo calculado automaticamente"
+          >
+            <span>{formatBRL(calcItemSaleTotal(item))}</span>
+            <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
           </div>
         </div>
         {/* Actions */}
