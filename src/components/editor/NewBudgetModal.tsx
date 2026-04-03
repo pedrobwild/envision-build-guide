@@ -196,7 +196,8 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
     }
 
     try {
-      await seedFromTemplate(data.id, selectedTemplateId || null);
+      const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
+      await seedFromTemplate(data.id, tplId);
     } catch (seedErr) {
       console.error("Erro ao criar seções padrão:", seedErr);
     }
