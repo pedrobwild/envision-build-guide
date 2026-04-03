@@ -78,10 +78,17 @@ export function calculateSectionSubtotal(section: any): number {
   const items = section.items || [];
   const qty = section.qty || 1;
 
-  // Sum item-level totals when available
+  // Sum item-level totals when available, falling back to internal_unit_price per item
   if (items.length > 0) {
     const itemsSum = items.reduce(
-      (sum: number, item: any) => sum + (Number(item.internal_total) || 0),
+      (sum: number, item: any) => {
+        const total = Number(item.internal_total) || 0;
+        if (total > 0) return sum + total;
+        // Fallback: use unit_price * qty (or just unit_price if qty missing)
+        const unitPrice = Number(item.internal_unit_price) || 0;
+        const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
+        return sum + unitPrice * itemQty;
+      },
       0
     );
     // If items have totals, use them; otherwise fall back to section_price
