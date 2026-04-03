@@ -1,12 +1,13 @@
-import { Check } from "lucide-react";
+import { Check, RotateCcw } from "lucide-react";
 import type { InternalStatus } from "@/lib/role-constants";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const STAGES = [
   { label: "Solicitado", statuses: ["requested", "triage", "assigned"] },
   { label: "Em Produção", statuses: ["in_progress", "waiting_info", "blocked"] },
   { label: "Revisão", statuses: ["ready_for_review", "delivered_to_sales"] },
-  { label: "Enviado", statuses: ["sent_to_client", "minuta_solicitada"] },
+  { label: "Enviado", statuses: ["sent_to_client", "minuta_solicitada", "revision_requested"] },
 ] as const;
 
 function getStageIndex(status: string): number {
