@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { CommentQuickTemplates } from "@/components/editor/CommentQuickTemplates";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
