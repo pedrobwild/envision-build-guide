@@ -347,10 +347,18 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
             <Button
               variant="default"
               size="sm"
-              className={`h-7 text-xs gap-1.5 ${internalStatus === "revision_requested" ? "bg-orange-500 hover:bg-orange-600 text-white" : ""}`}
+              className={`h-7 text-xs gap-1.5 ${
+                internalStatus === "revision_requested" ? "bg-orange-500 hover:bg-orange-600 text-white" :
+                internalStatus === "minuta_solicitada" ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
+                internalStatus === "delivered_to_sales" ? "bg-teal-600 hover:bg-teal-700 text-white" :
+                ""
+              }`}
               onClick={handlePrimaryClick}
             >
               {internalStatus === "revision_requested" && <RotateCcw className="h-3.5 w-3.5" />}
+              {internalStatus === "ready_for_review" && <PackageCheck className="h-3.5 w-3.5" />}
+              {internalStatus === "delivered_to_sales" && <Send className="h-3.5 w-3.5" />}
+              {internalStatus === "minuta_solicitada" && <Handshake className="h-3.5 w-3.5" />}
               {primaryTransition.label}
             </Button>
           )}
