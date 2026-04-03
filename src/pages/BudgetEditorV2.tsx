@@ -46,6 +46,8 @@ export default function BudgetEditorV2() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const lastSavePayload = useRef<{ field: string; value: any } | null>(null);
+  const saveErrorCount = useRef(0);
+  const errorToastId = useRef<string | number | null>(null);
   const [activeTab, setActiveTab] = useState("planilha");
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [mediaCount, setMediaCount] = useState(0);
