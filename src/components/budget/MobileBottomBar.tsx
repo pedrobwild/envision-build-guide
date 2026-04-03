@@ -222,14 +222,12 @@ export function MobileBottomBar({
         budgetId={budgetId}
       />
 
-      {/* Contract Request Dialog */}
-      <ContractRequestDialog
-        open={contractOpen}
-        onOpenChange={setContractOpen}
-        budgetId={budgetId || ""}
+      {/* WhatsApp Comment Dialog */}
+      <WhatsAppCommentDialog
+        open={whatsappOpen}
+        onOpenChange={setWhatsappOpen}
         publicId={publicId}
         projectName={projectName}
-        total={total}
       />
     </>
   );
