@@ -209,8 +209,15 @@ export default function PublicBudget() {
         {/* ═══ MOBILE HERO CARD — price + validity + CTA above the fold ═══ */}
 
 
+        {/* ═══ MOBILE PRICE ANCHOR — above the fold before TrustStrip ═══ */}
+        <MobilePriceAnchor
+          total={total}
+          validityDaysLeft={validity.daysLeft}
+          expired={validity.expired}
+        />
+
         {/* ═══ TRUST STRIP — scannable confidence chips ═══ */}
-        <div data-pdf-section>
+        <div className="mt-3" data-pdf-section>
           <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
         </div>
 
