@@ -294,9 +294,10 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
             <Button
               variant="default"
               size="sm"
-              className="h-7 text-xs"
+              className={`h-7 text-xs gap-1.5 ${internalStatus === "revision_requested" ? "bg-orange-500 hover:bg-orange-600 text-white" : ""}`}
               onClick={handlePrimaryClick}
             >
+              {internalStatus === "revision_requested" && <RotateCcw className="h-3.5 w-3.5" />}
               {primaryTransition.label}
             </Button>
           )}
