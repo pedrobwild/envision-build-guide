@@ -523,15 +523,30 @@ export default function EstimatorDashboard() {
                   ))}
                 </SelectContent>
               </Select>
-              {commercialOptions.length > 1 && (
+              {isAdmin && commercialOptions.length > 0 && (
                 <Select value={commercialFilter} onValueChange={setCommercialFilter}>
                   <SelectTrigger className="w-full sm:w-[180px]">
+                    <User className="h-3.5 w-3.5 mr-1.5" />
                     <SelectValue placeholder="Comercial" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="all">Todos os comerciais</SelectItem>
                     {commercialOptions.map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {isAdmin && estimatorOptions.length > 0 && (
+                <Select value={estimatorFilter} onValueChange={setEstimatorFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <UserCog className="h-3.5 w-3.5 mr-1.5" />
+                    <SelectValue placeholder="Orçamentista" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os orçamentistas</SelectItem>
+                    {estimatorOptions.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
