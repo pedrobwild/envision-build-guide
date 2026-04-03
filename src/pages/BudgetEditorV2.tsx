@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign, GitCompare, Globe, Eye, RotateCcw, PackageCheck, Send, Handshake } from "lucide-react";
+import { Loader2, User, ChevronDown, DollarSign, RotateCcw, PackageCheck, Send, Handshake, MessageSquare, ClipboardList, Image as ImageIcon, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { MetadataStep } from "@/components/editor/MetadataStep";
@@ -14,8 +14,6 @@ import { formatBRL } from "@/lib/formatBRL";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { WorkflowBar } from "@/components/editor/WorkflowBar";
 import { PipelineProgress } from "@/components/editor/PipelineProgress";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Link } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
 import { BriefingPanel } from "@/components/editor/BriefingPanel";
@@ -23,6 +21,9 @@ import { RevisionBanner } from "@/components/editor/RevisionBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { StickyEditorHeader, type SaveStatus } from "@/components/editor/StickyEditorHeader";
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -41,10 +42,12 @@ export default function BudgetEditorV2() {
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
   const [startingRevision, setStartingRevision] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const lastSavePayload = useRef<{ field: string; value: any } | null>(null);
+  const [activeTab, setActiveTab] = useState("planilha");
+  const [briefingOpen, setBriefingOpen] = useState(false);
+  const [mediaCount, setMediaCount] = useState(0);
 
   // Fetch latest revision request when status is revision_requested
   const { data: revisionRequest } = useQuery({
@@ -83,6 +86,25 @@ export default function BudgetEditorV2() {
   useEffect(() => {
     loadBudget();
   }, [budgetId]);
+
+  // Count media files for badge
+  useEffect(() => {
+    if (!budgetId) return;
+    const publicId = budget?.public_id || budget?.id;
+    if (!publicId) return;
+    const folders = ["3d", "fotos", "exec", "video"].map(f => `${publicId}/${f}`);
+    let total = 0;
+    Promise.all(
+      folders.map(folder =>
+        supabase.storage.from("budget-assets").list(folder, { limit: 100 }).then(({ data }) =>
+          (data || []).filter(f => f.name !== ".emptyFolderPlaceholder" && f.name !== ".lovkeep").length
+        )
+      )
+    ).then(counts => {
+      total = counts.reduce((a, b) => a + b, 0);
+      setMediaCount(total);
+    });
+  }, [budgetId, budget?.public_id, budget?.id]);
 
   const loadBudget = async () => {
     if (!budgetId) return;
@@ -165,14 +187,6 @@ export default function BudgetEditorV2() {
     setSaving(false);
   };
 
-  const copyPublicLink = () => {
-    if (!budget?.public_id) return;
-    navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id));
-    setLinkCopied(true);
-    toast.success("Link copiado!");
-    setTimeout(() => setLinkCopied(false), 2000);
-  };
-
   if (!budget) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -180,16 +194,6 @@ export default function BudgetEditorV2() {
       </div>
     );
   }
-
-  const statusLabel = budget.is_published_version
-    ? "Publicada"
-    : budget.status === "draft"
-    ? "Rascunho"
-    : budget.status;
-
-  const statusColor = budget.is_published_version
-    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
 
   // Derive primary workflow action for sticky header
   const internalStatus = (budget.internal_status ?? "requested") as InternalStatus;
@@ -210,13 +214,15 @@ export default function BudgetEditorV2() {
   const stickyPrimaryAction = canDoPrimary && primaryTransitionDef ? {
     label: primaryTransitionDef.label,
     onClick: () => {
-      // Delegate to the WorkflowBar below which handles confirmation dialogs etc.
       const btn = document.querySelector<HTMLButtonElement>('[data-workflow-primary]');
       if (btn) btn.click();
     },
     icon: primaryTransitionDef.icon,
     className: primaryTransitionDef.className,
   } : null;
+
+  // Check if MetadataStep has missing required fields
+  const missingContextFields = !budget.client_name || budget.client_name === "Cliente" || !budget.project_name;
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -232,139 +238,232 @@ export default function BudgetEditorV2() {
           primaryAction={stickyPrimaryAction}
         />
 
-        {/* ── Content ── */}
-        <main className="max-w-[1200px] w-full mx-auto px-6 py-8 space-y-8">
-          {/* Pipeline Progress */}
+        {/* ── Content below sticky header ── */}
+        <main className="max-w-[1200px] w-full mx-auto px-6 py-4 flex-1 flex flex-col">
+          {/* Pipeline Progress — always visible */}
           <PipelineProgress internalStatus={budget.internal_status ?? "requested"} />
 
-          {/* Revision Banner */}
+          {/* Revision Banner — always visible */}
           {budget.internal_status === "revision_requested" && revisionRequest && (
-            <RevisionBanner
-              revisionData={revisionRequest}
-              onStartRevision={handleStartRevision}
-              startingRevision={startingRevision}
-            />
+            <div className="mt-4">
+              <RevisionBanner
+                revisionData={revisionRequest}
+                onStartRevision={handleStartRevision}
+                startingRevision={startingRevision}
+              />
+            </div>
           )}
 
-          {/* Workflow Bar */}
-          <WorkflowBar
-            budget={budget}
-            onBudgetUpdate={(fields) => setBudget({ ...budget, ...fields })}
-          />
-
-          {/* Version History */}
-          <VersionHistoryPanel budgetId={budgetId!} onVersionChange={loadBudget} />
-
-          {/* ── Notion-like page title ── */}
-          <div className="space-y-1">
-            {editingTitle ? (
-              <input
-                autoFocus
-                value={budget.project_name || ""}
-                onChange={(e) => {
-                  setBudget({ ...budget, project_name: e.target.value });
-                  autoSaveBudgetField("project_name", e.target.value);
-                }}
-                onBlur={() => setEditingTitle(false)}
-                onKeyDown={(e) => e.key === "Enter" && setEditingTitle(false)}
-                className="w-full text-3xl font-display font-bold text-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/40 leading-tight"
-                placeholder="Nome do projeto"
-              />
-            ) : (
-              <h1
-                onClick={() => setEditingTitle(true)}
-                className="text-3xl font-display font-bold text-foreground leading-tight cursor-text hover:bg-muted/30 rounded-md px-1 -mx-1 py-0.5 transition-colors"
-              >
-                {budget.project_name || <span className="text-muted-foreground/40">Nome do projeto</span>}
-              </h1>
-            )}
-            {/* Subtitle metadata */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground font-body flex-wrap px-1">
-              {budget.client_name && budget.client_name !== "Cliente" && (
-                <span className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  {budget.client_name}
-                </span>
-              )}
-              {budget.condominio && <span className="text-muted-foreground/40">·</span>}
-              {budget.condominio && <span>{budget.condominio}</span>}
-              {budget.bairro && <span className="text-muted-foreground/40">·</span>}
-              {budget.bairro && <span>{budget.bairro}</span>}
-              {budget.metragem && <span className="text-muted-foreground/40">·</span>}
-              {budget.metragem && <span>{budget.metragem}</span>}
-            </div>
+          {/* Workflow Bar — always visible */}
+          <div className="mt-4">
+            <WorkflowBar
+              budget={budget}
+              onBudgetUpdate={(fields) => setBudget({ ...budget, ...fields })}
+            />
           </div>
 
-          {/* ── Metadata Properties ── */}
-          <MetadataStep
-            budget={budget}
-            onFieldChange={(field, value) => {
-              setBudget({ ...budget, [field]: value });
-              autoSaveBudgetField(field, value);
-            }}
-            onNext={handleSaveAndPublish}
-            saving={saving}
-          />
+          {/* ── Tab navigation ── */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 flex-1 flex flex-col">
+            <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none h-auto p-0 gap-0">
+              <TabsTrigger
+                value="planilha"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5"
+              >
+                <ClipboardList className="h-3.5 w-3.5" />
+                Planilha
+              </TabsTrigger>
+              <TabsTrigger
+                value="contexto"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5"
+              >
+                <User className="h-3.5 w-3.5" />
+                Contexto
+                {missingContextFields && (
+                  <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-semibold px-1">
+                    !
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="midia"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5"
+              >
+                <ImageIcon className="h-3.5 w-3.5" />
+                Mídia
+                {mediaCount > 0 && (
+                  <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 text-[10px] font-semibold px-1">
+                    {mediaCount}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="versoes"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5"
+              >
+                <ScrollText className="h-3.5 w-3.5" />
+                Versões
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Internal Data - Collapsible */}
-          <Collapsible open={internalDataOpen} onOpenChange={setInternalDataOpen}>
-            <CollapsibleTrigger className="w-full group">
-              <div className="flex items-center gap-2 py-2 text-sm font-body text-muted-foreground hover:text-foreground transition-colors">
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${internalDataOpen ? 'rotate-0' : '-rotate-90'}`} />
-                <DollarSign className="h-3.5 w-3.5" />
-                <span className="font-medium">Dados Internos</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Uso interno</span>
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="pl-7 pb-4 pt-1 space-y-3">
-                <div className="max-w-sm">
-                  <label className="block text-xs text-muted-foreground mb-1 font-body">
-                    Custo da Obra (interno) — R$
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={(budget as any).internal_cost ?? ""}
-                    onChange={(e) => {
-                      const val = e.target.value ? Number(e.target.value) : null;
-                      setBudget({ ...budget, internal_cost: val });
-                      autoSaveBudgetField("internal_cost", val);
-                    }}
-                    placeholder="0.00"
-                    className="w-full px-3 py-2 rounded-lg border border-transparent hover:border-border focus:border-border bg-transparent text-foreground text-sm font-body placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all tabular-nums"
+            {/* ── Tab: Planilha ── */}
+            <TabsContent value="planilha" className="mt-0 flex-1">
+              <div className="flex">
+                <div className={cn("flex-1 min-w-0", briefingOpen && "mr-[320px]")}>
+                  <SectionsEditor
+                    budgetId={budgetId!}
+                    sections={sections}
+                    onSectionsChange={setSections}
                   />
-                  <p className="text-xs text-muted-foreground/60 font-body mt-1">
-                    Custo real de execução. Nunca exposto ao cliente.
-                  </p>
                 </div>
-                {(budget as any).internal_cost > 0 && (
-                  <div className="text-sm font-body text-muted-foreground tabular-nums">
-                    Custo: {formatBRL((budget as any).internal_cost)}
+
+                {/* Briefing toggle button */}
+                {!briefingOpen && (
+                  <div className="fixed right-4 top-36 z-30">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBriefingOpen(true)}
+                      className="h-8 text-xs gap-1.5 shadow-md bg-background"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Briefing
+                    </Button>
+                  </div>
+                )}
+
+                {/* Briefing sidebar */}
+                {briefingOpen && (
+                  <div className="fixed right-0 top-[96px] bottom-0 w-[320px] z-30 border-l border-border bg-background overflow-y-auto">
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+                      <span className="text-sm font-body font-medium">Briefing & Histórico</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => setBriefingOpen(false)}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                    <BriefingPanel
+                      budgetId={budgetId!}
+                      budget={budget}
+                      onBudgetFieldChange={(field, value) => {
+                        setBudget({ ...budget, [field]: value });
+                      }}
+                    />
                   </div>
                 )}
               </div>
-            </CollapsibleContent>
-          </Collapsible>
+            </TabsContent>
 
-          <MediaUploadSection publicId={budget.public_id || budget.id} budgetId={budgetId!} />
+            {/* ── Tab: Contexto ── */}
+            <TabsContent value="contexto" className="mt-6 space-y-8">
+              {/* Editable title */}
+              <div className="space-y-1">
+                {editingTitle ? (
+                  <input
+                    autoFocus
+                    value={budget.project_name || ""}
+                    onChange={(e) => {
+                      setBudget({ ...budget, project_name: e.target.value });
+                      autoSaveBudgetField("project_name", e.target.value);
+                    }}
+                    onBlur={() => setEditingTitle(false)}
+                    onKeyDown={(e) => e.key === "Enter" && setEditingTitle(false)}
+                    className="w-full text-3xl font-display font-bold text-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/40 leading-tight"
+                    placeholder="Nome do projeto"
+                  />
+                ) : (
+                  <h1
+                    onClick={() => setEditingTitle(true)}
+                    className="text-3xl font-display font-bold text-foreground leading-tight cursor-text hover:bg-muted/30 rounded-md px-1 -mx-1 py-0.5 transition-colors"
+                  >
+                    {budget.project_name || <span className="text-muted-foreground/40">Nome do projeto</span>}
+                  </h1>
+                )}
+                {/* Subtitle metadata */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground font-body flex-wrap px-1">
+                  {budget.client_name && budget.client_name !== "Cliente" && (
+                    <span className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      {budget.client_name}
+                    </span>
+                  )}
+                  {budget.condominio && <span className="text-muted-foreground/40">·</span>}
+                  {budget.condominio && <span>{budget.condominio}</span>}
+                  {budget.bairro && <span className="text-muted-foreground/40">·</span>}
+                  {budget.bairro && <span>{budget.bairro}</span>}
+                  {budget.metragem && <span className="text-muted-foreground/40">·</span>}
+                  {budget.metragem && <span>{budget.metragem}</span>}
+                </div>
+              </div>
 
-          <SectionsEditor
-            budgetId={budgetId!}
-            sections={sections}
-            onSectionsChange={setSections}
-          />
+              {/* Metadata Properties */}
+              <MetadataStep
+                budget={budget}
+                onFieldChange={(field, value) => {
+                  setBudget({ ...budget, [field]: value });
+                  autoSaveBudgetField(field, value);
+                }}
+                onNext={handleSaveAndPublish}
+                saving={saving}
+              />
+
+              {/* Internal Data - Collapsible */}
+              <Collapsible open={internalDataOpen} onOpenChange={setInternalDataOpen}>
+                <CollapsibleTrigger className="w-full group">
+                  <div className="flex items-center gap-2 py-2 text-sm font-body text-muted-foreground hover:text-foreground transition-colors">
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${internalDataOpen ? 'rotate-0' : '-rotate-90'}`} />
+                    <DollarSign className="h-3.5 w-3.5" />
+                    <span className="font-medium">Dados Internos</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Uso interno</span>
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="pl-7 pb-4 pt-1 space-y-3">
+                    <div className="max-w-sm">
+                      <label className="block text-xs text-muted-foreground mb-1 font-body">
+                        Custo da Obra (interno) — R$
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={(budget as any).internal_cost ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value ? Number(e.target.value) : null;
+                          setBudget({ ...budget, internal_cost: val });
+                          autoSaveBudgetField("internal_cost", val);
+                        }}
+                        placeholder="0.00"
+                        className="w-full px-3 py-2 rounded-lg border border-transparent hover:border-border focus:border-border bg-transparent text-foreground text-sm font-body placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all tabular-nums"
+                      />
+                      <p className="text-xs text-muted-foreground/60 font-body mt-1">
+                        Custo real de execução. Nunca exposto ao cliente.
+                      </p>
+                    </div>
+                    {(budget as any).internal_cost > 0 && (
+                      <div className="text-sm font-body text-muted-foreground tabular-nums">
+                        Custo: {formatBRL((budget as any).internal_cost)}
+                      </div>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </TabsContent>
+
+            {/* ── Tab: Mídia ── */}
+            <TabsContent value="midia" className="mt-6">
+              <MediaUploadSection publicId={budget.public_id || budget.id} budgetId={budgetId!} />
+            </TabsContent>
+
+            {/* ── Tab: Versões ── */}
+            <TabsContent value="versoes" className="mt-6">
+              <VersionHistoryPanel budgetId={budgetId!} onVersionChange={loadBudget} defaultExpanded />
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
-
-      {/* Briefing Side Panel */}
-      <BriefingPanel
-        budgetId={budgetId!}
-        budget={budget}
-        onBudgetFieldChange={(field, value) => {
-          setBudget({ ...budget, [field]: value });
-        }}
-      />
     </div>
   );
 }

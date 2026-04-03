@@ -21,9 +21,10 @@ const VERSION_CHANGE_REASONS = [
 interface VersionHistoryPanelProps {
   budgetId: string;
   onVersionChange?: () => void;
+  defaultExpanded?: boolean;
 }
 
-export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistoryPanelProps) {
+export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded = false }: VersionHistoryPanelProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [versions, setVersions] = useState<any[]>([]);
@@ -32,7 +33,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange }: VersionHistor
   const [loading, setLoading] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [importOpen, setImportOpen] = useState(false);
   const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
 
