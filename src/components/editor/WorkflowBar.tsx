@@ -93,7 +93,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const { profile, isAdmin, isComercial, isOrcamentista } = useUserProfile();
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
-  const [contractConfirmOpen, setContractConfirmOpen] = useState(false);
+  
 
   useEffect(() => {
     supabase
