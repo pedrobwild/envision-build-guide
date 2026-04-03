@@ -230,7 +230,7 @@ function SortableSectionCard({
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-      <div className="border border-border rounded-xl bg-card overflow-hidden">
+      <div className="rounded-lg border border-border/50 hover:border-border bg-card/50 overflow-hidden transition-colors">
         {children(listeners)}
       </div>
     </div>
