@@ -55,7 +55,7 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
   budgetId: string;
   exporting: boolean;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const showItems = !isMobile || isOpen || exporting;
   const itemCount = allItems.length;
