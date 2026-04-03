@@ -3,11 +3,12 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign, GitCompare } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
-import { ensureVersionGroup, publishVersion } from "@/lib/budget-versioning";
+import { ensureVersionGroup, publishVersion, duplicateBudgetAsVersion } from "@/lib/budget-versioning";
 import { MediaUploadSection } from "@/components/editor/MediaUploadSection";
 import { formatBRL } from "@/lib/formatBRL";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -19,6 +20,8 @@ import { Link } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
 import { BriefingPanel } from "@/components/editor/BriefingPanel";
+import { RevisionBanner } from "@/components/editor/RevisionBanner";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
