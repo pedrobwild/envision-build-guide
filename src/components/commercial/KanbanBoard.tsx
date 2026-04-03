@@ -678,11 +678,21 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                               <div className="flex-1 h-px bg-border" />
                             </div>
                           )}
-                          <KanbanCard
-                            budget={b}
-                            locked={col.locked}
+                          <CompactKanbanCard
+                            projectName={b.project_name}
+                            clientName={b.client_name}
+                            priority={b.priority}
+                            internalStatus={b.internal_status}
+                            dueAt={b.due_at}
+                            bairro={b.bairro}
+                            city={b.city}
+                            versionNumber={b.version_number}
+                            commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
+                            estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             onClick={() => onCardClick(b.id)}
-                            getProfileName={getProfileName}
+                            onQuickAction={(action) => {
+                              if (action === "open") onCardClick(b.id);
+                            }}
                           />
                         </div>
                       );
