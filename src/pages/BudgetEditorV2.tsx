@@ -28,6 +28,7 @@ export default function BudgetEditorV2() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isOrcamentista, isComercial } = useUserProfile();
+  const { user } = useAuth();
 
   const backPath = (location.state as any)?.from
     || (isOrcamentista ? "/admin/producao" : isComercial ? "/admin/comercial" : "/admin");
