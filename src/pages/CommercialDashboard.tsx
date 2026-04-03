@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,10 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Search, Calendar, User, Building2, ArrowLeft, Loader2, Inbox,
   Clock, MoreVertical, ExternalLink, CheckCircle2,
@@ -120,6 +124,7 @@ export default function CommercialDashboard() {
   const [sortBy, setSortBy] = useState<SortOption>("urgente");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
+  const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
 
   useEffect(() => { if (user && profile) loadData(); }, [user, profile]);
 
@@ -239,6 +244,7 @@ export default function CommercialDashboard() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-20">
@@ -488,7 +494,7 @@ export default function CommercialDashboard() {
                               </DropdownMenuItem>
                             )}
                             {b.internal_status !== "approved" && b.internal_status !== "lost" && (
-                              <DropdownMenuItem onClick={() => changeStatus(b.id, "approved")}>
+                              <DropdownMenuItem onClick={() => setConfirmCloseBudgetId(b.id)}>
                                 <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
                               </DropdownMenuItem>
                             )}
@@ -514,6 +520,25 @@ export default function CommercialDashboard() {
         )}
       </div>
     </div>
+
+      {/* Confirmation dialog for "Contrato fechado" */}
+      <AlertDialog open={!!confirmCloseBudgetId} onOpenChange={(open) => { if (!open) setConfirmCloseBudgetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Registrar contrato fechado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação marca o orçamento como contrato fechado. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (confirmCloseBudgetId) { changeStatus(confirmCloseBudgetId, "approved"); setConfirmCloseBudgetId(null); } }}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
