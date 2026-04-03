@@ -496,6 +496,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     }
   }, [sectionMatchMap]);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
   const debouncedSave = useCallback((table: string, id: string, updates: Record<string, any>) => {
     const key = `${table}-${id}`;
     if (timers.current[key]) clearTimeout(timers.current[key]);
