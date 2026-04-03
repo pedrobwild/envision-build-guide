@@ -244,6 +244,7 @@ export default function CommercialDashboard() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-20">
