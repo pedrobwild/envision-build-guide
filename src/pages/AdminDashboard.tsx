@@ -754,7 +754,7 @@ export default function AdminDashboard() {
                                     <GitCompare className="h-3.5 w-3.5" /> Comparar versões
                                   </button>
                                 )}
-                                {budget.internal_status !== "contrato_fechado" && budget.internal_status !== "lost" && (
+                                {budget.internal_status !== "sent_to_client" && budget.internal_status !== "lost" && (
                                   <button
                                     onClick={() => markAsClosed(budget.id)}
                                     className="w-full px-3 py-2 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"

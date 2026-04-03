@@ -63,7 +63,7 @@ function getStatusBadgeClass(status: InternalStatus): string {
     case "sent_to_client":
     case "delivered_to_sales":
       return "bg-purple-100 text-purple-800 border-purple-200";
-    case "contrato_fechado":
+    case "sent_to_client":
       return "bg-green-100 text-green-800 border-green-200";
     case "blocked":
     case "waiting_info":
@@ -85,8 +85,7 @@ const PRIMARY_TRANSITIONS: Record<string, Transition> = {
   triage: { label: "Atribuir e Iniciar Produção", newStatus: "assigned", roles: ["admin"] },
   assigned: { label: "Iniciar Produção", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
   in_progress: { label: "Enviar para Revisão", newStatus: "ready_for_review", roles: ["orcamentista", "admin"] },
-  ready_for_review: { label: "Aprovar e Publicar", newStatus: "sent_to_client", roles: ["comercial", "admin"] },
-  sent_to_client: { label: "Registrar Contrato Fechado", newStatus: "contrato_fechado", roles: ["comercial", "admin"] },
+  ready_for_review: { label: "Enviar ao Cliente", newStatus: "sent_to_client", roles: ["comercial", "admin"] },
 };
 
 export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
@@ -94,7 +93,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const { profile, isAdmin, isComercial, isOrcamentista } = useUserProfile();
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
-  const [contractConfirmOpen, setContractConfirmOpen] = useState(false);
+  
 
   useEffect(() => {
     supabase
@@ -175,11 +174,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
 
   function handlePrimaryClick() {
     if (!primaryTransition) return;
-    if (primaryTransition.newStatus === "contrato_fechado" && internalStatus === "sent_to_client") {
-      setContractConfirmOpen(true);
-    } else {
-      changeStatus(primaryTransition.newStatus);
-    }
+    changeStatus(primaryTransition.newStatus);
   }
 
   return (
@@ -310,23 +305,6 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         </div>
       </div>
 
-      {/* Confirmation dialog for contract */}
-      <AlertDialog open={contractConfirmOpen} onOpenChange={setContractConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Registrar contrato fechado?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação marca o orçamento como contrato fechado. Deseja continuar?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => changeStatus("contrato_fechado")}>
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <BlockingDialog
         open={!!blockingTarget}

@@ -74,7 +74,7 @@ const PIPELINE_SECTIONS = {
   },
   fechado: {
     label: "Contrato Fechado",
-    statuses: ["contrato_fechado"] as InternalStatus[],
+    statuses: ["sent_to_client"] as InternalStatus[],
     icon: ThumbsUp,
     accent: "text-green-600",
   },
@@ -493,12 +493,12 @@ export default function CommercialDashboard() {
                                 <Send className="h-4 w-4 mr-2" />Enviar ao cliente
                               </DropdownMenuItem>
                             )}
-                            {b.internal_status !== "contrato_fechado" && b.internal_status !== "lost" && (
+                            {b.internal_status !== "sent_to_client" && b.internal_status !== "lost" && (
                               <DropdownMenuItem onClick={() => setConfirmCloseBudgetId(b.id)}>
                                 <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
                               </DropdownMenuItem>
                             )}
-                            {b.internal_status !== "lost" && b.internal_status !== "contrato_fechado" && (
+                            {b.internal_status !== "lost" && b.internal_status !== "sent_to_client" && (
                               <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
                                 <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
                               </DropdownMenuItem>
@@ -532,7 +532,7 @@ export default function CommercialDashboard() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (confirmCloseBudgetId) { changeStatus(confirmCloseBudgetId, "contrato_fechado"); setConfirmCloseBudgetId(null); } }}>
+            <AlertDialogAction onClick={() => { if (confirmCloseBudgetId) { changeStatus(confirmCloseBudgetId, "sent_to_client"); setConfirmCloseBudgetId(null); } }}>
               Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>

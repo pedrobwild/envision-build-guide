@@ -244,7 +244,7 @@ export default function EstimatorDashboard() {
   const IN_PROGRESS_STATUSES = ["in_progress", "waiting_info", "blocked"];
   const REVIEW_STATUSES = ["ready_for_review"];
   const DELIVERED_STATUSES = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
-  const FINISHED_STATUSES = ["contrato_fechado", "lost", "archived"];
+  const FINISHED_STATUSES = ["sent_to_client", "lost", "archived"];
 
   const counts = useMemo(() => {
     return {
@@ -452,7 +452,7 @@ export default function EstimatorDashboard() {
             count={counts.finished}
             icon={<FileSignature className="h-4 w-4" />}
             accent="text-green-600"
-            onClick={() => setStatusFilter("contrato_fechado")}
+            onClick={() => setStatusFilter("sent_to_client")}
           />
         </div>
 

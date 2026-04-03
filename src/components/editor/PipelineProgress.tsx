@@ -6,8 +6,7 @@ const STAGES = [
   { label: "Solicitado", statuses: ["requested", "triage", "assigned"] },
   { label: "Em Produção", statuses: ["in_progress", "waiting_info", "blocked"] },
   { label: "Revisão", statuses: ["ready_for_review", "delivered_to_sales"] },
-  { label: "Publicado", statuses: ["sent_to_client", "minuta_solicitada"] },
-  { label: "Contrato", statuses: ["contrato_fechado"] },
+  { label: "Enviado", statuses: ["sent_to_client", "minuta_solicitada"] },
 ] as const;
 
 function getStageIndex(status: string): number {
