@@ -10,6 +10,7 @@ import { JourneySection } from "@/components/orcamento/JourneySection";
 import { ScopeSection } from "@/components/orcamento/ScopeSection";
 import { PortalWarrantyNextSteps } from "@/components/orcamento/PortalWarrantyNextSteps";
 import { StickyBudgetSummary } from "@/components/orcamento/StickyBudgetSummary";
+import { ReformTimeline } from "@/components/budget/ReformTimeline";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -79,6 +80,9 @@ export default function OrcamentoPage() {
             </motion.div>
             <motion.div id="portal-section" variants={sectionVariants} viewport={{ once: true, amount: 0.15 }} initial="hidden" whileInView="visible">
               <PortalWarrantyNextSteps portalTabs={resolvedBudget.portalTabs} />
+            </motion.div>
+            <motion.div id="cronograma-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1 }} initial="hidden" whileInView="visible">
+              <ReformTimeline />
             </motion.div>
 
             {/* Bottom spacer for mobile CTA */}
