@@ -282,6 +282,15 @@ export default function NewBudgetRequest() {
               />
             </div>
             <div className="space-y-1.5">
+              <Label className="font-body text-sm">Cidade</Label>
+              <Input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="São Paulo"
+                maxLength={100}
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label className="font-body text-sm">Metragem</Label>
               <div className="relative">
                 <Input
