@@ -15,6 +15,10 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Search, Calendar, User, Building2, ArrowLeft, Loader2, Inbox,
   Clock, MoreVertical, ExternalLink, CheckCircle2,
   ArrowUpDown, Copy, Send, RotateCcw, AlertTriangle,
