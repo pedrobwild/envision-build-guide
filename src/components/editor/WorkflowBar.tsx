@@ -42,6 +42,7 @@ import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { BlockingDialog } from "./BlockingDialog";
+import { RevisionRequestDialog } from "./RevisionRequestDialog";
 
 interface ProfileRow {
   id: string;
