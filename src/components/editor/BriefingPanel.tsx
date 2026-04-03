@@ -58,6 +58,8 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
   const [events, setEvents] = useState<any[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const autoSaveTimers = useRef<Record<string, NodeJS.Timeout>>({});
+  const briefingTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const estimatorTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-collapse on narrow screens
   useEffect(() => {
