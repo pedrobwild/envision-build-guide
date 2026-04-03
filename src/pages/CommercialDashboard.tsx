@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +34,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
+import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 
 // Pipeline groups for the commercial view
 // Statuses in "solicitado" and "em_elaboracao" are read-only for commercial
@@ -125,6 +126,7 @@ export default function CommercialDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
+  const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
 
   useEffect(() => { if (user && profile) loadData(); }, [user, profile]);
 
@@ -236,6 +238,19 @@ export default function CommercialDashboard() {
     toast.success("Link copiado!");
   }
 
+  function handleRevisionRequestSuccess() {
+    const currentRevisionBudget = revisionBudget;
+    if (!currentRevisionBudget) return;
+
+    const now = new Date().toISOString();
+    setBudgets(prev => prev.map(b =>
+      b.id === currentRevisionBudget.id
+        ? { ...b, internal_status: "revision_requested", updated_at: now }
+        : b
+    ));
+    setRevisionBudget(null);
+  }
+
   const dueVariantStyles = {
     overdue: "bg-destructive/10 text-destructive border-destructive/20",
     today: "bg-warning/10 text-warning border-warning/20",
@@ -245,281 +260,291 @@ export default function CommercialDashboard() {
 
   return (
     <>
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-semibold font-display text-foreground">Meus Orçamentos</h1>
-              <p className="text-sm text-muted-foreground font-body">
-                {profile?.full_name || "Comercial"} · {counts.total} orçamento{counts.total !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
-          <Button size="sm" onClick={() => navigate("/admin/solicitacoes/nova")}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nova Solicitação
-          </Button>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
-        {/* Pipeline summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => {
-            const Icon = sec.icon;
-            return (
-              <SummaryCard
-                key={key}
-                label={sec.label}
-                count={counts[key] ?? 0}
-                icon={<Icon className="h-4 w-4" />}
-                accent={sec.accent}
-                active={statusFilter === key}
-                onClick={() => setStatusFilter(statusFilter === key ? "all" : key)}
-                alert={key === "entregue" && (counts[key] ?? 0) > 0}
-              />
-            );
-          })}
-        </div>
-
-        {/* Needs-action banner */}
-        {counts.needsAction > 0 && statusFilter === "all" && (
-          <div
-            className="flex items-center gap-3 px-4 py-3 rounded-lg border border-teal-200 bg-teal-50 dark:bg-teal-950/30 dark:border-teal-800 cursor-pointer hover:shadow-sm transition-shadow"
-            onClick={() => setStatusFilter("entregue")}
-          >
-            <CheckCircle2 className="h-5 w-5 text-teal-600 shrink-0" />
-            <span className="text-sm font-medium text-teal-800 dark:text-teal-200">
-              {counts.needsAction} orçamento{counts.needsAction > 1 ? "s" : ""} entregue{counts.needsAction > 1 ? "s" : ""} — pronto{counts.needsAction > 1 ? "s" : ""} para enviar ao cliente
-            </span>
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por cliente, projeto, bairro..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Pipeline" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => (
-                <SelectItem key={key} value={key}>{sec.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={v => setSortBy(v as SortOption)}>
-            <SelectTrigger className="w-full sm:w-[170px]">
-              <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="urgente">Mais urgente</SelectItem>
-              <SelectItem value="prazo">Prazo mais próximo</SelectItem>
-              <SelectItem value="recente">Mais recente</SelectItem>
-            </SelectContent>
-          </Select>
-          {/* Due filter */}
-          <Select value={dueFilter} onValueChange={v => setDueFilter(v as DueFilter)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os prazos</SelectItem>
-              <SelectItem value="overdue">🔴 Vencidos / Hoje</SelectItem>
-              <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
-            </SelectContent>
-          </Select>
-          {/* View toggle */}
-          <div className="flex border border-border rounded-lg overflow-hidden">
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="sm"
-              className="rounded-none px-2.5"
-              onClick={() => setViewMode("list")}
-            >
-              <LayoutList className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "kanban" ? "secondary" : "ghost"}
-              size="sm"
-              className="rounded-none px-2.5"
-              onClick={() => setViewMode("kanban")}
-            >
-              <Columns3 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Loading */}
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!loading && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Inbox className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h2 className="text-lg font-semibold font-display text-foreground mb-1">
-              {search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum orçamento ainda"}
-            </h2>
-            <p className="text-sm text-muted-foreground font-body max-w-sm">
-              {search || statusFilter !== "all"
-                ? "Ajuste os filtros para encontrar o que procura."
-                : "Crie uma nova solicitação de orçamento para começar."}
-            </p>
-            {!search && statusFilter === "all" && (
-              <Button className="mt-4" onClick={() => navigate("/admin/solicitacoes/nova")}>
-                <Plus className="h-4 w-4 mr-1.5" />
-                Nova Solicitação
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="border-b border-border bg-card sticky top-0 z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+                <ArrowLeft className="h-4 w-4" />
               </Button>
-            )}
+              <div>
+                <h1 className="text-lg font-semibold font-display text-foreground">Meus Orçamentos</h1>
+                <p className="text-sm text-muted-foreground font-body">
+                  {profile?.full_name || "Comercial"} · {counts.total} orçamento{counts.total !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+            <Button size="sm" onClick={() => navigate("/admin/solicitacoes/nova")}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Nova Solicitação
+            </Button>
           </div>
-        )}
+        </header>
 
-        {/* Kanban view */}
-        {!loading && viewMode === "kanban" && budgets.length > 0 && (
-          <KanbanBoard
-            budgets={budgets}
-            onStatusChange={changeStatus}
-            onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
-            getProfileName={getProfileName}
-            dueFilter={dueFilter}
-          />
-        )}
-
-        {/* List */}
-        {!loading && viewMode === "list" && filtered.length > 0 && (
-          <div className="space-y-2">
-            {filtered.map(b => {
-              const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
-              const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-              const due = getDueInfo(b.due_at);
-              const isLocked = LOCKED_STATUSES.includes(b.internal_status);
-              const isEntregue = b.internal_status === "delivered_to_sales";
-
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
+          {/* Pipeline summary cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+            {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => {
+              const Icon = sec.icon;
               return (
-                <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isEntregue ? "border-teal-300 dark:border-teal-700" : ""}`}>
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/admin/demanda/${b.id}`)}>
-                      {/* Row 1 */}
-                      <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                        {isEntregue && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
-                        <span className="font-semibold font-display text-foreground truncate">{b.project_name || "Sem nome"}</span>
-                        <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
-                          {status.icon} {status.label}
-                        </Badge>
-                        {b.priority !== "normal" && (
-                          <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>{prio.label}</Badge>
-                        )}
-                        {due.label && (
-                          <span className={`inline-flex items-center gap-1 text-xs font-medium font-body px-2 py-0.5 rounded-full border ${dueVariantStyles[due.variant]}`}>
-                            <Calendar className="h-3 w-3" />{due.label}
-                          </span>
-                        )}
-                        {(b.version_number ?? 1) > 1 && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                            V{b.version_number}
-                          </span>
-                        )}
-                        {b.is_published_version && (
-                          <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                            Publicada
-                          </span>
-                        )}
-                        {!b.is_published_version && b.status === "draft" && (b.version_number ?? 1) > 1 && (
-                          <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                            Em elaboração
-                          </span>
-                        )}
-                      </div>
-                      {/* Row 2 */}
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
-                        <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{b.client_name}</span>
-                        {(b.bairro || b.city) && (
-                          <span className="flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{[b.bairro, b.city].filter(Boolean).join(", ")}</span>
-                        )}
-                        <span className="flex items-center gap-1" title="Orçamentista">
-                          <FileText className="h-3.5 w-3.5" />{getProfileName(b.estimator_owner_id)}
-                        </span>
-                        {b.updated_at && <span className="text-xs">Atualizado {format(new Date(b.updated_at), "dd/MM HH:mm")}</span>}
-                      </div>
-                    </div>
-
-                    {/* Quick actions */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
-                          <FileText className="h-4 w-4 mr-2" />Ver detalhes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/comercial" } })}>
-                          <ExternalLink className="h-4 w-4 mr-2" />Abrir orçamento
-                        </DropdownMenuItem>
-                        {b.public_id && (
-                          <DropdownMenuItem onClick={() => copyPublicLink(b.public_id)}>
-                            <Copy className="h-4 w-4 mr-2" />Copiar link público
-                          </DropdownMenuItem>
-                        )}
-                        {(b.version_number ?? 1) > 1 && b.version_group_id && (
-                          <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
-                            <GitCompare className="h-4 w-4 mr-2" />Comparar versões
-                          </DropdownMenuItem>
-                        )}
-                        {/* Status actions — "Contrato fechado" available for all non-terminal statuses */}
-                        {!isLocked && (
-                          <>
-                            <DropdownMenuSeparator />
-                            {b.internal_status === "delivered_to_sales" && (
-                              <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
-                                <Send className="h-4 w-4 mr-2" />Enviar ao cliente
-                              </DropdownMenuItem>
-                            )}
-                            {b.internal_status !== "sent_to_client" && b.internal_status !== "lost" && (
-                              <DropdownMenuItem onClick={() => setConfirmCloseBudgetId(b.id)}>
-                                <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
-                              </DropdownMenuItem>
-                            )}
-                            {b.internal_status !== "lost" && b.internal_status !== "sent_to_client" && (
-                              <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
-                                <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
-                              </DropdownMenuItem>
-                            )}
-                            {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
-                              <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
-                                <RotateCcw className="h-4 w-4 mr-2" />Pedir revisão
-                              </DropdownMenuItem>
-                            )}
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </Card>
+                <SummaryCard
+                  key={key}
+                  label={sec.label}
+                  count={counts[key] ?? 0}
+                  icon={<Icon className="h-4 w-4" />}
+                  accent={sec.accent}
+                  active={statusFilter === key}
+                  onClick={() => setStatusFilter(statusFilter === key ? "all" : key)}
+                  alert={key === "entregue" && (counts[key] ?? 0) > 0}
+                />
               );
             })}
           </div>
-        )}
+
+          {/* Needs-action banner */}
+          {counts.needsAction > 0 && statusFilter === "all" && (
+            <div
+              className="flex items-center gap-3 px-4 py-3 rounded-lg border border-teal-200 bg-teal-50 dark:bg-teal-950/30 dark:border-teal-800 cursor-pointer hover:shadow-sm transition-shadow"
+              onClick={() => setStatusFilter("entregue")}
+            >
+              <CheckCircle2 className="h-5 w-5 text-teal-600 shrink-0" />
+              <span className="text-sm font-medium text-teal-800 dark:text-teal-200">
+                {counts.needsAction} orçamento{counts.needsAction > 1 ? "s" : ""} entregue{counts.needsAction > 1 ? "s" : ""} — pronto{counts.needsAction > 1 ? "s" : ""} para enviar ao cliente
+              </span>
+            </div>
+          )}
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar por cliente, projeto, bairro..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Pipeline" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => (
+                  <SelectItem key={key} value={key}>{sec.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={v => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-full sm:w-[170px]">
+                <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="urgente">Mais urgente</SelectItem>
+                <SelectItem value="prazo">Prazo mais próximo</SelectItem>
+                <SelectItem value="recente">Mais recente</SelectItem>
+              </SelectContent>
+            </Select>
+            {/* Due filter */}
+            <Select value={dueFilter} onValueChange={v => setDueFilter(v as DueFilter)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os prazos</SelectItem>
+                <SelectItem value="overdue">🔴 Vencidos / Hoje</SelectItem>
+                <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
+              </SelectContent>
+            </Select>
+            {/* View toggle */}
+            <div className="flex border border-border rounded-lg overflow-hidden">
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="sm"
+                className="rounded-none px-2.5"
+                onClick={() => setViewMode("list")}
+              >
+                <LayoutList className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "kanban" ? "secondary" : "ghost"}
+                size="sm"
+                className="rounded-none px-2.5"
+                onClick={() => setViewMode("kanban")}
+              >
+                <Columns3 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Loading */}
+          {loading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!loading && filtered.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Inbox className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h2 className="text-lg font-semibold font-display text-foreground mb-1">
+                {search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum orçamento ainda"}
+              </h2>
+              <p className="text-sm text-muted-foreground font-body max-w-sm">
+                {search || statusFilter !== "all"
+                  ? "Ajuste os filtros para encontrar o que procura."
+                  : "Crie uma nova solicitação de orçamento para começar."}
+              </p>
+              {!search && statusFilter === "all" && (
+                <Button className="mt-4" onClick={() => navigate("/admin/solicitacoes/nova")}>
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Nova Solicitação
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Kanban view */}
+          {!loading && viewMode === "kanban" && budgets.length > 0 && (
+            <KanbanBoard
+              budgets={budgets}
+              onStatusChange={changeStatus}
+              onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
+              getProfileName={getProfileName}
+              dueFilter={dueFilter}
+            />
+          )}
+
+          {/* List */}
+          {!loading && viewMode === "list" && filtered.length > 0 && (
+            <div className="space-y-2">
+              {filtered.map(b => {
+                const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
+                const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
+                const due = getDueInfo(b.due_at);
+                const isLocked = LOCKED_STATUSES.includes(b.internal_status);
+                const isEntregue = b.internal_status === "delivered_to_sales";
+
+                return (
+                  <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isEntregue ? "border-teal-300 dark:border-teal-700" : ""}`}>
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/admin/demanda/${b.id}`)}>
+                        {/* Row 1 */}
+                        <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                          {isEntregue && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
+                          <span className="font-semibold font-display text-foreground truncate">{b.project_name || "Sem nome"}</span>
+                          <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
+                            {status.icon} {status.label}
+                          </Badge>
+                          {b.priority !== "normal" && (
+                            <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>{prio.label}</Badge>
+                          )}
+                          {due.label && (
+                            <span className={`inline-flex items-center gap-1 text-xs font-medium font-body px-2 py-0.5 rounded-full border ${dueVariantStyles[due.variant]}`}>
+                              <Calendar className="h-3 w-3" />{due.label}
+                            </span>
+                          )}
+                          {(b.version_number ?? 1) > 1 && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                              V{b.version_number}
+                            </span>
+                          )}
+                          {b.is_published_version && (
+                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                              Publicada
+                            </span>
+                          )}
+                          {!b.is_published_version && b.status === "draft" && (b.version_number ?? 1) > 1 && (
+                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                              Em elaboração
+                            </span>
+                          )}
+                        </div>
+                        {/* Row 2 */}
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
+                          <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{b.client_name}</span>
+                          {(b.bairro || b.city) && (
+                            <span className="flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{[b.bairro, b.city].filter(Boolean).join(", ")}</span>
+                          )}
+                          <span className="flex items-center gap-1" title="Orçamentista">
+                            <FileText className="h-3.5 w-3.5" />{getProfileName(b.estimator_owner_id)}
+                          </span>
+                          {b.updated_at && <span className="text-xs">Atualizado {format(new Date(b.updated_at), "dd/MM HH:mm")}</span>}
+                        </div>
+                      </div>
+
+                      {/* Quick actions */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
+                            <FileText className="h-4 w-4 mr-2" />Ver detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/comercial" } })}>
+                            <ExternalLink className="h-4 w-4 mr-2" />Abrir orçamento
+                          </DropdownMenuItem>
+                          {b.public_id && (
+                            <DropdownMenuItem onClick={() => copyPublicLink(b.public_id)}>
+                              <Copy className="h-4 w-4 mr-2" />Copiar link público
+                            </DropdownMenuItem>
+                          )}
+                          {(b.version_number ?? 1) > 1 && b.version_group_id && (
+                            <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
+                              <GitCompare className="h-4 w-4 mr-2" />Comparar versões
+                            </DropdownMenuItem>
+                          )}
+                          {/* Status actions — "Contrato fechado" available for all non-terminal statuses */}
+                          {!isLocked && (
+                            <>
+                              <DropdownMenuSeparator />
+                              {b.internal_status === "delivered_to_sales" && (
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
+                                  <Send className="h-4 w-4 mr-2" />Enviar ao cliente
+                                </DropdownMenuItem>
+                              )}
+                              {b.internal_status !== "sent_to_client" && b.internal_status !== "lost" && (
+                                <DropdownMenuItem onClick={() => setConfirmCloseBudgetId(b.id)}>
+                                  <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
+                                </DropdownMenuItem>
+                              )}
+                              {b.internal_status !== "lost" && b.internal_status !== "sent_to_client" && (
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
+                                  <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
+                                </DropdownMenuItem>
+                              )}
+                              {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
+                                <DropdownMenuItem onClick={() => setRevisionBudget(b)}>
+                                  <RotateCcw className="h-4 w-4 mr-2" />Solicitar revisão
+                                </DropdownMenuItem>
+                              )}
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      <RevisionRequestDialog
+        open={!!revisionBudget}
+        onOpenChange={(open) => {
+          if (!open) setRevisionBudget(null);
+        }}
+        budgetId={revisionBudget?.id ?? ""}
+        currentStatus={revisionBudget?.internal_status ?? "sent_to_client"}
+        onSuccess={handleRevisionRequestSuccess}
+      />
 
       {/* Confirmation dialog for "Contrato fechado" */}
       <AlertDialog open={!!confirmCloseBudgetId} onOpenChange={(open) => { if (!open) setConfirmCloseBudgetId(null); }}>
