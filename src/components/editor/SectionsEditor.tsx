@@ -564,9 +564,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         if (s.id !== sectionId) return s;
         const newItem = { ...data, images: itemImages } as ItemData;
         const newItems = [...s.items, newItem];
-        const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
-        if (newTotal > 0) {
-          supabase.from("sections").update({ section_price: newTotal }).eq("id", sectionId);
+        const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
+        if (newSaleTotal > 0) {
+          supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
         }
         return { ...s, items: newItems, section_price: newTotal > 0 ? newTotal : s.section_price };
       });
