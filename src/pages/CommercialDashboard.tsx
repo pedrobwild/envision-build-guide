@@ -178,10 +178,21 @@ export default function CommercialDashboard() {
     return c;
   }, [budgets]);
 
+  const isAdmin = profile?.roles.includes("admin");
+
+  // Unique commercial owners for filter (admin only)
+  const commercialOptions = useMemo(() => {
+    if (!isAdmin) return [];
+    const ids = [...new Set(budgets.map(b => b.commercial_owner_id).filter(Boolean))] as string[];
+    return ids.map(id => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [isAdmin, budgets, getProfileName]);
+
   const filtered = useMemo(() => {
     let result = budgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
+      const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
+      if (!matchCommercial) return false;
       if (statusFilter === "all") return matchSearch;
       const section = PIPELINE_SECTIONS[statusFilter as keyof typeof PIPELINE_SECTIONS];
       if (section) return matchSearch && (section.statuses as readonly string[]).includes(b.internal_status);
