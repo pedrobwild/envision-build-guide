@@ -21,7 +21,7 @@ export function MobileTestimonialInline() {
         {/* Video thumbnail + play */}
         <button
           onClick={() => setOpen(true)}
-          className="relative w-full aspect-[16/9] bg-muted cursor-pointer group"
+          className="relative w-full aspect-[16/9] bg-muted cursor-pointer group overflow-hidden"
         >
           <video
             src={VIDEO_URL}
