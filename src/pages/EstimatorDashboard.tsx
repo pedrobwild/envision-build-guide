@@ -316,7 +316,7 @@ export default function EstimatorDashboard() {
     });
 
     return result;
-  }, [budgets, search, statusFilter, priorityFilter, commercialFilter, sortBy]);
+  }, [budgets, search, statusFilter, priorityFilter, commercialFilter, estimatorFilter, sortBy]);
 
   // Quick status change
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
