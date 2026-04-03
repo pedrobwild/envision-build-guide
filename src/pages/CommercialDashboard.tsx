@@ -436,7 +436,7 @@ export default function CommercialDashboard() {
           {/* Kanban view */}
           {!loading && viewMode === "kanban" && budgets.length > 0 && (
             <KanbanBoard
-              budgets={budgets}
+              budgets={commercialFilter === "all" ? budgets : budgets.filter(b => b.commercial_owner_id === commercialFilter)}
               onStatusChange={changeStatus}
               onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
               getProfileName={getProfileName}
