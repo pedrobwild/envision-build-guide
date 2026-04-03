@@ -254,7 +254,7 @@ export default function CommercialDashboard() {
   const dueVariantStyles = {
     overdue: "bg-destructive/10 text-destructive border-destructive/20",
     today: "bg-warning/10 text-warning border-warning/20",
-    soon: "bg-amber-50 text-amber-700 border-amber-200",
+    soon: "bg-warning/10 text-warning border-warning/20",
     default: "text-muted-foreground",
   };
 
