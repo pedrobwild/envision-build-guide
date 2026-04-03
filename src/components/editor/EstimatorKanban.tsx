@@ -139,16 +139,16 @@ function getDueInfo(dueAt: string | null): { label: string; variant: DueVariant 
 const dueVariantStyles: Record<DueVariant, string> = {
   overdue: "bg-destructive/10 text-destructive",
   today: "bg-warning/10 text-warning",
-  soon: "bg-amber-100/80 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
-  ok: "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
+  soon: "bg-warning/10 text-warning",
+  ok: "bg-success/10 text-success",
   default: "text-muted-foreground bg-muted/50",
 };
 
 const dueBorderStyles: Record<DueVariant, string> = {
   overdue: "border-l-destructive",
   today: "border-l-warning",
-  soon: "border-l-amber-400 dark:border-l-amber-500",
-  ok: "border-l-emerald-400 dark:border-l-emerald-500",
+  soon: "border-l-warning",
+  ok: "border-l-success",
   default: "border-l-transparent",
 };
 
