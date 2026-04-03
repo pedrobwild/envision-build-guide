@@ -239,7 +239,12 @@ export default function PublicBudget() {
                 </AnimatedSection>
               </div>
 
-              {/* ─── Visual 3D + Portal logo após Engenharia ─── */}
+              {/* ─── Prova social inline — depoimento entre serviços e galeria ─── */}
+              <div className="mt-3">
+                <MobileTestimonialInline />
+              </div>
+
+              {/* ─── Visual 3D + Portal logo após depoimento ─── */}
               <div id="mobile-trust" className="space-y-3 mt-3 scroll-mt-20">
                 <div data-pdf-section>
                 <AnimatedSection id="gallery-section" index={0.55}>
