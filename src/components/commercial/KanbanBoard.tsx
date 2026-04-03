@@ -679,6 +679,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             locked={col.locked}
                             onCardClick={onCardClick}
                             getProfileName={getProfileName}
+                            compact
                           />
                         </div>
                       ));
