@@ -284,12 +284,12 @@ export default function CommercialDashboard() {
         {/* Needs-action banner */}
         {counts.needsAction > 0 && statusFilter === "all" && (
           <div
-            className="flex items-center gap-3 px-4 py-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 cursor-pointer hover:shadow-sm transition-shadow"
-            onClick={() => setStatusFilter("waiting_me")}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg border border-teal-200 bg-teal-50 dark:bg-teal-950/30 dark:border-teal-800 cursor-pointer hover:shadow-sm transition-shadow"
+            onClick={() => setStatusFilter("entregue")}
           >
-            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
-            <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-              {counts.needsAction} orçamento{counts.needsAction > 1 ? "s" : ""} aguardando sua ação
+            <CheckCircle2 className="h-5 w-5 text-teal-600 shrink-0" />
+            <span className="text-sm font-medium text-teal-800 dark:text-teal-200">
+              {counts.needsAction} orçamento{counts.needsAction > 1 ? "s" : ""} entregue{counts.needsAction > 1 ? "s" : ""} — pronto{counts.needsAction > 1 ? "s" : ""} para enviar ao cliente
             </span>
           </div>
         )}
