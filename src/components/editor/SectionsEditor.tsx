@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
 import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
+import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight,
@@ -482,8 +483,61 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     debouncedSave("sections", sectionId, { [field]: value });
   };
 
+  /**
+   * Recalculate the "Impostos e despesas administrativas" item at TAX_RATE of budget total
+   * (excluding the tax item itself). Mutates the sections array in-place and persists.
+   */
+  const recalcTaxItem = useCallback((currentSections: SectionData[]): SectionData[] => {
+    // Find the tax item across all sections
+    let taxSectionId: string | null = null;
+    let taxItemId: string | null = null;
+
+    for (const s of currentSections) {
+      for (const i of s.items) {
+        if (i.title === TAX_ITEM_TITLE) {
+          taxSectionId = s.id;
+          taxItemId = i.id;
+          break;
+        }
+      }
+      if (taxItemId) break;
+    }
+
+    if (!taxItemId || !taxSectionId) return currentSections;
+
+    // Calculate total excluding the tax item
+    let totalExcludingTax = 0;
+    for (const s of currentSections) {
+      for (const i of s.items) {
+        if (i.id === taxItemId) continue;
+        totalExcludingTax += calcItemSaleTotal(i);
+      }
+    }
+
+    const taxValue = Math.round(totalExcludingTax * TAX_RATE * 100) / 100;
+
+    const updated = currentSections.map(s => {
+      if (s.id !== taxSectionId) return s;
+      const newItems = s.items.map(i => {
+        if (i.id !== taxItemId) return i;
+        return { ...i, internal_total: taxValue, internal_unit_price: taxValue, qty: 1, bdi_percentage: 0 };
+      });
+      const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
+      return { ...s, items: newItems, section_price: newSaleTotal };
+    });
+
+    // Persist tax item and its section
+    debouncedSave("items", taxItemId, { internal_total: taxValue, internal_unit_price: taxValue, qty: 1, bdi_percentage: 0 });
+    const taxSection = updated.find(s => s.id === taxSectionId);
+    if (taxSection) {
+      debouncedSave("sections", taxSectionId, { section_price: taxSection.section_price });
+    }
+
+    return updated;
+  }, [debouncedSave]);
+
   const updateItem = (sectionId: string, itemId: string, field: string, value: any) => {
-    const updated = sections.map(s => {
+    let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.map(i =>
         i.id === itemId ? { ...i, [field]: value } : i
@@ -497,6 +551,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       }
       return { ...s, items: newItems };
     });
+
+    // Recalculate tax item if a price field changed (and the edited item is NOT the tax item itself)
+    const priceFields = ["internal_total", "internal_unit_price", "bdi_percentage", "qty"];
+    const editedItem = sections.flatMap(s => s.items).find(i => i.id === itemId);
+    if (priceFields.includes(field) && editedItem?.title !== TAX_ITEM_TITLE) {
+      updated = recalcTaxItem(updated);
+    }
+
     onSectionsChange(updated);
     debouncedSave("items", itemId, { [field]: value });
   };
@@ -560,7 +622,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         if (imgRow) itemImages = [imgRow];
       }
 
-      const updated = sections.map(s => {
+      let updated = sections.map(s => {
         if (s.id !== sectionId) return s;
         const newItem = { ...data, images: itemImages } as ItemData;
         const newItems = [...s.items, newItem];
@@ -570,6 +632,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         }
         return { ...s, items: newItems, section_price: newSaleTotal > 0 ? newSaleTotal : s.section_price };
       });
+      updated = recalcTaxItem(updated);
       onSectionsChange(updated);
       const origin = itemData?.catalog_item_id ? "Item do catálogo adicionado" : "Item manual adicionado";
       toast.success(origin);
@@ -578,13 +641,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
   const deleteItem = async (sectionId: string, itemId: string) => {
     await supabase.from("items").delete().eq("id", itemId);
-    const updated = sections.map(s => {
+    let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.filter(i => i.id !== itemId);
       const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
       supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
       return { ...s, items: newItems, section_price: newSaleTotal };
     });
+    updated = recalcTaxItem(updated);
     onSectionsChange(updated);
     toast.success("Item removido");
   };

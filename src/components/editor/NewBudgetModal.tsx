@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { seedDefaultSections } from "@/lib/default-budget-sections";
 
 interface NewBudgetModalProps {
   open: boolean;
@@ -182,13 +183,21 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
       .select("id")
       .single();
 
-    setLoading(false);
-
     if (error || !data) {
       console.error(error);
       toast.error("Erro ao criar solicitação. Tente novamente.");
+      setLoading(false);
       return;
     }
+
+    // Seed default sections (Arquitetura + Administração) with items
+    try {
+      await seedDefaultSections(data.id);
+    } catch (seedErr) {
+      console.error("Erro ao criar seções padrão:", seedErr);
+    }
+
+    setLoading(false);
 
     toast.success("Solicitação criada com sucesso!", {
       description: "O orçamento entrará na fila de triagem.",
