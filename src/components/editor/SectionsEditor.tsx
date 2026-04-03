@@ -288,6 +288,7 @@ function SortableItemRow({
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
 }) {
+  const [detailOpen, setDetailOpen] = useState(false);
   const {
     attributes,
     listeners,
