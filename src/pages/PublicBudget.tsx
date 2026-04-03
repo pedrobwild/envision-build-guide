@@ -41,6 +41,7 @@ const NeighborhoodDensityMap = lazy(() => import("@/components/budget/Neighborho
 const ProjectGallery = lazy(() => import("@/components/budget/ProjectGallery").then(m => ({ default: m.ProjectGallery })));
 const PortalShowcase = lazy(() => import("@/components/budget/PortalShowcase").then(m => ({ default: m.PortalShowcase })));
 const RoomDetailModal = lazy(() => import("@/components/budget/RoomDetailModal").then(m => ({ default: m.RoomDetailModal })));
+const ReformTimeline = lazy(() => import("@/components/budget/ReformTimeline").then(m => ({ default: m.ReformTimeline })));
 
 /** Lightweight placeholder while lazy chunks load */
 function LazyFallback() {
@@ -405,6 +406,14 @@ export default function PublicBudget() {
               <AnimatedSection id="portal-section-inline" index={99}>
                 <Suspense fallback={<LazyFallback />}>
                   <PortalShowcase />
+                </Suspense>
+              </AnimatedSection>
+            </div>
+
+            <div data-pdf-section>
+              <AnimatedSection id="cronograma-section" index={99.5}>
+                <Suspense fallback={<LazyFallback />}>
+                  <ReformTimeline />
                 </Suspense>
               </AnimatedSection>
             </div>
