@@ -33,6 +33,7 @@ import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFilterChips";
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 
