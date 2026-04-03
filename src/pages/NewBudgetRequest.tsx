@@ -135,6 +135,8 @@ export default function NewBudgetRequest() {
       condominio: condominio.trim() || null,
       bairro: bairro.trim() || null,
       metragem: metragemFormatted,
+      property_type: propertyType || null,
+      city: city.trim() || null,
       location_type: locationType || null,
       demand_context: demandContext.trim() || null,
       briefing: briefing.trim() || null,
