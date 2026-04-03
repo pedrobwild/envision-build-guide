@@ -131,6 +131,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
     setReferenceLinks([""]);
     setCommercialOwnerId("");
     setHubspotDealUrl("");
+    setSelectedTemplateId("");
     // Keep estimator from round-robin
     if (nextEstimatorId) setEstimatorOwnerId(nextEstimatorId);
   };
