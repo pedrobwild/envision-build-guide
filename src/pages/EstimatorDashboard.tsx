@@ -61,6 +61,7 @@ import {
   type Priority,
 } from "@/lib/role-constants";
 import { ProductionFunnel } from "@/components/editor/ProductionFunnel";
+import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFilterChips";
 import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -423,8 +424,8 @@ export default function EstimatorDashboard() {
           }}
         />
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+        {/* Summary cards — desktop */}
+        <div className="hidden lg:grid grid-cols-7 gap-3">
           <SummaryCard
             label="Atrasadas"
             count={counts.overdue}
@@ -475,6 +476,49 @@ export default function EstimatorDashboard() {
           />
         </div>
 
+        {/* Mobile filter chips */}
+        <MobileFilterChips
+          chips={[
+            { id: "all", label: "Todos", count: counts.total },
+            { id: "overdue", label: "Atrasados", icon: AlertTriangle, count: counts.overdue, color: "destructive" },
+            { id: "urgente", label: "Urgentes", icon: Flame, count: budgets.filter(b => b.priority === "urgente").length },
+            { id: "today", label: "Hoje", icon: Clock, count: counts.dueToday },
+            { id: "assigned", label: "Pendente", icon: Inbox, count: counts.pending },
+            { id: "in_progress", label: "Em Elaboração", count: counts.inProgress },
+            { id: "ready_for_review", label: "Revisão", count: counts.review },
+          ] as FilterChip[]}
+          activeChipId={
+            priorityFilter === "urgente" ? "urgente" :
+            statusFilter !== "all" ? statusFilter :
+            "all"
+          }
+          onChipChange={(id) => {
+            if (id === "all") {
+              setStatusFilter("all");
+              setPriorityFilter("all");
+            } else if (id === "overdue") {
+              setStatusFilter("all");
+              setPriorityFilter("all");
+              // We'll use status filter + due filter logic — for now just show all and let sort handle it
+              setSortBy("prazo");
+              setStatusFilter("all");
+            } else if (id === "urgente") {
+              setPriorityFilter("urgente");
+              setStatusFilter("all");
+            } else if (id === "today") {
+              setStatusFilter("all");
+              setPriorityFilter("all");
+              setSortBy("prazo");
+            } else {
+              setPriorityFilter("all");
+              setStatusFilter(id);
+            }
+          }}
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Buscar cliente, projeto..."
+        />
+
         {/* Kanban View */}
         {viewMode === "kanban" && !loading && (
           <EstimatorKanban
@@ -491,7 +535,7 @@ export default function EstimatorDashboard() {
         {viewMode === "list" && (
           <>
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="hidden lg:flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
