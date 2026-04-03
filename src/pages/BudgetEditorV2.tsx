@@ -49,6 +49,23 @@ export default function BudgetEditorV2() {
   const [activeTab, setActiveTab] = useState("planilha");
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [mediaCount, setMediaCount] = useState(0);
+  const [creatingVersionFromBanner, setCreatingVersionFromBanner] = useState(false);
+
+  // Query current version id for "go to current" banner
+  const { data: currentVersionId } = useQuery({
+    queryKey: ["current-version", budget?.version_group_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("budgets")
+        .select("id")
+        .eq("version_group_id", budget.version_group_id)
+        .eq("is_current_version", true)
+        .limit(1)
+        .single();
+      return data?.id ?? null;
+    },
+    enabled: !!budget?.version_group_id && budget?.is_current_version === false,
+  });
 
   // Fetch latest revision request when status is revision_requested
   const { data: revisionRequest } = useQuery({
