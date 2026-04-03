@@ -153,10 +153,48 @@ interface ItemData {
   unit?: string | null;
   internal_unit_price?: number | null;
   internal_total?: number | null;
+  bdi_percentage?: number | null;
   order_index: number;
   catalog_item_id?: string | null;
   catalog_snapshot?: Record<string, any> | null;
   images?: { id: string; url: string; is_primary?: boolean | null }[];
+}
+
+/* ── BDI helpers ── */
+function calcSaleUnitPrice(cost: number | null | undefined, bdi: number | null | undefined): number {
+  const c = Number(cost) || 0;
+  const b = Number(bdi) || 0;
+  return c * (1 + b / 100);
+}
+
+function calcItemSaleTotal(item: ItemData): number {
+  const qty = Number(item.qty) || 1;
+  const saleUnit = calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage);
+  return saleUnit * qty;
+}
+
+function calcItemCostTotal(item: ItemData): number {
+  if (item.internal_total != null && Number(item.internal_total) > 0) return Number(item.internal_total);
+  const qty = Number(item.qty) || 1;
+  return (Number(item.internal_unit_price) || 0) * qty;
+}
+
+function calcSectionCostTotal(section: SectionData): number {
+  const qty = Number(section.qty) || 1;
+  if (section.items.length > 0) {
+    const sum = section.items.reduce((s, i) => s + calcItemCostTotal(i), 0);
+    if (sum > 0) return sum * qty;
+  }
+  return (Number(section.section_price) || 0) * qty;
+}
+
+function calcSectionSaleTotal(section: SectionData): number {
+  const qty = Number(section.qty) || 1;
+  if (section.items.length > 0) {
+    const sum = section.items.reduce((s, i) => s + calcItemSaleTotal(i), 0);
+    if (sum > 0) return sum * qty;
+  }
+  return (Number(section.section_price) || 0) * qty;
 }
 
 interface SectionsEditorProps {
