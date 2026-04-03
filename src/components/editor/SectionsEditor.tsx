@@ -928,7 +928,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           </DndContext>
 
                           {/* Add item + delete section */}
-                          <div className="px-4 py-3 flex items-center justify-between border-t border-border bg-muted/20">
+                          <div className="px-4 py-2 flex items-center justify-between border-t border-border/30">
                             <AddItemPopover
                               sectionTitle={section.title}
                               onAddItem={(itemData) => addItem(section.id, itemData)}
@@ -937,9 +937,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               onClick={() => {
                                 if (confirm("Excluir esta seção e todos os seus itens?")) deleteSection(section.id);
                               }}
-                              className="flex items-center gap-1.5 text-sm font-body text-destructive hover:text-destructive/80 transition-colors"
+                              className="flex items-center gap-1 text-xs font-body text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
                             >
-                              <Trash2 className="h-3.5 w-3.5" /> Excluir seção
+                              <Trash2 className="h-3 w-3" /> Excluir
                             </button>
                           </div>
                         </div>
