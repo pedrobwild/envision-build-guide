@@ -7,12 +7,16 @@ export type VersionEventType =
   | "version_superseded"
   | "version_compared"
   | "version_activated"
-  | "change_reason_updated";
+  | "change_reason_updated"
+  | "revision_requested";
 
 interface VersionEventPayload {
   event_type: VersionEventType;
   budget_id: string;
   user_id?: string | null;
+  from_status?: string | null;
+  to_status?: string | null;
+  note?: string | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -24,6 +28,9 @@ export async function logVersionEvent({
   event_type,
   budget_id,
   user_id,
+  from_status,
+  to_status,
+  note,
   metadata = {},
 }: VersionEventPayload) {
   try {
@@ -31,8 +38,10 @@ export async function logVersionEvent({
       budget_id,
       event_type,
       user_id: user_id ?? null,
+      from_status: from_status ?? null,
+      to_status: to_status ?? null,
       metadata: metadata as any,
-      note: buildNote(event_type, metadata),
+      note: note ?? buildNote(event_type, metadata),
     });
   } catch (err) {
     console.warn("[version-audit] Failed to log event:", err);
@@ -58,6 +67,8 @@ function buildNote(
       return `Versão V${meta.version_number ?? "?"} definida como atual`;
     case "change_reason_updated":
       return `Motivo atualizado: ${meta.change_reason ?? "—"}`;
+    case "revision_requested":
+      return `Revisão solicitada por ${meta.requested_by_name ?? "?"}: ${String(meta.instructions ?? "").slice(0, 100)}`;
     default:
       return event_type;
   }
@@ -77,6 +88,7 @@ export async function getVersionAuditEvents(budgetIds: string[]) {
     "version_compared",
     "version_activated",
     "change_reason_updated",
+    "revision_requested",
   ];
 
   const { data, error } = await supabase
@@ -107,4 +119,37 @@ export async function getVersionAuditEvents(budgetIds: string[]) {
     ...e,
     user_name: e.user_id ? nameMap[e.user_id] || "—" : "Sistema",
   }));
+}
+
+/**
+ * Log a revision request event — fired when comercial asks orçamentista to revise.
+ */
+export async function logRevisionRequestEvent({
+  budgetId,
+  userId,
+  instructions,
+  changeTypes,
+  requestedByName,
+  fromStatus,
+}: {
+  budgetId: string;
+  userId: string;
+  instructions: string;
+  changeTypes: string[];
+  requestedByName: string;
+  fromStatus: string;
+}) {
+  return logVersionEvent({
+    event_type: "revision_requested",
+    budget_id: budgetId,
+    user_id: userId,
+    from_status: fromStatus,
+    to_status: "revision_requested",
+    note: `Revisão solicitada por ${requestedByName}: ${instructions.slice(0, 100)}${instructions.length > 100 ? "…" : ""}`,
+    metadata: {
+      instructions,
+      change_types: changeTypes,
+      requested_by_name: requestedByName,
+    },
+  });
 }
