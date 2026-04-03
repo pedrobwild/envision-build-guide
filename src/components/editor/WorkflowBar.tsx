@@ -188,7 +188,33 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
 
   function handlePrimaryClick() {
     if (!primaryTransition) return;
-    changeStatus(primaryTransition.newStatus);
+    const note = internalStatus === "revision_requested" ? "Revisão iniciada pelo orçamentista" : undefined;
+    changeStatus(primaryTransition.newStatus, note);
+    if (internalStatus === "revision_requested") {
+      toast.success("Revisão iniciada. Realize as alterações e envie para revisão.");
+    }
+  }
+
+  async function openRevisionInstructions() {
+    setLoadingInstructions(true);
+    setRevisionInstructionsOpen(true);
+    const { data } = await supabase
+      .from("budget_events")
+      .select("metadata")
+      .eq("budget_id", budget.id)
+      .eq("event_type", "revision_requested")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (data?.metadata) {
+      const m = data.metadata as any;
+      setRevisionInstructions({
+        instructions: m.instructions || "",
+        change_types: m.change_types || [],
+        requested_by_name: m.requested_by_name || "—",
+      });
+    }
+    setLoadingInstructions(false);
   }
 
   return (
