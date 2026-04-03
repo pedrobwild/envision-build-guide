@@ -14,6 +14,9 @@ interface VersionEventPayload {
   event_type: VersionEventType;
   budget_id: string;
   user_id?: string | null;
+  from_status?: string | null;
+  to_status?: string | null;
+  note?: string | null;
   metadata?: Record<string, unknown>;
 }
 
