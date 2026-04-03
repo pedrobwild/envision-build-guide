@@ -278,8 +278,10 @@ export default function AdminDashboard() {
   }, [budgets]);
 
   // Filtered
+  const statusOrder: Record<string, number> = { draft: 0, published: 1, minuta_solicitada: 2, contrato_fechado: 3, archived: 4 };
+
   const filtered = useMemo(() => {
-    return budgets.filter((b) => {
+    const list = budgets.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -287,9 +289,23 @@ export default function AdminDashboard() {
       }
       return true;
     });
-  }, [budgets, searchQuery, statusFilter]);
 
-  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "date") {
+        cmp = new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+      } else if (sortBy === "value") {
+        cmp = getBudgetTotal(a) - getBudgetTotal(b);
+      } else if (sortBy === "status") {
+        cmp = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return list;
+  }, [budgets, searchQuery, statusFilter, sortBy, sortDir]);
+
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter, sortBy, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
