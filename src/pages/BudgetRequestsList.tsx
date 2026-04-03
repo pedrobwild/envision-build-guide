@@ -422,6 +422,12 @@ export default function BudgetRequestsList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <NewBudgetModal
+        open={newBudgetOpen}
+        onOpenChange={setNewBudgetOpen}
+        onSuccess={() => loadBudgets()}
+      />
     </div>
   );
 }
