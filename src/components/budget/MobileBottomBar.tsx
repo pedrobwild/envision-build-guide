@@ -2,19 +2,17 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronUp,
-  FileSignature,
   MessageCircle,
   Shield,
   Award,
-  CheckCircle2,
   Eye,
   CreditCard,
 } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 import type { CategorizedGroup } from "@/lib/scope-categories";
-import { ContractRequestDialog } from "./ContractRequestDialog";
 import { MobileFinancialSheet } from "./MobileFinancialSheet";
 import { StepProgressIndicator } from "./StepProgressIndicator";
+import { WhatsAppCommentDialog } from "./WhatsAppCommentDialog";
 
 interface MobileBottomBarProps {
   total: number;
@@ -38,7 +36,7 @@ const DEFAULT_PHONE = "5511911906183";
 type CtaVariant = {
   label: string;
   icon: React.ElementType;
-  action: "scroll" | "sheet" | "contract";
+  action: "scroll" | "sheet" | "whatsapp";
   scrollTarget?: string;
 };
 
@@ -60,26 +58,26 @@ const CTA_MAP: Record<string, CtaVariant> = {
     action: "sheet",
   },
   "mobile-portal": {
-    label: "Solicitar Contrato",
-    icon: FileSignature,
-    action: "contract",
+    label: "Falar com comercial",
+    icon: MessageCircle,
+    action: "whatsapp",
   },
   "mobile-next-steps": {
-    label: "Solicitar Contrato",
-    icon: FileSignature,
-    action: "contract",
+    label: "Falar com comercial",
+    icon: MessageCircle,
+    action: "whatsapp",
   },
   "mobile-faq": {
-    label: "Solicitar Contrato",
-    icon: FileSignature,
-    action: "contract",
+    label: "Falar com comercial",
+    icon: MessageCircle,
+    action: "whatsapp",
   },
 };
 
 const DEFAULT_CTA: CtaVariant = {
-  label: "Solicitar Contrato",
-  icon: FileSignature,
-  action: "contract",
+  label: "Falar com comercial",
+  icon: MessageCircle,
+  action: "whatsapp",
 };
 
 export function MobileBottomBar({
@@ -93,7 +91,7 @@ export function MobileBottomBar({
   hidden = false,
   activeSection,
 }: MobileBottomBarProps) {
-  const [contractOpen, setContractOpen] = useState(false);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const whatsappUpdateUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(
@@ -115,8 +113,8 @@ export function MobileBottomBar({
       case "sheet":
         setSheetOpen(true);
         break;
-      case "contract":
-        setContractOpen(true);
+      case "whatsapp":
+        setWhatsappOpen(true);
         break;
     }
   };
@@ -222,14 +220,12 @@ export function MobileBottomBar({
         budgetId={budgetId}
       />
 
-      {/* Contract Request Dialog */}
-      <ContractRequestDialog
-        open={contractOpen}
-        onOpenChange={setContractOpen}
-        budgetId={budgetId || ""}
+      {/* WhatsApp Comment Dialog */}
+      <WhatsAppCommentDialog
+        open={whatsappOpen}
+        onOpenChange={setWhatsappOpen}
         publicId={publicId}
         projectName={projectName}
-        total={total}
       />
     </>
   );
