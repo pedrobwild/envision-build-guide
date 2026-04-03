@@ -488,10 +488,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       const newItems = s.items.map(i =>
         i.id === itemId ? { ...i, [field]: value } : i
       );
-      if (field === "internal_total") {
-        const newTotal = newItems.reduce((sum, i) => sum + (Number(i.internal_total) || 0), 0);
-        debouncedSave("sections", sectionId, { section_price: newTotal });
-        return { ...s, items: newItems, section_price: newTotal };
+      // Recalculate section_price as sale total whenever price-related fields change
+      const priceFields = ["internal_total", "internal_unit_price", "bdi_percentage", "qty"];
+      if (priceFields.includes(field)) {
+        const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
+        debouncedSave("sections", sectionId, { section_price: newSaleTotal });
+        return { ...s, items: newItems, section_price: newSaleTotal };
       }
       return { ...s, items: newItems };
     });
