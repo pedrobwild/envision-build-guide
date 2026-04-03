@@ -1049,7 +1049,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                     onImagesChange={handleImagesChange}
                                     onPromoteToCatalog={promoteToCatalog}
                                   />
-                                  />
                                 ))}
                               </div>
                             </SortableContext>
