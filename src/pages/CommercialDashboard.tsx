@@ -519,6 +519,25 @@ export default function CommercialDashboard() {
         )}
       </div>
     </div>
+
+      {/* Confirmation dialog for "Contrato fechado" */}
+      <AlertDialog open={!!confirmCloseBudgetId} onOpenChange={(open) => { if (!open) setConfirmCloseBudgetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Registrar contrato fechado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação marca o orçamento como contrato fechado. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (confirmCloseBudgetId) { changeStatus(confirmCloseBudgetId, "approved"); setConfirmCloseBudgetId(null); } }}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
