@@ -846,59 +846,54 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         <div className="border-t border-border/40">
                           {/* Section fields */}
                           <div className="px-4 py-2.5 grid grid-cols-2 sm:grid-cols-6 gap-2 bg-muted/20">
-                            <div className="col-span-2 space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground font-body">Título da seção</label>
+                            <div className="col-span-2 space-y-0.5">
+                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Título</label>
                               <input
                                 type="text"
                                 value={section.title}
                                 onChange={(e) => updateSection(section.id, "title", e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
                               />
                             </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground font-body flex items-center gap-1">
-                                <DollarSign className="h-3 w-3" /> Total Custo
-                              </label>
-                              <div className="w-full px-3 py-2 rounded-lg border border-border bg-muted/50 text-foreground text-sm font-body tabular-nums">
+                            <div className="space-y-0.5">
+                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>
+                              <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
                                 {formatBRL(sectionCostTotal)}
                               </div>
                             </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground font-body">% BDI</label>
-                              <div className="w-full px-3 py-2 rounded-lg border border-border bg-muted/50 text-foreground text-sm font-body tabular-nums">
+                            <div className="space-y-0.5">
+                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI</label>
+                              <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
                                 {sectionCostTotal > 0 ? (((sectionSaleTotal / sectionCostTotal) - 1) * 100).toFixed(1) : "0.0"}%
                               </div>
                             </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground font-body flex items-center gap-1">
-                                <DollarSign className="h-3 w-3" /> Total Venda
-                              </label>
+                            <div className="space-y-0.5">
+                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
                               <input
                                 type="number"
                                 value={section.section_price ?? ""}
                                 onChange={(e) => updateSection(section.id, "section_price", e.target.value ? Number(e.target.value) : null)}
                                 onClick={(e) => e.stopPropagation()}
-                                placeholder="Calculado pelos itens"
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                style={{ fontVariantNumeric: "tabular-nums" }}
+                                placeholder="Auto"
+                                className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
                               />
                             </div>
-                            <div className="space-y-1 flex items-end">
+                            <div className="flex items-end">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateSection(section.id, "is_optional", !section.is_optional);
                                 }}
                                 className={cn(
-                                  "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-body transition-all",
+                                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-body transition-all",
                                   section.is_optional
-                                    ? "bg-warning/10 border-warning/30 text-warning"
-                                    : "bg-background border-border text-muted-foreground hover:border-warning/30 hover:text-warning"
+                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                    : "text-muted-foreground hover:text-amber-600 hover:bg-amber-500/5"
                                 )}
                               >
-                                <ToggleRight className="h-4 w-4" />
-                                {section.is_optional ? "Opcional ✓" : "Marcar opcional"}
+                                <ToggleRight className="h-3.5 w-3.5" />
+                                {section.is_optional ? "Opcional ✓" : "Opcional"}
                               </button>
                             </div>
                           </div>
