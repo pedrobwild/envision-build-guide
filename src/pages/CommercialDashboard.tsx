@@ -498,7 +498,7 @@ export default function CommercialDashboard() {
                                 <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
                               </DropdownMenuItem>
                             )}
-                            {b.internal_status !== "lost" && b.internal_status !== "approved" && (
+                            {b.internal_status !== "lost" && b.internal_status !== "contrato_fechado" && (
                               <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
                                 <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
                               </DropdownMenuItem>
