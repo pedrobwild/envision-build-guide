@@ -49,6 +49,8 @@ export default function NewBudgetRequest() {
   const [condominio, setCondominio] = useState("");
   const [bairro, setBairro] = useState("");
   const [metargemRaw, setMetragemRaw] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [city, setCity] = useState("");
   const [locationType, setLocationType] = useState("");
   const [demandContext, setDemandContext] = useState("");
   const [briefing, setBriefing] = useState("");
@@ -133,6 +135,8 @@ export default function NewBudgetRequest() {
       condominio: condominio.trim() || null,
       bairro: bairro.trim() || null,
       metragem: metragemFormatted,
+      property_type: propertyType || null,
+      city: city.trim() || null,
       location_type: locationType || null,
       demand_context: demandContext.trim() || null,
       briefing: briefing.trim() || null,
@@ -278,6 +282,15 @@ export default function NewBudgetRequest() {
               />
             </div>
             <div className="space-y-1.5">
+              <Label className="font-body text-sm">Cidade</Label>
+              <Input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="São Paulo"
+                maxLength={100}
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label className="font-body text-sm">Metragem</Label>
               <div className="relative">
                 <Input
@@ -293,6 +306,22 @@ export default function NewBudgetRequest() {
                   </span>
                 )}
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-body text-sm">Tipo de imóvel</Label>
+              <Select value={propertyType} onValueChange={setPropertyType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="apartamento">Apartamento</SelectItem>
+                  <SelectItem value="casa">Casa</SelectItem>
+                  <SelectItem value="cobertura">Cobertura</SelectItem>
+                  <SelectItem value="studio">Studio / Kitnet</SelectItem>
+                  <SelectItem value="comercial">Espaço Comercial</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label className="font-body text-sm">Tipo de locação</Label>
@@ -408,9 +437,12 @@ export default function NewBudgetRequest() {
                   </SelectContent>
                 </Select>
                 {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
-                  <p className="text-xs text-blue-600 font-body">
-                    ↻ Atribuído automaticamente por rodízio
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-1 px-2 py-1 rounded-md bg-accent text-accent-foreground">
+                    <UserCheck className="h-3.5 w-3.5 text-primary" />
+                    <p className="text-xs font-body">
+                      Atribuído por rodízio: <span className="font-medium">{orcamentistas.find(m => m.id === nextEstimatorId)?.full_name}</span>
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
