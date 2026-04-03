@@ -32,39 +32,50 @@ import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 
 // Pipeline groups for the commercial view
+// Statuses in "solicitado" and "em_elaboracao" are read-only for commercial
+const LOCKED_STATUSES: readonly string[] = [
+  "requested", "triage", "assigned", "in_progress", "waiting_info", "blocked",
+];
+
 const PIPELINE_SECTIONS = {
-  production: {
-    label: "Em Produção",
-    statuses: ["requested", "triage", "assigned", "in_progress"] as InternalStatus[],
+  solicitado: {
+    label: "Solicitado",
+    statuses: ["requested"] as InternalStatus[],
+    icon: FileText,
+    accent: "text-blue-600",
+  },
+  em_elaboracao: {
+    label: "Em Elaboração",
+    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked"] as InternalStatus[],
     icon: Clock,
     accent: "text-yellow-600",
   },
-  waiting_me: {
-    label: "Aguardando Minha Ação",
-    statuses: ["waiting_info", "delivered_to_sales"] as InternalStatus[],
-    icon: AlertTriangle,
-    accent: "text-amber-600",
+  entregue: {
+    label: "Entregue",
+    statuses: ["delivered_to_sales"] as InternalStatus[],
+    icon: CheckCircle2,
+    accent: "text-teal-600",
   },
-  review: {
+  em_revisao: {
     label: "Em Revisão",
     statuses: ["ready_for_review"] as InternalStatus[],
     icon: Eye,
     accent: "text-orange-600",
   },
-  sent: {
-    label: "Enviados ao Cliente",
+  enviado: {
+    label: "Enviado para o Cliente",
     statuses: ["sent_to_client"] as InternalStatus[],
     icon: Send,
     accent: "text-emerald-600",
   },
-  won: {
-    label: "Aprovados",
+  fechado: {
+    label: "Contrato Fechado",
     statuses: ["approved"] as InternalStatus[],
     icon: ThumbsUp,
     accent: "text-green-600",
   },
-  lost: {
-    label: "Perdidos",
+  perdido: {
+    label: "Perdido",
     statuses: ["lost"] as InternalStatus[],
     icon: XCircle,
     accent: "text-muted-foreground",
