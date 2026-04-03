@@ -568,7 +568,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         if (newSaleTotal > 0) {
           supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
         }
-        return { ...s, items: newItems, section_price: newTotal > 0 ? newTotal : s.section_price };
+        return { ...s, items: newItems, section_price: newSaleTotal > 0 ? newSaleTotal : s.section_price };
       });
       onSectionsChange(updated);
       const origin = itemData?.catalog_item_id ? "Item do catálogo adicionado" : "Item manual adicionado";
