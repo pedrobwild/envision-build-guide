@@ -41,6 +41,9 @@ export function ItemImageLightbox({ images, initialIndex, open, onOpenChange, on
     else if (e.key === "ArrowLeft") goPrev();
   }, [goNext, goPrev]);
 
+  const img = images[index];
+  if (!img) return null;
+
   const handleRemove = () => {
     if (!confirmDelete) {
       setConfirmDelete(true);
