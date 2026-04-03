@@ -804,46 +804,38 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                   {(dragListeners: any) => (
                     <>
                       {/* Section header */}
-                      <div className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
                         <button
                           {...dragListeners}
-                          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
-                          title="Arrastar para reordenar seção"
+                          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
+                          title="Arrastar"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <GripVertical className="h-4 w-4" />
+                          <GripVertical className="h-3.5 w-3.5" />
                         </button>
                         <div
-                          className="flex items-center gap-3 flex-1 min-w-0"
+                          className="flex items-center gap-2 flex-1 min-w-0"
                           onClick={() => toggleSection(section.id)}
                         >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0 transition-transform", isExpanded && "rotate-90")} />
+                          <span className="font-body font-medium text-sm text-foreground truncate">
+                            {section.title || "Sem título"}
+                          </span>
+                          {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
+                          {section.is_optional && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                              Opcional
+                            </span>
                           )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-body font-medium text-sm text-foreground truncate">
-                                {section.title || "Sem título"}
-                              </span>
-                              {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-                              {section.is_optional && (
-                                <span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-warning/15 text-warning border border-warning/20">
-                                  Opcional
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-xs text-muted-foreground font-body">
-                              {section.items.length} {section.items.length === 1 ? "item" : "itens"}
+                          <span className="text-xs text-muted-foreground/50 font-body ml-1">
+                            {section.items.length} {section.items.length === 1 ? "item" : "itens"}
+                          </span>
+                          <div className="ml-auto flex items-center gap-3 text-xs font-body tabular-nums shrink-0">
+                            <span className="text-muted-foreground">
+                              {formatBRL(sectionCostTotal)}
                             </span>
-                          </div>
-                          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                            <span className="font-display font-semibold text-sm text-foreground whitespace-nowrap tabular-nums">
-                              Venda: {formatBRL(sectionSaleTotal)}
-                            </span>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums font-body">
-                              Custo: {formatBRL(sectionCostTotal)}
+                            <span className="font-semibold text-foreground">
+                              {formatBRL(sectionSaleTotal)}
                             </span>
                           </div>
                         </div>
@@ -851,9 +843,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
                       {/* Expanded content */}
                       {isExpanded && (
-                        <div className="border-t border-border">
+                        <div className="border-t border-border/40">
                           {/* Section fields */}
-                          <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-6 gap-3 bg-muted/30">
+                          <div className="px-4 py-2.5 grid grid-cols-2 sm:grid-cols-6 gap-2 bg-muted/20">
                             <div className="col-span-2 space-y-1">
                               <label className="text-xs font-medium text-muted-foreground font-body">Título da seção</label>
                               <input
