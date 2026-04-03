@@ -641,13 +641,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
   const deleteItem = async (sectionId: string, itemId: string) => {
     await supabase.from("items").delete().eq("id", itemId);
-    const updated = sections.map(s => {
+    let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.filter(i => i.id !== itemId);
       const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
       supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
       return { ...s, items: newItems, section_price: newSaleTotal };
     });
+    updated = recalcTaxItem(updated);
     onSectionsChange(updated);
     toast.success("Item removido");
   };
