@@ -74,7 +74,7 @@ const PIPELINE_SECTIONS = {
   },
   fechado: {
     label: "Contrato Fechado",
-    statuses: ["approved"] as InternalStatus[],
+    statuses: ["contrato_fechado"] as InternalStatus[],
     icon: ThumbsUp,
     accent: "text-green-600",
   },
