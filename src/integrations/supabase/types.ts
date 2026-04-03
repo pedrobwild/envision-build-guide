@@ -756,6 +756,7 @@ export type Database = {
           included_rooms: Json
           internal_total: number | null
           internal_unit_price: number | null
+          notes: string | null
           order_index: number
           qty: number | null
           reference_url: string | null
@@ -775,6 +776,7 @@ export type Database = {
           included_rooms?: Json
           internal_total?: number | null
           internal_unit_price?: number | null
+          notes?: string | null
           order_index?: number
           qty?: number | null
           reference_url?: string | null
@@ -794,6 +796,7 @@ export type Database = {
           included_rooms?: Json
           internal_total?: number | null
           internal_unit_price?: number | null
+          notes?: string | null
           order_index?: number
           qty?: number | null
           reference_url?: string | null

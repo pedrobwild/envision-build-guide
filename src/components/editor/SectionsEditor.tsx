@@ -6,10 +6,12 @@ import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight,
+  Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
   PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
+import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
+import { ItemDetailSheet } from "@/components/editor/ItemDetailSheet";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
   DndContext,
@@ -100,38 +102,61 @@ function ItemImageInline({
     if (primary) saveToPhotoLibrary(itemTitle, primary.url);
   };
 
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const openLightbox = (idx: number) => {
+    setLightboxIndex(idx);
+    setLightboxOpen(true);
+  };
+
+  const handleLightboxRemove = async (imgId: string) => {
+    await removeImage(imgId);
+  };
+
   return (
-    <div className="mt-2 ml-7 flex items-center gap-1.5 flex-wrap">
-      {images.map(img => (
-        <div
-          key={img.id}
-          className={cn(
-            "relative group w-10 h-10 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0",
-            img.is_primary ? "border-primary" : "border-border"
-          )}
-        >
-          <img src={img.url} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5">
-            <button onClick={() => setPrimary(img.id)} className="p-0.5 rounded hover:bg-white/20" title="Principal">
-              <Star className={cn("h-2.5 w-2.5", img.is_primary ? "text-yellow-400 fill-yellow-400" : "text-white")} />
-            </button>
-            <button onClick={() => removeImage(img.id)} className="p-0.5 rounded hover:bg-white/20" title="Remover">
-              <X className="h-2.5 w-2.5 text-white" />
-            </button>
+    <>
+      <div className="mt-2 ml-7 flex items-center gap-1.5 flex-wrap">
+        {images.map((img, idx) => (
+          <div
+            key={img.id}
+            className={cn(
+              "relative group w-10 h-10 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0 cursor-pointer",
+              img.is_primary ? "border-primary" : "border-border"
+            )}
+            onClick={() => openLightbox(idx)}
+          >
+            <img src={img.url} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5">
+              <button onClick={(e) => { e.stopPropagation(); setPrimary(img.id); }} className="p-0.5 rounded hover:bg-white/20" title="Principal">
+                <Star className={cn("h-2.5 w-2.5", img.is_primary ? "text-yellow-400 fill-yellow-400" : "text-white")} />
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); removeImage(img.id); }} className="p-0.5 rounded hover:bg-white/20" title="Remover">
+                <X className="h-2.5 w-2.5 text-white" />
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
-      {images.length < 5 && (
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-          className="w-10 h-10 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center transition-all disabled:opacity-50 flex-shrink-0"
-        >
-          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />}
-        </button>
-      )}
-      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleUpload(e.target.files)} />
-    </div>
+        ))}
+        {images.length < 5 && (
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="w-10 h-10 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center transition-all disabled:opacity-50 flex-shrink-0"
+          >
+            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />}
+          </button>
+        )}
+        <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleUpload(e.target.files)} />
+      </div>
+
+      <ItemImageLightbox
+        images={images}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        onRemove={handleLightboxRemove}
+      />
+    </>
   );
 }
 
@@ -159,6 +184,7 @@ interface ItemData {
   order_index: number;
   catalog_item_id?: string | null;
   catalog_snapshot?: Record<string, any> | null;
+  notes?: string | null;
   images?: { id: string; url: string; is_primary?: boolean | null }[];
 }
 
@@ -262,6 +288,7 @@ function SortableItemRow({
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
 }) {
+  const [detailOpen, setDetailOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -407,6 +434,13 @@ function SortableItemRow({
         {/* Actions */}
         <div className="lg:col-span-1 flex items-end justify-end gap-1">
           {isItemSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+          <button
+            onClick={() => setDetailOpen(true)}
+            className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            title="Editar detalhes"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
           {!item.catalog_item_id && (
             <button
               onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
@@ -435,6 +469,17 @@ function SortableItemRow({
         budgetId={budgetId}
         images={item.images || []}
         onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
+      />
+
+      {/* Item detail sheet */}
+      <ItemDetailSheet
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        item={item}
+        sectionId={sectionId}
+        budgetId={budgetId}
+        onUpdate={onUpdate}
+        onImagesChange={onImagesChange}
       />
     </div>
   );
