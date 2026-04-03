@@ -30,6 +30,7 @@ import {
   X,
   CheckCircle2,
   UserCheck,
+  LayoutTemplate,
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
