@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -56,6 +56,7 @@ import {
 } from "@/lib/role-constants";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
 
 interface BudgetRow {
   id: string;
@@ -84,6 +85,7 @@ export default function BudgetRequestsList() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [deleteTarget, setDeleteTarget] = useState<BudgetRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [newBudgetOpen, setNewBudgetOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -177,7 +179,7 @@ export default function BudgetRequestsList() {
             </div>
           </div>
           <Button
-            onClick={() => navigate("/admin/solicitacoes/nova")}
+            onClick={() => setNewBudgetOpen(true)}
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -251,7 +253,7 @@ export default function BudgetRequestsList() {
             </p>
             {!search && statusFilter === "all" && priorityFilter === "all" && (
               <Button
-                onClick={() => navigate("/admin/solicitacoes/nova")}
+                onClick={() => setNewBudgetOpen(true)}
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" /> Nova Solicitação
@@ -420,6 +422,12 @@ export default function BudgetRequestsList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <NewBudgetModal
+        open={newBudgetOpen}
+        onOpenChange={setNewBudgetOpen}
+        onSuccess={() => loadBudgets()}
+      />
     </div>
   );
 }

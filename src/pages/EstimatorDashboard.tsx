@@ -64,6 +64,8 @@ import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { EstimatorKanban } from "@/components/editor/EstimatorKanban";
+import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
+import { Plus } from "lucide-react";
 
 // Statuses relevant for the estimator's active queue
 const ESTIMATOR_ACTIVE_STATUSES: InternalStatus[] = [
@@ -139,6 +141,7 @@ export default function EstimatorDashboard() {
   }>({ open: false, budgetId: "", type: "estimator", currentValue: null });
   const [assignValue, setAssignValue] = useState<string>("");
   const [assigning, setAssigning] = useState(false);
+  const [newBudgetOpen, setNewBudgetOpen] = useState(false);
 
   useEffect(() => {
     if (!user || profileLoading) return;
@@ -356,26 +359,34 @@ export default function EstimatorDashboard() {
               </p>
             </div>
           </div>
-          {/* View toggle */}
-          <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 px-2.5 gap-1.5 text-xs"
-              onClick={() => setViewMode("list")}
-            >
-              <LayoutList className="h-3.5 w-3.5" />
-              Lista
-            </Button>
-            <Button
-              variant={viewMode === "kanban" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-7 px-2.5 gap-1.5 text-xs"
-              onClick={() => setViewMode("kanban")}
-            >
-              <Kanban className="h-3.5 w-3.5" />
-              Kanban
-            </Button>
+          {/* View toggle + New button */}
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Button size="sm" className="gap-1.5" onClick={() => setNewBudgetOpen(true)}>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Nova Solicitação</span>
+              </Button>
+            )}
+            <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-2.5 gap-1.5 text-xs"
+                onClick={() => setViewMode("list")}
+              >
+                <LayoutList className="h-3.5 w-3.5" />
+                Lista
+              </Button>
+              <Button
+                variant={viewMode === "kanban" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-2.5 gap-1.5 text-xs"
+                onClick={() => setViewMode("kanban")}
+              >
+                <Kanban className="h-3.5 w-3.5" />
+                Kanban
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -786,6 +797,12 @@ export default function EstimatorDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <NewBudgetModal
+        open={newBudgetOpen}
+        onOpenChange={setNewBudgetOpen}
+        onSuccess={() => loadData()}
+      />
     </div>
   );
 }
