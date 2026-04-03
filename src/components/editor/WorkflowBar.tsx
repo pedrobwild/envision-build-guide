@@ -324,6 +324,15 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {internalStatus === "revision_requested" && isAdmin && (
+                  <>
+                    <DropdownMenuItem onClick={openRevisionInstructions}>
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Ver instruções da revisão
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 {!isBlockedOrWaiting && (
                   <>
                     <DropdownMenuItem onClick={() => setBlockingTarget("blocked")}>
