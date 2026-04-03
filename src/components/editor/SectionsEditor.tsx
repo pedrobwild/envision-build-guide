@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, Loader2, ImagePlus, X, Star, ToggleRight,
-  PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock,
+  PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
 } from "lucide-react";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
@@ -244,6 +244,7 @@ function SortableItemRow({
   sectionTitle,
   budgetId,
   isItemSaving,
+  searchMatch,
   onUpdate,
   onDelete,
   onImagesChange,
@@ -254,6 +255,7 @@ function SortableItemRow({
   sectionTitle: string;
   budgetId: string;
   isItemSaving: boolean;
+  searchMatch?: boolean;
   onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
@@ -282,6 +284,7 @@ function SortableItemRow({
       className={cn(
         "px-4 py-3 transition-colors border-b border-border/40 last:border-b-0 group/item",
         "even:bg-muted/20",
+        searchMatch && "ring-1 ring-yellow-400/50 bg-yellow-50/30 dark:bg-yellow-900/10",
         isDragging && "bg-muted/40 shadow-lg rounded-lg"
       )}
     >
@@ -437,14 +440,23 @@ function SortableItemRow({
 }
 
 export function SectionsEditor({ budgetId, sections, onSectionsChange }: SectionsEditorProps) {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const storageKey = `budget-sections-state-${budgetId}`;
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return new Set(JSON.parse(saved));
+    } catch { /* ignore */ }
+    return new Set();
+  });
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const timers = useRef<Record<string, NodeJS.Timeout>>({});
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  // Persist expanded state
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify([...expandedSections])); } catch { /* ignore */ }
+  }, [expandedSections, storageKey]);
 
   const toggleSection = (id: string) => {
     setExpandedSections(prev => {
@@ -453,6 +465,44 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       return next;
     });
   };
+
+  const expandAll = () => setExpandedSections(new Set(sections.map(s => s.id)));
+  const collapseAll = () => setExpandedSections(new Set());
+
+  // Search filtering
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const sectionMatchMap = useMemo(() => {
+    if (!normalizedQuery) return null;
+    const map = new Map<string, Set<string>>();
+    for (const s of sections) {
+      const matchingItemIds = new Set<string>();
+      const sectionTitleMatch = s.title.toLowerCase().includes(normalizedQuery);
+      for (const item of s.items) {
+        if (
+          item.title.toLowerCase().includes(normalizedQuery) ||
+          (item.description && item.description.toLowerCase().includes(normalizedQuery))
+        ) {
+          matchingItemIds.add(item.id);
+        }
+      }
+      if (sectionTitleMatch || matchingItemIds.size > 0) {
+        map.set(s.id, matchingItemIds);
+      }
+    }
+    return map;
+  }, [normalizedQuery, sections]);
+
+  // Auto-expand matching sections on search
+  useEffect(() => {
+    if (sectionMatchMap && sectionMatchMap.size > 0) {
+      setExpandedSections(new Set(sectionMatchMap.keys()));
+    }
+  }, [sectionMatchMap]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const debouncedSave = useCallback((table: string, id: string, updates: Record<string, any>) => {
     const key = `${table}-${id}`;
@@ -763,10 +813,24 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     onSectionsChange(updated);
   };
 
+  // Highlight helper for search
+  const highlightText = (text: string) => {
+    if (!normalizedQuery || !text) return text;
+    const idx = text.toLowerCase().indexOf(normalizedQuery);
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark className="bg-yellow-200 dark:bg-yellow-800/60 rounded-sm px-0.5">{text.slice(idx, idx + normalizedQuery.length)}</mark>
+        {text.slice(idx + normalizedQuery.length)}
+      </>
+    );
+  };
+
   return (
     <div className="mt-10">
       {/* ── Financial summary strip ── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-display font-bold text-foreground">Seções e Itens</h2>
           <div className="flex items-center gap-4 text-xs font-body mt-1.5 text-muted-foreground">
@@ -786,6 +850,46 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           <Plus className="h-3.5 w-3.5" /> Seção
         </button>
       </div>
+
+      {/* ── Control bar: search + expand/collapse ── */}
+      {sections.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+            <input
+              ref={searchRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); e.currentTarget.blur(); } }}
+              placeholder="Buscar item..."
+              className="w-full pl-8 pr-7 py-1.5 rounded-md border border-input bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={expandAll}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <ChevronsUpDown className="h-3.5 w-3.5" /> Expandir
+            </button>
+            <button
+              onClick={collapseAll}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <ChevronsDownUp className="h-3.5 w-3.5" /> Colapsar
+            </button>
+          </div>
+        </div>
+      )}
 
       {sections.length === 0 && (
         <div className="text-center py-16 border border-dashed border-border/50 rounded-lg">
@@ -807,46 +911,59 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
               const sectionCostTotal = calcSectionCostTotal(section);
               const sectionSaleTotal = calcSectionSaleTotal(section);
               const isSaving = savingIds.has(section.id);
+              const sectionPercent = grandTotalSale > 0 ? (sectionSaleTotal / grandTotalSale) * 100 : 0;
+              const isSearchActive = !!sectionMatchMap;
+              const sectionHasMatch = !isSearchActive || sectionMatchMap?.has(section.id);
+              const matchingItemIds = sectionMatchMap?.get(section.id);
 
               return (
                 <SortableSectionCard key={section.id} section={section}>
                   {(dragListeners: any) => (
-                    <>
+                    <div className={cn(isSearchActive && !sectionHasMatch && "opacity-40")}>
                       {/* Section header */}
-                      <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
-                        <button
-                          {...dragListeners}
-                          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
-                          title="Arrastar"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <GripVertical className="h-3.5 w-3.5" />
-                        </button>
-                        <div
-                          className="flex items-center gap-2 flex-1 min-w-0"
-                          onClick={() => toggleSection(section.id)}
-                        >
-                          <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0 transition-transform", isExpanded && "rotate-90")} />
-                          <span className="font-body font-medium text-sm text-foreground truncate">
-                            {section.title || "Sem título"}
-                          </span>
-                          {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
-                          {section.is_optional && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                              Opcional
+                      <div className="px-4 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            {...dragListeners}
+                            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
+                            title="Arrastar"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <GripVertical className="h-3.5 w-3.5" />
+                          </button>
+                          <div
+                            className="flex items-center gap-2 flex-1 min-w-0"
+                            onClick={() => toggleSection(section.id)}
+                          >
+                            <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0 transition-transform", isExpanded && "rotate-90")} />
+                            <span className="font-body font-bold text-sm text-foreground truncate">
+                              {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                             </span>
-                          )}
-                          <span className="text-xs text-muted-foreground/50 font-body ml-1">
-                            {section.items.length} {section.items.length === 1 ? "item" : "itens"}
-                          </span>
-                          <div className="ml-auto flex items-center gap-3 text-xs font-body tabular-nums shrink-0">
-                            <span className="text-muted-foreground">
-                              {formatBRL(sectionCostTotal)}
+                            {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
+                            {section.is_optional && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                Opcional
+                              </span>
+                            )}
+                            <span className="text-xs text-muted-foreground font-body ml-1 shrink-0">
+                              {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                             </span>
-                            <span className="font-semibold text-foreground">
-                              {formatBRL(sectionSaleTotal)}
-                            </span>
+                            <div className="ml-auto flex items-center gap-3 text-xs font-body tabular-nums shrink-0">
+                              <span className="text-muted-foreground/60">
+                                {sectionPercent.toFixed(0)}%
+                              </span>
+                              <span className="font-semibold text-foreground">
+                                {formatBRL(sectionSaleTotal)}
+                              </span>
+                            </div>
                           </div>
+                        </div>
+                        {/* Mini progress bar */}
+                        <div className="ml-9 mt-1.5 h-1 rounded-full bg-muted/50 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary/40 transition-all duration-300"
+                            style={{ width: `${Math.min(sectionPercent, 100)}%` }}
+                          />
                         </div>
                       </div>
 
@@ -926,6 +1043,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                     sectionTitle={section.title}
                                     budgetId={budgetId}
                                     isItemSaving={savingIds.has(item.id)}
+                                    searchMatch={matchingItemIds?.has(item.id)}
                                     onUpdate={updateItem}
                                     onDelete={deleteItem}
                                     onImagesChange={handleImagesChange}
@@ -953,7 +1071,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           </div>
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </SortableSectionCard>
               );
