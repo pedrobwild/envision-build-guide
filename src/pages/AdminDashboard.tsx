@@ -51,9 +51,11 @@ export default function AdminDashboard() {
   const PAGE_SIZE = 10;
 
   useEffect(() => {
-    loadBudgets();
-    loadNotifications();
-  }, []);
+    if (user) {
+      loadBudgets();
+      loadNotifications();
+    }
+  }, [user]);
 
   const loadBudgets = async () => {
     const { data } = await supabase
