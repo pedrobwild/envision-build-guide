@@ -141,6 +141,7 @@ export default function EstimatorDashboard() {
   }>({ open: false, budgetId: "", type: "estimator", currentValue: null });
   const [assignValue, setAssignValue] = useState<string>("");
   const [assigning, setAssigning] = useState(false);
+  const [newBudgetOpen, setNewBudgetOpen] = useState(false);
 
   useEffect(() => {
     if (!user || profileLoading) return;
