@@ -38,7 +38,7 @@ const DEFAULT_PHONE = "5511911906183";
 type CtaVariant = {
   label: string;
   icon: React.ElementType;
-  action: "scroll" | "sheet" | "contract";
+  action: "scroll" | "sheet" | "whatsapp";
   scrollTarget?: string;
 };
 
@@ -60,26 +60,26 @@ const CTA_MAP: Record<string, CtaVariant> = {
     action: "sheet",
   },
   "mobile-portal": {
-    label: "Solicitar Contrato",
-    icon: FileSignature,
-    action: "contract",
+    label: "Falar com comercial",
+    icon: MessageCircle,
+    action: "whatsapp",
   },
   "mobile-next-steps": {
-    label: "Solicitar Contrato",
-    icon: FileSignature,
-    action: "contract",
+    label: "Falar com comercial",
+    icon: MessageCircle,
+    action: "whatsapp",
   },
   "mobile-faq": {
-    label: "Solicitar Contrato",
-    icon: FileSignature,
-    action: "contract",
+    label: "Falar com comercial",
+    icon: MessageCircle,
+    action: "whatsapp",
   },
 };
 
 const DEFAULT_CTA: CtaVariant = {
-  label: "Solicitar Contrato",
-  icon: FileSignature,
-  action: "contract",
+  label: "Falar com comercial",
+  icon: MessageCircle,
+  action: "whatsapp",
 };
 
 export function MobileBottomBar({
