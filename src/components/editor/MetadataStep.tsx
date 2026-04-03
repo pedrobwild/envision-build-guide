@@ -170,13 +170,7 @@ export function MetadataStep({ budget, onFieldChange, onNext, saving }: Metadata
         </button>
       </div>
 
-      {/* Header config */}
-      <div className="mb-8 p-4 rounded-xl border border-border bg-card">
-        <HeaderConfigStep
-          config={headerConfig}
-          onChange={(cfg) => onFieldChange("header_config", cfg)}
-        />
-      </div>
+      {/* Header config hidden — kept in code for future use */}
 
       <div className="flex justify-end">
         <button
