@@ -34,6 +34,7 @@ import { TrustStrip } from "@/components/budget/TrustStrip";
 import { useScrollspy } from "@/hooks/useScrollspy";
 import { categorizeSections } from "@/lib/scope-categories";
 import { cn } from "@/lib/utils";
+import { SectionDivider } from "@/components/budget/SectionDivider";
 
 // ── Lazy-loaded heavy components (MapLibre, ReactPlayer, Lightbox, Embla) ──
 const NeighborhoodDensityMap = lazy(() => import("@/components/budget/NeighborhoodDensityMap").then(m => ({ default: m.NeighborhoodDensityMap })));
@@ -242,6 +243,7 @@ export default function PublicBudget() {
               </div>
 
               {/* ─── Prova social inline — depoimento entre serviços e galeria ─── */}
+              <SectionDivider className="lg:hidden" />
               <div className="mt-3">
                 <MobileTestimonialInline />
               </div>
@@ -275,6 +277,7 @@ export default function PublicBudget() {
             </div>
 
             {/* ── Mobile inline summary — before items ── */}
+            <SectionDivider className="lg:hidden" />
             <div id="resumo-financeiro" className="scroll-mt-20" data-pdf-section>
             <MobileInlineSummary
               total={total}
