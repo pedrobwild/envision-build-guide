@@ -1,6 +1,5 @@
 import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, Save, Timer, Clock, Loader2, ShoppingBag, Users, ExternalLink } from "lucide-react";
-import { HeaderConfigStep } from "@/components/editor/HeaderConfigStep";
-import type { HeaderConfig } from "@/components/budget/BudgetHeader";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
