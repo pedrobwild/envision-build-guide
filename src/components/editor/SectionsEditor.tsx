@@ -755,41 +755,34 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   };
 
   return (
-    <div className="max-w-5xl mx-auto mt-10">
+    <div className="mt-10">
+      {/* ── Financial summary strip ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="font-display text-2xl font-bold text-foreground">Seções e Itens</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm font-body mt-1">
-            <div>
-              <span className="text-muted-foreground">Total Venda: </span>
-              <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalSale)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Total Custo: </span>
-              <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalCost)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">% BDI Total: </span>
-              <span className="font-semibold text-foreground tabular-nums">{grandBdiPercent.toFixed(1)}%</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Margem Líquida: </span>
-              <span className={cn("font-semibold tabular-nums", grandMargin >= 0 ? "text-green-600 dark:text-green-400" : "text-destructive")}>{formatBRL(grandMargin)}</span>
-            </div>
+          <h2 className="text-xl font-display font-bold text-foreground">Seções e Itens</h2>
+          <div className="flex items-center gap-4 text-xs font-body mt-1.5 text-muted-foreground">
+            <span>Venda: <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalSale)}</span></span>
+            <span className="text-border">|</span>
+            <span>Custo: <span className="font-medium text-foreground tabular-nums">{formatBRL(grandTotalCost)}</span></span>
+            <span className="text-border">|</span>
+            <span>BDI: <span className="font-medium text-foreground tabular-nums">{grandBdiPercent.toFixed(1)}%</span></span>
+            <span className="text-border">|</span>
+            <span>Margem: <span className={cn("font-semibold tabular-nums", grandMargin >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>{formatBRL(grandMargin)}</span></span>
           </div>
         </div>
         <button
           onClick={addSection}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium font-body hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-body font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
-          <Plus className="h-4 w-4" /> Seção
+          <Plus className="h-3.5 w-3.5" /> Seção
         </button>
       </div>
 
       {sections.length === 0 && (
-        <div className="text-center py-12 border border-dashed border-border rounded-xl">
-          <Package className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-muted-foreground font-body text-sm">Nenhuma seção ainda. Importe um PDF ou adicione manualmente.</p>
+        <div className="text-center py-16 border border-dashed border-border/50 rounded-lg">
+          <Package className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
+          <p className="text-muted-foreground/60 font-body text-sm">Nenhuma seção ainda.</p>
+          <p className="text-muted-foreground/40 font-body text-xs mt-1">Importe um PDF ou adicione manualmente.</p>
         </div>
       )}
 
