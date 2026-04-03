@@ -621,6 +621,7 @@ export type Database = {
       }
       items: {
         Row: {
+          bdi_percentage: number | null
           catalog_item_id: string | null
           catalog_snapshot: Json | null
           coverage_type: string
@@ -639,6 +640,7 @@ export type Database = {
           unit: string | null
         }
         Insert: {
+          bdi_percentage?: number | null
           catalog_item_id?: string | null
           catalog_snapshot?: Json | null
           coverage_type?: string
@@ -657,6 +659,7 @@ export type Database = {
           unit?: string | null
         }
         Update: {
+          bdi_percentage?: number | null
           catalog_item_id?: string | null
           catalog_snapshot?: Json | null
           coverage_type?: string
