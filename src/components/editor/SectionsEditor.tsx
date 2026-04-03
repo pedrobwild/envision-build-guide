@@ -1067,7 +1067,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           </div>
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </SortableSectionCard>
               );
