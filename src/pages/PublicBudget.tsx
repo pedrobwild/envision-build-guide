@@ -13,7 +13,7 @@ import { CollapsingSectionHeader } from "@/components/budget/CollapsingSectionHe
 import { PublicBudgetSkeleton } from "@/components/budget/PublicBudgetSkeleton";
 import { demoBudget } from "@/lib/demo-budget-data";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
 import { ScrollToTopButton } from "@/components/budget/ScrollToTopButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
