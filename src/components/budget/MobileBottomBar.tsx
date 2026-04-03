@@ -2,11 +2,9 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronUp,
-  FileSignature,
   MessageCircle,
   Shield,
   Award,
-  CheckCircle2,
   Eye,
   CreditCard,
 } from "lucide-react";
