@@ -811,8 +811,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                       {isExpanded && (
                         <div className="border-t border-border">
                           {/* Section fields */}
-                          <div className="px-4 py-3 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-muted/30">
-                            <div className="sm:col-span-2 space-y-1">
+                          <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-6 gap-3 bg-muted/30">
+                            <div className="col-span-2 space-y-1">
                               <label className="text-xs font-medium text-muted-foreground font-body">Título da seção</label>
                               <input
                                 type="text"
@@ -823,7 +823,23 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground font-body">Preço da seção (R$)</label>
+                              <label className="text-xs font-medium text-muted-foreground font-body flex items-center gap-1">
+                                <DollarSign className="h-3 w-3" /> Total Custo
+                              </label>
+                              <div className="w-full px-3 py-2 rounded-lg border border-border bg-muted/50 text-foreground text-sm font-body tabular-nums">
+                                {formatBRL(sectionCostTotal)}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground font-body">% BDI</label>
+                              <div className="w-full px-3 py-2 rounded-lg border border-border bg-muted/50 text-foreground text-sm font-body tabular-nums">
+                                {sectionCostTotal > 0 ? (((sectionSaleTotal / sectionCostTotal) - 1) * 100).toFixed(1) : "0.0"}%
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground font-body flex items-center gap-1">
+                                <DollarSign className="h-3 w-3" /> Total Venda
+                              </label>
                               <input
                                 type="number"
                                 value={section.section_price ?? ""}
