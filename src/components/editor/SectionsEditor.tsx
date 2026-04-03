@@ -10,6 +10,8 @@ import {
   PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
+import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
+import { ItemDetailSheet } from "@/components/editor/ItemDetailSheet";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import {
   DndContext,
