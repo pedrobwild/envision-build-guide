@@ -92,7 +92,7 @@ export function MobileBottomBar({
   hidden = false,
   activeSection,
 }: MobileBottomBarProps) {
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const whatsappUpdateUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(
