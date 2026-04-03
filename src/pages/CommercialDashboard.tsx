@@ -493,7 +493,7 @@ export default function CommercialDashboard() {
                                 <Send className="h-4 w-4 mr-2" />Enviar ao cliente
                               </DropdownMenuItem>
                             )}
-                            {b.internal_status !== "approved" && b.internal_status !== "lost" && (
+                            {b.internal_status !== "contrato_fechado" && b.internal_status !== "lost" && (
                               <DropdownMenuItem onClick={() => setConfirmCloseBudgetId(b.id)}>
                                 <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
                               </DropdownMenuItem>
