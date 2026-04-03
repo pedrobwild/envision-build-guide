@@ -105,6 +105,9 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
   const [revisionModalOpen, setRevisionModalOpen] = useState(false);
+  const [revisionInstructionsOpen, setRevisionInstructionsOpen] = useState(false);
+  const [revisionInstructions, setRevisionInstructions] = useState<{ instructions: string; change_types: string[]; requested_by_name: string } | null>(null);
+  const [loadingInstructions, setLoadingInstructions] = useState(false);
 
   useEffect(() => {
     supabase
