@@ -91,8 +91,9 @@ export function BudgetBreakdownPanel({ budgetId }: Props) {
       const cost = Number(item.internal_unit_price) || 0;
       const bdi = Number(item.bdi_percentage) || 0;
       const sale = calcSalePrice(cost, bdi);
-      const totalCost = qty * cost;
-      const totalSale = qty * sale;
+      // When qty is missing, fall back to internal_total or unit price as the total
+      const totalCost = qty > 0 ? qty * cost : (Number((item as any).internal_total) || cost);
+      const totalSale = qty > 0 ? qty * sale : calcSalePrice(totalCost, bdi);
       secCost += totalCost;
       secSale += totalSale;
       return { ...item, cost, bdi, sale, totalCost, totalSale, qty };
