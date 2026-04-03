@@ -11,7 +11,7 @@ import {
   MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil, ShoppingBag,
   Handshake, BarChart3, Hammer, Briefcase, Settings, Users,
   ArrowRight, GitCompare, Send, LayoutDashboard, ClipboardList,
-  Settings2, DollarSign,
+  Settings2, DollarSign, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { toast } from "sonner";
@@ -41,6 +41,8 @@ export default function AdminDashboard() {
   const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"date" | "value" | "status">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const [duplicateConfirmId, setDuplicateConfirmId] = useState<string | null>(null);
@@ -276,8 +278,10 @@ export default function AdminDashboard() {
   }, [budgets]);
 
   // Filtered
+  const statusOrder: Record<string, number> = { draft: 0, published: 1, minuta_solicitada: 2, contrato_fechado: 3, archived: 4 };
+
   const filtered = useMemo(() => {
-    return budgets.filter((b) => {
+    const list = budgets.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -285,9 +289,23 @@ export default function AdminDashboard() {
       }
       return true;
     });
-  }, [budgets, searchQuery, statusFilter]);
 
-  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "date") {
+        cmp = new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+      } else if (sortBy === "value") {
+        cmp = getBudgetTotal(a) - getBudgetTotal(b);
+      } else if (sortBy === "status") {
+        cmp = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return list;
+  }, [budgets, searchQuery, statusFilter, sortBy, sortDir]);
+
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter, sortBy, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -578,30 +596,65 @@ export default function AdminDashboard() {
 
       {/* Budget List */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold font-display text-foreground">Todos os orçamentos</h2>
-          <div className="flex items-center gap-2 flex-1 max-w-md justify-end">
-            <div className="relative flex-1 max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Buscar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-body text-sm"
-              />
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold font-display text-foreground">Todos os orçamentos</h2>
+            <div className="flex items-center gap-2 flex-1 max-w-md justify-end">
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-body text-sm"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 rounded-md border border-input bg-background text-foreground font-body text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex-shrink-0"
+              >
+                <option value="all">Todos</option>
+                <option value="draft">Rascunhos</option>
+                <option value="published">Publicados</option>
+                <option value="contrato_fechado">Contratos</option>
+                <option value="archived">Arquivados</option>
+              </select>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 rounded-md border border-input bg-background text-foreground font-body text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex-shrink-0"
-            >
-              <option value="all">Todos</option>
-              <option value="draft">Rascunhos</option>
-              <option value="published">Publicados</option>
-              <option value="contrato_fechado">Contratos</option>
-              <option value="archived">Arquivados</option>
-            </select>
+          </div>
+
+          {/* Sort chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            <span className="text-[11px] text-muted-foreground font-body shrink-0 mr-0.5">Ordenar:</span>
+            {([
+              { key: "date" as const, label: "Data" },
+              { key: "value" as const, label: "Valor" },
+              { key: "status" as const, label: "Status" },
+            ]).map((opt) => {
+              const isActive = sortBy === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    if (isActive) {
+                      setSortDir((d) => d === "asc" ? "desc" : "asc");
+                    } else {
+                      setSortBy(opt.key);
+                      setSortDir(opt.key === "value" ? "desc" : opt.key === "date" ? "desc" : "asc");
+                    }
+                  }}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-body font-medium whitespace-nowrap transition-all border ${
+                    isActive
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-card text-muted-foreground border-border hover:bg-muted/50 active:scale-95"
+                  }`}
+                >
+                  {opt.label}
+                  {isActive && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                </button>
+              );
+            })}
           </div>
         </div>
 
