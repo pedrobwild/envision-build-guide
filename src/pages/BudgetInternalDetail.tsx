@@ -538,9 +538,15 @@ export default function BudgetInternalDetail() {
                 <Separator />
 
                 {/* New comment form */}
+                <CommentQuickTemplates
+                  value={newComment}
+                  onChange={setNewComment}
+                  textareaRef={commentTextareaRef}
+                />
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder="Escreva uma nota interna..."
+                    ref={commentTextareaRef}
+                    placeholder="Escreva uma nota interna... (digite / para templates)"
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     rows={2}
