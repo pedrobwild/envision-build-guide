@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AdminBreadcrumb } from "@/components/AdminBreadcrumb";
 import { GlobalLoadingBar } from "@/components/GlobalLoadingBar";
+import { AdminBottomNav } from "@/components/admin/AdminBottomNav";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,9 +15,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger />
           </header>
           <AdminBreadcrumb />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pb-16 lg:pb-0">{children}</main>
         </div>
       </div>
+      <AdminBottomNav />
     </SidebarProvider>
   );
 }
