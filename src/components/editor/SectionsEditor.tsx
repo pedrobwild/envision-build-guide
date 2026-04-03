@@ -434,6 +434,13 @@ function SortableItemRow({
         {/* Actions */}
         <div className="lg:col-span-1 flex items-end justify-end gap-1">
           {isItemSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+          <button
+            onClick={() => setDetailOpen(true)}
+            className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            title="Editar detalhes"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
           {!item.catalog_item_id && (
             <button
               onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
@@ -462,6 +469,17 @@ function SortableItemRow({
         budgetId={budgetId}
         images={item.images || []}
         onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
+      />
+
+      {/* Item detail sheet */}
+      <ItemDetailSheet
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        item={item}
+        sectionId={sectionId}
+        budgetId={budgetId}
+        onUpdate={onUpdate}
+        onImagesChange={onImagesChange}
       />
     </div>
   );
