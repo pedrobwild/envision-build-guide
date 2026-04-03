@@ -708,9 +708,24 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-display text-2xl font-bold text-foreground">Seções e Itens</h2>
-          <p className="text-muted-foreground font-body text-sm mt-1">
-            Total geral: <span className="font-semibold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>{formatBRL(grandTotal)}</span>
-          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm font-body mt-1">
+            <div>
+              <span className="text-muted-foreground">Total Venda: </span>
+              <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalSale)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Total Custo: </span>
+              <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalCost)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">% BDI Total: </span>
+              <span className="font-semibold text-foreground tabular-nums">{grandBdiPercent.toFixed(1)}%</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Margem Líquida: </span>
+              <span className={cn("font-semibold tabular-nums", grandMargin >= 0 ? "text-green-600 dark:text-green-400" : "text-destructive")}>{formatBRL(grandMargin)}</span>
+            </div>
+          </div>
         </div>
         <button
           onClick={addSection}
