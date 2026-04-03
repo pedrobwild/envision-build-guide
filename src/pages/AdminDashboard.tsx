@@ -297,7 +297,7 @@ export default function AdminDashboard() {
     published: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
     minuta_solicitada: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
     contrato_fechado: "bg-primary/10 text-primary",
-    approved: "bg-primary/10 text-primary",
+    
     expired: "bg-destructive/10 text-destructive",
     archived: "bg-muted text-muted-foreground",
   };
