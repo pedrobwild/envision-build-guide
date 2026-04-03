@@ -1,4 +1,5 @@
-import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, Save, Timer, Clock, Loader2, ShoppingBag, Users, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, Save, Timer, Clock, Loader2, ShoppingBag, Users, ExternalLink, ChevronDown } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -9,172 +10,215 @@ interface MetadataStepProps {
   saving?: boolean;
 }
 
-const FIELDS = [
+/* ── Notion-like property row ── */
+function PropertyRow({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3 py-1.5 group">
+      <div className="flex items-center gap-2 w-[180px] shrink-0 pt-2">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground/60" />
+        <span className="text-sm text-muted-foreground font-body truncate">{label}</span>
+      </div>
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function NotionInput({
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  className = "",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  type?: string;
+  className?: string;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={`w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all ${className}`}
+      style={type === "number" ? { fontVariantNumeric: "tabular-nums" } : undefined}
+    />
+  );
+}
+
+const CORE_FIELDS = [
   { key: "client_name", label: "Cliente", placeholder: "Nome do cliente", icon: User },
   { key: "condominio", label: "Condomínio", placeholder: "Nome do condomínio", icon: Building },
   { key: "bairro", label: "Bairro", placeholder: "Bairro", icon: MapPin },
   { key: "metragem", label: "Metragem", placeholder: "Ex: 120m²", icon: Ruler },
+];
+
+const TIME_FIELDS = [
   { key: "date", label: "Data de elaboração", placeholder: "AAAA-MM-DD", icon: Calendar, type: "date" },
   { key: "versao", label: "Versão", placeholder: "Ex: 1.0", icon: Hash },
   { key: "validity_days", label: "Validade (dias)", placeholder: "30", icon: Timer, type: "number" },
-  { key: "prazo_dias_uteis", label: "Prazo de execução (dias úteis)", placeholder: "55", icon: Clock, type: "number" },
-  { key: "estimated_weeks", label: "Prazo estimado (semanas)", placeholder: "8", icon: Timer, type: "number" },
+  { key: "prazo_dias_uteis", label: "Prazo execução (dias)", placeholder: "55", icon: Clock, type: "number" },
+  { key: "estimated_weeks", label: "Prazo (semanas)", placeholder: "8", icon: Timer, type: "number" },
+];
+
+const COMMERCIAL_FIELDS = [
   { key: "consultora_comercial", label: "Consultora Comercial", placeholder: "Nome da vendedora", icon: UserCheck },
   { key: "email_comercial", label: "E-mail Comercial", placeholder: "email@exemplo.com", icon: Mail, type: "email" },
 ];
 
 export function MetadataStep({ budget, onFieldChange, onNext, saving }: MetadataStepProps) {
   const hasClientName = !!budget.client_name && budget.client_name !== "Cliente";
-  // headerConfig removed — hidden from editor
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const [showMore, setShowMore] = useState(false);
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="mb-8">
-        <h2 className="font-display text-2xl font-bold text-foreground mb-2">
-          Dados do orçamento
-        </h2>
-        <p className="text-muted-foreground font-body text-sm">
-          Preencha as informações do cabeçalho que aparecerão no orçamento público.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        {FIELDS.map((field) => (
-          <div key={field.key} className="space-y-1.5">
-            <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
-              <field.icon className="h-3.5 w-3.5 text-muted-foreground" />
-              {field.label}
-            </label>
-            <input
-              type={field.type || "text"}
+    <div className="max-w-3xl">
+      {/* ── Core properties (always visible) ── */}
+      <div className="border-b border-border/40 pb-1 mb-1">
+        {CORE_FIELDS.map((field) => (
+          <PropertyRow key={field.key} icon={field.icon} label={field.label}>
+            <NotionInput
               value={budget[field.key] || ""}
-              onChange={(e) => onFieldChange(field.key, e.target.value)}
+              onChange={(v) => onFieldChange(field.key, v)}
               placeholder={field.placeholder}
-              className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
             />
-          </div>
+          </PropertyRow>
         ))}
       </div>
 
-      {/* Responsáveis */}
-      <div className="mb-8 p-4 rounded-xl border border-border bg-card space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Users className="h-4 w-4 text-primary" />
-          <span className="font-display font-semibold text-sm text-foreground">Responsáveis</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
-              <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
-              Comercial
-            </label>
-            <Select
-              value={budget.commercial_owner_id || ""}
-              onValueChange={(v) => onFieldChange("commercial_owner_id", v || null)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o comercial" />
-              </SelectTrigger>
-              <SelectContent>
-                {comerciais.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* ── Responsáveis ── */}
+      <div className="border-b border-border/40 pb-1 mb-1">
+        <PropertyRow icon={UserCheck} label="Comercial">
+          <Select
+            value={budget.commercial_owner_id || ""}
+            onValueChange={(v) => onFieldChange("commercial_owner_id", v || null)}
+          >
+            <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-1.5 px-2 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {comerciais.map((m) => (
+                <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </PropertyRow>
+        <PropertyRow icon={UserCheck} label="Orçamentista">
+          <Select
+            value={budget.estimator_owner_id || ""}
+            onValueChange={(v) => onFieldChange("estimator_owner_id", v || null)}
+          >
+            <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-1.5 px-2 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {orcamentistas.map((m) => (
+                <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </PropertyRow>
+      </div>
+
+      {/* ── Hubspot ── */}
+      <div className="border-b border-border/40 pb-1 mb-1">
+        <PropertyRow icon={ExternalLink} label="Negócio Hubspot">
+          <div className="flex items-center gap-1">
+            <NotionInput
+              value={budget.hubspot_deal_url || ""}
+              onChange={(v) => onFieldChange("hubspot_deal_url", v)}
+              placeholder="https://app.hubspot.com/..."
+              type="url"
+            />
+            {budget.hubspot_deal_url && (
+              <a
+                href={budget.hubspot_deal_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors shrink-0"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
           </div>
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
-              <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
-              Orçamentista
-            </label>
-            <Select
-              value={budget.estimator_owner_id || ""}
-              onValueChange={(v) => onFieldChange("estimator_owner_id", v || null)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o orçamentista" />
-              </SelectTrigger>
-              <SelectContent>
-                {orcamentistas.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        </PropertyRow>
+      </div>
+
+      {/* ── Optional items toggle ── */}
+      <div className="border-b border-border/40 pb-1 mb-1">
+        <PropertyRow icon={ShoppingBag} label="Incluir opcionais">
+          <button
+            onClick={() => onFieldChange("show_optional_items", !budget.show_optional_items)}
+            className="flex items-center gap-2 py-1.5 px-2 text-sm font-body text-foreground"
+          >
+            <div className={`relative w-8 h-[18px] rounded-full transition-colors ${budget.show_optional_items ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+              <span className={`absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-transform ${budget.show_optional_items ? 'translate-x-[14px]' : ''}`} />
+            </div>
+            <span className="text-muted-foreground text-xs">
+              {budget.show_optional_items ? "Ativado" : "Desativado"}
+            </span>
+          </button>
+        </PropertyRow>
+      </div>
+
+      {/* ── Show more properties ── */}
+      <button
+        onClick={() => setShowMore(!showMore)}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-body py-2 transition-colors"
+      >
+        <ChevronDown className={`h-3 w-3 transition-transform ${showMore ? 'rotate-0' : '-rotate-90'}`} />
+        {showMore ? "Menos propriedades" : "Mais propriedades"}
+      </button>
+
+      {showMore && (
+        <div className="space-y-0 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+          {/* Time & scheduling */}
+          <div className="border-b border-border/40 pb-1 mb-1">
+            {TIME_FIELDS.map((field) => (
+              <PropertyRow key={field.key} icon={field.icon} label={field.label}>
+                <NotionInput
+                  value={budget[field.key] || ""}
+                  onChange={(v) => onFieldChange(field.key, field.type === "number" ? (v ? Number(v) : null) : v)}
+                  placeholder={field.placeholder}
+                  type={field.type || "text"}
+                />
+              </PropertyRow>
+            ))}
+          </div>
+
+          {/* Commercial info */}
+          <div className="border-b border-border/40 pb-1 mb-1">
+            {COMMERCIAL_FIELDS.map((field) => (
+              <PropertyRow key={field.key} icon={field.icon} label={field.label}>
+                <NotionInput
+                  value={budget[field.key] || ""}
+                  onChange={(v) => onFieldChange(field.key, v)}
+                  placeholder={field.placeholder}
+                  type={field.type || "text"}
+                />
+              </PropertyRow>
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Hubspot Deal URL */}
-      <div className="mb-8 p-4 rounded-xl border border-border bg-card space-y-2">
-        <div className="flex items-center gap-2">
-          <ExternalLink className="h-4 w-4 text-primary" />
-          <span className="font-display font-semibold text-sm text-foreground">Negócio Hubspot</span>
-        </div>
-        <div className="flex gap-2 items-center">
-          <input
-            type="url"
-            value={budget.hubspot_deal_url || ""}
-            onChange={(e) => onFieldChange("hubspot_deal_url", e.target.value)}
-            placeholder="https://app.hubspot.com/contacts/.../deal/..."
-            className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-          />
-          {budget.hubspot_deal_url && (
-            <a
-              href={budget.hubspot_deal_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2.5 rounded-lg border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
-        </div>
-      </div>
-
-      {/* Project name (full width) */}
-      <div className="space-y-1.5 mb-8">
-        <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
-          Nome do projeto
-        </label>
-        <input
-          type="text"
-          value={budget.project_name || ""}
-          onChange={(e) => onFieldChange("project_name", e.target.value)}
-          placeholder="Nome do projeto"
-          className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-        />
-      </div>
-
-      {/* Optional items toggle */}
-      <div className="mb-8 p-4 rounded-xl border border-border bg-card flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <ShoppingBag className="h-4 w-4 text-warning" />
-          <div>
-            <p className="text-sm font-body font-medium text-foreground">Incluir opcionais</p>
-            <p className="text-xs text-muted-foreground font-body">Permite que o cliente simule a inclusão de itens opcionais no orçamento público</p>
-          </div>
-        </div>
-        <button
-          onClick={() => onFieldChange("show_optional_items", !budget.show_optional_items)}
-          className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${budget.show_optional_items ? 'bg-primary' : 'bg-muted'}`}
-        >
-          <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${budget.show_optional_items ? 'translate-x-5' : ''}`} />
-        </button>
-      </div>
-
-      {/* Header config hidden — kept in code for future use */}
-
-      <div className="flex justify-end">
+      {/* ── Publish button ── */}
+      <div className="flex justify-end pt-4">
         <button
           onClick={onNext}
           disabled={!hasClientName || saving}
-          className="flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-body font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-body font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? (
             <>
