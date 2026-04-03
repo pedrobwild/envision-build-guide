@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { INTERNAL_STATUSES } from "@/lib/role-constants";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { BudgetListCard, BudgetListSkeleton } from "@/components/admin/BudgetListCard";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -606,11 +606,7 @@ export default function AdminDashboard() {
         </div>
 
         {loading ? (
-          <div className="space-y-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 rounded-lg bg-muted animate-pulse" />
-            ))}
-          </div>
+          <BudgetListSkeleton />
         ) : filtered.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="py-12 flex flex-col items-center text-center">
@@ -622,186 +618,36 @@ export default function AdminDashboard() {
           </Card>
         ) : (
           <>
-            <div className="rounded-lg border border-border bg-card divide-y divide-border">
+            <div className="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
               {paginated.map((budget) => {
                 const total = getBudgetTotal(budget);
                 const sectionCount = (budget.sections || []).length;
-                const internalCost = Number(budget.internal_cost) || 0;
-                const isClosed = budget.status === "contrato_fechado";
-                const profit = total - internalCost;
-                const profitMargin = total > 0 ? (profit / total) * 100 : 0;
 
                 return (
-                  <div key={budget.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
-                    {/* Status badge */}
-                    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium font-body border ${
-                      budget.status === "published" ? "border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30" :
-                      budget.status === "contrato_fechado" ? "border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30" :
-                      budget.status === "draft" ? "border-blue-400 text-blue-600 bg-blue-50 dark:bg-blue-950/30" :
-                      "border-amber-400 text-amber-600 bg-amber-50 dark:bg-amber-950/30"
-                    }`}>
-                      {statusLabels[budget.status] || budget.status}
-                    </span>
-
-                    {/* Title + metadata */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Link
-                          to={`/admin/budget/${budget.id}`}
-                          className="font-medium text-sm text-foreground hover:text-primary transition-colors font-body truncate"
-                        >
-                          {budget.project_name || "Sem nome"}
-                        </Link>
-                        {(budget.version_number ?? 1) > 1 && (
-                          <span className="text-[10px] bg-muted border border-border rounded-full px-1.5 py-0.5 font-body">
-                            V{budget.version_number}
-                          </span>
-                        )}
-                        {budget.is_published_version && (
-                          <span className="text-[10px] bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-full px-1.5 py-0.5 font-body">
-                            Publicada
-                          </span>
-                        )}
-                        {budget.show_optional_items && (
-                          <ShoppingBag className="h-3 w-3 text-amber-500" />
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground font-body mt-0.5">
-                        {budget.client_name}
-                        {budget.date && <> · {formatDate(budget.date)}</>}
-                        {" · "}{sectionCount} {sectionCount === 1 ? "seção" : "seções"}
-                        {budget.view_count >= 5 && (
-                          <span className="inline-flex items-center gap-0.5 ml-1">
-                            · <Eye className="h-3 w-3 inline" /> {budget.view_count}
-                          </span>
-                        )}
-                        {budget.view_count > 0 && budget.view_count < 5 && <> · {budget.view_count} view{budget.view_count !== 1 ? "s" : ""}</>}
-                      </p>
-                      {isClosed && internalCost > 0 && (
-                        <p className="text-xs font-body mt-0.5">
-                          <span className="text-muted-foreground">Custo: {formatBRL(internalCost)}</span>
-                          <span className={` ml-2 ${profit >= 0 ? "text-green-600" : "text-destructive"}`}>
-                            Lucro: {formatBRL(profit)} ({profitMargin.toFixed(0)}%)
-                          </span>
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Price */}
-                    <span className="text-sm font-display font-semibold text-foreground whitespace-nowrap text-right">{formatBRL(total)}</span>
-
-                    {/* Action icons with tooltips */}
-                    <TooltipProvider delayDuration={300}>
-                      <div className="flex items-center gap-0.5">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/admin/budget/${budget.id}`)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>Editar orçamento</p></TooltipContent>
-                        </Tooltip>
-                        {budget.status === "draft" && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => publishBudget(budget.id)}>
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Publicar</p></TooltipContent>
-                          </Tooltip>
-                        )}
-                        {budget.public_id && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank")}>
-                                <Eye className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Visualizar página pública</p></TooltipContent>
-                          </Tooltip>
-                        )}
-                        <div className="relative">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMenuOpen(menuOpen === budget.id ? null : budget.id)}>
-                                <MoreHorizontal className="h-3.5 w-3.5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Mais ações</p></TooltipContent>
-                          </Tooltip>
-                          {menuOpen === budget.id && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-lg border border-border bg-popover shadow-lg py-1">
-                                {budget.public_id && (
-                                  <button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
-                                      toast.success("Link copiado!");
-                                      setMenuOpen(null);
-                                    }}
-                                    className="w-full px-3 py-2 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
-                                  >
-                                    <Copy className="h-3.5 w-3.5" /> Copiar link público
-                                  </button>
-                                )}
-                                {budget.version_group_id && (
-                                  <button
-                                    onClick={() => { setMenuOpen(null); navigate(`/admin/comparar?group=${budget.version_group_id}`); }}
-                                    className="w-full px-3 py-2 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
-                                  >
-                                    <GitCompare className="h-3.5 w-3.5" /> Comparar versões
-                                  </button>
-                                )}
-                                {budget.internal_status !== "sent_to_client" && budget.internal_status !== "lost" && (
-                                  <button
-                                    onClick={() => markAsClosed(budget.id)}
-                                    className="w-full px-3 py-2 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
-                                  >
-                                    <Handshake className="h-3.5 w-3.5 text-primary" /> Contrato Fechado
-                                  </button>
-                                )}
-                                <button
-                                  onClick={async () => {
-                                    const newVal = !budget.show_optional_items;
-                                    await supabase.from("budgets").update({ show_optional_items: newVal }).eq("id", budget.id);
-                                    setBudgets((prev) => prev.map((b) => (b.id === budget.id ? { ...b, show_optional_items: newVal } : b)));
-                                    toast.success(newVal ? "Opcionais ativados" : "Opcionais desativados");
-                                    setMenuOpen(null);
-                                  }}
-                                  className="w-full px-3 py-2 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
-                                >
-                                  <ShoppingBag className="h-3.5 w-3.5 text-amber-500" />
-                                  {budget.show_optional_items ? "Desativar opcionais" : "Incluir opcionais"}
-                                </button>
-                                <button
-                                  onClick={() => { setMenuOpen(null); setDuplicateConfirmId(budget.id); }}
-                                  className="w-full px-3 py-2 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
-                                >
-                                  <Copy className="h-3.5 w-3.5 text-muted-foreground" /> Duplicar como novo
-                                </button>
-                                {budget.status !== "archived" && (
-                                  <button
-                                    onClick={() => archiveBudget(budget.id)}
-                                    className="w-full px-3 py-2 text-left text-sm font-body text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2"
-                                  >
-                                    <Archive className="h-3.5 w-3.5" /> Arquivar
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => { if (confirm("Excluir este orçamento permanentemente?")) deleteBudget(budget.id); }}
-                                  className="w-full px-3 py-2 text-left text-sm font-body text-destructive hover:bg-destructive/10 flex items-center gap-2"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" /> Excluir
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </TooltipProvider>
-                  </div>
+                  <BudgetListCard
+                    key={budget.id}
+                    budget={budget}
+                    total={total}
+                    sectionCount={sectionCount}
+                    statusLabel={statusLabels[budget.status] || budget.status}
+                    statusColor={statusColors[budget.status] || ""}
+                    onPublish={publishBudget}
+                    onCopyLink={(publicId) => {
+                      navigator.clipboard.writeText(getPublicBudgetUrl(publicId));
+                      toast.success("Link copiado!");
+                    }}
+                    onMarkClosed={markAsClosed}
+                    onToggleOptionals={async (id, current) => {
+                      const newVal = !current;
+                      await supabase.from("budgets").update({ show_optional_items: newVal }).eq("id", id);
+                      setBudgets((prev) => prev.map((b) => (b.id === id ? { ...b, show_optional_items: newVal } : b)));
+                      toast.success(newVal ? "Opcionais ativados" : "Opcionais desativados");
+                    }}
+                    onDuplicate={(id) => setDuplicateConfirmId(id)}
+                    onArchive={archiveBudget}
+                    onDelete={(id) => { if (confirm("Excluir este orçamento permanentemente?")) deleteBudget(id); }}
+                    onCompareVersions={(groupId) => navigate(`/admin/comparar?group=${groupId}`)}
+                  />
                 );
               })}
             </div>
