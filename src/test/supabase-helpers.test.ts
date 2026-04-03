@@ -43,6 +43,29 @@ describe("calculateSectionSubtotal", () => {
     const section = { items: [{ internal_total: 100 }] };
     expect(calculateSectionSubtotal(section)).toBe(100);
   });
+
+  it("falls back to internal_unit_price when internal_total is missing", () => {
+    const section = {
+      items: [
+        { internal_total: null, internal_unit_price: 50, qty: 2 },
+        { internal_total: null, internal_unit_price: 100, qty: null },
+      ],
+      qty: 1,
+    };
+    // 50*2 + 100*1(default) = 200
+    expect(calculateSectionSubtotal(section)).toBe(200);
+  });
+
+  it("mixes internal_total and internal_unit_price fallback", () => {
+    const section = {
+      items: [
+        { internal_total: 300 },
+        { internal_total: null, internal_unit_price: 150, qty: 1 },
+      ],
+      qty: 1,
+    };
+    expect(calculateSectionSubtotal(section)).toBe(450);
+  });
 });
 
 describe("calculateBudgetTotal", () => {

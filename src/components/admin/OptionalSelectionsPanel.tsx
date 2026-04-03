@@ -66,7 +66,7 @@ export function OptionalSelectionsPanel() {
     // Fetch sections with items for totals
     const { data: sections } = await supabase
       .from("sections")
-      .select("id, title, section_price, qty, items(id, internal_total)")
+      .select("id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty)")
       .in("id", sectionIds);
 
     const budgetMap = Object.fromEntries((budgets || []).map((b: any) => [b.id, b]));
