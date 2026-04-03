@@ -18,7 +18,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin/solicitacoes/nova": "Nova Solicitação",
   "/admin/comparar": "Comparar Versões",
   "/admin/usuarios": "Usuários",
-  "/admin/producao": "Minha Produção",
+  "/admin/producao": "Pipeline Orçamentos",
   "/admin/comercial": "Pipeline Comercial",
   "/admin/operacoes": "Operações",
   "/admin/financeiro": "Financeiro",
@@ -44,7 +44,7 @@ export function AdminBreadcrumb() {
 
     // Role-based origin
     if (roles.includes("orcamentista") && !roles.includes("admin")) {
-      crumbs.push({ label: "Minha Produção", href: "/admin/producao" });
+      crumbs.push({ label: "Pipeline Orçamentos", href: "/admin/producao" });
     } else if (roles.includes("comercial") && !roles.includes("admin")) {
       crumbs.push({ label: "Pipeline Comercial", href: "/admin/comercial" });
     }
