@@ -102,38 +102,61 @@ function ItemImageInline({
     if (primary) saveToPhotoLibrary(itemTitle, primary.url);
   };
 
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const openLightbox = (idx: number) => {
+    setLightboxIndex(idx);
+    setLightboxOpen(true);
+  };
+
+  const handleLightboxRemove = async (imgId: string) => {
+    await removeImage(imgId);
+  };
+
   return (
-    <div className="mt-2 ml-7 flex items-center gap-1.5 flex-wrap">
-      {images.map(img => (
-        <div
-          key={img.id}
-          className={cn(
-            "relative group w-10 h-10 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0",
-            img.is_primary ? "border-primary" : "border-border"
-          )}
-        >
-          <img src={img.url} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5">
-            <button onClick={() => setPrimary(img.id)} className="p-0.5 rounded hover:bg-white/20" title="Principal">
-              <Star className={cn("h-2.5 w-2.5", img.is_primary ? "text-yellow-400 fill-yellow-400" : "text-white")} />
-            </button>
-            <button onClick={() => removeImage(img.id)} className="p-0.5 rounded hover:bg-white/20" title="Remover">
-              <X className="h-2.5 w-2.5 text-white" />
-            </button>
+    <>
+      <div className="mt-2 ml-7 flex items-center gap-1.5 flex-wrap">
+        {images.map((img, idx) => (
+          <div
+            key={img.id}
+            className={cn(
+              "relative group w-10 h-10 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0 cursor-pointer",
+              img.is_primary ? "border-primary" : "border-border"
+            )}
+            onClick={() => openLightbox(idx)}
+          >
+            <img src={img.url} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5">
+              <button onClick={(e) => { e.stopPropagation(); setPrimary(img.id); }} className="p-0.5 rounded hover:bg-white/20" title="Principal">
+                <Star className={cn("h-2.5 w-2.5", img.is_primary ? "text-yellow-400 fill-yellow-400" : "text-white")} />
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); removeImage(img.id); }} className="p-0.5 rounded hover:bg-white/20" title="Remover">
+                <X className="h-2.5 w-2.5 text-white" />
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
-      {images.length < 5 && (
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-          className="w-10 h-10 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center transition-all disabled:opacity-50 flex-shrink-0"
-        >
-          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />}
-        </button>
-      )}
-      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleUpload(e.target.files)} />
-    </div>
+        ))}
+        {images.length < 5 && (
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="w-10 h-10 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center transition-all disabled:opacity-50 flex-shrink-0"
+          >
+            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />}
+          </button>
+        )}
+        <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleUpload(e.target.files)} />
+      </div>
+
+      <ItemImageLightbox
+        images={images}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        onRemove={handleLightboxRemove}
+      />
+    </>
   );
 }
 
