@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Search, Calendar, User, Building2, ArrowLeft, Loader2, Inbox,
-  Clock, AlertTriangle, MoreVertical, ExternalLink, CheckCircle2,
-  PauseCircle, ArrowUpDown, Flame, Copy, Send, RotateCcw,
+  Clock, MoreVertical, ExternalLink, CheckCircle2,
+  ArrowUpDown, Copy, Send, RotateCcw, AlertTriangle,
   FileText, Eye, ThumbsUp, XCircle, Plus, GitCompare,
   LayoutList, Columns3,
 } from "lucide-react";
