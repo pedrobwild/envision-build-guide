@@ -120,3 +120,36 @@ export async function getVersionAuditEvents(budgetIds: string[]) {
     user_name: e.user_id ? nameMap[e.user_id] || "—" : "Sistema",
   }));
 }
+
+/**
+ * Log a revision request event — fired when comercial asks orçamentista to revise.
+ */
+export async function logRevisionRequestEvent({
+  budgetId,
+  userId,
+  instructions,
+  changeTypes,
+  requestedByName,
+  fromStatus,
+}: {
+  budgetId: string;
+  userId: string;
+  instructions: string;
+  changeTypes: string[];
+  requestedByName: string;
+  fromStatus: string;
+}) {
+  return logVersionEvent({
+    event_type: "revision_requested",
+    budget_id: budgetId,
+    user_id: userId,
+    from_status: fromStatus,
+    to_status: "revision_requested",
+    note: `Revisão solicitada por ${requestedByName}: ${instructions.slice(0, 100)}${instructions.length > 100 ? "…" : ""}`,
+    metadata: {
+      instructions,
+      change_types: changeTypes,
+      requested_by_name: requestedByName,
+    },
+  });
+}
