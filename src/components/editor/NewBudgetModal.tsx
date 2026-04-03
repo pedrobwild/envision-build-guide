@@ -55,7 +55,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
 
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const { data: templates = [] } = useBudgetTemplates();
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
   // Form state
   const [clientName, setClientName] = useState("");
