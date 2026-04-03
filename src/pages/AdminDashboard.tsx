@@ -307,7 +307,7 @@ export default function AdminDashboard() {
     published: "Publicado",
     minuta_solicitada: "Minuta Solicitada",
     contrato_fechado: "Contrato Fechado",
-    approved: "Aprovado",
+    
     expired: "Expirado",
     archived: "Arquivado",
   };
