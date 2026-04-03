@@ -752,7 +752,7 @@ export default function AdminDashboard() {
                                     <GitCompare className="h-3.5 w-3.5" /> Comparar versões
                                   </button>
                                 )}
-                                {(budget.status === "published" || budget.status === "approved") && (
+                                {(budget.status === "published" || budget.status === "approved" || budget.status === "minuta_solicitada") && (
                                   <button
                                     onClick={() => markAsClosed(budget.id)}
                                     className="w-full px-3 py-2 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
