@@ -1,13 +1,13 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, User, ChevronDown, DollarSign, RotateCcw, PackageCheck, Send, Handshake, MessageSquare, ClipboardList, Image as ImageIcon, ScrollText } from "lucide-react";
+import { Loader2, User, ChevronDown, DollarSign, RotateCcw, PackageCheck, Send, Handshake, MessageSquare, ClipboardList, Image as ImageIcon, ScrollText, AlertTriangle, Info, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
-import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
+import { VersionTimeline } from "@/components/editor/VersionTimeline";
 import { ensureVersionGroup, publishVersion, duplicateBudgetAsVersion } from "@/lib/budget-versioning";
 import { MediaUploadSection } from "@/components/editor/MediaUploadSection";
 import { formatBRL } from "@/lib/formatBRL";
@@ -23,6 +23,7 @@ import { StickyEditorHeader, type SaveStatus } from "@/components/editor/StickyE
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 export default function BudgetEditorV2() {
