@@ -56,6 +56,7 @@ import {
 } from "@/lib/role-constants";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
 
 interface BudgetRow {
   id: string;
