@@ -94,11 +94,11 @@ const KANBAN_COLUMNS = [
     id: "fechado",
     label: "Contrato Fechado",
     icon: ThumbsUp,
-    statuses: ["approved"] as InternalStatus[],
+    statuses: ["contrato_fechado"] as InternalStatus[],
     accent: "border-t-green-500",
     headerColor: "text-green-700 dark:text-green-400",
     bgColor: "bg-green-50/50 dark:bg-green-950/20",
-    targetStatus: "approved" as InternalStatus,
+    targetStatus: "contrato_fechado" as InternalStatus,
     locked: false,
   },
   {

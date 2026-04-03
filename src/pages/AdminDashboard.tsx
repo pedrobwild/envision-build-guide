@@ -297,7 +297,7 @@ export default function AdminDashboard() {
     published: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
     minuta_solicitada: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
     contrato_fechado: "bg-primary/10 text-primary",
-    approved: "bg-primary/10 text-primary",
+    
     expired: "bg-destructive/10 text-destructive",
     archived: "bg-muted text-muted-foreground",
   };
@@ -307,7 +307,7 @@ export default function AdminDashboard() {
     published: "Publicado",
     minuta_solicitada: "Minuta Solicitada",
     contrato_fechado: "Contrato Fechado",
-    approved: "Aprovado",
+    
     expired: "Expirado",
     archived: "Arquivado",
   };
@@ -754,7 +754,7 @@ export default function AdminDashboard() {
                                     <GitCompare className="h-3.5 w-3.5" /> Comparar versões
                                   </button>
                                 )}
-                                {budget.internal_status !== "approved" && budget.internal_status !== "lost" && (
+                                {budget.internal_status !== "contrato_fechado" && budget.internal_status !== "lost" && (
                                   <button
                                     onClick={() => markAsClosed(budget.id)}
                                     className="w-full px-3 py-2 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2"
