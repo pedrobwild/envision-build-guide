@@ -183,8 +183,6 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
       .select("id")
       .single();
 
-    setLoading(false);
-
     if (error || !data) {
       console.error(error);
       toast.error("Erro ao criar solicitação. Tente novamente.");
