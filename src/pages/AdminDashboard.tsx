@@ -62,7 +62,7 @@ export default function AdminDashboard() {
   const loadBudgets = async () => {
     const { data } = await supabase
       .from("budgets")
-      .select("*, sections(id, title, section_price, qty, items(id, internal_total)), adjustments(id, sign, amount)")
+      .select("*, sections(id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty)), adjustments(id, sign, amount)")
       .order("created_at", { ascending: false });
     setBudgets(data || []);
     setLoading(false);

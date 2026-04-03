@@ -61,7 +61,7 @@ async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; secti
 
   const { data: sections } = await supabase
     .from("sections")
-    .select("id, title, order_index, section_price, qty, items(id, title, description, qty, unit, internal_total)")
+    .select("id, title, order_index, section_price, qty, items(id, title, description, qty, unit, internal_total, internal_unit_price)")
     .eq("budget_id", budgetId)
     .order("order_index");
 
