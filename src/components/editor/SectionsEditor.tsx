@@ -260,6 +260,7 @@ function SortableItemRow({
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
 }) {
+  const { item, sectionId, sectionTitle, budgetId, isItemSaving, searchMatch, onUpdate, onDelete, onImagesChange, onPromoteToCatalog } = arguments[0] as any;
   const {
     attributes,
     listeners,
