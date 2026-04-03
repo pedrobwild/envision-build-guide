@@ -120,11 +120,25 @@ export default function BudgetEditorV2() {
 
   const autoSaveBudgetField = useCallback((field: string, value: any) => {
     if (!budgetId) return;
+    lastSavePayload.current = { field, value };
+    setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      await supabase.from("budgets").update({ [field]: value } as any).eq("id", budgetId);
-    }, 800);
+      const { error } = await supabase.from("budgets").update({ [field]: value } as any).eq("id", budgetId);
+      if (error) {
+        setSaveStatus("error");
+      } else {
+        setSaveStatus("saved");
+        setLastSavedAt(new Date());
+      }
+    }, 600);
   }, [budgetId]);
+
+  const retrySave = useCallback(() => {
+    if (lastSavePayload.current) {
+      autoSaveBudgetField(lastSavePayload.current.field, lastSavePayload.current.value);
+    }
+  }, [autoSaveBudgetField]);
 
   const handleSaveAndPublish = async () => {
     if (!budgetId || !budget) return;
