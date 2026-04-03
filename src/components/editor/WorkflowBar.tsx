@@ -210,11 +210,42 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
 
   function handlePrimaryClick() {
     if (!primaryTransition) return;
+    if (primaryTransition.confirmRequired) {
+      setConfirmDialogOpen(true);
+      return;
+    }
     const note = internalStatus === "revision_requested" ? "Revisão iniciada pelo orçamentista" : undefined;
     changeStatus(primaryTransition.newStatus, note);
     if (internalStatus === "revision_requested") {
       toast.success("Revisão iniciada. Realize as alterações e envie para revisão.");
     }
+  }
+
+  async function handleConfirmedTransition() {
+    if (!primaryTransition) return;
+    setConfirmLoading(true);
+
+    // For delivered_to_sales → sent_to_client, also publish
+    if (internalStatus === "delivered_to_sales" && primaryTransition.newStatus === "sent_to_client") {
+      try {
+        if (!budget.is_published_version) {
+          const groupId = await ensureVersionGroup(budget.id);
+          const publicId = budget.public_id || crypto.randomUUID().slice(0, 12);
+          await publishVersion(budget.id, groupId, publicId, user?.id);
+          onBudgetUpdate({ is_published_version: true, public_id: publicId, status: "published" });
+        }
+      } catch (err) {
+        console.error("Erro ao publicar:", err);
+        toast.error("Erro ao publicar o orçamento.");
+        setConfirmLoading(false);
+        setConfirmDialogOpen(false);
+        return;
+      }
+    }
+
+    await changeStatus(primaryTransition.newStatus);
+    setConfirmLoading(false);
+    setConfirmDialogOpen(false);
   }
 
   async function openRevisionInstructions() {
