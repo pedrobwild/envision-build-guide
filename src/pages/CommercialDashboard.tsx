@@ -428,12 +428,12 @@ export default function CommercialDashboard() {
                 const isEntregue = b.internal_status === "delivered_to_sales";
 
                 return (
-                  <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isEntregue ? "border-teal-300 dark:border-teal-700" : ""}`}>
+                  <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isEntregue ? "border-success/30" : ""}`}>
                     <div className="flex items-start gap-4">
                       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/admin/demanda/${b.id}`)}>
                         {/* Row 1 */}
                         <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                          {isEntregue && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
+                          {isEntregue && <span className="w-2 h-2 rounded-full bg-success shrink-0" />}
                           <span className="font-semibold font-display text-foreground truncate">{b.project_name || "Sem nome"}</span>
                           <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
                             {status.icon} {status.label}
