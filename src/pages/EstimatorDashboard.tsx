@@ -244,7 +244,7 @@ export default function EstimatorDashboard() {
 
   // Summary counts aligned with the 5 funnel stages
   const PENDING_STATUSES = ["requested", "novo", "triage", "assigned"];
-  const IN_PROGRESS_STATUSES = ["in_progress", "waiting_info", "blocked"];
+  const IN_PROGRESS_STATUSES = ["in_progress", "waiting_info", "blocked", "revision_requested"];
   const REVIEW_STATUSES = ["ready_for_review"];
   const DELIVERED_STATUSES = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
   const FINISHED_STATUSES = ["lost", "archived"];

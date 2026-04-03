@@ -386,6 +386,51 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           onBudgetUpdate({ internal_status: "revision_requested" });
         }}
       />
+
+      <Dialog open={revisionInstructionsOpen} onOpenChange={(open) => {
+        setRevisionInstructionsOpen(open);
+        if (!open) setRevisionInstructions(null);
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-display">
+              <RotateCcw className="h-4 w-4 text-orange-500" />
+              Instruções da Revisão
+            </DialogTitle>
+            {revisionInstructions && (
+              <DialogDescription className="text-xs font-body">
+                Solicitada por {revisionInstructions.requested_by_name}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {loadingInstructions ? (
+            <div className="flex items-center justify-center py-8">
+              <span className="text-sm text-muted-foreground">Carregando...</span>
+            </div>
+          ) : revisionInstructions ? (
+            <div className="space-y-4">
+              {revisionInstructions.change_types.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Tipo de alteração</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {revisionInstructions.change_types.map((t) => (
+                      <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Instruções</p>
+                <p className="text-sm whitespace-pre-wrap bg-muted/50 rounded-md p-3 border">
+                  {revisionInstructions.instructions}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-4">Nenhuma instrução encontrada.</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
