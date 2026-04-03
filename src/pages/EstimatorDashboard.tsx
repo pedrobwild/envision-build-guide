@@ -797,6 +797,12 @@ export default function EstimatorDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <NewBudgetModal
+        open={newBudgetOpen}
+        onOpenChange={setNewBudgetOpen}
+        onSuccess={() => loadData()}
+      />
     </div>
   );
 }
