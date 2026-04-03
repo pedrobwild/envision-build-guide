@@ -751,7 +751,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           <div className="space-y-3">
             {sections.map((section) => {
               const isExpanded = expandedSections.has(section.id);
-              const sectionTotal = getSectionTotal(section);
+              const sectionCostTotal = calcSectionCostTotal(section);
+              const sectionSaleTotal = calcSectionSaleTotal(section);
               const isSaving = savingIds.has(section.id);
 
               return (
@@ -793,9 +794,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                             </span>
                           </div>
-                          <span className="font-display font-semibold text-sm text-foreground whitespace-nowrap" style={{ fontVariantNumeric: "tabular-nums" }}>
-                            {formatBRL(sectionTotal)}
-                          </span>
+                          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                            <span className="font-display font-semibold text-sm text-foreground whitespace-nowrap tabular-nums">
+                              Venda: {formatBRL(sectionSaleTotal)}
+                            </span>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums font-body">
+                              Custo: {formatBRL(sectionCostTotal)}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
