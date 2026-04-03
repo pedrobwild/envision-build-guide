@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { seedDefaultSections } from "@/lib/default-budget-sections";
 
 interface NewBudgetModalProps {
   open: boolean;
