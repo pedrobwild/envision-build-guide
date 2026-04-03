@@ -908,46 +908,59 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
               const sectionCostTotal = calcSectionCostTotal(section);
               const sectionSaleTotal = calcSectionSaleTotal(section);
               const isSaving = savingIds.has(section.id);
+              const sectionPercent = grandTotalSale > 0 ? (sectionSaleTotal / grandTotalSale) * 100 : 0;
+              const isSearchActive = !!sectionMatchMap;
+              const sectionHasMatch = !isSearchActive || sectionMatchMap?.has(section.id);
+              const matchingItemIds = sectionMatchMap?.get(section.id);
 
               return (
                 <SortableSectionCard key={section.id} section={section}>
                   {(dragListeners: any) => (
-                    <>
+                    <div className={cn(isSearchActive && !sectionHasMatch && "opacity-40")}>
                       {/* Section header */}
-                      <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
-                        <button
-                          {...dragListeners}
-                          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
-                          title="Arrastar"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <GripVertical className="h-3.5 w-3.5" />
-                        </button>
-                        <div
-                          className="flex items-center gap-2 flex-1 min-w-0"
-                          onClick={() => toggleSection(section.id)}
-                        >
-                          <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0 transition-transform", isExpanded && "rotate-90")} />
-                          <span className="font-body font-medium text-sm text-foreground truncate">
-                            {section.title || "Sem título"}
-                          </span>
-                          {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
-                          {section.is_optional && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                              Opcional
+                      <div className="px-4 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            {...dragListeners}
+                            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
+                            title="Arrastar"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <GripVertical className="h-3.5 w-3.5" />
+                          </button>
+                          <div
+                            className="flex items-center gap-2 flex-1 min-w-0"
+                            onClick={() => toggleSection(section.id)}
+                          >
+                            <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0 transition-transform", isExpanded && "rotate-90")} />
+                            <span className="font-body font-bold text-sm text-foreground truncate">
+                              {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                             </span>
-                          )}
-                          <span className="text-xs text-muted-foreground/50 font-body ml-1">
-                            {section.items.length} {section.items.length === 1 ? "item" : "itens"}
-                          </span>
-                          <div className="ml-auto flex items-center gap-3 text-xs font-body tabular-nums shrink-0">
-                            <span className="text-muted-foreground">
-                              {formatBRL(sectionCostTotal)}
+                            {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
+                            {section.is_optional && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                Opcional
+                              </span>
+                            )}
+                            <span className="text-xs text-muted-foreground font-body ml-1 shrink-0">
+                              {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                             </span>
-                            <span className="font-semibold text-foreground">
-                              {formatBRL(sectionSaleTotal)}
-                            </span>
+                            <div className="ml-auto flex items-center gap-3 text-xs font-body tabular-nums shrink-0">
+                              <span className="text-muted-foreground/60">
+                                {sectionPercent.toFixed(0)}%
+                              </span>
+                              <span className="font-semibold text-foreground">
+                                {formatBRL(sectionSaleTotal)}
+                              </span>
+                            </div>
                           </div>
+                        </div>
+                        {/* Mini progress bar */}
+                        <div className="ml-9 mt-1.5 h-1 rounded-full bg-muted/50 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary/40 transition-all duration-300"
+                            style={{ width: `${Math.min(sectionPercent, 100)}%` }}
+                          />
                         </div>
                       </div>
 
