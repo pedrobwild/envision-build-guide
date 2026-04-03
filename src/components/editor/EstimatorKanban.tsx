@@ -310,7 +310,7 @@ function EstimatorCard({
       onClick={(e) => { e.stopPropagation(); onClick(); }}
     >
       <div className="flex items-start gap-1.5 mb-1.5">
-        {highPrio && <Pin className="h-3 w-3 shrink-0 text-amber-500 mt-0.5 fill-amber-500" />}
+        {highPrio && <Pin className="h-3 w-3 shrink-0 text-warning mt-0.5 fill-warning" />}
         <span className="font-semibold font-display text-xs text-foreground leading-tight line-clamp-2 flex-1">
           {b.project_name || "Sem nome"}
         </span>
