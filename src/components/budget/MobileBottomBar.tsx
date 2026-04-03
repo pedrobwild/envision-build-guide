@@ -115,8 +115,8 @@ export function MobileBottomBar({
       case "sheet":
         setSheetOpen(true);
         break;
-      case "contract":
-        setContractOpen(true);
+      case "whatsapp":
+        setWhatsappOpen(true);
         break;
     }
   };
