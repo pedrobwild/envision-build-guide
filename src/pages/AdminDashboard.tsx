@@ -41,6 +41,8 @@ export default function AdminDashboard() {
   const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"date" | "value" | "status">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const [duplicateConfirmId, setDuplicateConfirmId] = useState<string | null>(null);
