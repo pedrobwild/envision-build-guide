@@ -68,15 +68,9 @@ const PIPELINE_SECTIONS = {
   },
   enviado: {
     label: "Enviado para o Cliente",
-    statuses: ["sent_to_client"] as InternalStatus[],
+    statuses: ["sent_to_client", "approved"] as InternalStatus[],
     icon: Send,
     accent: "text-emerald-600",
-  },
-  fechado: {
-    label: "Contrato Fechado",
-    statuses: ["approved"] as InternalStatus[],
-    icon: ThumbsUp,
-    accent: "text-green-600",
   },
   perdido: {
     label: "Perdido",
