@@ -74,7 +74,7 @@ const ESTIMATOR_COLUMNS = [
     id: "delivered",
     label: "Entregue",
     icon: Send,
-    statuses: ["delivered_to_sales", "minuta_solicitada"],
+    statuses: ["delivered_to_sales", "sent_to_client", "minuta_solicitada"],
     accent: "border-t-teal-500",
     headerColor: "text-teal-700 dark:text-teal-400",
     bgColor: "bg-teal-50/50 dark:bg-teal-950/20",
