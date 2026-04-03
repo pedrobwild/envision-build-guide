@@ -48,6 +48,7 @@ export function MobileInlineSummary({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   
   const [contractOpen, setContractOpen] = useState(false);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
   const totalCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
