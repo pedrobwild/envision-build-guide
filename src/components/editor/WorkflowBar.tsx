@@ -56,6 +56,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { BlockingDialog } from "./BlockingDialog";
 import { RevisionRequestDialog } from "./RevisionRequestDialog";
+import { publishVersion, ensureVersionGroup } from "@/lib/budget-versioning";
 
 interface ProfileRow {
   id: string;
