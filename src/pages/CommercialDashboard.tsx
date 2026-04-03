@@ -121,7 +121,7 @@ export default function CommercialDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
 
-  useEffect(() => { if (user) loadData(); }, [user]);
+  useEffect(() => { if (user && profile) loadData(); }, [user, profile]);
 
   async function loadData() {
     setLoading(true);
