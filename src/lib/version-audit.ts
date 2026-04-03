@@ -7,7 +7,8 @@ export type VersionEventType =
   | "version_superseded"
   | "version_compared"
   | "version_activated"
-  | "change_reason_updated";
+  | "change_reason_updated"
+  | "revision_requested";
 
 interface VersionEventPayload {
   event_type: VersionEventType;
