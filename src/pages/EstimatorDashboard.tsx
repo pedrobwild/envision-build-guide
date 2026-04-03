@@ -216,12 +216,16 @@ export default function EstimatorDashboard() {
   );
 
   const commercialOptions = useMemo(() => {
-    const ids = new Set(budgets.map((b) => b.commercial_owner_id).filter(Boolean));
-    return Array.from(ids).map((id) => ({
-      id: id!,
-      name: getProfileName(id!),
-    }));
-  }, [budgets, getProfileName]);
+    if (!isAdmin) return [];
+    const ids = [...new Set(budgets.map((b) => b.commercial_owner_id).filter(Boolean))] as string[];
+    return ids.map((id) => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [isAdmin, budgets, getProfileName]);
+
+  const estimatorOptions = useMemo(() => {
+    if (!isAdmin) return [];
+    const ids = [...new Set(budgets.map((b) => b.estimator_owner_id).filter(Boolean))] as string[];
+    return ids.map((id) => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [isAdmin, budgets, getProfileName]);
 
   // Deadline helpers
   const getDueInfo = (dueAt: string | null) => {
