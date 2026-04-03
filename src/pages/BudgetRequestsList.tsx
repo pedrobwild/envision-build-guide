@@ -253,7 +253,7 @@ export default function BudgetRequestsList() {
             </p>
             {!search && statusFilter === "all" && priorityFilter === "all" && (
               <Button
-                onClick={() => navigate("/admin/solicitacoes/nova")}
+                onClick={() => setNewBudgetOpen(true)}
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" /> Nova Solicitação
