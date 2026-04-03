@@ -61,6 +61,7 @@ import {
   type Priority,
 } from "@/lib/role-constants";
 import { ProductionFunnel } from "@/components/editor/ProductionFunnel";
+import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFilterChips";
 import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
