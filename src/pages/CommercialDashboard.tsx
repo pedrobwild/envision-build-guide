@@ -478,7 +478,7 @@ export default function CommercialDashboard() {
                             <GitCompare className="h-4 w-4 mr-2" />Comparar versões
                           </DropdownMenuItem>
                         )}
-                        {/* Status actions only for unlocked statuses */}
+                        {/* Status actions — "Contrato fechado" available for all non-terminal statuses */}
                         {!isLocked && (
                           <>
                             <DropdownMenuSeparator />
@@ -487,15 +487,15 @@ export default function CommercialDashboard() {
                                 <Send className="h-4 w-4 mr-2" />Enviar ao cliente
                               </DropdownMenuItem>
                             )}
-                            {b.internal_status === "sent_to_client" && (
-                              <>
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "approved")}>
-                                  <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
-                                  <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
-                                </DropdownMenuItem>
-                              </>
+                            {b.internal_status !== "approved" && b.internal_status !== "lost" && (
+                              <DropdownMenuItem onClick={() => changeStatus(b.id, "approved")}>
+                                <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
+                              </DropdownMenuItem>
+                            )}
+                            {b.internal_status !== "lost" && b.internal_status !== "approved" && (
+                              <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
+                                <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
+                              </DropdownMenuItem>
                             )}
                             {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
                               <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
