@@ -174,11 +174,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
 
   function handlePrimaryClick() {
     if (!primaryTransition) return;
-    if (primaryTransition.newStatus === "contrato_fechado" && internalStatus === "sent_to_client") {
-      setContractConfirmOpen(true);
-    } else {
-      changeStatus(primaryTransition.newStatus);
-    }
+    changeStatus(primaryTransition.newStatus);
   }
 
   return (
