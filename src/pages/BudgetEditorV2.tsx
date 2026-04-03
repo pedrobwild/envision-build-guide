@@ -460,7 +460,7 @@ export default function BudgetEditorV2() {
 
             {/* ── Tab: Versões ── */}
             <TabsContent value="versoes" className="mt-6">
-              <VersionHistoryPanel budgetId={budgetId!} onVersionChange={loadBudget} defaultExpanded />
+              <VersionTimeline budgetId={budgetId!} onVersionChange={loadBudget} />
             </TabsContent>
           </Tabs>
         </main>
