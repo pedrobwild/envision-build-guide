@@ -452,12 +452,12 @@ export default function CommercialDashboard() {
                             </span>
                           )}
                           {b.is_published_version && (
-                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success">
                               Publicada
                             </span>
                           )}
                           {!b.is_published_version && b.status === "draft" && (b.version_number ?? 1) > 1 && (
-                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-warning/10 text-warning">
                               Em elaboração
                             </span>
                           )}
