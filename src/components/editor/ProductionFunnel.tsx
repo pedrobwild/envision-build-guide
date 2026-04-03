@@ -39,7 +39,7 @@ const FUNNEL_STAGES: FunnelStage[] = [
     key: "delivered",
     label: "Entregue",
     icon: Send,
-    statuses: ["delivered_to_sales", "minuta_solicitada"],
+    statuses: ["delivered_to_sales", "sent_to_client", "minuta_solicitada"],
     color: "text-teal-600",
     bgColor: "bg-teal-500",
   },
