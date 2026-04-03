@@ -622,7 +622,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         if (imgRow) itemImages = [imgRow];
       }
 
-      const updated = sections.map(s => {
+      let updated = sections.map(s => {
         if (s.id !== sectionId) return s;
         const newItem = { ...data, images: itemImages } as ItemData;
         const newItems = [...s.items, newItem];
@@ -632,6 +632,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         }
         return { ...s, items: newItems, section_price: newSaleTotal > 0 ? newSaleTotal : s.section_price };
       });
+      updated = recalcTaxItem(updated);
       onSectionsChange(updated);
       const origin = itemData?.catalog_item_id ? "Item do catálogo adicionado" : "Item manual adicionado";
       toast.success(origin);
