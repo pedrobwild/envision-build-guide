@@ -125,6 +125,7 @@ export default function CommercialDashboard() {
   const [sortBy, setSortBy] = useState<SortOption>("urgente");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
+  const [commercialFilter, setCommercialFilter] = useState<string>("all");
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
 
@@ -177,10 +178,21 @@ export default function CommercialDashboard() {
     return c;
   }, [budgets]);
 
+  const isAdmin = profile?.roles.includes("admin");
+
+  // Unique commercial owners for filter (admin only)
+  const commercialOptions = useMemo(() => {
+    if (!isAdmin) return [];
+    const ids = [...new Set(budgets.map(b => b.commercial_owner_id).filter(Boolean))] as string[];
+    return ids.map(id => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [isAdmin, budgets, getProfileName]);
+
   const filtered = useMemo(() => {
     let result = budgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
+      const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
+      if (!matchCommercial) return false;
       if (statusFilter === "all") return matchSearch;
       const section = PIPELINE_SECTIONS[statusFilter as keyof typeof PIPELINE_SECTIONS];
       if (section) return matchSearch && (section.statuses as readonly string[]).includes(b.internal_status);
@@ -207,7 +219,7 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [budgets, search, statusFilter, sortBy]);
+  }, [budgets, search, statusFilter, sortBy, commercialFilter]);
 
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
     const current = budgets.find(b => b.id === budgetId);
@@ -355,6 +367,21 @@ export default function CommercialDashboard() {
                 <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
               </SelectContent>
             </Select>
+            {/* Commercial owner filter (admin only) */}
+            {isAdmin && commercialOptions.length > 0 && (
+              <Select value={commercialFilter} onValueChange={setCommercialFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <User className="h-3.5 w-3.5 mr-1.5" />
+                  <SelectValue placeholder="Comercial" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os comerciais</SelectItem>
+                  {commercialOptions.map(opt => (
+                    <SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {/* View toggle */}
             <div className="flex border border-border rounded-lg overflow-hidden">
               <Button
@@ -409,7 +436,7 @@ export default function CommercialDashboard() {
           {/* Kanban view */}
           {!loading && viewMode === "kanban" && budgets.length > 0 && (
             <KanbanBoard
-              budgets={budgets}
+              budgets={commercialFilter === "all" ? budgets : budgets.filter(b => b.commercial_owner_id === commercialFilter)}
               onStatusChange={changeStatus}
               onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
               getProfileName={getProfileName}
