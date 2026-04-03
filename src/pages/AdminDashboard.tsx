@@ -11,7 +11,7 @@ import {
   MoreHorizontal, Trash2, Archive, Eye, Bell, Pencil, ShoppingBag,
   Handshake, BarChart3, Hammer, Briefcase, Settings, Users,
   ArrowRight, GitCompare, Send, LayoutDashboard, ClipboardList,
-  Settings2, DollarSign,
+  Settings2, DollarSign, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { toast } from "sonner";
