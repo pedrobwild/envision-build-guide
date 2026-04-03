@@ -386,7 +386,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
           {!mapFailed ? (
             <div
               ref={mapContainer}
-              className="w-full h-[400px] md:h-[600px] rounded-xl overflow-hidden border border-border"
+              className="w-full h-[360px] md:h-[600px] rounded-xl overflow-hidden border border-border"
               aria-label="Mapa de densidade por bairro"
             />
           ) : (
