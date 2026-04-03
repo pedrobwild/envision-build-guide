@@ -74,14 +74,6 @@ export default function BudgetEditorV2() {
     setStartingRevision(false);
   };
 
-        {/* Revision Banner — visible to orçamentista when revision requested */}
-        {budget.internal_status === "revision_requested" && revisionRequest && (
-          <RevisionBanner
-            revisionData={revisionRequest}
-            onStartRevision={handleStartRevision}
-            startingRevision={startingRevision}
-          />
-        )}
 
   useEffect(() => {
     loadBudget();
