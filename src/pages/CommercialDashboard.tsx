@@ -263,7 +263,7 @@ export default function CommercialDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
         {/* Pipeline summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => {
             const Icon = sec.icon;
             return (
