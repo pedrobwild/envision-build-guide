@@ -1040,21 +1040,31 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               strategy={verticalListSortingStrategy}
                             >
                               <div>
-                                {section.items.map((item) => (
-                                  <SortableItemRow
-                                    key={item.id}
-                                    item={item}
-                                    sectionId={section.id}
-                                    sectionTitle={section.title}
-                                    budgetId={budgetId}
-                                    isItemSaving={savingIds.has(item.id)}
-                                    searchMatch={matchingItemIds?.has(item.id)}
-                                    onUpdate={updateItem}
-                                    onDelete={deleteItem}
-                                    onImagesChange={handleImagesChange}
-                                    onPromoteToCatalog={promoteToCatalog}
-                                  />
-                                ))}
+                                {section.items.length === 0 ? (
+                                  <button
+                                    onClick={() => addItem(section.id, {})}
+                                    className="w-full py-6 border-2 border-dashed border-border/40 rounded-md text-sm font-body text-muted-foreground/50 hover:text-foreground hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer flex items-center justify-center gap-1.5 mx-auto my-2"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                    Adicionar primeiro item
+                                  </button>
+                                ) : (
+                                  section.items.map((item) => (
+                                    <SortableItemRow
+                                      key={item.id}
+                                      item={item}
+                                      sectionId={section.id}
+                                      sectionTitle={section.title}
+                                      budgetId={budgetId}
+                                      isItemSaving={savingIds.has(item.id)}
+                                      searchMatch={matchingItemIds?.has(item.id)}
+                                      onUpdate={updateItem}
+                                      onDelete={deleteItem}
+                                      onImagesChange={handleImagesChange}
+                                      onPromoteToCatalog={promoteToCatalog}
+                                    />
+                                  ))
+                                )}
                               </div>
                             </SortableContext>
                           </DndContext>
