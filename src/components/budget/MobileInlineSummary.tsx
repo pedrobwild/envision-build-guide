@@ -143,7 +143,7 @@ export function MobileInlineSummary({
           <p className="text-xs font-body font-medium text-muted-foreground mb-1">
             Investimento total
           </p>
-          <p className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none">
+          <p className="font-display font-extrabold text-[1.75rem] text-primary leading-none" style={{ letterSpacing: '-0.035em', fontFeatureSettings: '"tnum" 1, "ss01" 1' }}>
             {formatBRL(total)}
           </p>
           <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-primary/10">

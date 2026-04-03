@@ -29,7 +29,7 @@ export function MobilePriceAnchor({ total, validityDaysLeft, expired }: MobilePr
         {/* Price block */}
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground font-body mb-0.5">Investimento total</p>
-          <p className="text-2xl font-display font-bold text-foreground tracking-tight leading-none">
+          <p className="text-2xl font-display font-bold text-foreground leading-none" style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}>
             {formatBRL(total)}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5">

@@ -42,7 +42,8 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-20px" }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="group rounded-xl border border-border bg-card overflow-hidden hover:border-border/80 hover:shadow-md transition-all duration-300"
+        whileTap={{ scale: 0.98 }}
+        className="group rounded-xl border border-border bg-card overflow-hidden hover:border-border/80 hover:shadow-md active:shadow-sm active:border-primary/20 transition-all duration-300"
       >
         {/* Always show clean public card — single image + title */}
         <div className="flex gap-0">
