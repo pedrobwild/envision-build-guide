@@ -88,6 +88,7 @@ export async function getVersionAuditEvents(budgetIds: string[]) {
     "version_compared",
     "version_activated",
     "change_reason_updated",
+    "revision_requested",
   ];
 
   const { data, error } = await supabase
