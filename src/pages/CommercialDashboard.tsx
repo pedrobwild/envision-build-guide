@@ -219,7 +219,7 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [budgets, search, statusFilter, sortBy]);
+  }, [budgets, search, statusFilter, sortBy, commercialFilter]);
 
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
     const current = budgets.find(b => b.id === budgetId);
