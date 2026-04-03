@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense, Fragment } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicBudget, calculateBudgetTotal, calculateSectionSubtotal } from "@/lib/supabase-helpers";
@@ -13,7 +13,7 @@ import { CollapsingSectionHeader } from "@/components/budget/CollapsingSectionHe
 import { PublicBudgetSkeleton } from "@/components/budget/PublicBudgetSkeleton";
 import { demoBudget } from "@/lib/demo-budget-data";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
 import { ScrollToTopButton } from "@/components/budget/ScrollToTopButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
@@ -46,6 +46,107 @@ const ReformTimeline = lazy(() => import("@/components/budget/ReformTimeline").t
 /** Lightweight placeholder while lazy chunks load */
 function LazyFallback() {
   return <div className="rounded-xl bg-muted/30 animate-pulse h-48 w-full" />;
+}
+
+/** Collapsible photo group — collapses on mobile, always open on desktop */
+function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
+  group: any;
+  allItems: any[];
+  budgetId: string;
+  exporting: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const showItems = !isMobile || isOpen || exporting;
+  const itemCount = allItems.length;
+
+  return (
+    <div key={group.category.id} className="mb-8 last:mb-0" data-pdf-section>
+      {/* Header — clickable on mobile */}
+      <button
+        type="button"
+        onClick={() => isMobile && setIsOpen(prev => !prev)}
+        className={cn(
+          "flex items-center gap-2.5 mb-3 sm:mb-4 w-full text-left",
+          isMobile && "active:opacity-70 transition-opacity"
+        )}
+      >
+        <div className={cn("w-1 h-5 rounded-full", group.category.bgClass)} />
+        <span className={cn("text-sm sm:text-base font-display font-bold tracking-tight flex-1", group.category.colorClass)}>
+          {group.category.label}
+        </span>
+        {/* Mobile: item count badge + chevron */}
+        <span className="flex items-center gap-1.5 sm:hidden">
+          <span className="text-xs font-mono text-muted-foreground tabular-nums bg-muted/60 px-1.5 py-0.5 rounded-full">
+            {itemCount}
+          </span>
+          <motion.svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-muted-foreground"
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <path d="m6 9 6 6 6-6" />
+          </motion.svg>
+        </span>
+      </button>
+
+      {/* Items */}
+      <AnimatePresence initial={false}>
+        {showItems && (
+          <motion.div
+            initial={isMobile ? { height: 0, opacity: 0 } : false}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            {exporting ? (
+              <ul className="space-y-1">
+                {allItems.map((item: any, idx: number) => (
+                  <li
+                    key={item.id}
+                    className={cn(
+                      "flex items-center gap-2 py-1.5 text-sm font-body text-foreground",
+                      idx < allItems.length - 1 && "border-b border-border/30"
+                    )}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />
+                    <span className="flex-1">{item.title}</span>
+                    {item.qty && (
+                      <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
+                        {item.qty} {item.unit || "un"}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {allItems.map((item: any) => (
+                  <ProductShowcaseCard
+                    key={item.id}
+                    item={item}
+                    budgetId={budgetId}
+                    editable={false}
+                    showGallery={false}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 
@@ -335,48 +436,13 @@ export default function PublicBudget() {
                         if (allItems.length === 0) return null;
 
                         return (
-                          <div key={group.category.id} className="mb-8 last:mb-0" data-pdf-section>
-                            <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
-                              <div className={cn("w-1 h-5 rounded-full", group.category.bgClass)} />
-                              <span className={cn("text-sm sm:text-base font-display font-bold tracking-tight", group.category.colorClass)}>
-                                {group.category.label}
-                              </span>
-                            </div>
-
-                            {exporting ? (
-                              <ul className="space-y-1">
-                                {allItems.map((item: any, idx: number) => (
-                                  <li
-                                    key={item.id}
-                                    className={cn(
-                                      "flex items-center gap-2 py-1.5 text-sm font-body text-foreground",
-                                      idx < allItems.length - 1 && "border-b border-border/30"
-                                    )}
-                                  >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />
-                                    <span className="flex-1">{item.title}</span>
-                                    {item.qty && (
-                                      <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-                                        {item.qty} {item.unit || "un"}
-                                      </span>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                {allItems.map((item: any) => (
-                                  <ProductShowcaseCard
-                                    key={item.id}
-                                    item={item}
-                                    budgetId={budget.id}
-                                    editable={false}
-                                    showGallery={false}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                          <CollapsiblePhotoGroup
+                            key={group.category.id}
+                            group={group}
+                            allItems={allItems}
+                            budgetId={budget.id}
+                            exporting={exporting}
+                          />
                         );
                       })}
                     </div>
