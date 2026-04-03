@@ -111,6 +111,20 @@ export default function BudgetRequestsList() {
     setLoading(false);
   }
 
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from("budgets").delete().eq("id", deleteTarget.id);
+    if (error) {
+      toast.error("Erro ao excluir solicitação");
+    } else {
+      toast.success("Solicitação excluída com sucesso");
+      setBudgets((prev) => prev.filter((b) => b.id !== deleteTarget.id));
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
+  }
+
   const filtered = budgets.filter((b) => {
     const q = search.toLowerCase();
     const matchSearch =
