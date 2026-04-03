@@ -437,14 +437,23 @@ function SortableItemRow({
 }
 
 export function SectionsEditor({ budgetId, sections, onSectionsChange }: SectionsEditorProps) {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const storageKey = `budget-sections-state-${budgetId}`;
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return new Set(JSON.parse(saved));
+    } catch { /* ignore */ }
+    return new Set();
+  });
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const timers = useRef<Record<string, NodeJS.Timeout>>({});
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  // Persist expanded state
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify([...expandedSections])); } catch { /* ignore */ }
+  }, [expandedSections, storageKey]);
 
   const toggleSection = (id: string) => {
     setExpandedSections(prev => {
@@ -453,6 +462,39 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       return next;
     });
   };
+
+  const expandAll = () => setExpandedSections(new Set(sections.map(s => s.id)));
+  const collapseAll = () => setExpandedSections(new Set());
+
+  // Search filtering
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const sectionMatchMap = useMemo(() => {
+    if (!normalizedQuery) return null;
+    const map = new Map<string, Set<string>>();
+    for (const s of sections) {
+      const matchingItemIds = new Set<string>();
+      const sectionTitleMatch = s.title.toLowerCase().includes(normalizedQuery);
+      for (const item of s.items) {
+        if (
+          item.title.toLowerCase().includes(normalizedQuery) ||
+          (item.description && item.description.toLowerCase().includes(normalizedQuery))
+        ) {
+          matchingItemIds.add(item.id);
+        }
+      }
+      if (sectionTitleMatch || matchingItemIds.size > 0) {
+        map.set(s.id, matchingItemIds);
+      }
+    }
+    return map;
+  }, [normalizedQuery, sections]);
+
+  // Auto-expand matching sections on search
+  useEffect(() => {
+    if (sectionMatchMap && sectionMatchMap.size > 0) {
+      setExpandedSections(new Set(sectionMatchMap.keys()));
+    }
+  }, [sectionMatchMap]);
 
   const debouncedSave = useCallback((table: string, id: string, updates: Record<string, any>) => {
     const key = `${table}-${id}`;
