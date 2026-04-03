@@ -15,6 +15,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Plus,
   Search,
   Calendar,
@@ -26,7 +43,11 @@ import {
   Inbox,
   Hammer,
   Briefcase,
+  MoreVertical,
+  Pencil,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
