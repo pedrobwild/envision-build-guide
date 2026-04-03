@@ -93,6 +93,8 @@ type Transition = {
   label: string;
   newStatus: InternalStatus;
   roles: ("admin" | "comercial" | "orcamentista")[];
+  confirmRequired?: boolean;
+  confirmMessage?: string;
 };
 
 const PRIMARY_TRANSITIONS: Record<string, Transition> = {
@@ -100,8 +102,21 @@ const PRIMARY_TRANSITIONS: Record<string, Transition> = {
   triage: { label: "Atribuir e Iniciar Produção", newStatus: "assigned", roles: ["admin"] },
   assigned: { label: "Iniciar Produção", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
   in_progress: { label: "Enviar para Revisão", newStatus: "ready_for_review", roles: ["orcamentista", "admin"] },
-  ready_for_review: { label: "Enviar ao Cliente", newStatus: "sent_to_client", roles: ["comercial", "admin"] },
+  ready_for_review: { label: "Entregar ao Comercial", newStatus: "delivered_to_sales", roles: ["orcamentista", "admin"] },
+  delivered_to_sales: {
+    label: "Enviar ao Cliente",
+    newStatus: "sent_to_client",
+    roles: ["comercial", "admin"],
+    confirmRequired: true,
+  },
   revision_requested: { label: "Iniciar Revisão", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
+  minuta_solicitada: {
+    label: "Registrar Contrato Fechado",
+    newStatus: "contrato_fechado",
+    roles: ["comercial", "admin"],
+    confirmRequired: true,
+    confirmMessage: "Confirmar contrato fechado? Esta ação marca o orçamento como convertido.",
+  },
 };
 
 export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {

@@ -20,7 +20,9 @@ export const INTERNAL_STATUSES = {
   delivered_to_sales: { label: 'Entregue ao Comercial', color: 'bg-teal-100 text-teal-800', icon: '📤' },
   sent_to_client: { label: 'Enviado ao Cliente', color: 'bg-emerald-100 text-emerald-800', icon: '✉️' },
   revision_requested: { label: 'Revisão Solicitada', color: 'bg-orange-100 text-orange-700 border-orange-300', icon: '🔄' },
-  
+  minuta_solicitada: { label: 'Minuta Solicitada', color: 'bg-violet-100 text-violet-700 border-violet-300', icon: '📝' },
+  contrato_fechado: { label: 'Contrato Fechado', color: 'bg-emerald-100 text-emerald-700 border-emerald-300', icon: '🤝' },
+
   lost: { label: 'Perdido', color: 'bg-gray-100 text-gray-600', icon: '❌' },
   archived: { label: 'Arquivado', color: 'bg-gray-100 text-gray-500', icon: '📦' },
 } as const;
