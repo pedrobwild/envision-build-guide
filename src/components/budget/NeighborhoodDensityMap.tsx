@@ -62,6 +62,10 @@ function getPinStyle(count: number) {
 
 const DEFAULT_CENTER: [number, number] = [-46.6679, -23.5874];
 const DEFAULT_ZOOM = 11.5;
+const ALL_PINS_BOUNDS: [[number, number], [number, number]] = [
+  [-46.7302, -23.6536], // SW corner (Butantã lng, Santo Amaro lat)
+  [-46.5580, -23.5274], // NE corner (Vila Guilhermina lng/lat)
+];
 const MAPTILER_STYLE = "https://api.maptiler.com/maps/streets-v2/style.json";
 const SECONDARY_FALLBACK_STYLE = "https://demotiles.maplibre.org/style.json";
 const FALLBACK_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
