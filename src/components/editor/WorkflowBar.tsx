@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -13,8 +13,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,6 +96,7 @@ const PRIMARY_TRANSITIONS: Record<string, Transition> = {
   assigned: { label: "Iniciar Produção", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
   in_progress: { label: "Enviar para Revisão", newStatus: "ready_for_review", roles: ["orcamentista", "admin"] },
   ready_for_review: { label: "Enviar ao Cliente", newStatus: "sent_to_client", roles: ["comercial", "admin"] },
+  revision_requested: { label: "Iniciar Revisão", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
 };
 
 export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
@@ -96,6 +105,9 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
   const [revisionModalOpen, setRevisionModalOpen] = useState(false);
+  const [revisionInstructionsOpen, setRevisionInstructionsOpen] = useState(false);
+  const [revisionInstructions, setRevisionInstructions] = useState<{ instructions: string; change_types: string[]; requested_by_name: string } | null>(null);
+  const [loadingInstructions, setLoadingInstructions] = useState(false);
 
   useEffect(() => {
     supabase
@@ -176,7 +188,33 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
 
   function handlePrimaryClick() {
     if (!primaryTransition) return;
-    changeStatus(primaryTransition.newStatus);
+    const note = internalStatus === "revision_requested" ? "Revisão iniciada pelo orçamentista" : undefined;
+    changeStatus(primaryTransition.newStatus, note);
+    if (internalStatus === "revision_requested") {
+      toast.success("Revisão iniciada. Realize as alterações e envie para revisão.");
+    }
+  }
+
+  async function openRevisionInstructions() {
+    setLoadingInstructions(true);
+    setRevisionInstructionsOpen(true);
+    const { data } = await supabase
+      .from("budget_events")
+      .select("metadata")
+      .eq("budget_id", budget.id)
+      .eq("event_type", "revision_requested")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (data?.metadata) {
+      const m = data.metadata as any;
+      setRevisionInstructions({
+        instructions: m.instructions || "",
+        change_types: m.change_types || [],
+        requested_by_name: m.requested_by_name || "—",
+      });
+    }
+    setLoadingInstructions(false);
   }
 
   return (
@@ -256,9 +294,10 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
             <Button
               variant="default"
               size="sm"
-              className="h-7 text-xs"
+              className={`h-7 text-xs gap-1.5 ${internalStatus === "revision_requested" ? "bg-orange-500 hover:bg-orange-600 text-white" : ""}`}
               onClick={handlePrimaryClick}
             >
+              {internalStatus === "revision_requested" && <RotateCcw className="h-3.5 w-3.5" />}
               {primaryTransition.label}
             </Button>
           )}
@@ -285,6 +324,15 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {internalStatus === "revision_requested" && isAdmin && (
+                  <>
+                    <DropdownMenuItem onClick={openRevisionInstructions}>
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Ver instruções da revisão
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 {!isBlockedOrWaiting && (
                   <>
                     <DropdownMenuItem onClick={() => setBlockingTarget("blocked")}>
@@ -338,6 +386,51 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           onBudgetUpdate({ internal_status: "revision_requested" });
         }}
       />
+
+      <Dialog open={revisionInstructionsOpen} onOpenChange={(open) => {
+        setRevisionInstructionsOpen(open);
+        if (!open) setRevisionInstructions(null);
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-display">
+              <RotateCcw className="h-4 w-4 text-orange-500" />
+              Instruções da Revisão
+            </DialogTitle>
+            {revisionInstructions && (
+              <DialogDescription className="text-xs font-body">
+                Solicitada por {revisionInstructions.requested_by_name}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {loadingInstructions ? (
+            <div className="flex items-center justify-center py-8">
+              <span className="text-sm text-muted-foreground">Carregando...</span>
+            </div>
+          ) : revisionInstructions ? (
+            <div className="space-y-4">
+              {revisionInstructions.change_types.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Tipo de alteração</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {revisionInstructions.change_types.map((t) => (
+                      <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Instruções</p>
+                <p className="text-sm whitespace-pre-wrap bg-muted/50 rounded-md p-3 border">
+                  {revisionInstructions.instructions}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-4">Nenhuma instrução encontrada.</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

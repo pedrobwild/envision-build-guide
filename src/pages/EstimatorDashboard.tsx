@@ -52,6 +52,7 @@ import {
   FileSignature,
   UserCog,
   Handshake,
+  RotateCcw,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -80,7 +81,7 @@ type SortOption = "urgente" | "recente" | "prazo";
 
 function getEstimatorStage(status: string): "pending" | "in_progress" | "review" | "delivered" | "finished" {
   if (["requested", "novo", "triage", "assigned"].includes(status)) return "pending";
-  if (["in_progress", "waiting_info", "blocked"].includes(status)) return "in_progress";
+  if (["in_progress", "waiting_info", "blocked", "revision_requested"].includes(status)) return "in_progress";
   if (status === "ready_for_review") return "review";
   if (["delivered_to_sales", "sent_to_client", "minuta_solicitada"].includes(status)) return "delivered";
   return "finished";
@@ -244,7 +245,7 @@ export default function EstimatorDashboard() {
 
   // Summary counts aligned with the 5 funnel stages
   const PENDING_STATUSES = ["requested", "novo", "triage", "assigned"];
-  const IN_PROGRESS_STATUSES = ["in_progress", "waiting_info", "blocked"];
+  const IN_PROGRESS_STATUSES = ["in_progress", "waiting_info", "blocked", "revision_requested"];
   const REVIEW_STATUSES = ["ready_for_review"];
   const DELIVERED_STATUSES = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
   const FINISHED_STATUSES = ["lost", "archived"];
@@ -608,6 +609,14 @@ export default function EstimatorDashboard() {
                               </span>
                             )}
                           </div>
+                          {b.internal_status === "revision_requested" && (
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-300 border text-xs font-body gap-1 px-2 py-0.5">
+                                <RotateCcw className="h-3 w-3" />
+                                Revisão solicitada
+                              </Badge>
+                            </div>
+                          )}
 
                           {/* Row 2: Meta */}
                           <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
