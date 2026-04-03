@@ -142,7 +142,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         >
           <div className="py-2 border-b border-white/[0.08]">
             <p className="text-xs font-body text-white/60 leading-relaxed">
-              CNPJ: 47.350.338/0001-37 · Responsável Técnico: Thiago Dantas do Amor · CAU: A162437-7
+              Bwild Reformas LTDA · CNPJ: 47.350.338/0001-37 · Responsável Técnico: Thiago Dantas do Amor · CAU: A162437-7
             </p>
           </div>
         </motion.div>
@@ -197,7 +197,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               variants={fadeUp} custom={0.7} initial="hidden" animate="visible"
               className="text-[10px] font-body text-white/50 leading-relaxed pt-1"
             >
-              Bwild Engenharia e Projetos Ltda · CNPJ 47.350.338/0001-37
+              Bwild Reformas LTDA · CNPJ 47.350.338/0001-37
               <br />
               RT: Thiago Dantas do Amor · CAU A162437-7
             </motion.p>
