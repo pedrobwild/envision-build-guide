@@ -229,16 +229,15 @@ export function MobileInlineSummary({
           </motion.a>
         ) : (
           <motion.button
-            onClick={() => setContractOpen(true)}
+            onClick={() => setWhatsappOpen(true)}
             whileTap={{ scale: 0.97 }}
             className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
           >
-            <FileSignature className="h-4 w-4 flex-shrink-0" />
-            Solicitar Contrato
+            <MessageCircle className="h-4 w-4 flex-shrink-0" />
+            Falar com comercial
           </motion.button>
         )}
       </motion.div>
-
 
       <ContractRequestDialog
         open={contractOpen}
@@ -247,6 +246,13 @@ export function MobileInlineSummary({
         publicId={publicId}
         projectName={projectName}
         total={total}
+      />
+
+      <WhatsAppCommentDialog
+        open={whatsappOpen}
+        onOpenChange={setWhatsappOpen}
+        publicId={publicId}
+        projectName={projectName}
       />
     </div>
   );
