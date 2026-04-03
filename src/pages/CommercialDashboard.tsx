@@ -403,15 +403,16 @@ export default function CommercialDashboard() {
               const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
               const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
               const due = getDueInfo(b.due_at);
-              const isWaitingAction = ["waiting_info", "delivered_to_sales"].includes(b.internal_status);
+              const isLocked = LOCKED_STATUSES.includes(b.internal_status);
+              const isEntregue = b.internal_status === "delivered_to_sales";
 
               return (
-                <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isWaitingAction ? "border-amber-300 dark:border-amber-700" : ""}`}>
+                <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isEntregue ? "border-teal-300 dark:border-teal-700" : ""}`}>
                   <div className="flex items-start gap-4">
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/admin/demanda/${b.id}`)}>
                       {/* Row 1 */}
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                        {isWaitingAction && <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />}
+                        {isEntregue && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
                         <span className="font-semibold font-display text-foreground truncate">{b.project_name || "Sem nome"}</span>
                         <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
                           {status.icon} {status.label}
@@ -477,26 +478,31 @@ export default function CommercialDashboard() {
                             <GitCompare className="h-4 w-4 mr-2" />Comparar versões
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuSeparator />
-                        {b.internal_status === "delivered_to_sales" && (
-                          <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
-                            <Send className="h-4 w-4 mr-2" />Marcar como enviado ao cliente
-                          </DropdownMenuItem>
-                        )}
-                        {b.internal_status === "sent_to_client" && (
+                        {/* Status actions only for unlocked statuses */}
+                        {!isLocked && (
                           <>
-                            <DropdownMenuItem onClick={() => changeStatus(b.id, "approved")}>
-                              <ThumbsUp className="h-4 w-4 mr-2" />Marcar como aprovado
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
-                              <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
-                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {b.internal_status === "delivered_to_sales" && (
+                              <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
+                                <Send className="h-4 w-4 mr-2" />Enviar ao cliente
+                              </DropdownMenuItem>
+                            )}
+                            {b.internal_status === "sent_to_client" && (
+                              <>
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "approved")}>
+                                  <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
+                                  <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
+                              <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
+                                <RotateCcw className="h-4 w-4 mr-2" />Pedir revisão
+                              </DropdownMenuItem>
+                            )}
                           </>
-                        )}
-                        {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
-                          <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
-                            <RotateCcw className="h-4 w-4 mr-2" />Pedir revisão
-                          </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
