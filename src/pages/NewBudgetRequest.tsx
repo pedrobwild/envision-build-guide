@@ -308,6 +308,22 @@ export default function NewBudgetRequest() {
               </div>
             </div>
             <div className="space-y-1.5">
+              <Label className="font-body text-sm">Tipo de imóvel</Label>
+              <Select value={propertyType} onValueChange={setPropertyType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="apartamento">Apartamento</SelectItem>
+                  <SelectItem value="casa">Casa</SelectItem>
+                  <SelectItem value="cobertura">Cobertura</SelectItem>
+                  <SelectItem value="studio">Studio / Kitnet</SelectItem>
+                  <SelectItem value="comercial">Espaço Comercial</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
               <Label className="font-body text-sm">Tipo de locação</Label>
               <Select value={locationType} onValueChange={setLocationType}>
                 <SelectTrigger>
