@@ -390,7 +390,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
               aria-label="Mapa de densidade por bairro"
             />
           ) : (
-            <MapFallback height={isMobile ? "400px" : "600px"} />
+            <MapFallback height={isMobile ? "360px" : "600px"} />
           )}
         </div>
         <div className="flex-[2] md:max-h-[600px] overflow-y-auto" ref={panelRef}>
