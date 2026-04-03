@@ -217,6 +217,39 @@ export default function NewBudgetRequest() {
         onSubmit={handleSubmit}
         className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6"
       >
+        {/* Template selector */}
+        {templates.length > 0 && (
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-display flex items-center gap-2">
+                <LayoutTemplate className="h-4 w-4 text-primary" />
+                Template do Orçamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Label className="font-body text-sm">Modelo base</Label>
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um template (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem template (seções padrão)</SelectItem>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedTemplateId && selectedTemplateId !== "none" && (
+                <p className="text-xs text-muted-foreground font-body">
+                  {templates.find((t) => t.id === selectedTemplateId)?.description}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Client */}
         <Card>
           <CardHeader className="pb-4">
