@@ -264,12 +264,14 @@ function SubSectionGroup({
   locked,
   onCardClick,
   getProfileName,
+  compact = false,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
   locked: boolean;
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
+  compact?: boolean;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
@@ -299,12 +301,31 @@ function SubSectionGroup({
       <div className="space-y-2">
         {sorted.map((b) => (
           <div key={b.id} className={subsection.cardBorderClass ? `rounded-md ${subsection.cardBorderClass}` : ""}>
-            <DraggableCard
-              budget={b}
-              locked={locked}
-              onClick={() => onCardClick(b.id)}
-              getProfileName={getProfileName}
-            />
+            {compact ? (
+              <CompactKanbanCard
+                projectName={b.project_name}
+                clientName={b.client_name}
+                priority={b.priority}
+                internalStatus={b.internal_status}
+                dueAt={b.due_at}
+                bairro={b.bairro}
+                city={b.city}
+                versionNumber={b.version_number}
+                commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
+                estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                onClick={() => onCardClick(b.id)}
+                onQuickAction={(action) => {
+                  if (action === "open") onCardClick(b.id);
+                }}
+              />
+            ) : (
+              <DraggableCard
+                budget={b}
+                locked={locked}
+                onClick={() => onCardClick(b.id)}
+                getProfileName={getProfileName}
+              />
+            )}
           </div>
         ))}
       </div>
