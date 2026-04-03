@@ -217,6 +217,98 @@ function matchesDueFilter(budget: BudgetRow, filter: DueFilter): boolean {
   return true;
 }
 
+// Sub-section definitions for the "Em Elaboração" column
+const EM_ELABORACAO_SUBSECTIONS = [
+  {
+    id: "em_producao",
+    label: "Em Produção",
+    statuses: ["triage", "assigned", "in_progress"],
+    icon: null,
+    headerClass: "text-xs font-medium text-muted-foreground uppercase tracking-wide",
+    cardBorderClass: "",
+  },
+  {
+    id: "aguardando",
+    label: "Aguardando",
+    statuses: ["waiting_info"],
+    icon: Clock,
+    headerClass: "text-xs font-medium text-amber-600 uppercase tracking-wide",
+    cardBorderClass: "border-l-2 border-l-amber-400",
+  },
+  {
+    id: "bloqueado",
+    label: "Bloqueado",
+    statuses: ["blocked"],
+    icon: AlertTriangle,
+    headerClass: "text-xs font-medium text-red-600 uppercase tracking-wide",
+    cardBorderClass: "border-l-2 border-l-red-400",
+  },
+  {
+    id: "revisao_solicitada",
+    label: "Revisão Solicitada",
+    statuses: ["revision_requested"],
+    icon: RotateCcw,
+    headerClass: "text-xs font-medium text-orange-600 uppercase tracking-wide",
+    cardBorderClass: "border-l-2 border-l-orange-500",
+    tooltip: "Orçamento retornou para o orçamentista para revisão",
+  },
+] as const;
+
+// --- Sub-section within a column ---
+function SubSectionGroup({
+  subsection,
+  budgets,
+  locked,
+  onCardClick,
+  getProfileName,
+}: {
+  subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
+  budgets: BudgetRow[];
+  locked: boolean;
+  onCardClick: (id: string) => void;
+  getProfileName: (id: string | null) => string;
+}) {
+  const Icon = subsection.icon;
+  const sorted = sortBudgetsForColumn(budgets);
+
+  const header = (
+    <div className="flex items-center gap-1.5 px-1 mb-2 mt-3">
+      {Icon && <Icon className="h-3 w-3" />}
+      <span className={subsection.headerClass}>{subsection.label}</span>
+      <Badge variant="secondary" className="text-xs">{sorted.length}</Badge>
+    </div>
+  );
+
+  return (
+    <div>
+      {"tooltip" in subsection && subsection.tooltip ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>{header}</TooltipTrigger>
+            <TooltipContent side="top">
+              <p className="text-xs">{subsection.tooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        header
+      )}
+      <div className="space-y-2">
+        {sorted.map((b) => (
+          <div key={b.id} className={subsection.cardBorderClass ? `rounded-md ${subsection.cardBorderClass}` : ""}>
+            <DraggableCard
+              budget={b}
+              locked={locked}
+              onClick={() => onCardClick(b.id)}
+              getProfileName={getProfileName}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // --- Droppable Column ---
 function KanbanColumn({
   column,
@@ -240,6 +332,17 @@ function KanbanColumn({
     const d = getDueInfo(b.due_at);
     return d?.variant === "overdue" || d?.variant === "today";
   }).length;
+
+  const isEmElaboracao = column.id === "em_elaboracao";
+
+  // Pre-compute sub-section groups for em_elaboracao
+  const subSectionData = useMemo(() => {
+    if (!isEmElaboracao) return [];
+    return EM_ELABORACAO_SUBSECTIONS.map(sub => ({
+      sub,
+      items: filteredBudgets.filter(b => (sub.statuses as readonly string[]).includes(b.internal_status)),
+    })).filter(({ items }) => items.length > 0);
+  }, [isEmElaboracao, filteredBudgets]);
 
   return (
     <div
@@ -270,36 +373,60 @@ function KanbanColumn({
 
       {/* Cards */}
       <ScrollArea className="flex-1 px-2 pb-2" style={{ maxHeight: "calc(100vh - 320px)" }}>
-        <div className="space-y-2">
-          {sorted.map((b, idx) => {
-            const prevHighPrio = idx > 0 && isHighPriority(sorted[idx - 1].priority);
-            const currHighPrio = isHighPriority(b.priority);
-            const showDivider = idx > 0 && prevHighPrio && !currHighPrio;
-
-            return (
-              <div key={b.id}>
-                {showDivider && (
-                  <div className="flex items-center gap-2 py-1 px-1">
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-body">Demais</span>
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-                )}
-                <DraggableCard
-                  budget={b}
+        {isEmElaboracao ? (
+          /* Sub-sectioned layout for Em Elaboração */
+          <div>
+            {subSectionData.length === 0 && (
+              <div className="py-8 text-center text-xs text-muted-foreground font-body">
+                Nenhum orçamento
+              </div>
+            )}
+            {subSectionData.map(({ sub, items }, idx) => (
+              <div key={sub.id}>
+                {idx > 0 && <Separator className="my-2" />}
+                <SubSectionGroup
+                  subsection={sub}
+                  budgets={items}
                   locked={column.locked}
-                  onClick={() => onCardClick(b.id)}
+                  onCardClick={onCardClick}
                   getProfileName={getProfileName}
                 />
               </div>
-            );
-          })}
-          {sorted.length === 0 && (
-            <div className="py-8 text-center text-xs text-muted-foreground font-body">
-              Nenhum orçamento
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          /* Standard layout for other columns */
+          <div className="space-y-2">
+            {sorted.map((b, idx) => {
+              const prevHighPrio = idx > 0 && isHighPriority(sorted[idx - 1].priority);
+              const currHighPrio = isHighPriority(b.priority);
+              const showDivider = idx > 0 && prevHighPrio && !currHighPrio;
+
+              return (
+                <div key={b.id}>
+                  {showDivider && (
+                    <div className="flex items-center gap-2 py-1 px-1">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-body">Demais</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                  )}
+                  <DraggableCard
+                    budget={b}
+                    locked={column.locked}
+                    onClick={() => onCardClick(b.id)}
+                    getProfileName={getProfileName}
+                  />
+                </div>
+              );
+            })}
+            {sorted.length === 0 && (
+              <div className="py-8 text-center text-xs text-muted-foreground font-body">
+                Nenhum orçamento
+              </div>
+            )}
+          </div>
+        )}
       </ScrollArea>
     </div>
   );
