@@ -410,6 +410,14 @@ export default function PublicBudget() {
               </AnimatedSection>
             </div>
 
+            <div data-pdf-section>
+              <AnimatedSection id="cronograma-section" index={99.5}>
+                <Suspense fallback={<LazyFallback />}>
+                  <ReformTimeline />
+                </Suspense>
+              </AnimatedSection>
+            </div>
+
             <div id="mobile-next-steps" className="scroll-mt-20" data-pdf-section>
               <AnimatedSection id="next-steps" index={100}>
                 <NextSteps />
