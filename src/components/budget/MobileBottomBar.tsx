@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 import type { CategorizedGroup } from "@/lib/scope-categories";
-import { ContractRequestDialog } from "./ContractRequestDialog";
 import { MobileFinancialSheet } from "./MobileFinancialSheet";
 import { StepProgressIndicator } from "./StepProgressIndicator";
+import { WhatsAppCommentDialog } from "./WhatsAppCommentDialog";
 
 interface MobileBottomBarProps {
   total: number;
