@@ -162,8 +162,19 @@ export default function NewBudgetRequest() {
     if (error || !inserted) {
       console.error(error);
       toast.error("Erro ao criar solicitação. Tente novamente.");
+      setLoading(false);
       return;
     }
+
+    // Seed sections from template or defaults
+    try {
+      const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
+      await seedFromTemplate(inserted.id, tplId);
+    } catch (seedErr) {
+      console.error("Erro ao criar seções:", seedErr);
+    }
+
+    setLoading(false);
 
     const estimatorName = orcamentistas.find(m => m.id === estimatorOwnerId)?.full_name;
     const newId = inserted.id;
