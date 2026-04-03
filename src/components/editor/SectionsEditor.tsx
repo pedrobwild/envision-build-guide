@@ -230,7 +230,7 @@ function SortableSectionCard({
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-      <div className="border border-border rounded-xl bg-card overflow-hidden">
+      <div className="rounded-lg border border-border/50 hover:border-border bg-card/50 overflow-hidden transition-colors">
         {children(listeners)}
       </div>
     </div>
@@ -280,28 +280,28 @@ function SortableItemRow({
       style={style}
       {...attributes}
       className={cn(
-        "px-4 py-3 hover:bg-muted/20 transition-colors border-b border-border last:border-b-0",
+        "px-4 py-3 hover:bg-muted/20 transition-colors border-b border-border/40 last:border-b-0",
         isDragging && "bg-muted/40 shadow-lg rounded-lg"
       )}
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
         {/* Drag handle + Title + description */}
-        <div className="lg:col-span-3 space-y-1.5">
-          <div className="flex items-center gap-2">
+        <div className="lg:col-span-3 space-y-1">
+          <div className="flex items-center gap-1.5">
             <button
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/50 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
+              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover:opacity-100"
               title="Arrastar para reordenar"
             >
               <GripVertical className="h-3.5 w-3.5" />
             </button>
             {item.catalog_item_id ? (
               <span className="flex-shrink-0" title="Item do catálogo">
-                <BookOpen className="h-3.5 w-3.5 text-primary" />
+                <BookOpen className="h-3.5 w-3.5 text-primary/60" />
               </span>
             ) : (
               <span className="flex-shrink-0" title="Item manual">
-                <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+                <PenLine className="h-3 w-3 text-muted-foreground/40" />
               </span>
             )}
             <input
@@ -309,101 +309,85 @@ function SortableItemRow({
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full px-2 py-1 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
             />
           </div>
           <input
             type="text"
             value={item.description || ""}
             onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
-            placeholder="Descrição (opcional)"
-            className="w-full px-2.5 py-1.5 rounded-md border border-border/60 bg-background text-foreground text-xs font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 ml-7"
+            placeholder="Descrição"
+            className="w-full px-2 py-1 rounded-md border border-transparent hover:border-border/60 focus:border-border bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 ml-6 transition-all"
           />
-          <div className="flex items-center gap-1.5 ml-7">
-            <LinkIcon className="h-3 w-3 text-muted-foreground shrink-0" />
+          <div className="flex items-center gap-1 ml-6">
+            <LinkIcon className="h-2.5 w-2.5 text-muted-foreground/40 shrink-0" />
             <input
               type="url"
               value={item.reference_url || ""}
               onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
-              placeholder="Link de referência (interno)"
-              className="w-full px-2.5 py-1.5 rounded-md border border-border/60 bg-background text-foreground text-xs font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              placeholder="Link de referência"
+              className="w-full px-2 py-1 rounded-md border border-transparent hover:border-border/60 focus:border-border bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
             />
           </div>
         </div>
         {/* Qty */}
-        <div className="lg:col-span-1 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <Hash className="h-3 w-3" /> Qtd
-          </label>
+        <div className="lg:col-span-1 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Qtd</label>
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
           />
         </div>
         {/* $ Custo (unit) */}
-        <div className="lg:col-span-1 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Custo
-          </label>
+        <div className="lg:col-span-1 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
           />
         </div>
         {/* %BDI */}
-        <div className="lg:col-span-1 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            % BDI
-          </label>
+        <div className="lg:col-span-1 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI %</label>
           <input
             type="number"
             value={item.bdi_percentage ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
             placeholder="0"
             step="0.01"
-            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
           />
         </div>
         {/* $ Venda (auto) */}
-        <div className="lg:col-span-1 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Venda
-          </label>
-          <div className="w-full px-2 py-2 rounded-lg border border-border bg-muted/30 text-foreground text-sm font-body tabular-nums">
+        <div className="lg:col-span-1 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
+          <div className="w-full px-2 py-1.5 rounded-md text-sm font-body tabular-nums text-muted-foreground">
             {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
         {/* $ Total Custo */}
-        <div className="lg:col-span-2 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Total Custo
-          </label>
+        <div className="lg:col-span-2 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Custo</label>
           <input
             type="number"
             value={item.internal_total ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_total", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
           />
         </div>
         {/* $ Total Venda (auto) */}
-        <div className="lg:col-span-2 space-y-1">
-          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Total Venda
-          </label>
-          <div className="w-full px-2 py-2 rounded-lg border border-border bg-muted/30 text-foreground text-sm font-body font-semibold tabular-nums">
+        <div className="lg:col-span-2 space-y-0.5">
+          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Venda</label>
+          <div className="w-full px-2 py-1.5 rounded-md text-sm font-body font-semibold tabular-nums text-foreground">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
@@ -771,41 +755,34 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   };
 
   return (
-    <div className="max-w-5xl mx-auto mt-10">
+    <div className="mt-10">
+      {/* ── Financial summary strip ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="font-display text-2xl font-bold text-foreground">Seções e Itens</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm font-body mt-1">
-            <div>
-              <span className="text-muted-foreground">Total Venda: </span>
-              <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalSale)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Total Custo: </span>
-              <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalCost)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">% BDI Total: </span>
-              <span className="font-semibold text-foreground tabular-nums">{grandBdiPercent.toFixed(1)}%</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Margem Líquida: </span>
-              <span className={cn("font-semibold tabular-nums", grandMargin >= 0 ? "text-green-600 dark:text-green-400" : "text-destructive")}>{formatBRL(grandMargin)}</span>
-            </div>
+          <h2 className="text-xl font-display font-bold text-foreground">Seções e Itens</h2>
+          <div className="flex items-center gap-4 text-xs font-body mt-1.5 text-muted-foreground">
+            <span>Venda: <span className="font-semibold text-foreground tabular-nums">{formatBRL(grandTotalSale)}</span></span>
+            <span className="text-border">|</span>
+            <span>Custo: <span className="font-medium text-foreground tabular-nums">{formatBRL(grandTotalCost)}</span></span>
+            <span className="text-border">|</span>
+            <span>BDI: <span className="font-medium text-foreground tabular-nums">{grandBdiPercent.toFixed(1)}%</span></span>
+            <span className="text-border">|</span>
+            <span>Margem: <span className={cn("font-semibold tabular-nums", grandMargin >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>{formatBRL(grandMargin)}</span></span>
           </div>
         </div>
         <button
           onClick={addSection}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium font-body hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-body font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
-          <Plus className="h-4 w-4" /> Seção
+          <Plus className="h-3.5 w-3.5" /> Seção
         </button>
       </div>
 
       {sections.length === 0 && (
-        <div className="text-center py-12 border border-dashed border-border rounded-xl">
-          <Package className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-muted-foreground font-body text-sm">Nenhuma seção ainda. Importe um PDF ou adicione manualmente.</p>
+        <div className="text-center py-16 border border-dashed border-border/50 rounded-lg">
+          <Package className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
+          <p className="text-muted-foreground/60 font-body text-sm">Nenhuma seção ainda.</p>
+          <p className="text-muted-foreground/40 font-body text-xs mt-1">Importe um PDF ou adicione manualmente.</p>
         </div>
       )}
 
@@ -827,46 +804,38 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                   {(dragListeners: any) => (
                     <>
                       {/* Section header */}
-                      <div className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-1.5 px-4 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
                         <button
                           {...dragListeners}
-                          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
-                          title="Arrastar para reordenar seção"
+                          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
+                          title="Arrastar"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <GripVertical className="h-4 w-4" />
+                          <GripVertical className="h-3.5 w-3.5" />
                         </button>
                         <div
-                          className="flex items-center gap-3 flex-1 min-w-0"
+                          className="flex items-center gap-2 flex-1 min-w-0"
                           onClick={() => toggleSection(section.id)}
                         >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0 transition-transform", isExpanded && "rotate-90")} />
+                          <span className="font-body font-medium text-sm text-foreground truncate">
+                            {section.title || "Sem título"}
+                          </span>
+                          {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
+                          {section.is_optional && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                              Opcional
+                            </span>
                           )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-body font-medium text-sm text-foreground truncate">
-                                {section.title || "Sem título"}
-                              </span>
-                              {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
-                              {section.is_optional && (
-                                <span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-warning/15 text-warning border border-warning/20">
-                                  Opcional
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-xs text-muted-foreground font-body">
-                              {section.items.length} {section.items.length === 1 ? "item" : "itens"}
+                          <span className="text-xs text-muted-foreground/50 font-body ml-1">
+                            {section.items.length} {section.items.length === 1 ? "item" : "itens"}
+                          </span>
+                          <div className="ml-auto flex items-center gap-3 text-xs font-body tabular-nums shrink-0">
+                            <span className="text-muted-foreground">
+                              {formatBRL(sectionCostTotal)}
                             </span>
-                          </div>
-                          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                            <span className="font-display font-semibold text-sm text-foreground whitespace-nowrap tabular-nums">
-                              Venda: {formatBRL(sectionSaleTotal)}
-                            </span>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums font-body">
-                              Custo: {formatBRL(sectionCostTotal)}
+                            <span className="font-semibold text-foreground">
+                              {formatBRL(sectionSaleTotal)}
                             </span>
                           </div>
                         </div>
@@ -874,62 +843,57 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
                       {/* Expanded content */}
                       {isExpanded && (
-                        <div className="border-t border-border">
+                        <div className="border-t border-border/40">
                           {/* Section fields */}
-                          <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-6 gap-3 bg-muted/30">
-                            <div className="col-span-2 space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground font-body">Título da seção</label>
+                          <div className="px-4 py-2.5 grid grid-cols-2 sm:grid-cols-6 gap-2 bg-muted/20">
+                            <div className="col-span-2 space-y-0.5">
+                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Título</label>
                               <input
                                 type="text"
                                 value={section.title}
                                 onChange={(e) => updateSection(section.id, "title", e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
                               />
                             </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground font-body flex items-center gap-1">
-                                <DollarSign className="h-3 w-3" /> Total Custo
-                              </label>
-                              <div className="w-full px-3 py-2 rounded-lg border border-border bg-muted/50 text-foreground text-sm font-body tabular-nums">
+                            <div className="space-y-0.5">
+                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>
+                              <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
                                 {formatBRL(sectionCostTotal)}
                               </div>
                             </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground font-body">% BDI</label>
-                              <div className="w-full px-3 py-2 rounded-lg border border-border bg-muted/50 text-foreground text-sm font-body tabular-nums">
+                            <div className="space-y-0.5">
+                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI</label>
+                              <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
                                 {sectionCostTotal > 0 ? (((sectionSaleTotal / sectionCostTotal) - 1) * 100).toFixed(1) : "0.0"}%
                               </div>
                             </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground font-body flex items-center gap-1">
-                                <DollarSign className="h-3 w-3" /> Total Venda
-                              </label>
+                            <div className="space-y-0.5">
+                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
                               <input
                                 type="number"
                                 value={section.section_price ?? ""}
                                 onChange={(e) => updateSection(section.id, "section_price", e.target.value ? Number(e.target.value) : null)}
                                 onClick={(e) => e.stopPropagation()}
-                                placeholder="Calculado pelos itens"
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                style={{ fontVariantNumeric: "tabular-nums" }}
+                                placeholder="Auto"
+                                className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
                               />
                             </div>
-                            <div className="space-y-1 flex items-end">
+                            <div className="flex items-end">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   updateSection(section.id, "is_optional", !section.is_optional);
                                 }}
                                 className={cn(
-                                  "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-body transition-all",
+                                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-body transition-all",
                                   section.is_optional
-                                    ? "bg-warning/10 border-warning/30 text-warning"
-                                    : "bg-background border-border text-muted-foreground hover:border-warning/30 hover:text-warning"
+                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                    : "text-muted-foreground hover:text-amber-600 hover:bg-amber-500/5"
                                 )}
                               >
-                                <ToggleRight className="h-4 w-4" />
-                                {section.is_optional ? "Opcional ✓" : "Marcar opcional"}
+                                <ToggleRight className="h-3.5 w-3.5" />
+                                {section.is_optional ? "Opcional ✓" : "Opcional"}
                               </button>
                             </div>
                           </div>
@@ -964,7 +928,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           </DndContext>
 
                           {/* Add item + delete section */}
-                          <div className="px-4 py-3 flex items-center justify-between border-t border-border bg-muted/20">
+                          <div className="px-4 py-2 flex items-center justify-between border-t border-border/30">
                             <AddItemPopover
                               sectionTitle={section.title}
                               onAddItem={(itemData) => addItem(section.id, itemData)}
@@ -973,9 +937,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               onClick={() => {
                                 if (confirm("Excluir esta seção e todos os seus itens?")) deleteSection(section.id);
                               }}
-                              className="flex items-center gap-1.5 text-sm font-body text-destructive hover:text-destructive/80 transition-colors"
+                              className="flex items-center gap-1 text-xs font-body text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
                             >
-                              <Trash2 className="h-3.5 w-3.5" /> Excluir seção
+                              <Trash2 className="h-3 w-3" /> Excluir
                             </button>
                           </div>
                         </div>
