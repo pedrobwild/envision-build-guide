@@ -497,9 +497,9 @@ export default function CommercialDashboard() {
                                 <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
                               </DropdownMenuItem>
                             )}
-                            {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
+                            {b.internal_status !== "approved" && b.internal_status !== "lost" && (
                               <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
-                                <RotateCcw className="h-4 w-4 mr-2" />Pedir revisão
+                                <RotateCcw className="h-4 w-4 mr-2" />Solicitar revisão
                               </DropdownMenuItem>
                             )}
                           </>
