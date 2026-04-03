@@ -277,6 +277,16 @@ export default function BudgetEditorV2() {
           onSectionsChange={setSections}
         />
       </main>
+      </div>
+
+      {/* Briefing Side Panel */}
+      <BriefingPanel
+        budgetId={budgetId!}
+        budget={budget}
+        onBudgetFieldChange={(field, value) => {
+          setBudget({ ...budget, [field]: value });
+        }}
+      />
     </div>
   );
 }
