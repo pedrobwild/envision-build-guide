@@ -42,6 +42,9 @@ export default function BudgetEditorV2() {
   const [startingRevision, setStartingRevision] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const lastSavePayload = useRef<{ field: string; value: any } | null>(null);
 
   // Fetch latest revision request when status is revision_requested
   const { data: revisionRequest } = useQuery({
