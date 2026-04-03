@@ -128,6 +128,8 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const [revisionInstructionsOpen, setRevisionInstructionsOpen] = useState(false);
   const [revisionInstructions, setRevisionInstructions] = useState<{ instructions: string; change_types: string[]; requested_by_name: string } | null>(null);
   const [loadingInstructions, setLoadingInstructions] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   useEffect(() => {
     supabase
