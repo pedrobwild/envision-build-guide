@@ -157,8 +157,6 @@ export default function NewBudgetRequest() {
       created_by: user.id,
     } as any).select("id").single();
 
-    setLoading(false);
-
     if (error || !inserted) {
       console.error(error);
       toast.error("Erro ao criar solicitação. Tente novamente.");
