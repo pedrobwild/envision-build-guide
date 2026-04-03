@@ -59,26 +59,26 @@ const CTA_MAP: Record<string, CtaVariant> = {
     action: "sheet",
   },
   "mobile-portal": {
-    label: "Falar com comercial",
-    icon: MessageCircle,
-    action: "whatsapp",
+    label: "Solicitar contrato",
+    icon: FileSignature,
+    action: "contract",
   },
   "mobile-next-steps": {
-    label: "Falar com comercial",
-    icon: MessageCircle,
-    action: "whatsapp",
+    label: "Solicitar contrato",
+    icon: FileSignature,
+    action: "contract",
   },
   "mobile-faq": {
-    label: "Falar com comercial",
-    icon: MessageCircle,
-    action: "whatsapp",
+    label: "Solicitar contrato",
+    icon: FileSignature,
+    action: "contract",
   },
 };
 
 const DEFAULT_CTA: CtaVariant = {
-  label: "Falar com comercial",
-  icon: MessageCircle,
-  action: "whatsapp",
+  label: "Solicitar contrato",
+  icon: FileSignature,
+  action: "contract",
 };
 
 export function MobileBottomBar({
