@@ -283,9 +283,9 @@ function SortableItemRow({
         isDragging && "bg-muted/40 shadow-lg rounded-lg"
       )}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
         {/* Drag handle + Title + description */}
-        <div className="sm:col-span-5 space-y-1.5">
+        <div className="lg:col-span-3 space-y-1.5">
           <div className="flex items-center gap-2">
             <button
               {...listeners}
@@ -294,7 +294,6 @@ function SortableItemRow({
             >
               <GripVertical className="h-3.5 w-3.5" />
             </button>
-            {/* Origin badge */}
             {item.catalog_item_id ? (
               <span className="flex-shrink-0" title="Item do catálogo">
                 <BookOpen className="h-3.5 w-3.5 text-primary" />
@@ -331,7 +330,7 @@ function SortableItemRow({
           </div>
         </div>
         {/* Qty */}
-        <div className="sm:col-span-2 space-y-1">
+        <div className="lg:col-span-1 space-y-1">
           <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
             <Hash className="h-3 w-3" /> Qtd
           </label>
@@ -340,14 +339,14 @@ function SortableItemRow({
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             style={{ fontVariantNumeric: "tabular-nums" }}
           />
         </div>
-        {/* Unit price */}
-        <div className="sm:col-span-2 space-y-1">
+        {/* $ Custo (unit) */}
+        <div className="lg:col-span-1 space-y-1">
           <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Unitário
+            <DollarSign className="h-3 w-3" /> Custo
           </label>
           <input
             type="number"
@@ -355,14 +354,38 @@ function SortableItemRow({
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             style={{ fontVariantNumeric: "tabular-nums" }}
           />
         </div>
-        {/* Total */}
-        <div className="sm:col-span-2 space-y-1">
+        {/* %BDI */}
+        <div className="lg:col-span-1 space-y-1">
           <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
-            <DollarSign className="h-3 w-3" /> Total
+            % BDI
+          </label>
+          <input
+            type="number"
+            value={item.bdi_percentage ?? ""}
+            onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
+            placeholder="0"
+            step="0.01"
+            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          />
+        </div>
+        {/* $ Venda (auto) */}
+        <div className="lg:col-span-1 space-y-1">
+          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
+            <DollarSign className="h-3 w-3" /> Venda
+          </label>
+          <div className="w-full px-2 py-2 rounded-lg border border-border bg-muted/30 text-foreground text-sm font-body tabular-nums">
+            {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+          </div>
+        </div>
+        {/* $ Total Custo */}
+        <div className="lg:col-span-2 space-y-1">
+          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
+            <DollarSign className="h-3 w-3" /> Total Custo
           </label>
           <input
             type="number"
@@ -370,12 +393,21 @@ function SortableItemRow({
             onChange={(e) => onUpdate(sectionId, item.id, "internal_total", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             style={{ fontVariantNumeric: "tabular-nums" }}
           />
         </div>
+        {/* $ Total Venda (auto) */}
+        <div className="lg:col-span-2 space-y-1">
+          <label className="text-xs text-muted-foreground font-body flex items-center gap-1">
+            <DollarSign className="h-3 w-3" /> Total Venda
+          </label>
+          <div className="w-full px-2 py-2 rounded-lg border border-border bg-muted/30 text-foreground text-sm font-body font-semibold tabular-nums">
+            {formatBRL(calcItemSaleTotal(item))}
+          </div>
+        </div>
         {/* Actions */}
-        <div className="sm:col-span-1 flex items-end justify-end gap-1">
+        <div className="lg:col-span-1 flex items-end justify-end gap-1">
           {isItemSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
           {!item.catalog_item_id && (
             <button
