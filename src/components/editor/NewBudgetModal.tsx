@@ -38,7 +38,9 @@ import {
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
-import { seedDefaultSections } from "@/lib/default-budget-sections";
+import { seedFromTemplate } from "@/lib/seed-from-template";
+import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
+import { LayoutTemplate } from "lucide-react";
 
 interface NewBudgetModalProps {
   open: boolean;
