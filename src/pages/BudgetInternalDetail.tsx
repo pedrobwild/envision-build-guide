@@ -496,6 +496,9 @@ export default function BudgetInternalDetail() {
               </Card>
             )}
 
+            {/* Budget Breakdown - read-only view */}
+            <BudgetBreakdownPanel budgetId={budget.id} />
+
             {/* Comments section */}
             <Card>
               <CardHeader className="pb-3">
