@@ -182,7 +182,11 @@ export default function BudgetEditorV2() {
               : undefined,
             action: {
               label: "Tentar novamente",
-              onClick: () => retrySave(),
+              onClick: () => {
+                if (lastSavePayload.current) {
+                  autoSaveBudgetField(lastSavePayload.current.field, lastSavePayload.current.value);
+                }
+              },
             },
           }
         );
