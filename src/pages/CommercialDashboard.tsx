@@ -367,6 +367,21 @@ export default function CommercialDashboard() {
                 <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
               </SelectContent>
             </Select>
+            {/* Commercial owner filter (admin only) */}
+            {isAdmin && commercialOptions.length > 0 && (
+              <Select value={commercialFilter} onValueChange={setCommercialFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <User className="h-3.5 w-3.5 mr-1.5" />
+                  <SelectValue placeholder="Comercial" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os comerciais</SelectItem>
+                  {commercialOptions.map(opt => (
+                    <SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {/* View toggle */}
             <div className="flex border border-border rounded-lg overflow-hidden">
               <Button
