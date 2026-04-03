@@ -44,7 +44,7 @@ export function MobileInlineSummary({
   budgetId,
   onTotalCardVisibilityChange,
 }: MobileInlineSummaryProps) {
-  const [installments, setInstallments] = useState(10);
+  const [installments, setInstallments] = useState(18);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   
   const [contractOpen, setContractOpen] = useState(false);

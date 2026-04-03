@@ -13,7 +13,7 @@ const options = Array.from({ length: 18 }, (_, i) => ({
 }));
 
 export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
-  const [selected, setSelected] = useState(10);
+  const [selected, setSelected] = useState(18);
   const [open, setOpen] = useState(false);
 
   const selectedOption = options.find((o) => o.months === selected)!;
