@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileSwipeableKanban } from "@/components/admin/MobileSwipeableKanban";
 import {
   DndContext,
   DragOverlay,
@@ -552,6 +554,8 @@ function KanbanCard({
 // --- Main Board ---
 export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all" }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [mobileColIndex, setMobileColIndex] = useState(0);
+  const isMobile = useIsMobile();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
@@ -577,7 +581,6 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
       const currentColumn = getColumnForBudget(budget.internal_status);
       if (currentColumn?.id === targetColumn.id) return;
 
-      // Can't drag FROM locked columns
       const sourceColumn = KANBAN_COLUMNS.find((col) =>
         (col.statuses as readonly string[]).includes(budget.internal_status)
       );
@@ -596,6 +599,107 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
     [budgets]
   );
 
+  const mobileColumns = useMemo(() =>
+    KANBAN_COLUMNS.map((col) => {
+      const items = columnBudgets(col).filter(b => matchesDueFilter(b, dueFilter));
+      const overdueCount = items.filter((b) => {
+        const d = getDueInfo(b.due_at);
+        return d?.variant === "overdue" || d?.variant === "today";
+      }).length;
+      return {
+        id: col.id,
+        label: col.label,
+        icon: col.icon,
+        accent: col.accent,
+        headerColor: col.headerColor,
+        count: items.length,
+        overdueCount,
+      };
+    }),
+    [columnBudgets, dueFilter]
+  );
+
+  // Mobile: swipeable single-column view
+  if (isMobile) {
+    return (
+      <MobileSwipeableKanban
+        columns={mobileColumns}
+        activeIndex={mobileColIndex}
+        onChangeIndex={setMobileColIndex}
+      >
+        {(colIndex) => {
+          const col = KANBAN_COLUMNS[colIndex];
+          const items = columnBudgets(col).filter(b => matchesDueFilter(b, dueFilter));
+          const sorted = sortBudgetsForColumn(items);
+          const isEmElaboracao = col.id === "em_elaboracao";
+
+          return (
+            <div className={`rounded-xl border border-border border-t-4 ${col.accent} ${col.bgColor} min-h-[300px]`}>
+              <ScrollArea className="px-2 pb-2 pt-1" style={{ maxHeight: "calc(100vh - 280px)" }}>
+                {isEmElaboracao ? (
+                  <div>
+                    {(() => {
+                      const subData = EM_ELABORACAO_SUBSECTIONS.map(sub => ({
+                        sub,
+                        items: items.filter(b => (sub.statuses as readonly string[]).includes(b.internal_status)),
+                      })).filter(({ items }) => items.length > 0);
+
+                      if (subData.length === 0) return (
+                        <div className="py-8 text-center text-xs text-muted-foreground font-body">Nenhum orçamento</div>
+                      );
+
+                      return subData.map(({ sub, items: subItems }, idx) => (
+                        <div key={sub.id}>
+                          {idx > 0 && <Separator className="my-2" />}
+                          <SubSectionGroup
+                            subsection={sub}
+                            budgets={subItems}
+                            locked={col.locked}
+                            onCardClick={onCardClick}
+                            getProfileName={getProfileName}
+                          />
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {sorted.map((b, idx) => {
+                      const prevHigh = idx > 0 && isHighPriority(sorted[idx - 1].priority);
+                      const currHigh = isHighPriority(b.priority);
+                      const showDivider = idx > 0 && prevHigh && !currHigh;
+                      return (
+                        <div key={b.id}>
+                          {showDivider && (
+                            <div className="flex items-center gap-2 py-1 px-1">
+                              <div className="flex-1 h-px bg-border" />
+                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-body">Demais</span>
+                              <div className="flex-1 h-px bg-border" />
+                            </div>
+                          )}
+                          <KanbanCard
+                            budget={b}
+                            locked={col.locked}
+                            onClick={() => onCardClick(b.id)}
+                            getProfileName={getProfileName}
+                          />
+                        </div>
+                      );
+                    })}
+                    {sorted.length === 0 && (
+                      <div className="py-8 text-center text-xs text-muted-foreground font-body">Nenhum orçamento</div>
+                    )}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+          );
+        }}
+      </MobileSwipeableKanban>
+    );
+  }
+
+  // Desktop: horizontal scroll with drag & drop
   return (
     <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
