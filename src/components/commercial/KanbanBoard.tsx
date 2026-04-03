@@ -58,7 +58,7 @@ const KANBAN_COLUMNS = [
     id: "em_elaboracao",
     label: "Em Elaboração",
     icon: Hammer,
-    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked"] as InternalStatus[],
+    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested"] as InternalStatus[],
     accent: "border-t-yellow-500",
     headerColor: "text-yellow-700 dark:text-yellow-400",
     bgColor: "bg-yellow-50/50 dark:bg-yellow-950/20",

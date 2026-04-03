@@ -50,7 +50,7 @@ const PIPELINE_SECTIONS = {
   },
   em_elaboracao: {
     label: "Em Elaboração",
-    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked"] as InternalStatus[],
+    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested"] as InternalStatus[],
     icon: Clock,
     accent: "text-yellow-600",
   },
