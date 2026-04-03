@@ -35,7 +35,7 @@ export function MobilePriceAnchor({ total, validityDaysLeft, expired }: MobilePr
           <div className="flex items-center gap-1.5 mt-1.5">
             <CreditCard className="h-3.5 w-3.5 text-primary flex-shrink-0" />
             <span className="text-xs text-muted-foreground font-body">
-              ou <strong className="text-foreground">10× {formatBRL(installment10x)}</strong> sem juros
+              ou <strong className="text-foreground">18× {formatBRL(installment18x)}</strong> sem juros
             </span>
           </div>
         </div>
