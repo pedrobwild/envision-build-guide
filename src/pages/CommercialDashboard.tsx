@@ -296,8 +296,8 @@ export default function CommercialDashboard() {
         </header>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
-          {/* Pipeline summary cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          {/* Pipeline summary cards — desktop */}
+          <div className="hidden lg:grid grid-cols-7 gap-3">
             {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => {
               const Icon = sec.icon;
               return (
@@ -314,6 +314,23 @@ export default function CommercialDashboard() {
               );
             })}
           </div>
+
+          {/* Mobile filter chips */}
+          <MobileFilterChips
+            chips={[
+              { id: "all", label: "Todos", count: counts.total },
+              { id: "entregue", label: "Entregues", icon: CheckCircle2, count: counts["entregue"] ?? 0 },
+              { id: "em_elaboracao", label: "Em Elaboração", icon: Clock, count: counts["em_elaboracao"] ?? 0 },
+              { id: "enviado", label: "Enviados", icon: Send, count: counts["enviado"] ?? 0 },
+              { id: "solicitado", label: "Solicitados", icon: FileText, count: counts["solicitado"] ?? 0 },
+              { id: "fechado", label: "Fechados", icon: ThumbsUp, count: counts["fechado"] ?? 0 },
+            ] as FilterChip[]}
+            activeChipId={statusFilter}
+            onChipChange={(id) => setStatusFilter(id)}
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Buscar cliente, projeto..."
+          />
 
           {/* Needs-action banner */}
           {counts.needsAction > 0 && statusFilter === "all" && (
