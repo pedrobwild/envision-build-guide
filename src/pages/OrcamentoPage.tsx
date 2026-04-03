@@ -10,6 +10,7 @@ import { JourneySection } from "@/components/orcamento/JourneySection";
 import { ScopeSection } from "@/components/orcamento/ScopeSection";
 import { PortalWarrantyNextSteps } from "@/components/orcamento/PortalWarrantyNextSteps";
 import { StickyBudgetSummary } from "@/components/orcamento/StickyBudgetSummary";
+import { ReformTimeline } from "@/components/budget/ReformTimeline";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 30 },
