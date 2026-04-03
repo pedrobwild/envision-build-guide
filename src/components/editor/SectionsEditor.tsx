@@ -505,12 +505,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
     if (!taxItemId || !taxSectionId) return currentSections;
 
-    // Calculate total excluding the tax item
+    // Calculate total excluding the tax item (use sale total if available, otherwise cost total)
     let totalExcludingTax = 0;
     for (const s of currentSections) {
       for (const i of s.items) {
         if (i.id === taxItemId) continue;
-        totalExcludingTax += calcItemSaleTotal(i);
+        const saleTotal = calcItemSaleTotal(i);
+        totalExcludingTax += saleTotal > 0 ? saleTotal : calcItemCostTotal(i);
       }
     }
 
