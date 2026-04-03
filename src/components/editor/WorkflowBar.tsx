@@ -350,6 +350,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           {/* Primary action button */}
           {canDoPrimary && (
             <Button
+              data-workflow-primary
               variant="default"
               size="sm"
               className={`h-7 text-xs gap-1.5 ${

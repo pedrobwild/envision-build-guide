@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign, GitCompare, Globe, Eye } from "lucide-react";
+import { ArrowLeft, Save, Copy, Check, Loader2, User, ChevronDown, DollarSign, GitCompare, Globe, Eye, RotateCcw, PackageCheck, Send, Handshake } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { MetadataStep } from "@/components/editor/MetadataStep";
@@ -21,12 +21,14 @@ import { Button } from "@/components/ui/button";
 import { BriefingPanel } from "@/components/editor/BriefingPanel";
 import { RevisionBanner } from "@/components/editor/RevisionBanner";
 import { useAuth } from "@/hooks/useAuth";
+import { StickyEditorHeader, type SaveStatus } from "@/components/editor/StickyEditorHeader";
+import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isOrcamentista, isComercial } = useUserProfile();
+  const { isOrcamentista, isComercial, profile } = useUserProfile();
   const { user } = useAuth();
 
   const backPath = (location.state as any)?.from
@@ -40,6 +42,9 @@ export default function BudgetEditorV2() {
   const [startingRevision, setStartingRevision] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const lastSavePayload = useRef<{ field: string; value: any } | null>(null);
 
   // Fetch latest revision request when status is revision_requested
   const { data: revisionRequest } = useQuery({
@@ -115,11 +120,25 @@ export default function BudgetEditorV2() {
 
   const autoSaveBudgetField = useCallback((field: string, value: any) => {
     if (!budgetId) return;
+    lastSavePayload.current = { field, value };
+    setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      await supabase.from("budgets").update({ [field]: value } as any).eq("id", budgetId);
-    }, 800);
+      const { error } = await supabase.from("budgets").update({ [field]: value } as any).eq("id", budgetId);
+      if (error) {
+        setSaveStatus("error");
+      } else {
+        setSaveStatus("saved");
+        setLastSavedAt(new Date());
+      }
+    }, 600);
   }, [budgetId]);
+
+  const retrySave = useCallback(() => {
+    if (lastSavePayload.current) {
+      autoSaveBudgetField(lastSavePayload.current.field, lastSavePayload.current.value);
+    }
+  }, [autoSaveBudgetField]);
 
   const handleSaveAndPublish = async () => {
     if (!budgetId || !budget) return;
@@ -172,96 +191,46 @@ export default function BudgetEditorV2() {
     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
     : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
 
+  // Derive primary workflow action for sticky header
+  const internalStatus = (budget.internal_status ?? "requested") as InternalStatus;
+  const userRoles = (profile?.roles ?? []) as string[];
+
+  const PRIMARY_TRANSITIONS: Record<string, { label: string; newStatus: InternalStatus; roles: string[]; icon?: React.ReactNode; className?: string }> = {
+    assigned: { label: "Iniciar Produção", newStatus: "in_progress", roles: ["orcamentista", "admin"] },
+    in_progress: { label: "Enviar para Revisão", newStatus: "ready_for_review", roles: ["orcamentista", "admin"] },
+    ready_for_review: { label: "Entregar ao Comercial", newStatus: "delivered_to_sales", roles: ["orcamentista", "admin"], icon: <PackageCheck className="h-3.5 w-3.5" /> },
+    delivered_to_sales: { label: "Enviar ao Cliente", newStatus: "sent_to_client", roles: ["comercial", "admin"], icon: <Send className="h-3.5 w-3.5" />, className: "bg-teal-600 hover:bg-teal-700 text-white" },
+    revision_requested: { label: "Iniciar Revisão", newStatus: "in_progress", roles: ["orcamentista", "admin"], icon: <RotateCcw className="h-3.5 w-3.5" />, className: "bg-orange-500 hover:bg-orange-600 text-white" },
+    minuta_solicitada: { label: "Contrato Fechado", newStatus: "contrato_fechado", roles: ["comercial", "admin"], icon: <Handshake className="h-3.5 w-3.5" />, className: "bg-emerald-600 hover:bg-emerald-700 text-white" },
+  };
+
+  const primaryTransitionDef = PRIMARY_TRANSITIONS[internalStatus];
+  const canDoPrimary = primaryTransitionDef && primaryTransitionDef.roles.some(r => userRoles.includes(r));
+
+  const stickyPrimaryAction = canDoPrimary && primaryTransitionDef ? {
+    label: primaryTransitionDef.label,
+    onClick: () => {
+      // Delegate to the WorkflowBar below which handles confirmation dialogs etc.
+      const btn = document.querySelector<HTMLButtonElement>('[data-workflow-primary]');
+      if (btn) btn.click();
+    },
+    icon: primaryTransitionDef.icon,
+    className: primaryTransitionDef.className,
+  } : null;
+
   return (
     <div className="min-h-screen bg-background flex">
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* ── Minimal top bar ── */}
-        <header className="bg-background/80 backdrop-blur-sm border-b border-border/60 sticky top-0 z-40">
-          <div className="max-w-[1200px] mx-auto px-6 h-12 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => navigate(backPath)}
-                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </button>
-
-              {/* Breadcrumb-like path */}
-              <div className="flex items-center gap-1.5 text-sm font-body text-muted-foreground">
-                <span className="hidden sm:inline">Orçamentos</span>
-                <span className="hidden sm:inline">/</span>
-                <span className="text-foreground font-medium truncate max-w-[200px]">
-                  {budget.project_name || "Sem nome"}
-                </span>
-              </div>
-
-              {/* Version badge */}
-              {versionCount > 1 ? (
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => navigate(`/admin/comparar?group=${budget.version_group_id}`)}
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
-                      >
-                        <GitCompare className="h-2.5 w-2.5" />
-                        v{budget.version_number || 1}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{versionCount} versões — clique para comparar</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-body font-medium">
-                  v{budget.version_number || 1}
-                </span>
-              )}
-
-              {/* Status pill */}
-              <span className={`text-[10px] px-1.5 py-0.5 rounded border font-body font-medium ${statusColor}`}>
-                {statusLabel}
-              </span>
-            </div>
-
-            {/* Right actions */}
-            <div className="flex items-center gap-1">
-              {budget.public_id && (
-                <>
-                  <TooltipProvider delayDuration={300}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={copyPublicLink}
-                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>Copiar link público</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider delayDuration={300}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a
-                          href={getPublicBudgetUrl(budget.public_id)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent>Visualizar orçamento público</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </>
-              )}
-            </div>
-          </div>
-        </header>
+        {/* ── Sticky two-layer header ── */}
+        <StickyEditorHeader
+          budget={budget}
+          sections={sections}
+          backPath={backPath}
+          saveStatus={saveStatus}
+          lastSavedAt={lastSavedAt}
+          onRetrySave={retrySave}
+          primaryAction={stickyPrimaryAction}
+        />
 
         {/* ── Content ── */}
         <main className="max-w-[1200px] w-full mx-auto px-6 py-8 space-y-8">
