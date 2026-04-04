@@ -131,6 +131,9 @@ export function StickyEditorHeader({
           <div className="flex items-center gap-2 text-sm font-body text-muted-foreground min-w-0">
             <span className="hidden sm:inline shrink-0">Orçamentos</span>
             <span className="hidden sm:inline shrink-0 text-border">/</span>
+            {budget.sequential_code && (
+              <span className="hidden sm:inline text-[10px] font-mono text-muted-foreground/60 shrink-0">{budget.sequential_code}</span>
+            )}
             <span className="text-foreground font-semibold truncate max-w-[200px] tracking-tight">
               {truncatedName}
             </span>

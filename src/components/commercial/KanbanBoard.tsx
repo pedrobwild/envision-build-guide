@@ -710,6 +710,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             bairro={b.bairro}
                             city={b.city}
                             versionNumber={b.version_number}
+                            sequentialCode={(b as any).sequential_code}
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             onClick={() => onCardClick(b.id)}

@@ -72,6 +72,9 @@ export function BudgetListCard({
           <div className="flex-1 min-w-0">
             {/* Row 1: Project name + version + status */}
             <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+              {budget.sequential_code && (
+                <span className="text-[10px] font-mono text-muted-foreground/70 shrink-0">{budget.sequential_code}</span>
+              )}
               <span className="font-semibold text-sm font-display text-foreground truncate max-w-[200px] sm:max-w-none">
                 {budget.project_name || "Sem nome"}
               </span>
