@@ -79,22 +79,22 @@ export default function OrcamentoPage() {
             initial="hidden"
             animate="visible"
           >
-            <motion.div id="budget-hero" variants={sectionVariants}>
+            <motion.div id="budget-hero" variants={heroVariants}>
               <BudgetHero meta={resolvedBudget.meta} included={resolvedBudget.included} />
             </motion.div>
-            <motion.div id="services-section" variants={sectionVariants} viewport={{ once: true, amount: 0.15 }} initial="hidden" whileInView="visible">
+            <motion.div id="services-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1, margin: "0px 0px -60px 0px" }} initial="hidden" whileInView="visible">
               <ServicesSection services={resolvedBudget.services} />
             </motion.div>
-            <motion.div id="journey-section" variants={sectionVariants} viewport={{ once: true, amount: 0.15 }} initial="hidden" whileInView="visible">
+            <motion.div id="journey-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1, margin: "0px 0px -60px 0px" }} initial="hidden" whileInView="visible">
               <JourneySection steps={resolvedBudget.journey} />
             </motion.div>
-            <motion.div id="scope-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1 }} initial="hidden" whileInView="visible">
+            <motion.div id="scope-section" variants={sectionVariants} viewport={{ once: true, amount: 0.05, margin: "0px 0px -40px 0px" }} initial="hidden" whileInView="visible">
               <ScopeSection scope={resolvedBudget.scope} />
             </motion.div>
-            <motion.div id="portal-section" variants={sectionVariants} viewport={{ once: true, amount: 0.15 }} initial="hidden" whileInView="visible">
+            <motion.div id="portal-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1, margin: "0px 0px -60px 0px" }} initial="hidden" whileInView="visible">
               <PortalWarrantyNextSteps portalTabs={resolvedBudget.portalTabs} />
             </motion.div>
-            <motion.div id="cronograma-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1 }} initial="hidden" whileInView="visible">
+            <motion.div id="cronograma-section" variants={sectionVariants} viewport={{ once: true, amount: 0.05, margin: "0px 0px -40px 0px" }} initial="hidden" whileInView="visible">
               <ReformTimeline />
             </motion.div>
 
