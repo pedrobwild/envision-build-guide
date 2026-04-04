@@ -164,18 +164,28 @@ export function MobileInlineSummary({
         {/* Total card — premium feel */}
         <div
           ref={totalCardRef}
-          className="rounded-xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-primary/12 px-5 py-5"
+          className="relative rounded-xl border border-primary/10 px-5 py-5 overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, hsl(212 100% 48% / 0.06) 0%, hsl(212 100% 48% / 0.02) 60%, transparent 100%)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+          }}
         >
-          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2">
+          {/* Subtle glow accent */}
+          <div
+            className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-[0.07] pointer-events-none"
+            style={{ background: 'radial-gradient(circle, hsl(212 100% 48%) 0%, transparent 70%)' }}
+          />
+          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2 relative">
             Investimento total
           </p>
           <p
-            className="font-display font-extrabold text-[1.85rem] text-primary leading-none"
+            className="font-display font-extrabold text-[1.85rem] text-primary leading-none relative"
             style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
           >
             {formatBRL(total)}
           </p>
-          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/8">
+          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/8 relative">
             <Shield className="h-3 w-3 text-primary/30" />
             <span className="text-[11px] text-muted-foreground/60 font-body">
               Preço fixo · Sem custos ocultos
