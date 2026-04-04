@@ -1131,7 +1131,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         const { avgBdi, hasData } = calcGlobalBdi(sections);
         if (!hasData || avgBdi >= 20) return null;
         return (
-          <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded border border-warning/20 bg-warning/5 text-xs font-body text-warning">
+          <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded border border-border bg-muted/30 text-xs font-body text-muted-foreground">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
             <span>BDI médio geral está em <strong className="font-mono">{avgBdi.toFixed(1)}%</strong> — abaixo de 20%.</span>
           </div>
