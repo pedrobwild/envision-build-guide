@@ -1,0 +1,2 @@
+UPDATE items SET internal_unit_price = 2000, bdi_percentage = 260 WHERE id = 'a650b456-3401-4b1d-a356-7b7c66ca49e9';
+UPDATE items SET internal_unit_price = 3781.24 WHERE id = '961cd239-1829-49ed-8333-05760abf5326';
