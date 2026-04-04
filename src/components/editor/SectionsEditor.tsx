@@ -1096,7 +1096,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                       {/* Section header — 48px fixed height, no change on expand */}
                       <div
                         className={cn(
-                          "h-12 px-3 flex items-center gap-1.5 cursor-pointer transition-colors duration-150",
+                          "h-12 px-3 flex items-center gap-1.5 cursor-pointer transition-colors duration-100",
                           isExpanded ? "bg-muted/20 hover:bg-muted/30" : "hover:bg-muted/30"
                         )}
                         onClick={() => toggleSection(section.id)}
