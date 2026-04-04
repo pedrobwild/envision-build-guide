@@ -1144,35 +1144,35 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         <div>
                           {/* Column headers — sticky label-caps */}
                           {section.items.length > 0 && (
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 px-2 h-8 items-center border-t border-border/40 bg-background sticky top-0 z-10">
-                              <div className="lg:col-span-3 px-2">
-                                <span className="label-caps">Título</span>
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 px-3 h-9 items-center border-t border-border/40 bg-background sticky top-0 z-10">
+                              <div className="lg:col-span-3 px-3">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Título</span>
                               </div>
-                              <div className="lg:col-span-1 px-1 text-right">
-                                <span className="label-caps">Qtd</span>
+                              <div className="lg:col-span-1 px-3 text-right">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
                               </div>
-                              <div className="lg:col-span-1 px-1 text-right">
-                                <span className="label-caps">Custo</span>
+                              <div className="lg:col-span-1 px-3 text-right">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo</span>
                               </div>
-                              <div className="lg:col-span-1 px-1 text-right">
-                                <span className="label-caps">BDI %</span>
+                              <div className="lg:col-span-1 px-3 text-right">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI %</span>
                               </div>
-                              <div className="lg:col-span-1 px-1 text-right">
-                                <span className="label-caps">Venda</span>
+                              <div className="lg:col-span-1 px-3 text-right">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda</span>
                               </div>
                               {!compactMode && (
                                 <>
-                                  <div className="lg:col-span-2 px-1 text-right">
-                                    <span className="label-caps">Total Custo</span>
+                                  <div className="lg:col-span-2 px-3 text-right">
+                                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Custo</span>
                                   </div>
-                                  <div className="lg:col-span-2 px-1 text-right">
-                                    <span className="label-caps">Total Venda</span>
+                                  <div className="lg:col-span-2 px-3 text-right">
+                                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
                                   </div>
                                 </>
                               )}
                               {compactMode && (
-                                <div className="lg:col-span-4 px-1 text-right">
-                                  <span className="label-caps">Total Venda</span>
+                                <div className="lg:col-span-4 px-3 text-right">
+                                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
                                 </div>
                               )}
                               <div className="lg:col-span-1" />
