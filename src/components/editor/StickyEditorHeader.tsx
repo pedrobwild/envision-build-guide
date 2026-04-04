@@ -117,9 +117,9 @@ export function StickyEditorHeader({
     : "text-destructive";
 
   return (
-    <div className="sticky top-0 z-50 bg-card/80 glass border-b border-border/50 shadow-premium-sm">
+    <div className="sticky top-0 z-50 bg-card/85 backdrop-blur-xl border-b border-border/40 shadow-sm">
       {/* Layer 1 — Breadcrumb + status + action + auto-save */}
-      <div className="max-w-[1200px] mx-auto px-6 h-14 flex items-center justify-between gap-3">
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate(backPath)}
