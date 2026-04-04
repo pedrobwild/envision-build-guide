@@ -369,6 +369,7 @@ export type Database = {
           public_id: string | null
           public_token_hash: string | null
           reference_links: Json | null
+          sequential_code: string | null
           show_item_prices: boolean | null
           show_item_qty: boolean | null
           show_optional_items: boolean
@@ -428,6 +429,7 @@ export type Database = {
           public_id?: string | null
           public_token_hash?: string | null
           reference_links?: Json | null
+          sequential_code?: string | null
           show_item_prices?: boolean | null
           show_item_qty?: boolean | null
           show_optional_items?: boolean
@@ -487,6 +489,7 @@ export type Database = {
           public_id?: string | null
           public_token_hash?: string | null
           reference_links?: Json | null
+          sequential_code?: string | null
           show_item_prices?: boolean | null
           show_item_qty?: boolean | null
           show_optional_items?: boolean
