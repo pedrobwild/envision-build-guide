@@ -491,18 +491,26 @@ export default function AdminDashboard() {
       {/* Quick Access Shortcuts */}
       {shortcuts.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {shortcuts.map((s) => (
-            <Link key={s.href} to={s.href}>
-              <Card className={`cursor-pointer hover:bg-accent/50 transition-colors duration-150 border-l-4 ${s.borderColor} h-full`}>
-                <CardContent className="p-4 flex items-center gap-3">
-                  <s.icon className={`h-5 w-5 ${s.iconColor} shrink-0`} />
-                  <div>
-                    <p className="font-medium text-sm font-body text-foreground">{s.label}</p>
-                    <p className={`text-xs font-body ${s.descColor || "text-muted-foreground"}`}>{s.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+          {shortcuts.map((s, i) => (
+            <motion.div
+              key={s.href}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: i * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }}
+              whileHover={{ y: -2, transition: { duration: 0.2 } }}
+            >
+              <Link to={s.href}>
+                <Card className={`cursor-pointer transition-shadow duration-200 hover:shadow-premium border-l-4 ${s.borderColor} h-full`}>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <s.icon className={`h-5 w-5 ${s.iconColor} shrink-0`} />
+                    <div>
+                      <p className="font-medium text-sm font-body text-foreground tracking-tight">{s.label}</p>
+                      <p className={`text-xs font-body ${s.descColor || "text-muted-foreground"}`}>{s.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </motion.div>
           ))}
         </div>
       )}
