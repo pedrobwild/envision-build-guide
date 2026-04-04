@@ -110,6 +110,20 @@ export default function AdminDashboard() {
     }
   };
 
+  const createBudgetForTemplate = async () => {
+    if (!user) return;
+    const publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+    const { data } = await supabase
+      .from("budgets")
+      .insert({ project_name: "Novo Projeto", client_name: "Cliente", created_by: user.id, public_id: publicId })
+      .select()
+      .single();
+    if (data) {
+      setTemplateBudgetId(data.id);
+      setTemplateDialogOpen(true);
+    }
+  };
+
   const publishBudget = async (id: string) => {
     const existing = budgets.find((b) => b.id === id);
     const publicId = existing?.public_id || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
