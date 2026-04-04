@@ -1,0 +1,15 @@
+ALTER TABLE public.suppliers
+  ADD COLUMN IF NOT EXISTS razao_social text,
+  ADD COLUMN IF NOT EXISTS cnpj_cpf text,
+  ADD COLUMN IF NOT EXISTS categoria text DEFAULT 'Outros',
+  ADD COLUMN IF NOT EXISTS telefone text,
+  ADD COLUMN IF NOT EXISTS email text,
+  ADD COLUMN IF NOT EXISTS site text,
+  ADD COLUMN IF NOT EXISTS endereco text,
+  ADD COLUMN IF NOT EXISTS cidade text,
+  ADD COLUMN IF NOT EXISTS estado text,
+  ADD COLUMN IF NOT EXISTS produtos_servicos text,
+  ADD COLUMN IF NOT EXISTS condicoes_pagamento text,
+  ADD COLUMN IF NOT EXISTS prazo_entrega_dias integer,
+  ADD COLUMN IF NOT EXISTS nota numeric,
+  ADD COLUMN IF NOT EXISTS observacoes text;

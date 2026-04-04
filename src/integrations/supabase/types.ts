@@ -1008,27 +1008,69 @@ export type Database = {
       }
       suppliers: {
         Row: {
+          categoria: string | null
+          cidade: string | null
+          cnpj_cpf: string | null
+          condicoes_pagamento: string | null
           contact_info: string | null
           created_at: string | null
+          email: string | null
+          endereco: string | null
+          estado: string | null
           id: string
           is_active: boolean
           name: string
+          nota: number | null
+          observacoes: string | null
+          prazo_entrega_dias: number | null
+          produtos_servicos: string | null
+          razao_social: string | null
+          site: string | null
+          telefone: string | null
           updated_at: string | null
         }
         Insert: {
+          categoria?: string | null
+          cidade?: string | null
+          cnpj_cpf?: string | null
+          condicoes_pagamento?: string | null
           contact_info?: string | null
           created_at?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          nota?: number | null
+          observacoes?: string | null
+          prazo_entrega_dias?: number | null
+          produtos_servicos?: string | null
+          razao_social?: string | null
+          site?: string | null
+          telefone?: string | null
           updated_at?: string | null
         }
         Update: {
+          categoria?: string | null
+          cidade?: string | null
+          cnpj_cpf?: string | null
+          condicoes_pagamento?: string | null
           contact_info?: string | null
           created_at?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          nota?: number | null
+          observacoes?: string | null
+          prazo_entrega_dias?: number | null
+          produtos_servicos?: string | null
+          razao_social?: string | null
+          site?: string | null
+          telefone?: string | null
           updated_at?: string | null
         }
         Relationships: []
