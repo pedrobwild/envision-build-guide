@@ -82,7 +82,7 @@ export function CategoryAccordionItem({
 
         {/* Title + count */}
         <div className="flex-1 text-left min-w-0">
-          <span className="font-body font-medium text-foreground leading-snug block truncate text-[13px]">
+          <span className="font-body font-medium text-foreground leading-snug block text-[13px]">
             {toTitleCase(data.title)}
           </span>
           {hasItems && (
