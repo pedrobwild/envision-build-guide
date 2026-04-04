@@ -104,35 +104,6 @@ function BdiInput({ value, onChange }: { value: number | null | undefined; onCha
   );
 }
 
-function BdiDisplay({ value }: { value: number }) {
-  const status = getBdiStatus(value);
-  const tooltip = getBdiTooltip(value);
-
-  const display = (
-    <div className={cn(
-      "px-2 py-1.5 text-sm font-body tabular-nums flex items-center gap-1",
-      status === "zero" && "text-yellow-600 dark:text-yellow-400",
-      status === "normal" && "text-muted-foreground",
-      status === "high" && "text-yellow-600 dark:text-yellow-400",
-      status === "extreme" && "text-destructive",
-    )}>
-      <span>{value.toFixed(1)}%</span>
-      {status === "high" && <AlertTriangle className="h-3 w-3" />}
-      {status === "extreme" && <AlertCircle className="h-3 w-3" />}
-    </div>
-  );
-
-  if (status === "normal") return display;
-
-  return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>{display}</TooltipTrigger>
-        <TooltipContent side="top" className="max-w-[240px] text-xs">{tooltip}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 /* ── Inline image management for editor items ── */
 function ItemImageInline({
@@ -1115,7 +1086,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                       {isExpanded && (
                         <div className="border-t border-border/40">
                           {/* Section fields */}
-                          <div className="px-4 py-2.5 grid grid-cols-2 sm:grid-cols-6 gap-2 bg-muted/20">
+                          <div className="px-4 py-2.5 grid grid-cols-2 sm:grid-cols-5 gap-2 bg-muted/20">
                             <div className="col-span-2 space-y-0.5">
                               <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Título</label>
                               <input
@@ -1131,10 +1102,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
                                 {formatBRL(sectionCostTotal)}
                               </div>
-                            </div>
-                            <div className="space-y-0.5">
-                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI</label>
-                              <BdiDisplay value={sectionCostTotal > 0 ? ((sectionSaleTotal / sectionCostTotal) - 1) * 100 : 0} />
                             </div>
                             <div className="space-y-0.5">
                               <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
