@@ -203,6 +203,8 @@ function CategorizedList({
   onDetailOpen: (g: CategorizedGroup) => void;
   forceExpandItems?: boolean;
 }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   return (
     <div className="space-y-0.5">
       {groups.map((group) =>
@@ -213,6 +215,8 @@ function CategorizedList({
             colorClass={group.category.colorClass}
             bgClass={group.category.bgClass}
             forceExpanded={forceExpandItems}
+            isExpanded={expandedId === section.id}
+            onToggle={() => setExpandedId((prev) => (prev === section.id ? null : section.id))}
           />
         ))
       )}
