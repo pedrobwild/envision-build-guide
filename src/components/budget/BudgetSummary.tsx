@@ -292,29 +292,37 @@ function AdjustmentsList({ adjustments }: { adjustments: any[] }) {
 function TotalCard({ total }: { total: number }) {
   return (
     <div
-      className="mx-5 mb-4 rounded-xl border border-primary/10 p-5 relative overflow-hidden"
+      className="mx-5 mb-4 rounded-xl border border-primary/10 px-5 py-5 relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, hsl(212 100% 48% / 0.06) 0%, hsl(212 100% 48% / 0.02) 60%, transparent 100%)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'linear-gradient(145deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 40%, hsl(var(--background)) 100%)',
+        boxShadow: '0 8px 28px -8px hsl(var(--primary) / 0.10), 0 2px 8px -2px hsl(var(--primary) / 0.04)',
       }}
     >
       <div
-        className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-[0.07] pointer-events-none"
-        style={{ background: 'radial-gradient(circle, hsl(212 100% 48%) 0%, transparent 70%)' }}
+        className="absolute -top-20 -right-20 w-44 h-44 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)' }}
+        aria-hidden
       />
-      <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2 relative">
-        Investimento Total
-      </p>
-      <CountUpValue
-        value={total}
-        className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none relative block"
-      />
-      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/8 relative">
-        <Shield className="h-3.5 w-3.5 text-primary/30" />
-        <span className="text-[11px] text-muted-foreground/60 font-body">
-          Preço fixo · Sem custos ocultos
-        </span>
+      <div className="relative space-y-3">
+        <div className="space-y-1.5">
+          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground">
+            Investimento Total
+          </p>
+          <CountUpValue
+            value={total}
+            className={cn(
+              "font-mono font-extrabold text-primary leading-none block tabular-nums",
+              total >= 1_000_000 ? "text-[1.5rem]" : "text-[1.875rem]"
+            )}
+            style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
+          />
+        </div>
+        <div className="flex items-center gap-1.5 pt-3 border-t border-primary/8">
+          <Shield className="h-3.5 w-3.5 text-primary/40" />
+          <span className="text-[11px] text-muted-foreground font-body">
+            Preço fixo · Sem custos ocultos
+          </span>
+        </div>
       </div>
     </div>
   );
