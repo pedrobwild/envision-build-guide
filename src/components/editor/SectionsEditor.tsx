@@ -1082,7 +1082,18 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         </div>
       )}
 
-      {sections.length === 0 && (
+      {/* ── Global BDI warning ── */}
+      {(() => {
+        const { avgBdi, hasData } = calcGlobalBdi(sections);
+        if (!hasData || avgBdi >= 20) return null;
+        return (
+          <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-md border border-warning/30 bg-warning/5 text-warning text-xs font-body">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            <span>BDI médio geral está em <strong>{avgBdi.toFixed(1)}%</strong> — abaixo de 20%. Verifique se os valores estão corretos.</span>
+          </div>
+        );
+      })()}
+
         <EmptyState
           icon={FileSpreadsheet}
           title="Orçamento em branco"
