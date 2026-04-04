@@ -162,6 +162,9 @@ export function CompactKanbanCard({
         <div className="flex-1 min-w-0">
           {/* Line 1: project name + priority */}
           <div className="flex items-center gap-1.5">
+            {sequentialCode && (
+              <span className="text-[9px] font-mono text-muted-foreground/70 shrink-0">{sequentialCode}</span>
+            )}
             <span className="font-display font-semibold text-xs text-foreground truncate flex-1 leading-tight">
               {projectName || "Sem nome"}
             </span>
