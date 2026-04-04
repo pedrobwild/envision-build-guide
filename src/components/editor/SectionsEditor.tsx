@@ -1232,25 +1232,25 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         <div>
                           {/* Column headers — sticky label-caps */}
                           {section.items.length > 0 && (
-                            <div className="flex items-center gap-0 h-9 border-t border-border/40 bg-background sticky top-0 z-10">
+                            <div className="flex items-center border-b border-border/60 bg-muted/10 px-2 h-8">
                               <div className="w-6 flex-shrink-0" />
                               <div className="flex-1 px-1">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Título</span>
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Descrição do Item</span>
                               </div>
                               <div className="w-16 flex-shrink-0 px-1 text-center">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
                               </div>
                               <div className="w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo</span>
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo Unit.</span>
                               </div>
                               <div className="w-[72px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI %</span>
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI%</span>
                               </div>
                               <div className="w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda</span>
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda Unit.</span>
                               </div>
                               <div className="w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total</span>
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
                               </div>
                               <div className="w-8 flex-shrink-0" />
                             </div>
