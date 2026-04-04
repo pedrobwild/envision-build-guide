@@ -74,6 +74,12 @@ const PIPELINE_SECTIONS = {
     icon: Send,
     accent: "text-success",
   },
+  minuta: {
+    label: "Minuta Solicitada",
+    statuses: ["minuta_solicitada"] as InternalStatus[],
+    icon: FileText,
+    accent: "text-violet-600",
+  },
   fechado: {
     label: "Contrato Fechado",
     statuses: ["contrato_fechado"] as InternalStatus[],
