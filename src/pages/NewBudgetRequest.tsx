@@ -620,23 +620,36 @@ export default function NewBudgetRequest() {
         </div>
 
         {/* ── Completion checklist (bottom) ── */}
-        <div className="rounded-xl border border-border/50 bg-muted/30 p-4 mb-8">
-          <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Checklist
-          </p>
+        <div className="rounded-xl border border-border/40 bg-card p-5 mb-8 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] font-display font-bold text-muted-foreground uppercase tracking-[0.08em]">
+              Checklist de preenchimento
+            </p>
+            <span className={cn(
+              "text-[11px] font-mono tabular-nums px-2 py-0.5 rounded-full",
+              completionPercent === 100
+                ? "bg-success/10 text-success"
+                : "bg-muted text-muted-foreground"
+            )}>
+              {completionItems.filter(i => i.done).length}/{completionItems.length}
+            </span>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {completionItems.map((item) => (
               <div
                 key={item.label}
                 className={cn(
-                  "flex items-center gap-1.5 text-xs font-body px-2.5 py-1.5 rounded-lg transition-colors",
+                  "flex items-center gap-2 text-xs font-body px-3 py-2 rounded-lg border transition-all duration-300",
                   item.done
-                    ? "text-success bg-success/10"
-                    : "text-muted-foreground bg-background"
+                    ? "text-success bg-success/5 border-success/15"
+                    : "text-muted-foreground/60 bg-muted/20 border-border/30"
                 )}
               >
-                <CheckCircle2 className={cn("h-3 w-3 shrink-0", item.done ? "text-success" : "text-muted-foreground/30")} />
-                {item.label}
+                <CheckCircle2 className={cn(
+                  "h-3.5 w-3.5 shrink-0 transition-colors",
+                  item.done ? "text-success" : "text-muted-foreground/20"
+                )} />
+                <span className={item.done ? "font-medium" : ""}>{item.label}</span>
               </div>
             ))}
           </div>
@@ -644,10 +657,10 @@ export default function NewBudgetRequest() {
 
         {/* ── Bottom action (mobile-friendly) ── */}
         <div className="flex justify-end gap-3 pb-10 sm:hidden">
-          <Button type="button" variant="outline" onClick={() => navigate("/admin/solicitacoes")}>
+          <Button type="button" variant="outline" size="sm" onClick={() => navigate("/admin/solicitacoes")}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading || !clientName.trim()} className="gap-2">
+          <Button type="submit" disabled={loading || !clientName.trim()} size="sm" className="gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             {loading ? "Criando…" : "Criar Solicitação"}
           </Button>
