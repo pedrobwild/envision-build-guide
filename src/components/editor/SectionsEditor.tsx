@@ -610,6 +610,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   });
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const densityKey = `budget-item-density-${budgetId}`;
+  const [compactMode, setCompactMode] = useState(() => {
+    try { return localStorage.getItem(densityKey) !== "expanded"; } catch { return true; }
+  });
   const searchRef = useRef<HTMLInputElement>(null);
   const timers = useRef<Record<string, NodeJS.Timeout>>({});
 
