@@ -500,31 +500,9 @@ function SortableItemRow({
               </div>
             )}
           </div>
-          {showExpanded && (
-            <>
-              <input
-                type="text"
-                value={item.description || ""}
-                onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
-                placeholder="Descrição"
-                className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 ml-6 transition-all cursor-text"
-              />
-              <div className="flex items-center gap-1 ml-6">
-                <LinkIcon className="h-2.5 w-2.5 text-muted-foreground/40 shrink-0" />
-                <input
-                  type="url"
-                  value={item.reference_url || ""}
-                  onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
-                  placeholder="Link de referência"
-                  className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
-                />
-              </div>
-            </>
-          )}
         </div>
         {/* Qty — editable */}
-        <div className="lg:col-span-1 space-y-0.5">
-          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Qtd</label>}
+        <div className="lg:col-span-1">
           <input
             type="number"
             value={item.qty ?? ""}
@@ -546,16 +524,14 @@ function SortableItemRow({
           />
         </div>
         {/* %BDI — editable with validation */}
-        <div className="lg:col-span-1 space-y-0.5">
-          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI %</label>}
+        <div className="lg:col-span-1">
           <BdiInput
             value={item.bdi_percentage}
             onChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
           />
         </div>
         {/* $ Venda (calculated) */}
-        <div className="lg:col-span-1 space-y-0.5">
-          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>}
+        <div className="lg:col-span-1">
           <div
             className="group/cell w-full px-2 py-1.5 rounded-md bg-muted/40 text-sm font-body tabular-nums text-muted-foreground cursor-default flex items-center justify-between"
             title="Campo calculado automaticamente"
@@ -566,8 +542,7 @@ function SortableItemRow({
         </div>
         {/* $ Total Custo (calculated) — hidden in compact */}
         {showExpanded && (
-          <div className="lg:col-span-2 space-y-0.5">
-            <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Custo</label>
+          <div className="lg:col-span-2">
             <div
               className="group/cell w-full px-2 py-1.5 rounded-md bg-muted/40 text-sm font-body tabular-nums text-muted-foreground cursor-default flex items-center justify-between"
               title="Campo calculado automaticamente"
@@ -578,8 +553,7 @@ function SortableItemRow({
           </div>
         )}
         {/* $ Total Venda (calculated) */}
-        <div className={cn("space-y-0.5", showExpanded ? "lg:col-span-2" : "lg:col-span-4")}>
-          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Venda</label>}
+        <div className={cn(showExpanded ? "lg:col-span-2" : "lg:col-span-4")}>
           <div
             className="group/cell w-full px-2 py-1.5 rounded-md bg-primary/5 text-sm font-body font-semibold tabular-nums text-foreground cursor-default flex items-center justify-between"
             title="Campo calculado automaticamente"
@@ -589,7 +563,7 @@ function SortableItemRow({
           </div>
         </div>
         {/* Actions */}
-        <div className="lg:col-span-1 flex items-end justify-end gap-1">
+        <div className="lg:col-span-1 flex items-center justify-end gap-1">
           {isItemSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
           <button
             onClick={() => setDetailOpen(true)}
@@ -618,6 +592,29 @@ function SortableItemRow({
           </button>
         </div>
       </div>
+
+      {/* Description + Link — full width below grid */}
+      {showExpanded && (
+        <div className="mt-2 ml-9 space-y-1.5">
+          <input
+            type="text"
+            value={item.description || ""}
+            onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
+            placeholder="Descrição do item"
+            className="w-full max-w-xl px-2.5 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
+          />
+          <div className="flex items-center gap-1.5 max-w-xl">
+            <LinkIcon className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+            <input
+              type="url"
+              value={item.reference_url || ""}
+              onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
+              placeholder="Link de referência (fornecedor, produto, etc.)"
+              className="w-full px-2.5 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Item image management — only in expanded */}
       {showExpanded && (
