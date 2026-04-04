@@ -549,28 +549,36 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
           </form>
         </ScrollArea>
 
-        <DialogFooter className="px-6 py-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => handleOpenChange(false)}
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            form="new-budget-form"
-            disabled={loading}
-            className="gap-2 min-w-[160px]"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
-            {loading ? "Salvando..." : "Criar Solicitação"}
-          </Button>
+        <DialogFooter className="px-6 py-4 border-t border-border bg-muted/30">
+          <div className="flex items-center justify-between w-full gap-3">
+            <span className="text-xs text-muted-foreground font-body hidden sm:inline">
+              {progressPercent}% preenchido
+            </span>
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => handleOpenChange(false)}
+                disabled={loading}
+                className="text-sm"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                form="new-budget-form"
+                disabled={loading}
+                className="gap-2 min-w-[160px] text-sm"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4" />
+                )}
+                {loading ? "Salvando..." : "Criar Solicitação"}
+              </Button>
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
