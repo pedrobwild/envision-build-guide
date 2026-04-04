@@ -391,7 +391,7 @@ export default function BudgetEditorV2() {
 
           {/* ── Tab navigation ── */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 flex-1 flex flex-col">
-            <TabsList className="w-full justify-start bg-transparent border-b border-border/60 rounded-none h-auto p-0 gap-0">
+            <TabsList className="w-full justify-start bg-transparent border-b border-border/60 rounded-none h-auto p-0 gap-0 overflow-x-auto scrollbar-none">
               {[
                 { value: "planilha", label: "Planilha", icon: <ClipboardList className="h-3.5 w-3.5" />, badge: null },
                 { value: "contexto", label: "Contexto", icon: <User className="h-3.5 w-3.5" />, badge: missingContextFields ? "!" : null, badgeClass: "bg-warning/10 text-warning" },
@@ -401,10 +401,10 @@ export default function BudgetEditorV2() {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5 transition-colors"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 sm:px-4 pb-2.5 pt-2 text-xs sm:text-sm font-body font-medium gap-1 sm:gap-1.5 transition-colors whitespace-nowrap shrink-0"
                 >
                   {tab.icon}
-                  <span className="hidden sm:inline">{tab.label}</span>
+                  {tab.label}
                   {tab.badge && (
                     <span className={cn("ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full text-[10px] font-semibold px-1", tab.badgeClass)}>
                       {tab.badge}
