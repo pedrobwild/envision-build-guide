@@ -1058,17 +1058,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
       {/* ── Control bar ── */}
       {sections.length > 0 && (
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-muted/30 border border-border/40">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
             <input
               ref={searchRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); e.currentTarget.blur(); } }}
-              placeholder="Buscar item..."
-              className="w-full pl-7 pr-7 h-8 rounded border border-border bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20 transition-colors"
+              placeholder="Buscar item…"
+              className="w-full pl-8 pr-7 h-8 rounded-md border border-border/60 bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all"
             />
             {searchQuery && (
               <button
@@ -1082,17 +1082,21 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           <div className="flex items-center gap-0.5 ml-auto">
             <button
               onClick={expandAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              title="Expandir tudo"
             >
-              <ChevronsUpDown className="h-3 w-3" /> Expandir
+              <ChevronsUpDown className="h-3 w-3" />
+              <span className="hidden sm:inline">Expandir</span>
             </button>
             <button
               onClick={collapseAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              title="Colapsar tudo"
             >
-              <ChevronsDownUp className="h-3 w-3" /> Colapsar
+              <ChevronsDownUp className="h-3 w-3" />
+              <span className="hidden sm:inline">Colapsar</span>
             </button>
-            <div className="w-px h-4 bg-border mx-0.5" />
+            <div className="w-px h-4 bg-border/60 mx-0.5" />
             <button
               onClick={() => {
                 const next = !compactMode;
@@ -1100,15 +1104,15 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                 try { localStorage.setItem(densityKey, next ? "compact" : "expanded"); } catch { /* ignore */ }
               }}
               className={cn(
-                "flex items-center gap-1 px-2 py-1.5 rounded text-xs font-body transition-colors",
+                "flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body transition-colors",
                 compactMode
-                  ? "text-foreground bg-muted"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  ? "text-foreground bg-background shadow-sm border border-border/40"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background"
               )}
               title={compactMode ? "Modo expandido" : "Modo compacto"}
             >
               {compactMode ? <Rows3 className="h-3 w-3" /> : <Rows4 className="h-3 w-3" />}
-              {compactMode ? "Compacto" : "Expandido"}
+              <span className="hidden sm:inline">{compactMode ? "Compacto" : "Expandido"}</span>
             </button>
           </div>
         </div>
