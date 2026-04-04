@@ -299,7 +299,8 @@ export default function BudgetEditorV2() {
           <PipelineProgress internalStatus={budget.internal_status ?? "requested"} />
 
           {/* ── Versioning context banners (priority: A > B > C) ── */}
-          {budget.is_published_version ? (
+          {/* Only show published-version warning if the budget was actually sent to the client */}
+          {budget.is_published_version && ["sent_to_client", "minuta_solicitada", "contrato_fechado"].includes(budget.internal_status ?? "") ? (
             /* Scenario A — Editing published version */
             <Alert className="mt-4 border-amber-500/40 bg-amber-500/10">
               <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
