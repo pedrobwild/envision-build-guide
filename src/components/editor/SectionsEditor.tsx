@@ -411,6 +411,9 @@ function SortableItemRow({
   const imageCount = item.images?.length || 0;
   const showExpanded = !compact || rowExpanded;
 
+  const isOptional = !!(item as any).is_optional;
+  const hasBdiWarning = (Number(item.bdi_percentage) || 0) > 150;
+
   return (
     <div
       ref={setNodeRef}
@@ -419,157 +422,145 @@ function SortableItemRow({
       className={cn(
         "group/item transition-colors duration-100 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
         compact && !rowExpanded ? "h-11" : "",
+        isOptional && "border-l-2 border-dashed border-muted-foreground/30",
         searchMatch && "bg-warning/5 hover:bg-warning/8",
         isDragging && "bg-muted/40 shadow-lg rounded border-b-0"
       )}
     >
-      {/* ── Single-line grid row ── */}
+      {/* ── Compact inline row ── */}
       <div className={cn(
-        "grid grid-cols-1 lg:grid-cols-12 gap-0 items-center",
+        "flex items-center gap-0",
         compact && !rowExpanded ? "h-11" : "py-2",
       )}>
-        {/* Title column */}
-        <div className="lg:col-span-3 flex items-center gap-1 px-3 min-w-0">
-          {compact && (
-            <button
-              onClick={() => setRowExpanded(!rowExpanded)}
-              className="p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0"
-            >
-              <ChevronRight className={cn("h-3 w-3 transition-transform", rowExpanded && "rotate-90")} />
-            </button>
-          )}
+        {/* [▶ expand] — 24px */}
+        <div className="w-6 flex-shrink-0 flex items-center justify-center">
           <button
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing p-0.5 rounded text-muted-foreground/20 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover/item:opacity-100"
+            onClick={() => setRowExpanded(!rowExpanded)}
+            className="p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground transition-colors"
           >
-            <GripVertical className="h-3 w-3" />
+            <ChevronRight className={cn(
+              "h-3.5 w-3.5 transition-transform duration-200",
+              rowExpanded && "rotate-90"
+            )} />
           </button>
+        </div>
+
+        {/* [Título] — flex-1 */}
+        <div className="flex-1 min-w-0 flex items-center gap-1 px-1">
           {compact && !rowExpanded ? (
-            <span
-              className="text-sm font-body text-foreground truncate cursor-default"
-              title={item.title}
-            >
-              {item.title}
-            </span>
+            <>
+              <span
+                className="text-sm text-foreground truncate cursor-default"
+                title={item.title}
+              >
+                {item.title}
+              </span>
+              {/* Compact indicators */}
+              {hasDescription && (
+                <span className="ml-1 text-[10px] text-muted-foreground flex-shrink-0" title="Tem descrição">📝</span>
+              )}
+              {isOptional && (
+                <span className="ml-1 text-[10px] bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
+              )}
+              {hasBdiWarning && (
+                <AlertTriangle className="ml-1 h-3 w-3 text-orange-500 inline flex-shrink-0" />
+              )}
+            </>
           ) : (
             <input
               type="text"
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100"
+              className="w-full h-9 px-2 rounded border border-transparent bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100"
             />
-          )}
-          {/* Compact indicators */}
-          {compact && !rowExpanded && (
-            <div className="flex items-center gap-1 shrink-0">
-              {hasDescription && (
-                <span title="Tem descrição"><FileText className="h-2.5 w-2.5 text-muted-foreground/30" /></span>
-              )}
-              {hasImages && (
-                <span className="flex items-center gap-0.5" title={`${imageCount} imagem(ns)`}>
-                  <Paperclip className="h-2.5 w-2.5 text-muted-foreground/30" />
-                  <span className="text-[9px] text-muted-foreground/40 font-mono tabular-nums">{imageCount}</span>
-                </span>
-              )}
-            </div>
           )}
         </div>
 
-        {/* Qty — secondary value */}
-        <div className="lg:col-span-1 px-1">
+        {/* [QTD] — 64px */}
+        <div className="w-16 flex-shrink-0 px-1">
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right"
+            className="w-full h-8 rounded border border-transparent bg-transparent text-sm font-mono text-center placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
-        {/* $ Custo (unit) — primary financial */}
-        <div className="lg:col-span-1 px-1">
+        {/* [Custo] — 100px */}
+        <div className="w-[100px] flex-shrink-0 px-1">
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right"
+            className="w-full h-8 rounded border border-transparent bg-transparent text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
-        {/* %BDI — secondary value */}
-        <div className="lg:col-span-1 px-1">
-          <BdiInput
-            value={item.bdi_percentage}
-            onChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
+        {/* [BDI%] — 72px */}
+        <div className="w-[72px] flex-shrink-0 px-1">
+          <input
+            type="number"
+            value={item.bdi_percentage ?? ""}
+            onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
+            placeholder="0"
+            step="0.01"
+            className="w-full h-8 rounded border border-transparent bg-transparent text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
-        {/* $ Venda (calculated) — secondary */}
-        <div className="lg:col-span-1 px-1">
-          <div className="h-9 flex items-center justify-end px-3 text-sm font-mono tabular-nums text-muted-foreground">
+        {/* [Venda] — 100px, readonly */}
+        <div className="w-[100px] flex-shrink-0 px-1">
+          <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground bg-muted/30 rounded">
             {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
 
-        {/* $ Total Custo (calculated) — hidden in compact */}
-        {showExpanded && (
-          <div className="lg:col-span-2 px-1">
-            <div className="h-9 flex items-center justify-end px-3 text-sm font-mono tabular-nums text-muted-foreground">
-              {formatBRL(calcItemCostTotal(item))}
-            </div>
-          </div>
-        )}
-
-        {/* $ Total Venda (calculated) — primary data */}
-        <div className={cn("px-1", showExpanded ? "lg:col-span-2" : "lg:col-span-4")}>
-          <div className="h-9 flex items-center justify-end px-3 text-sm font-mono font-semibold tabular-nums text-foreground tracking-[-0.035em]">
+        {/* [Total Venda] — 100px, primary */}
+        <div className="w-[100px] flex-shrink-0 px-1">
+          <div className="h-8 flex items-center justify-end px-2 text-sm font-semibold font-mono tabular-nums text-foreground">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
 
-        {/* Actions — hidden until hover */}
-        <div className="lg:col-span-1 flex items-center justify-end gap-0.5 px-3">
-          {isItemSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
-          <button
-            onClick={() => setDetailOpen(true)}
-            className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-foreground transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
-            title="Editar detalhes"
-          >
-            <Pencil className="h-3 w-3" />
-          </button>
-          {!item.catalog_item_id && !compact && (
+        {/* [⋮ ações] — 32px, hover-only */}
+        <div className="w-8 flex-shrink-0 flex items-center justify-center">
+          {isItemSaving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground/40" />
+          ) : (
             <button
-              onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
-              className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-primary transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
-              title="Salvar no catálogo"
+              onClick={() => {
+                if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
+              }}
+              className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
+              title="Excluir item"
             >
-              <BookmarkPlus className="h-3 w-3" />
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
           )}
-          <button
-            onClick={() => {
-              if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
-            }}
-            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
-            title="Excluir item"
-          >
-            <Trash2 className="h-3 w-3" />
-          </button>
         </div>
       </div>
 
-      {/* Description + Link — full width below grid */}
-      {showExpanded && (
-        <div className="pb-2 pl-10 pr-4 space-y-1">
+      {/* ── Expanded detail area ── */}
+      {rowExpanded && (
+        <div className="pb-2 pl-8 pr-4 space-y-1.5 border-t border-border/20 pt-2">
+          {/* Editable title when expanded */}
+          <input
+            type="text"
+            value={item.title}
+            onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
+            placeholder="Nome do item"
+            className="w-full max-w-xl h-8 px-2 rounded border border-transparent bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary hover:border-border transition-colors"
+          />
           <input
             type="text"
             value={item.description || ""}
             onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
             placeholder="Descrição do item"
-            className="w-full max-w-xl h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+            className="w-full max-w-xl h-7 px-2 rounded border border-transparent bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
           />
           <div className="flex items-center gap-1.5 max-w-xl">
             <LinkIcon className="h-3 w-3 text-muted-foreground/30 shrink-0" />
@@ -578,21 +569,34 @@ function SortableItemRow({
               value={item.reference_url || ""}
               onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
               placeholder="Link de referência"
-              className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+              className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
             />
           </div>
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={() => setDetailOpen(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <Pencil className="h-3 w-3" /> Editar detalhes
+            </button>
+            {!item.catalog_item_id && (
+              <button
+                onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+              >
+                <BookmarkPlus className="h-3 w-3" /> Salvar no catálogo
+              </button>
+            )}
+          </div>
+          {/* Item images */}
+          <ItemImageInline
+            itemId={item.id}
+            itemTitle={item.title}
+            budgetId={budgetId}
+            images={item.images || []}
+            onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
+          />
         </div>
-      )}
-
-      {/* Item image management — only in expanded */}
-      {showExpanded && (
-        <ItemImageInline
-          itemId={item.id}
-          itemTitle={item.title}
-          budgetId={budgetId}
-          images={item.images || []}
-          onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
-        />
       )}
 
       {/* Item detail sheet */}
