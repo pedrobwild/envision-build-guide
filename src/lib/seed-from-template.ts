@@ -43,7 +43,7 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     // Load items for this template section
     const { data: templateItems } = await supabase
       .from("budget_template_items" as any)
-      .select("title, description, unit, qty, order_index, coverage_type, reference_url")
+      .select("title, description, unit, qty, order_index, coverage_type, reference_url, internal_unit_price, internal_total, bdi_percentage")
       .eq("template_section_id", tSec.id)
       .order("order_index");
 
@@ -59,6 +59,9 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
         order_index: tItem.order_index,
         coverage_type: tItem.coverage_type || "geral",
         reference_url: tItem.reference_url || null,
+        internal_unit_price: tItem.internal_unit_price ?? null,
+        internal_total: tItem.internal_total ?? null,
+        bdi_percentage: tItem.bdi_percentage ?? 0,
       });
     }
   }
