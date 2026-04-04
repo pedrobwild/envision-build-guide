@@ -272,14 +272,16 @@ interface SectionsEditorProps {
   onSectionsChange: (sections: SectionData[]) => void;
 }
 
-/* ── Section context menu (rename + delete) ── */
+/* ── Section context menu (rename + duplicate + delete) ── */
 function SectionContextMenu({
   section,
   onRename,
+  onDuplicate,
   onDelete,
 }: {
   section: SectionData;
   onRename: (name: string) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -290,22 +292,28 @@ function SectionContextMenu({
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
-          className="p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0 opacity-0 group-hover/section:opacity-100"
+          className="p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
           title="Configurações da seção"
         >
           <MoreVertical className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2.5 space-y-2.5" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-        <div className="space-y-1">
-          <label className="label-caps">Nome da seção</label>
+      <PopoverContent className="w-56 p-2.5 space-y-1" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+        <div className="space-y-1 pb-1.5 border-b border-border/40">
+          <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Nome da seção</label>
           <input
             type="text"
             value={name}
             onChange={(e) => { setName(e.target.value); onRename(e.target.value); }}
-            className="w-full h-8 px-2 rounded border border-input bg-background text-sm font-body text-foreground focus:outline-none focus:border-primary transition-colors"
+            className="w-full h-8 px-2 rounded border border-input bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
+        <button
+          onClick={() => { onDuplicate(); setOpen(false); }}
+          className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs text-foreground hover:bg-muted transition-colors"
+        >
+          <Package className="h-3 w-3" /> Duplicar seção
+        </button>
         <button
           onClick={() => {
             if (confirm("Excluir esta seção e todos os seus itens?")) {
@@ -313,7 +321,7 @@ function SectionContextMenu({
               setOpen(false);
             }
           }}
-          className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs font-body text-destructive hover:bg-destructive/8 transition-colors"
+          className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs text-destructive hover:bg-destructive/10 transition-colors"
         >
           <Trash2 className="h-3 w-3" /> Excluir seção
         </button>
@@ -779,6 +787,49 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     }
   };
 
+  const duplicateSection = async (sectionId: string) => {
+    const source = sections.find(s => s.id === sectionId);
+    if (!source) return;
+    const order = sections.length;
+    const { data: newSec } = await supabase
+      .from("sections")
+      .insert({
+        budget_id: budgetId,
+        title: `${source.title} (cópia)`,
+        order_index: order,
+        is_optional: source.is_optional ?? false,
+        subtitle: source.subtitle ?? null,
+      })
+      .select()
+      .single();
+    if (!newSec) return;
+    // Duplicate items
+    const newItems: any[] = [];
+    for (const item of source.items) {
+      const { data: newItem } = await supabase
+        .from("items")
+        .insert({
+          section_id: newSec.id,
+          title: item.title,
+          description: item.description,
+          unit: item.unit,
+          qty: item.qty,
+          internal_unit_price: item.internal_unit_price,
+          internal_total: item.internal_total,
+          bdi_percentage: item.bdi_percentage,
+          order_index: item.order_index,
+          notes: item.notes,
+        })
+        .select()
+        .single();
+      if (newItem) newItems.push({ ...newItem, images: [] });
+    }
+    const newSection: SectionData = { ...newSec, items: newItems };
+    onSectionsChange([...sections, newSection]);
+    setExpandedSections(prev => new Set(prev).add(newSec.id));
+    toast.success("Seção duplicada");
+  };
+
   const addItem = async (sectionId: string, itemData?: {
     title: string;
     description: string | null;
@@ -1135,13 +1186,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                         </span>
 
-                        {/* Right zone: [% bar] [R$ total] [⋮] */}
+                        {/* Right zone: [% bar] [R$ total] */}
                         <div className="ml-auto flex items-center gap-2 shrink-0">
-                          {/* [% barra] — mini progress bar + percentage */}
+                          {/* [% barra] — mini progress bar */}
                           <div className="hidden sm:flex items-center gap-1.5">
-                            <div className="w-12 h-1 rounded-full bg-border overflow-hidden">
+                            <div className="h-1 rounded-full bg-primary/10 overflow-hidden" style={{ width: '80px' }}>
                               <div
-                                className="h-full rounded-full bg-muted-foreground/40 transition-all duration-300"
+                                className="h-full rounded-full bg-primary/30 transition-all duration-300"
                                 style={{ width: `${Math.min(sectionPercent, 100)}%` }}
                               />
                             </div>
@@ -1161,13 +1212,19 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           <SectionContextMenu
                             section={section}
                             onRename={(name) => updateSection(section.id, "title", name)}
+                            onDuplicate={() => duplicateSection(section.id)}
                             onDelete={() => deleteSection(section.id)}
                           />
                         </div>
                       </div>
 
-                      {/* Expanded content */}
-                      {isExpanded && (
+                      {/* Expanded content — animated */}
+                      <div
+                        className={cn(
+                          "overflow-hidden transition-all duration-200 ease-out",
+                          isExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+                        )}
+                      >
                         <div>
                           {/* Column headers — sticky label-caps */}
                           {section.items.length > 0 && (
@@ -1255,7 +1312,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             />
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   )}
                 </SortableSectionCard>
