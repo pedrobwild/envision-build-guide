@@ -13,6 +13,7 @@ import {
   Handshake, BarChart3, Hammer, Briefcase, Settings, Users,
   ArrowRight, GitCompare, Send, LayoutDashboard, ClipboardList,
   Settings2, DollarSign, ArrowUpDown, ArrowUp, ArrowDown,
+  LayoutTemplate,
 } from "lucide-react";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
