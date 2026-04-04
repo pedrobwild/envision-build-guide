@@ -8,11 +8,18 @@ import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
   PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
+  AlertTriangle, AlertCircle,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
 import { ItemDetailSheet } from "@/components/editor/ItemDetailSheet";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   DndContext,
   closestCenter,
@@ -34,6 +41,98 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
+
+/* ── BDI validation helpers ── */
+function getBdiStatus(bdi: number | null | undefined): "zero" | "normal" | "high" | "extreme" {
+  const v = Number(bdi) || 0;
+  if (v === 0) return "zero";
+  if (v <= 80) return "normal";
+  if (v <= 150) return "high";
+  return "extreme";
+}
+
+function getBdiTooltip(bdi: number | null | undefined): string {
+  const v = Number(bdi) || 0;
+  const status = getBdiStatus(bdi);
+  if (status === "zero") return "BDI zero: o item será vendido pelo custo, sem margem";
+  if (status === "high") return "BDI elevado — verifique se o valor está correto";
+  if (status === "extreme") {
+    const margin = (v / (100 + v) * 100).toFixed(1);
+    return `BDI muito alto (acima de 150%). Isso pode ser um erro de digitação. A margem resultante será de ${margin}%.`;
+  }
+  return "";
+}
+
+function BdiInput({ value, onChange }: { value: number | null | undefined; onChange: (v: number | null) => void }) {
+  const status = getBdiStatus(value);
+  const tooltip = getBdiTooltip(value);
+
+  const input = (
+    <div className="relative">
+      <input
+        type="number"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+        placeholder="0"
+        step="0.01"
+        className={cn(
+          "w-full px-2 py-1.5 rounded-md border text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 transition-all tabular-nums cursor-text",
+          status === "zero" && "border-yellow-400 dark:border-yellow-500 bg-background hover:border-yellow-500 focus:border-yellow-500 focus:ring-yellow-300/30",
+          status === "normal" && "border-input bg-background hover:border-primary/40 focus:border-primary focus:ring-primary/20",
+          status === "high" && "border-input bg-background hover:border-primary/40 focus:border-primary focus:ring-primary/20 pr-7",
+          status === "extreme" && "border-destructive bg-background hover:border-destructive focus:border-destructive focus:ring-destructive/20 pr-7",
+        )}
+      />
+      {status === "high" && (
+        <AlertTriangle className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-yellow-500" />
+      )}
+      {status === "extreme" && (
+        <AlertCircle className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-destructive" />
+      )}
+    </div>
+  );
+
+  if (status === "normal") return input;
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>{input}</TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[240px] text-xs">{tooltip}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function BdiDisplay({ value }: { value: number }) {
+  const status = getBdiStatus(value);
+  const tooltip = getBdiTooltip(value);
+
+  const display = (
+    <div className={cn(
+      "px-2 py-1.5 text-sm font-body tabular-nums flex items-center gap-1",
+      status === "zero" && "text-yellow-600 dark:text-yellow-400",
+      status === "normal" && "text-muted-foreground",
+      status === "high" && "text-yellow-600 dark:text-yellow-400",
+      status === "extreme" && "text-destructive",
+    )}>
+      <span>{value.toFixed(1)}%</span>
+      {status === "high" && <AlertTriangle className="h-3 w-3" />}
+      {status === "extreme" && <AlertCircle className="h-3 w-3" />}
+    </div>
+  );
+
+  if (status === "normal") return display;
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>{display}</TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[240px] text-xs">{tooltip}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 /* ── Inline image management for editor items ── */
 function ItemImageInline({
@@ -385,16 +484,12 @@ function SortableItemRow({
             className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
           />
         </div>
-        {/* %BDI — editable */}
+        {/* %BDI — editable with validation */}
         <div className="lg:col-span-1 space-y-0.5">
           <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI %</label>
-          <input
-            type="number"
-            value={item.bdi_percentage ?? ""}
-            onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
-            placeholder="0"
-            step="0.01"
-            className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
+          <BdiInput
+            value={item.bdi_percentage}
+            onChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
           />
         </div>
         {/* $ Venda (calculated) */}
@@ -1039,9 +1134,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             </div>
                             <div className="space-y-0.5">
                               <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI</label>
-                              <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
-                                {sectionCostTotal > 0 ? (((sectionSaleTotal / sectionCostTotal) - 1) * 100).toFixed(1) : "0.0"}%
-                              </div>
+                              <BdiDisplay value={sectionCostTotal > 0 ? ((sectionSaleTotal / sectionCostTotal) - 1) * 100 : 0} />
                             </div>
                             <div className="space-y-0.5">
                               <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
