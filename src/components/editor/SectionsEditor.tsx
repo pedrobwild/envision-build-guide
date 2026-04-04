@@ -981,7 +981,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   const grandBdiPercent = grandTotalCost > 0 ? ((grandTotalSale / grandTotalCost) - 1) * 100 : 0;
 
   /* ── Drag handlers ── */
-  const handleSectionDragEnd = (event: DragEndEvent) => {
+  const handleSectionDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -991,9 +991,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
     const withNewOrder = reordered.map((s, i) => ({ ...s, order_index: i }));
     onSectionsChange(withNewOrder);
-    withNewOrder.forEach(s => {
-      supabase.from("sections").update({ order_index: s.order_index }).eq("id", s.id);
-    });
+    await Promise.all(
+      withNewOrder.map(s =>
+        supabase.from("sections").update({ order_index: s.order_index }).eq("id", s.id)
+      )
+    );
     toast.success("Ordem das seções atualizada");
   };
 
