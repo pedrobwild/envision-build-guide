@@ -75,8 +75,6 @@ export function PipelineProgress({ internalStatus }: PipelineProgressProps) {
                       {circleContent}
                     </div>
                   );
-                    </div>
-                  );
 
                   if (isRevisionRequested) {
                     return (
