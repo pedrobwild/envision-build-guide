@@ -79,7 +79,7 @@ export function SectionNav({ sections }: SectionNavProps) {
                       className={cn(
                         "w-full flex items-center gap-2 px-4 py-2.5 text-left transition-all relative group",
                         isActive
-                          ? "bg-primary/8 text-foreground"
+                          ? "bg-primary/[0.08] text-foreground"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                       )}
                     >
