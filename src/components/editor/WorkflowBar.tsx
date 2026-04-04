@@ -301,7 +301,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
                   : dueToday
                   ? "bg-warning/10 text-warning border-warning/20"
                   : daysLeft !== null && daysLeft <= 2
-                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  ? "bg-muted text-muted-foreground border-border"
                   : "text-muted-foreground border-border"
               }`}
             >
