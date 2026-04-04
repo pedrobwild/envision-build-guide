@@ -1115,7 +1115,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                       {isExpanded && (
                         <div className="border-t border-border/40">
                           {/* Section fields */}
-                          <div className="px-4 py-2.5 grid grid-cols-2 sm:grid-cols-6 gap-2 bg-muted/20">
+                          <div className="px-4 py-2.5 grid grid-cols-2 sm:grid-cols-5 gap-2 bg-muted/20">
                             <div className="col-span-2 space-y-0.5">
                               <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Título</label>
                               <input
@@ -1131,10 +1131,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
                                 {formatBRL(sectionCostTotal)}
                               </div>
-                            </div>
-                            <div className="space-y-0.5">
-                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI</label>
-                              <BdiDisplay value={sectionCostTotal > 0 ? ((sectionSaleTotal / sectionCostTotal) - 1) * 100 : 0} />
                             </div>
                             <div className="space-y-0.5">
                               <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
