@@ -342,6 +342,7 @@ function SortableItemRow({
   budgetId,
   isItemSaving,
   searchMatch,
+  compact,
   onUpdate,
   onDelete,
   onImagesChange,
@@ -353,12 +354,14 @@ function SortableItemRow({
   budgetId: string;
   isItemSaving: boolean;
   searchMatch?: boolean;
+  compact: boolean;
   onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const [rowExpanded, setRowExpanded] = useState(false);
   const {
     attributes,
     listeners,
@@ -374,14 +377,20 @@ function SortableItemRow({
     opacity: isDragging ? 0.4 : 1,
   };
 
+  const hasDescription = !!(item.description && item.description.trim());
+  const hasImages = (item.images?.length || 0) > 0;
+  const imageCount = item.images?.length || 0;
+  const showExpanded = !compact || rowExpanded;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       className={cn(
-        "px-4 py-3 transition-colors border-b border-border/40 last:border-b-0 group/item",
+        "px-4 transition-colors border-b border-border/40 last:border-b-0 group/item",
         "even:bg-muted/20",
+        compact && !rowExpanded ? "py-1.5" : "py-3",
         searchMatch && "ring-1 ring-yellow-400/50 bg-yellow-50/30 dark:bg-yellow-900/10",
         isDragging && "bg-muted/40 shadow-lg rounded-lg"
       )}
@@ -390,6 +399,15 @@ function SortableItemRow({
         {/* Drag handle + Title + description */}
         <div className="lg:col-span-3 space-y-1">
           <div className="flex items-center gap-1.5">
+            {compact && (
+              <button
+                onClick={() => setRowExpanded(!rowExpanded)}
+                className="p-0.5 rounded text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
+                title={rowExpanded ? "Recolher" : "Expandir"}
+              >
+                <ChevronRight className={cn("h-3 w-3 transition-transform", rowExpanded && "rotate-90")} />
+              </button>
+            )}
             <button
               {...listeners}
               className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover/item:opacity-100"
@@ -406,35 +424,62 @@ function SortableItemRow({
                 <PenLine className="h-3 w-3 text-muted-foreground/40" />
               </span>
             )}
-            <input
-              type="text"
-              value={item.title}
-              onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
-              placeholder="Nome do item"
-              className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
-            />
+            {compact && !rowExpanded ? (
+              <span
+                className="text-sm font-body font-medium text-foreground truncate max-w-[280px] cursor-default"
+                title={item.title}
+              >
+                {item.title}
+              </span>
+            ) : (
+              <input
+                type="text"
+                value={item.title}
+                onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
+                placeholder="Nome do item"
+                className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
+              />
+            )}
+            {/* Compact indicators */}
+            {compact && !rowExpanded && (
+              <div className="flex items-center gap-1 shrink-0">
+                {hasDescription && (
+                  <FileText className="h-2.5 w-2.5 text-muted-foreground/40" title="Tem descrição" />
+                )}
+                {hasImages && (
+                  <span className="flex items-center gap-0.5" title={`${imageCount} imagem(ns)`}>
+                    <Paperclip className="h-2.5 w-2.5 text-muted-foreground/40" />
+                    <span className="text-[9px] text-muted-foreground/50 tabular-nums">{imageCount}</span>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
-          <input
-            type="text"
-            value={item.description || ""}
-            onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
-            placeholder="Descrição"
-            className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 ml-6 transition-all cursor-text"
-          />
-          <div className="flex items-center gap-1 ml-6">
-            <LinkIcon className="h-2.5 w-2.5 text-muted-foreground/40 shrink-0" />
-            <input
-              type="url"
-              value={item.reference_url || ""}
-              onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
-              placeholder="Link de referência"
-              className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
-            />
-          </div>
+          {showExpanded && (
+            <>
+              <input
+                type="text"
+                value={item.description || ""}
+                onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
+                placeholder="Descrição"
+                className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 ml-6 transition-all cursor-text"
+              />
+              <div className="flex items-center gap-1 ml-6">
+                <LinkIcon className="h-2.5 w-2.5 text-muted-foreground/40 shrink-0" />
+                <input
+                  type="url"
+                  value={item.reference_url || ""}
+                  onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
+                  placeholder="Link de referência"
+                  className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
+                />
+              </div>
+            </>
+          )}
         </div>
         {/* Qty — editable */}
         <div className="lg:col-span-1 space-y-0.5">
-          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Qtd</label>
+          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Qtd</label>}
           <input
             type="number"
             value={item.qty ?? ""}
@@ -445,7 +490,7 @@ function SortableItemRow({
         </div>
         {/* $ Custo (unit) — editable */}
         <div className="lg:col-span-1 space-y-0.5">
-          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>
+          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>}
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
@@ -457,7 +502,7 @@ function SortableItemRow({
         </div>
         {/* %BDI — editable with validation */}
         <div className="lg:col-span-1 space-y-0.5">
-          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI %</label>
+          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI %</label>}
           <BdiInput
             value={item.bdi_percentage}
             onChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
@@ -465,7 +510,7 @@ function SortableItemRow({
         </div>
         {/* $ Venda (calculated) */}
         <div className="lg:col-span-1 space-y-0.5">
-          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
+          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>}
           <div
             className="group/cell w-full px-2 py-1.5 rounded-md bg-muted/40 text-sm font-body tabular-nums text-muted-foreground cursor-default flex items-center justify-between"
             title="Campo calculado automaticamente"
@@ -474,20 +519,22 @@ function SortableItemRow({
             <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
           </div>
         </div>
-        {/* $ Total Custo (calculated) */}
-        <div className="lg:col-span-2 space-y-0.5">
-          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Custo</label>
-          <div
-            className="group/cell w-full px-2 py-1.5 rounded-md bg-muted/40 text-sm font-body tabular-nums text-muted-foreground cursor-default flex items-center justify-between"
-            title="Campo calculado automaticamente"
-          >
-            <span>{formatBRL(calcItemCostTotal(item))}</span>
-            <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
+        {/* $ Total Custo (calculated) — hidden in compact */}
+        {showExpanded && (
+          <div className="lg:col-span-2 space-y-0.5">
+            <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Custo</label>
+            <div
+              className="group/cell w-full px-2 py-1.5 rounded-md bg-muted/40 text-sm font-body tabular-nums text-muted-foreground cursor-default flex items-center justify-between"
+              title="Campo calculado automaticamente"
+            >
+              <span>{formatBRL(calcItemCostTotal(item))}</span>
+              <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
+            </div>
           </div>
-        </div>
-        {/* $ Total Venda (calculated — special treatment) */}
-        <div className="lg:col-span-2 space-y-0.5">
-          <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Venda</label>
+        )}
+        {/* $ Total Venda (calculated) */}
+        <div className={cn("space-y-0.5", showExpanded ? "lg:col-span-2" : "lg:col-span-4")}>
+          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Venda</label>}
           <div
             className="group/cell w-full px-2 py-1.5 rounded-md bg-primary/5 text-sm font-body font-semibold tabular-nums text-foreground cursor-default flex items-center justify-between"
             title="Campo calculado automaticamente"
@@ -506,7 +553,7 @@ function SortableItemRow({
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          {!item.catalog_item_id && (
+          {!item.catalog_item_id && !compact && (
             <button
               onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
               className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
@@ -527,14 +574,16 @@ function SortableItemRow({
         </div>
       </div>
 
-      {/* Item image management */}
-      <ItemImageInline
-        itemId={item.id}
-        itemTitle={item.title}
-        budgetId={budgetId}
-        images={item.images || []}
-        onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
-      />
+      {/* Item image management — only in expanded */}
+      {showExpanded && (
+        <ItemImageInline
+          itemId={item.id}
+          itemTitle={item.title}
+          budgetId={budgetId}
+          images={item.images || []}
+          onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
+        />
+      )}
 
       {/* Item detail sheet */}
       <ItemDetailSheet
