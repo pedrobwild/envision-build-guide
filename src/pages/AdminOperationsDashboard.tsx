@@ -526,31 +526,33 @@ export default function AdminOperationsDashboard() {
                       <Button variant="ghost" size="icon" className="opacity-60 group-hover:opacity-100" onClick={() => openEditDialog(b)} title="Gerenciar">
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="opacity-60 group-hover:opacity-100">
+                      <BudgetActionsMenu
+                        budget={b}
+                        onRefresh={loadData}
+                        fromPath="/admin/operacoes"
+                        extraItems={
+                          <>
+                            <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
+                              <FileText className="h-4 w-4 mr-2" />Ver detalhes
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-xs">Alterar Status</DropdownMenuLabel>
+                            {Object.entries(INTERNAL_STATUSES)
+                              .filter(([k]) => k !== b.internal_status)
+                              .slice(0, 6)
+                              .map(([k, v]) => (
+                                <DropdownMenuItem key={k} onClick={() => quickChangeStatus(b, k as InternalStatus)}>
+                                  <span className="mr-2">{v.icon}</span>{v.label}
+                                </DropdownMenuItem>
+                              ))}
+                          </>
+                        }
+                        trigger={
+                          <Button variant="ghost" size="icon" className="opacity-60 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
                             <MoreVertical className="h-4 w-4" />
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
-                            <FileText className="h-4 w-4 mr-2" />Ver detalhes
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/operacoes" } })}>
-                            <ExternalLink className="h-4 w-4 mr-2" />Abrir editor
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuLabel className="text-xs">Alterar Status</DropdownMenuLabel>
-                          {Object.entries(INTERNAL_STATUSES)
-                            .filter(([k]) => k !== b.internal_status)
-                            .slice(0, 6)
-                            .map(([k, v]) => (
-                              <DropdownMenuItem key={k} onClick={() => quickChangeStatus(b, k as InternalStatus)}>
-                                <span className="mr-2">{v.icon}</span>{v.label}
-                              </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        }
+                      />
                     </div>
                   </div>
                 </Card>

@@ -765,87 +765,82 @@ export default function EstimatorDashboard() {
                             ));
                           })()}
 
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                          <BudgetActionsMenu
+                            budget={b}
+                            onRefresh={loadData}
+                            fromPath="/admin/producao"
+                            extraItems={
+                              <>
+                                {b.briefing && (
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      toast.info(b.briefing, {
+                                        duration: 10000,
+                                        description: `Briefing — ${b.project_name}`,
+                                      });
+                                    }}
+                                  >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Ver briefing
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
+                                {!PENDING_STATUSES.includes(b.internal_status) && (
+                                  <DropdownMenuItem onClick={() => requestStatusChange(b.id, "assigned")}>
+                                    <Inbox className="h-4 w-4 mr-2" />
+                                    Mover p/ Pendente
+                                  </DropdownMenuItem>
+                                )}
+                                {!IN_PROGRESS_STATUSES.includes(b.internal_status) && (
+                                  <DropdownMenuItem onClick={() => requestStatusChange(b.id, "in_progress")}>
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    Mover p/ Em Elaboração
+                                  </DropdownMenuItem>
+                                )}
+                                {b.internal_status !== "ready_for_review" && (
+                                  <DropdownMenuItem onClick={() => requestStatusChange(b.id, "ready_for_review")}>
+                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                    Mover p/ Em Revisão
+                                  </DropdownMenuItem>
+                                )}
+                                {!DELIVERED_STATUSES.includes(b.internal_status) && (
+                                  <DropdownMenuItem onClick={() => requestStatusChange(b.id, "delivered_to_sales")}>
+                                    <Send className="h-4 w-4 mr-2" />
+                                    Mover p/ Entregue
+                                  </DropdownMenuItem>
+                                )}
+                                {isAdmin && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => {
+                                      setAssignValue(b.estimator_owner_id ?? "");
+                                      setAssignDialog({ open: true, budgetId: b.id, type: "estimator", currentValue: b.estimator_owner_id });
+                                    }}>
+                                      <UserCog className="h-4 w-4 mr-2" />
+                                      Atribuir orçamentista
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => {
+                                      setAssignValue(b.commercial_owner_id ?? "");
+                                      setAssignDialog({ open: true, budgetId: b.id, type: "commercial", currentValue: b.commercial_owner_id });
+                                    }}>
+                                      <Handshake className="h-4 w-4 mr-2" />
+                                      Atribuir comercial
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </>
+                            }
+                            trigger={
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreVertical className="h-3.5 w-3.5" />
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}>
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                Abrir orçamento
-                              </DropdownMenuItem>
-                              {b.briefing && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    toast.info(b.briefing, {
-                                      duration: 10000,
-                                      description: `Briefing — ${b.project_name}`,
-                                    });
-                                  }}
-                                >
-                                  <FileText className="h-4 w-4 mr-2" />
-                                  Ver briefing
-                                </DropdownMenuItem>
-                              )}
-                              {(b.version_number ?? 1) > 1 && b.version_group_id && (
-                                <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
-                                  <GitCompare className="h-4 w-4 mr-2" />
-                                  Comparar versões
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              {/* All 5 stage transitions in overflow */}
-                              {!PENDING_STATUSES.includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "assigned")}>
-                                  <Inbox className="h-4 w-4 mr-2" />
-                                  Mover p/ Pendente
-                                </DropdownMenuItem>
-                              )}
-                              {!IN_PROGRESS_STATUSES.includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "in_progress")}>
-                                  <Clock className="h-4 w-4 mr-2" />
-                                  Mover p/ Em Elaboração
-                                </DropdownMenuItem>
-                              )}
-                              {b.internal_status !== "ready_for_review" && (
-                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "ready_for_review")}>
-                                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                                  Mover p/ Em Revisão
-                                </DropdownMenuItem>
-                              )}
-                              {!DELIVERED_STATUSES.includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "delivered_to_sales")}>
-                                  <Send className="h-4 w-4 mr-2" />
-                                  Mover p/ Entregue
-                                </DropdownMenuItem>
-                              )}
-                              {isAdmin && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => {
-                                    setAssignValue(b.estimator_owner_id ?? "");
-                                    setAssignDialog({ open: true, budgetId: b.id, type: "estimator", currentValue: b.estimator_owner_id });
-                                  }}>
-                                    <UserCog className="h-4 w-4 mr-2" />
-                                    Atribuir orçamentista
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => {
-                                    setAssignValue(b.commercial_owner_id ?? "");
-                                    setAssignDialog({ open: true, budgetId: b.id, type: "commercial", currentValue: b.commercial_owner_id });
-                                  }}>
-                                    <Handshake className="h-4 w-4 mr-2" />
-                                    Atribuir comercial
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            }
+                          />
                         </div>
                       </div>
                     </Card>
