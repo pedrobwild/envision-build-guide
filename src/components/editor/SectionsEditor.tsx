@@ -1199,6 +1199,43 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                       {isExpanded && (
                         <div className="border-t border-border/40">
 
+                          {/* Column headers */}
+                          {section.items.length > 0 && (
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 px-4 pt-2.5 pb-1.5 border-b border-border/20">
+                              <div className="lg:col-span-3">
+                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Título</span>
+                              </div>
+                              <div className="lg:col-span-1">
+                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Qtd</span>
+                              </div>
+                              <div className="lg:col-span-1">
+                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Custo</span>
+                              </div>
+                              <div className="lg:col-span-1">
+                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">BDI %</span>
+                              </div>
+                              <div className="lg:col-span-1">
+                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Venda</span>
+                              </div>
+                              {!compactMode && (
+                                <>
+                                  <div className="lg:col-span-2">
+                                    <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Total Custo</span>
+                                  </div>
+                                  <div className="lg:col-span-2">
+                                    <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Total Venda</span>
+                                  </div>
+                                </>
+                              )}
+                              {compactMode && (
+                                <div className="lg:col-span-2">
+                                  <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Total Venda</span>
+                                </div>
+                              )}
+                              <div className="lg:col-span-1" />
+                            </div>
+                          )}
+
                           {/* Items with DnD */}
                           <DndContext
                             sensors={sensors}
