@@ -1066,17 +1066,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
       {/* ── Control bar ── */}
       {sections.length > 0 && (
-        <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-muted/30 border border-border/40">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-3 p-1.5 sm:p-2 rounded-lg bg-muted/30 border border-border/40 flex-wrap sm:flex-nowrap">
+          <div className="relative flex-1 min-w-[120px] sm:max-w-xs">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
             <input
               ref={searchRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); e.currentTarget.blur(); } }}
-              placeholder="Buscar item…"
-              className="w-full pl-8 pr-7 h-8 rounded-md border border-border/60 bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all"
+              placeholder="Buscar…"
+              className="w-full pl-7 pr-6 h-8 rounded-md border border-border/60 bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all"
             />
             {searchQuery && (
               <button
@@ -1090,7 +1090,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           <div className="flex items-center gap-0.5 ml-auto">
             <button
               onClick={expandAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
               title="Expandir tudo"
             >
               <ChevronsUpDown className="h-3 w-3" />
@@ -1098,7 +1098,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
             </button>
             <button
               onClick={collapseAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
               title="Colapsar tudo"
             >
               <ChevronsDownUp className="h-3 w-3" />
@@ -1112,7 +1112,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                 try { localStorage.setItem(densityKey, next ? "compact" : "expanded"); } catch { /* ignore */ }
               }}
               className={cn(
-                "flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body transition-colors",
+                "flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-md text-[11px] font-body transition-colors",
                 compactMode
                   ? "text-foreground bg-background shadow-sm border border-border/40"
                   : "text-muted-foreground hover:text-foreground hover:bg-background"
