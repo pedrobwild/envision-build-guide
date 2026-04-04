@@ -390,7 +390,7 @@ export default function BudgetInternalDetail() {
             {budget.internal_status === "blocked" ? (
               <AlertOctagon className="h-4 w-4 text-destructive shrink-0" />
             ) : (
-              <PauseCircle className="h-4 w-4 text-amber-600 shrink-0" />
+              <PauseCircle className="h-4 w-4 text-warning shrink-0" />
             )}
             <p className={`text-sm font-body font-medium flex-1 ${
               budget.internal_status === "blocked" ? "text-destructive" : "text-amber-800"
