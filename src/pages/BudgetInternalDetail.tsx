@@ -452,7 +452,7 @@ export default function BudgetInternalDetail() {
             {budget.internal_notes && (
               <Card className="border-warning/20 bg-warning/5">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-display flex items-center gap-2 text-amber-800">
+                  <CardTitle className="text-sm font-display flex items-center gap-2 text-warning">
                     <AlertTriangle className="h-4 w-4" />
                     Observações Internas
                   </CardTitle>
