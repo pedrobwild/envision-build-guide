@@ -1317,36 +1317,36 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
       {/* ── Sticky footer summary bar ── */}
       {sections.length > 0 && (
-        <div className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-sm py-3 px-6">
-          <div className="flex items-center justify-between gap-8">
-            <div className="flex items-center gap-8">
+        <div className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-sm py-2 md:py-3 px-3 md:px-6">
+          <div className="flex items-center justify-between gap-3 md:gap-8">
+            <div className="flex items-center gap-3 md:gap-8 flex-wrap">
               {/* Custo */}
               <div className="flex flex-col items-end gap-0.5">
-                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Custo</span>
-                <span className="text-sm font-semibold font-mono text-foreground tabular-nums">
+                <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">Custo</span>
+                <span className="text-xs md:text-sm font-semibold font-mono text-foreground tabular-nums">
                   {formatBRL(grandTotalCost)}
                 </span>
               </div>
-              {/* BDI */}
-              <div className="flex flex-col items-end gap-0.5">
-                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">BDI</span>
-                <span className="text-sm font-semibold font-mono text-foreground tabular-nums">
+              {/* BDI — hidden on very small screens */}
+              <div className="hidden sm:flex flex-col items-end gap-0.5">
+                <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">BDI</span>
+                <span className="text-xs md:text-sm font-semibold font-mono text-foreground tabular-nums">
                   {grandBdiPercent.toFixed(1)}%
                 </span>
               </div>
               {/* Venda — destaque */}
               <div className="flex flex-col items-end gap-0.5">
-                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Venda</span>
-                <span className="text-base font-bold font-mono text-foreground tabular-nums">
+                <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">Venda</span>
+                <span className="text-sm md:text-base font-bold font-mono text-foreground tabular-nums">
                   {formatBRL(grandTotalSale)}
                 </span>
               </div>
             </div>
             {/* Margem */}
             <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Margem</span>
+              <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">Margem</span>
               <span className={cn(
-                "text-sm font-semibold font-mono tabular-nums",
+                "text-xs md:text-sm font-semibold font-mono tabular-nums",
                 grandMargin >= 0 ? "text-foreground" : "text-destructive"
               )}>
                 {formatBRL(grandMargin)}
