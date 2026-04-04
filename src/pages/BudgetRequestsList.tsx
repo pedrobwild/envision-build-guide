@@ -57,6 +57,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
+import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 
 interface BudgetRow {
   id: string;
@@ -362,34 +363,16 @@ export default function BudgetRequestsList() {
                         )}
                       </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                      <BudgetActionsMenu
+                        budget={b}
+                        onRefresh={loadBudgets}
+                        fromPath="/admin/solicitacoes"
+                        trigger={
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                             <MoreVertical className="h-4 w-4" />
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenuItem
-                            onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/solicitacoes" } })}
-                          >
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Editar solicitação
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => setDeleteTarget(b)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        }
+                      />
                     </div>
                   </div>
                 </Card>

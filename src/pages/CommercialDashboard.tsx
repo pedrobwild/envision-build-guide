@@ -36,6 +36,7 @@ import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFilterChips";
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
+import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 
 // Pipeline groups for the commercial view
 // Statuses in "solicitado" and "em_elaboracao" are read-only for commercial
@@ -527,57 +528,43 @@ export default function CommercialDashboard() {
                       </div>
 
                       {/* Quick actions */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <BudgetActionsMenu
+                        budget={b}
+                        onRefresh={loadData}
+                        fromPath="/admin/comercial"
+                        extraItems={
+                          <>
+                            <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
+                              <FileText className="h-4 w-4 mr-2" />Ver detalhes
+                            </DropdownMenuItem>
+                            {!isLocked && (
+                              <>
+                                <DropdownMenuSeparator />
+                                {b.internal_status === "delivered_to_sales" && (
+                                  <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
+                                    <Send className="h-4 w-4 mr-2" />Enviar ao cliente
+                                  </DropdownMenuItem>
+                                )}
+                                {b.internal_status !== "lost" && b.internal_status !== "sent_to_client" && (
+                                  <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
+                                    <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
+                                  </DropdownMenuItem>
+                                )}
+                                {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
+                                  <DropdownMenuItem onClick={() => setRevisionBudget(b)}>
+                                    <RotateCcw className="h-4 w-4 mr-2" />Solicitar revisão
+                                  </DropdownMenuItem>
+                                )}
+                              </>
+                            )}
+                          </>
+                        }
+                        trigger={
+                          <Button variant="ghost" size="icon" className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                             <MoreVertical className="h-4 w-4" />
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
-                            <FileText className="h-4 w-4 mr-2" />Ver detalhes
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/comercial" } })}>
-                            <ExternalLink className="h-4 w-4 mr-2" />Abrir orçamento
-                          </DropdownMenuItem>
-                          {b.public_id && (
-                            <DropdownMenuItem onClick={() => copyPublicLink(b.public_id)}>
-                              <Copy className="h-4 w-4 mr-2" />Copiar link público
-                            </DropdownMenuItem>
-                          )}
-                          {(b.version_number ?? 1) > 1 && b.version_group_id && (
-                            <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${b.version_group_id}&right=${b.id}`)}>
-                              <GitCompare className="h-4 w-4 mr-2" />Comparar versões
-                            </DropdownMenuItem>
-                          )}
-                          {/* Status actions — "Contrato fechado" available for all non-terminal statuses */}
-                          {!isLocked && (
-                            <>
-                              <DropdownMenuSeparator />
-                              {b.internal_status === "delivered_to_sales" && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
-                                  <Send className="h-4 w-4 mr-2" />Enviar ao cliente
-                                </DropdownMenuItem>
-                              )}
-                              {b.internal_status !== "sent_to_client" && b.internal_status !== "lost" && (
-                                <DropdownMenuItem onClick={() => setConfirmCloseBudgetId(b.id)}>
-                                  <ThumbsUp className="h-4 w-4 mr-2" />Contrato fechado
-                                </DropdownMenuItem>
-                              )}
-                              {b.internal_status !== "lost" && b.internal_status !== "sent_to_client" && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
-                                  <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
-                                </DropdownMenuItem>
-                              )}
-                              {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => setRevisionBudget(b)}>
-                                  <RotateCcw className="h-4 w-4 mr-2" />Solicitar revisão
-                                </DropdownMenuItem>
-                              )}
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        }
+                      />
                     </div>
                   </Card>
                 );

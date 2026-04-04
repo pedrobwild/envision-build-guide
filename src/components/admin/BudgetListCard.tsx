@@ -2,20 +2,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import {
-  Pencil, Eye, MoreHorizontal, Copy, GitCompare,
-  Handshake, ShoppingBag, Archive, Trash2, ExternalLink,
+  Pencil, Eye, ExternalLink,
   User, Calendar, Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 
 interface BudgetListCardProps {
   budget: any;
@@ -23,14 +16,7 @@ interface BudgetListCardProps {
   sectionCount: number;
   statusLabel: string;
   statusColor: string;
-  onPublish: (id: string) => void;
-  onCopyLink: (publicId: string) => void;
-  onMarkClosed: (id: string) => void;
-  onToggleOptionals: (id: string, current: boolean) => void;
-  onDuplicate: (id: string) => void;
-  onArchive: (id: string) => void;
-  onDelete: (id: string) => void;
-  onCompareVersions?: (groupId: string) => void;
+  onRefresh?: () => void;
 }
 
 export function BudgetListCard({
@@ -39,14 +25,7 @@ export function BudgetListCard({
   sectionCount,
   statusLabel,
   statusColor,
-  onPublish,
-  onCopyLink,
-  onMarkClosed,
-  onToggleOptionals,
-  onDuplicate,
-  onArchive,
-  onDelete,
-  onCompareVersions,
+  onRefresh,
 }: BudgetListCardProps) {
   const navigate = useNavigate();
 
@@ -61,7 +40,6 @@ export function BudgetListCard({
       onClick={() => navigate(`/admin/budget/${budget.id}`)}
     >
       <div className="px-4 py-3 sm:py-3.5">
-        {/* Mobile: stacked layout / Desktop: row layout */}
         <div className="flex items-start gap-3">
           {/* Left: initials avatar */}
           <div className="hidden sm:flex h-10 w-10 rounded-lg bg-primary/10 text-primary items-center justify-center shrink-0 text-sm font-bold font-display">
@@ -70,7 +48,6 @@ export function BudgetListCard({
 
           {/* Center: info */}
           <div className="flex-1 min-w-0">
-            {/* Row 1: Project name + version + status */}
             <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
               {budget.sequential_code && (
                 <span className="text-[10px] font-mono text-muted-foreground/70 shrink-0">{budget.sequential_code}</span>
@@ -94,7 +71,6 @@ export function BudgetListCard({
               )}
             </div>
 
-            {/* Row 2: Client + meta */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground font-body flex-wrap">
               <span className="flex items-center gap-1 truncate max-w-[140px] sm:max-w-none">
                 <User className="h-3 w-3 shrink-0 opacity-60" />
@@ -118,7 +94,6 @@ export function BudgetListCard({
               )}
             </div>
 
-            {/* Row 3 (conditional): profit info */}
             {isClosed && internalCost > 0 && (
               <div className="flex items-center gap-2 text-[11px] font-body mt-1">
                 <span className="text-muted-foreground">Custo {formatBRL(internalCost)}</span>
@@ -145,16 +120,6 @@ export function BudgetListCard({
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
-              {budget.status === "draft" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={(e) => { e.stopPropagation(); onPublish(budget.id); }}
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-              )}
               {budget.public_id && (
                 <Button
                   variant="ghost"
@@ -167,61 +132,8 @@ export function BudgetListCard({
               )}
             </div>
 
-            {/* More menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuItem onClick={() => navigate(`/admin/budget/${budget.id}`)}>
-                  <Pencil className="h-4 w-4 mr-2" /> Editar
-                </DropdownMenuItem>
-                {budget.public_id && (
-                  <DropdownMenuItem onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank")}>
-                    <Eye className="h-4 w-4 mr-2" /> Ver página pública
-                  </DropdownMenuItem>
-                )}
-                {budget.public_id && (
-                  <DropdownMenuItem onClick={() => onCopyLink(budget.public_id!)}>
-                    <Copy className="h-4 w-4 mr-2" /> Copiar link
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                {budget.version_group_id && onCompareVersions && (
-                  <DropdownMenuItem onClick={() => onCompareVersions(budget.version_group_id!)}>
-                    <GitCompare className="h-4 w-4 mr-2" /> Comparar versões
-                  </DropdownMenuItem>
-                )}
-                {budget.internal_status !== "sent_to_client" && budget.internal_status !== "lost" && (
-                  <DropdownMenuItem onClick={() => onMarkClosed(budget.id)}>
-                    <Handshake className="h-4 w-4 mr-2 text-primary" /> Contrato Fechado
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => onToggleOptionals(budget.id, budget.show_optional_items)}>
-                  <ShoppingBag className="h-4 w-4 mr-2 text-amber-500" />
-                  {budget.show_optional_items ? "Desativar opcionais" : "Incluir opcionais"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDuplicate(budget.id)}>
-                  <Copy className="h-4 w-4 mr-2" /> Duplicar como novo
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {budget.status !== "archived" && (
-                  <DropdownMenuItem onClick={() => onArchive(budget.id)}>
-                    <Archive className="h-4 w-4 mr-2" /> Arquivar
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(budget.id)}>
-                  <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Shared actions menu */}
+            <BudgetActionsMenu budget={budget} onRefresh={onRefresh} />
           </div>
         </div>
       </div>
