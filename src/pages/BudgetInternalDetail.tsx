@@ -339,7 +339,7 @@ export default function BudgetInternalDetail() {
                     : dueToday
                     ? "bg-warning/10 text-warning border-warning/20"
                     : daysLeft !== null && daysLeft <= 2
-                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                    ? "bg-warning/5 text-warning border-warning/20"
                     : "text-muted-foreground border-border"
                 }`}
               >
@@ -384,16 +384,16 @@ export default function BudgetInternalDetail() {
         <div className={`border-b px-4 sm:px-6 py-3 ${
           budget.internal_status === "blocked"
             ? "bg-destructive/5 border-destructive/20"
-            : "bg-amber-50 border-amber-200"
+            : "bg-warning/5 border-warning/20"
         }`}>
           <div className="max-w-6xl mx-auto flex items-center gap-3">
             {budget.internal_status === "blocked" ? (
               <AlertOctagon className="h-4 w-4 text-destructive shrink-0" />
             ) : (
-              <PauseCircle className="h-4 w-4 text-amber-600 shrink-0" />
+              <PauseCircle className="h-4 w-4 text-warning shrink-0" />
             )}
             <p className={`text-sm font-body font-medium flex-1 ${
-              budget.internal_status === "blocked" ? "text-destructive" : "text-amber-800"
+              budget.internal_status === "blocked" ? "text-destructive" : "text-warning"
             }`}>
               {budget.internal_status === "blocked"
                 ? "Esta demanda está bloqueada. Verifique as notas internas para detalhes."
@@ -450,15 +450,15 @@ export default function BudgetInternalDetail() {
 
             {/* Internal Notes */}
             {budget.internal_notes && (
-              <Card className="border-amber-200 bg-amber-50/30">
+              <Card className="border-warning/20 bg-warning/5">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-display flex items-center gap-2 text-amber-800">
+                  <CardTitle className="text-sm font-display flex items-center gap-2 text-warning">
                     <AlertTriangle className="h-4 w-4" />
                     Observações Internas
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm font-body text-amber-900 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-sm font-body text-foreground whitespace-pre-wrap leading-relaxed">
                     {budget.internal_notes}
                   </p>
                 </CardContent>

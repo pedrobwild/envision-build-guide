@@ -291,7 +291,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
           {skippedRows.length > 0 && (
             <button
               onClick={() => setShowSkipped(true)}
-              className="flex items-center gap-2 text-xs text-amber-600 hover:text-amber-700 font-body transition-colors"
+              className="flex items-center gap-2 text-xs text-warning hover:text-warning/80 font-body transition-colors"
             >
               <AlertCircle className="h-3.5 w-3.5" />
               {skippedRows.length} linha(s) ignorada(s) — clique para ver
