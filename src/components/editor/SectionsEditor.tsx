@@ -563,14 +563,14 @@ function SortableItemRow({
             value={item.title}
             onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
             placeholder="Nome do item"
-            className="w-full max-w-xl h-8 px-2 rounded border border-transparent bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary hover:border-border transition-colors"
+            className="w-full max-w-xl h-8 px-2 rounded border border-transparent bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary hover:border-border transition-colors"
           />
           <input
             type="text"
             value={item.description || ""}
             onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
             placeholder="Descrição do item"
-            className="w-full max-w-xl h-7 px-2 rounded border border-transparent bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+            className="w-full max-w-xl h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
           />
           <div className="flex items-center gap-1.5 max-w-xl">
             <LinkIcon className="h-3 w-3 text-muted-foreground/30 shrink-0" />
@@ -579,13 +579,13 @@ function SortableItemRow({
               value={item.reference_url || ""}
               onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
               placeholder="Link de referência"
-              className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+              className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
             />
           </div>
 
           {/* Mobile-only: BDI field when expanded */}
           <div className="flex items-center gap-2 md:hidden pt-1">
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">BDI%</span>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium font-body">BDI%</span>
             <input
               type="number"
               value={item.bdi_percentage ?? ""}
