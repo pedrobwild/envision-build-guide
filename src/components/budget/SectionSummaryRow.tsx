@@ -77,7 +77,7 @@ export function SectionSummaryRow({
         {/* Title + item count */}
         <div className="flex-1 text-left min-w-0">
           <span className={cn(
-            "font-body font-medium text-foreground leading-snug block truncate",
+            "font-body font-medium text-foreground leading-snug block",
             compact ? "text-[13px]" : "text-sm"
           )}>
             {toTitleCase(section.title)}
