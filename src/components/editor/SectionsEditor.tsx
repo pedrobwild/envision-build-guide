@@ -432,49 +432,48 @@ function SortableItemRow({
         "flex items-center gap-0",
         compact && !rowExpanded ? "h-11" : "py-2",
       )}>
-        {/* [▶ expand] — 24px */}
-        <div className="w-6 flex-shrink-0 flex items-center justify-center">
+        {/* [▶ expand] — 20px mobile, 24px desktop */}
+        <div className="w-5 sm:w-6 flex-shrink-0 flex items-center justify-center">
           <button
             onClick={() => setRowExpanded(!rowExpanded)}
             className="p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground transition-colors"
           >
             <ChevronRight className={cn(
-              "h-3.5 w-3.5 transition-transform duration-200",
+              "h-3 sm:h-3.5 w-3 sm:w-3.5 transition-transform duration-200",
               rowExpanded && "rotate-90"
             )} />
           </button>
         </div>
 
         {/* [Título] — flex-1 */}
-        <div className="flex-1 min-w-0 flex items-center gap-1 px-1">
+        <div className="flex-1 min-w-0 flex items-center gap-1 px-0.5 sm:px-1">
           {compact && !rowExpanded ? (
             <>
               <span
-                className="text-sm text-foreground truncate cursor-default"
+                className="text-xs sm:text-sm text-foreground truncate cursor-default"
                 title={item.title}
               >
                 {item.title}
               </span>
-              {/* Compact indicators — clickable to expand */}
               {hasDescription && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setRowExpanded(true); }}
-                  className="ml-1 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
+                  className="ml-0.5 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
                   title="Tem descrição — clique para expandir"
                 >📝</button>
               )}
               {hasImages && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setRowExpanded(true); }}
-                  className="ml-1 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
+                  className="ml-0.5 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
                   title={`${imageCount} imagem(ns) — clique para expandir`}
                 >📷 {imageCount > 1 ? imageCount : ""}</button>
               )}
               {isOptional && (
-                <span className="ml-1 text-[10px] bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
+                <span className="ml-0.5 text-[9px] bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
               )}
               {hasBdiWarning && (
-                <AlertTriangle className="ml-1 h-3 w-3 text-orange-500 inline flex-shrink-0" />
+                <AlertTriangle className="ml-0.5 h-3 w-3 text-warning inline flex-shrink-0" />
               )}
             </>
           ) : (
@@ -483,35 +482,35 @@ function SortableItemRow({
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full h-9 px-2 rounded border border-transparent bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100"
+              className="w-full h-8 sm:h-9 px-1.5 sm:px-2 rounded border border-transparent bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100"
             />
           )}
         </div>
 
-        {/* [QTD] — 48px mobile, 64px desktop */}
-        <div className="w-12 md:w-16 flex-shrink-0 px-1">
+        {/* [QTD] — 40px mobile, 64px desktop */}
+        <div className="w-10 sm:w-16 flex-shrink-0 px-0.5 sm:px-1">
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full h-8 rounded border border-transparent bg-transparent text-sm font-mono text-center placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
+            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-xs sm:text-sm font-mono text-center placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
-        {/* [Custo] — 80px mobile, 100px desktop */}
-        <div className="w-20 md:w-[100px] flex-shrink-0 px-1">
+        {/* [Custo] — 64px mobile, 100px desktop */}
+        <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full h-8 rounded border border-transparent bg-transparent text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
+            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-xs sm:text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
-        {/* [BDI%] — hidden mobile, 72px desktop */}
+        {/* [BDI%] — hidden mobile */}
         <div className="hidden md:block w-[72px] flex-shrink-0 px-1">
           <input
             type="number"
@@ -523,33 +522,33 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [Venda] — hidden mobile, 100px desktop, readonly */}
+        {/* [Venda Unit.] — hidden mobile */}
         <div className="hidden md:block w-[100px] flex-shrink-0 px-1">
           <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground bg-muted/30 rounded">
             {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
 
-        {/* [Total Venda] — 80px mobile, 100px desktop, primary */}
-        <div className="w-20 md:w-[100px] flex-shrink-0 px-1">
-          <div className="h-8 flex items-center justify-end px-2 text-xs md:text-sm font-semibold font-mono tabular-nums text-foreground">
+        {/* [Total Venda] — 64px mobile, 100px desktop */}
+        <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
+          <div className="h-7 sm:h-8 flex items-center justify-end px-1 sm:px-2 text-[11px] sm:text-sm font-semibold font-mono tabular-nums text-foreground">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
 
-        {/* [⋮ ações] — 32px, hover-only */}
-        <div className="w-8 flex-shrink-0 flex items-center justify-center">
+        {/* [⋮ ações] — 24px mobile, 32px desktop */}
+        <div className="w-6 sm:w-8 flex-shrink-0 flex items-center justify-center">
           {isItemSaving ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground/40" />
+            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />
           ) : (
             <button
               onClick={() => {
                 if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
               }}
-              className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
+              className="p-0.5 sm:p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity duration-100 sm:opacity-0 sm:group-hover/item:opacity-100"
               title="Excluir item"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
             </button>
           )}
         </div>
@@ -557,7 +556,7 @@ function SortableItemRow({
 
       {/* ── Expanded detail area ── */}
       {rowExpanded && (
-        <div className="pb-2 pl-8 pr-4 space-y-1.5 border-t border-border/20 pt-2">
+        <div className="pb-2 pl-6 sm:pl-8 pr-2 sm:pr-4 space-y-1.5 border-t border-border/20 pt-2">
           {/* Editable title when expanded */}
           <input
             type="text"
@@ -583,7 +582,24 @@ function SortableItemRow({
               className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
             />
           </div>
-          <div className="flex items-center gap-2 pt-1">
+
+          {/* Mobile-only: BDI field when expanded */}
+          <div className="flex items-center gap-2 md:hidden pt-1">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">BDI%</span>
+            <input
+              type="number"
+              value={item.bdi_percentage ?? ""}
+              onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
+              placeholder="0"
+              step="0.01"
+              className="w-20 h-7 rounded border border-border/60 bg-transparent text-xs font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors tabular-nums"
+            />
+            <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
+              Venda unit: {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1 flex-wrap">
             <button
               onClick={() => setDetailOpen(true)}
               className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -1054,29 +1070,29 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   return (
     <div className="mt-6 pb-20">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-display font-bold text-foreground uppercase tracking-[0.06em]">Seções e Itens</h2>
+      <div className="flex items-center justify-between mb-4 px-1">
+        <h2 className="text-xs sm:text-sm font-display font-bold text-foreground uppercase tracking-[0.06em]">Seções e Itens</h2>
         <button
           onClick={addSection}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-body font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+          className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-body font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
         >
-          <Plus className="h-3.5 w-3.5" /> Nova Seção
+          <Plus className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Nova</span> Seção
         </button>
       </div>
 
       {/* ── Control bar ── */}
       {sections.length > 0 && (
-        <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-muted/30 border border-border/40">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-3 p-1.5 sm:p-2 rounded-lg bg-muted/30 border border-border/40 flex-wrap sm:flex-nowrap">
+          <div className="relative flex-1 min-w-[120px] sm:max-w-xs">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
             <input
               ref={searchRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); e.currentTarget.blur(); } }}
-              placeholder="Buscar item…"
-              className="w-full pl-8 pr-7 h-8 rounded-md border border-border/60 bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all"
+              placeholder="Buscar…"
+              className="w-full pl-7 pr-6 h-8 rounded-md border border-border/60 bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all"
             />
             {searchQuery && (
               <button
@@ -1090,7 +1106,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           <div className="flex items-center gap-0.5 ml-auto">
             <button
               onClick={expandAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
               title="Expandir tudo"
             >
               <ChevronsUpDown className="h-3 w-3" />
@@ -1098,7 +1114,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
             </button>
             <button
               onClick={collapseAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
               title="Colapsar tudo"
             >
               <ChevronsDownUp className="h-3 w-3" />
@@ -1112,7 +1128,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                 try { localStorage.setItem(densityKey, next ? "compact" : "expanded"); } catch { /* ignore */ }
               }}
               className={cn(
-                "flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body transition-colors",
+                "flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-md text-[11px] font-body transition-colors",
                 compactMode
                   ? "text-foreground bg-background shadow-sm border border-border/40"
                   : "text-muted-foreground hover:text-foreground hover:bg-background"
@@ -1174,22 +1190,22 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                       {/* Section header — 48px fixed, Linear pattern */}
                       <div
                         className={cn(
-                          "h-12 px-3 flex items-center cursor-pointer transition-colors duration-100",
+                          "h-12 px-2 sm:px-3 flex items-center cursor-pointer transition-colors duration-100",
                           isExpanded ? "bg-muted/20 hover:bg-muted/30" : "hover:bg-muted/30"
                         )}
                         onClick={() => toggleSection(section.id)}
                       >
-                        {/* [⋮⋮] drag — 8px zone, hover-only */}
+                        {/* [⋮⋮] drag — hidden on mobile, visible on hover desktop */}
                         <button
                           {...dragListeners}
-                          className="w-5 flex-shrink-0 flex items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/section:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
+                          className="hidden sm:flex w-5 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/section:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <GripVertical className="h-3.5 w-3.5" />
                         </button>
 
-                        {/* [▶/▼] chevron — 24px zone */}
-                        <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                        {/* [▶/▼] chevron */}
+                        <div className="w-5 sm:w-6 flex-shrink-0 flex items-center justify-center">
                           <ChevronRight className={cn(
                             "h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 ease-out",
                             isExpanded && "rotate-90"
@@ -1197,25 +1213,25 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         </div>
 
                         {/* [Nome da Seção] — auto, truncate */}
-                        <span className="text-sm font-semibold text-foreground truncate min-w-0">
+                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate min-w-0">
                           {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                         </span>
 
-                        {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/30 ml-1.5 flex-shrink-0" />}
+                        {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/30 ml-1 flex-shrink-0" />}
                         {section.is_optional && (
-                          <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground flex-shrink-0">
+                          <span className="ml-1 px-1 py-0.5 text-[9px] sm:text-[10px] font-medium rounded bg-muted text-muted-foreground flex-shrink-0">
                             OPT
                           </span>
                         )}
 
                         {/* [N itens] — text-xs muted */}
-                        <span className="text-xs text-muted-foreground ml-2 shrink-0 tabular-nums">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground ml-1.5 sm:ml-2 shrink-0 tabular-nums">
                           {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                         </span>
 
-                        {/* Right zone: [% bar] [R$ total] */}
-                        <div className="ml-auto flex items-center gap-2 shrink-0">
-                          {/* [% barra] — mini progress bar */}
+                        {/* Right zone: [R$ total] */}
+                        <div className="ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
+                          {/* [% barra] — hidden on mobile */}
                           <div className="hidden sm:flex items-center gap-1.5">
                             <div className="h-1 rounded-full bg-primary/10 overflow-hidden" style={{ width: '80px' }}>
                               <div
@@ -1228,14 +1244,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             </span>
                           </div>
 
-                          {/* [R$ total] — monospace semibold */}
-                          <span className="text-sm font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
+                          {/* [R$ total] */}
+                          <span className="text-xs sm:text-sm font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
                             {formatBRL(sectionSaleTotal)}
                           </span>
                         </div>
 
-                        {/* [⋮] menu — 24px zone, hover-only */}
-                        <div className="w-6 flex-shrink-0 flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity duration-100">
+                        {/* [⋮] menu — always visible on mobile via tap, hover on desktop */}
+                        <div className="w-6 flex-shrink-0 flex items-center justify-center sm:opacity-0 sm:group-hover/section:opacity-100 transition-opacity duration-100">
                           <SectionContextMenu
                             section={section}
                             onRename={(name) => updateSection(section.id, "title", name)}
@@ -1255,27 +1271,27 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         <div>
                           {/* Column headers — sticky label-caps */}
                           {section.items.length > 0 && (
-                            <div className="flex items-center border-b border-border/60 bg-muted/10 px-2 h-8">
-                              <div className="w-6 flex-shrink-0" />
-                              <div className="flex-1 px-1">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Descrição do Item</span>
+                            <div className="flex items-center border-b border-border/60 bg-muted/10 px-1 sm:px-2 h-7 sm:h-8">
+                              <div className="w-5 sm:w-6 flex-shrink-0" />
+                              <div className="flex-1 px-0.5 sm:px-1">
+                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Item</span>
                               </div>
-                              <div className="w-12 md:w-16 flex-shrink-0 px-1 text-center">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
+                              <div className="w-10 sm:w-16 flex-shrink-0 px-0.5 sm:px-1 text-center">
+                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
                               </div>
-                              <div className="w-20 md:w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo Unit.</span>
+                              <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
+                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo</span>
                               </div>
                               <div className="hidden md:block w-[72px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI%</span>
                               </div>
                               <div className="hidden md:block w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda Unit.</span>
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda Un.</span>
                               </div>
-                              <div className="w-20 md:w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
+                              <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
+                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total</span>
                               </div>
-                              <div className="w-8 flex-shrink-0" />
+                              <div className="w-6 sm:w-8 flex-shrink-0" />
                             </div>
                           )}
 
