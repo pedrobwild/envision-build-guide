@@ -444,7 +444,7 @@ function SortableItemRow({
             {compact && !rowExpanded && (
               <div className="flex items-center gap-1 shrink-0">
                 {hasDescription && (
-                  <FileText className="h-2.5 w-2.5 text-muted-foreground/40" title="Tem descrição" />
+                  <span title="Tem descrição"><FileText className="h-2.5 w-2.5 text-muted-foreground/40" /></span>
                 )}
                 {hasImages && (
                   <span className="flex items-center gap-0.5" title={`${imageCount} imagem(ns)`}>
