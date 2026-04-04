@@ -146,7 +146,11 @@ export default function EstimatorDashboard() {
   const [assignValue, setAssignValue] = useState<string>("");
   const [assigning, setAssigning] = useState(false);
   const [newBudgetOpen, setNewBudgetOpen] = useState(false);
-
+  const [templateDialog, setTemplateDialog] = useState<{ open: boolean; budgetId: string; pendingStatus: InternalStatus }>({
+    open: false,
+    budgetId: "",
+    pendingStatus: "in_progress",
+  });
   useEffect(() => {
     if (!user || profileLoading) return;
     loadData();
