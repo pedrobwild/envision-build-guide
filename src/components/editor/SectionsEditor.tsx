@@ -1054,13 +1054,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   return (
     <div className="mt-6 pb-20">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-display font-bold text-foreground uppercase tracking-[0.06em]">Seções e Itens</h2>
+      <div className="flex items-center justify-between mb-4 px-1">
+        <h2 className="text-xs sm:text-sm font-display font-bold text-foreground uppercase tracking-[0.06em]">Seções e Itens</h2>
         <button
           onClick={addSection}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-body font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+          className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-body font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
         >
-          <Plus className="h-3.5 w-3.5" /> Nova Seção
+          <Plus className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Nova</span> Seção
         </button>
       </div>
 
