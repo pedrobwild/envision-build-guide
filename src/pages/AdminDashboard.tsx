@@ -726,6 +726,24 @@ export default function AdminDashboard() {
       {/* Modals */}
       <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} fileFilter={importType} />
 
+      {templateBudgetId && (
+        <TemplateSelectorDialog
+          open={templateDialogOpen}
+          budgetId={templateBudgetId}
+          onOpenChange={(v) => {
+            setTemplateDialogOpen(v);
+            if (!v && templateBudgetId) {
+              navigate(`/admin/budget/${templateBudgetId}`);
+              setTemplateBudgetId(null);
+            }
+          }}
+          onConfirm={() => {
+            if (templateBudgetId) navigate(`/admin/budget/${templateBudgetId}`);
+            setTemplateBudgetId(null);
+          }}
+        />
+      )}
+
       {(duplicateConfirmId || duplicating) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !duplicating && setDuplicateConfirmId(null)}>
           <div className="bg-card rounded-xl shadow-xl p-6 max-w-md mx-4 border border-border" onClick={(e) => e.stopPropagation()}>
