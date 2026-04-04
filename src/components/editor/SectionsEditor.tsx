@@ -1174,8 +1174,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         </div>
                       </div>
 
-                      {/* Expanded content */}
-                      {isExpanded && (
+                      {/* Expanded content — animated */}
+                      <div
+                        className={cn(
+                          "overflow-hidden transition-all duration-200 ease-out",
+                          isExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+                        )}
+                      >
                         <div>
                           {/* Column headers — sticky label-caps */}
                           {section.items.length > 0 && (
