@@ -15,6 +15,7 @@ interface CompactKanbanCardProps {
   bairro?: string | null;
   city?: string | null;
   versionNumber?: number | null;
+  sequentialCode?: string | null;
   commercialName?: string;
   estimatorName?: string;
   highPriority?: boolean;
