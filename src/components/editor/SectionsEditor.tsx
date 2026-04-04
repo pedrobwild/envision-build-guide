@@ -421,7 +421,7 @@ function SortableItemRow({
         compact && !rowExpanded ? "h-11" : "py-2",
       )}>
         {/* Title column */}
-        <div className="lg:col-span-3 flex items-center gap-1 px-2 min-w-0">
+        <div className="lg:col-span-3 flex items-center gap-1 px-3 min-w-0">
           {compact && (
             <button
               onClick={() => setRowExpanded(!rowExpanded)}
