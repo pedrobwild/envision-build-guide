@@ -455,12 +455,20 @@ function SortableItemRow({
               >
                 {item.title}
               </span>
-              {/* Compact indicators */}
+              {/* Compact indicators — clickable to expand */}
               {hasDescription && (
-                <span className="ml-1 text-[10px] text-muted-foreground flex-shrink-0" title="Tem descrição">📝</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setRowExpanded(true); }}
+                  className="ml-1 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
+                  title="Tem descrição — clique para expandir"
+                >📝</button>
               )}
               {hasImages && (
-                <span className="ml-1 text-[10px] text-muted-foreground flex-shrink-0" title={`${imageCount} imagem(ns)`}>📷 {imageCount > 1 ? imageCount : ""}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setRowExpanded(true); }}
+                  className="ml-1 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
+                  title={`${imageCount} imagem(ns) — clique para expandir`}
+                >📷 {imageCount > 1 ? imageCount : ""}</button>
               )}
               {isOptional && (
                 <span className="ml-1 text-[10px] bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
