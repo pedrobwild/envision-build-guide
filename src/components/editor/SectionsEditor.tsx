@@ -1051,6 +1051,24 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
             >
               <ChevronsDownUp className="h-3.5 w-3.5" /> Colapsar
             </button>
+            <div className="w-px h-4 bg-border mx-1" />
+            <button
+              onClick={() => {
+                const next = !compactMode;
+                setCompactMode(next);
+                try { localStorage.setItem(densityKey, next ? "compact" : "expanded"); } catch { /* ignore */ }
+              }}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-body transition-colors",
+                compactMode
+                  ? "text-foreground bg-muted"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+              title={compactMode ? "Modo expandido" : "Modo compacto"}
+            >
+              {compactMode ? <Rows3 className="h-3.5 w-3.5" /> : <Rows4 className="h-3.5 w-3.5" />}
+              {compactMode ? "Compacto" : "Expandido"}
+            </button>
           </div>
         </div>
       )}
