@@ -1322,43 +1322,43 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         </SortableContext>
       </DndContext>
 
-      {/* ── Sticky footer summary bar (Stripe-style) ── */}
-      {sections.length > 0 && grandTotalCost > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border">
-          <div className="max-w-screen-xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
-            <div className="flex items-center gap-6">
-              <div>
-                <span className="label-caps block">Custo</span>
-                <span className="text-base font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
+      {/* ── Sticky footer summary bar ── */}
+      {sections.length > 0 && (
+        <div className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-sm py-3 px-6">
+          <div className="flex items-center justify-between gap-8">
+            <div className="flex items-center gap-8">
+              {/* Custo */}
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Custo</span>
+                <span className="text-sm font-semibold font-mono text-foreground tabular-nums">
                   {formatBRL(grandTotalCost)}
                 </span>
               </div>
-              <span className="text-border select-none">|</span>
-              <div>
-                <span className="label-caps block">BDI médio</span>
-                <span className="text-base font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
+              {/* BDI */}
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">BDI</span>
+                <span className="text-sm font-semibold font-mono text-foreground tabular-nums">
                   {grandBdiPercent.toFixed(1)}%
                 </span>
               </div>
-              <span className="text-border select-none">|</span>
-              <div>
-                <span className="label-caps block">Venda</span>
-                <span className="text-base font-mono font-bold text-foreground tabular-nums tracking-[-0.035em]">
+              {/* Venda — destaque */}
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Venda</span>
+                <span className="text-base font-bold font-mono text-foreground tabular-nums">
                   {formatBRL(grandTotalSale)}
                 </span>
               </div>
             </div>
-            <div className="text-right">
-              <span className="label-caps block">Margem</span>
+            {/* Margem */}
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Margem</span>
               <span className={cn(
-                "text-base font-mono font-semibold tabular-nums tracking-[-0.035em]",
+                "text-sm font-semibold font-mono tabular-nums",
                 grandMargin >= 0 ? "text-foreground" : "text-destructive"
               )}>
                 {formatBRL(grandMargin)}
-                <span className="text-xs text-muted-foreground ml-1.5">·</span>
-                <span className="text-xs text-muted-foreground ml-1 font-mono">
-                  {marginPercent.toFixed(1)}%
-                </span>
+                {" "}
+                <span className="text-muted-foreground font-normal">· {marginPercent.toFixed(1)}%</span>
               </span>
             </div>
           </div>
