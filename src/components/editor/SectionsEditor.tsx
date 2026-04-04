@@ -500,31 +500,9 @@ function SortableItemRow({
               </div>
             )}
           </div>
-          {showExpanded && (
-            <>
-              <input
-                type="text"
-                value={item.description || ""}
-                onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
-                placeholder="Descrição"
-                className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 ml-6 transition-all cursor-text"
-              />
-              <div className="flex items-center gap-1 ml-6">
-                <LinkIcon className="h-2.5 w-2.5 text-muted-foreground/40 shrink-0" />
-                <input
-                  type="url"
-                  value={item.reference_url || ""}
-                  onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
-                  placeholder="Link de referência"
-                  className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
-                />
-              </div>
-            </>
-          )}
         </div>
         {/* Qty — editable */}
-        <div className="lg:col-span-1 space-y-0.5">
-          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Qtd</label>}
+        <div className="lg:col-span-1">
           <input
             type="number"
             value={item.qty ?? ""}
