@@ -544,7 +544,7 @@ export default function EstimatorDashboard() {
           <EstimatorKanban
             budgets={budgets.filter(b => (commercialFilter === "all" || b.commercial_owner_id === commercialFilter) && (estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter))}
             onStatusChange={async (budgetId, newStatus) => {
-              await changeStatus(budgetId, newStatus);
+              requestStatusChange(budgetId, newStatus);
             }}
             onCardClick={(id) => navigate(`/admin/budget/${id}`, { state: { from: "/admin/producao" } })}
             getProfileName={getProfileName}
