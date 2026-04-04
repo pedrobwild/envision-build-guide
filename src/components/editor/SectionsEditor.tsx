@@ -602,14 +602,14 @@ function SortableItemRow({
           <div className="flex items-center gap-2 pt-1 flex-wrap">
             <button
               onClick={() => setDetailOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <Pencil className="h-3 w-3" /> Editar detalhes
             </button>
             {!item.catalog_item_id && (
               <button
                 onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
-                className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
               >
                 <BookmarkPlus className="h-3 w-3" /> Salvar no catálogo
               </button>
