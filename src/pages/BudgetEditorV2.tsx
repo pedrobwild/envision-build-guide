@@ -278,6 +278,8 @@ export default function BudgetEditorV2() {
           saveStatus={saveStatus}
           lastSavedAt={lastSavedAt}
           onRetrySave={retrySave}
+          onPublish={handleSaveAndPublish}
+          publishing={saving}
           primaryAction={stickyPrimaryAction}
         />
 
