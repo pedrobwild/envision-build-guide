@@ -459,6 +459,9 @@ function SortableItemRow({
               {hasDescription && (
                 <span className="ml-1 text-[10px] text-muted-foreground flex-shrink-0" title="Tem descrição">📝</span>
               )}
+              {hasImages && (
+                <span className="ml-1 text-[10px] text-muted-foreground flex-shrink-0" title={`${imageCount} imagem(ns)`}>📷 {imageCount > 1 ? imageCount : ""}</span>
+              )}
               {isOptional && (
                 <span className="ml-1 text-[10px] bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
               )}
