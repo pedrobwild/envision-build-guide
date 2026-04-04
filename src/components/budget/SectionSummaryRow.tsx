@@ -17,6 +17,9 @@ function toTitleCase(str: string): string {
     .join(" ");
 }
 
+/* ── Typography tokens (branding: Sora / Inter / Geist Mono) ── */
+const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
+
 interface SectionSummaryRowProps {
   section: BudgetSection;
   colorClass: string;
@@ -51,13 +54,13 @@ export function SectionSummaryRow({
           !hasItems && "cursor-default"
         )}
       >
-        {/* Color indicator — pill shape */}
+        {/* Color indicator */}
         <div className={cn(
           "w-[3px] rounded-full flex-shrink-0 self-stretch min-h-[24px]",
           bgClass
         )} />
 
-        {/* Section title */}
+        {/* Section title — Inter (font-body) */}
         <div className="flex-1 text-left min-w-0">
           <span className={cn(
             "font-body font-medium text-foreground leading-snug block truncate",
@@ -78,14 +81,13 @@ export function SectionSummaryRow({
           </motion.div>
         )}
 
-        {/* Value — prominent mono styling */}
+        {/* Value — Geist Mono (font-mono) */}
         <span
           className={cn(
-            "font-mono tabular-nums font-semibold whitespace-nowrap tracking-tight",
-            compact ? "text-[13px]" : "text-sm",
-            "text-foreground"
+            "font-mono tabular-nums font-semibold whitespace-nowrap text-foreground",
+            compact ? "text-[13px]" : "text-sm"
           )}
-          style={{ fontFeatureSettings: '"tnum" 1' }}
+          style={MONO_STYLE}
         >
           {formatBRL(subtotal)}
         </span>
@@ -113,16 +115,21 @@ export function SectionSummaryRow({
                   transition={{ duration: 0.2, delay: idx * 0.03, ease: [0.16, 1, 0.3, 1] }}
                   className="flex items-start justify-between py-[6px] gap-3"
                 >
+                  {/* Item title — Inter (font-body) */}
                   <span className="text-[12px] font-body text-muted-foreground leading-relaxed flex-1">
                     {item.qty && item.qty > 1 && (
-                      <span className="font-mono text-[11px] text-muted-foreground/60 mr-1 tabular-nums">
+                      <span className="font-mono text-[11px] text-muted-foreground/60 mr-1 tabular-nums" style={MONO_STYLE}>
                         {item.qty}×
                       </span>
                     )}
                     {item.title}
                   </span>
+                  {/* Unit — Geist Mono (font-mono) */}
                   {item.unit && (
-                    <span className="text-[10px] text-muted-foreground/40 font-mono uppercase whitespace-nowrap tracking-wider mt-0.5">
+                    <span
+                      className="text-[10px] text-muted-foreground/40 font-mono uppercase whitespace-nowrap tracking-wider mt-0.5 tabular-nums"
+                      style={MONO_STYLE}
+                    >
                       {item.unit}
                     </span>
                   )}
