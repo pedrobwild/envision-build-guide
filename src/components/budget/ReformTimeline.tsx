@@ -29,6 +29,8 @@ const etapas: Etapa[] = [
   { id: 12, titulo: "Vistoria e entrega da unidade", descricao: "Vistoria Bwild, limpeza fina e vistoria com o cliente para entrega formal da unidade.", inicio: "22/06", fim: "25/06", semana: "Sem 12", isEntrega: true },
 ];
 
+const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
+
 export function ReformTimeline() {
   const [openId, setOpenId] = useState<number | null>(null);
 
@@ -52,6 +54,16 @@ export function ReformTimeline() {
           </div>
         </div>
 
+        {/* Progress bar — desktop only */}
+        <div className="hidden md:block">
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary/20"
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
+
         {/* Timeline */}
         <div className="space-y-0">
           {etapas.map((etapa, index) => {
@@ -64,10 +76,12 @@ export function ReformTimeline() {
                 <div className="flex flex-col items-center flex-shrink-0 w-5">
                   <div
                     className={cn(
-                      "w-2.5 h-2.5 rounded-full mt-3 flex-shrink-0 ring-2 ring-background",
+                      "w-2.5 h-2.5 rounded-full mt-3 flex-shrink-0 ring-2 ring-background transition-colors",
                       isLast
                         ? "bg-primary"
-                        : "bg-muted-foreground/30"
+                        : isOpen
+                          ? "bg-primary/60"
+                          : "bg-muted-foreground/30"
                     )}
                   />
                   {!isLast && (
@@ -79,8 +93,11 @@ export function ReformTimeline() {
                 <div className="flex-1 pb-2 min-w-0">
                   <button
                     onClick={() => toggle(etapa.id)}
+                    aria-expanded={isOpen}
+                    aria-controls={`etapa-detail-${etapa.id}`}
                     className={cn(
-                      "w-full text-left rounded-lg px-3 py-2.5 transition-colors flex items-center justify-between gap-2",
+                      "w-full text-left rounded-lg px-3 py-2.5 md:px-4 md:py-3 transition-colors flex items-center justify-between gap-2",
+                      "focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]",
                       isOpen ? "bg-muted/50" : "hover:bg-muted/30"
                     )}
                   >
@@ -96,7 +113,7 @@ export function ReformTimeline() {
                         )}
                       </div>
                       <p className={cn(
-                        "text-sm leading-snug truncate",
+                        "text-sm md:text-[15px] leading-snug",
                         isLast ? "font-display font-bold text-foreground" : "font-body font-medium text-foreground"
                       )}>
                         {etapa.titulo}
@@ -104,7 +121,10 @@ export function ReformTimeline() {
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-[11px] text-muted-foreground font-body tabular-nums whitespace-nowrap hidden sm:inline">
+                      <span
+                        className="text-[11px] md:text-xs text-muted-foreground font-mono tabular-nums whitespace-nowrap hidden sm:inline"
+                        style={MONO_STYLE}
+                      >
                         {etapa.inicio} → {etapa.fim}
                       </span>
                       <ChevronDown
@@ -119,17 +139,21 @@ export function ReformTimeline() {
                   <AnimatePresence>
                     {isOpen && (
                       <motion.div
+                        id={`etapa-detail-${etapa.id}`}
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                         className="overflow-hidden"
                       >
-                        <div className="px-3 pt-1 pb-2 space-y-1.5">
-                          <p className="text-xs text-muted-foreground font-body leading-relaxed">
+                        <div className="px-3 md:px-4 pt-1 pb-2 space-y-1.5">
+                          <p className="text-xs md:text-sm text-muted-foreground font-body leading-relaxed">
                             {etapa.descricao}
                           </p>
-                          <span className="text-[11px] text-muted-foreground font-body tabular-nums sm:hidden">
+                          <span
+                            className="text-[11px] text-muted-foreground font-mono tabular-nums sm:hidden"
+                            style={MONO_STYLE}
+                          >
                             {etapa.inicio} → {etapa.fim}
                           </span>
                         </div>
