@@ -116,10 +116,12 @@ function NotionInput({
 /* ── Section divider with title ── */
 function SectionTitle({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
   return (
-    <div className="flex items-center gap-2 pt-6 pb-2 first:pt-0">
-      <Icon className="h-4 w-4 text-primary" />
-      <h2 className="text-sm font-display font-semibold text-foreground tracking-tight">{title}</h2>
-      <div className="flex-1 h-px bg-gradient-to-r from-border/60 to-transparent ml-2" />
+    <div className="flex items-center gap-2.5 pt-8 pb-3 first:pt-0">
+      <div className="h-6 w-6 rounded-md bg-primary/8 flex items-center justify-center">
+        <Icon className="h-3.5 w-3.5 text-primary" />
+      </div>
+      <h2 className="text-xs font-display font-bold text-foreground uppercase tracking-[0.08em]">{title}</h2>
+      <div className="flex-1 h-px bg-gradient-to-r from-border/40 to-transparent ml-1" />
     </div>
   );
 }
