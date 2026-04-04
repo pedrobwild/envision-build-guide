@@ -346,12 +346,7 @@ function TotalCard({ total, installments }: { total: number; installments: numbe
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 pt-3 border-t border-primary/8">
-          <Shield className="h-3.5 w-3.5 text-primary/40" />
-          <span className="text-[11px] text-muted-foreground font-body">
-            Preço fixo · Sem custos ocultos
-          </span>
-        </div>
+        <TrustBadgesRow />
       </div>
     </div>
   );
