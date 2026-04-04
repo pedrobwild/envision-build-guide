@@ -1232,38 +1232,27 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         <div>
                           {/* Column headers — sticky label-caps */}
                           {section.items.length > 0 && (
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 px-3 h-9 items-center border-t border-border/40 bg-background sticky top-0 z-10">
-                              <div className="lg:col-span-3 px-3">
+                            <div className="flex items-center gap-0 h-9 border-t border-border/40 bg-background sticky top-0 z-10">
+                              <div className="w-6 flex-shrink-0" />
+                              <div className="flex-1 px-1">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Título</span>
                               </div>
-                              <div className="lg:col-span-1 px-3 text-right">
+                              <div className="w-16 flex-shrink-0 px-1 text-center">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
                               </div>
-                              <div className="lg:col-span-1 px-3 text-right">
+                              <div className="w-[100px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo</span>
                               </div>
-                              <div className="lg:col-span-1 px-3 text-right">
+                              <div className="w-[72px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI %</span>
                               </div>
-                              <div className="lg:col-span-1 px-3 text-right">
+                              <div className="w-[100px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda</span>
                               </div>
-                              {!compactMode && (
-                                <>
-                                  <div className="lg:col-span-2 px-3 text-right">
-                                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Custo</span>
-                                  </div>
-                                  <div className="lg:col-span-2 px-3 text-right">
-                                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
-                                  </div>
-                                </>
-                              )}
-                              {compactMode && (
-                                <div className="lg:col-span-4 px-3 text-right">
-                                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
-                                </div>
-                              )}
-                              <div className="lg:col-span-1" />
+                              <div className="w-[100px] flex-shrink-0 px-1 text-right">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total</span>
+                              </div>
+                              <div className="w-8 flex-shrink-0" />
                             </div>
                           )}
 
