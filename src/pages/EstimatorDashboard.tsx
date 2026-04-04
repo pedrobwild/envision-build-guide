@@ -325,6 +325,21 @@ export default function EstimatorDashboard() {
   }, [budgets, search, statusFilter, priorityFilter, commercialFilter, estimatorFilter, sortBy]);
 
   // Quick status change
+  // Check if we should show template selector before changing status
+  const PENDING_STATUSES_SET = new Set(["requested", "novo", "triage", "assigned"]);
+
+  function requestStatusChange(budgetId: string, newStatus: InternalStatus) {
+    // If moving to in_progress from a pending status, show template selector
+    if (newStatus === "in_progress") {
+      const budget = budgets.find((b) => b.id === budgetId);
+      if (budget && PENDING_STATUSES_SET.has(budget.internal_status)) {
+        setTemplateDialog({ open: true, budgetId, pendingStatus: newStatus });
+        return;
+      }
+    }
+    changeStatus(budgetId, newStatus);
+  }
+
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
     const { error } = await supabase
       .from("budgets")
