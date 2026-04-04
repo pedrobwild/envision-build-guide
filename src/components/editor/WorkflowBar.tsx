@@ -279,8 +279,8 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
     <div className="rounded-xl border border-border/60 bg-card px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm">
       <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
         {/* Read-only status badge */}
-        <Badge className={`${getStatusBadgeClass(internalStatus)} text-xs font-body border`}>
-          {statusInfo.icon} {statusInfo.label}
+        <Badge className={`${getStatusBadgeClass(internalStatus)} text-[10px] sm:text-xs font-body border`}>
+          {statusInfo.icon} <span className="hidden sm:inline">{statusInfo.label}</span>
         </Badge>
 
         <div className="h-4 w-px bg-border hidden sm:block" />
