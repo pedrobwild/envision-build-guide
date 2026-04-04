@@ -1044,31 +1044,31 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   const marginPercent = grandTotalSale > 0 ? (grandMargin / grandTotalSale) * 100 : 0;
 
   return (
-    <div className="mt-8 pb-20">
+    <div className="mt-6 pb-20">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-display font-semibold text-foreground tracking-[-0.04em]">Seções e Itens</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-display font-bold text-foreground uppercase tracking-[0.06em]">Seções e Itens</h2>
         <button
           onClick={addSection}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-body font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-body font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
         >
-          <Plus className="h-3.5 w-3.5" /> Seção
+          <Plus className="h-3.5 w-3.5" /> Nova Seção
         </button>
       </div>
 
       {/* ── Control bar ── */}
       {sections.length > 0 && (
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-muted/30 border border-border/40">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
             <input
               ref={searchRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); e.currentTarget.blur(); } }}
-              placeholder="Buscar item..."
-              className="w-full pl-7 pr-7 h-8 rounded border border-border bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20 transition-colors"
+              placeholder="Buscar item…"
+              className="w-full pl-8 pr-7 h-8 rounded-md border border-border/60 bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all"
             />
             {searchQuery && (
               <button
@@ -1082,17 +1082,21 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           <div className="flex items-center gap-0.5 ml-auto">
             <button
               onClick={expandAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              title="Expandir tudo"
             >
-              <ChevronsUpDown className="h-3 w-3" /> Expandir
+              <ChevronsUpDown className="h-3 w-3" />
+              <span className="hidden sm:inline">Expandir</span>
             </button>
             <button
               onClick={collapseAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+              title="Colapsar tudo"
             >
-              <ChevronsDownUp className="h-3 w-3" /> Colapsar
+              <ChevronsDownUp className="h-3 w-3" />
+              <span className="hidden sm:inline">Colapsar</span>
             </button>
-            <div className="w-px h-4 bg-border mx-0.5" />
+            <div className="w-px h-4 bg-border/60 mx-0.5" />
             <button
               onClick={() => {
                 const next = !compactMode;
@@ -1100,15 +1104,15 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                 try { localStorage.setItem(densityKey, next ? "compact" : "expanded"); } catch { /* ignore */ }
               }}
               className={cn(
-                "flex items-center gap-1 px-2 py-1.5 rounded text-xs font-body transition-colors",
+                "flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-body transition-colors",
                 compactMode
-                  ? "text-foreground bg-muted"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  ? "text-foreground bg-background shadow-sm border border-border/40"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background"
               )}
               title={compactMode ? "Modo expandido" : "Modo compacto"}
             >
               {compactMode ? <Rows3 className="h-3 w-3" /> : <Rows4 className="h-3 w-3" />}
-              {compactMode ? "Compacto" : "Expandido"}
+              <span className="hidden sm:inline">{compactMode ? "Compacto" : "Expandido"}</span>
             </button>
           </div>
         </div>
@@ -1328,41 +1332,40 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
       {/* ── Sticky footer summary bar ── */}
       {sections.length > 0 && (
-        <div className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-sm py-2 md:py-3 px-3 md:px-6">
+        <div className="sticky bottom-0 z-10 border-t border-border/40 bg-card/90 backdrop-blur-xl py-2.5 md:py-3 px-3 md:px-6 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.08)]">
           <div className="flex items-center justify-between gap-3 md:gap-8">
-            <div className="flex items-center gap-3 md:gap-8 flex-wrap">
+            <div className="flex items-center gap-4 md:gap-8 flex-wrap">
               {/* Custo */}
-              <div className="flex flex-col items-end gap-0.5">
-                <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">Custo</span>
-                <span className="text-xs md:text-sm font-semibold font-mono text-foreground tabular-nums">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">Custo</span>
+                <span className="text-xs md:text-sm font-semibold font-mono text-foreground tabular-nums tracking-[-0.035em]">
                   {formatBRL(grandTotalCost)}
                 </span>
               </div>
-              {/* BDI — hidden on very small screens */}
-              <div className="hidden sm:flex flex-col items-end gap-0.5">
-                <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">BDI</span>
-                <span className="text-xs md:text-sm font-semibold font-mono text-foreground tabular-nums">
+              {/* BDI */}
+              <div className="hidden sm:flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">BDI</span>
+                <span className="text-xs md:text-sm font-semibold font-mono text-primary tabular-nums tracking-[-0.035em]">
                   {grandBdiPercent.toFixed(1)}%
                 </span>
               </div>
               {/* Venda — destaque */}
-              <div className="flex flex-col items-end gap-0.5">
-                <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">Venda</span>
-                <span className="text-sm md:text-base font-bold font-mono text-foreground tabular-nums">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">Venda</span>
+                <span className="text-sm md:text-base font-bold font-mono text-foreground tabular-nums tracking-[-0.035em]">
                   {formatBRL(grandTotalSale)}
                 </span>
               </div>
             </div>
             {/* Margem */}
             <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">Margem</span>
+              <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">Margem</span>
               <span className={cn(
-                "text-xs md:text-sm font-semibold font-mono tabular-nums",
-                grandMargin >= 0 ? "text-foreground" : "text-destructive"
+                "text-xs md:text-sm font-bold font-mono tabular-nums tracking-[-0.035em]",
+                marginPercent >= 15 ? "text-success" : marginPercent >= 10 ? "text-warning" : "text-destructive"
               )}>
                 {formatBRL(grandMargin)}
-                {" "}
-                <span className="text-muted-foreground font-normal">· {marginPercent.toFixed(1)}%</span>
+                <span className="text-muted-foreground font-normal ml-1">· {marginPercent.toFixed(1)}%</span>
               </span>
             </div>
           </div>

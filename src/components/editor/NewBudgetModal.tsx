@@ -212,21 +212,40 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
     onSuccess?.(data.id);
   };
 
+  // Progress calculation
+  const filledFields = [
+    clientName.trim(),
+    condominio.trim() || bairro.trim(),
+    metargemRaw.trim(),
+    briefing.trim() || demandContext.trim(),
+    estimatorOwnerId,
+  ].filter(Boolean).length;
+  const progressPercent = Math.round((filledFields / 5) * 100);
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border relative">
           <DialogTitle className="text-lg font-display flex items-center gap-2">
-            <Plus className="h-5 w-5 text-primary" />
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Plus className="h-4 w-4 text-primary" />
+            </div>
             Nova Solicitação de Orçamento
           </DialogTitle>
-          <DialogDescription className="text-sm font-body">
+          <DialogDescription className="text-sm font-body text-muted-foreground">
             Preencha o briefing para iniciar a produção
           </DialogDescription>
+          {/* Progress bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-border/40">
+            <div
+              className="h-full bg-primary rounded-r-full transition-all duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-180px)]">
-          <form id="new-budget-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
+          <form id="new-budget-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
             {/* Template */}
             {templates.length > 0 && (
               <section className="space-y-3">
@@ -259,9 +278,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             )}
 
             {/* Cliente */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <User className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <User className="h-3.5 w-3.5 text-primary" />
                 Cliente e Projeto
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -306,9 +325,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Imóvel */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <Building2 className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <Building2 className="h-3.5 w-3.5 text-primary" />
                 Detalhes do Imóvel
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -364,9 +383,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Briefing */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <FileText className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <FileText className="h-3.5 w-3.5 text-primary" />
                 Briefing e Contexto
               </h3>
               <div className="space-y-3">
@@ -394,9 +413,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Hubspot */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <LinkIcon className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <LinkIcon className="h-3.5 w-3.5 text-primary" />
                 Negócio Hubspot
               </h3>
               <div className="space-y-1.5">
@@ -411,9 +430,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Responsáveis */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <UserCheck className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <UserCheck className="h-3.5 w-3.5 text-primary" />
                 Responsáveis
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -452,9 +471,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Prazo e Prioridade */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <Calendar className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <Calendar className="h-3.5 w-3.5 text-primary" />
                 Prazo e Prioridade
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -486,9 +505,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Links de Referência */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <LinkIcon className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <LinkIcon className="h-3.5 w-3.5 text-primary" />
                 Links de Referência
               </h3>
               <div className="space-y-2">
@@ -515,8 +534,8 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Observações Internas */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
                 📝 Observações Internas
               </h3>
               <Textarea
@@ -530,28 +549,36 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
           </form>
         </ScrollArea>
 
-        <DialogFooter className="px-6 py-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => handleOpenChange(false)}
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            form="new-budget-form"
-            disabled={loading}
-            className="gap-2 min-w-[160px]"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
-            {loading ? "Salvando..." : "Criar Solicitação"}
-          </Button>
+        <DialogFooter className="px-6 py-4 border-t border-border bg-muted/30">
+          <div className="flex items-center justify-between w-full gap-3">
+            <span className="text-xs text-muted-foreground font-body hidden sm:inline">
+              {progressPercent}% preenchido
+            </span>
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => handleOpenChange(false)}
+                disabled={loading}
+                className="text-sm"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                form="new-budget-form"
+                disabled={loading}
+                className="gap-2 min-w-[160px] text-sm"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4" />
+                )}
+                {loading ? "Salvando..." : "Criar Solicitação"}
+              </Button>
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
