@@ -89,6 +89,7 @@ const App = () => (
                 <Route path="/admin/sistema" element={<AdminPage><SystemToolsPage /></AdminPage>} />
                 <Route path="/admin/biblioteca-fotos" element={<AdminPage><PhotoLibraryUpload /></AdminPage>} />
                 <Route path="/admin/templates" element={<AdminPage><BudgetTemplatesPage /></AdminPage>} />
+                <Route path="/admin/templates/:templateId/editar" element={<AdminPage><TemplateEditorPage /></AdminPage>} />
                 <Route path="/o/:publicId" element={<PublicBudget />} />
                 <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
                 <Route path="/qa" element={<AdminPage><QAEvaluator /></AdminPage>} />
