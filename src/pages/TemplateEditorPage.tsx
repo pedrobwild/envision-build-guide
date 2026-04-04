@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Save, Plus, Trash2, GripVertical, ChevronDown, ChevronRight,
-  LayoutTemplate, Loader2, MoreVertical, Package,
+  LayoutTemplate, Loader2, MoreVertical, Package, Check, X,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -245,6 +245,38 @@ function SortableItemRow({
   );
 }
 
+// ─── Auto-save status chip ───────────────────────────────────────
+
+type AutoSaveStatus = "idle" | "saving" | "saved" | "error";
+
+function AutoSaveChip({ status }: { status: AutoSaveStatus }) {
+  if (status === "saving") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground font-body px-2.5 py-1 rounded-full bg-muted/60">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Salvando…
+      </span>
+    );
+  }
+  if (status === "error") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[11px] text-destructive font-body px-2.5 py-1 rounded-full bg-destructive/10">
+        <X className="h-3 w-3" />
+        Erro ao salvar
+      </span>
+    );
+  }
+  if (status === "saved") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-success font-body px-2.5 py-1 rounded-full bg-success/10">
+        <Check className="h-3 w-3" />
+        Salvo
+      </span>
+    );
+  }
+  return null;
+}
+
 // ─── Main page ───────────────────────────────────────────────────
 
 export default function TemplateEditorPage() {
@@ -253,8 +285,17 @@ export default function TemplateEditorPage() {
   const [template, setTemplate] = useState<TemplateData | null>(null);
   const [sections, setSections] = useState<TemplateSectionData[]>([]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>("idle");
+
+  // Auto-save refs
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const isInitialLoadRef = useRef(true);
+  const templateRef = useRef(template);
+  const sectionsRef = useRef(sections);
+  templateRef.current = template;
+  sectionsRef.current = sections;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -297,21 +338,25 @@ export default function TemplateEditorPage() {
     setSections(enriched);
     setExpandedSections(new Set(sectionList.map((s) => s.id)));
     setLoading(false);
+    // Allow auto-save to kick in only after initial load
+    setTimeout(() => { isInitialLoadRef.current = false; }, 100);
   }, [templateId, navigate]);
 
   useEffect(() => { loadTemplate(); }, [loadTemplate]);
 
-  // ─── Save all ────────────────────────────────────────────────
-  const saveAll = async () => {
-    if (!template) return;
-    setSaving(true);
+  // ─── Persist (auto-save core) ─────────────────────────────────
+  const persistAll = useCallback(async () => {
+    const tpl = templateRef.current;
+    const secs = sectionsRef.current;
+    if (!tpl) return;
+    setAutoSaveStatus("saving");
     try {
       await supabase
         .from("budget_templates")
-        .update({ name: template.name, description: template.description })
-        .eq("id", template.id);
+        .update({ name: tpl.name, description: tpl.description })
+        .eq("id", tpl.id);
 
-      for (const section of sections) {
+      for (const section of secs) {
         await supabase
           .from("budget_template_sections")
           .update({
@@ -341,12 +386,32 @@ export default function TemplateEditorPage() {
         }
       }
 
-      toast.success("Template salvo com sucesso!");
+      setAutoSaveStatus("saved");
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
     } catch {
-      toast.error("Erro ao salvar template");
+      setAutoSaveStatus("error");
     }
-    setSaving(false);
-  };
+  }, []);
+
+  // ─── Schedule auto-save on data changes ─────────────────────
+  const scheduleSave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => persistAll(), 1500);
+  }, [persistAll]);
+
+  useEffect(() => {
+    if (isInitialLoadRef.current) return;
+    scheduleSave();
+  }, [template, sections, scheduleSave]);
+
+  // Cleanup timers
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   // ─── Section mutations ───────────────────────────────────────
   const toggleSection = (id: string) => {
@@ -567,10 +632,13 @@ export default function TemplateEditorPage() {
             placeholder="Descrição do template..."
           />
         </div>
-        <Button onClick={saveAll} disabled={saving} className="gap-2 shrink-0">
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Salvar
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <AutoSaveChip status={autoSaveStatus} />
+          <Button onClick={persistAll} disabled={autoSaveStatus === "saving"} variant="outline" size="sm" className="gap-1.5">
+            <Save className="h-3.5 w-3.5" />
+            Salvar agora
+          </Button>
+        </div>
       </div>
 
       {/* Summary bar */}
