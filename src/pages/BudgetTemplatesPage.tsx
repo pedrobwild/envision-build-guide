@@ -468,6 +468,7 @@ function TemplateDetail({ template }: { template: Template }) {
 export default function BudgetTemplatesPage() {
   const { data: templates = [], isLoading } = useTemplates();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [templateDialog, setTemplateDialog] = useState<{ open: boolean; template?: Template | null }>({ open: false });
 
