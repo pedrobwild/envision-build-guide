@@ -242,8 +242,25 @@ export default function BudgetEditorV2() {
 
   if (!budget) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Skeleton header */}
+        <div className="h-14 border-b border-border/40 bg-card/50 backdrop-blur-xl">
+          <div className="max-w-[1200px] mx-auto px-6 h-full flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-muted animate-pulse" />
+            <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+            <div className="h-5 w-20 rounded-full bg-muted animate-pulse ml-2" />
+          </div>
+        </div>
+        <div className="h-10 border-b border-border/20 bg-card/30">
+          <div className="max-w-[1200px] mx-auto px-6 h-full flex items-center gap-6">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-3 w-16 rounded bg-muted animate-pulse" />
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
       </div>
     );
   }
