@@ -8,7 +8,6 @@ import {
   Shield,
   CreditCard,
   MessageCircle,
-  FileSignature,
   ChevronDown,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
@@ -95,7 +94,7 @@ export function MobileInlineSummary({
         {/* Validity badge */}
         <div
           className={cn(
-            "rounded-lg px-3.5 py-2.5 flex items-center gap-2.5",
+            "rounded-xl px-3.5 py-2.5 flex items-center gap-2.5",
             validity.expired
               ? "bg-destructive/6 border border-destructive/12"
               : validity.daysLeft <= 5
@@ -127,14 +126,14 @@ export function MobileInlineSummary({
 
         {/* Composition breakdown */}
         {categorizedGroups.length > 0 && (
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
             <div className="px-4 pt-4 pb-2">
               <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60">
                 Composição do investimento
               </p>
             </div>
             <motion.div
-              className="px-3 pb-3 divide-y divide-border/20"
+              className="px-3 pb-3"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.15 }}
@@ -162,27 +161,27 @@ export function MobileInlineSummary({
           </div>
         )}
 
-        {/* Total card — premium feel */}
+        {/* Total card — premium glassmorphism */}
         <div
           ref={totalCardRef}
-          className="relative rounded-xl border border-primary/10 px-5 py-5 overflow-hidden"
+          className="relative rounded-2xl border border-primary/10 px-5 py-5 overflow-hidden shadow-lg shadow-primary/5"
           style={{
-            background: 'linear-gradient(135deg, hsl(212 100% 48% / 0.06) 0%, hsl(212 100% 48% / 0.02) 60%, transparent 100%)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 60%, transparent 100%)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
           }}
         >
           {/* Subtle glow accent */}
           <div
-            className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-[0.07] pointer-events-none"
-            style={{ background: 'radial-gradient(circle, hsl(212 100% 48%) 0%, transparent 70%)' }}
+            className="absolute -top-16 -right-16 w-40 h-40 rounded-full opacity-[0.07] pointer-events-none"
+            style={{ background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)' }}
           />
           <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2 relative">
             Investimento total
           </p>
           <CountUpValue
             value={total}
-            className="font-display font-extrabold text-[1.85rem] text-primary leading-none relative block"
+            className="font-mono font-extrabold text-[1.85rem] text-primary leading-none relative block tabular-nums"
             style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
           />
           <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/8 relative">
@@ -194,7 +193,7 @@ export function MobileInlineSummary({
         </div>
 
         {/* Installment simulator */}
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
           <div className="px-4 pt-4 pb-2.5">
             <div className="flex items-center gap-2">
               <CreditCard className="h-3.5 w-3.5 text-primary/70" />
@@ -207,7 +206,7 @@ export function MobileInlineSummary({
           <div className="px-4 pb-4">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full flex items-center justify-between px-3.5 py-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 active:bg-muted/60 transition-colors min-h-[48px]"
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 active:bg-muted/60 transition-colors min-h-[48px]"
             >
               <span className="text-sm font-body font-medium text-foreground">
                 <AnimatePresence mode="wait">
@@ -252,22 +251,22 @@ export function MobileInlineSummary({
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-2 max-h-[220px] overflow-y-auto rounded-lg border border-border/40 bg-card divide-y divide-border/20">
+                  <div className="mt-2 max-h-[220px] overflow-y-auto rounded-xl border border-border/40 bg-card divide-y divide-border/20">
                     {Array.from({ length: 18 }, (_, i) => i + 1).map((n) => (
                       <button
                         key={n}
                         onClick={() => { setInstallments(n); setDropdownOpen(false); }}
                         className={cn(
-                          "w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-body transition-colors min-h-[44px]",
+                          "w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors min-h-[44px]",
                           installments === n
                             ? "bg-primary/6 text-primary font-medium"
                             : "text-foreground hover:bg-muted/40"
                         )}
                       >
-                        <span>{n}× {n === 1 ? "parcela" : "parcelas"}</span>
+                        <span className="font-body">{n}× {n === 1 ? "parcela" : "parcelas"}</span>
                         <span className="font-mono font-semibold tabular-nums">
                           {formatBRL(total / n)}
-                          <span className="font-body font-normal text-muted-foreground/60 ml-1 text-xs">sem juros</span>
+                          <span className="font-body font-normal text-muted-foreground/50 ml-1.5 text-[11px]">sem juros</span>
                         </span>
                       </button>
                     ))}

@@ -72,9 +72,11 @@ export function SectionSummaryRow({
 
         {/* Value */}
         <span className={cn(
-          "font-mono tabular-nums font-semibold text-foreground whitespace-nowrap",
+          "font-mono tabular-nums font-semibold text-foreground whitespace-nowrap tracking-tight",
           compact ? "text-[13px]" : "text-sm"
-        )}>
+        )}
+        style={{ fontFeatureSettings: '"tnum" 1' }}
+        >
           {formatBRL(subtotal)}
         </span>
       </button>
