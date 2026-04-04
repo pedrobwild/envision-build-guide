@@ -8,7 +8,7 @@ import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
   PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
-  AlertTriangle, AlertCircle, Paperclip, Rows3, Rows4,
+  AlertTriangle, AlertCircle, Paperclip, Rows3, Rows4, MoreVertical,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
@@ -20,6 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DndContext,
   closestCenter,
@@ -299,6 +300,56 @@ interface SectionsEditorProps {
   budgetId: string;
   sections: SectionData[];
   onSectionsChange: (sections: SectionData[]) => void;
+}
+
+/* ── Section context menu (rename + delete) ── */
+function SectionContextMenu({
+  section,
+  onRename,
+  onDelete,
+}: {
+  section: SectionData;
+  onRename: (name: string) => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(section.title);
+
+  return (
+    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) setName(section.title); }}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
+          title="Configurações da seção"
+        >
+          <MoreVertical className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-3 space-y-3" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+        <div className="space-y-1.5">
+          <label className="text-xs font-body font-medium text-muted-foreground">Nome da seção</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => { setName(e.target.value); onRename(e.target.value); }}
+            className="w-full px-2.5 py-1.5 rounded-md border border-input bg-background text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all"
+          />
+        </div>
+        <button
+          onClick={() => {
+            if (confirm("Excluir esta seção e todos os seus itens?")) {
+              onDelete();
+              setOpen(false);
+            }
+          }}
+          className="flex items-center gap-1.5 w-full px-2.5 py-1.5 rounded-md text-xs font-body text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <Trash2 className="h-3 w-3" /> Excluir seção
+        </button>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 /* ── Sortable Section wrapper ── */
@@ -1134,6 +1185,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               </span>
                             </div>
                           </div>
+                          {/* Section context menu */}
+                          <SectionContextMenu
+                            section={section}
+                            onRename={(name) => updateSection(section.id, "title", name)}
+                            onDelete={() => deleteSection(section.id)}
+                          />
                         </div>
                         {/* Mini progress bar */}
                         <div className="ml-9 mt-1.5 h-1 rounded-full bg-muted/50 overflow-hidden">
@@ -1144,56 +1201,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         </div>
                       </div>
 
-                      {/* Expanded content */}
+                      {/* Expanded content — items directly */}
                       {isExpanded && (
                         <div className="border-t border-border/40">
-                          {/* Section fields */}
-                          <div className="px-4 py-2.5 grid grid-cols-2 sm:grid-cols-5 gap-2 bg-muted/20">
-                            <div className="col-span-2 space-y-0.5">
-                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Título</label>
-                              <input
-                                type="text"
-                                value={section.title}
-                                onChange={(e) => updateSection(section.id, "title", e.target.value)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
-                              />
-                            </div>
-                            <div className="space-y-0.5">
-                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>
-                              <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
-                                {formatBRL(sectionCostTotal)}
-                              </div>
-                            </div>
-                            <div className="space-y-0.5">
-                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
-                              <input
-                                type="number"
-                                value={section.section_price ?? ""}
-                                onChange={(e) => updateSection(section.id, "section_price", e.target.value ? Number(e.target.value) : null)}
-                                onClick={(e) => e.stopPropagation()}
-                                placeholder="Auto"
-                                className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
-                              />
-                            </div>
-                            <div className="flex items-end">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  updateSection(section.id, "is_optional", !section.is_optional);
-                                }}
-                                className={cn(
-                                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-body transition-all",
-                                  section.is_optional
-                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                    : "text-muted-foreground hover:text-amber-600 hover:bg-amber-500/5"
-                                )}
-                              >
-                                <ToggleRight className="h-3.5 w-3.5" />
-                                {section.is_optional ? "Opcional ✓" : "Opcional"}
-                              </button>
-                            </div>
-                          </div>
 
                           {/* Items with DnD */}
                           <DndContext
@@ -1236,20 +1246,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             </SortableContext>
                           </DndContext>
 
-                          {/* Add item + delete section */}
-                          <div className="px-4 py-2 flex items-center justify-between border-t border-border/30">
+                          {/* Add item */}
+                          <div className="px-4 py-2 border-t border-border/30">
                             <AddItemPopover
                               sectionTitle={section.title}
                               onAddItem={(itemData) => addItem(section.id, itemData)}
                             />
-                            <button
-                              onClick={() => {
-                                if (confirm("Excluir esta seção e todos os seus itens?")) deleteSection(section.id);
-                              }}
-                              className="flex items-center gap-1 text-xs font-body text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                            >
-                              <Trash2 className="h-3 w-3" /> Excluir
-                            </button>
                           </div>
                         </div>
                       )}
