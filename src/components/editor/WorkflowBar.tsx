@@ -320,7 +320,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         {/* Ownership */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-body cursor-default">
+            <span className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground font-body cursor-default">
               <User className="h-3 w-3" />
               {getProfileName(budget.commercial_owner_id)}
             </span>
