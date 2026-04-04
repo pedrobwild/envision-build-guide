@@ -9,12 +9,9 @@ import {
 } from "@/lib/public-columns";
 
 export async function fetchPublicBudget(publicId: string) {
+  // Use security-definer RPC that only returns public-safe columns
   const { data: budget, error: budgetError } = await supabase
-    .from('budgets')
-    .select(PUBLIC_BUDGET_SELECT)
-    .eq('public_id', publicId)
-    .in('status', ['published', 'minuta_solicitada'])
-    .single() as { data: any; error: any };
+    .rpc('get_public_budget', { p_public_id: publicId }) as { data: any; error: any };
 
   if (budgetError || !budget) return null;
 
