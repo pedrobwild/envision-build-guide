@@ -276,7 +276,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   }
 
   return (
-    <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+    <div className="rounded-xl border border-border/60 bg-card px-4 py-3 shadow-sm">
       <div className="flex items-center gap-3 flex-wrap">
         {/* Read-only status badge */}
         <Badge className={`${getStatusBadgeClass(internalStatus)} text-xs font-body border`}>
