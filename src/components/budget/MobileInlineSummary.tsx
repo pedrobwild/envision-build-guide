@@ -180,12 +180,11 @@ export function MobileInlineSummary({
           <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2 relative">
             Investimento total
           </p>
-          <p
-            className="font-display font-extrabold text-[1.85rem] text-primary leading-none relative"
+          <CountUpValue
+            value={total}
+            className="font-display font-extrabold text-[1.85rem] text-primary leading-none relative block"
             style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
-          >
-            {formatBRL(total)}
-          </p>
+          />
           <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/8 relative">
             <Shield className="h-3 w-3 text-primary/30" />
             <span className="text-[11px] text-muted-foreground/60 font-body">
