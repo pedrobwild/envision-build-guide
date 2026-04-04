@@ -999,7 +999,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     toast.success("Ordem das seções atualizada");
   };
 
-  const handleItemDragEnd = (sectionId: string) => (event: DragEndEvent) => {
+  const handleItemDragEnd = (sectionId: string) => async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -1011,12 +1011,18 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         ...item,
         order_index: i,
       }));
-      reordered.forEach(item => {
-        supabase.from("items").update({ order_index: item.order_index }).eq("id", item.id);
-      });
       return { ...s, items: reordered };
     });
     onSectionsChange(updated);
+
+    const targetSection = updated.find(s => s.id === sectionId);
+    if (targetSection) {
+      await Promise.all(
+        targetSection.items.map(item =>
+          supabase.from("items").update({ order_index: item.order_index }).eq("id", item.id)
+        )
+      );
+    }
   };
 
   const highlightText = (text: string) => {
