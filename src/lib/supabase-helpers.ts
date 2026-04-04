@@ -71,24 +71,32 @@ export async function fetchPublicBudget(publicId: string) {
   };
 }
 
+/**
+ * Calculate the SALE subtotal for a section (applies BDI markup when available).
+ * This is the value displayed to all users in lists, funnels, and summaries.
+ */
 export function calculateSectionSubtotal(section: any): number {
   const items = section.items || [];
   const qty = section.qty || 1;
 
-  // Sum item-level totals when available, falling back to internal_unit_price per item
   if (items.length > 0) {
     const itemsSum = items.reduce(
       (sum: number, item: any) => {
-        const total = Number(item.internal_total) || 0;
-        if (total > 0) return sum + total;
-        // Fallback: use unit_price * qty (or just unit_price if qty missing)
+        const cost = Number(item.internal_total) || 0;
         const unitPrice = Number(item.internal_unit_price) || 0;
         const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
+        const bdi = Number(item.bdi_percentage) || 0;
+
+        // If item has BDI, calculate sale price from unit price
+        if (bdi > 0 && unitPrice > 0) {
+          return sum + unitPrice * (1 + bdi / 100) * itemQty;
+        }
+        // Fallback: use internal_total as-is (already the sale value when no BDI)
+        if (cost > 0) return sum + cost;
         return sum + unitPrice * itemQty;
       },
       0
     );
-    // If items have totals, use them; otherwise fall back to section_price
     if (itemsSum > 0) return itemsSum * qty;
   }
 

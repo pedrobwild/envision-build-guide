@@ -42,7 +42,7 @@ export default function FinancialHistory() {
   const loadClosedBudgets = async () => {
     const { data } = await supabase
       .from("budgets")
-      .select("*, sections(id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty)), adjustments(id, sign, amount)")
+      .select("*, sections(id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)")
       .eq("status", "contrato_fechado")
       .order("closed_at", { ascending: false } as any);
     setBudgets(data || []);
