@@ -301,6 +301,56 @@ interface SectionsEditorProps {
   onSectionsChange: (sections: SectionData[]) => void;
 }
 
+/* ── Section context menu (rename + delete) ── */
+function SectionContextMenu({
+  section,
+  onRename,
+  onDelete,
+}: {
+  section: SectionData;
+  onRename: (name: string) => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(section.title);
+
+  return (
+    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) setName(section.title); }}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
+          title="Configurações da seção"
+        >
+          <MoreVertical className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-3 space-y-3" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+        <div className="space-y-1.5">
+          <label className="text-xs font-body font-medium text-muted-foreground">Nome da seção</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => { setName(e.target.value); onRename(e.target.value); }}
+            className="w-full px-2.5 py-1.5 rounded-md border border-input bg-background text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all"
+          />
+        </div>
+        <button
+          onClick={() => {
+            if (confirm("Excluir esta seção e todos os seus itens?")) {
+              onDelete();
+              setOpen(false);
+            }
+          }}
+          className="flex items-center gap-1.5 w-full px-2.5 py-1.5 rounded-md text-xs font-body text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <Trash2 className="h-3 w-3" /> Excluir seção
+        </button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 /* ── Sortable Section wrapper ── */
 function SortableSectionCard({
   section,
