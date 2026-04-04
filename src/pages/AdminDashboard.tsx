@@ -491,7 +491,7 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Quick Access Shortcuts */}
       {shortcuts.length > 0 && (
