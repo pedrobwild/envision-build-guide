@@ -291,7 +291,7 @@ function AdjustmentsList({ adjustments }: { adjustments: any[] }) {
 function TotalCard({ total }: { total: number }) {
   return (
     <div className="mx-5 mb-4 rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-5">
-      <p className="text-[13px] font-body font-medium text-muted-foreground mb-1.5">
+      <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2">
         Investimento Total
       </p>
       <motion.p
