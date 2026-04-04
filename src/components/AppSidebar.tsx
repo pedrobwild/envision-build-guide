@@ -51,12 +51,6 @@ interface NavItem {
   actionLabel?: string;
 }
 
-// Grouped navigation structure
-interface NavGroup {
-  label: string;
-  items: NavItem[];
-}
-
 const DASHBOARD_ITEM: NavItem = {
   title: "Painel Geral", url: "/admin", icon: LayoutDashboard, roles: "all", end: true,
 };
@@ -94,11 +88,11 @@ function renderNavItem(item: NavItem, collapsed: boolean) {
         <NavLink
           to={item.url}
           end={item.end}
-          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-body text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
-          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+          className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-body text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
+          activeClassName="bg-sidebar-primary/15 text-sidebar-primary-foreground font-medium shadow-premium-sm"
         >
           <item.icon className="h-4 w-4 shrink-0" />
-          {!collapsed && <span className="flex-1">{item.title}</span>}
+          {!collapsed && <span className="flex-1 tracking-tight">{item.title}</span>}
           {!collapsed && item.actionUrl && (
             <TooltipProvider delayDuration={300}>
               <Tooltip>
@@ -106,9 +100,9 @@ function renderNavItem(item: NavItem, collapsed: boolean) {
                   <Link
                     to={item.actionUrl}
                     onClick={(e) => e.stopPropagation()}
-                    className="opacity-0 group-hover/action:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted"
+                    className="opacity-0 group-hover/action:opacity-100 transition-all duration-200 h-6 w-6 flex items-center justify-center rounded-md hover:bg-sidebar-accent"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5" />
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right"><p>{item.actionLabel}</p></TooltipContent>
@@ -137,7 +131,6 @@ export function AppSidebar() {
     return (item.roles as AppRole[]).some((r) => userRoles.includes(r));
   };
 
-  // Auto-collapse on budget editor route for smaller screens
   const isBudgetEditor = /^\/admin\/budget\//.test(location.pathname);
 
   useEffect(() => {
@@ -157,15 +150,14 @@ export function AppSidebar() {
     navigate("/login");
   }
 
-  // Helper to render a named group
   const renderGroup = (label: string, items: NavItem[]) => {
     if (items.length === 0) return null;
     return (
       <>
-        <Separator className="mx-2" />
+        <Separator className="mx-2 opacity-20" />
         <SidebarGroup>
           {!collapsed && (
-            <SidebarGroupLabel className="text-xs uppercase tracking-wide text-sidebar-foreground/50 font-body">
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-sidebar-foreground/40 font-body font-semibold px-2.5 mb-1">
               {label}
             </SidebarGroupLabel>
           )}
@@ -181,18 +173,17 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-3">
+      <SidebarHeader className="p-4">
         <img
           src={logoDark}
           alt="Bwild"
-          className={collapsed ? "h-5 mx-auto object-contain" : "h-6 object-contain"}
+          className={collapsed ? "h-5 mx-auto object-contain" : "h-7 object-contain"}
         />
       </SidebarHeader>
 
-      <Separator />
+      <Separator className="opacity-20" />
 
-      <SidebarContent>
-        {/* Dashboard — always visible */}
+      <SidebarContent className="py-2">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -208,8 +199,7 @@ export function AppSidebar() {
         {renderGroup("Ferramentas", ferramentasItems)}
       </SidebarContent>
 
-      <SidebarFooter className="p-2">
-        {/* Reopen button when collapsed on budget editor */}
+      <SidebarFooter className="p-3">
         {collapsed && isBudgetEditor && (
           <Button
             variant="ghost"
@@ -221,8 +211,8 @@ export function AppSidebar() {
           </Button>
         )}
         {!collapsed && profile && (
-          <div className="px-2 py-1.5 mb-1">
-            <p className="text-xs font-medium font-body text-sidebar-foreground truncate">
+          <div className="px-2.5 py-2 mb-1 rounded-lg bg-sidebar-accent/50">
+            <p className="text-xs font-semibold font-body text-sidebar-foreground truncate tracking-tight">
               {profile.full_name || "Usuário"}
             </p>
             <p className="text-[11px] text-sidebar-foreground/50 font-body truncate">
@@ -233,7 +223,7 @@ export function AppSidebar() {
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start gap-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent text-xs"
+          className="w-full justify-start gap-2 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent text-xs rounded-lg"
           onClick={handleSignOut}
         >
           <LogOut className="h-3.5 w-3.5" />

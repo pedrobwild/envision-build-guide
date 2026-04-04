@@ -8,10 +8,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <GlobalLoadingBar />
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-10 flex items-center border-b border-border bg-card shrink-0 px-2 lg:hidden">
+          <header className="h-12 flex items-center border-b border-border/50 bg-card/60 glass shrink-0 px-3 lg:hidden">
             <SidebarTrigger />
           </header>
           <AdminBreadcrumb />

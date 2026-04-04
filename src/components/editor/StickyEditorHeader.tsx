@@ -17,7 +17,6 @@ interface StickyEditorHeaderProps {
   saveStatus: SaveStatus;
   lastSavedAt: Date | null;
   onRetrySave?: () => void;
-  /** Primary workflow action — rendered as a button */
   primaryAction?: {
     label: string;
     onClick: () => void;
@@ -30,31 +29,31 @@ interface StickyEditorHeaderProps {
 function getStatusBadgeClass(status: InternalStatus): string {
   switch (status) {
     case "in_progress":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-primary/10 text-primary border-primary/20";
     case "ready_for_review":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      return "bg-warning/10 text-warning border-warning/20";
     case "delivered_to_sales":
-      return "bg-purple-100 text-purple-800 border-purple-200";
+      return "bg-accent text-accent-foreground border-border";
     case "sent_to_client":
-      return "bg-green-100 text-green-800 border-green-200";
+      return "bg-success/10 text-success border-success/20";
     case "revision_requested":
-      return "bg-orange-100 text-orange-700 border-orange-300";
+      return "bg-warning/10 text-warning border-warning/20";
     case "minuta_solicitada":
-      return "bg-violet-100 text-violet-700 border-violet-300";
+      return "bg-accent text-accent-foreground border-border";
     case "contrato_fechado":
-      return "bg-emerald-100 text-emerald-700 border-emerald-300";
+      return "bg-success/10 text-success border-success/20";
     case "blocked":
     case "waiting_info":
-      return "bg-red-100 text-red-800 border-red-200";
+      return "bg-destructive/10 text-destructive border-destructive/20";
     default:
-      return "bg-gray-100 text-gray-700 border-gray-200";
+      return "bg-muted text-muted-foreground border-border";
   }
 }
 
 function AutoSaveChip({ status, lastSavedAt, onRetry }: { status: SaveStatus; lastSavedAt: Date | null; onRetry?: () => void }) {
   if (status === "saving") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground font-body">
+      <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground font-body px-2.5 py-1 rounded-full bg-muted/60">
         <Loader2 className="h-3 w-3 animate-spin" />
         Salvando…
       </span>
@@ -63,7 +62,7 @@ function AutoSaveChip({ status, lastSavedAt, onRetry }: { status: SaveStatus; la
 
   if (status === "error") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-[11px] text-destructive font-body">
+      <span className="inline-flex items-center gap-1.5 text-[11px] text-destructive font-body px-2.5 py-1 rounded-full bg-destructive/10">
         <X className="h-3 w-3" />
         Erro
         {onRetry && (
@@ -79,7 +78,7 @@ function AutoSaveChip({ status, lastSavedAt, onRetry }: { status: SaveStatus; la
     const seconds = Math.max(0, Math.round((Date.now() - lastSavedAt.getTime()) / 1000));
     const label = seconds < 5 ? "agora" : `há ${seconds}s`;
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-body">
+      <span className="inline-flex items-center gap-1 text-[11px] text-success font-body px-2.5 py-1 rounded-full bg-success/10">
         <Check className="h-3 w-3" />
         Salvo {label}
       </span>
@@ -108,32 +107,32 @@ export function StickyEditorHeader({
   const truncatedName = projectName.length > 30 ? projectName.slice(0, 30) + "…" : projectName;
 
   const marginColor = totals.marginPercent >= 15
-    ? "text-emerald-600 dark:text-emerald-400"
+    ? "text-success"
     : totals.marginPercent >= 10
-    ? "text-amber-600 dark:text-amber-400"
+    ? "text-warning"
     : "text-destructive";
 
   return (
-    <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border/60">
-      {/* Layer 1 — Breadcrumb + status + action + auto-save (56px) */}
+    <div className="sticky top-0 z-50 bg-card/80 glass border-b border-border/50 shadow-premium-sm">
+      {/* Layer 1 — Breadcrumb + status + action + auto-save */}
       <div className="max-w-[1200px] mx-auto px-6 h-14 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate(backPath)}
-            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            className="p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          <div className="flex items-center gap-1.5 text-sm font-body text-muted-foreground min-w-0">
+          <div className="flex items-center gap-2 text-sm font-body text-muted-foreground min-w-0">
             <span className="hidden sm:inline shrink-0">Orçamentos</span>
-            <span className="hidden sm:inline shrink-0">/</span>
-            <span className="text-foreground font-medium truncate max-w-[200px]">
+            <span className="hidden sm:inline shrink-0 text-border">/</span>
+            <span className="text-foreground font-semibold truncate max-w-[200px] tracking-tight">
               {truncatedName}
             </span>
           </div>
 
-          <Badge className={`${getStatusBadgeClass(internalStatus)} text-[10px] font-body border shrink-0`}>
+          <Badge className={cn("text-[10px] font-body border shrink-0 rounded-full px-2.5", getStatusBadgeClass(internalStatus))}>
             {statusInfo.icon} {statusInfo.label}
           </Badge>
         </div>
@@ -144,7 +143,7 @@ export function StickyEditorHeader({
           {primaryAction && (
             <Button
               size="sm"
-              className={cn("h-7 text-xs gap-1.5", primaryAction.className)}
+              className={cn("h-8 text-xs gap-1.5", primaryAction.className)}
               onClick={primaryAction.onClick}
             >
               {primaryAction.icon}
@@ -154,39 +153,39 @@ export function StickyEditorHeader({
         </div>
       </div>
 
-      {/* Layer 2 — Financial totals (40px) */}
-      <div className="border-t border-border/40">
+      {/* Layer 2 — Financial totals */}
+      <div className="border-t border-border/30">
         <div className="max-w-[1200px] mx-auto px-6 h-10 flex items-center gap-6 text-xs font-body">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="text-muted-foreground uppercase tracking-wider text-[10px]">Venda</span>
-            <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+          <span className="inline-flex items-center gap-2">
+            <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-medium">Venda</span>
+            <span className="font-bold tabular-nums text-success tracking-tight">
               {formatBRL(totals.sale)}
             </span>
           </span>
 
-          <span className="text-border">|</span>
+          <span className="w-px h-4 bg-border/60" />
 
-          <span className="inline-flex items-center gap-1.5">
-            <span className="text-muted-foreground uppercase tracking-wider text-[10px]">Custo</span>
-            <span className="font-medium tabular-nums text-muted-foreground">
+          <span className="inline-flex items-center gap-2">
+            <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-medium">Custo</span>
+            <span className="font-semibold tabular-nums text-muted-foreground tracking-tight">
               {formatBRL(totals.cost)}
             </span>
           </span>
 
-          <span className="text-border">|</span>
+          <span className="w-px h-4 bg-border/60" />
 
-          <span className="inline-flex items-center gap-1.5">
-            <span className="text-muted-foreground uppercase tracking-wider text-[10px]">BDI</span>
-            <span className="font-medium tabular-nums text-blue-600 dark:text-blue-400">
+          <span className="inline-flex items-center gap-2">
+            <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-medium">BDI</span>
+            <span className="font-semibold tabular-nums text-primary tracking-tight">
               {totals.bdiPercent.toFixed(1)}%
             </span>
           </span>
 
-          <span className="text-border">|</span>
+          <span className="w-px h-4 bg-border/60" />
 
-          <span className="inline-flex items-center gap-1.5">
-            <span className="text-muted-foreground uppercase tracking-wider text-[10px]">Margem</span>
-            <span className={cn("font-semibold tabular-nums", marginColor)}>
+          <span className="inline-flex items-center gap-2">
+            <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-medium">Margem</span>
+            <span className={cn("font-bold tabular-nums tracking-tight", marginColor)}>
               {formatBRL(totals.margin)} · {totals.marginPercent.toFixed(1)}%
             </span>
           </span>
