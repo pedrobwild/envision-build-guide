@@ -43,60 +43,37 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
 
-/* ── BDI validation helpers ── */
-function getBdiStatus(bdi: number | null | undefined): "normal" | "high" | "extreme" {
-  const v = Number(bdi) || 0;
-  if (v <= 80) return "normal";
-  if (v <= 150) return "high";
-  return "extreme";
-}
-
-function getBdiTooltip(bdi: number | null | undefined): string {
-  const v = Number(bdi) || 0;
-  const status = getBdiStatus(bdi);
-  if (status === "high") return "BDI elevado — verifique se está correto";
-  if (status === "extreme") {
-    const margin = (v / (100 + v) * 100).toFixed(1);
-    return `BDI acima de 150% — a margem resultante é de ${margin}%. Confirme se está correto.`;
-  }
-  return "";
-}
-
+/* ── BDI input (simple, no per-item warnings) ── */
 function BdiInput({ value, onChange }: { value: number | null | undefined; onChange: (v: number | null) => void }) {
-  const status = getBdiStatus(value);
-  const tooltip = getBdiTooltip(value);
-
-  const input = (
+  return (
     <input
       type="number"
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
       placeholder="0"
       step="0.01"
-      className={cn(
-        "w-full px-2 py-1.5 rounded-md border text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 transition-all tabular-nums cursor-text",
-        status === "extreme"
-          ? "border-orange-300 bg-background hover:border-orange-400 focus:border-orange-400 focus:ring-orange-300/30"
-          : "border-input bg-background hover:border-primary/40 focus:border-primary focus:ring-primary/20",
-      )}
+      className="w-full px-2 py-1.5 rounded-md border border-input bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 hover:border-primary/40 focus:border-primary transition-all tabular-nums cursor-text"
     />
   );
+}
 
-  if (status === "normal") return input;
-
-  return (
-    <div className="flex items-center gap-1">
-      {input}
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <AlertTriangle className={cn("h-3.5 w-3.5 shrink-0", status === "extreme" ? "text-orange-500" : "text-yellow-500")} />
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-[240px] text-xs">{tooltip}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </div>
-  );
+/* ── Global BDI calculation ── */
+function calcGlobalBdi(sections: SectionData[]): { avgBdi: number; hasData: boolean } {
+  let totalCost = 0;
+  let totalSale = 0;
+  for (const s of sections) {
+    for (const item of s.items) {
+      const cost = calcItemCostTotal(item);
+      const sale = calcItemSaleTotal(item);
+      if (cost > 0) {
+        totalCost += cost;
+        totalSale += sale;
+      }
+    }
+  }
+  if (totalCost === 0) return { avgBdi: 0, hasData: false };
+  const avgBdi = ((totalSale - totalCost) / totalCost) * 100;
+  return { avgBdi, hasData: true };
 }
 
 
