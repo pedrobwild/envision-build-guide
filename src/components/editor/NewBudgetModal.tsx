@@ -383,9 +383,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Briefing */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <FileText className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <FileText className="h-3.5 w-3.5 text-primary" />
                 Briefing e Contexto
               </h3>
               <div className="space-y-3">
