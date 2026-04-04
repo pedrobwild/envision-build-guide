@@ -187,7 +187,7 @@ export function StickyEditorHeader({
           <span className="inline-flex items-center gap-1.5">
             <span className="text-muted-foreground uppercase tracking-wider text-[10px]">Margem</span>
             <span className={cn("font-semibold tabular-nums", marginColor)}>
-              {totals.marginPercent.toFixed(1)}%
+              {formatBRL(totals.margin)} · {totals.marginPercent.toFixed(1)}%
             </span>
           </span>
         </div>
