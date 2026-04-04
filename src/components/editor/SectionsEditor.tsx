@@ -449,7 +449,7 @@ function SortableItemRow({
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+              className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100"
             />
           )}
           {/* Compact indicators */}
