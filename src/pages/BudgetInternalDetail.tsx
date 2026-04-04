@@ -458,7 +458,7 @@ export default function BudgetInternalDetail() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm font-body text-amber-900 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-sm font-body text-foreground whitespace-pre-wrap leading-relaxed">
                     {budget.internal_notes}
                   </p>
                 </CardContent>

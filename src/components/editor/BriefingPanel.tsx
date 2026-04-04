@@ -45,7 +45,7 @@ const EVENT_ICONS: Record<string, React.ElementType> = {
 
 const PRIORITY_COLORS: Record<string, string> = {
   alta: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800",
-  media: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  media: "bg-warning/10 text-warning border-warning/20",
   normal: "bg-muted text-muted-foreground border-border",
   baixa: "bg-muted text-muted-foreground border-border",
 };
