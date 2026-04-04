@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
@@ -17,7 +16,6 @@ function toTitleCase(str: string): string {
     .join(" ");
 }
 
-/* ── Typography tokens (branding: Sora / Inter / Geist Mono) ── */
 const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
 
 interface SectionSummaryRowProps {
@@ -26,6 +24,11 @@ interface SectionSummaryRowProps {
   bgClass: string;
   forceExpanded?: boolean;
   compact?: boolean;
+  /** Controlled mode: parent manages expanded state */
+  isExpanded?: boolean;
+  onToggle?: () => void;
+  /** Percentage of total for the subtle bar */
+  percentage?: number;
 }
 
 export function SectionSummaryRow({
@@ -34,33 +37,44 @@ export function SectionSummaryRow({
   bgClass,
   forceExpanded = false,
   compact = false,
+  isExpanded,
+  onToggle,
+  percentage,
 }: SectionSummaryRowProps) {
-  const [expanded, setExpanded] = useState(forceExpanded);
+  // Support both controlled and uncontrolled modes
+  const controlled = isExpanded !== undefined;
+  const expanded = controlled ? isExpanded : forceExpanded;
+
   const subtotal = calculateSectionSubtotal(section);
   const items = section.items || [];
   const hasItems = items.length > 0;
 
+  const handleClick = () => {
+    if (!hasItems || forceExpanded) return;
+    if (onToggle) {
+      onToggle();
+    }
+  };
+
   return (
-    <div className={cn(
-      "transition-colors duration-150",
-      expanded && !forceExpanded && "bg-muted/[0.04] rounded-xl"
-    )}>
+    <div className="transition-colors duration-150">
+      {/* ── Row trigger ── */}
       <button
-        onClick={() => hasItems && !forceExpanded && setExpanded((v) => !v)}
+        onClick={handleClick}
         className={cn(
           "w-full flex items-center gap-3 transition-all duration-200",
-          compact ? "px-2.5 py-3.5" : "px-2.5 -mx-2 py-3.5",
-          hasItems && !forceExpanded && "hover:bg-muted/30 active:bg-muted/50 cursor-pointer rounded-xl",
+          compact ? "px-3 py-3" : "px-3 py-3.5",
+          hasItems && !forceExpanded && "active:bg-muted/40 cursor-pointer",
           !hasItems && "cursor-default"
         )}
       >
-        {/* Color indicator */}
+        {/* Color pip */}
         <div className={cn(
-          "w-[3px] rounded-full flex-shrink-0 self-stretch min-h-[24px]",
+          "w-[3px] rounded-full flex-shrink-0 self-stretch min-h-[20px]",
           bgClass
         )} />
 
-        {/* Section title — Inter (font-body) */}
+        {/* Title + item count */}
         <div className="flex-1 text-left min-w-0">
           <span className={cn(
             "font-body font-medium text-foreground leading-snug block truncate",
@@ -68,20 +82,25 @@ export function SectionSummaryRow({
           )}>
             {toTitleCase(section.title)}
           </span>
+          {hasItems && !forceExpanded && (
+            <span className="text-[11px] font-body text-muted-foreground/50 mt-0.5 block">
+              {items.length} {items.length === 1 ? "item" : "itens"}
+            </span>
+          )}
         </div>
 
         {/* Chevron */}
         {hasItems && !forceExpanded && (
           <motion.div
-            animate={{ rotate: expanded ? 90 : 0 }}
+            animate={{ rotate: expanded ? 180 : 0 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="flex-shrink-0"
           >
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40" />
           </motion.div>
         )}
 
-        {/* Value — Geist Mono (font-mono) */}
+        {/* Value */}
         <span
           className={cn(
             "font-mono tabular-nums font-semibold whitespace-nowrap text-foreground",
@@ -93,7 +112,21 @@ export function SectionSummaryRow({
         </span>
       </button>
 
-      {/* Expanded items list */}
+      {/* ── Percentage bar ── */}
+      {percentage !== undefined && percentage > 0 && (
+        <div className="px-3 pb-1">
+          <div className="h-[2px] rounded-full bg-muted/40 overflow-hidden">
+            <motion.div
+              className={cn("h-full rounded-full", bgClass)}
+              initial={{ width: 0 }}
+              animate={{ width: `${percentage}%` }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Expanded items ── */}
       <AnimatePresence initial={false}>
         {(expanded || forceExpanded) && hasItems && (
           <motion.div
@@ -104,30 +137,27 @@ export function SectionSummaryRow({
             className="overflow-hidden"
           >
             <div className={cn(
-              "ml-5 pl-4 border-l border-border/40",
-              compact ? "mb-2 pb-1.5 pt-0" : "mb-2 pb-1 pt-0.5"
+              "mx-3 mb-3 rounded-lg bg-muted/[0.03] border border-border/30 divide-y divide-border/[0.06]"
             )}>
               {items.map((item: any, idx: number) => (
                 <motion.div
                   key={item.id}
-                  initial={forceExpanded ? false : { opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: idx * 0.03, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex items-start justify-between py-[6px] gap-3"
+                  initial={forceExpanded ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.15, delay: idx * 0.02, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex items-start justify-between px-3 py-2.5 gap-3"
                 >
-                  {/* Item title — Inter (font-body) */}
-                  <span className="text-[12px] font-body text-muted-foreground leading-relaxed flex-1">
+                  <span className="text-[12px] font-body text-muted-foreground/70 leading-relaxed flex-1">
                     {item.qty && item.qty > 1 && (
-                      <span className="font-mono text-[11px] text-muted-foreground/60 mr-1 tabular-nums" style={MONO_STYLE}>
+                      <span className="font-mono text-[11px] text-muted-foreground/50 mr-1 tabular-nums" style={MONO_STYLE}>
                         {item.qty}×
                       </span>
                     )}
                     {item.title}
                   </span>
-                  {/* Unit — Geist Mono (font-mono) */}
                   {item.unit && (
                     <span
-                      className="text-[10px] text-muted-foreground/40 font-mono uppercase whitespace-nowrap tracking-wider mt-0.5 tabular-nums"
+                      className="text-[10px] text-muted-foreground/35 font-mono uppercase whitespace-nowrap tracking-wider mt-0.5 tabular-nums"
                       style={MONO_STYLE}
                     >
                       {item.unit}
