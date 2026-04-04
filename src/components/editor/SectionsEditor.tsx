@@ -477,8 +477,8 @@ function SortableItemRow({
           )}
         </div>
 
-        {/* [QTD] — 64px */}
-        <div className="w-16 flex-shrink-0 px-1">
+        {/* [QTD] — 48px mobile, 64px desktop */}
+        <div className="w-12 md:w-16 flex-shrink-0 px-1">
           <input
             type="number"
             value={item.qty ?? ""}
@@ -488,8 +488,8 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [Custo] — 100px */}
-        <div className="w-[100px] flex-shrink-0 px-1">
+        {/* [Custo] — 80px mobile, 100px desktop */}
+        <div className="w-20 md:w-[100px] flex-shrink-0 px-1">
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
@@ -500,8 +500,8 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [BDI%] — 72px */}
-        <div className="w-[72px] flex-shrink-0 px-1">
+        {/* [BDI%] — hidden mobile, 72px desktop */}
+        <div className="hidden md:block w-[72px] flex-shrink-0 px-1">
           <input
             type="number"
             value={item.bdi_percentage ?? ""}
@@ -512,16 +512,16 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [Venda] — 100px, readonly */}
-        <div className="w-[100px] flex-shrink-0 px-1">
+        {/* [Venda] — hidden mobile, 100px desktop, readonly */}
+        <div className="hidden md:block w-[100px] flex-shrink-0 px-1">
           <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground bg-muted/30 rounded">
             {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
 
-        {/* [Total Venda] — 100px, primary */}
-        <div className="w-[100px] flex-shrink-0 px-1">
-          <div className="h-8 flex items-center justify-end px-2 text-sm font-semibold font-mono tabular-nums text-foreground">
+        {/* [Total Venda] — 80px mobile, 100px desktop, primary */}
+        <div className="w-20 md:w-[100px] flex-shrink-0 px-1">
+          <div className="h-8 flex items-center justify-end px-2 text-xs md:text-sm font-semibold font-mono tabular-nums text-foreground">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
