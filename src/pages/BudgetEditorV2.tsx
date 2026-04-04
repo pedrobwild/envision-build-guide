@@ -503,8 +503,6 @@ export default function BudgetEditorV2() {
                   setBudget({ ...budget, [field]: value });
                   autoSaveBudgetField(field, value);
                 }}
-                onNext={handleSaveAndPublish}
-                saving={saving}
               />
 
               {/* Internal Data - Collapsible */}
