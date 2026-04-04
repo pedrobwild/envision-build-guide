@@ -391,45 +391,27 @@ export default function BudgetEditorV2() {
 
           {/* ── Tab navigation ── */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 flex-1 flex flex-col">
-            <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none h-auto p-0 gap-0">
-              <TabsTrigger
-                value="planilha"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5"
-              >
-                <ClipboardList className="h-3.5 w-3.5" />
-                Planilha
-              </TabsTrigger>
-              <TabsTrigger
-                value="contexto"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5"
-              >
-                <User className="h-3.5 w-3.5" />
-                Contexto
-                {missingContextFields && (
-                  <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-semibold px-1">
-                    !
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="midia"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5"
-              >
-                <ImageIcon className="h-3.5 w-3.5" />
-                Mídia
-                {mediaCount > 0 && (
-                  <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 text-[10px] font-semibold px-1">
-                    {mediaCount}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="versoes"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5"
-              >
-                <ScrollText className="h-3.5 w-3.5" />
-                Versões
-              </TabsTrigger>
+            <TabsList className="w-full justify-start bg-transparent border-b border-border/60 rounded-none h-auto p-0 gap-0">
+              {[
+                { value: "planilha", label: "Planilha", icon: <ClipboardList className="h-3.5 w-3.5" />, badge: null },
+                { value: "contexto", label: "Contexto", icon: <User className="h-3.5 w-3.5" />, badge: missingContextFields ? "!" : null, badgeClass: "bg-amber-500/20 text-amber-600 dark:text-amber-400" },
+                { value: "midia", label: "Mídia", icon: <ImageIcon className="h-3.5 w-3.5" />, badge: mediaCount > 0 ? String(mediaCount) : null, badgeClass: "bg-primary/10 text-primary" },
+                { value: "versoes", label: "Versões", icon: <ScrollText className="h-3.5 w-3.5" />, badge: null },
+              ].map(tab => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-2.5 pt-2 text-sm font-body font-medium gap-1.5 transition-colors"
+                >
+                  {tab.icon}
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  {tab.badge && (
+                    <span className={cn("ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full text-[10px] font-semibold px-1", tab.badgeClass)}>
+                      {tab.badge}
+                    </span>
+                  )}
+                </TabsTrigger>
+              ))}
             </TabsList>
 
             {/* ── Tab: Planilha ── */}
