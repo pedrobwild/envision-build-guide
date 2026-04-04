@@ -1274,22 +1274,22 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             <div className="flex items-center border-b border-border/60 bg-muted/10 px-1 sm:px-2 h-7 sm:h-8">
                               <div className="w-5 sm:w-6 flex-shrink-0" />
                               <div className="flex-1 px-0.5 sm:px-1">
-                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Item</span>
+                                <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Item</span>
                               </div>
-                              <div className="w-10 sm:w-16 flex-shrink-0 px-0.5 sm:px-1 text-center">
-                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
+                              <div className="w-9 sm:w-16 flex-shrink-0 px-0.5 sm:px-1 text-center">
+                                <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Qtd</span>
                               </div>
-                              <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
-                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo</span>
+                              <div className="w-14 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
+                                <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Custo</span>
                               </div>
                               <div className="hidden md:block w-[72px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI%</span>
+                                <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">BDI%</span>
                               </div>
                               <div className="hidden md:block w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda Un.</span>
+                                <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Venda Un.</span>
                               </div>
-                              <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
-                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total</span>
+                              <div className="w-[72px] sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
+                                <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Total</span>
                               </div>
                               <div className="w-6 sm:w-8 flex-shrink-0" />
                             </div>
