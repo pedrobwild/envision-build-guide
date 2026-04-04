@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { SectionSummaryRow } from "./SectionSummaryRow";
+import { CountUpValue } from "./CountUpValue";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
