@@ -104,35 +104,6 @@ function BdiInput({ value, onChange }: { value: number | null | undefined; onCha
   );
 }
 
-function BdiDisplay({ value }: { value: number }) {
-  const status = getBdiStatus(value);
-  const tooltip = getBdiTooltip(value);
-
-  const display = (
-    <div className={cn(
-      "px-2 py-1.5 text-sm font-body tabular-nums flex items-center gap-1",
-      status === "zero" && "text-yellow-600 dark:text-yellow-400",
-      status === "normal" && "text-muted-foreground",
-      status === "high" && "text-yellow-600 dark:text-yellow-400",
-      status === "extreme" && "text-destructive",
-    )}>
-      <span>{value.toFixed(1)}%</span>
-      {status === "high" && <AlertTriangle className="h-3 w-3" />}
-      {status === "extreme" && <AlertCircle className="h-3 w-3" />}
-    </div>
-  );
-
-  if (status === "normal") return display;
-
-  return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>{display}</TooltipTrigger>
-        <TooltipContent side="top" className="max-w-[240px] text-xs">{tooltip}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 /* ── Inline image management for editor items ── */
 function ItemImageInline({
