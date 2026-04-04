@@ -492,6 +492,14 @@ export default function AdminDashboard() {
                   >
                     <FileText className="h-4 w-4 text-muted-foreground" /> Em branco
                   </button>
+                  {(isAdmin || isOrcamentista) && (
+                    <button
+                      onClick={() => { setNewMenuOpen(false); createBudgetForTemplate(); }}
+                      className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
+                    >
+                      <LayoutTemplate className="h-4 w-4 text-muted-foreground" /> Usar template
+                    </button>
+                  )}
                   <button
                     onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("pdf"); }}
                     className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
