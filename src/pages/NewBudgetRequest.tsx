@@ -344,11 +344,11 @@ export default function NewBudgetRequest() {
       >
         {/* Project name preview */}
         {projectName && (
-          <div className="mb-6 px-1">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-body">
-              <Sparkles className="h-3 w-3 text-primary/60" />
-              <span>Nome gerado:</span>
-              <span className="font-semibold text-foreground">{projectName}</span>
+          <div className="mb-6 px-1 py-2 rounded-lg bg-primary/3 border border-primary/8">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground font-body px-2">
+              <Sparkles className="h-3 w-3 text-primary/50" />
+              <span>Projeto:</span>
+              <span className="font-semibold text-foreground font-display tracking-tight">{projectName}</span>
             </div>
           </div>
         )}
