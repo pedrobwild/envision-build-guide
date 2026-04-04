@@ -505,9 +505,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Links de Referência */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <LinkIcon className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <LinkIcon className="h-3.5 w-3.5 text-primary" />
                 Links de Referência
               </h3>
               <div className="space-y-2">
