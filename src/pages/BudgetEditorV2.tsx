@@ -551,7 +551,7 @@ export default function BudgetEditorV2() {
                       </p>
                     </div>
                     {(budget as any).internal_cost > 0 && (
-                      <div className="text-sm font-body text-muted-foreground tabular-nums">
+                      <div className="text-sm font-mono text-muted-foreground tabular-nums">
                         Custo: {formatBRL((budget as any).internal_cost)}
                       </div>
                     )}
