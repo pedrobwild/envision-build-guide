@@ -290,21 +290,32 @@ function AdjustmentsList({ adjustments }: { adjustments: any[] }) {
 
 function TotalCard({ total }: { total: number }) {
   return (
-    <div className="mx-5 mb-4 rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-5">
-      <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2">
+    <div
+      className="mx-5 mb-4 rounded-xl border border-primary/10 p-5 relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, hsl(212 100% 48% / 0.06) 0%, hsl(212 100% 48% / 0.02) 60%, transparent 100%)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      }}
+    >
+      <div
+        className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-[0.07] pointer-events-none"
+        style={{ background: 'radial-gradient(circle, hsl(212 100% 48%) 0%, transparent 70%)' }}
+      />
+      <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2 relative">
         Investimento Total
       </p>
       <motion.p
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.4, duration: 0.4 }}
-        className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none"
+        className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none relative"
       >
         {formatBRL(total)}
       </motion.p>
-      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/10">
-        <Shield className="h-3.5 w-3.5 text-primary/40" />
-        <span className="text-[13px] text-muted-foreground/80 font-body">
+      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/8 relative">
+        <Shield className="h-3.5 w-3.5 text-primary/30" />
+        <span className="text-[11px] text-muted-foreground/60 font-body">
           Preço fixo · Sem custos ocultos
         </span>
       </div>
