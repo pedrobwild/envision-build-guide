@@ -311,7 +311,7 @@ export default function BudgetEditorV2() {
         />
 
         {/* ── Content below sticky header ── */}
-        <main className="max-w-[1200px] w-full mx-auto px-6 py-4 flex-1 flex flex-col">
+        <main className="max-w-[1200px] w-full mx-auto px-3 sm:px-6 py-4 flex-1 flex flex-col">
           {/* Pipeline Progress — always visible */}
           <PipelineProgress internalStatus={budget.internal_status ?? "requested"} />
 

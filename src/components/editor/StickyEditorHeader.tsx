@@ -128,7 +128,7 @@ export function StickyEditorHeader({
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          <span className="text-foreground font-semibold truncate text-sm tracking-tight min-w-0">
+          <span className="text-foreground font-semibold font-display truncate text-sm tracking-tight min-w-0">
             {truncatedName}
           </span>
 

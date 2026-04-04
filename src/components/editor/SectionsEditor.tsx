@@ -52,7 +52,7 @@ function BdiInput({ value, onChange }: { value: number | null | undefined; onCha
       onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
       placeholder="0"
       step="0.01"
-      className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right"
+      className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right font-body"
     />
   );
 }
@@ -450,7 +450,7 @@ function SortableItemRow({
           {compact && !rowExpanded ? (
             <>
               <span
-                className="text-xs sm:text-sm text-foreground truncate cursor-default"
+                className="text-xs sm:text-sm font-body text-foreground truncate cursor-default"
                 title={item.title}
               >
                 {item.title}
@@ -470,7 +470,7 @@ function SortableItemRow({
                 >📷 {imageCount > 1 ? imageCount : ""}</button>
               )}
               {isOptional && (
-                <span className="ml-0.5 text-[9px] bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
+                <span className="ml-0.5 text-[9px] font-body bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
               )}
               {hasBdiWarning && (
                 <AlertTriangle className="ml-0.5 h-3 w-3 text-warning inline flex-shrink-0" />
@@ -482,31 +482,31 @@ function SortableItemRow({
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full h-8 sm:h-9 px-1.5 sm:px-2 rounded border border-transparent bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100"
+              className="w-full h-8 sm:h-9 px-1.5 sm:px-2 rounded border border-transparent bg-transparent text-xs sm:text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100"
             />
           )}
         </div>
 
-        {/* [QTD] — 40px mobile, 64px desktop */}
-        <div className="w-10 sm:w-16 flex-shrink-0 px-0.5 sm:px-1">
+        {/* [QTD] — 36px mobile, 64px desktop */}
+        <div className="w-9 sm:w-16 flex-shrink-0 px-0.5 sm:px-1">
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-xs sm:text-sm font-mono text-center placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
+            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-[11px] sm:text-sm font-mono text-center placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
-        {/* [Custo] — 64px mobile, 100px desktop */}
-        <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
+        {/* [Custo] — 56px mobile, 100px desktop */}
+        <div className="w-14 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-xs sm:text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
+            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-[11px] sm:text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
@@ -529,8 +529,8 @@ function SortableItemRow({
           </div>
         </div>
 
-        {/* [Total Venda] — 64px mobile, 100px desktop */}
-        <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
+        {/* [Total Venda] — 72px mobile, 100px desktop */}
+        <div className="w-[72px] sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
           <div className="h-7 sm:h-8 flex items-center justify-end px-1 sm:px-2 text-[11px] sm:text-sm font-semibold font-mono tabular-nums text-foreground">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
@@ -563,14 +563,14 @@ function SortableItemRow({
             value={item.title}
             onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
             placeholder="Nome do item"
-            className="w-full max-w-xl h-8 px-2 rounded border border-transparent bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary hover:border-border transition-colors"
+            className="w-full max-w-xl h-8 px-2 rounded border border-transparent bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary hover:border-border transition-colors"
           />
           <input
             type="text"
             value={item.description || ""}
             onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
             placeholder="Descrição do item"
-            className="w-full max-w-xl h-7 px-2 rounded border border-transparent bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+            className="w-full max-w-xl h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
           />
           <div className="flex items-center gap-1.5 max-w-xl">
             <LinkIcon className="h-3 w-3 text-muted-foreground/30 shrink-0" />
@@ -579,13 +579,13 @@ function SortableItemRow({
               value={item.reference_url || ""}
               onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
               placeholder="Link de referência"
-              className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+              className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
             />
           </div>
 
           {/* Mobile-only: BDI field when expanded */}
           <div className="flex items-center gap-2 md:hidden pt-1">
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">BDI%</span>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium font-body">BDI%</span>
             <input
               type="number"
               value={item.bdi_percentage ?? ""}
@@ -602,14 +602,14 @@ function SortableItemRow({
           <div className="flex items-center gap-2 pt-1 flex-wrap">
             <button
               onClick={() => setDetailOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <Pencil className="h-3 w-3" /> Editar detalhes
             </button>
             {!item.catalog_item_id && (
               <button
                 onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
-                className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
               >
                 <BookmarkPlus className="h-3 w-3" /> Salvar no catálogo
               </button>
@@ -1213,7 +1213,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         </div>
 
                         {/* [Nome da Seção] — auto, truncate */}
-                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate min-w-0">
+                        <span className="text-xs sm:text-sm font-semibold font-display text-foreground truncate min-w-0">
                           {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                         </span>
 
@@ -1225,7 +1225,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         )}
 
                         {/* [N itens] — text-xs muted */}
-                        <span className="text-[10px] sm:text-xs text-muted-foreground ml-1.5 sm:ml-2 shrink-0 tabular-nums">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground font-body ml-1.5 sm:ml-2 shrink-0 tabular-nums">
                           {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                         </span>
 
@@ -1274,22 +1274,22 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             <div className="flex items-center border-b border-border/60 bg-muted/10 px-1 sm:px-2 h-7 sm:h-8">
                               <div className="w-5 sm:w-6 flex-shrink-0" />
                               <div className="flex-1 px-0.5 sm:px-1">
-                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Item</span>
+                                <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Item</span>
                               </div>
-                              <div className="w-10 sm:w-16 flex-shrink-0 px-0.5 sm:px-1 text-center">
-                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
+                              <div className="w-9 sm:w-16 flex-shrink-0 px-0.5 sm:px-1 text-center">
+                                <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Qtd</span>
                               </div>
-                              <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
-                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo</span>
+                              <div className="w-14 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
+                                <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Custo</span>
                               </div>
                               <div className="hidden md:block w-[72px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI%</span>
+                                <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">BDI%</span>
                               </div>
                               <div className="hidden md:block w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda Un.</span>
+                                <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Venda Un.</span>
                               </div>
-                              <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
-                                <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total</span>
+                              <div className="w-[72px] sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
+                                <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Total</span>
                               </div>
                               <div className="w-6 sm:w-8 flex-shrink-0" />
                             </div>
