@@ -409,8 +409,8 @@ function SortableItemRow({
       style={style}
       {...attributes}
       className={cn(
-        "group/item transition-colors duration-150 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
-        compact && !rowExpanded ? "h-10" : "",
+        "group/item transition-colors duration-100 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
+        compact && !rowExpanded ? "h-11" : "",
         searchMatch && "bg-warning/5 hover:bg-warning/8",
         isDragging && "bg-muted/40 shadow-lg rounded border-b-0"
       )}
@@ -418,7 +418,7 @@ function SortableItemRow({
       {/* ── Single-line grid row ── */}
       <div className={cn(
         "grid grid-cols-1 lg:grid-cols-12 gap-0 items-center",
-        compact && !rowExpanded ? "h-10" : "py-1.5",
+        compact && !rowExpanded ? "h-11" : "py-2",
       )}>
         {/* Title column */}
         <div className="lg:col-span-3 flex items-center gap-1 px-2 min-w-0">
