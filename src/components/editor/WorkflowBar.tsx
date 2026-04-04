@@ -353,10 +353,10 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               data-workflow-primary
               variant="default"
               size="sm"
-              className={`h-7 text-xs gap-1.5 ${
-                internalStatus === "revision_requested" ? "bg-orange-500 hover:bg-orange-600 text-white" :
-                internalStatus === "minuta_solicitada" ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
-                internalStatus === "delivered_to_sales" ? "bg-teal-600 hover:bg-teal-700 text-white" :
+              className={`h-7 text-[10px] sm:text-xs gap-1 sm:gap-1.5 ${
+                internalStatus === "revision_requested" ? "bg-warning hover:bg-warning/90 text-warning-foreground" :
+                internalStatus === "minuta_solicitada" ? "bg-success hover:bg-success/90 text-success-foreground" :
+                internalStatus === "delivered_to_sales" ? "bg-success hover:bg-success/90 text-success-foreground" :
                 ""
               }`}
               onClick={handlePrimaryClick}
@@ -365,7 +365,8 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               {internalStatus === "ready_for_review" && <PackageCheck className="h-3.5 w-3.5" />}
               {internalStatus === "delivered_to_sales" && <Send className="h-3.5 w-3.5" />}
               {internalStatus === "minuta_solicitada" && <Handshake className="h-3.5 w-3.5" />}
-              {primaryTransition.label}
+              <span className="hidden sm:inline">{primaryTransition.label}</span>
+              <span className="sm:hidden">Avançar</span>
             </Button>
           )}
 
