@@ -160,8 +160,18 @@ export default function BudgetEditorV2() {
     setSections(sorted);
   };
 
+  // Fields that must never be changed via auto-save (only via WorkflowBar or explicit actions)
+  const PROTECTED_FIELDS = useRef(new Set([
+    "internal_status", "status", "is_published_version", "public_id",
+    "is_current_version", "version_group_id", "version_number",
+  ]));
+
   const autoSaveBudgetField = useCallback((field: string, value: any) => {
     if (!budgetId) return;
+    if (PROTECTED_FIELDS.current.has(field)) {
+      console.warn(`[autoSave] Blocked attempt to save protected field: ${field}`);
+      return;
+    }
     lastSavePayload.current = { field, value };
     setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
