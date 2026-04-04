@@ -409,10 +409,10 @@ function SortableItemRow({
       style={style}
       {...attributes}
       className={cn(
-        "group/item transition-colors",
+        "group/item transition-colors duration-150 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
         compact && !rowExpanded ? "h-10" : "",
-        searchMatch && "bg-warning/5",
-        isDragging && "bg-muted/40 shadow-lg rounded"
+        searchMatch && "bg-warning/5 hover:bg-warning/8",
+        isDragging && "bg-muted/40 shadow-lg rounded border-b-0"
       )}
     >
       {/* ── Single-line grid row ── */}
@@ -975,8 +975,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     );
   };
 
+  const marginPercent = grandTotalSale > 0 ? (grandMargin / grandTotalSale) * 100 : 0;
+
   return (
-    <div className="mt-8">
+    <div className="mt-8 pb-20">
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-display font-semibold text-foreground tracking-[-0.04em]">Seções e Itens</h2>
@@ -1091,9 +1093,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                 <SortableSectionCard key={section.id} section={section}>
                   {(dragListeners: any) => (
                     <div className={cn("group/section", isSearchActive && !sectionHasMatch && "opacity-40")}>
-                      {/* Section header — 48px, structure from spacing not borders */}
+                      {/* Section header — 48px fixed height, no change on expand */}
                       <div
-                        className="h-12 px-3 flex items-center gap-1.5 cursor-pointer hover:bg-muted/40 transition-colors"
+                        className={cn(
+                          "h-12 px-3 flex items-center gap-1.5 cursor-pointer transition-colors duration-150",
+                          isExpanded ? "bg-muted/20 hover:bg-muted/30" : "hover:bg-muted/30"
+                        )}
                         onClick={() => toggleSection(section.id)}
                       >
                         <button
@@ -1103,14 +1108,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         >
                           <GripVertical className="h-3.5 w-3.5" />
                         </button>
-                        <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 transition-transform", isExpanded && "rotate-90")} />
+                        <ChevronRight className={cn(
+                          "h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 transition-transform duration-200 ease-out",
+                          isExpanded && "rotate-90"
+                        )} />
                         <span className="text-sm font-body font-semibold text-foreground truncate">
                           {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                         </span>
                         {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/30" />}
                         {section.is_optional && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-warning/10 text-warning">
-                            Opcional
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground">
+                            OPT
                           </span>
                         )}
                         <span className="text-xs text-muted-foreground font-body ml-1 shrink-0">
@@ -1134,9 +1142,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                       {/* Expanded content */}
                       {isExpanded && (
                         <div>
-                          {/* Column headers — label-caps style */}
+                          {/* Column headers — sticky label-caps */}
                           {section.items.length > 0 && (
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 px-2 h-8 items-center border-t border-border/40">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 px-2 h-8 items-center border-t border-border/40 bg-background sticky top-0 z-10">
                               <div className="lg:col-span-3 px-2">
                                 <span className="label-caps">Título</span>
                               </div>
@@ -1181,7 +1189,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               items={section.items.map(i => i.id)}
                               strategy={verticalListSortingStrategy}
                             >
-                              <div className="divide-y divide-border/30">
+                              <div>
                                 {section.items.length === 0 ? (
                                   <button
                                     onClick={() => addItem(section.id)}
@@ -1229,6 +1237,49 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           </div>
         </SortableContext>
       </DndContext>
+
+      {/* ── Sticky footer summary bar (Stripe-style) ── */}
+      {sections.length > 0 && grandTotalCost > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border">
+          <div className="max-w-screen-xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div>
+                <span className="label-caps block">Custo</span>
+                <span className="text-base font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
+                  {formatBRL(grandTotalCost)}
+                </span>
+              </div>
+              <span className="text-border select-none">|</span>
+              <div>
+                <span className="label-caps block">BDI médio</span>
+                <span className="text-base font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
+                  {grandBdiPercent.toFixed(1)}%
+                </span>
+              </div>
+              <span className="text-border select-none">|</span>
+              <div>
+                <span className="label-caps block">Venda</span>
+                <span className="text-base font-mono font-bold text-foreground tabular-nums tracking-[-0.035em]">
+                  {formatBRL(grandTotalSale)}
+                </span>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="label-caps block">Margem</span>
+              <span className={cn(
+                "text-base font-mono font-semibold tabular-nums tracking-[-0.035em]",
+                grandMargin >= 0 ? "text-foreground" : "text-destructive"
+              )}>
+                {formatBRL(grandMargin)}
+                <span className="text-xs text-muted-foreground ml-1.5">·</span>
+                <span className="text-xs text-muted-foreground ml-1 font-mono">
+                  {marginPercent.toFixed(1)}%
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
