@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
@@ -38,21 +38,26 @@ export function SectionSummaryRow({
   const hasItems = items.length > 0;
 
   return (
-    <div>
+    <div className={cn(
+      "transition-colors duration-150",
+      expanded && !forceExpanded && "bg-muted/[0.04] rounded-xl"
+    )}>
       <button
         onClick={() => hasItems && !forceExpanded && setExpanded((v) => !v)}
         className={cn(
-          "w-full flex items-center gap-3 rounded-xl transition-all duration-200",
-          compact ? "px-2 py-3" : "px-2 -mx-2 py-3",
-          hasItems && !forceExpanded && "hover:bg-muted/40 active:bg-muted/60 cursor-pointer",
-          !hasItems && "cursor-default",
-          expanded && !forceExpanded && "bg-muted/20"
+          "w-full flex items-center gap-3 transition-all duration-200",
+          compact ? "px-2.5 py-3.5" : "px-2.5 -mx-2 py-3.5",
+          hasItems && !forceExpanded && "hover:bg-muted/30 active:bg-muted/50 cursor-pointer rounded-xl",
+          !hasItems && "cursor-default"
         )}
       >
-        {/* Color indicator */}
-        <div className={cn("w-[3px] rounded-full flex-shrink-0 self-stretch min-h-[20px]", bgClass)} />
+        {/* Color indicator — pill shape */}
+        <div className={cn(
+          "w-[3px] rounded-full flex-shrink-0 self-stretch min-h-[24px]",
+          bgClass
+        )} />
 
-        {/* Section title + item count */}
+        {/* Section title */}
         <div className="flex-1 text-left min-w-0">
           <span className={cn(
             "font-body font-medium text-foreground leading-snug block truncate",
@@ -60,28 +65,25 @@ export function SectionSummaryRow({
           )}>
             {toTitleCase(section.title)}
           </span>
-          {hasItems && !forceExpanded && (
-            <span className="text-[10px] font-body text-muted-foreground/50 mt-0.5 block">
-              {items.length} {items.length === 1 ? "item" : "itens"}
-            </span>
-          )}
         </div>
 
         {/* Chevron */}
         {hasItems && !forceExpanded && (
           <motion.div
-            animate={{ rotate: expanded ? 180 : 0 }}
+            animate={{ rotate: expanded ? 90 : 0 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="flex-shrink-0"
           >
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40 flex-shrink-0" />
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
           </motion.div>
         )}
 
-        {/* Value */}
+        {/* Value — prominent mono styling */}
         <span
           className={cn(
-            "font-mono tabular-nums font-semibold text-foreground whitespace-nowrap tracking-tight",
-            compact ? "text-[13px]" : "text-sm"
+            "font-mono tabular-nums font-semibold whitespace-nowrap tracking-tight",
+            compact ? "text-[13px]" : "text-sm",
+            "text-foreground"
           )}
           style={{ fontFeatureSettings: '"tnum" 1' }}
         >
@@ -100,27 +102,27 @@ export function SectionSummaryRow({
             className="overflow-hidden"
           >
             <div className={cn(
-              "ml-[17px] border-l-2 border-border/20 pl-4",
-              compact ? "mb-2 pb-1 pt-0.5" : "mb-2 pb-1 pt-0.5"
+              "ml-5 pl-4 border-l border-border/40",
+              compact ? "mb-2 pb-1.5 pt-0" : "mb-2 pb-1 pt-0.5"
             )}>
               {items.map((item: any, idx: number) => (
                 <motion.div
                   key={item.id}
-                  initial={forceExpanded ? false : { opacity: 0, x: -4 }}
+                  initial={forceExpanded ? false : { opacity: 0, x: -6 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2, delay: idx * 0.03, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex items-baseline justify-between py-[5px]"
+                  className="flex items-start justify-between py-[6px] gap-3"
                 >
-                  <span className="text-[12px] font-body text-muted-foreground/70 leading-relaxed mr-3 flex-1">
+                  <span className="text-[12px] font-body text-muted-foreground leading-relaxed flex-1">
                     {item.qty && item.qty > 1 && (
-                      <span className="font-mono text-[11px] text-muted-foreground/50 mr-1 tabular-nums">
+                      <span className="font-mono text-[11px] text-muted-foreground/60 mr-1 tabular-nums">
                         {item.qty}×
                       </span>
                     )}
                     {item.title}
                   </span>
                   {item.unit && (
-                    <span className="text-[10px] text-muted-foreground/40 font-mono uppercase whitespace-nowrap tracking-wide">
+                    <span className="text-[10px] text-muted-foreground/40 font-mono uppercase whitespace-nowrap tracking-wider mt-0.5">
                       {item.unit}
                     </span>
                   )}
