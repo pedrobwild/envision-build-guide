@@ -44,9 +44,8 @@ import { cn } from "@/lib/utils";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
 
 /* ── BDI validation helpers ── */
-function getBdiStatus(bdi: number | null | undefined): "zero" | "normal" | "high" | "extreme" {
+function getBdiStatus(bdi: number | null | undefined): "normal" | "high" | "extreme" {
   const v = Number(bdi) || 0;
-  if (v === 0) return "zero";
   if (v <= 80) return "normal";
   if (v <= 150) return "high";
   return "extreme";
@@ -55,11 +54,10 @@ function getBdiStatus(bdi: number | null | undefined): "zero" | "normal" | "high
 function getBdiTooltip(bdi: number | null | undefined): string {
   const v = Number(bdi) || 0;
   const status = getBdiStatus(bdi);
-  if (status === "zero") return "BDI zero: o item será vendido pelo custo, sem margem";
-  if (status === "high") return "BDI elevado — verifique se o valor está correto";
+  if (status === "high") return "BDI elevado — verifique se está correto";
   if (status === "extreme") {
     const margin = (v / (100 + v) * 100).toFixed(1);
-    return `BDI muito alto (acima de 150%). Isso pode ser um erro de digitação. A margem resultante será de ${margin}%.`;
+    return `BDI acima de 150% — a margem resultante é de ${margin}%. Confirme se está correto.`;
   }
   return "";
 }
@@ -69,39 +67,35 @@ function BdiInput({ value, onChange }: { value: number | null | undefined; onCha
   const tooltip = getBdiTooltip(value);
 
   const input = (
-    <div className="relative">
-      <input
-        type="number"
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
-        placeholder="0"
-        step="0.01"
-        className={cn(
-          "w-full px-2 py-1.5 rounded-md border text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 transition-all tabular-nums cursor-text",
-          status === "zero" && "border-yellow-400 dark:border-yellow-500 bg-background hover:border-yellow-500 focus:border-yellow-500 focus:ring-yellow-300/30",
-          status === "normal" && "border-input bg-background hover:border-primary/40 focus:border-primary focus:ring-primary/20",
-          status === "high" && "border-input bg-background hover:border-primary/40 focus:border-primary focus:ring-primary/20 pr-7",
-          status === "extreme" && "border-destructive bg-background hover:border-destructive focus:border-destructive focus:ring-destructive/20 pr-7",
-        )}
-      />
-      {status === "high" && (
-        <AlertTriangle className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-yellow-500" />
+    <input
+      type="number"
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+      placeholder="0"
+      step="0.01"
+      className={cn(
+        "w-full px-2 py-1.5 rounded-md border text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 transition-all tabular-nums cursor-text",
+        status === "extreme"
+          ? "border-orange-300 bg-background hover:border-orange-400 focus:border-orange-400 focus:ring-orange-300/30"
+          : "border-input bg-background hover:border-primary/40 focus:border-primary focus:ring-primary/20",
       )}
-      {status === "extreme" && (
-        <AlertCircle className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-destructive" />
-      )}
-    </div>
+    />
   );
 
   if (status === "normal") return input;
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>{input}</TooltipTrigger>
-        <TooltipContent side="top" className="max-w-[240px] text-xs">{tooltip}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="flex items-center gap-1">
+      {input}
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <AlertTriangle className={cn("h-3.5 w-3.5 shrink-0", status === "extreme" ? "text-orange-500" : "text-yellow-500")} />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[240px] text-xs">{tooltip}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 }
 
