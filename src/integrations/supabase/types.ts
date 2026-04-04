@@ -1060,6 +1060,7 @@ export type Database = {
         Args: { _budget_id: string; _user_id: string }
         Returns: boolean
       }
+      get_public_budget: { Args: { p_public_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
