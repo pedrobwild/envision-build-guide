@@ -74,8 +74,7 @@ const COMMERCIAL_FIELDS = [
   { key: "email_comercial", label: "E-mail Comercial", placeholder: "email@exemplo.com", icon: Mail, type: "email" },
 ];
 
-export function MetadataStep({ budget, onFieldChange, onNext, saving }: MetadataStepProps) {
-  const hasClientName = !!budget.client_name && budget.client_name !== "Cliente";
+export function MetadataStep({ budget, onFieldChange }: MetadataStepProps) {
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
   const [showMore, setShowMore] = useState(false);
