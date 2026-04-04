@@ -71,8 +71,10 @@ export function PipelineProgress({ internalStatus }: PipelineProgressProps) {
                     : "border-2 border-muted-foreground/20 text-muted-foreground/40"}`;
 
                   const circle = (
-                    <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-medium transition-colors ${circleClass}`}>
+                    <div className={circleClass}>
                       {circleContent}
+                    </div>
+                  );
                     </div>
                   );
 
