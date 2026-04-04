@@ -129,7 +129,7 @@ export default function BudgetInternalDetail() {
       supabase
         .from("budgets")
         .select(
-          "id, project_name, client_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id"
+          "id, project_name, client_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code"
         )
         .eq("id", budgetId!)
         .single(),
