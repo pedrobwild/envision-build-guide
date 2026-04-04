@@ -1213,7 +1213,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         </div>
 
                         {/* [Nome da Seção] — auto, truncate */}
-                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate min-w-0">
+                        <span className="text-xs sm:text-sm font-semibold font-display text-foreground truncate min-w-0">
                           {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                         </span>
 
