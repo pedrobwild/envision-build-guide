@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ import {
   Loader2,
   ChevronRight,
   Copy,
+  FileSpreadsheet,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -466,6 +468,7 @@ function TemplateDetail({ template }: { template: Template }) {
 export default function BudgetTemplatesPage() {
   const { data: templates = [], isLoading } = useTemplates();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [templateDialog, setTemplateDialog] = useState<{ open: boolean; template?: Template | null }>({ open: false });
 
@@ -580,6 +583,9 @@ export default function BudgetTemplatesPage() {
                   <ChevronRight className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${selectedId === t.id ? "rotate-90" : ""}`} />
                 </div>
                 <div className="flex items-center gap-1 mt-3">
+                  <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={(e) => { e.stopPropagation(); navigate(`/admin/templates/${t.id}/editar`); }}>
+                    <FileSpreadsheet className="h-3.5 w-3.5" /> Editar planilha
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setTemplateDialog({ open: true, template: t }); }}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
