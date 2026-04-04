@@ -1093,50 +1093,77 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                 <SortableSectionCard key={section.id} section={section}>
                   {(dragListeners: any) => (
                     <div className={cn("group/section", isSearchActive && !sectionHasMatch && "opacity-40")}>
-                      {/* Section header — 48px fixed height, no change on expand */}
+                      {/* Section header — 48px fixed, Linear pattern */}
                       <div
                         className={cn(
-                          "h-12 px-3 flex items-center gap-1.5 cursor-pointer transition-colors duration-100",
+                          "h-12 px-3 flex items-center cursor-pointer transition-colors duration-100",
                           isExpanded ? "bg-muted/20 hover:bg-muted/30" : "hover:bg-muted/30"
                         )}
                         onClick={() => toggleSection(section.id)}
                       >
+                        {/* [⋮⋮] drag — 8px zone, hover-only */}
                         <button
                           {...dragListeners}
-                          className="cursor-grab active:cursor-grabbing p-0.5 rounded text-muted-foreground/20 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover/section:opacity-100"
+                          className="w-5 flex-shrink-0 flex items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/section:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <GripVertical className="h-3.5 w-3.5" />
                         </button>
-                        <ChevronRight className={cn(
-                          "h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 transition-transform duration-200 ease-out",
-                          isExpanded && "rotate-90"
-                        )} />
-                        <span className="text-sm font-body font-semibold text-foreground truncate">
+
+                        {/* [▶/▼] chevron — 24px zone */}
+                        <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                          <ChevronRight className={cn(
+                            "h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 ease-out",
+                            isExpanded && "rotate-90"
+                          )} />
+                        </div>
+
+                        {/* [Nome da Seção] — auto, truncate */}
+                        <span className="text-sm font-semibold text-foreground truncate min-w-0">
                           {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                         </span>
-                        {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/30" />}
+
+                        {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/30 ml-1.5 flex-shrink-0" />}
                         {section.is_optional && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground">
+                          <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground flex-shrink-0">
                             OPT
                           </span>
                         )}
-                        <span className="text-xs text-muted-foreground font-body ml-1 shrink-0">
+
+                        {/* [N itens] — text-xs muted */}
+                        <span className="text-xs text-muted-foreground ml-2 shrink-0 tabular-nums">
                           {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                         </span>
-                        <div className="ml-auto flex items-center gap-3 shrink-0">
-                          <span className="text-xs font-mono text-muted-foreground tabular-nums">
-                            {sectionPercent.toFixed(0)}%
-                          </span>
+
+                        {/* Right zone: [% bar] [R$ total] [⋮] */}
+                        <div className="ml-auto flex items-center gap-2 shrink-0">
+                          {/* [% barra] — mini progress bar + percentage */}
+                          <div className="hidden sm:flex items-center gap-1.5">
+                            <div className="w-12 h-1 rounded-full bg-border overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-muted-foreground/40 transition-all duration-300"
+                                style={{ width: `${Math.min(sectionPercent, 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-mono text-muted-foreground tabular-nums w-7 text-right">
+                              {sectionPercent.toFixed(0)}%
+                            </span>
+                          </div>
+
+                          {/* [R$ total] — monospace semibold */}
                           <span className="text-sm font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
                             {formatBRL(sectionSaleTotal)}
                           </span>
                         </div>
-                        <SectionContextMenu
-                          section={section}
-                          onRename={(name) => updateSection(section.id, "title", name)}
-                          onDelete={() => deleteSection(section.id)}
-                        />
+
+                        {/* [⋮] menu — 24px zone, hover-only */}
+                        <div className="w-6 flex-shrink-0 flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity duration-100">
+                          <SectionContextMenu
+                            section={section}
+                            onRename={(name) => updateSection(section.id, "title", name)}
+                            onDelete={() => deleteSection(section.id)}
+                          />
+                        </div>
                       </div>
 
                       {/* Expanded content */}
