@@ -981,7 +981,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   const grandBdiPercent = grandTotalCost > 0 ? ((grandTotalSale / grandTotalCost) - 1) * 100 : 0;
 
   /* ── Drag handlers ── */
-  const handleSectionDragEnd = (event: DragEndEvent) => {
+  const handleSectionDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -991,13 +991,15 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
     const withNewOrder = reordered.map((s, i) => ({ ...s, order_index: i }));
     onSectionsChange(withNewOrder);
-    withNewOrder.forEach(s => {
-      supabase.from("sections").update({ order_index: s.order_index }).eq("id", s.id);
-    });
+    await Promise.all(
+      withNewOrder.map(s =>
+        supabase.from("sections").update({ order_index: s.order_index }).eq("id", s.id)
+      )
+    );
     toast.success("Ordem das seções atualizada");
   };
 
-  const handleItemDragEnd = (sectionId: string) => (event: DragEndEvent) => {
+  const handleItemDragEnd = (sectionId: string) => async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -1009,12 +1011,18 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         ...item,
         order_index: i,
       }));
-      reordered.forEach(item => {
-        supabase.from("items").update({ order_index: item.order_index }).eq("id", item.id);
-      });
       return { ...s, items: reordered };
     });
     onSectionsChange(updated);
+
+    const targetSection = updated.find(s => s.id === sectionId);
+    if (targetSection) {
+      await Promise.all(
+        targetSection.items.map(item =>
+          supabase.from("items").update({ order_index: item.order_index }).eq("id", item.id)
+        )
+      );
+    }
   };
 
   const highlightText = (text: string) => {
