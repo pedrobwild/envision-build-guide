@@ -6,8 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface MetadataStepProps {
   budget: any;
   onFieldChange: (field: string, value: any) => void;
-  onNext: () => void;
-  saving?: boolean;
 }
 
 /* ── Notion-like property row ── */
