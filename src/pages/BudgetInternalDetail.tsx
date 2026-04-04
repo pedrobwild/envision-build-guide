@@ -339,7 +339,7 @@ export default function BudgetInternalDetail() {
                     : dueToday
                     ? "bg-warning/10 text-warning border-warning/20"
                     : daysLeft !== null && daysLeft <= 2
-                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                    ? "bg-warning/5 text-warning border-warning/20"
                     : "text-muted-foreground border-border"
                 }`}
               >
