@@ -33,6 +33,7 @@ import {
   Loader2,
   ChevronRight,
   Copy,
+  FileSpreadsheet,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────
