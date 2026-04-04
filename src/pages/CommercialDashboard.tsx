@@ -36,6 +36,7 @@ import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFilterChips";
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
+import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 
 // Pipeline groups for the commercial view
 // Statuses in "solicitado" and "em_elaboracao" are read-only for commercial
