@@ -331,7 +331,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         {budget.internal_notes && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-body cursor-default">
+              <span className="inline-flex items-center gap-1 text-xs text-warning font-body cursor-default">
                 <AlertTriangle className="h-3 w-3" />
                 Obs. internas
               </span>

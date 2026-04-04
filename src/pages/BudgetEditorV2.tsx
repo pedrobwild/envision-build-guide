@@ -394,7 +394,7 @@ export default function BudgetEditorV2() {
             <TabsList className="w-full justify-start bg-transparent border-b border-border/60 rounded-none h-auto p-0 gap-0">
               {[
                 { value: "planilha", label: "Planilha", icon: <ClipboardList className="h-3.5 w-3.5" />, badge: null },
-                { value: "contexto", label: "Contexto", icon: <User className="h-3.5 w-3.5" />, badge: missingContextFields ? "!" : null, badgeClass: "bg-amber-500/20 text-amber-600 dark:text-amber-400" },
+                { value: "contexto", label: "Contexto", icon: <User className="h-3.5 w-3.5" />, badge: missingContextFields ? "!" : null, badgeClass: "bg-warning/10 text-warning" },
                 { value: "midia", label: "Mídia", icon: <ImageIcon className="h-3.5 w-3.5" />, badge: mediaCount > 0 ? String(mediaCount) : null, badgeClass: "bg-primary/10 text-primary" },
                 { value: "versoes", label: "Versões", icon: <ScrollText className="h-3.5 w-3.5" />, badge: null },
               ].map(tab => (
