@@ -13,8 +13,10 @@ import {
   Handshake, BarChart3, Hammer, Briefcase, Settings, Users,
   ArrowRight, GitCompare, Send, LayoutDashboard, ClipboardList,
   Settings2, DollarSign, ArrowUpDown, ArrowUp, ArrowDown,
+  LayoutTemplate,
 } from "lucide-react";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
+import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { toast } from "sonner";
 
 import { TeamMetricsPanel } from "@/components/admin/TeamMetricsPanel";
@@ -51,6 +53,8 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateBudgetId, setTemplateBudgetId] = useState<string | null>(null);
   const PAGE_SIZE = 10;
 
   useEffect(() => {
@@ -103,6 +107,20 @@ export default function AdminDashboard() {
         console.warn("[CreateBudget] Template seed failed (non-critical):", e);
       }
       navigate(`/admin/budget/${data.id}`);
+    }
+  };
+
+  const createBudgetForTemplate = async () => {
+    if (!user) return;
+    const publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+    const { data } = await supabase
+      .from("budgets")
+      .insert({ project_name: "Novo Projeto", client_name: "Cliente", created_by: user.id, public_id: publicId })
+      .select()
+      .single();
+    if (data) {
+      setTemplateBudgetId(data.id);
+      setTemplateDialogOpen(true);
     }
   };
 
@@ -474,6 +492,14 @@ export default function AdminDashboard() {
                   >
                     <FileText className="h-4 w-4 text-muted-foreground" /> Em branco
                   </button>
+                  {(isAdmin || isOrcamentista) && (
+                    <button
+                      onClick={() => { setNewMenuOpen(false); createBudgetForTemplate(); }}
+                      className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
+                    >
+                      <LayoutTemplate className="h-4 w-4 text-muted-foreground" /> Usar template
+                    </button>
+                  )}
                   <button
                     onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("pdf"); }}
                     className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
@@ -699,6 +725,24 @@ export default function AdminDashboard() {
 
       {/* Modals */}
       <ImportExcelModal open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) loadBudgets(); }} fileFilter={importType} />
+
+      {templateBudgetId && (
+        <TemplateSelectorDialog
+          open={templateDialogOpen}
+          budgetId={templateBudgetId}
+          onOpenChange={(v) => {
+            setTemplateDialogOpen(v);
+            if (!v && templateBudgetId) {
+              navigate(`/admin/budget/${templateBudgetId}`);
+              setTemplateBudgetId(null);
+            }
+          }}
+          onConfirm={() => {
+            if (templateBudgetId) navigate(`/admin/budget/${templateBudgetId}`);
+            setTemplateBudgetId(null);
+          }}
+        />
+      )}
 
       {(duplicateConfirmId || duplicating) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !duplicating && setDuplicateConfirmId(null)}>
