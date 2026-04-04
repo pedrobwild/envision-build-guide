@@ -210,26 +210,6 @@ export function MetadataStep({ budget, onFieldChange }: MetadataStepProps) {
         </div>
       )}
 
-      {/* ── Publish button ── */}
-      <div className="flex justify-end pt-4">
-        <button
-          onClick={onNext}
-          disabled={!hasClientName || saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-body font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Publicando...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              Salvar e Publicar
-            </>
-          )}
-        </button>
-      </div>
     </div>
   );
 }
