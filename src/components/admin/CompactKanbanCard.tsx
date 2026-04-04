@@ -73,6 +73,7 @@ export function CompactKanbanCard({
   bairro,
   city,
   versionNumber,
+  sequentialCode,
   commercialName,
   estimatorName,
   onClick,
