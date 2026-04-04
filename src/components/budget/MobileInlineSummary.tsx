@@ -132,19 +132,32 @@ export function MobileInlineSummary({
                 Composição do investimento
               </p>
             </div>
-            <div className="px-3 pb-3 divide-y divide-border/20">
+            <motion.div
+              className="px-3 pb-3 divide-y divide-border/20"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.15 }}
+              variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+            >
               {categorizedGroups.flatMap((group) =>
                 group.sections.map((section) => (
-                  <SectionSummaryRow
+                  <motion.div
                     key={section.id}
-                    section={section}
-                    colorClass={group.category.colorClass}
-                    bgClass={group.category.bgClass}
-                    compact
-                  />
+                    variants={{
+                      hidden: { opacity: 0, y: 8 },
+                      visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
+                    }}
+                  >
+                    <SectionSummaryRow
+                      section={section}
+                      colorClass={group.category.colorClass}
+                      bgClass={group.category.bgClass}
+                      compact
+                    />
+                  </motion.div>
                 ))
               )}
-            </div>
+            </motion.div>
           </div>
         )}
 
