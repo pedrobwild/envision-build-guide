@@ -327,7 +327,7 @@ export default function AdminDashboard() {
             <KpiCardCompact
               label="Receita fechada"
               value={metrics ? formatBRL(metrics.revenue) : "—"}
-              subtitle={metrics?.revenueChange !== null ? `${metrics!.revenueChange > 0 ? "+" : ""}${metrics!.revenueChange}% vs anterior` : undefined}
+              subtitle={metrics != null && metrics.revenueChange != null ? `${metrics.revenueChange > 0 ? "+" : ""}${metrics.revenueChange}% vs anterior` : undefined}
               loading={loading}
             />
             <KpiCardCompact
