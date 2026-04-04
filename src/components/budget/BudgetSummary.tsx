@@ -9,6 +9,7 @@ import { CategoryDetailDialog } from "@/components/budget/CategoryDetailDialog";
 import { SectionSummaryRow } from "@/components/budget/SectionSummaryRow";
 import { CountUpValue } from "@/components/budget/CountUpValue";
 import { InstallmentSimulator } from "@/components/budget/summary/InstallmentSimulator";
+import { TrustBadgesRow } from "@/components/budget/summary/TrustBadgesRow";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface BudgetSummaryProps {
