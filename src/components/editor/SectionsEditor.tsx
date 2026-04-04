@@ -408,17 +408,16 @@ function SortableItemRow({
             <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
           </div>
         </div>
-        {/* $ Total Custo — editable override */}
+        {/* $ Total Custo (calculated) */}
         <div className="lg:col-span-2 space-y-0.5">
           <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Total Custo</label>
-          <input
-            type="number"
-            value={item.internal_total ?? ""}
-            onChange={(e) => onUpdate(sectionId, item.id, "internal_total", e.target.value ? Number(e.target.value) : null)}
-            placeholder="0.00"
-            step="0.01"
-            className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
-          />
+          <div
+            className="group/cell w-full px-2 py-1.5 rounded-md bg-muted/40 text-sm font-body tabular-nums text-muted-foreground cursor-default flex items-center justify-between"
+            title="Campo calculado automaticamente"
+          >
+            <span>{formatBRL(calcItemCostTotal(item))}</span>
+            <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
+          </div>
         </div>
         {/* $ Total Venda (calculated — special treatment) */}
         <div className="lg:col-span-2 space-y-0.5">
