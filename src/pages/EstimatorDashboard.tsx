@@ -67,6 +67,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { EstimatorKanban } from "@/components/editor/EstimatorKanban";
 import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
+import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { Plus } from "lucide-react";
 
 // Statuses relevant for the estimator's active queue
@@ -145,7 +146,11 @@ export default function EstimatorDashboard() {
   const [assignValue, setAssignValue] = useState<string>("");
   const [assigning, setAssigning] = useState(false);
   const [newBudgetOpen, setNewBudgetOpen] = useState(false);
-
+  const [templateDialog, setTemplateDialog] = useState<{ open: boolean; budgetId: string; pendingStatus: InternalStatus }>({
+    open: false,
+    budgetId: "",
+    pendingStatus: "in_progress",
+  });
   useEffect(() => {
     if (!user || profileLoading) return;
     loadData();
@@ -320,6 +325,21 @@ export default function EstimatorDashboard() {
   }, [budgets, search, statusFilter, priorityFilter, commercialFilter, estimatorFilter, sortBy]);
 
   // Quick status change
+  // Check if we should show template selector before changing status
+  const PENDING_STATUSES_SET = new Set(["requested", "novo", "triage", "assigned"]);
+
+  function requestStatusChange(budgetId: string, newStatus: InternalStatus) {
+    // If moving to in_progress from a pending status, show template selector
+    if (newStatus === "in_progress") {
+      const budget = budgets.find((b) => b.id === budgetId);
+      if (budget && PENDING_STATUSES_SET.has(budget.internal_status)) {
+        setTemplateDialog({ open: true, budgetId, pendingStatus: newStatus });
+        return;
+      }
+    }
+    changeStatus(budgetId, newStatus);
+  }
+
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
     const { error } = await supabase
       .from("budgets")
@@ -524,7 +544,7 @@ export default function EstimatorDashboard() {
           <EstimatorKanban
             budgets={budgets.filter(b => (commercialFilter === "all" || b.commercial_owner_id === commercialFilter) && (estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter))}
             onStatusChange={async (budgetId, newStatus) => {
-              await changeStatus(budgetId, newStatus);
+              requestStatusChange(budgetId, newStatus);
             }}
             onCardClick={(id) => navigate(`/admin/budget/${id}`, { state: { from: "/admin/producao" } })}
             getProfileName={getProfileName}
@@ -737,7 +757,7 @@ export default function EstimatorDashboard() {
                                 variant={a.variant}
                                 size="sm"
                                 className="h-7 text-xs gap-1 px-2.5"
-                                onClick={(e) => { e.stopPropagation(); changeStatus(b.id, a.targetStatus); }}
+                                onClick={(e) => { e.stopPropagation(); requestStatusChange(b.id, a.targetStatus); }}
                               >
                                 {a.icon}
                                 {a.label}
@@ -782,25 +802,25 @@ export default function EstimatorDashboard() {
                               <DropdownMenuSeparator />
                               {/* All 5 stage transitions in overflow */}
                               {!PENDING_STATUSES.includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "assigned")}>
+                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "assigned")}>
                                   <Inbox className="h-4 w-4 mr-2" />
                                   Mover p/ Pendente
                                 </DropdownMenuItem>
                               )}
                               {!IN_PROGRESS_STATUSES.includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "in_progress")}>
+                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "in_progress")}>
                                   <Clock className="h-4 w-4 mr-2" />
                                   Mover p/ Em Elaboração
                                 </DropdownMenuItem>
                               )}
                               {b.internal_status !== "ready_for_review" && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
+                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "ready_for_review")}>
                                   <CheckCircle2 className="h-4 w-4 mr-2" />
                                   Mover p/ Em Revisão
                                 </DropdownMenuItem>
                               )}
                               {!DELIVERED_STATUSES.includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "delivered_to_sales")}>
+                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "delivered_to_sales")}>
                                   <Send className="h-4 w-4 mr-2" />
                                   Mover p/ Entregue
                                 </DropdownMenuItem>
@@ -877,6 +897,16 @@ export default function EstimatorDashboard() {
         open={newBudgetOpen}
         onOpenChange={setNewBudgetOpen}
         onSuccess={() => loadData()}
+      />
+
+      <TemplateSelectorDialog
+        open={templateDialog.open}
+        budgetId={templateDialog.budgetId}
+        onOpenChange={(open) => setTemplateDialog((prev) => ({ ...prev, open }))}
+        onConfirm={() => {
+          changeStatus(templateDialog.budgetId, templateDialog.pendingStatus);
+          setTemplateDialog({ open: false, budgetId: "", pendingStatus: "in_progress" });
+        }}
       />
     </div>
   );
