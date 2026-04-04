@@ -534,8 +534,8 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Observações Internas */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
                 📝 Observações Internas
               </h3>
               <Textarea
