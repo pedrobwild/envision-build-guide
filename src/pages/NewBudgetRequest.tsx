@@ -6,7 +6,6 @@ import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -15,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -31,23 +29,112 @@ import {
   CheckCircle2,
   UserCheck,
   LayoutTemplate,
+  MapPin,
+  Ruler,
+  Phone,
+  Mail,
+  Home,
+  ExternalLink,
+  StickyNote,
+  Sparkles,
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { cn } from "@/lib/utils";
+
+/* ── Notion-like property row ── */
+function PropertyRow({
+  icon: Icon,
+  label,
+  required,
+  children,
+  hint,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 py-2 group">
+      <div className="flex items-center gap-2 w-[160px] shrink-0 pt-2.5">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+        <span className="text-sm text-muted-foreground font-body truncate">
+          {label}
+          {required && <span className="text-destructive ml-0.5">*</span>}
+        </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        {children}
+        {hint && (
+          <p className="text-[11px] text-muted-foreground/60 font-body mt-1 ml-0.5">{hint}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Clean input styled like Notion ── */
+function NotionInput({
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  maxLength,
+  required,
+  suffix,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  type?: string;
+  maxLength?: number;
+  required?: boolean;
+  suffix?: string;
+}) {
+  return (
+    <div className="relative">
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        required={required}
+        className="w-full px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+      />
+      {suffix && value && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/50 pointer-events-none font-body">
+          {suffix}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* ── Section divider with title ── */
+function SectionTitle({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
+  return (
+    <div className="flex items-center gap-2 pt-6 pb-2 first:pt-0">
+      <Icon className="h-4 w-4 text-primary" />
+      <h2 className="text-sm font-display font-semibold text-foreground tracking-tight">{title}</h2>
+      <div className="flex-1 h-px bg-gradient-to-r from-border/60 to-transparent ml-2" />
+    </div>
+  );
+}
 
 export default function NewBudgetRequest() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // Team members for assignment
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
   const { data: templates = [] } = useBudgetTemplates();
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
-  // Form state
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
@@ -67,26 +154,22 @@ export default function NewBudgetRequest() {
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
   const [hubspotDealUrl, setHubspotDealUrl] = useState("");
 
-  // Auto-generated project name
   const projectName = useMemo(() => {
     const parts = [
       clientName.trim(),
       condominio.trim(),
       metargemRaw.trim() ? `${metargemRaw.trim()}m²` : "",
     ].filter(Boolean);
-    return parts.join(" - ") || "";
+    return parts.join(" · ") || "";
   }, [clientName, condominio, metargemRaw]);
 
-  // Handle metragem input — only allow numbers
   const handleMetragemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^0-9.,]/g, "");
     setMetragemRaw(val);
   };
 
-  // Round-robin: determine next estimator based on last assignment
   useEffect(() => {
     if (orcamentistas.length === 0) return;
-
     async function findNextEstimator() {
       const { data } = await supabase
         .from("budgets")
@@ -94,39 +177,32 @@ export default function NewBudgetRequest() {
         .not("estimator_owner_id", "is", null)
         .order("created_at", { ascending: false })
         .limit(1);
-
       const lastEstimatorId = data?.[0]?.estimator_owner_id;
-
       if (!lastEstimatorId) {
         setNextEstimatorId(orcamentistas[0].id);
         setEstimatorOwnerId(orcamentistas[0].id);
         return;
       }
-
       const lastIdx = orcamentistas.findIndex((m) => m.id === lastEstimatorId);
       const nextIdx = (lastIdx + 1) % orcamentistas.length;
       setNextEstimatorId(orcamentistas[nextIdx].id);
       setEstimatorOwnerId(orcamentistas[nextIdx].id);
     }
-
     findNextEstimator();
   }, [orcamentistas]);
 
   const addLink = () => setReferenceLinks((prev) => [...prev, ""]);
-  const removeLink = (i: number) =>
-    setReferenceLinks((prev) => prev.filter((_, idx) => idx !== i));
+  const removeLink = (i: number) => setReferenceLinks((prev) => prev.filter((_, idx) => idx !== i));
   const updateLink = (i: number, val: string) =>
     setReferenceLinks((prev) => prev.map((l, idx) => (idx === i ? val : l)));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-
     if (!clientName.trim()) {
       toast.error("Preencha ao menos o nome do cliente.");
       return;
     }
-
     setLoading(true);
 
     const links = referenceLinks.filter((l) => l.trim().length > 0);
@@ -146,7 +222,7 @@ export default function NewBudgetRequest() {
       demand_context: demandContext.trim() || null,
       briefing: briefing.trim() || null,
       due_at: dueAt || null,
-      priority: priority,
+      priority,
       internal_notes: internalNotes.trim() || null,
       reference_links: links.length > 0 ? links : [],
       hubspot_deal_url: hubspotDealUrl.trim() || null,
@@ -164,7 +240,6 @@ export default function NewBudgetRequest() {
       return;
     }
 
-    // Seed sections from template or defaults
     try {
       const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
       await seedFromTemplate(inserted.id, tplId);
@@ -173,8 +248,7 @@ export default function NewBudgetRequest() {
     }
 
     setLoading(false);
-
-    const estimatorName = orcamentistas.find(m => m.id === estimatorOwnerId)?.full_name;
+    const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
     const newId = inserted.id;
 
     toast.success("Solicitação criada!", {
@@ -188,443 +262,385 @@ export default function NewBudgetRequest() {
     setTimeout(() => navigate("/admin/solicitacoes"), 1000);
   };
 
+  const completionItems = [
+    { done: !!clientName.trim(), label: "Nome do cliente" },
+    { done: !!condominio.trim() || !!bairro.trim(), label: "Localização" },
+    { done: !!metargemRaw.trim(), label: "Metragem" },
+    { done: !!briefing.trim() || !!demandContext.trim(), label: "Briefing" },
+  ];
+  const completionPercent = Math.round(
+    (completionItems.filter((i) => i.done).length / completionItems.length) * 100
+  );
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/admin/solicitacoes")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-semibold font-display text-foreground">
-              Nova Solicitação de Orçamento
-            </h1>
-            <p className="text-sm text-muted-foreground font-body">
-              Preencha o briefing para iniciar a produção
-            </p>
+      {/* ── Sticky Header ── */}
+      <header className="sticky top-0 z-50 bg-card/80 glass border-b border-border/50 shadow-premium-sm">
+        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => navigate("/admin/solicitacoes")}
+              className="p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-sm font-display font-bold text-foreground tracking-tight truncate">
+                Nova Solicitação
+              </h1>
+              <p className="text-[11px] text-muted-foreground font-body">
+                Preencha o briefing para iniciar a produção
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Completion indicator */}
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${completionPercent}%` }}
+                />
+              </div>
+              <span className="text-[11px] text-muted-foreground font-body tabular-nums">
+                {completionPercent}%
+              </span>
+            </div>
+
+            <Button
+              type="submit"
+              form="budget-form"
+              disabled={loading || !clientName.trim()}
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+            >
+              {loading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              )}
+              {loading ? "Criando…" : "Criar Solicitação"}
+            </Button>
           </div>
         </div>
       </header>
 
+      {/* ── Main form ── */}
       <form
+        id="budget-form"
         onSubmit={handleSubmit}
-        className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6"
+        className="max-w-3xl mx-auto px-6 py-6"
       >
-        {/* Template selector */}
+        {/* Project name preview */}
+        {projectName && (
+          <div className="mb-6 px-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground font-body">
+              <Sparkles className="h-3 w-3 text-primary/60" />
+              <span>Nome gerado:</span>
+              <span className="font-semibold text-foreground">{projectName}</span>
+            </div>
+          </div>
+        )}
+
+        {/* ── Template ── */}
         {templates.length > 0 && (
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-display flex items-center gap-2">
-                <LayoutTemplate className="h-4 w-4 text-primary" />
-                Template do Orçamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Label className="font-body text-sm">Modelo base</Label>
+          <>
+            <SectionTitle icon={LayoutTemplate} title="Template" />
+            <PropertyRow icon={LayoutTemplate} label="Modelo base">
               <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                <SelectTrigger>
+                <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
                   <SelectValue placeholder="Selecione um template (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sem template (seções padrão)</SelectItem>
                   {templates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {selectedTemplateId && selectedTemplateId !== "none" && (
-                <p className="text-xs text-muted-foreground font-body">
-                  {templates.find((t) => t.id === selectedTemplateId)?.description}
+            </PropertyRow>
+            {selectedTemplateId && selectedTemplateId !== "none" && (
+              <p className="text-[11px] text-muted-foreground font-body ml-[176px] -mt-1 mb-1">
+                {templates.find((t) => t.id === selectedTemplateId)?.description}
+              </p>
+            )}
+          </>
+        )}
+
+        {/* ── Cliente ── */}
+        <SectionTitle icon={User} title="Cliente" />
+        <div className="border-b border-border/30 pb-1 mb-1">
+          <PropertyRow icon={User} label="Nome" required>
+            <NotionInput
+              value={clientName}
+              onChange={setClientName}
+              placeholder="João Silva"
+              maxLength={255}
+              required
+            />
+          </PropertyRow>
+          <PropertyRow icon={Mail} label="E-mail">
+            <NotionInput
+              value={clientEmail}
+              onChange={setClientEmail}
+              placeholder="cliente@email.com"
+              type="email"
+              maxLength={255}
+            />
+          </PropertyRow>
+          <PropertyRow icon={Phone} label="Telefone">
+            <NotionInput
+              value={clientPhone}
+              onChange={setClientPhone}
+              placeholder="(11) 99999-9999"
+              maxLength={20}
+            />
+          </PropertyRow>
+        </div>
+
+        {/* ── Imóvel ── */}
+        <SectionTitle icon={Building2} title="Imóvel" />
+        <div className="border-b border-border/30 pb-1 mb-1">
+          <PropertyRow icon={Building2} label="Condomínio">
+            <NotionInput value={condominio} onChange={setCondominio} placeholder="Ed. Aurora" maxLength={255} />
+          </PropertyRow>
+          <PropertyRow icon={MapPin} label="Bairro">
+            <NotionInput value={bairro} onChange={setBairro} placeholder="Brooklin" maxLength={100} />
+          </PropertyRow>
+          <PropertyRow icon={MapPin} label="Cidade">
+            <NotionInput value={city} onChange={setCity} placeholder="São Paulo" maxLength={100} />
+          </PropertyRow>
+          <PropertyRow icon={Ruler} label="Metragem">
+            <div className="relative">
+              <input
+                value={metargemRaw}
+                onChange={handleMetragemChange}
+                placeholder="82"
+                maxLength={10}
+                className="w-full px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all pr-10"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              />
+              {metargemRaw && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/50 pointer-events-none font-body">m²</span>
+              )}
+            </div>
+          </PropertyRow>
+          <PropertyRow icon={Home} label="Tipo de imóvel">
+            <Select value={propertyType} onValueChange={setPropertyType}>
+              <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="apartamento">Apartamento</SelectItem>
+                <SelectItem value="casa">Casa</SelectItem>
+                <SelectItem value="cobertura">Cobertura</SelectItem>
+                <SelectItem value="studio">Studio / Kitnet</SelectItem>
+                <SelectItem value="comercial">Espaço Comercial</SelectItem>
+                <SelectItem value="outro">Outro</SelectItem>
+              </SelectContent>
+            </Select>
+          </PropertyRow>
+          <PropertyRow icon={Home} label="Tipo de locação">
+            <Select value={locationType} onValueChange={setLocationType}>
+              <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {LOCATION_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </PropertyRow>
+        </div>
+
+        {/* ── Briefing ── */}
+        <SectionTitle icon={FileText} title="Briefing e Contexto" />
+        <div className="border-b border-border/30 pb-1 mb-1">
+          <PropertyRow icon={FileText} label="Contexto" hint="Como o cliente chegou, urgência, corretor envolvido...">
+            <Textarea
+              value={demandContext}
+              onChange={(e) => setDemandContext(e.target.value)}
+              placeholder="Ex: Cliente indicado pelo corretor X, quer reforma completa antes da mudança..."
+              rows={3}
+              maxLength={2000}
+              className="border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body placeholder:text-muted-foreground/40 focus:ring-1 focus:ring-primary/20 resize-none"
+            />
+          </PropertyRow>
+          <PropertyRow icon={FileText} label="Briefing" hint="Escopo, preferências do cliente, restrições...">
+            <Textarea
+              value={briefing}
+              onChange={(e) => setBriefing(e.target.value)}
+              placeholder="Descreva o escopo desejado, preferências, restrições do condomínio..."
+              rows={5}
+              maxLength={5000}
+              className="border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body placeholder:text-muted-foreground/40 focus:ring-1 focus:ring-primary/20 resize-none"
+            />
+          </PropertyRow>
+        </div>
+
+        {/* ── Responsáveis ── */}
+        <SectionTitle icon={UserCheck} title="Responsáveis" />
+        <div className="border-b border-border/30 pb-1 mb-1">
+          <PropertyRow icon={UserCheck} label="Comercial">
+            <Select value={commercialOwnerId} onValueChange={setCommercialOwnerId}>
+              <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+                <SelectValue placeholder="Selecione o comercial" />
+              </SelectTrigger>
+              <SelectContent>
+                {comerciais.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </PropertyRow>
+          <PropertyRow icon={UserCheck} label="Orçamentista">
+            <div>
+              <Select value={estimatorOwnerId} onValueChange={setEstimatorOwnerId}>
+                <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+                  <SelectValue placeholder="Selecione o orçamentista" />
+                </SelectTrigger>
+                <SelectContent>
+                  {orcamentistas.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
+                <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
+                  <UserCheck className="h-3 w-3 text-success" />
+                  Rodízio automático: <span className="font-medium">{orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name}</span>
                 </p>
               )}
-            </CardContent>
-          </Card>
-        )}
+              {nextEstimatorId && estimatorOwnerId && estimatorOwnerId !== nextEstimatorId && (
+                <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
+                  <UserCheck className="h-3 w-3 text-primary" />
+                  Manual (rodízio: {orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name})
+                </p>
+              )}
+            </div>
+          </PropertyRow>
+        </div>
 
-        {/* Client */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <User className="h-4 w-4 text-primary" />
-              Cliente e Projeto
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1.5 md:col-span-1">
-              <Label htmlFor="client_name" className="font-body text-sm">
-                Nome do cliente <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="client_name"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder="Ex: João Silva"
-                maxLength={255}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="client_email" className="font-body text-sm">
-                E-mail
-              </Label>
-              <Input
-                id="client_email"
-                type="email"
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-                placeholder="cliente@email.com"
-                maxLength={255}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="client_phone" className="font-body text-sm">
-                Telefone
-              </Label>
-              <Input
-                id="client_phone"
-                type="tel"
-                value={clientPhone}
-                onChange={(e) => setClientPhone(e.target.value)}
-                placeholder="(11) 99999-9999"
-                maxLength={20}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        {/* ── Prazo e Prioridade ── */}
+        <SectionTitle icon={Calendar} title="Prazo e Prioridade" />
+        <div className="border-b border-border/30 pb-1 mb-1">
+          <PropertyRow icon={Calendar} label="Prazo desejado">
+            <input
+              type="date"
+              value={dueAt}
+              onChange={(e) => setDueAt(e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
+              className="px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+            />
+          </PropertyRow>
+          <PropertyRow icon={AlertTriangle} label="Prioridade">
+            <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+              <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(PRIORITIES).map(([key, { label }]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </PropertyRow>
+        </div>
 
-        {/* Auto-generated project name preview */}
-        {projectName && (
-          <div className="px-1">
-            <p className="text-xs text-muted-foreground font-body">
-              Nome do projeto (gerado automaticamente):{" "}
-              <span className="font-medium text-foreground">{projectName}</span>
-            </p>
-          </div>
-        )}
-
-        {/* Property details */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-primary" />
-              Detalhes do Imóvel
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Condomínio</Label>
-              <Input
-                value={condominio}
-                onChange={(e) => setCondominio(e.target.value)}
-                placeholder="Ex: Ed. Aurora"
-                maxLength={255}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Bairro</Label>
-              <Input
-                value={bairro}
-                onChange={(e) => setBairro(e.target.value)}
-                placeholder="Brooklin"
-                maxLength={100}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Cidade</Label>
-              <Input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="São Paulo"
-                maxLength={100}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Metragem</Label>
-              <div className="relative">
-                <Input
-                  value={metargemRaw}
-                  onChange={handleMetragemChange}
-                  placeholder="82"
-                  maxLength={10}
-                  className="pr-10"
-                />
-                {metargemRaw && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                    m²
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Tipo de imóvel</Label>
-              <Select value={propertyType} onValueChange={setPropertyType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="apartamento">Apartamento</SelectItem>
-                  <SelectItem value="casa">Casa</SelectItem>
-                  <SelectItem value="cobertura">Cobertura</SelectItem>
-                  <SelectItem value="studio">Studio / Kitnet</SelectItem>
-                  <SelectItem value="comercial">Espaço Comercial</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Tipo de locação</Label>
-              <Select value={locationType} onValueChange={setLocationType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOCATION_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Briefing */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <FileText className="h-4 w-4 text-primary" />
-              Briefing e Contexto
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Contexto da demanda</Label>
-              <Textarea
-                value={demandContext}
-                onChange={(e) => setDemandContext(e.target.value)}
-                placeholder="Ex: Cliente indicado pelo corretor X, quer reforma completa antes da mudança..."
-                rows={3}
-                maxLength={2000}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Briefing detalhado</Label>
-              <Textarea
-                value={briefing}
-                onChange={(e) => setBriefing(e.target.value)}
-                placeholder="Descreva o escopo desejado, preferências do cliente, restrições do condomínio, referências de estilo..."
-                rows={5}
-                maxLength={5000}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Hubspot Deal URL */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <LinkIcon className="h-4 w-4 text-primary" />
-              Negócio Hubspot
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">URL do negócio no Hubspot</Label>
-              <Input
-                value={hubspotDealUrl}
-                onChange={(e) => setHubspotDealUrl(e.target.value)}
-                placeholder="https://app.hubspot.com/contacts/.../deal/..."
-                type="url"
-              />
-              <p className="text-xs text-muted-foreground font-body">
-                Cole o link do negócio no Hubspot para vincular este orçamento.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Responsáveis */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-primary" />
-              Responsáveis
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="font-body text-sm">Comercial responsável</Label>
-                <Select value={commercialOwnerId} onValueChange={setCommercialOwnerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o comercial" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {comerciais.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="font-body text-sm">Orçamentista responsável</Label>
-                <Select value={estimatorOwnerId} onValueChange={setEstimatorOwnerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o orçamentista" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {orcamentistas.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                    <UserCheck className="h-3.5 w-3.5 text-green-500" />
-                    Rodízio: <span className="font-medium">{orcamentistas.find(m => m.id === nextEstimatorId)?.full_name}</span>
-                  </p>
-                )}
-                {nextEstimatorId && estimatorOwnerId && estimatorOwnerId !== nextEstimatorId && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                    <UserCheck className="h-3.5 w-3.5 text-primary" />
-                    Seleção manual (rodízio seria: {orcamentistas.find(m => m.id === nextEstimatorId)?.full_name})
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Prazo e Prioridade */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" />
-              Prazo e Prioridade
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm">Prazo desejado</Label>
-              <Input
-                type="date"
-                value={dueAt}
-                onChange={(e) => setDueAt(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-body text-sm flex items-center gap-1">
-                <AlertTriangle className="h-3.5 w-3.5" /> Prioridade
-              </Label>
-              <Select
-                value={priority}
-                onValueChange={(v) => setPriority(v as Priority)}
+        {/* ── Links ── */}
+        <SectionTitle icon={LinkIcon} title="Links e Referências" />
+        <div className="border-b border-border/30 pb-1 mb-1">
+          <PropertyRow icon={ExternalLink} label="Hubspot" hint="URL do negócio no Hubspot">
+            <NotionInput
+              value={hubspotDealUrl}
+              onChange={setHubspotDealUrl}
+              placeholder="https://app.hubspot.com/..."
+              type="url"
+            />
+          </PropertyRow>
+          <PropertyRow icon={LinkIcon} label="Referências">
+            <div className="space-y-2">
+              {referenceLinks.map((link, i) => (
+                <div key={i} className="flex gap-1.5">
+                  <input
+                    value={link}
+                    onChange={(e) => updateLink(i, e.target.value)}
+                    placeholder="https://..."
+                    type="url"
+                    className="flex-1 px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+                  />
+                  {referenceLinks.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeLink(i)}
+                      className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addLink}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary font-body py-1 px-2 rounded-md hover:bg-primary/5 transition-colors"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(PRIORITIES).map(([key, { label }]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Plus className="h-3 w-3" />
+                Adicionar link
+              </button>
             </div>
-          </CardContent>
-        </Card>
+          </PropertyRow>
+        </div>
 
-        {/* Reference links */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <LinkIcon className="h-4 w-4 text-primary" />
-              Links de Referência
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {referenceLinks.map((link, i) => (
-              <div key={i} className="flex gap-2">
-                <Input
-                  value={link}
-                  onChange={(e) => updateLink(i, e.target.value)}
-                  placeholder="https://..."
-                  type="url"
-                  className="flex-1"
-                />
-                {referenceLinks.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeLink(i)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addLink}
-              className="gap-1.5"
-            >
-              <Plus className="h-3.5 w-3.5" /> Adicionar link
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Internal Notes */}
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              📝 Observações Internas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* ── Notas internas ── */}
+        <SectionTitle icon={StickyNote} title="Observações Internas" />
+        <div className="pb-4">
+          <PropertyRow icon={StickyNote} label="Notas" hint="Visíveis apenas internamente">
             <Textarea
               value={internalNotes}
               onChange={(e) => setInternalNotes(e.target.value)}
               placeholder="Notas visíveis apenas internamente..."
               rows={3}
               maxLength={2000}
+              className="border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body placeholder:text-muted-foreground/40 focus:ring-1 focus:ring-primary/20 resize-none"
             />
-          </CardContent>
-        </Card>
+          </PropertyRow>
+        </div>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-3 pb-10">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/admin/solicitacoes")}
-          >
+        {/* ── Completion checklist (bottom) ── */}
+        <div className="rounded-xl border border-border/50 bg-muted/30 p-4 mb-8">
+          <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Checklist
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {completionItems.map((item) => (
+              <div
+                key={item.label}
+                className={cn(
+                  "flex items-center gap-1.5 text-xs font-body px-2.5 py-1.5 rounded-lg transition-colors",
+                  item.done
+                    ? "text-success bg-success/10"
+                    : "text-muted-foreground bg-background"
+                )}
+              >
+                <CheckCircle2 className={cn("h-3 w-3 shrink-0", item.done ? "text-success" : "text-muted-foreground/30")} />
+                {item.label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Bottom action (mobile-friendly) ── */}
+        <div className="flex justify-end gap-3 pb-10 sm:hidden">
+          <Button type="button" variant="outline" onClick={() => navigate("/admin/solicitacoes")}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading} className="gap-2 min-w-[180px]">
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
-            {loading ? "Salvando..." : "Criar Solicitação"}
+          <Button type="submit" disabled={loading || !clientName.trim()} className="gap-2">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            {loading ? "Criando…" : "Criar Solicitação"}
           </Button>
         </div>
       </form>
