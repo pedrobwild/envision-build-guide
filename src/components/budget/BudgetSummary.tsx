@@ -78,10 +78,13 @@ export function BudgetSummary({
       <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xl">
         {/* Header — clean, typographic */}
         <div className="px-5 pt-5 pb-3">
+          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-1">
+            Investimento
+          </p>
           <h3 className="font-display font-bold text-base text-foreground tracking-tight">
             Resumo do Orçamento
           </h3>
-          <p className="mt-2 text-xs text-muted-foreground font-body">
+          <p className="mt-1.5 text-xs text-muted-foreground/60 font-body">
             Clique em cada tópico para visualizar o escopo detalhado
           </p>
         </div>
@@ -288,7 +291,7 @@ function AdjustmentsList({ adjustments }: { adjustments: any[] }) {
 function TotalCard({ total }: { total: number }) {
   return (
     <div className="mx-5 mb-4 rounded-xl bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12 p-5">
-      <p className="text-[13px] font-body font-medium text-muted-foreground mb-1.5">
+      <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2">
         Investimento Total
       </p>
       <motion.p
