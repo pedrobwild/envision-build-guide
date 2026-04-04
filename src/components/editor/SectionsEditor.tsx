@@ -477,8 +477,8 @@ function SortableItemRow({
           )}
         </div>
 
-        {/* [QTD] — 64px */}
-        <div className="w-16 flex-shrink-0 px-1">
+        {/* [QTD] — 48px mobile, 64px desktop */}
+        <div className="w-12 md:w-16 flex-shrink-0 px-1">
           <input
             type="number"
             value={item.qty ?? ""}
@@ -488,8 +488,8 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [Custo] — 100px */}
-        <div className="w-[100px] flex-shrink-0 px-1">
+        {/* [Custo] — 80px mobile, 100px desktop */}
+        <div className="w-20 md:w-[100px] flex-shrink-0 px-1">
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
@@ -500,8 +500,8 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [BDI%] — 72px */}
-        <div className="w-[72px] flex-shrink-0 px-1">
+        {/* [BDI%] — hidden mobile, 72px desktop */}
+        <div className="hidden md:block w-[72px] flex-shrink-0 px-1">
           <input
             type="number"
             value={item.bdi_percentage ?? ""}
@@ -512,16 +512,16 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [Venda] — 100px, readonly */}
-        <div className="w-[100px] flex-shrink-0 px-1">
+        {/* [Venda] — hidden mobile, 100px desktop, readonly */}
+        <div className="hidden md:block w-[100px] flex-shrink-0 px-1">
           <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground bg-muted/30 rounded">
             {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
 
-        {/* [Total Venda] — 100px, primary */}
-        <div className="w-[100px] flex-shrink-0 px-1">
-          <div className="h-8 flex items-center justify-end px-2 text-sm font-semibold font-mono tabular-nums text-foreground">
+        {/* [Total Venda] — 80px mobile, 100px desktop, primary */}
+        <div className="w-20 md:w-[100px] flex-shrink-0 px-1">
+          <div className="h-8 flex items-center justify-end px-2 text-xs md:text-sm font-semibold font-mono tabular-nums text-foreground">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
@@ -1237,19 +1237,19 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               <div className="flex-1 px-1">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Descrição do Item</span>
                               </div>
-                              <div className="w-16 flex-shrink-0 px-1 text-center">
+                              <div className="w-12 md:w-16 flex-shrink-0 px-1 text-center">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
                               </div>
-                              <div className="w-[100px] flex-shrink-0 px-1 text-right">
+                              <div className="w-20 md:w-[100px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo Unit.</span>
                               </div>
-                              <div className="w-[72px] flex-shrink-0 px-1 text-right">
+                              <div className="hidden md:block w-[72px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI%</span>
                               </div>
-                              <div className="w-[100px] flex-shrink-0 px-1 text-right">
+                              <div className="hidden md:block w-[100px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda Unit.</span>
                               </div>
-                              <div className="w-[100px] flex-shrink-0 px-1 text-right">
+                              <div className="w-20 md:w-[100px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
                               </div>
                               <div className="w-8 flex-shrink-0" />
@@ -1317,36 +1317,36 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
       {/* ── Sticky footer summary bar ── */}
       {sections.length > 0 && (
-        <div className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-sm py-3 px-6">
-          <div className="flex items-center justify-between gap-8">
-            <div className="flex items-center gap-8">
+        <div className="sticky bottom-0 z-10 border-t border-border bg-background/95 backdrop-blur-sm py-2 md:py-3 px-3 md:px-6">
+          <div className="flex items-center justify-between gap-3 md:gap-8">
+            <div className="flex items-center gap-3 md:gap-8 flex-wrap">
               {/* Custo */}
               <div className="flex flex-col items-end gap-0.5">
-                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Custo</span>
-                <span className="text-sm font-semibold font-mono text-foreground tabular-nums">
+                <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">Custo</span>
+                <span className="text-xs md:text-sm font-semibold font-mono text-foreground tabular-nums">
                   {formatBRL(grandTotalCost)}
                 </span>
               </div>
-              {/* BDI */}
-              <div className="flex flex-col items-end gap-0.5">
-                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">BDI</span>
-                <span className="text-sm font-semibold font-mono text-foreground tabular-nums">
+              {/* BDI — hidden on very small screens */}
+              <div className="hidden sm:flex flex-col items-end gap-0.5">
+                <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">BDI</span>
+                <span className="text-xs md:text-sm font-semibold font-mono text-foreground tabular-nums">
                   {grandBdiPercent.toFixed(1)}%
                 </span>
               </div>
               {/* Venda — destaque */}
               <div className="flex flex-col items-end gap-0.5">
-                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Venda</span>
-                <span className="text-base font-bold font-mono text-foreground tabular-nums">
+                <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">Venda</span>
+                <span className="text-sm md:text-base font-bold font-mono text-foreground tabular-nums">
                   {formatBRL(grandTotalSale)}
                 </span>
               </div>
             </div>
             {/* Margem */}
             <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Margem</span>
+              <span className="text-[10px] md:text-[11px] uppercase tracking-wide text-muted-foreground">Margem</span>
               <span className={cn(
-                "text-sm font-semibold font-mono tabular-nums",
+                "text-xs md:text-sm font-semibold font-mono tabular-nums",
                 grandMargin >= 0 ? "text-foreground" : "text-destructive"
               )}>
                 {formatBRL(grandMargin)}
