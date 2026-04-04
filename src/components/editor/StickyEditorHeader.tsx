@@ -17,6 +17,8 @@ interface StickyEditorHeaderProps {
   saveStatus: SaveStatus;
   lastSavedAt: Date | null;
   onRetrySave?: () => void;
+  onPublish?: () => void;
+  publishing?: boolean;
   primaryAction?: {
     label: string;
     onClick: () => void;
