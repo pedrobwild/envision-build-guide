@@ -172,14 +172,17 @@ export function MobileInlineSummary({
 
         {/* ── Composition breakdown ── */}
         {categorizedGroups.length > 0 && (
-          <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-            <div className="px-4 pt-4 pb-2">
+          <div className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm">
+            <div className="px-4 pt-4 pb-1.5 flex items-center justify-between">
               <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60">
                 Composição do investimento
               </p>
+              <span className="text-[10px] font-mono text-muted-foreground/40 tabular-nums">
+                {categorizedGroups.reduce((acc, g) => acc + g.sections.length, 0)} seções
+              </span>
             </div>
             <motion.div
-              className="px-3 pb-3"
+              className="px-2 pb-2.5"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.15 }}
