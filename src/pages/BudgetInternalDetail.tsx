@@ -129,7 +129,7 @@ export default function BudgetInternalDetail() {
       supabase
         .from("budgets")
         .select(
-          "id, project_name, client_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id"
+          "id, project_name, client_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code"
         )
         .eq("id", budgetId!)
         .single(),
@@ -300,9 +300,14 @@ export default function BudgetInternalDetail() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-semibold font-display text-foreground truncate">
-                {budget.project_name}
-              </h1>
+              <div className="flex items-center gap-2">
+                {(budget as any).sequential_code && (
+                  <span className="text-xs font-mono text-muted-foreground/70">{(budget as any).sequential_code}</span>
+                )}
+                <h1 className="text-lg font-semibold font-display text-foreground truncate">
+                  {budget.project_name}
+                </h1>
+              </div>
               <p className="text-sm text-muted-foreground font-body">
                 {budget.client_name}
               </p>
