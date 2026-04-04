@@ -212,17 +212,36 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
     onSuccess?.(data.id);
   };
 
+  // Progress calculation
+  const filledFields = [
+    clientName.trim(),
+    condominio.trim() || bairro.trim(),
+    metargemRaw.trim(),
+    briefing.trim() || demandContext.trim(),
+    estimatorOwnerId,
+  ].filter(Boolean).length;
+  const progressPercent = Math.round((filledFields / 5) * 100);
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border relative">
           <DialogTitle className="text-lg font-display flex items-center gap-2">
-            <Plus className="h-5 w-5 text-primary" />
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Plus className="h-4 w-4 text-primary" />
+            </div>
             Nova Solicitação de Orçamento
           </DialogTitle>
-          <DialogDescription className="text-sm font-body">
+          <DialogDescription className="text-sm font-body text-muted-foreground">
             Preencha o briefing para iniciar a produção
           </DialogDescription>
+          {/* Progress bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-border/40">
+            <div
+              className="h-full bg-primary rounded-r-full transition-all duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-180px)]">
