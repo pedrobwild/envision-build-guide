@@ -1233,6 +1233,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                       budgetId={budgetId}
                                       isItemSaving={savingIds.has(item.id)}
                                       searchMatch={matchingItemIds?.has(item.id)}
+                                      compact={compactMode}
                                       onUpdate={updateItem}
                                       onDelete={deleteItem}
                                       onImagesChange={handleImagesChange}
