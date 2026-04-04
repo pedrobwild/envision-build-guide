@@ -632,10 +632,13 @@ export default function TemplateEditorPage() {
             placeholder="Descrição do template..."
           />
         </div>
-        <Button onClick={saveAll} disabled={saving} className="gap-2 shrink-0">
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Salvar
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <AutoSaveChip status={autoSaveStatus} />
+          <Button onClick={persistAll} disabled={autoSaveStatus === "saving"} variant="outline" size="sm" className="gap-1.5">
+            <Save className="h-3.5 w-3.5" />
+            Salvar agora
+          </Button>
+        </div>
       </div>
 
       {/* Summary bar */}
