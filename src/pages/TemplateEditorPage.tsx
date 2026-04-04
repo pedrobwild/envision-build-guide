@@ -245,6 +245,38 @@ function SortableItemRow({
   );
 }
 
+// ─── Auto-save status chip ───────────────────────────────────────
+
+type AutoSaveStatus = "idle" | "saving" | "saved" | "error";
+
+function AutoSaveChip({ status }: { status: AutoSaveStatus }) {
+  if (status === "saving") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground font-body px-2.5 py-1 rounded-full bg-muted/60">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Salvando…
+      </span>
+    );
+  }
+  if (status === "error") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[11px] text-destructive font-body px-2.5 py-1 rounded-full bg-destructive/10">
+        <X className="h-3 w-3" />
+        Erro ao salvar
+      </span>
+    );
+  }
+  if (status === "saved") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-success font-body px-2.5 py-1 rounded-full bg-success/10">
+        <Check className="h-3 w-3" />
+        Salvo
+      </span>
+    );
+  }
+  return null;
+}
+
 // ─── Main page ───────────────────────────────────────────────────
 
 export default function TemplateEditorPage() {
@@ -253,8 +285,17 @@ export default function TemplateEditorPage() {
   const [template, setTemplate] = useState<TemplateData | null>(null);
   const [sections, setSections] = useState<TemplateSectionData[]>([]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>("idle");
+
+  // Auto-save refs
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const isInitialLoadRef = useRef(true);
+  const templateRef = useRef(template);
+  const sectionsRef = useRef(sections);
+  templateRef.current = template;
+  sectionsRef.current = sections;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
