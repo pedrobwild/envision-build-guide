@@ -144,6 +144,22 @@ export function StickyEditorHeader({
         <div className="flex items-center gap-3 shrink-0">
           <AutoSaveChip status={saveStatus} lastSavedAt={lastSavedAt} onRetry={onRetrySave} />
 
+          {onPublish && (
+            <Button
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={onPublish}
+              disabled={publishing}
+            >
+              {publishing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              {publishing ? "Publicando…" : "Salvar e Publicar"}
+            </Button>
+          )}
+
           {primaryAction && (
             <Button
               size="sm"
