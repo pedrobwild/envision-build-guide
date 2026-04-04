@@ -385,16 +385,12 @@ function SortableItemRow({
             className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
           />
         </div>
-        {/* %BDI — editable */}
+        {/* %BDI — editable with validation */}
         <div className="lg:col-span-1 space-y-0.5">
           <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI %</label>
-          <input
-            type="number"
-            value={item.bdi_percentage ?? ""}
-            onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
-            placeholder="0"
-            step="0.01"
-            className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
+          <BdiInput
+            value={item.bdi_percentage}
+            onChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
           />
         </div>
         {/* $ Venda (calculated) */}
