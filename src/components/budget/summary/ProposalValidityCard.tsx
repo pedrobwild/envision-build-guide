@@ -41,12 +41,12 @@ export function ProposalValidityCard({
         <Clock
           className={cn(
             "h-3.5 w-3.5 flex-shrink-0",
-            urgent ? "text-warning" : "text-muted-foreground/60"
+            urgent ? "text-warning" : "text-muted-foreground"
           )}
           aria-hidden
         />
       )}
-      <p className={cn(BODY_SM, expired ? "text-destructive" : "text-muted-foreground/70")}>
+      <p className={cn(BODY_SM, expired ? "text-destructive" : "text-foreground")}>
         {expired
           ? "Condições expiradas — solicite valores atualizados."
           : revised

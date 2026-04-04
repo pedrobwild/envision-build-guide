@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Drawer as VaulDrawer } from "vaul";
-import { FileSignature } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/formatBRL";
 
@@ -30,7 +29,7 @@ interface MobileFinancialSheetProps {
 
 const DEFAULT_PHONE = "5511911906183";
 const SNAP_POINTS = [0.45, 0.88] as const;
-const LABEL = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/40";
+const LABEL = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground";
 const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
 
 export function MobileFinancialSheet({
@@ -81,24 +80,24 @@ export function MobileFinancialSheet({
             >
               {/* ── Total card (compact for sheet) ── */}
               <div
-                className="relative rounded-2xl border border-primary/10 px-5 py-5 overflow-hidden"
+                className="relative rounded-2xl border border-primary/10 px-5 py-4 overflow-hidden"
                 style={{
                   background: 'linear-gradient(145deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 40%, hsl(var(--background)) 100%)',
-                  boxShadow: '0 8px 32px -8px hsl(var(--primary) / 0.12), 0 2px 8px -2px hsl(var(--primary) / 0.06)',
+                  boxShadow: '0 6px 24px -6px hsl(var(--primary) / 0.10), 0 2px 6px -2px hsl(var(--primary) / 0.04)',
                 }}
               >
                 <div
-                  className="absolute -top-16 -right-16 w-40 h-40 rounded-full pointer-events-none"
-                  style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.07) 0%, transparent 70%)' }}
+                  className="absolute -top-16 -right-16 w-36 h-36 rounded-full pointer-events-none"
+                  style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)' }}
                   aria-hidden
                 />
-                <div className="relative space-y-4">
-                  <div className="space-y-2">
+                <div className="relative space-y-3">
+                  <div className="space-y-1.5">
                     <p className={LABEL}>Investimento total</p>
                     <p
                       className={cn(
                         "font-mono font-extrabold text-primary tabular-nums leading-none",
-                        total >= 1_000_000 ? "text-xl" : "text-2xl"
+                        total >= 1_000_000 ? "text-lg" : "text-xl"
                       )}
                       style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
                     >
@@ -108,11 +107,11 @@ export function MobileFinancialSheet({
 
                   {/* Installment preview inline */}
                   <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <span className="text-[12px] font-body text-muted-foreground/50">ou</span>
+                    <span className="text-[12px] font-body text-muted-foreground">ou</span>
                     <span className="font-mono text-sm font-semibold text-foreground tabular-nums" style={MONO_STYLE}>
                       {formatBRL(total / installments)}
                     </span>
-                    <span className="text-[12px] font-body text-muted-foreground/50">
+                    <span className="text-[12px] font-body text-muted-foreground">
                       em {installments}× sem juros
                     </span>
                   </div>
