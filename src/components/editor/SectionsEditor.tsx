@@ -1094,6 +1094,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         );
       })()}
 
+      {sections.length === 0 && (
         <EmptyState
           icon={FileSpreadsheet}
           title="Orçamento em branco"
