@@ -340,7 +340,7 @@ export default function NewBudgetRequest() {
       <form
         id="budget-form"
         onSubmit={handleSubmit}
-        className="max-w-3xl mx-auto px-6 py-6"
+        className="max-w-3xl mx-auto px-4 sm:px-6 py-6"
       >
         {/* Project name preview */}
         {projectName && (
