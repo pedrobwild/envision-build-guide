@@ -129,7 +129,7 @@ export function BudgetSummary({
         {/* Footer */}
         {generatedAt && (
           <div className="px-5 pb-4 pt-1">
-            <p className="text-[13px] text-muted-foreground/60 text-center font-body">
+            <p className="text-[13px] text-muted-foreground text-center font-body">
               Gerado em {formatDate(generatedAt)}
             </p>
           </div>
