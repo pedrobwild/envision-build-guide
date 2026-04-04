@@ -97,10 +97,10 @@ export default function AdminDashboard() {
       .single();
     if (data) {
       try {
-        const { appendUtensiliosTemplate } = await import("@/lib/utensilios-template");
-        await appendUtensiliosTemplate(data.id, 0);
+        const { seedFromTemplate } = await import("@/lib/seed-from-template");
+        await seedFromTemplate(data.id, "a01da86a-9184-4693-bd07-6798c2bf79b2");
       } catch (e) {
-        console.warn("[CreateBudget] Utensílios template failed (non-critical):", e);
+        console.warn("[CreateBudget] Template seed failed (non-critical):", e);
       }
       navigate(`/admin/budget/${data.id}`);
     }
