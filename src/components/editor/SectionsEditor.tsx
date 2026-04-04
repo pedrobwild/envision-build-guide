@@ -57,25 +57,6 @@ function BdiInput({ value, onChange }: { value: number | null | undefined; onCha
   );
 }
 
-/* ── Global BDI calculation ── */
-function calcGlobalBdi(sections: SectionData[]): { avgBdi: number; hasData: boolean } {
-  let totalCost = 0;
-  let totalSale = 0;
-  for (const s of sections) {
-    for (const item of s.items) {
-      const cost = calcItemCostTotal(item);
-      const sale = calcItemSaleTotal(item);
-      if (cost > 0) {
-        totalCost += cost;
-        totalSale += sale;
-      }
-    }
-  }
-  if (totalCost === 0) return { avgBdi: 0, hasData: false };
-  const avgBdi = ((totalSale - totalCost) / totalCost) * 100;
-  return { avgBdi, hasData: true };
-}
-
 
 /* ── Inline image management for editor items ── */
 function ItemImageInline({
