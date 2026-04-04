@@ -450,7 +450,7 @@ export default function BudgetInternalDetail() {
 
             {/* Internal Notes */}
             {budget.internal_notes && (
-              <Card className="border-amber-200 bg-amber-50/30">
+              <Card className="border-warning/20 bg-warning/5">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-display flex items-center gap-2 text-amber-800">
                     <AlertTriangle className="h-4 w-4" />
