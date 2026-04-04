@@ -62,13 +62,13 @@ export function PipelineProgress({ internalStatus }: PipelineProgressProps) {
                     i + 1
                   );
 
-                  const circleClass = isCompleted
+                  const circleClass = `h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-medium transition-all duration-300 ${isCompleted
                     ? "bg-primary text-primary-foreground"
                     : isRevisionRequested
-                    ? "bg-amber-500 text-white ring-2 ring-amber-300/50"
+                    ? "bg-warning text-warning-foreground ring-2 ring-warning/30"
                     : isCurrent
-                    ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                    : "border-2 border-muted-foreground/30 text-muted-foreground/50";
+                    ? "bg-primary text-primary-foreground ring-2 ring-primary/20 shadow-sm"
+                    : "border-2 border-muted-foreground/20 text-muted-foreground/40"}`;
 
                   const circle = (
                     <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-medium transition-colors ${circleClass}`}>
