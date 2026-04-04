@@ -1044,15 +1044,15 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   const marginPercent = grandTotalSale > 0 ? (grandMargin / grandTotalSale) * 100 : 0;
 
   return (
-    <div className="mt-8 pb-20">
+    <div className="mt-6 pb-20">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-display font-semibold text-foreground tracking-[-0.04em]">Seções e Itens</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-display font-bold text-foreground uppercase tracking-[0.06em]">Seções e Itens</h2>
         <button
           onClick={addSection}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-body font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-body font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
         >
-          <Plus className="h-3.5 w-3.5" /> Seção
+          <Plus className="h-3.5 w-3.5" /> Nova Seção
         </button>
       </div>
 
