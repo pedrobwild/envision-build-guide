@@ -1217,6 +1217,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           <SectionContextMenu
                             section={section}
                             onRename={(name) => updateSection(section.id, "title", name)}
+                            onDuplicate={() => duplicateSection(section.id)}
                             onDelete={() => deleteSection(section.id)}
                           />
                         </div>
