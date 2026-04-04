@@ -757,7 +757,7 @@ export default function EstimatorDashboard() {
                                 variant={a.variant}
                                 size="sm"
                                 className="h-7 text-xs gap-1 px-2.5"
-                                onClick={(e) => { e.stopPropagation(); changeStatus(b.id, a.targetStatus); }}
+                                onClick={(e) => { e.stopPropagation(); requestStatusChange(b.id, a.targetStatus); }}
                               >
                                 {a.icon}
                                 {a.label}
@@ -802,25 +802,25 @@ export default function EstimatorDashboard() {
                               <DropdownMenuSeparator />
                               {/* All 5 stage transitions in overflow */}
                               {!PENDING_STATUSES.includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "assigned")}>
+                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "assigned")}>
                                   <Inbox className="h-4 w-4 mr-2" />
                                   Mover p/ Pendente
                                 </DropdownMenuItem>
                               )}
                               {!IN_PROGRESS_STATUSES.includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "in_progress")}>
+                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "in_progress")}>
                                   <Clock className="h-4 w-4 mr-2" />
                                   Mover p/ Em Elaboração
                                 </DropdownMenuItem>
                               )}
                               {b.internal_status !== "ready_for_review" && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "ready_for_review")}>
+                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "ready_for_review")}>
                                   <CheckCircle2 className="h-4 w-4 mr-2" />
                                   Mover p/ Em Revisão
                                 </DropdownMenuItem>
                               )}
                               {!DELIVERED_STATUSES.includes(b.internal_status) && (
-                                <DropdownMenuItem onClick={() => changeStatus(b.id, "delivered_to_sales")}>
+                                <DropdownMenuItem onClick={() => requestStatusChange(b.id, "delivered_to_sales")}>
                                   <Send className="h-4 w-4 mr-2" />
                                   Mover p/ Entregue
                                 </DropdownMenuItem>
