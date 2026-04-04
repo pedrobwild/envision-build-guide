@@ -499,9 +499,9 @@ function SortableItemRow({
           />
         </div>
 
-        {/* $ Venda (calculated) */}
+        {/* $ Venda (calculated) — secondary */}
         <div className="lg:col-span-1 px-1">
-          <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground">
+          <div className="h-9 flex items-center justify-end px-3 text-sm font-mono tabular-nums text-muted-foreground">
             {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
@@ -509,7 +509,7 @@ function SortableItemRow({
         {/* $ Total Custo (calculated) — hidden in compact */}
         {showExpanded && (
           <div className="lg:col-span-2 px-1">
-            <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground">
+            <div className="h-9 flex items-center justify-end px-3 text-sm font-mono tabular-nums text-muted-foreground">
               {formatBRL(calcItemCostTotal(item))}
             </div>
           </div>
@@ -517,17 +517,17 @@ function SortableItemRow({
 
         {/* $ Total Venda (calculated) — primary data */}
         <div className={cn("px-1", showExpanded ? "lg:col-span-2" : "lg:col-span-4")}>
-          <div className="h-8 flex items-center justify-end px-2 text-sm font-mono font-semibold tabular-nums text-foreground tracking-[-0.035em]">
+          <div className="h-9 flex items-center justify-end px-3 text-sm font-mono font-semibold tabular-nums text-foreground tracking-[-0.035em]">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="lg:col-span-1 flex items-center justify-end gap-0.5 px-2">
+        {/* Actions — hidden until hover */}
+        <div className="lg:col-span-1 flex items-center justify-end gap-0.5 px-3">
           {isItemSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
           <button
             onClick={() => setDetailOpen(true)}
-            className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-foreground transition-colors opacity-0 group-hover/item:opacity-100"
+            className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-foreground transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
             title="Editar detalhes"
           >
             <Pencil className="h-3 w-3" />
@@ -535,7 +535,7 @@ function SortableItemRow({
           {!item.catalog_item_id && !compact && (
             <button
               onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
-              className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-primary transition-colors opacity-0 group-hover/item:opacity-100"
+              className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-primary transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
               title="Salvar no catálogo"
             >
               <BookmarkPlus className="h-3 w-3" />
@@ -545,7 +545,7 @@ function SortableItemRow({
             onClick={() => {
               if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
             }}
-            className="p-1.5 rounded hover:bg-destructive/8 text-muted-foreground/40 hover:text-destructive transition-colors opacity-0 group-hover/item:opacity-100"
+            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
             title="Excluir item"
           >
             <Trash2 className="h-3 w-3" />
