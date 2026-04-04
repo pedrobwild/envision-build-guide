@@ -517,85 +517,69 @@ export default function AdminDashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total */}
-        <Card className="border bg-card">
-          <CardContent className="p-5 flex items-start gap-4">
-            <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-            <div>
-              <p className="text-2xl font-display font-bold text-foreground">{metrics.total}</p>
-              <p className="text-xs text-muted-foreground font-body">Total de orçamentos</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Publicados */}
-        <Card className="border bg-card">
-          <CardContent className="p-5 flex items-start gap-4">
-            <Send className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-2xl font-display font-bold text-blue-600">{metrics.published}</p>
-              <p className="text-xs text-muted-foreground font-body">Publicados</p>
-              <p className="text-xs text-muted-foreground font-body">
-                ({metrics.total > 0 ? Math.round((metrics.published / metrics.total) * 100) : 0}% do total)
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Contratos */}
-        <Card className="border bg-card">
-          <CardContent className="p-5 flex items-start gap-4">
-            <Handshake className={`h-5 w-5 mt-0.5 shrink-0 ${metrics.closed > 0 ? "text-green-500" : "text-muted-foreground"}`} />
-            <div>
-              <p className={`text-2xl font-display font-bold ${metrics.closed > 0 ? "text-green-600" : "text-muted-foreground"}`}>{metrics.closed}</p>
-              <p className="text-xs text-muted-foreground font-body">Contratos fechados</p>
-              {metrics.closed === 0 && (
-                <p className="text-xs text-muted-foreground font-body">Nenhum contrato fechado ainda</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Valor Total — hero metric */}
-        <Card className="border bg-card border-l-4 border-l-emerald-500">
-          <CardContent className="p-5 flex items-start gap-4">
-            <TrendingUp className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-xl font-display font-bold text-emerald-600 truncate">{formatBRL(metrics.totalValue)}</p>
-              <p className="text-xs text-muted-foreground font-body">Valor em carteira</p>
-            </div>
-          </CardContent>
-        </Card>
+        {[
+          { icon: FileText, iconClass: "text-muted-foreground", value: metrics.total, valueClass: "text-foreground", label: "Total de orçamentos", extra: null, cardClass: "" },
+          { icon: Send, iconClass: "text-primary", value: metrics.published, valueClass: "text-primary", label: "Publicados", extra: `(${metrics.total > 0 ? Math.round((metrics.published / metrics.total) * 100) : 0}% do total)`, cardClass: "" },
+          { icon: Handshake, iconClass: metrics.closed > 0 ? "text-success" : "text-muted-foreground", value: metrics.closed, valueClass: metrics.closed > 0 ? "text-success" : "text-muted-foreground", label: "Contratos fechados", extra: metrics.closed === 0 ? "Nenhum contrato fechado ainda" : null, cardClass: "" },
+          { icon: TrendingUp, iconClass: "text-success", value: formatBRL(metrics.totalValue), valueClass: "text-success", label: "Valor em carteira", extra: null, cardClass: "border-l-4 border-l-success" },
+        ].map((kpi, i) => (
+          <motion.div
+            key={kpi.label}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 + i * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+          >
+            <Card className={`border bg-card ${kpi.cardClass}`}>
+              <CardContent className="p-5 flex items-start gap-4">
+                <kpi.icon className={`h-5 w-5 ${kpi.iconClass} mt-0.5 shrink-0`} />
+                <div>
+                  <p className={`text-2xl font-display font-bold ${kpi.valueClass} tracking-tight`}>
+                    {typeof kpi.value === "number" ? kpi.value : kpi.value}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-body">{kpi.label}</p>
+                  {kpi.extra && <p className="text-xs text-muted-foreground font-body">{kpi.extra}</p>}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Monthly Billing (only if there's data) */}
+      {/* Monthly Billing */}
       {monthlyBilling.count > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <div className="p-3 rounded-lg border border-border bg-card">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm">🤝</span>
-              <span className="text-xs text-muted-foreground font-body capitalize">{monthlyBilling.monthName}</span>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="p-3 rounded-xl border border-border bg-card">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm">🤝</span>
+                <span className="text-xs text-muted-foreground font-body capitalize">{monthlyBilling.monthName}</span>
+              </div>
+              <p className="text-lg font-display font-bold text-foreground tracking-tight">{formatBRL(monthlyBilling.revenue)}</p>
+              <p className="text-xs text-muted-foreground font-body">{monthlyBilling.count} contrato{monthlyBilling.count !== 1 ? "s" : ""}</p>
             </div>
-            <p className="text-lg font-display font-bold text-foreground">{formatBRL(monthlyBilling.revenue)}</p>
-            <p className="text-xs text-muted-foreground font-body">{monthlyBilling.count} contrato{monthlyBilling.count !== 1 ? "s" : ""}</p>
-          </div>
-          <div className="p-3 rounded-lg border border-border bg-card">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm">🧱</span>
-              <span className="text-xs text-muted-foreground font-body">Custo das obras</span>
+            <div className="p-3 rounded-xl border border-border bg-card">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm">🧱</span>
+                <span className="text-xs text-muted-foreground font-body">Custo das obras</span>
+              </div>
+              <p className="text-lg font-display font-bold text-foreground tracking-tight">{formatBRL(monthlyBilling.cost)}</p>
             </div>
-            <p className="text-lg font-display font-bold text-foreground">{formatBRL(monthlyBilling.cost)}</p>
-          </div>
-          <div className="p-3 rounded-lg border border-border bg-card">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm">📈</span>
-              <span className="text-xs text-muted-foreground font-body">Lucro · Margem {monthlyBilling.margin.toFixed(0)}%</span>
+            <div className="p-3 rounded-xl border border-border bg-card">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm">📈</span>
+                <span className="text-xs text-muted-foreground font-body">Lucro · Margem {monthlyBilling.margin.toFixed(0)}%</span>
+              </div>
+              <p className={`text-lg font-display font-bold tracking-tight ${monthlyBilling.profit >= 0 ? "text-success" : "text-destructive"}`}>
+                {formatBRL(monthlyBilling.profit)}
+              </p>
             </div>
-            <p className={`text-lg font-display font-bold ${monthlyBilling.profit >= 0 ? "text-green-600" : "text-destructive"}`}>
-              {formatBRL(monthlyBilling.profit)}
-            </p>
           </div>
-        </div>
+        </motion.div>
       )}
 
 
