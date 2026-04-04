@@ -277,13 +277,13 @@ export default function NewBudgetRequest() {
   return (
     <div className="min-h-screen bg-background">
       {/* ── Sticky Header ── */}
-      <header className="sticky top-0 z-50 bg-card/80 glass border-b border-border/50 shadow-premium-sm">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-50 bg-card/85 backdrop-blur-xl border-b border-border/40 shadow-sm">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => navigate("/admin/solicitacoes")}
-              className="p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
+              className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
@@ -291,7 +291,7 @@ export default function NewBudgetRequest() {
               <h1 className="text-sm font-display font-bold text-foreground tracking-tight truncate">
                 Nova Solicitação
               </h1>
-              <p className="text-[11px] text-muted-foreground font-body">
+              <p className="text-[11px] text-muted-foreground/70 font-body">
                 Preencha o briefing para iniciar a produção
               </p>
             </div>
@@ -299,14 +299,14 @@ export default function NewBudgetRequest() {
 
           <div className="flex items-center gap-3 shrink-0">
             {/* Completion indicator */}
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="hidden sm:flex items-center gap-2.5">
+              <div className="w-24 h-1 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
                   style={{ width: `${completionPercent}%` }}
                 />
               </div>
-              <span className="text-[11px] text-muted-foreground font-body tabular-nums">
+              <span className="text-[11px] text-muted-foreground/60 font-mono tabular-nums w-8 text-right">
                 {completionPercent}%
               </span>
             </div>
@@ -316,7 +316,7 @@ export default function NewBudgetRequest() {
               form="budget-form"
               disabled={loading || !clientName.trim()}
               size="sm"
-              className="h-8 text-xs gap-1.5"
+              className="h-8 text-xs gap-1.5 shadow-sm"
             >
               {loading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -326,6 +326,13 @@ export default function NewBudgetRequest() {
               {loading ? "Criando…" : "Criar Solicitação"}
             </Button>
           </div>
+        </div>
+        {/* Progress bar under header */}
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-transparent">
+          <div
+            className="h-full bg-primary/60 rounded-r-full transition-all duration-700 ease-out"
+            style={{ width: `${completionPercent}%` }}
+          />
         </div>
       </header>
 
