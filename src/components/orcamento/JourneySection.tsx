@@ -14,9 +14,14 @@ export function JourneySection({ steps }: JourneySectionProps) {
 
   return (
     <section className="space-y-6">
-      <h2 className="text-lg sm:text-xl font-display font-bold text-foreground">
-        Sua jornada
-      </h2>
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-1">
+          Processo
+        </p>
+        <h2 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-tight">
+          Sua jornada
+        </h2>
+      </div>
 
       {/* Desktop horizontal stepper */}
       <div className="hidden md:block">

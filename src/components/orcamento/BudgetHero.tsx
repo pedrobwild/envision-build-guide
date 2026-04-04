@@ -12,25 +12,28 @@ export function BudgetHero({ meta, included }: BudgetHeroProps) {
   return (
     <section className="space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+        <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-1">
+          Proposta
+        </p>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground tracking-tight">
           Orçamento
         </h1>
-        <p className="text-sm text-muted-foreground font-body mt-1">
+        <p className="text-sm text-muted-foreground font-body mt-1.5 leading-relaxed">
           Resumo do seu projeto e tudo que está incluído nos serviços Bwild.
         </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">{meta.area}</Badge>
-        <Badge variant="secondary">{meta.version}</Badge>
-        <Badge variant="secondary">Válido até {meta.validUntil}</Badge>
-        <Badge variant="outline">Arq. {meta.architect}</Badge>
-        <Badge variant="outline">Eng. {meta.engineer}</Badge>
+        <Badge variant="secondary" className="font-body text-xs">{meta.area}</Badge>
+        <Badge variant="secondary" className="font-body text-xs">{meta.version}</Badge>
+        <Badge variant="secondary" className="font-body text-xs">Válido até {meta.validUntil}</Badge>
+        <Badge variant="outline" className="font-body text-xs">Arq. {meta.architect}</Badge>
+        <Badge variant="outline" className="font-body text-xs">Eng. {meta.engineer}</Badge>
       </div>
 
-      <Card className="border-primary/20 bg-primary/5">
+      <Card className="border-primary/15 bg-primary/4">
         <CardContent className="pt-5 pb-4">
-          <p className="text-xs font-display font-semibold text-primary uppercase tracking-wider mb-3">
+          <p className="text-[10px] font-body font-semibold text-primary uppercase tracking-[0.08em] mb-3">
             Inclui (Serviços Bwild)
           </p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -44,7 +47,7 @@ export function BudgetHero({ meta, included }: BudgetHeroProps) {
         </CardContent>
       </Card>
 
-      <p className="text-xs text-muted-foreground font-body italic">
+      <p className="text-xs text-muted-foreground/60 font-body italic leading-relaxed">
         A Bwild cuida do projeto, engenharia e gestão — para você não precisar coordenar fornecedores, cronograma ou burocracias.
       </p>
     </section>

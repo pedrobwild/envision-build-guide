@@ -30,9 +30,14 @@ export function ServicesSection({ services }: ServicesSectionProps) {
 
   return (
     <section className="space-y-6">
-      <h2 className="text-lg sm:text-xl font-display font-bold text-foreground">
-        O que a Bwild faz por você
-      </h2>
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-1">
+          Serviços
+        </p>
+        <h2 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-tight">
+          O que a Bwild faz por você
+        </h2>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {services.map((s) => {
@@ -75,7 +80,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
       {/* Why Bwild */}
       <Card>
         <CardContent className="pt-5 pb-4">
-          <p className="text-xs font-display font-semibold text-foreground uppercase tracking-wider mb-3">
+          <p className="text-[10px] font-body font-semibold text-foreground uppercase tracking-[0.08em] mb-3">
             Por que clientes escolhem a Bwild
           </p>
           <ul className="space-y-1.5">

@@ -49,9 +49,14 @@ export function ScopeSection({ scope }: ScopeSectionProps) {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg sm:text-xl font-display font-bold text-foreground">
-        Escopo da reforma
-      </h2>
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-1">
+          Detalhamento
+        </p>
+        <h2 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-tight">
+          Escopo da reforma
+        </h2>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
