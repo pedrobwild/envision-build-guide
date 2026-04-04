@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { SectionSummaryRow } from "./SectionSummaryRow";
 import { CountUpValue } from "./CountUpValue";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,10 +9,12 @@ import {
   CreditCard,
   MessageCircle,
   ChevronDown,
-  TrendingUp,
+  CheckCircle2,
+  Layers,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
+import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 
 import { ContractRequestDialog } from "./ContractRequestDialog";
 import { WhatsAppCommentDialog } from "./WhatsAppCommentDialog";
@@ -35,11 +37,10 @@ interface MobileInlineSummaryProps {
 
 const DEFAULT_PHONE = "5511911906183";
 
-/* ── Typography tokens (branding: Sora / Inter / Geist Mono) ── */
-const LABEL = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60";
+/* ── Typography tokens (Sora / Inter / Geist Mono) ── */
+const LABEL = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/50";
 const HEADING = "font-display font-bold text-foreground tracking-tight";
 const BODY_SM = "text-xs font-body leading-snug";
-const BODY_BASE = "text-sm font-body font-medium text-foreground";
 const MONO_VALUE = "font-mono tabular-nums font-semibold text-primary";
 const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
 
@@ -53,23 +54,34 @@ export function MobileInlineSummary({
   budgetId,
   onTotalCardVisibilityChange,
 }: MobileInlineSummaryProps) {
+  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
   const [installments, setInstallments] = useState(18);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  
   const [contractOpen, setContractOpen] = useState(false);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const totalCardRef = useRef<HTMLDivElement>(null);
 
+  // Flatten sections for accordion
+  const allSections = useMemo(() =>
+    categorizedGroups.flatMap((group) =>
+      group.sections.map((section) => ({
+        section,
+        colorClass: group.category.colorClass,
+        bgClass: group.category.bgClass,
+        subtotal: calculateSectionSubtotal(section),
+      }))
+    ), [categorizedGroups]
+  );
+
+  const totalSections = allSections.length;
+  const totalItems = allSections.reduce((acc, s) => acc + (s.section.items?.length || 0), 0);
+
   useEffect(() => {
     if (!totalCardRef.current || !onTotalCardVisibilityChange) return;
-
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        onTotalCardVisibilityChange(entry.isIntersecting);
-      },
+      ([entry]) => onTotalCardVisibilityChange(entry.isIntersecting),
       { threshold: 0.5 }
     );
-
     observer.observe(totalCardRef.current);
     return () => observer.disconnect();
   }, [onTotalCardVisibilityChange]);
@@ -79,222 +91,222 @@ export function MobileInlineSummary({
   )}`;
 
   return (
-    <div
-      id="resumo-mobile"
-      className="lg:hidden scroll-mt-24"
-    >
+    <div id="resumo-mobile" className="lg:hidden scroll-mt-24">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="space-y-4"
+        className="space-y-6"
       >
-        {/* ── Section title ── */}
-        <div className="space-y-1">
+        {/* ────── Section heading ────── */}
+        <div className="space-y-1.5">
           <p className={LABEL}>Investimento</p>
           <h2 className={cn(HEADING, "text-xl")}>Resumo do investimento</h2>
         </div>
 
-        {/* ── Validity badge ── */}
-        <div
-          className={cn(
-            "rounded-xl px-3.5 py-2.5 flex items-center gap-2.5",
-            validity.expired
-              ? "bg-destructive/[0.06] border border-destructive/[0.12]"
-              : validity.daysLeft <= 5
-                ? "bg-warning/[0.06] border border-warning/[0.12]"
-                : "bg-muted/50 border border-border"
-          )}
-        >
-          {validity.expired ? (
-            <AlertTriangle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
-          ) : (
-            <Clock
-              className={cn(
-                "h-3.5 w-3.5 flex-shrink-0",
-                validity.daysLeft <= 5 ? "text-warning" : "text-muted-foreground"
-              )}
-            />
-          )}
-          <p className={cn(BODY_SM, validity.expired ? "text-destructive" : "text-muted-foreground")}>
-            {validity.expired
-              ? "Condições expiradas — solicite valores atualizados."
-              : `Condições válidas até ${formatDateLong(validity.expiresAt)}`}
-          </p>
-        </div>
-
-        {/* ── Total card — premium glassmorphism ── */}
+        {/* ────── HERO: Total investment card ────── */}
         <motion.div
           ref={totalCardRef}
           initial={{ opacity: 0, scale: 0.97 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="relative rounded-2xl border border-primary/10 px-5 py-5 overflow-hidden"
+          className="relative rounded-2xl border border-primary/10 px-6 py-7 overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.07) 0%, hsl(var(--primary) / 0.03) 50%, hsl(var(--background)) 100%)',
-            boxShadow: '0 8px 32px -8px hsl(var(--primary) / 0.12), 0 2px 8px -2px hsl(var(--primary) / 0.06)',
+            background: 'linear-gradient(145deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 40%, hsl(var(--background)) 100%)',
+            boxShadow: '0 12px 40px -12px hsl(var(--primary) / 0.12), 0 4px 12px -4px hsl(var(--primary) / 0.05)',
           }}
         >
+          {/* Decorative glows */}
           <div
-            className="absolute -top-20 -right-20 w-48 h-48 rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)' }}
+            className="absolute -top-24 -right-24 w-56 h-56 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.07) 0%, transparent 70%)' }}
           />
           <div
-            className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.05) 0%, transparent 70%)' }}
+            className="absolute -bottom-16 -left-16 w-40 h-40 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.04) 0%, transparent 70%)' }}
           />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="h-3.5 w-3.5 text-primary/60" />
-              <p className={LABEL}>Investimento total</p>
+
+          <div className="relative space-y-5">
+            {/* Total value — hero treatment */}
+            <div className="space-y-2">
+              <p className={cn(LABEL, "text-muted-foreground/40")}>Investimento total</p>
+              <CountUpValue
+                value={total}
+                className="font-mono font-extrabold text-[2.25rem] text-primary leading-none block tabular-nums"
+                style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
+              />
             </div>
-            <CountUpValue
-              value={total}
-              className="font-mono font-extrabold text-[2rem] text-primary leading-none block tabular-nums"
-              style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
-            />
-            <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-primary/[0.08]">
-              <Shield className="h-3 w-3 text-primary/40" />
-              <span className="text-[11px] text-muted-foreground/60 font-body">
-                Preço fixo · Sem custos ocultos
+
+            {/* Installment preview — inline, not a separate card */}
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[12px] font-body text-muted-foreground/50">ou</span>
+              <span className="font-mono text-sm font-semibold text-foreground tabular-nums" style={MONO_STYLE}>
+                {formatBRL(total / installments)}
               </span>
+              <span className="text-[12px] font-body text-muted-foreground/50">
+                em {installments}× sem juros
+              </span>
+            </div>
+
+            {/* Trust signals */}
+            <div className="flex items-center gap-4 pt-4 border-t border-primary/[0.06]">
+              <div className="flex items-center gap-1.5">
+                <Shield className="h-3 w-3 text-primary/35" />
+                <span className="text-[11px] text-muted-foreground/50 font-body">Preço fixo</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3 w-3 text-primary/35" />
+                <span className="text-[11px] text-muted-foreground/50 font-body">Sem custos ocultos</span>
+              </div>
             </div>
           </div>
         </motion.div>
 
-        {/* ── Composition breakdown ── */}
-        {categorizedGroups.length > 0 && (
-          <div className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm">
-            <div className="px-4 pt-4 pb-1.5 flex items-center justify-between">
-              <p className={LABEL}>Composição do investimento</p>
-              <span className="text-[10px] font-mono text-muted-foreground/40 tabular-nums" style={MONO_STYLE}>
-                {categorizedGroups.reduce((acc, g) => acc + g.sections.length, 0)} seções
+        {/* ────── Validity ────── */}
+        <div
+          className={cn(
+            "rounded-xl px-3.5 py-2.5 flex items-center gap-2.5",
+            validity.expired
+              ? "bg-destructive/[0.05] border border-destructive/[0.10]"
+              : validity.daysLeft <= 5
+                ? "bg-warning/[0.05] border border-warning/[0.10]"
+                : "bg-muted/30 border border-border/60"
+          )}
+        >
+          {validity.expired ? (
+            <AlertTriangle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
+          ) : (
+            <Clock className={cn(
+              "h-3.5 w-3.5 flex-shrink-0",
+              validity.daysLeft <= 5 ? "text-warning" : "text-muted-foreground/60"
+            )} />
+          )}
+          <p className={cn(BODY_SM, validity.expired ? "text-destructive" : "text-muted-foreground/70")}>
+            {validity.expired
+              ? "Condições expiradas — solicite valores atualizados."
+              : `Válido até ${formatDateLong(validity.expiresAt)}`}
+          </p>
+        </div>
+
+        {/* ────── Composition breakdown (accordion) ────── */}
+        {allSections.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Layers className="h-3.5 w-3.5 text-muted-foreground/40" />
+                <p className={LABEL}>O que está incluído</p>
+              </div>
+              <span className="text-[10px] font-mono text-muted-foreground/35 tabular-nums" style={MONO_STYLE}>
+                {totalSections} {totalSections === 1 ? "categoria" : "categorias"} · {totalItems} itens
               </span>
             </div>
-            <motion.div
-              className="px-2 pb-2.5"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.15 }}
-              variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
-            >
-              {categorizedGroups.flatMap((group) =>
-                group.sections.map((section) => (
-                  <motion.div
-                    key={section.id}
-                    variants={{
-                      hidden: { opacity: 0, y: 8 },
-                      visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
-                    }}
-                  >
-                    <SectionSummaryRow
-                      section={section}
-                      colorClass={group.category.colorClass}
-                      bgClass={group.category.bgClass}
-                      compact
-                    />
-                  </motion.div>
-                ))
-              )}
-            </motion.div>
+
+            <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+              {/* Distribution bar */}
+              <div className="px-3 pt-3 pb-1">
+                <div className="flex h-[3px] rounded-full overflow-hidden bg-muted/30">
+                  {allSections.map((s) => {
+                    const pct = total > 0 ? (s.subtotal / total) * 100 : 0;
+                    if (pct <= 0) return null;
+                    return (
+                      <div
+                        key={s.section.id}
+                        className={cn("transition-all duration-500", s.bgClass)}
+                        style={{ width: `${pct}%` }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Section rows — one expanded at a time */}
+              <div className="divide-y divide-border/[0.06]">
+                {allSections.map((s) => (
+                  <SectionSummaryRow
+                    key={s.section.id}
+                    section={s.section}
+                    colorClass={s.colorClass}
+                    bgClass={s.bgClass}
+                    compact
+                    isExpanded={expandedSectionId === s.section.id}
+                    onToggle={() =>
+                      setExpandedSectionId((prev) =>
+                        prev === s.section.id ? null : s.section.id
+                      )
+                    }
+                    percentage={total > 0 ? (s.subtotal / total) * 100 : 0}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* ── Installment simulator ── */}
-        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-          <div className="px-4 pt-4 pb-2.5">
+        {/* ────── Installment simulator (collapsed by default) ────── */}
+        <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="w-full flex items-center justify-between px-4 py-3.5 min-h-[48px]"
+          >
             <div className="flex items-center gap-2">
-              <CreditCard className="h-3.5 w-3.5 text-primary/70" />
-              <span className={LABEL}>Simule o parcelamento</span>
+              <CreditCard className="h-3.5 w-3.5 text-muted-foreground/50" />
+              <span className="text-[13px] font-body font-medium text-foreground">Simular parcelamento</span>
             </div>
-          </div>
-
-          <div className="px-4 pb-4">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 active:bg-muted/60 transition-colors min-h-[48px]"
-            >
-              <span className={BODY_BASE}>
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={installments}
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="inline-flex items-baseline gap-1"
-                  >
-                    <span className="font-mono tabular-nums" style={MONO_STYLE}>{installments}</span>
-                    <span className="font-body">× {installments === 1 ? "parcela" : "parcelas"}</span>
-                  </motion.span>
-                </AnimatePresence>
+            <div className="flex items-center gap-2">
+              <span className={cn(MONO_VALUE, "text-[13px]")} style={MONO_STYLE}>
+                {installments}×
               </span>
-              <div className="flex items-center gap-2.5">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={installments}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className={cn(MONO_VALUE, "text-sm inline-block")}
-                    style={MONO_STYLE}
-                  >
-                    {formatBRL(total / installments)}
-                  </motion.span>
-                </AnimatePresence>
-                <ChevronDown className={cn(
-                  "h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200",
-                  dropdownOpen && "rotate-180"
-                )} />
-              </div>
-            </button>
+              <ChevronDown className={cn(
+                "h-3.5 w-3.5 text-muted-foreground/40 transition-transform duration-200",
+                dropdownOpen && "rotate-180"
+              )} />
+            </div>
+          </button>
 
-            <AnimatePresence>
-              {dropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-2 max-h-[220px] overflow-y-auto rounded-xl border border-border/40 bg-card divide-y divide-border/20">
-                    {Array.from({ length: 18 }, (_, i) => i + 1).map((n) => (
+          <AnimatePresence>
+            {dropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4">
+                  <div className="max-h-[240px] overflow-y-auto rounded-xl border border-border/30 bg-background divide-y divide-border/[0.06]">
+                    {[1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 18].map((n) => (
                       <button
                         key={n}
                         onClick={() => { setInstallments(n); setDropdownOpen(false); }}
                         className={cn(
                           "w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors min-h-[44px]",
                           installments === n
-                            ? "bg-primary/[0.06] text-primary font-medium"
-                            : "text-foreground hover:bg-muted/40"
+                            ? "bg-primary/[0.05] text-primary"
+                            : "text-foreground hover:bg-muted/30"
                         )}
                       >
-                        <span className="font-body inline-flex items-baseline gap-1">
+                        <span className="font-body text-[13px]">
                           <span className="font-mono tabular-nums" style={MONO_STYLE}>{n}</span>
-                          <span>× {n === 1 ? "parcela" : "parcelas"}</span>
+                          <span className="text-muted-foreground/60 ml-1">× {n === 1 ? "parcela" : "parcelas"}</span>
                         </span>
-                        <span className="font-mono font-semibold tabular-nums" style={MONO_STYLE}>
+                        <span className="font-mono font-semibold tabular-nums text-[13px]" style={MONO_STYLE}>
                           {formatBRL(total / n)}
-                          <span className="font-body font-normal text-muted-foreground/50 ml-1.5 text-[11px]">sem juros</span>
                         </span>
                       </button>
                     ))}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <p className="text-[11px] text-muted-foreground/50 font-body mt-3 text-center">
-              Condições sob consulta com sua consultora
-            </p>
-          </div>
+                  <p className="text-[11px] text-muted-foreground/40 font-body mt-2.5 text-center">
+                    Condições sob consulta
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* ── Inline CTA ── */}
+        {/* ────── Inline CTA ────── */}
         {validity.expired ? (
           <motion.a
             href={whatsappUpdateUrl}
