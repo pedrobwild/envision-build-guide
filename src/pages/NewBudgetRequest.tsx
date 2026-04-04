@@ -57,10 +57,10 @@ function PropertyRow({
   hint?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 py-2 group">
-      <div className="flex items-center gap-2 w-[160px] shrink-0 pt-2.5">
-        <Icon className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-        <span className="text-sm text-muted-foreground font-body truncate">
+    <div className="flex items-start gap-3 py-1.5 group/row rounded-lg hover:bg-muted/30 px-1 -mx-1 transition-colors">
+      <div className="flex items-center gap-2 w-[152px] shrink-0 pt-2.5">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 group-hover/row:text-muted-foreground/80 transition-colors" />
+        <span className="text-[13px] text-muted-foreground font-body truncate">
           {label}
           {required && <span className="text-destructive ml-0.5">*</span>}
         </span>
@@ -68,7 +68,7 @@ function PropertyRow({
       <div className="flex-1 min-w-0">
         {children}
         {hint && (
-          <p className="text-[11px] text-muted-foreground/60 font-body mt-1 ml-0.5">{hint}</p>
+          <p className="text-[11px] text-muted-foreground/50 font-body mt-0.5 ml-0.5">{hint}</p>
         )}
       </div>
     </div>
@@ -116,10 +116,12 @@ function NotionInput({
 /* ── Section divider with title ── */
 function SectionTitle({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
   return (
-    <div className="flex items-center gap-2 pt-6 pb-2 first:pt-0">
-      <Icon className="h-4 w-4 text-primary" />
-      <h2 className="text-sm font-display font-semibold text-foreground tracking-tight">{title}</h2>
-      <div className="flex-1 h-px bg-gradient-to-r from-border/60 to-transparent ml-2" />
+    <div className="flex items-center gap-2.5 pt-8 pb-3 first:pt-0">
+      <div className="h-6 w-6 rounded-md bg-primary/8 flex items-center justify-center">
+        <Icon className="h-3.5 w-3.5 text-primary" />
+      </div>
+      <h2 className="text-xs font-display font-bold text-foreground uppercase tracking-[0.08em]">{title}</h2>
+      <div className="flex-1 h-px bg-gradient-to-r from-border/40 to-transparent ml-1" />
     </div>
   );
 }
@@ -275,13 +277,13 @@ export default function NewBudgetRequest() {
   return (
     <div className="min-h-screen bg-background">
       {/* ── Sticky Header ── */}
-      <header className="sticky top-0 z-50 bg-card/80 glass border-b border-border/50 shadow-premium-sm">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-50 bg-card/85 backdrop-blur-xl border-b border-border/40 shadow-sm">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => navigate("/admin/solicitacoes")}
-              className="p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
+              className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
@@ -289,7 +291,7 @@ export default function NewBudgetRequest() {
               <h1 className="text-sm font-display font-bold text-foreground tracking-tight truncate">
                 Nova Solicitação
               </h1>
-              <p className="text-[11px] text-muted-foreground font-body">
+              <p className="text-[11px] text-muted-foreground/70 font-body">
                 Preencha o briefing para iniciar a produção
               </p>
             </div>
@@ -297,14 +299,14 @@ export default function NewBudgetRequest() {
 
           <div className="flex items-center gap-3 shrink-0">
             {/* Completion indicator */}
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="hidden sm:flex items-center gap-2.5">
+              <div className="w-24 h-1 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
                   style={{ width: `${completionPercent}%` }}
                 />
               </div>
-              <span className="text-[11px] text-muted-foreground font-body tabular-nums">
+              <span className="text-[11px] text-muted-foreground/60 font-mono tabular-nums w-8 text-right">
                 {completionPercent}%
               </span>
             </div>
@@ -314,7 +316,7 @@ export default function NewBudgetRequest() {
               form="budget-form"
               disabled={loading || !clientName.trim()}
               size="sm"
-              className="h-8 text-xs gap-1.5"
+              className="h-8 text-xs gap-1.5 shadow-sm"
             >
               {loading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -325,21 +327,28 @@ export default function NewBudgetRequest() {
             </Button>
           </div>
         </div>
+        {/* Progress bar under header */}
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-transparent">
+          <div
+            className="h-full bg-primary/60 rounded-r-full transition-all duration-700 ease-out"
+            style={{ width: `${completionPercent}%` }}
+          />
+        </div>
       </header>
 
       {/* ── Main form ── */}
       <form
         id="budget-form"
         onSubmit={handleSubmit}
-        className="max-w-3xl mx-auto px-6 py-6"
+        className="max-w-3xl mx-auto px-4 sm:px-6 py-6"
       >
         {/* Project name preview */}
         {projectName && (
-          <div className="mb-6 px-1">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-body">
-              <Sparkles className="h-3 w-3 text-primary/60" />
-              <span>Nome gerado:</span>
-              <span className="font-semibold text-foreground">{projectName}</span>
+          <div className="mb-6 px-1 py-2 rounded-lg bg-primary/3 border border-primary/8">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground font-body px-2">
+              <Sparkles className="h-3 w-3 text-primary/50" />
+              <span>Projeto:</span>
+              <span className="font-semibold text-foreground font-display tracking-tight">{projectName}</span>
             </div>
           </div>
         )}
@@ -611,23 +620,36 @@ export default function NewBudgetRequest() {
         </div>
 
         {/* ── Completion checklist (bottom) ── */}
-        <div className="rounded-xl border border-border/50 bg-muted/30 p-4 mb-8">
-          <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Checklist
-          </p>
+        <div className="rounded-xl border border-border/40 bg-card p-5 mb-8 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] font-display font-bold text-muted-foreground uppercase tracking-[0.08em]">
+              Checklist de preenchimento
+            </p>
+            <span className={cn(
+              "text-[11px] font-mono tabular-nums px-2 py-0.5 rounded-full",
+              completionPercent === 100
+                ? "bg-success/10 text-success"
+                : "bg-muted text-muted-foreground"
+            )}>
+              {completionItems.filter(i => i.done).length}/{completionItems.length}
+            </span>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {completionItems.map((item) => (
               <div
                 key={item.label}
                 className={cn(
-                  "flex items-center gap-1.5 text-xs font-body px-2.5 py-1.5 rounded-lg transition-colors",
+                  "flex items-center gap-2 text-xs font-body px-3 py-2 rounded-lg border transition-all duration-300",
                   item.done
-                    ? "text-success bg-success/10"
-                    : "text-muted-foreground bg-background"
+                    ? "text-success bg-success/5 border-success/15"
+                    : "text-muted-foreground/60 bg-muted/20 border-border/30"
                 )}
               >
-                <CheckCircle2 className={cn("h-3 w-3 shrink-0", item.done ? "text-success" : "text-muted-foreground/30")} />
-                {item.label}
+                <CheckCircle2 className={cn(
+                  "h-3.5 w-3.5 shrink-0 transition-colors",
+                  item.done ? "text-success" : "text-muted-foreground/20"
+                )} />
+                <span className={item.done ? "font-medium" : ""}>{item.label}</span>
               </div>
             ))}
           </div>
@@ -635,10 +657,10 @@ export default function NewBudgetRequest() {
 
         {/* ── Bottom action (mobile-friendly) ── */}
         <div className="flex justify-end gap-3 pb-10 sm:hidden">
-          <Button type="button" variant="outline" onClick={() => navigate("/admin/solicitacoes")}>
+          <Button type="button" variant="outline" size="sm" onClick={() => navigate("/admin/solicitacoes")}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading || !clientName.trim()} className="gap-2">
+          <Button type="submit" disabled={loading || !clientName.trim()} size="sm" className="gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             {loading ? "Criando…" : "Criar Solicitação"}
           </Button>
