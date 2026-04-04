@@ -1225,7 +1225,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         )}
 
                         {/* [N itens] — text-xs muted */}
-                        <span className="text-[10px] sm:text-xs text-muted-foreground ml-1.5 sm:ml-2 shrink-0 tabular-nums">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground font-body ml-1.5 sm:ml-2 shrink-0 tabular-nums">
                           {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                         </span>
 
