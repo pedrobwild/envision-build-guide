@@ -614,7 +614,7 @@ function SortableItemRow({
             />
           </div>
         </div>
-      )
+      )}
 
       {/* Item image management — only in expanded */}
       {showExpanded && (
