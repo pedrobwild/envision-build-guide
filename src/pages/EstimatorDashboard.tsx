@@ -157,7 +157,7 @@ export default function EstimatorDashboard() {
     let budgetQuery = supabase
       .from("budgets")
       .select(
-        "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context, version_number, version_group_id, is_current_version"
+        "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context, version_number, version_group_id, is_current_version, sequential_code"
       )
       .order("created_at", { ascending: false });
     if (!adminCheck) {
