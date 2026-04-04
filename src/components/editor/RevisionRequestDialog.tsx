@@ -120,8 +120,8 @@ export function RevisionRequestDialog({
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
-            <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-900/30">
-              <RotateCcw className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <div className="p-1.5 rounded-md bg-warning/10">
+              <RotateCcw className="h-4 w-4 text-warning" />
             </div>
             Solicitar Revisão ao Orçamentista
           </DialogTitle>

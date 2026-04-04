@@ -111,7 +111,7 @@ export function ItemImageUpload({ images, onImagesChange, budgetId, itemLabel }:
                 className="p-1 rounded hover:bg-white/20 transition-colors"
                 title="Definir como principal"
               >
-                <Star className={cn("h-3 w-3", img.isPrimary ? "text-yellow-400 fill-yellow-400" : "text-white")} />
+                <Star className={cn("h-3 w-3", img.isPrimary ? "text-primary fill-primary" : "text-white")} />
               </button>
               <button
                 onClick={() => removeImage(img.id)}
