@@ -53,6 +53,8 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateBudgetId, setTemplateBudgetId] = useState<string | null>(null);
   const PAGE_SIZE = 10;
 
   useEffect(() => {
