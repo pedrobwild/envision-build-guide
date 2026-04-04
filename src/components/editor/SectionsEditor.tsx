@@ -151,7 +151,7 @@ function ItemImageInline({
             <img src={img.url} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5">
               <button onClick={(e) => { e.stopPropagation(); setPrimary(img.id); }} className="p-0.5 rounded hover:bg-white/20" title="Principal">
-                <Star className={cn("h-2.5 w-2.5", img.is_primary ? "text-yellow-400 fill-yellow-400" : "text-white")} />
+                <Star className={cn("h-2.5 w-2.5", img.is_primary ? "text-primary fill-primary" : "text-white")} />
               </button>
               <button onClick={(e) => { e.stopPropagation(); removeImage(img.id); }} className="p-0.5 rounded hover:bg-white/20" title="Remover">
                 <X className="h-2.5 w-2.5 text-white" />
@@ -423,7 +423,7 @@ function SortableItemRow({
         "group/item transition-colors duration-100 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
         compact && !rowExpanded ? "h-11" : "",
         isOptional && "border-l-2 border-dashed border-muted-foreground/30",
-        searchMatch && "bg-warning/5 hover:bg-warning/8",
+        searchMatch && "bg-primary/5 hover:bg-primary/8",
         isDragging && "bg-muted/40 shadow-lg rounded border-b-0"
       )}
     >
@@ -1131,7 +1131,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         const { avgBdi, hasData } = calcGlobalBdi(sections);
         if (!hasData || avgBdi >= 20) return null;
         return (
-          <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded border border-warning/20 bg-warning/5 text-xs font-body text-warning">
+          <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded border border-border bg-muted/30 text-xs font-body text-muted-foreground">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
             <span>BDI médio geral está em <strong className="font-mono">{avgBdi.toFixed(1)}%</strong> — abaixo de 20%.</span>
           </div>

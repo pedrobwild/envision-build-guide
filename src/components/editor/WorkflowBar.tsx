@@ -301,7 +301,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
                   : dueToday
                   ? "bg-warning/10 text-warning border-warning/20"
                   : daysLeft !== null && daysLeft <= 2
-                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  ? "bg-muted text-muted-foreground border-border"
                   : "text-muted-foreground border-border"
               }`}
             >
@@ -331,7 +331,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         {budget.internal_notes && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-body cursor-default">
+              <span className="inline-flex items-center gap-1 text-xs text-warning font-body cursor-default">
                 <AlertTriangle className="h-3 w-3" />
                 Obs. internas
               </span>

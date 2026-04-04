@@ -184,7 +184,7 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
 
                   {/* Revision reason */}
                   {reason && (
-                    <div className="mt-1 px-2.5 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400 font-body">
+                    <div className="mt-1 px-2.5 py-1.5 rounded-md bg-warning/5 border border-warning/15 text-xs text-muted-foreground font-body">
                       📝 Revisão solicitada: {reason}
                     </div>
                   )}

@@ -122,7 +122,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
     approved: "text-primary",
     archived: "text-muted-foreground",
     superseded: "text-muted-foreground",
-    in_progress: "text-amber-600",
+    in_progress: "text-warning",
     ready: "text-green-600",
   };
 

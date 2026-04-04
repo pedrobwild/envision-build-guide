@@ -319,16 +319,16 @@ export default function BudgetEditorV2() {
           {/* Only show published-version warning if the budget was actually sent to the client */}
           {budget.is_published_version && ["sent_to_client", "minuta_solicitada", "contrato_fechado"].includes(budget.internal_status ?? "") ? (
             /* Scenario A — Editing published version */
-            <Alert className="mt-4 border-amber-500/40 bg-amber-500/10">
-              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <Alert className="mt-4 border-warning/30 bg-warning/5">
+              <AlertTriangle className="h-4 w-4 text-warning" />
               <AlertDescription className="flex items-center justify-between gap-4">
-                <span className="text-sm font-body text-amber-800 dark:text-amber-300">
+                <span className="text-sm font-body text-foreground">
                   ⚠️ Esta é a versão publicada. O cliente pode ver suas edições em tempo real. Recomendamos criar uma nova versão para editar com segurança.
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="shrink-0 gap-1.5 border-amber-500/50 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                  className="shrink-0 gap-1.5 border-border text-foreground hover:bg-muted"
                   disabled={creatingVersionFromBanner}
                   onClick={async () => {
                     if (!user) return;
@@ -394,7 +394,7 @@ export default function BudgetEditorV2() {
             <TabsList className="w-full justify-start bg-transparent border-b border-border/60 rounded-none h-auto p-0 gap-0">
               {[
                 { value: "planilha", label: "Planilha", icon: <ClipboardList className="h-3.5 w-3.5" />, badge: null },
-                { value: "contexto", label: "Contexto", icon: <User className="h-3.5 w-3.5" />, badge: missingContextFields ? "!" : null, badgeClass: "bg-amber-500/20 text-amber-600 dark:text-amber-400" },
+                { value: "contexto", label: "Contexto", icon: <User className="h-3.5 w-3.5" />, badge: missingContextFields ? "!" : null, badgeClass: "bg-warning/10 text-warning" },
                 { value: "midia", label: "Mídia", icon: <ImageIcon className="h-3.5 w-3.5" />, badge: mediaCount > 0 ? String(mediaCount) : null, badgeClass: "bg-primary/10 text-primary" },
                 { value: "versoes", label: "Versões", icon: <ScrollText className="h-3.5 w-3.5" />, badge: null },
               ].map(tab => (

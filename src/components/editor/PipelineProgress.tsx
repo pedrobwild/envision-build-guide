@@ -95,7 +95,7 @@ export function PipelineProgress({ internalStatus }: PipelineProgressProps) {
                   className={`text-[11px] font-body whitespace-nowrap ${
                     isCurrent
                       ? internalStatus === "revision_requested"
-                        ? "text-amber-600 dark:text-amber-400 font-semibold"
+                        ? "text-warning font-semibold"
                         : "text-foreground font-semibold"
                       : isCompleted
                       ? "text-muted-foreground"
