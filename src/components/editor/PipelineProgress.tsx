@@ -42,7 +42,7 @@ export function PipelineProgress({ internalStatus }: PipelineProgressProps) {
   }
 
   return (
-    <div className="px-4 sm:px-6 py-3">
+    <div className="px-4 sm:px-6 py-3 rounded-lg bg-muted/20">
       <div className="flex items-center">
         {STAGES.map((stage, i) => {
           const isCompleted = i < currentIdx;
