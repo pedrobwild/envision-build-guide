@@ -1,11 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigation, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 
 /**
- * Global top progress bar that activates on:
- * 1. Route transitions (via React Router)
- * 2. Fetch/XHR network requests (via monkey-patching fetch)
+ * Global top progress bar that activates on
+ * Fetch/XHR network requests to Supabase/edge-functions.
  */
 export function GlobalLoadingBar() {
   const [activeRequests, setActiveRequests] = useState(0);
@@ -45,7 +43,6 @@ export function GlobalLoadingBar() {
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
       const url = typeof args[0] === "string" ? args[0] : (args[0] as Request)?.url ?? "";
-      // Only track supabase/edge-function calls, not static assets
       const isTracked =
         url.includes("supabase.co") || url.includes("/functions/");
       if (isTracked) increment();
@@ -79,31 +76,26 @@ export function GlobalLoadingBar() {
     };
   }, [visible, progress]);
 
-  // Route change flash
+  // Cleanup hide timer on unmount / route change
   useEffect(() => {
     return () => {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, [location.pathname]);
 
+  if (!visible) return null;
+
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          className="fixed top-0 left-0 right-0 z-[100] h-[2.5px] pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <motion.div
-            className="h-full bg-primary origin-left"
-            style={{ width: `${progress}%` }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          />
-          <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-primary/40 to-transparent rounded-full" />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div
+      className="fixed top-0 left-0 right-0 z-[100] h-[2.5px] pointer-events-none"
+      role="progressbar"
+      aria-valuenow={Math.round(progress)}
+    >
+      <div
+        className="h-full bg-primary origin-left transition-all duration-200 ease-out"
+        style={{ width: `${progress}%` }}
+      />
+      <div className="absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-primary/40 to-transparent rounded-full" />
+    </div>
   );
 }
