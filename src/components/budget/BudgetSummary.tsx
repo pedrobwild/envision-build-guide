@@ -300,7 +300,9 @@ function AdjustmentsList({ adjustments }: { adjustments: any[] }) {
   );
 }
 
-function TotalCard({ total }: { total: number }) {
+function TotalCard({ total, installments }: { total: number; installments: number }) {
+  const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
+
   return (
     <div
       className="mx-5 mb-4 rounded-xl border border-primary/10 px-5 py-5 relative overflow-hidden"
@@ -328,6 +330,21 @@ function TotalCard({ total }: { total: number }) {
             style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
           />
         </div>
+
+        {/* Installment preview */}
+        <div className="flex items-baseline gap-1.5 flex-wrap">
+          <span className="text-[12px] font-body text-muted-foreground">ou</span>
+          <span
+            className="font-mono text-sm font-semibold text-foreground tabular-nums"
+            style={MONO_STYLE}
+          >
+            {formatBRL(total / installments)}
+          </span>
+          <span className="text-[12px] font-body text-muted-foreground">
+            em {installments}× sem juros
+          </span>
+        </div>
+
         <div className="flex items-center gap-1.5 pt-3 border-t border-primary/8">
           <Shield className="h-3.5 w-3.5 text-primary/40" />
           <span className="text-[11px] text-muted-foreground font-body">
