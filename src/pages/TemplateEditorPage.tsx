@@ -338,6 +338,8 @@ export default function TemplateEditorPage() {
     setSections(enriched);
     setExpandedSections(new Set(sectionList.map((s) => s.id)));
     setLoading(false);
+    // Allow auto-save to kick in only after initial load
+    setTimeout(() => { isInitialLoadRef.current = false; }, 100);
   }, [templateId, navigate]);
 
   useEffect(() => { loadTemplate(); }, [loadTemplate]);
