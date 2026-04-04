@@ -286,7 +286,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         <div className="h-4 w-px bg-border hidden sm:block" />
 
         {/* Priority */}
-        <Badge variant="outline" className={`${prioInfo.color} text-xs font-body`}>
+        <Badge variant="outline" className={`${prioInfo.color} text-[10px] sm:text-xs font-body hidden sm:inline-flex`}>
           {prioInfo.label}
         </Badge>
 
