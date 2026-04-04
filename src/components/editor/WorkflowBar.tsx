@@ -276,17 +276,17 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card px-4 py-3 shadow-sm">
-      <div className="flex items-center gap-3 flex-wrap">
+    <div className="rounded-xl border border-border/60 bg-card px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm">
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
         {/* Read-only status badge */}
-        <Badge className={`${getStatusBadgeClass(internalStatus)} text-xs font-body border`}>
-          {statusInfo.icon} {statusInfo.label}
+        <Badge className={`${getStatusBadgeClass(internalStatus)} text-[10px] sm:text-xs font-body border`}>
+          {statusInfo.icon} <span className="hidden sm:inline">{statusInfo.label}</span>
         </Badge>
 
         <div className="h-4 w-px bg-border hidden sm:block" />
 
         {/* Priority */}
-        <Badge variant="outline" className={`${prioInfo.color} text-xs font-body`}>
+        <Badge variant="outline" className={`${prioInfo.color} text-[10px] sm:text-xs font-body hidden sm:inline-flex`}>
           {prioInfo.label}
         </Badge>
 
@@ -315,12 +315,12 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           </>
         )}
 
-        <div className="h-4 w-px bg-border hidden sm:block" />
+        <div className="h-4 w-px bg-border/60 hidden sm:block" />
 
         {/* Ownership */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-body cursor-default">
+            <span className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground font-body cursor-default">
               <User className="h-3 w-3" />
               {getProfileName(budget.commercial_owner_id)}
             </span>
@@ -331,7 +331,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         {budget.internal_notes && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-flex items-center gap-1 text-xs text-warning font-body cursor-default">
+              <span className="hidden sm:inline-flex items-center gap-1 text-xs text-warning font-body cursor-default">
                 <AlertTriangle className="h-3 w-3" />
                 Obs. internas
               </span>
@@ -353,10 +353,10 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               data-workflow-primary
               variant="default"
               size="sm"
-              className={`h-7 text-xs gap-1.5 ${
-                internalStatus === "revision_requested" ? "bg-orange-500 hover:bg-orange-600 text-white" :
-                internalStatus === "minuta_solicitada" ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
-                internalStatus === "delivered_to_sales" ? "bg-teal-600 hover:bg-teal-700 text-white" :
+              className={`h-7 text-[10px] sm:text-xs gap-1 sm:gap-1.5 ${
+                internalStatus === "revision_requested" ? "bg-warning hover:bg-warning/90 text-warning-foreground" :
+                internalStatus === "minuta_solicitada" ? "bg-success hover:bg-success/90 text-success-foreground" :
+                internalStatus === "delivered_to_sales" ? "bg-success hover:bg-success/90 text-success-foreground" :
                 ""
               }`}
               onClick={handlePrimaryClick}
@@ -365,7 +365,8 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               {internalStatus === "ready_for_review" && <PackageCheck className="h-3.5 w-3.5" />}
               {internalStatus === "delivered_to_sales" && <Send className="h-3.5 w-3.5" />}
               {internalStatus === "minuta_solicitada" && <Handshake className="h-3.5 w-3.5" />}
-              {primaryTransition.label}
+              <span className="hidden sm:inline">{primaryTransition.label}</span>
+              <span className="sm:hidden">Avançar</span>
             </Button>
           )}
 
@@ -375,10 +376,11 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               variant="outline"
               size="sm"
               onClick={() => setRevisionModalOpen(true)}
-              className="h-7 text-xs border-orange-400 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 gap-2"
+              className="h-7 text-[10px] sm:text-xs border-warning/40 text-warning hover:bg-warning/5 gap-1 sm:gap-2"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              Solicitar Revisão
+              <span className="hidden sm:inline">Solicitar Revisão</span>
+              <span className="sm:hidden">Revisão</span>
             </Button>
           )}
 

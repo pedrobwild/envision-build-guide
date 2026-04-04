@@ -119,33 +119,28 @@ export function StickyEditorHeader({
   return (
     <div className="sticky top-0 z-50 bg-card/85 backdrop-blur-xl border-b border-border/40 shadow-sm">
       {/* Layer 1 — Breadcrumb + status + action + auto-save */}
-      <div className="max-w-[1200px] mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           <button
             onClick={() => navigate(backPath)}
-            className="p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          <div className="flex items-center gap-2 text-sm font-body text-muted-foreground min-w-0">
-            <span className="hidden sm:inline shrink-0">Orçamentos</span>
-            <span className="hidden sm:inline shrink-0 text-border">/</span>
-            {budget.sequential_code && (
-              <span className="hidden sm:inline text-[10px] font-mono text-muted-foreground/60 shrink-0">{budget.sequential_code}</span>
-            )}
-            <span className="text-foreground font-semibold truncate max-w-[200px] tracking-tight">
-              {truncatedName}
-            </span>
-          </div>
+          <span className="text-foreground font-semibold truncate text-sm tracking-tight min-w-0">
+            {truncatedName}
+          </span>
 
-          <Badge className={cn("text-[10px] font-body border shrink-0 rounded-full px-2.5", getStatusBadgeClass(internalStatus))}>
-            {statusInfo.icon} {statusInfo.label}
+          <Badge className={cn("text-[10px] font-body border shrink-0 rounded-full px-2", getStatusBadgeClass(internalStatus))}>
+            {statusInfo.icon} <span className="hidden sm:inline ml-1">{statusInfo.label}</span>
           </Badge>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <AutoSaveChip status={saveStatus} lastSavedAt={lastSavedAt} onRetry={onRetrySave} />
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="hidden sm:block">
+            <AutoSaveChip status={saveStatus} lastSavedAt={lastSavedAt} onRetry={onRetrySave} />
+          </div>
 
           {onPublish && (
             <Button
@@ -159,7 +154,8 @@ export function StickyEditorHeader({
               ) : (
                 <Save className="h-3.5 w-3.5" />
               )}
-              {publishing ? "Publicando…" : "Salvar e Publicar"}
+              <span className="hidden sm:inline">{publishing ? "Publicando…" : "Salvar e Publicar"}</span>
+              <span className="sm:hidden">{publishing ? "…" : "Salvar"}</span>
             </Button>
           )}
 
@@ -170,48 +166,44 @@ export function StickyEditorHeader({
               onClick={primaryAction.onClick}
             >
               {primaryAction.icon}
-              {primaryAction.label}
+              <span className="hidden sm:inline">{primaryAction.label}</span>
             </Button>
           )}
         </div>
       </div>
 
-      {/* Layer 2 — Financial totals */}
+      {/* Layer 2 — Financial totals (compact grid on mobile) */}
       <div className="border-t border-border/20">
-        <div className="max-w-[1200px] mx-auto px-3 sm:px-6 h-10 flex items-center gap-3 sm:gap-6 text-xs font-body overflow-x-auto scrollbar-none">
-          <span className="inline-flex items-center gap-2">
-            <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-medium">Venda</span>
-            <span className="font-bold tabular-nums text-success tracking-tight">
-              {formatBRL(totals.sale)}
-            </span>
-          </span>
+        <div className="max-w-[1200px] mx-auto px-3 sm:px-6 py-1.5 sm:py-0 sm:h-10 flex items-center">
+          <div className="grid grid-cols-4 gap-2 sm:flex sm:gap-6 w-full text-xs font-body">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Venda</span>
+              <span className="font-bold tabular-nums text-success tracking-tight text-[11px] sm:text-xs">
+                {formatBRL(totals.sale)}
+              </span>
+            </div>
 
-          <span className="w-px h-4 bg-border/60" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Custo</span>
+              <span className="font-semibold tabular-nums text-muted-foreground tracking-tight text-[11px] sm:text-xs">
+                {formatBRL(totals.cost)}
+              </span>
+            </div>
 
-          <span className="inline-flex items-center gap-2">
-            <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-medium">Custo</span>
-            <span className="font-semibold tabular-nums text-muted-foreground tracking-tight">
-              {formatBRL(totals.cost)}
-            </span>
-          </span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">BDI</span>
+              <span className="font-semibold tabular-nums text-primary tracking-tight text-[11px] sm:text-xs">
+                {totals.bdiPercent.toFixed(1)}%
+              </span>
+            </div>
 
-          <span className="w-px h-4 bg-border/60" />
-
-          <span className="inline-flex items-center gap-2">
-            <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-medium">BDI</span>
-            <span className="font-semibold tabular-nums text-primary tracking-tight">
-              {totals.bdiPercent.toFixed(1)}%
-            </span>
-          </span>
-
-          <span className="w-px h-4 bg-border/60" />
-
-          <span className="inline-flex items-center gap-2">
-            <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-medium">Margem</span>
-            <span className={cn("font-bold tabular-nums tracking-tight", marginColor)}>
-              {formatBRL(totals.margin)} · {totals.marginPercent.toFixed(1)}%
-            </span>
-          </span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem</span>
+              <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
+                {totals.marginPercent.toFixed(1)}%
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
