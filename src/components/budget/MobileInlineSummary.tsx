@@ -210,12 +210,32 @@ export function MobileInlineSummary({
               className="w-full flex items-center justify-between px-3.5 py-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 active:bg-muted/60 transition-colors min-h-[48px]"
             >
               <span className="text-sm font-body font-medium text-foreground">
-                {installments}× {installments === 1 ? "parcela" : "parcelas"}
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={installments}
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                    className="inline-block"
+                  >
+                    {installments}× {installments === 1 ? "parcela" : "parcelas"}
+                  </motion.span>
+                </AnimatePresence>
               </span>
               <div className="flex items-center gap-2.5">
-                <span className="text-sm font-mono font-semibold tabular-nums text-primary">
-                  {formatBRL(total / installments)}
-                </span>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={installments}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                    className="text-sm font-mono font-semibold tabular-nums text-primary inline-block"
+                  >
+                    {formatBRL(total / installments)}
+                  </motion.span>
+                </AnimatePresence>
                 <ChevronDown className={cn(
                   "h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200",
                   dropdownOpen && "rotate-180"
