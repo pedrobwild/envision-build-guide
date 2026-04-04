@@ -384,7 +384,7 @@ export default function BudgetInternalDetail() {
         <div className={`border-b px-4 sm:px-6 py-3 ${
           budget.internal_status === "blocked"
             ? "bg-destructive/5 border-destructive/20"
-            : "bg-amber-50 border-amber-200"
+            : "bg-warning/5 border-warning/20"
         }`}>
           <div className="max-w-6xl mx-auto flex items-center gap-3">
             {budget.internal_status === "blocked" ? (
