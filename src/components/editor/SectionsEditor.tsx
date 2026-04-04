@@ -1035,9 +1035,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             </div>
                             <div className="space-y-0.5">
                               <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">BDI</label>
-                              <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
-                                {sectionCostTotal > 0 ? (((sectionSaleTotal / sectionCostTotal) - 1) * 100).toFixed(1) : "0.0"}%
-                              </div>
+                              <BdiDisplay value={sectionCostTotal > 0 ? ((sectionSaleTotal / sectionCostTotal) - 1) * 100 : 0} />
                             </div>
                             <div className="space-y-0.5">
                               <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
