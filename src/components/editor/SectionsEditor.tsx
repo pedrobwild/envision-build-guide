@@ -1174,22 +1174,22 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                       {/* Section header — 48px fixed, Linear pattern */}
                       <div
                         className={cn(
-                          "h-12 px-3 flex items-center cursor-pointer transition-colors duration-100",
+                          "h-12 px-2 sm:px-3 flex items-center cursor-pointer transition-colors duration-100",
                           isExpanded ? "bg-muted/20 hover:bg-muted/30" : "hover:bg-muted/30"
                         )}
                         onClick={() => toggleSection(section.id)}
                       >
-                        {/* [⋮⋮] drag — 8px zone, hover-only */}
+                        {/* [⋮⋮] drag — hidden on mobile, visible on hover desktop */}
                         <button
                           {...dragListeners}
-                          className="w-5 flex-shrink-0 flex items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/section:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
+                          className="hidden sm:flex w-5 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/section:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <GripVertical className="h-3.5 w-3.5" />
                         </button>
 
-                        {/* [▶/▼] chevron — 24px zone */}
-                        <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                        {/* [▶/▼] chevron */}
+                        <div className="w-5 sm:w-6 flex-shrink-0 flex items-center justify-center">
                           <ChevronRight className={cn(
                             "h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 ease-out",
                             isExpanded && "rotate-90"
@@ -1197,25 +1197,25 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         </div>
 
                         {/* [Nome da Seção] — auto, truncate */}
-                        <span className="text-sm font-semibold text-foreground truncate min-w-0">
+                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate min-w-0">
                           {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                         </span>
 
-                        {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/30 ml-1.5 flex-shrink-0" />}
+                        {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/30 ml-1 flex-shrink-0" />}
                         {section.is_optional && (
-                          <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded bg-muted text-muted-foreground flex-shrink-0">
+                          <span className="ml-1 px-1 py-0.5 text-[9px] sm:text-[10px] font-medium rounded bg-muted text-muted-foreground flex-shrink-0">
                             OPT
                           </span>
                         )}
 
                         {/* [N itens] — text-xs muted */}
-                        <span className="text-xs text-muted-foreground ml-2 shrink-0 tabular-nums">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground ml-1.5 sm:ml-2 shrink-0 tabular-nums">
                           {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                         </span>
 
-                        {/* Right zone: [% bar] [R$ total] */}
-                        <div className="ml-auto flex items-center gap-2 shrink-0">
-                          {/* [% barra] — mini progress bar */}
+                        {/* Right zone: [R$ total] */}
+                        <div className="ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
+                          {/* [% barra] — hidden on mobile */}
                           <div className="hidden sm:flex items-center gap-1.5">
                             <div className="h-1 rounded-full bg-primary/10 overflow-hidden" style={{ width: '80px' }}>
                               <div
@@ -1228,14 +1228,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             </span>
                           </div>
 
-                          {/* [R$ total] — monospace semibold */}
-                          <span className="text-sm font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
+                          {/* [R$ total] */}
+                          <span className="text-xs sm:text-sm font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
                             {formatBRL(sectionSaleTotal)}
                           </span>
                         </div>
 
-                        {/* [⋮] menu — 24px zone, hover-only */}
-                        <div className="w-6 flex-shrink-0 flex items-center justify-center opacity-0 group-hover/section:opacity-100 transition-opacity duration-100">
+                        {/* [⋮] menu — always visible on mobile via tap, hover on desktop */}
+                        <div className="w-6 flex-shrink-0 flex items-center justify-center sm:opacity-0 sm:group-hover/section:opacity-100 transition-opacity duration-100">
                           <SectionContextMenu
                             section={section}
                             onRename={(name) => updateSection(section.id, "title", name)}
