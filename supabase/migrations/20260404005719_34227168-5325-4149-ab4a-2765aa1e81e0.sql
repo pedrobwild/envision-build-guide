@@ -1,0 +1,1 @@
+UPDATE public.budgets SET internal_status = 'requested' WHERE id = '03f764c4-a2e3-48f6-bdb5-bc0827ce8070' AND internal_status = 'sent_to_client';
