@@ -393,7 +393,7 @@ export default function BudgetInternalDetail() {
               <PauseCircle className="h-4 w-4 text-warning shrink-0" />
             )}
             <p className={`text-sm font-body font-medium flex-1 ${
-              budget.internal_status === "blocked" ? "text-destructive" : "text-amber-800"
+              budget.internal_status === "blocked" ? "text-destructive" : "text-warning"
             }`}>
               {budget.internal_status === "blocked"
                 ? "Esta demanda está bloqueada. Verifique as notas internas para detalhes."
