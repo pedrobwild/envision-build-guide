@@ -423,7 +423,7 @@ function SortableItemRow({
         "group/item transition-colors duration-100 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
         compact && !rowExpanded ? "h-11" : "",
         isOptional && "border-l-2 border-dashed border-muted-foreground/30",
-        searchMatch && "bg-warning/5 hover:bg-warning/8",
+        searchMatch && "bg-primary/5 hover:bg-primary/8",
         isDragging && "bg-muted/40 shadow-lg rounded border-b-0"
       )}
     >
