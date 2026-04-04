@@ -5,14 +5,29 @@ import { toast } from "sonner";
 import { formatBRL } from "@/lib/formatBRL";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Save, Plus, Trash2, GripVertical, ChevronDown, ChevronRight,
-  LayoutTemplate, Loader2, MoreVertical, Package, Pencil,
+  LayoutTemplate, Loader2, MoreVertical, Package,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -141,6 +156,95 @@ function SectionMenu({
   );
 }
 
+// ─── Sortable section wrapper ────────────────────────────────────
+
+function SortableSectionCard({
+  section,
+  children,
+}: {
+  section: TemplateSectionData;
+  children: (dragListeners: any) => React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      {children(listeners)}
+    </div>
+  );
+}
+
+// ─── Sortable item row ──────────────────────────────────────────
+
+function SortableItemRow({
+  item,
+  sectionId,
+  onUpdate,
+  onDelete,
+}: {
+  item: TemplateItemData;
+  sectionId: string;
+  onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
+  onDelete: (sectionId: string, itemId: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  const saleTotal = calcItemSaleTotal(item);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className="grid grid-cols-[1fr_80px_60px_100px_70px_100px_36px] gap-px items-center px-4 py-1 border-t border-border/20 hover:bg-muted/20 transition-colors group"
+    >
+      <div className="flex items-center gap-1.5 min-w-0">
+        <button {...listeners} className="cursor-grab active:cursor-grabbing shrink-0 touch-none">
+          <GripVertical className="h-3 w-3 text-muted-foreground/20" />
+        </button>
+        <input
+          type="text"
+          value={item.title}
+          onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
+          className="flex-1 bg-transparent border-none outline-none text-sm text-foreground font-body truncate h-8 focus:ring-0"
+          placeholder="Nome do item"
+        />
+      </div>
+      <input
+        type="text"
+        value={item.unit ?? ""}
+        onChange={(e) => onUpdate(sectionId, item.id, "unit", e.target.value || null)}
+        className="h-8 px-2 bg-transparent border-none outline-none text-sm text-right text-muted-foreground font-body focus:ring-0 hover:border-border"
+        placeholder="un"
+      />
+      <NumInput value={item.qty} onChange={(v) => onUpdate(sectionId, item.id, "qty", v)} />
+      <NumInput value={item.internal_unit_price} onChange={(v) => onUpdate(sectionId, item.id, "internal_unit_price", v)} />
+      <NumInput value={item.bdi_percentage} onChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)} className="text-muted-foreground" />
+      <span className="text-sm font-mono tabular-nums text-right text-foreground pr-1">
+        {saleTotal > 0 ? formatBRL(saleTotal) : "—"}
+      </span>
+      <button
+        onClick={() => onDelete(sectionId, item.id)}
+        className="h-7 w-7 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10 transition-all"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 // ─── Main page ───────────────────────────────────────────────────
 
 export default function TemplateEditorPage() {
@@ -151,6 +255,11 @@ export default function TemplateEditorPage() {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   // ─── Load ────────────────────────────────────────────────────
   const loadTemplate = useCallback(async () => {
@@ -319,6 +428,57 @@ export default function TemplateEditorPage() {
     toast.success("Seção excluída");
   };
 
+  // ─── Drag & drop: sections ──────────────────────────────────
+  const handleSectionDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sections.findIndex((s) => s.id === active.id);
+    const newIndex = sections.findIndex((s) => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(sections, oldIndex, newIndex).map((s, i) => ({
+      ...s,
+      order_index: i,
+    }));
+    setSections(reordered);
+
+    // Persist
+    await Promise.all(
+      reordered.map((s) =>
+        supabase.from("budget_template_sections").update({ order_index: s.order_index }).eq("id", s.id)
+      )
+    );
+  };
+
+  // ─── Drag & drop: items within a section ────────────────────
+  const handleItemDragEnd = (sectionId: string) => async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setSections((prev) =>
+      prev.map((s) => {
+        if (s.id !== sectionId) return s;
+        const oldIdx = s.items.findIndex((i) => i.id === active.id);
+        const newIdx = s.items.findIndex((i) => i.id === over.id);
+        if (oldIdx === -1 || newIdx === -1) return s;
+        const reordered = arrayMove(s.items, oldIdx, newIdx).map((item, i) => ({
+          ...item,
+          order_index: i,
+        }));
+
+        // Persist in background
+        Promise.all(
+          reordered.map((item) =>
+            supabase.from("budget_template_items").update({ order_index: item.order_index }).eq("id", item.id)
+          )
+        );
+
+        return { ...s, items: reordered };
+      })
+    );
+  };
+
   // ─── Item mutations ──────────────────────────────────────────
   const updateItem = (sectionId: string, itemId: string, field: string, value: any) => {
     setSections((prev) =>
@@ -430,133 +590,106 @@ export default function TemplateEditorPage() {
         )}
       </div>
 
-      {/* Sections */}
-      <div className="space-y-3">
-        {sections.map((section, sIdx) => {
-          const isExpanded = expandedSections.has(section.id);
-          const sectionCost = calcSectionCostTotal(section);
-          const sectionSale = calcSectionSaleTotal(section);
+      {/* Sections with DnD */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+        <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {sections.map((section) => {
+              const isExpanded = expandedSections.has(section.id);
+              const sectionSale = calcSectionSaleTotal(section);
 
-          return (
-            <div key={section.id} className="rounded-md border border-border/60 bg-card overflow-hidden">
-              {/* Section header */}
-              <button
-                className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
-                onClick={() => toggleSection(section.id)}
-              >
-                <GripVertical className="h-4 w-4 text-muted-foreground/30 shrink-0" />
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                )}
-                <input
-                  type="text"
-                  value={section.title}
-                  onChange={(e) => updateSection(section.id, "title", e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-foreground font-body"
-                  placeholder="Nome da seção"
-                />
-                {section.is_optional && (
-                  <Badge variant="secondary" className="text-[10px] shrink-0">Opcional</Badge>
-                )}
-                <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
-                  {section.items.length} itens
-                </span>
-                {sectionSale > 0 && (
-                  <span className="text-xs font-medium text-foreground font-mono tabular-nums shrink-0">
-                    {formatBRL(sectionSale)}
-                  </span>
-                )}
-                <SectionMenu
-                  onDuplicate={() => duplicateSection(section)}
-                  onDelete={() => deleteSection(section.id)}
-                />
-              </button>
-
-              {/* Items table */}
-              {isExpanded && (
-                <div className="border-t border-border/40">
-                  {/* Table header */}
-                  <div className="grid grid-cols-[1fr_80px_60px_100px_70px_100px_36px] gap-px bg-muted/50 px-4 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground font-body">
-                    <span>Item</span>
-                    <span className="text-right">Unidade</span>
-                    <span className="text-right">Qtd</span>
-                    <span className="text-right">Custo Unit.</span>
-                    <span className="text-right">BDI %</span>
-                    <span className="text-right">Venda Total</span>
-                    <span />
-                  </div>
-
-                  {/* Items */}
-                  {section.items.map((item) => {
-                    const saleTotal = calcItemSaleTotal(item);
-                    return (
-                      <div
-                        key={item.id}
-                        className="grid grid-cols-[1fr_80px_60px_100px_70px_100px_36px] gap-px items-center px-4 py-1 border-t border-border/20 hover:bg-muted/20 transition-colors group"
+              return (
+                <SortableSectionCard key={section.id} section={section}>
+                  {(dragListeners) => (
+                    <div className="rounded-md border border-border/60 bg-card overflow-hidden">
+                      {/* Section header */}
+                      <button
+                        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+                        onClick={() => toggleSection(section.id)}
                       >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <GripVertical className="h-3 w-3 text-muted-foreground/20 shrink-0" />
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(e) => updateItem(section.id, item.id, "title", e.target.value)}
-                            className="flex-1 bg-transparent border-none outline-none text-sm text-foreground font-body truncate h-8 focus:ring-0"
-                            placeholder="Nome do item"
-                          />
-                        </div>
+                        <span {...dragListeners} className="cursor-grab active:cursor-grabbing shrink-0 touch-none" onClick={(e) => e.stopPropagation()}>
+                          <GripVertical className="h-4 w-4 text-muted-foreground/30" />
+                        </span>
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
                         <input
                           type="text"
-                          value={item.unit ?? ""}
-                          onChange={(e) => updateItem(section.id, item.id, "unit", e.target.value || null)}
-                          className="h-8 px-2 bg-transparent border-none outline-none text-sm text-right text-muted-foreground font-body focus:ring-0 hover:border-border"
-                          placeholder="un"
+                          value={section.title}
+                          onChange={(e) => updateSection(section.id, "title", e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-foreground font-body"
+                          placeholder="Nome da seção"
                         />
-                        <NumInput
-                          value={item.qty}
-                          onChange={(v) => updateItem(section.id, item.id, "qty", v)}
-                        />
-                        <NumInput
-                          value={item.internal_unit_price}
-                          onChange={(v) => updateItem(section.id, item.id, "internal_unit_price", v)}
-                        />
-                        <NumInput
-                          value={item.bdi_percentage}
-                          onChange={(v) => updateItem(section.id, item.id, "bdi_percentage", v)}
-                          className="text-muted-foreground"
-                        />
-                        <span className="text-sm font-mono tabular-nums text-right text-foreground pr-1">
-                          {saleTotal > 0 ? formatBRL(saleTotal) : "—"}
+                        {section.is_optional && (
+                          <Badge variant="secondary" className="text-[10px] shrink-0">Opcional</Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
+                          {section.items.length} itens
                         </span>
-                        <button
-                          onClick={() => deleteItem(section.id, item.id)}
-                          className="h-7 w-7 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10 transition-all"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })}
+                        {sectionSale > 0 && (
+                          <span className="text-xs font-medium text-foreground font-mono tabular-nums shrink-0">
+                            {formatBRL(sectionSale)}
+                          </span>
+                        )}
+                        <SectionMenu
+                          onDuplicate={() => duplicateSection(section)}
+                          onDelete={() => deleteSection(section.id)}
+                        />
+                      </button>
 
-                  {/* Add item */}
-                  <div className="px-4 py-2 border-t border-border/20">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      onClick={() => addItem(section.id)}
-                    >
-                      <Plus className="h-3.5 w-3.5" /> Adicionar item
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                      {/* Items table with DnD */}
+                      {isExpanded && (
+                        <div className="border-t border-border/40">
+                          {/* Table header */}
+                          <div className="grid grid-cols-[1fr_80px_60px_100px_70px_100px_36px] gap-px bg-muted/50 px-4 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground font-body">
+                            <span>Item</span>
+                            <span className="text-right">Unidade</span>
+                            <span className="text-right">Qtd</span>
+                            <span className="text-right">Custo Unit.</span>
+                            <span className="text-right">BDI %</span>
+                            <span className="text-right">Venda Total</span>
+                            <span />
+                          </div>
+
+                          {/* Items */}
+                          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleItemDragEnd(section.id)}>
+                            <SortableContext items={section.items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                              {section.items.map((item) => (
+                                <SortableItemRow
+                                  key={item.id}
+                                  item={item}
+                                  sectionId={section.id}
+                                  onUpdate={updateItem}
+                                  onDelete={deleteItem}
+                                />
+                              ))}
+                            </SortableContext>
+                          </DndContext>
+
+                          {/* Add item */}
+                          <div className="px-4 py-2 border-t border-border/20">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                              onClick={() => addItem(section.id)}
+                            >
+                              <Plus className="h-3.5 w-3.5" /> Adicionar item
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </SortableSectionCard>
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Add section */}
       <Button variant="outline" className="gap-2 w-full" onClick={addSection}>
