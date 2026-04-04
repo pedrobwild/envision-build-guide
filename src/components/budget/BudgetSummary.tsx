@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
-import { Shield, Clock, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CategoryDistributionBar } from "@/components/budget/CategoryDistributionBar";
