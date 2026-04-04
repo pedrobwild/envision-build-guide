@@ -468,18 +468,18 @@ function SortableItemRow({
           )}
         </div>
 
-        {/* Qty */}
+        {/* Qty — secondary value */}
         <div className="lg:col-span-1 px-1">
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors tabular-nums text-right"
+            className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right"
           />
         </div>
 
-        {/* $ Custo (unit) */}
+        {/* $ Custo (unit) — primary financial */}
         <div className="lg:col-span-1 px-1">
           <input
             type="number"
@@ -487,11 +487,11 @@ function SortableItemRow({
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors tabular-nums text-right"
+            className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right"
           />
         </div>
 
-        {/* %BDI */}
+        {/* %BDI — secondary value */}
         <div className="lg:col-span-1 px-1">
           <BdiInput
             value={item.bdi_percentage}
