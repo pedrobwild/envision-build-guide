@@ -67,6 +67,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { EstimatorKanban } from "@/components/editor/EstimatorKanban";
 import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
+import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { Plus } from "lucide-react";
 
 // Statuses relevant for the estimator's active queue
