@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
-import { Shield, Clock, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CategoryDistributionBar } from "@/components/budget/CategoryDistributionBar";
@@ -9,6 +9,7 @@ import { CategoryDetailDialog } from "@/components/budget/CategoryDetailDialog";
 import { SectionSummaryRow } from "@/components/budget/SectionSummaryRow";
 import { CountUpValue } from "@/components/budget/CountUpValue";
 import { InstallmentSimulator } from "@/components/budget/summary/InstallmentSimulator";
+import { TrustBadgesRow } from "@/components/budget/summary/TrustBadgesRow";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface BudgetSummaryProps {
@@ -345,12 +346,7 @@ function TotalCard({ total, installments }: { total: number; installments: numbe
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 pt-3 border-t border-primary/8">
-          <Shield className="h-3.5 w-3.5 text-primary/40" />
-          <span className="text-[11px] text-muted-foreground font-body">
-            Preço fixo · Sem custos ocultos
-          </span>
-        </div>
+        <TrustBadgesRow />
       </div>
     </div>
   );
