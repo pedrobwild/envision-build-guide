@@ -450,7 +450,7 @@ function SortableItemRow({
           {compact && !rowExpanded ? (
             <>
               <span
-                className="text-xs sm:text-sm text-foreground truncate cursor-default"
+                className="text-xs sm:text-sm font-body text-foreground truncate cursor-default"
                 title={item.title}
               >
                 {item.title}
@@ -470,7 +470,7 @@ function SortableItemRow({
                 >📷 {imageCount > 1 ? imageCount : ""}</button>
               )}
               {isOptional && (
-                <span className="ml-0.5 text-[9px] bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
+                <span className="ml-0.5 text-[9px] font-body bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
               )}
               {hasBdiWarning && (
                 <AlertTriangle className="ml-0.5 h-3 w-3 text-warning inline flex-shrink-0" />
@@ -482,31 +482,31 @@ function SortableItemRow({
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full h-8 sm:h-9 px-1.5 sm:px-2 rounded border border-transparent bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100"
+              className="w-full h-8 sm:h-9 px-1.5 sm:px-2 rounded border border-transparent bg-transparent text-xs sm:text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100"
             />
           )}
         </div>
 
-        {/* [QTD] — 40px mobile, 64px desktop */}
-        <div className="w-10 sm:w-16 flex-shrink-0 px-0.5 sm:px-1">
+        {/* [QTD] — 36px mobile, 64px desktop */}
+        <div className="w-9 sm:w-16 flex-shrink-0 px-0.5 sm:px-1">
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-xs sm:text-sm font-mono text-center placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
+            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-[11px] sm:text-sm font-mono text-center placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
-        {/* [Custo] — 64px mobile, 100px desktop */}
-        <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
+        {/* [Custo] — 56px mobile, 100px desktop */}
+        <div className="w-14 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-xs sm:text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
+            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-[11px] sm:text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
@@ -529,8 +529,8 @@ function SortableItemRow({
           </div>
         </div>
 
-        {/* [Total Venda] — 64px mobile, 100px desktop */}
-        <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
+        {/* [Total Venda] — 72px mobile, 100px desktop */}
+        <div className="w-[72px] sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
           <div className="h-7 sm:h-8 flex items-center justify-end px-1 sm:px-2 text-[11px] sm:text-sm font-semibold font-mono tabular-nums text-foreground">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
