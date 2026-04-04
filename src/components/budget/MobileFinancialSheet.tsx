@@ -85,7 +85,7 @@ export function MobileFinancialSheet({
               )}
             >
               {/* ── Total card — always visible at 40% snap ── */}
-              <div className="rounded-xl bg-gradient-to-br from-primary/10 to-primary/4 border border-primary/15 px-4 py-4 shadow-sm mb-3">
+              <div className="rounded-xl bg-gradient-to-br from-primary/10 to-primary/[0.04] border border-primary/[0.15] px-4 py-4 shadow-sm mb-3">
                 <p className="text-xs font-body font-medium text-muted-foreground mb-1">
                   Investimento total
                 </p>
@@ -105,10 +105,10 @@ export function MobileFinancialSheet({
                 className={cn(
                   "rounded-lg px-3 py-2.5 flex items-center gap-2 mb-3",
                   validity.expired
-                    ? "bg-destructive/8 border border-destructive/15"
+                    ? "bg-destructive/[0.08] border border-destructive/[0.15]"
                     : validity.daysLeft <= 5
-                      ? "bg-warning/8 border border-warning/15"
-                      : "bg-success/8 border border-success/15"
+                      ? "bg-warning/[0.08] border border-warning/[0.15]"
+                      : "bg-success/[0.08] border border-success/[0.15]"
                 )}
               >
                 {validity.expired ? (

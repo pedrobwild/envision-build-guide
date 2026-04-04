@@ -40,7 +40,7 @@ export function InlineCTA({
       className={cn(
         "lg:hidden rounded-2xl p-4 space-y-3",
         isStrong
-          ? "bg-gradient-to-br from-primary/8 to-primary/3 border border-primary/12"
+          ? "bg-gradient-to-br from-primary/[0.08] to-primary/[0.03] border border-primary/[0.12]"
           : "bg-muted/30 border border-border"
       )}
     >

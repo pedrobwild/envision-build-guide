@@ -9,6 +9,7 @@ import {
   CreditCard,
   MessageCircle,
   ChevronDown,
+  TrendingUp,
 } from "lucide-react";
 import { formatBRL, formatDateLong } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
@@ -96,9 +97,9 @@ export function MobileInlineSummary({
           className={cn(
             "rounded-xl px-3.5 py-2.5 flex items-center gap-2.5",
             validity.expired
-              ? "bg-destructive/6 border border-destructive/12"
+              ? "bg-destructive/[0.06] border border-destructive/[0.12]"
               : validity.daysLeft <= 5
-                ? "bg-warning/6 border border-warning/12"
+                ? "bg-warning/[0.06] border border-warning/[0.12]"
                 : "bg-muted/50 border border-border"
           )}
         >
@@ -124,7 +125,52 @@ export function MobileInlineSummary({
           </p>
         </div>
 
-        {/* Composition breakdown */}
+        {/* ── Total card — premium glassmorphism ── */}
+        <motion.div
+          ref={totalCardRef}
+          initial={{ opacity: 0, scale: 0.97 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="relative rounded-2xl border border-primary/10 px-5 py-5 overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.07) 0%, hsl(var(--primary) / 0.03) 50%, hsl(var(--background)) 100%)',
+            boxShadow: '0 8px 32px -8px hsl(var(--primary) / 0.12), 0 2px 8px -2px hsl(var(--primary) / 0.06)',
+          }}
+        >
+          {/* Subtle glow accent */}
+          <div
+            className="absolute -top-20 -right-20 w-48 h-48 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)' }}
+          />
+          {/* Bottom glow */}
+          <div
+            className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.05) 0%, transparent 70%)' }}
+          />
+
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="h-3.5 w-3.5 text-primary/60" />
+              <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60">
+                Investimento total
+              </p>
+            </div>
+            <CountUpValue
+              value={total}
+              className="font-mono font-extrabold text-[2rem] text-primary leading-none block tabular-nums"
+              style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
+            />
+            <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-primary/[0.08]">
+              <Shield className="h-3 w-3 text-primary/40" />
+              <span className="text-[11px] text-muted-foreground/60 font-body">
+                Preço fixo · Sem custos ocultos
+              </span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ── Composition breakdown ── */}
         {categorizedGroups.length > 0 && (
           <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
             <div className="px-4 pt-4 pb-2">
@@ -161,38 +207,7 @@ export function MobileInlineSummary({
           </div>
         )}
 
-        {/* Total card — premium glassmorphism */}
-        <div
-          ref={totalCardRef}
-          className="relative rounded-2xl border border-primary/10 px-5 py-5 overflow-hidden shadow-lg shadow-primary/5"
-          style={{
-            background: 'linear-gradient(135deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 60%, transparent 100%)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-          }}
-        >
-          {/* Subtle glow accent */}
-          <div
-            className="absolute -top-16 -right-16 w-40 h-40 rounded-full opacity-[0.07] pointer-events-none"
-            style={{ background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)' }}
-          />
-          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2 relative">
-            Investimento total
-          </p>
-          <CountUpValue
-            value={total}
-            className="font-mono font-extrabold text-[1.85rem] text-primary leading-none relative block tabular-nums"
-            style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
-          />
-          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/8 relative">
-            <Shield className="h-3 w-3 text-primary/30" />
-            <span className="text-[11px] text-muted-foreground/60 font-body">
-              Preço fixo · Sem custos ocultos
-            </span>
-          </div>
-        </div>
-
-        {/* Installment simulator */}
+        {/* ── Installment simulator ── */}
         <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
           <div className="px-4 pt-4 pb-2.5">
             <div className="flex items-center gap-2">
@@ -259,7 +274,7 @@ export function MobileInlineSummary({
                         className={cn(
                           "w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors min-h-[44px]",
                           installments === n
-                            ? "bg-primary/6 text-primary font-medium"
+                            ? "bg-primary/[0.06] text-primary font-medium"
                             : "text-foreground hover:bg-muted/40"
                         )}
                       >
@@ -281,7 +296,7 @@ export function MobileInlineSummary({
           </div>
         </div>
 
-        {/* Inline CTA */}
+        {/* ── Inline CTA ── */}
         {validity.expired ? (
           <motion.a
             href={whatsappUpdateUrl}
