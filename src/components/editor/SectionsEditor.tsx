@@ -272,14 +272,16 @@ interface SectionsEditorProps {
   onSectionsChange: (sections: SectionData[]) => void;
 }
 
-/* ── Section context menu (rename + delete) ── */
+/* ── Section context menu (rename + duplicate + delete) ── */
 function SectionContextMenu({
   section,
   onRename,
+  onDuplicate,
   onDelete,
 }: {
   section: SectionData;
   onRename: (name: string) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -290,22 +292,28 @@ function SectionContextMenu({
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
-          className="p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0 opacity-0 group-hover/section:opacity-100"
+          className="p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
           title="Configurações da seção"
         >
           <MoreVertical className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2.5 space-y-2.5" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-        <div className="space-y-1">
-          <label className="label-caps">Nome da seção</label>
+      <PopoverContent className="w-56 p-2.5 space-y-1" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+        <div className="space-y-1 pb-1.5 border-b border-border/40">
+          <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Nome da seção</label>
           <input
             type="text"
             value={name}
             onChange={(e) => { setName(e.target.value); onRename(e.target.value); }}
-            className="w-full h-8 px-2 rounded border border-input bg-background text-sm font-body text-foreground focus:outline-none focus:border-primary transition-colors"
+            className="w-full h-8 px-2 rounded border border-input bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
+        <button
+          onClick={() => { onDuplicate(); setOpen(false); }}
+          className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs text-foreground hover:bg-muted transition-colors"
+        >
+          <Package className="h-3 w-3" /> Duplicar seção
+        </button>
         <button
           onClick={() => {
             if (confirm("Excluir esta seção e todos os seus itens?")) {
@@ -313,7 +321,7 @@ function SectionContextMenu({
               setOpen(false);
             }
           }}
-          className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs font-body text-destructive hover:bg-destructive/8 transition-colors"
+          className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs text-destructive hover:bg-destructive/10 transition-colors"
         >
           <Trash2 className="h-3 w-3" /> Excluir seção
         </button>
