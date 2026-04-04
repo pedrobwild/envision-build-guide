@@ -787,6 +787,54 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     }
   };
 
+  const duplicateSection = async (sectionId: string) => {
+    const source = sections.find(s => s.id === sectionId);
+    if (!source) return;
+    const order = sections.length;
+    const { data: newSec } = await supabase
+      .from("sections")
+      .insert({
+        budget_id: budgetId,
+        title: `${source.title} (cópia)`,
+        order_index: order,
+        is_optional: source.is_optional,
+        notes: source.notes,
+        subtitle: source.subtitle,
+        included_bullets: source.included_bullets as any,
+        excluded_bullets: source.excluded_bullets as any,
+        tags: source.tags as any,
+      })
+      .select()
+      .single();
+    if (!newSec) return;
+    // Duplicate items
+    const newItems: any[] = [];
+    for (const item of source.items) {
+      const { data: newItem } = await supabase
+        .from("items")
+        .insert({
+          section_id: newSec.id,
+          title: item.title,
+          description: item.description,
+          unit: item.unit,
+          qty: item.qty,
+          internal_unit_price: item.internal_unit_price,
+          internal_total: item.internal_total,
+          bdi_percentage: item.bdi_percentage,
+          order_index: item.order_index,
+          coverage_type: item.coverage_type,
+          notes: item.notes,
+        })
+        .select()
+        .single();
+      if (newItem) newItems.push({ ...newItem, images: [] });
+    }
+    const newSection: SectionData = { ...newSec, items: newItems };
+    onSectionsChange([...sections, newSection]);
+    setExpandedSections(prev => new Set(prev).add(newSec.id));
+    toast.success("Seção duplicada");
+  };
+
   const addItem = async (sectionId: string, itemData?: {
     title: string;
     description: string | null;
