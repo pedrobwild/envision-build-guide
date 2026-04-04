@@ -1134,6 +1134,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               </span>
                             </div>
                           </div>
+                          {/* Section context menu */}
+                          <SectionContextMenu
+                            section={section}
+                            onRename={(name) => updateSection(section.id, "title", name)}
+                            onDelete={() => deleteSection(section.id)}
+                          />
                         </div>
                         {/* Mini progress bar */}
                         <div className="ml-9 mt-1.5 h-1 rounded-full bg-muted/50 overflow-hidden">
@@ -1144,56 +1150,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         </div>
                       </div>
 
-                      {/* Expanded content */}
+                      {/* Expanded content — items directly */}
                       {isExpanded && (
                         <div className="border-t border-border/40">
-                          {/* Section fields */}
-                          <div className="px-4 py-2.5 grid grid-cols-2 sm:grid-cols-5 gap-2 bg-muted/20">
-                            <div className="col-span-2 space-y-0.5">
-                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Título</label>
-                              <input
-                                type="text"
-                                value={section.title}
-                                onChange={(e) => updateSection(section.id, "title", e.target.value)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
-                              />
-                            </div>
-                            <div className="space-y-0.5">
-                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>
-                              <div className="px-2 py-1.5 text-sm font-body tabular-nums text-muted-foreground">
-                                {formatBRL(sectionCostTotal)}
-                              </div>
-                            </div>
-                            <div className="space-y-0.5">
-                              <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Venda</label>
-                              <input
-                                type="number"
-                                value={section.section_price ?? ""}
-                                onChange={(e) => updateSection(section.id, "section_price", e.target.value ? Number(e.target.value) : null)}
-                                onClick={(e) => e.stopPropagation()}
-                                placeholder="Auto"
-                                className="w-full px-2 py-1.5 rounded-md border border-transparent hover:border-border focus:border-border bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums"
-                              />
-                            </div>
-                            <div className="flex items-end">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  updateSection(section.id, "is_optional", !section.is_optional);
-                                }}
-                                className={cn(
-                                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-body transition-all",
-                                  section.is_optional
-                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                    : "text-muted-foreground hover:text-amber-600 hover:bg-amber-500/5"
-                                )}
-                              >
-                                <ToggleRight className="h-3.5 w-3.5" />
-                                {section.is_optional ? "Opcional ✓" : "Opcional"}
-                              </button>
-                            </div>
-                          </div>
 
                           {/* Items with DnD */}
                           <DndContext
