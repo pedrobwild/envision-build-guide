@@ -96,7 +96,7 @@ export function SectionSummaryRow({
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="flex-shrink-0"
           >
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           </motion.div>
         )}
 
