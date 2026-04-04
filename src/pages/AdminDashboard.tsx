@@ -15,6 +15,7 @@ import {
   Settings2, DollarSign, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
+import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { toast } from "sonner";
 
 import { TeamMetricsPanel } from "@/components/admin/TeamMetricsPanel";
