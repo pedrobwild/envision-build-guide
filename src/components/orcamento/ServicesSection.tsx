@@ -80,7 +80,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
       {/* Why Bwild */}
       <Card>
         <CardContent className="pt-5 pb-4">
-          <p className="text-xs font-display font-semibold text-foreground uppercase tracking-wider mb-3">
+          <p className="text-[10px] font-body font-semibold text-foreground uppercase tracking-[0.08em] mb-3">
             Por que clientes escolhem a Bwild
           </p>
           <ul className="space-y-1.5">

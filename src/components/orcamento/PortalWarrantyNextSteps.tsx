@@ -27,9 +27,14 @@ export function PortalWarrantyNextSteps({ portalTabs }: PortalWarrantyNextStepsP
     <section className="space-y-6">
       {/* Portal */}
       <div className="space-y-3">
-        <h2 className="text-lg sm:text-xl font-display font-bold text-foreground">
-          Portal Bwild
-        </h2>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-1">
+            Acompanhamento
+          </p>
+          <h2 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-tight">
+            Portal Bwild
+          </h2>
+        </div>
         <p className="text-sm text-muted-foreground font-body">
           Acompanhe cada etapa da sua obra em tempo real.
         </p>

@@ -81,7 +81,7 @@ export function StickyBudgetSummary({ meta, included }: StickyBudgetSummaryProps
 
       {/* Section progress */}
       <div className="rounded-lg border border-border bg-card p-3 space-y-1">
-        <p className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+        <p className="text-[10px] font-body font-semibold text-muted-foreground/60 uppercase tracking-[0.08em] mb-1">
           Navegação
         </p>
         {sectionAnchors.map(({ label, id }) => (
