@@ -556,65 +556,84 @@ function SortableItemRow({
 
       {/* ── Expanded detail area ── */}
       {rowExpanded && (
-        <div className="pb-2 pl-6 sm:pl-8 pr-2 sm:pr-4 space-y-1.5 border-t border-border/20 pt-2">
+        <div className="pb-3 pl-6 sm:pl-8 pr-2 sm:pr-4 space-y-2.5 border-t border-border/20 pt-3 bg-muted/5">
           {/* Editable title when expanded */}
-          <input
-            type="text"
-            value={item.title}
-            onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
-            placeholder="Nome do item"
-            className="w-full max-w-xl h-8 px-2 rounded border border-transparent bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary hover:border-border transition-colors"
-          />
-          <input
-            type="text"
-            value={item.description || ""}
-            onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
-            placeholder="Descrição do item"
-            className="w-full max-w-xl h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
-          />
-          <div className="flex items-center gap-1.5 max-w-xl">
-            <LinkIcon className="h-3 w-3 text-muted-foreground/30 shrink-0" />
+          <div className="space-y-0.5">
+            <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">Nome</label>
             <input
-              type="url"
-              value={item.reference_url || ""}
-              onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
-              placeholder="Link de referência"
-              className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+              type="text"
+              value={item.title}
+              onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
+              placeholder="Nome do item"
+              className="w-full max-w-xl h-8 px-2.5 rounded-md border border-border/40 bg-background text-sm font-body font-medium text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all"
             />
+          </div>
+
+          {/* Description */}
+          <div className="space-y-0.5">
+            <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">Descrição</label>
+            <textarea
+              value={item.description || ""}
+              onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
+              placeholder="Descrição do item (opcional)"
+              rows={2}
+              className="w-full max-w-xl px-2.5 py-1.5 rounded-md border border-border/40 bg-background text-xs font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all resize-none leading-relaxed"
+            />
+          </div>
+
+          {/* Reference link */}
+          <div className="space-y-0.5">
+            <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">Referência</label>
+            <div className="flex items-center gap-1.5 max-w-xl">
+              <LinkIcon className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+              <input
+                type="url"
+                value={item.reference_url || ""}
+                onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
+                placeholder="https://exemplo.com/produto"
+                className="w-full h-7 px-2.5 rounded-md border border-border/40 bg-background text-xs font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all"
+              />
+            </div>
           </div>
 
           {/* Mobile-only: BDI field when expanded */}
-          <div className="flex items-center gap-2 md:hidden pt-1">
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium font-body">BDI%</span>
-            <input
-              type="number"
-              value={item.bdi_percentage ?? ""}
-              onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
-              placeholder="0"
-              step="0.01"
-              className="w-20 h-7 rounded border border-border/60 bg-transparent text-xs font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors tabular-nums"
-            />
-            <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
-              Venda unit: {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
-            </span>
+          <div className="flex items-center gap-3 md:hidden pt-0.5">
+            <div className="space-y-0.5">
+              <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">BDI%</label>
+              <input
+                type="number"
+                value={item.bdi_percentage ?? ""}
+                onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
+                placeholder="0"
+                step="0.01"
+                className="w-20 h-7 px-2 rounded-md border border-border/40 bg-background text-xs font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all tabular-nums"
+              />
+            </div>
+            <div className="pt-4">
+              <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
+                Venda unit: {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-1 flex-wrap">
+          {/* Action buttons */}
+          <div className="flex items-center gap-1 pt-1 flex-wrap">
             <button
               onClick={() => setDetailOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-body font-medium text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border/40 transition-all"
             >
               <Pencil className="h-3 w-3" /> Editar detalhes
             </button>
             {!item.catalog_item_id && (
               <button
                 onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
-                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-body font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-all"
               >
                 <BookmarkPlus className="h-3 w-3" /> Salvar no catálogo
               </button>
             )}
           </div>
+
           {/* Item images */}
           <ItemImageInline
             itemId={item.id}
