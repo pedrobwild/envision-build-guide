@@ -432,49 +432,48 @@ function SortableItemRow({
         "flex items-center gap-0",
         compact && !rowExpanded ? "h-11" : "py-2",
       )}>
-        {/* [▶ expand] — 24px */}
-        <div className="w-6 flex-shrink-0 flex items-center justify-center">
+        {/* [▶ expand] — 20px mobile, 24px desktop */}
+        <div className="w-5 sm:w-6 flex-shrink-0 flex items-center justify-center">
           <button
             onClick={() => setRowExpanded(!rowExpanded)}
             className="p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground transition-colors"
           >
             <ChevronRight className={cn(
-              "h-3.5 w-3.5 transition-transform duration-200",
+              "h-3 sm:h-3.5 w-3 sm:w-3.5 transition-transform duration-200",
               rowExpanded && "rotate-90"
             )} />
           </button>
         </div>
 
         {/* [Título] — flex-1 */}
-        <div className="flex-1 min-w-0 flex items-center gap-1 px-1">
+        <div className="flex-1 min-w-0 flex items-center gap-1 px-0.5 sm:px-1">
           {compact && !rowExpanded ? (
             <>
               <span
-                className="text-sm text-foreground truncate cursor-default"
+                className="text-xs sm:text-sm text-foreground truncate cursor-default"
                 title={item.title}
               >
                 {item.title}
               </span>
-              {/* Compact indicators — clickable to expand */}
               {hasDescription && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setRowExpanded(true); }}
-                  className="ml-1 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
+                  className="ml-0.5 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
                   title="Tem descrição — clique para expandir"
                 >📝</button>
               )}
               {hasImages && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setRowExpanded(true); }}
-                  className="ml-1 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
+                  className="ml-0.5 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
                   title={`${imageCount} imagem(ns) — clique para expandir`}
                 >📷 {imageCount > 1 ? imageCount : ""}</button>
               )}
               {isOptional && (
-                <span className="ml-1 text-[10px] bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
+                <span className="ml-0.5 text-[9px] bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
               )}
               {hasBdiWarning && (
-                <AlertTriangle className="ml-1 h-3 w-3 text-orange-500 inline flex-shrink-0" />
+                <AlertTriangle className="ml-0.5 h-3 w-3 text-warning inline flex-shrink-0" />
               )}
             </>
           ) : (
@@ -483,35 +482,35 @@ function SortableItemRow({
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full h-9 px-2 rounded border border-transparent bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100"
+              className="w-full h-8 sm:h-9 px-1.5 sm:px-2 rounded border border-transparent bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100"
             />
           )}
         </div>
 
-        {/* [QTD] — 48px mobile, 64px desktop */}
-        <div className="w-12 md:w-16 flex-shrink-0 px-1">
+        {/* [QTD] — 40px mobile, 64px desktop */}
+        <div className="w-10 sm:w-16 flex-shrink-0 px-0.5 sm:px-1">
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full h-8 rounded border border-transparent bg-transparent text-sm font-mono text-center placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
+            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-xs sm:text-sm font-mono text-center placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
-        {/* [Custo] — 80px mobile, 100px desktop */}
-        <div className="w-20 md:w-[100px] flex-shrink-0 px-1">
+        {/* [Custo] — 64px mobile, 100px desktop */}
+        <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full h-8 rounded border border-transparent bg-transparent text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
+            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-xs sm:text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
           />
         </div>
 
-        {/* [BDI%] — hidden mobile, 72px desktop */}
+        {/* [BDI%] — hidden mobile */}
         <div className="hidden md:block w-[72px] flex-shrink-0 px-1">
           <input
             type="number"
@@ -523,33 +522,33 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [Venda] — hidden mobile, 100px desktop, readonly */}
+        {/* [Venda Unit.] — hidden mobile */}
         <div className="hidden md:block w-[100px] flex-shrink-0 px-1">
           <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground bg-muted/30 rounded">
             {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
 
-        {/* [Total Venda] — 80px mobile, 100px desktop, primary */}
-        <div className="w-20 md:w-[100px] flex-shrink-0 px-1">
-          <div className="h-8 flex items-center justify-end px-2 text-xs md:text-sm font-semibold font-mono tabular-nums text-foreground">
+        {/* [Total Venda] — 64px mobile, 100px desktop */}
+        <div className="w-16 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
+          <div className="h-7 sm:h-8 flex items-center justify-end px-1 sm:px-2 text-[11px] sm:text-sm font-semibold font-mono tabular-nums text-foreground">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
 
-        {/* [⋮ ações] — 32px, hover-only */}
-        <div className="w-8 flex-shrink-0 flex items-center justify-center">
+        {/* [⋮ ações] — 24px mobile, 32px desktop */}
+        <div className="w-6 sm:w-8 flex-shrink-0 flex items-center justify-center">
           {isItemSaving ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground/40" />
+            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />
           ) : (
             <button
               onClick={() => {
                 if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
               }}
-              className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
+              className="p-0.5 sm:p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity duration-100 sm:opacity-0 sm:group-hover/item:opacity-100"
               title="Excluir item"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
             </button>
           )}
         </div>
@@ -557,7 +556,7 @@ function SortableItemRow({
 
       {/* ── Expanded detail area ── */}
       {rowExpanded && (
-        <div className="pb-2 pl-8 pr-4 space-y-1.5 border-t border-border/20 pt-2">
+        <div className="pb-2 pl-6 sm:pl-8 pr-2 sm:pr-4 space-y-1.5 border-t border-border/20 pt-2">
           {/* Editable title when expanded */}
           <input
             type="text"
@@ -583,7 +582,24 @@ function SortableItemRow({
               className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
             />
           </div>
-          <div className="flex items-center gap-2 pt-1">
+
+          {/* Mobile-only: BDI field when expanded */}
+          <div className="flex items-center gap-2 md:hidden pt-1">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">BDI%</span>
+            <input
+              type="number"
+              value={item.bdi_percentage ?? ""}
+              onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
+              placeholder="0"
+              step="0.01"
+              className="w-20 h-7 rounded border border-border/60 bg-transparent text-xs font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors tabular-nums"
+            />
+            <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
+              Venda unit: {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1 flex-wrap">
             <button
               onClick={() => setDetailOpen(true)}
               className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
