@@ -1237,19 +1237,19 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               <div className="flex-1 px-1">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Descrição do Item</span>
                               </div>
-                              <div className="w-16 flex-shrink-0 px-1 text-center">
+                              <div className="w-12 md:w-16 flex-shrink-0 px-1 text-center">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
                               </div>
-                              <div className="w-[100px] flex-shrink-0 px-1 text-right">
+                              <div className="w-20 md:w-[100px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo Unit.</span>
                               </div>
-                              <div className="w-[72px] flex-shrink-0 px-1 text-right">
+                              <div className="hidden md:block w-[72px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI%</span>
                               </div>
-                              <div className="w-[100px] flex-shrink-0 px-1 text-right">
+                              <div className="hidden md:block w-[100px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda Unit.</span>
                               </div>
-                              <div className="w-[100px] flex-shrink-0 px-1 text-right">
+                              <div className="w-20 md:w-[100px] flex-shrink-0 px-1 text-right">
                                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
                               </div>
                               <div className="w-8 flex-shrink-0" />
