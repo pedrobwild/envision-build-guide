@@ -1,5 +1,5 @@
-import { useId } from "react";
-import { ChevronDown } from "lucide-react";
+import { useId, useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,7 @@ export interface CategoryAccordionItemData {
   items: Array<{
     id: string;
     title: string;
+    description?: string | null;
     qty?: number | null;
     unit?: string | null;
   }>;
@@ -55,6 +56,7 @@ export function CategoryAccordionItem({
   const regionId = useId();
   const triggerId = useId();
   const hasItems = data.items.length > 0;
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
   return (
     <div className="transition-colors duration-150">
@@ -141,39 +143,80 @@ export function CategoryAccordionItem({
             className="overflow-hidden"
           >
             <div className="mx-3 mb-3 rounded-lg bg-muted/[0.03] border border-border/30 divide-y divide-border/[0.06]">
-              {data.items.map((item, idx) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{
-                    duration: 0.15,
-                    delay: idx * 0.02,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                  className="flex items-start justify-between px-3 py-2.5 gap-3"
-                >
-                  <span className="text-[12px] font-body text-foreground/80 leading-relaxed flex-1">
-                    {item.qty && item.qty > 1 && (
-                      <span
-                        className="font-mono text-[11px] text-muted-foreground mr-1 tabular-nums"
-                        style={MONO_STYLE}
-                      >
-                        {item.qty}×
-                      </span>
-                    )}
-                    {item.title}
-                  </span>
-                  {item.unit && (
-                    <span
-                      className="text-[10px] text-muted-foreground font-mono uppercase whitespace-nowrap tracking-wider mt-0.5 tabular-nums"
-                      style={MONO_STYLE}
+              {data.items.map((item, idx) => {
+                const hasDesc = !!item.description?.trim();
+                const isItemExpanded = expandedItemId === item.id;
+
+                return (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{
+                      duration: 0.15,
+                      delay: idx * 0.02,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={hasDesc ? () => setExpandedItemId(isItemExpanded ? null : item.id) : undefined}
+                      className={cn(
+                        "w-full flex items-start justify-between px-3 py-2.5 gap-3 text-left transition-colors",
+                        hasDesc && "cursor-pointer hover:bg-muted/30 active:bg-muted/50",
+                        !hasDesc && "cursor-default"
+                      )}
                     >
-                      {item.unit}
-                    </span>
-                  )}
-                </motion.div>
-              ))}
+                      <div className="flex items-start gap-1.5 flex-1 min-w-0">
+                        {hasDesc && (
+                          <ChevronRight
+                            className={cn(
+                              "h-3 w-3 text-muted-foreground/60 mt-0.5 flex-shrink-0 transition-transform duration-200",
+                              isItemExpanded && "rotate-90"
+                            )}
+                          />
+                        )}
+                        <span className="text-[12px] font-body text-foreground/80 leading-relaxed flex-1">
+                          {item.qty && item.qty > 1 && (
+                            <span
+                              className="font-mono text-[11px] text-muted-foreground mr-1 tabular-nums"
+                              style={MONO_STYLE}
+                            >
+                              {item.qty}×
+                            </span>
+                          )}
+                          {item.title}
+                        </span>
+                      </div>
+                      {item.unit && (
+                        <span
+                          className="text-[10px] text-muted-foreground font-mono uppercase whitespace-nowrap tracking-wider mt-0.5 tabular-nums"
+                          style={MONO_STYLE}
+                        >
+                          {item.unit}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Item description */}
+                    <AnimatePresence initial={false}>
+                      {isItemExpanded && hasDesc && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                          className="overflow-hidden"
+                        >
+                          <p className="px-3 pb-3 pl-7 text-[11px] font-body text-muted-foreground leading-relaxed whitespace-pre-line">
+                            {item.description}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.div>
         )}

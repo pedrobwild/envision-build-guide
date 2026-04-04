@@ -36,6 +36,7 @@ export function CategoryAccordionList({
           items: (section.items || []).map((item: any) => ({
             id: item.id,
             title: item.title,
+            description: item.description,
             qty: item.qty,
             unit: item.unit,
           })),
