@@ -105,10 +105,10 @@ export function MobileFinancialSheet({
                 className={cn(
                   "rounded-lg px-3 py-2.5 flex items-center gap-2 mb-3",
                   validity.expired
-                    ? "bg-destructive/8 border border-destructive/15"
+                    ? "bg-destructive/[0.08] border border-destructive/[0.15]"
                     : validity.daysLeft <= 5
-                      ? "bg-warning/8 border border-warning/15"
-                      : "bg-success/8 border border-success/15"
+                      ? "bg-warning/[0.08] border border-warning/[0.15]"
+                      : "bg-success/[0.08] border border-success/[0.15]"
                 )}
               >
                 {validity.expired ? (
