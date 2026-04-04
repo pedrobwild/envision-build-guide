@@ -79,13 +79,13 @@ export function BudgetSummary({
       <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xl">
         {/* Header — clean, typographic */}
         <div className="px-5 pt-5 pb-3">
-          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-1">
+          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground mb-1">
             Investimento
           </p>
           <h3 className="font-display font-bold text-base text-foreground tracking-tight">
             Resumo do Orçamento
           </h3>
-          <p className="mt-1.5 text-xs text-muted-foreground/60 font-body">
+          <p className="mt-1.5 text-xs text-muted-foreground font-body">
             Clique em cada tópico para visualizar o escopo detalhado
           </p>
         </div>
