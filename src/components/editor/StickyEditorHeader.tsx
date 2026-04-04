@@ -97,6 +97,8 @@ export function StickyEditorHeader({
   saveStatus,
   lastSavedAt,
   onRetrySave,
+  onPublish,
+  publishing,
   primaryAction,
 }: StickyEditorHeaderProps) {
   const navigate = useNavigate();
