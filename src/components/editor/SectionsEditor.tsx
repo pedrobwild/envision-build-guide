@@ -1200,33 +1200,33 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           {section.items.length > 0 && (
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 px-4 pt-2.5 pb-1.5 border-b border-border/20">
                               <div className="lg:col-span-3">
-                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Título</span>
+                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Título</span>
                               </div>
                               <div className="lg:col-span-1">
-                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Qtd</span>
+                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Qtd</span>
                               </div>
                               <div className="lg:col-span-1">
-                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Custo</span>
+                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Custo</span>
                               </div>
                               <div className="lg:col-span-1">
-                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">BDI %</span>
+                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">BDI %</span>
                               </div>
                               <div className="lg:col-span-1">
-                                <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Venda</span>
+                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Venda</span>
                               </div>
                               {!compactMode && (
                                 <>
                                   <div className="lg:col-span-2">
-                                    <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Total Custo</span>
+                                    <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Total Custo</span>
                                   </div>
                                   <div className="lg:col-span-2">
-                                    <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Total Venda</span>
+                                    <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Total Venda</span>
                                   </div>
                                 </>
                               )}
                               {compactMode && (
                                 <div className="lg:col-span-2">
-                                  <span className="text-[10px] text-muted-foreground/50 font-body uppercase tracking-widest font-medium">Total Venda</span>
+                                  <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Total Venda</span>
                                 </div>
                               )}
                               <div className="lg:col-span-1" />
