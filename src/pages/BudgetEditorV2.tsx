@@ -425,9 +425,9 @@ export default function BudgetEditorV2() {
                   />
                 </div>
 
-                {/* Briefing toggle button */}
+                {/* Briefing toggle button — hidden on mobile */}
                 {!briefingOpen && (
-                  <div className="fixed right-4 top-36 z-30">
+                  <div className="fixed right-4 top-36 z-30 hidden sm:block">
                     <Button
                       variant="outline"
                       size="sm"

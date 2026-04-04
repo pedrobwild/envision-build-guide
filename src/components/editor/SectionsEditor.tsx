@@ -1340,40 +1340,37 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
       {/* ── Sticky footer summary bar ── */}
       {sections.length > 0 && (
-        <div className="sticky bottom-0 z-10 border-t border-border/40 bg-card/90 backdrop-blur-xl py-2.5 md:py-3 px-3 md:px-6 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.08)]">
-          <div className="flex items-center justify-between gap-3 md:gap-8">
-            <div className="flex items-center gap-4 md:gap-8 flex-wrap">
-              {/* Custo */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">Custo</span>
-                <span className="text-xs md:text-sm font-semibold font-mono text-foreground tabular-nums tracking-[-0.035em]">
-                  {formatBRL(grandTotalCost)}
-                </span>
-              </div>
-              {/* BDI */}
-              <div className="hidden sm:flex flex-col gap-0.5">
-                <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">BDI</span>
-                <span className="text-xs md:text-sm font-semibold font-mono text-primary tabular-nums tracking-[-0.035em]">
-                  {grandBdiPercent.toFixed(1)}%
-                </span>
-              </div>
-              {/* Venda — destaque */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">Venda</span>
-                <span className="text-sm md:text-base font-bold font-mono text-foreground tabular-nums tracking-[-0.035em]">
-                  {formatBRL(grandTotalSale)}
-                </span>
-              </div>
+        <div className="sticky bottom-0 z-10 border-t border-border/40 bg-card/90 backdrop-blur-xl py-2 sm:py-3 px-3 sm:px-6 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.08)]">
+          <div className="grid grid-cols-4 gap-2 sm:flex sm:items-center sm:justify-between sm:gap-8">
+            {/* Custo */}
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">Custo</span>
+              <span className="text-[11px] sm:text-sm font-semibold font-mono text-foreground tabular-nums tracking-[-0.035em]">
+                {formatBRL(grandTotalCost)}
+              </span>
+            </div>
+            {/* BDI */}
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">BDI</span>
+              <span className="text-[11px] sm:text-sm font-semibold font-mono text-primary tabular-nums tracking-[-0.035em]">
+                {grandBdiPercent.toFixed(1)}%
+              </span>
+            </div>
+            {/* Venda — destaque */}
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">Venda</span>
+              <span className="text-[11px] sm:text-base font-bold font-mono text-foreground tabular-nums tracking-[-0.035em]">
+                {formatBRL(grandTotalSale)}
+              </span>
             </div>
             {/* Margem */}
-            <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">Margem</span>
+            <div className="flex flex-col gap-0.5 sm:items-end">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.08em] text-muted-foreground/60 font-medium">Margem</span>
               <span className={cn(
-                "text-xs md:text-sm font-bold font-mono tabular-nums tracking-[-0.035em]",
+                "text-[11px] sm:text-sm font-bold font-mono tabular-nums tracking-[-0.035em]",
                 marginPercent >= 15 ? "text-success" : marginPercent >= 10 ? "text-warning" : "text-destructive"
               )}>
-                {formatBRL(grandMargin)}
-                <span className="text-muted-foreground font-normal ml-1">· {marginPercent.toFixed(1)}%</span>
+                {marginPercent.toFixed(1)}%
               </span>
             </div>
           </div>

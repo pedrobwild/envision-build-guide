@@ -376,10 +376,11 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               variant="outline"
               size="sm"
               onClick={() => setRevisionModalOpen(true)}
-              className="h-7 text-xs border-orange-400 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 gap-2"
+              className="h-7 text-[10px] sm:text-xs border-warning/40 text-warning hover:bg-warning/5 gap-1 sm:gap-2"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              Solicitar Revisão
+              <span className="hidden sm:inline">Solicitar Revisão</span>
+              <span className="sm:hidden">Revisão</span>
             </Button>
           )}
 
