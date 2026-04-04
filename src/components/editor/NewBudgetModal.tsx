@@ -325,9 +325,9 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
             </section>
 
             {/* Imóvel */}
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold font-display flex items-center gap-2 text-foreground">
-                <Building2 className="h-4 w-4 text-primary" />
+            <section className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <h3 className="text-xs font-semibold font-display flex items-center gap-2 text-foreground uppercase tracking-widest">
+                <Building2 className="h-3.5 w-3.5 text-primary" />
                 Detalhes do Imóvel
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
