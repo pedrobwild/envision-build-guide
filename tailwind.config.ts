@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         display: ['Sora', 'sans-serif'],
         body: ['Inter', 'sans-serif'],
+        mono: ['"Geist Mono"', '"SF Mono"', 'Menlo', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",

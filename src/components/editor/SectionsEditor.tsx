@@ -52,7 +52,7 @@ function BdiInput({ value, onChange }: { value: number | null | undefined; onCha
       onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
       placeholder="0"
       step="0.01"
-      className="w-full px-2 py-1.5 rounded-md border border-input bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 hover:border-primary/40 focus:border-primary transition-all tabular-nums cursor-text"
+      className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors tabular-nums text-right"
     />
   );
 }
@@ -114,7 +114,6 @@ function ItemImageInline({
   };
 
   const setPrimary = async (imgId: string) => {
-    // Unset all, set new primary
     for (const img of images) {
       if (img.is_primary) await supabase.from("item_images").update({ is_primary: false }).eq("id", img.id);
     }
@@ -144,7 +143,7 @@ function ItemImageInline({
           <div
             key={img.id}
             className={cn(
-              "relative group w-10 h-10 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0 cursor-pointer",
+              "relative group w-10 h-10 rounded overflow-hidden border transition-colors flex-shrink-0 cursor-pointer",
               img.is_primary ? "border-primary" : "border-border"
             )}
             onClick={() => openLightbox(idx)}
@@ -164,7 +163,7 @@ function ItemImageInline({
           <button
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="w-10 h-10 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center transition-all disabled:opacity-50 flex-shrink-0"
+            className="w-10 h-10 rounded border border-dashed border-border hover:border-muted-foreground/40 flex items-center justify-center transition-all disabled:opacity-50 flex-shrink-0"
           >
             {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />}
           </button>
@@ -247,6 +246,7 @@ function calcSectionSaleTotal(section: SectionData): number {
   }
   return (Number(section.section_price) || 0) * qty;
 }
+
 /* ── Global BDI calculation ── */
 function calcGlobalBdi(sections: SectionData[]): { avgBdi: number; hasData: boolean } {
   let totalCost = 0;
@@ -290,20 +290,20 @@ function SectionContextMenu({
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
-          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
+          className="p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0 opacity-0 group-hover/section:opacity-100"
           title="Configurações da seção"
         >
           <MoreVertical className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3 space-y-3" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-        <div className="space-y-1.5">
-          <label className="text-xs font-body font-medium text-muted-foreground">Nome da seção</label>
+      <PopoverContent className="w-56 p-2.5 space-y-2.5" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+        <div className="space-y-1">
+          <label className="label-caps">Nome da seção</label>
           <input
             type="text"
             value={name}
             onChange={(e) => { setName(e.target.value); onRename(e.target.value); }}
-            className="w-full px-2.5 py-1.5 rounded-md border border-input bg-background text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all"
+            className="w-full h-8 px-2 rounded border border-input bg-background text-sm font-body text-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
         <button
@@ -313,7 +313,7 @@ function SectionContextMenu({
               setOpen(false);
             }
           }}
-          className="flex items-center gap-1.5 w-full px-2.5 py-1.5 rounded-md text-xs font-body text-destructive hover:bg-destructive/10 transition-colors"
+          className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs font-body text-destructive hover:bg-destructive/8 transition-colors"
         >
           <Trash2 className="h-3 w-3" /> Excluir seção
         </button>
@@ -348,7 +348,7 @@ function SortableSectionCard({
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-      <div className="rounded-lg border border-border/50 hover:border-border bg-card/50 overflow-hidden transition-colors">
+      <div className="rounded-md border border-border/60 bg-card overflow-hidden transition-colors">
         {children(listeners)}
       </div>
     </div>
@@ -409,184 +409,168 @@ function SortableItemRow({
       style={style}
       {...attributes}
       className={cn(
-        "px-4 transition-colors border-b border-border/40 last:border-b-0 group/item",
-        "even:bg-muted/20",
-        compact && !rowExpanded ? "py-1.5" : "py-3",
-        searchMatch && "ring-1 ring-yellow-400/50 bg-yellow-50/30 dark:bg-yellow-900/10",
-        isDragging && "bg-muted/40 shadow-lg rounded-lg"
+        "group/item transition-colors",
+        compact && !rowExpanded ? "h-10" : "",
+        searchMatch && "bg-warning/5",
+        isDragging && "bg-muted/40 shadow-lg rounded"
       )}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-        {/* Drag handle + Title + description */}
-        <div className="lg:col-span-3 space-y-1">
-          <div className="flex items-center gap-1.5">
-            {compact && (
-              <button
-                onClick={() => setRowExpanded(!rowExpanded)}
-                className="p-0.5 rounded text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
-                title={rowExpanded ? "Recolher" : "Expandir"}
-              >
-                <ChevronRight className={cn("h-3 w-3 transition-transform", rowExpanded && "rotate-90")} />
-              </button>
-            )}
+      {/* ── Single-line grid row ── */}
+      <div className={cn(
+        "grid grid-cols-1 lg:grid-cols-12 gap-0 items-center",
+        compact && !rowExpanded ? "h-10" : "py-1.5",
+      )}>
+        {/* Title column */}
+        <div className="lg:col-span-3 flex items-center gap-1 px-2 min-w-0">
+          {compact && (
             <button
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover/item:opacity-100"
-              title="Arrastar para reordenar"
+              onClick={() => setRowExpanded(!rowExpanded)}
+              className="p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0"
             >
-              <GripVertical className="h-3.5 w-3.5" />
+              <ChevronRight className={cn("h-3 w-3 transition-transform", rowExpanded && "rotate-90")} />
             </button>
-            {item.catalog_item_id ? (
-              <span className="flex-shrink-0" title="Item do catálogo">
-                <BookOpen className="h-3.5 w-3.5 text-primary/60" />
-              </span>
-            ) : (
-              <span className="flex-shrink-0" title="Item manual">
-                <PenLine className="h-3 w-3 text-muted-foreground/40" />
-              </span>
-            )}
-            {compact && !rowExpanded ? (
-              <span
-                className="text-sm font-body font-medium text-foreground truncate max-w-[280px] cursor-default"
-                title={item.title}
-              >
-                {item.title}
-              </span>
-            ) : (
-              <input
-                type="text"
-                value={item.title}
-                onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
-                placeholder="Nome do item"
-                className="w-full px-2 py-1 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body font-medium text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
-              />
-            )}
-            {/* Compact indicators */}
-            {compact && !rowExpanded && (
-              <div className="flex items-center gap-1 shrink-0">
-                {hasDescription && (
-                  <span title="Tem descrição"><FileText className="h-2.5 w-2.5 text-muted-foreground/40" /></span>
-                )}
-                {hasImages && (
-                  <span className="flex items-center gap-0.5" title={`${imageCount} imagem(ns)`}>
-                    <Paperclip className="h-2.5 w-2.5 text-muted-foreground/40" />
-                    <span className="text-[9px] text-muted-foreground/50 tabular-nums">{imageCount}</span>
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+          )}
+          <button
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-0.5 rounded text-muted-foreground/20 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover/item:opacity-100"
+          >
+            <GripVertical className="h-3 w-3" />
+          </button>
+          {compact && !rowExpanded ? (
+            <span
+              className="text-sm font-body text-foreground truncate cursor-default"
+              title={item.title}
+            >
+              {item.title}
+            </span>
+          ) : (
+            <input
+              type="text"
+              value={item.title}
+              onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
+              placeholder="Nome do item"
+              className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+            />
+          )}
+          {/* Compact indicators */}
+          {compact && !rowExpanded && (
+            <div className="flex items-center gap-1 shrink-0">
+              {hasDescription && (
+                <span title="Tem descrição"><FileText className="h-2.5 w-2.5 text-muted-foreground/30" /></span>
+              )}
+              {hasImages && (
+                <span className="flex items-center gap-0.5" title={`${imageCount} imagem(ns)`}>
+                  <Paperclip className="h-2.5 w-2.5 text-muted-foreground/30" />
+                  <span className="text-[9px] text-muted-foreground/40 font-mono tabular-nums">{imageCount}</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        {/* Qty — editable */}
-        <div className="lg:col-span-1">
+
+        {/* Qty */}
+        <div className="lg:col-span-1 px-1">
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
+            className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors tabular-nums text-right"
           />
         </div>
-        {/* $ Custo (unit) — editable */}
-        <div className="lg:col-span-1 space-y-0.5">
-          {showExpanded && <label className="text-[10px] text-muted-foreground/60 font-body uppercase tracking-wider">Custo</label>}
+
+        {/* $ Custo (unit) */}
+        <div className="lg:col-span-1 px-1">
           <input
             type="number"
             value={item.internal_unit_price ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full px-2 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all tabular-nums cursor-text"
+            className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors tabular-nums text-right"
           />
         </div>
-        {/* %BDI — editable with validation */}
-        <div className="lg:col-span-1">
+
+        {/* %BDI */}
+        <div className="lg:col-span-1 px-1">
           <BdiInput
             value={item.bdi_percentage}
             onChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
           />
         </div>
+
         {/* $ Venda (calculated) */}
-        <div className="lg:col-span-1">
-          <div
-            className="group/cell w-full px-2 py-1.5 rounded-md bg-muted/40 text-sm font-body tabular-nums text-muted-foreground cursor-default flex items-center justify-between"
-            title="Campo calculado automaticamente"
-          >
-            <span>{formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}</span>
-            <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
+        <div className="lg:col-span-1 px-1">
+          <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground">
+            {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
+
         {/* $ Total Custo (calculated) — hidden in compact */}
         {showExpanded && (
-          <div className="lg:col-span-2">
-            <div
-              className="group/cell w-full px-2 py-1.5 rounded-md bg-muted/40 text-sm font-body tabular-nums text-muted-foreground cursor-default flex items-center justify-between"
-              title="Campo calculado automaticamente"
-            >
-              <span>{formatBRL(calcItemCostTotal(item))}</span>
-              <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
+          <div className="lg:col-span-2 px-1">
+            <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground">
+              {formatBRL(calcItemCostTotal(item))}
             </div>
           </div>
         )}
-        {/* $ Total Venda (calculated) */}
-        <div className={cn(showExpanded ? "lg:col-span-2" : "lg:col-span-4")}>
-          <div
-            className="group/cell w-full px-2 py-1.5 rounded-md bg-primary/5 text-sm font-body font-semibold tabular-nums text-foreground cursor-default flex items-center justify-between"
-            title="Campo calculado automaticamente"
-          >
-            <span>{formatBRL(calcItemSaleTotal(item))}</span>
-            <Lock className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover/cell:opacity-100 transition-opacity" />
+
+        {/* $ Total Venda (calculated) — primary data */}
+        <div className={cn("px-1", showExpanded ? "lg:col-span-2" : "lg:col-span-4")}>
+          <div className="h-8 flex items-center justify-end px-2 text-sm font-mono font-semibold tabular-nums text-foreground tracking-[-0.035em]">
+            {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
+
         {/* Actions */}
-        <div className="lg:col-span-1 flex items-center justify-end gap-1">
-          {isItemSaving && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+        <div className="lg:col-span-1 flex items-center justify-end gap-0.5 px-2">
+          {isItemSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
           <button
             onClick={() => setDetailOpen(true)}
-            className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-foreground transition-colors opacity-0 group-hover/item:opacity-100"
             title="Editar detalhes"
           >
-            <Pencil className="h-3.5 w-3.5" />
+            <Pencil className="h-3 w-3" />
           </button>
           {!item.catalog_item_id && !compact && (
             <button
               onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
-              className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+              className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-primary transition-colors opacity-0 group-hover/item:opacity-100"
               title="Salvar no catálogo"
             >
-              <BookmarkPlus className="h-3.5 w-3.5" />
+              <BookmarkPlus className="h-3 w-3" />
             </button>
           )}
           <button
             onClick={() => {
               if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
             }}
-            className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+            className="p-1.5 rounded hover:bg-destructive/8 text-muted-foreground/40 hover:text-destructive transition-colors opacity-0 group-hover/item:opacity-100"
             title="Excluir item"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-3 w-3" />
           </button>
         </div>
       </div>
 
       {/* Description + Link — full width below grid */}
       {showExpanded && (
-        <div className="mt-2 ml-9 space-y-1.5">
+        <div className="pb-2 pl-10 pr-4 space-y-1">
           <input
             type="text"
             value={item.description || ""}
             onChange={(e) => onUpdate(sectionId, item.id, "description", e.target.value)}
             placeholder="Descrição do item"
-            className="w-full max-w-xl px-2.5 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
+            className="w-full max-w-xl h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
           />
           <div className="flex items-center gap-1.5 max-w-xl">
-            <LinkIcon className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+            <LinkIcon className="h-3 w-3 text-muted-foreground/30 shrink-0" />
             <input
               type="url"
               value={item.reference_url || ""}
               onChange={(e) => onUpdate(sectionId, item.id, "reference_url", e.target.value || null)}
-              placeholder="Link de referência (fornecedor, produto, etc.)"
-              className="w-full px-2.5 py-1.5 rounded-md border border-input bg-background hover:border-primary/40 focus:border-primary text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all cursor-text"
+              placeholder="Link de referência"
+              className="w-full h-7 px-2 rounded border border-transparent bg-transparent text-xs font-body text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
             />
           </div>
         </div>
@@ -708,12 +692,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     debouncedSave("sections", sectionId, { [field]: value });
   };
 
-  /**
-   * Recalculate the "Impostos e despesas administrativas" item at TAX_RATE of budget total
-   * (excluding the tax item itself). Mutates the sections array in-place and persists.
-   */
   const recalcTaxItem = useCallback((currentSections: SectionData[]): SectionData[] => {
-    // Find the tax item across all sections
     let taxSectionId: string | null = null;
     let taxItemId: string | null = null;
 
@@ -730,7 +709,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
     if (!taxItemId || !taxSectionId) return currentSections;
 
-    // Calculate total excluding the tax item (use sale total if available, otherwise cost total)
     let totalExcludingTax = 0;
     for (const s of currentSections) {
       for (const i of s.items) {
@@ -752,7 +730,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       return { ...s, items: newItems, section_price: newSaleTotal };
     });
 
-    // Persist tax item and its section
     debouncedSave("items", taxItemId, { internal_total: taxValue, internal_unit_price: taxValue, qty: 1, bdi_percentage: 0 });
     const taxSection = updated.find(s => s.id === taxSectionId);
     if (taxSection) {
@@ -768,7 +745,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       const newItems = s.items.map(i =>
         i.id === itemId ? { ...i, [field]: value } : i
       );
-      // Recalculate section_price as sale total whenever price-related fields change
       const priceFields = ["internal_total", "internal_unit_price", "bdi_percentage", "qty"];
       if (priceFields.includes(field)) {
         const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
@@ -778,7 +754,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       return { ...s, items: newItems };
     });
 
-    // Recalculate tax item if a price field changed (and the edited item is NOT the tax item itself)
     const priceFields = ["internal_total", "internal_unit_price", "bdi_percentage", "qty"];
     const editedItem = sections.flatMap(s => s.items).find(i => i.id === itemId);
     if (priceFields.includes(field) && editedItem?.title !== TAX_ITEM_TITLE) {
@@ -836,7 +811,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       .select()
       .single();
     if (data) {
-      // Auto-create item_images from catalog image_url
       const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
       let itemImages: any[] = [];
       if (catalogImageUrl) {
@@ -904,7 +878,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   const promoteToCatalog = async (sectionId: string, item: ItemData, sectionTitle: string) => {
     if (!item.title.trim()) { toast.error("Item precisa ter um nome"); return; }
     try {
-      // Create catalog item
       const { data: catalogItem, error } = await supabase.from("catalog_items").insert({
         name: item.title.trim(),
         description: item.description || null,
@@ -914,26 +887,22 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       }).select("id").single();
       if (error || !catalogItem) { toast.error("Erro ao salvar no catálogo"); return; }
 
-      // Link to current section
       const { setItemSections } = await import("@/lib/catalog-helpers");
       const sectionKey = SCOPE_CATEGORIES.find(c => c.label === sectionTitle)?.id;
       if (sectionKey) {
         await setItemSections(catalogItem.id, [sectionKey]);
       }
 
-      // Copy primary image to catalog if exists
       const primaryImage = item.images?.find(img => img.is_primary) || item.images?.[0];
       if (primaryImage) {
         await supabase.from("catalog_items").update({ image_url: primaryImage.url }).eq("id", catalogItem.id);
       }
 
-      // Update the budget item to link to catalog
       await supabase.from("items").update({
         catalog_item_id: catalogItem.id,
         catalog_snapshot: { item_type: "product", promoted_from_manual: true },
       }).eq("id", item.id);
 
-      // Update local state
       const updated = sections.map(s => {
         if (s.id !== sectionId) return s;
         return {
@@ -965,7 +934,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     const newIndex = sections.findIndex(s => s.id === over.id);
     const reordered = arrayMove(sections, oldIndex, newIndex);
 
-    // Update order_index locally and persist
     const withNewOrder = reordered.map((s, i) => ({ ...s, order_index: i }));
     onSectionsChange(withNewOrder);
     withNewOrder.forEach(s => {
@@ -986,7 +954,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         ...item,
         order_index: i,
       }));
-      // Persist new order
       reordered.forEach(item => {
         supabase.from("items").update({ order_index: item.order_index }).eq("id", item.id);
       });
@@ -995,7 +962,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     onSectionsChange(updated);
   };
 
-  // Highlight helper for search
   const highlightText = (text: string) => {
     if (!normalizedQuery || !text) return text;
     const idx = text.toLowerCase().indexOf(normalizedQuery);
@@ -1003,32 +969,30 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     return (
       <>
         {text.slice(0, idx)}
-        <mark className="bg-yellow-200 dark:bg-yellow-800/60 rounded-sm px-0.5">{text.slice(idx, idx + normalizedQuery.length)}</mark>
+        <mark className="bg-warning/20 rounded-sm px-0.5">{text.slice(idx, idx + normalizedQuery.length)}</mark>
         {text.slice(idx + normalizedQuery.length)}
       </>
     );
   };
 
   return (
-    <div className="mt-10">
-      {/* ── Financial summary strip ── */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-display font-bold text-foreground">Seções e Itens</h2>
-        </div>
+    <div className="mt-8">
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-display font-semibold text-foreground tracking-[-0.04em]">Seções e Itens</h2>
         <button
           onClick={addSection}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-body font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-body font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
           <Plus className="h-3.5 w-3.5" /> Seção
         </button>
       </div>
 
-      {/* ── Control bar: search + expand/collapse ── */}
+      {/* ── Control bar ── */}
       {sections.length > 0 && (
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
             <input
               ref={searchRef}
               type="text"
@@ -1036,31 +1000,31 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); e.currentTarget.blur(); } }}
               placeholder="Buscar item..."
-              className="w-full pl-8 pr-7 py-1.5 rounded-md border border-input bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:border-primary transition-all"
+              className="w-full pl-7 pr-7 h-8 rounded border border-border bg-background text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20 transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
-          <div className="flex items-center gap-1 ml-auto">
+          <div className="flex items-center gap-0.5 ml-auto">
             <button
               onClick={expandAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
-              <ChevronsUpDown className="h-3.5 w-3.5" /> Expandir
+              <ChevronsUpDown className="h-3 w-3" /> Expandir
             </button>
             <button
               onClick={collapseAll}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 rounded text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
-              <ChevronsDownUp className="h-3.5 w-3.5" /> Colapsar
+              <ChevronsDownUp className="h-3 w-3" /> Colapsar
             </button>
-            <div className="w-px h-4 bg-border mx-1" />
+            <div className="w-px h-4 bg-border mx-0.5" />
             <button
               onClick={() => {
                 const next = !compactMode;
@@ -1068,14 +1032,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                 try { localStorage.setItem(densityKey, next ? "compact" : "expanded"); } catch { /* ignore */ }
               }}
               className={cn(
-                "flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-body transition-colors",
+                "flex items-center gap-1 px-2 py-1.5 rounded text-xs font-body transition-colors",
                 compactMode
                   ? "text-foreground bg-muted"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
               title={compactMode ? "Modo expandido" : "Modo compacto"}
             >
-              {compactMode ? <Rows3 className="h-3.5 w-3.5" /> : <Rows4 className="h-3.5 w-3.5" />}
+              {compactMode ? <Rows3 className="h-3 w-3" /> : <Rows4 className="h-3 w-3" />}
               {compactMode ? "Compacto" : "Expandido"}
             </button>
           </div>
@@ -1087,9 +1051,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         const { avgBdi, hasData } = calcGlobalBdi(sections);
         if (!hasData || avgBdi >= 20) return null;
         return (
-          <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-md border border-warning/30 bg-warning/5 text-warning text-xs font-body">
+          <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded border border-warning/20 bg-warning/5 text-xs font-body text-warning">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-            <span>BDI médio geral está em <strong>{avgBdi.toFixed(1)}%</strong> — abaixo de 20%. Verifique se os valores estão corretos.</span>
+            <span>BDI médio geral está em <strong className="font-mono">{avgBdi.toFixed(1)}%</strong> — abaixo de 20%.</span>
           </div>
         );
       })()}
@@ -1112,7 +1076,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         onDragEnd={handleSectionDragEnd}
       >
         <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {sections.map((section) => {
               const isExpanded = expandedSections.has(section.id);
               const sectionCostTotal = calcSectionCostTotal(section);
@@ -1126,95 +1090,81 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
               return (
                 <SortableSectionCard key={section.id} section={section}>
                   {(dragListeners: any) => (
-                    <div className={cn(isSearchActive && !sectionHasMatch && "opacity-40")}>
-                      {/* Section header */}
-                      <div className="px-4 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            {...dragListeners}
-                            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted text-muted-foreground/30 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none"
-                            title="Arrastar"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <GripVertical className="h-3.5 w-3.5" />
-                          </button>
-                          <div
-                            className="flex items-center gap-2 flex-1 min-w-0"
-                            onClick={() => toggleSection(section.id)}
-                          >
-                            <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0 transition-transform", isExpanded && "rotate-90")} />
-                            <span className="font-body font-bold text-sm text-foreground truncate">
-                              {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
-                            </span>
-                            {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
-                            {section.is_optional && (
-                              <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                Opcional
-                              </span>
-                            )}
-                            <span className="text-xs text-muted-foreground font-body ml-1 shrink-0">
-                              {section.items.length} {section.items.length === 1 ? "item" : "itens"}
-                            </span>
-                            <div className="ml-auto flex items-center gap-3 text-xs font-body tabular-nums shrink-0">
-                              <span className="text-muted-foreground/60">
-                                {sectionPercent.toFixed(0)}%
-                              </span>
-                              <span className="font-semibold text-foreground">
-                                {formatBRL(sectionSaleTotal)}
-                              </span>
-                            </div>
-                          </div>
-                          {/* Section context menu */}
-                          <SectionContextMenu
-                            section={section}
-                            onRename={(name) => updateSection(section.id, "title", name)}
-                            onDelete={() => deleteSection(section.id)}
-                          />
+                    <div className={cn("group/section", isSearchActive && !sectionHasMatch && "opacity-40")}>
+                      {/* Section header — 48px, structure from spacing not borders */}
+                      <div
+                        className="h-12 px-3 flex items-center gap-1.5 cursor-pointer hover:bg-muted/40 transition-colors"
+                        onClick={() => toggleSection(section.id)}
+                      >
+                        <button
+                          {...dragListeners}
+                          className="cursor-grab active:cursor-grabbing p-0.5 rounded text-muted-foreground/20 hover:text-muted-foreground transition-colors flex-shrink-0 touch-none opacity-0 group-hover/section:opacity-100"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <GripVertical className="h-3.5 w-3.5" />
+                        </button>
+                        <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 transition-transform", isExpanded && "rotate-90")} />
+                        <span className="text-sm font-body font-semibold text-foreground truncate">
+                          {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
+                        </span>
+                        {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/30" />}
+                        {section.is_optional && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-warning/10 text-warning">
+                            Opcional
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground font-body ml-1 shrink-0">
+                          {section.items.length} {section.items.length === 1 ? "item" : "itens"}
+                        </span>
+                        <div className="ml-auto flex items-center gap-3 shrink-0">
+                          <span className="text-xs font-mono text-muted-foreground tabular-nums">
+                            {sectionPercent.toFixed(0)}%
+                          </span>
+                          <span className="text-sm font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
+                            {formatBRL(sectionSaleTotal)}
+                          </span>
                         </div>
-                        {/* Mini progress bar */}
-                        <div className="ml-9 mt-1.5 h-1 rounded-full bg-muted/50 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-primary/40 transition-all duration-300"
-                            style={{ width: `${Math.min(sectionPercent, 100)}%` }}
-                          />
-                        </div>
+                        <SectionContextMenu
+                          section={section}
+                          onRename={(name) => updateSection(section.id, "title", name)}
+                          onDelete={() => deleteSection(section.id)}
+                        />
                       </div>
 
-                      {/* Expanded content — items directly */}
+                      {/* Expanded content */}
                       {isExpanded && (
-                        <div className="border-t border-border/40">
-
-                          {/* Column headers */}
+                        <div>
+                          {/* Column headers — label-caps style */}
                           {section.items.length > 0 && (
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 px-4 pt-2.5 pb-1.5 border-b border-border/20">
-                              <div className="lg:col-span-3">
-                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Título</span>
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 px-2 h-8 items-center border-t border-border/40">
+                              <div className="lg:col-span-3 px-2">
+                                <span className="label-caps">Título</span>
                               </div>
-                              <div className="lg:col-span-1">
-                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Qtd</span>
+                              <div className="lg:col-span-1 px-1 text-right">
+                                <span className="label-caps">Qtd</span>
                               </div>
-                              <div className="lg:col-span-1">
-                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Custo</span>
+                              <div className="lg:col-span-1 px-1 text-right">
+                                <span className="label-caps">Custo</span>
                               </div>
-                              <div className="lg:col-span-1">
-                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">BDI %</span>
+                              <div className="lg:col-span-1 px-1 text-right">
+                                <span className="label-caps">BDI %</span>
                               </div>
-                              <div className="lg:col-span-1">
-                                <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Venda</span>
+                              <div className="lg:col-span-1 px-1 text-right">
+                                <span className="label-caps">Venda</span>
                               </div>
                               {!compactMode && (
                                 <>
-                                  <div className="lg:col-span-2">
-                                    <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Total Custo</span>
+                                  <div className="lg:col-span-2 px-1 text-right">
+                                    <span className="label-caps">Total Custo</span>
                                   </div>
-                                  <div className="lg:col-span-2">
-                                    <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Total Venda</span>
+                                  <div className="lg:col-span-2 px-1 text-right">
+                                    <span className="label-caps">Total Venda</span>
                                   </div>
                                 </>
                               )}
                               {compactMode && (
-                                <div className="lg:col-span-2">
-                                  <span className="text-[10px] text-foreground font-body uppercase tracking-widest font-semibold">Total Venda</span>
+                                <div className="lg:col-span-4 px-1 text-right">
+                                  <span className="label-caps">Total Venda</span>
                                 </div>
                               )}
                               <div className="lg:col-span-1" />
@@ -1231,11 +1181,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                               items={section.items.map(i => i.id)}
                               strategy={verticalListSortingStrategy}
                             >
-                              <div>
+                              <div className="divide-y divide-border/30">
                                 {section.items.length === 0 ? (
                                   <button
                                     onClick={() => addItem(section.id)}
-                                    className="w-full py-6 border-2 border-dashed border-border/40 rounded-md text-sm font-body text-muted-foreground/50 hover:text-foreground hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer flex items-center justify-center gap-1.5 mx-auto my-2"
+                                    className="w-full py-6 text-sm font-body text-muted-foreground/40 hover:text-foreground hover:bg-muted/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                                   >
                                     <Plus className="h-3.5 w-3.5" />
                                     Adicionar primeiro item
@@ -1263,7 +1213,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           </DndContext>
 
                           {/* Add item */}
-                          <div className="px-4 py-2 border-t border-border/30">
+                          <div className="px-3 py-1.5 border-t border-border/30">
                             <AddItemPopover
                               sectionTitle={section.title}
                               onAddItem={(itemData) => addItem(section.id, itemData)}
