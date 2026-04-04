@@ -1143,13 +1143,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                         </span>
 
-                        {/* Right zone: [% bar] [R$ total] [⋮] */}
+                        {/* Right zone: [% bar] [R$ total] */}
                         <div className="ml-auto flex items-center gap-2 shrink-0">
-                          {/* [% barra] — mini progress bar + percentage */}
+                          {/* [% barra] — mini progress bar */}
                           <div className="hidden sm:flex items-center gap-1.5">
-                            <div className="w-12 h-1 rounded-full bg-border overflow-hidden">
+                            <div className="h-1 rounded-full bg-primary/10 overflow-hidden" style={{ width: '80px' }}>
                               <div
-                                className="h-full rounded-full bg-muted-foreground/40 transition-all duration-300"
+                                className="h-full rounded-full bg-primary/30 transition-all duration-300"
                                 style={{ width: `${Math.min(sectionPercent, 100)}%` }}
                               />
                             </div>
