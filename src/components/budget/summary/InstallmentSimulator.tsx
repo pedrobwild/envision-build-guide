@@ -32,7 +32,7 @@ export function InstallmentSimulator({
         )}
       >
         <div className="flex items-center gap-2">
-          <CreditCard className="h-3.5 w-3.5 text-muted-foreground/50" aria-hidden />
+          <CreditCard className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
           <span className="text-[13px] font-body font-medium text-foreground">
             Simular parcelamento
           </span>
@@ -43,7 +43,7 @@ export function InstallmentSimulator({
           </span>
           <ChevronDown
             className={cn(
-              "h-3.5 w-3.5 text-muted-foreground/40 transition-transform duration-200",
+              "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
               open && "rotate-180"
             )}
             aria-hidden
@@ -81,7 +81,7 @@ export function InstallmentSimulator({
                       <span className="font-mono tabular-nums" style={MONO_STYLE}>
                         {n}
                       </span>
-                      <span className="text-muted-foreground/60 ml-1">
+                      <span className="text-muted-foreground ml-1">
                         × {n === 1 ? "parcela" : "parcelas"}
                       </span>
                     </span>
@@ -94,7 +94,7 @@ export function InstallmentSimulator({
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-muted-foreground/40 font-body mt-2.5 text-center">
+              <p className="text-[11px] text-muted-foreground font-body mt-2.5 text-center">
                 Condições sob consulta
               </p>
             </div>

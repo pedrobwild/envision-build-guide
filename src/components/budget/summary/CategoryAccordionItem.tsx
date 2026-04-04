@@ -86,7 +86,7 @@ export function CategoryAccordionItem({
             {toTitleCase(data.title)}
           </span>
           {hasItems && (
-            <span className="text-[11px] font-body text-muted-foreground/50 mt-0.5 block">
+            <span className="text-[11px] font-body text-muted-foreground mt-0.5 block">
               {data.items.length} {data.items.length === 1 ? "item" : "itens"}
             </span>
           )}
@@ -100,7 +100,7 @@ export function CategoryAccordionItem({
             className="flex-shrink-0"
             aria-hidden
           >
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           </motion.div>
         )}
 
@@ -153,10 +153,10 @@ export function CategoryAccordionItem({
                   }}
                   className="flex items-start justify-between px-3 py-2.5 gap-3"
                 >
-                  <span className="text-[12px] font-body text-muted-foreground/70 leading-relaxed flex-1">
+                  <span className="text-[12px] font-body text-foreground/80 leading-relaxed flex-1">
                     {item.qty && item.qty > 1 && (
                       <span
-                        className="font-mono text-[11px] text-muted-foreground/50 mr-1 tabular-nums"
+                        className="font-mono text-[11px] text-muted-foreground mr-1 tabular-nums"
                         style={MONO_STYLE}
                       >
                         {item.qty}×
@@ -166,7 +166,7 @@ export function CategoryAccordionItem({
                   </span>
                   {item.unit && (
                     <span
-                      className="text-[10px] text-muted-foreground/35 font-mono uppercase whitespace-nowrap tracking-wider mt-0.5 tabular-nums"
+                      className="text-[10px] text-muted-foreground font-mono uppercase whitespace-nowrap tracking-wider mt-0.5 tabular-nums"
                       style={MONO_STYLE}
                     >
                       {item.unit}
