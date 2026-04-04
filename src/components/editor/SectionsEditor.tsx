@@ -1246,20 +1246,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                             </SortableContext>
                           </DndContext>
 
-                          {/* Add item + delete section */}
-                          <div className="px-4 py-2 flex items-center justify-between border-t border-border/30">
+                          {/* Add item */}
+                          <div className="px-4 py-2 border-t border-border/30">
                             <AddItemPopover
                               sectionTitle={section.title}
                               onAddItem={(itemData) => addItem(section.id, itemData)}
                             />
-                            <button
-                              onClick={() => {
-                                if (confirm("Excluir esta seção e todos os seus itens?")) deleteSection(section.id);
-                              }}
-                              className="flex items-center gap-1 text-xs font-body text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                            >
-                              <Trash2 className="h-3 w-3" /> Excluir
-                            </button>
                           </div>
                         </div>
                       )}
