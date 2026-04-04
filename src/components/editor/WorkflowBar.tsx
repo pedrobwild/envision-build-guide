@@ -315,7 +315,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           </>
         )}
 
-        <div className="h-4 w-px bg-border hidden sm:block" />
+        <div className="h-4 w-px bg-border/60 hidden sm:block" />
 
         {/* Ownership */}
         <Tooltip>
