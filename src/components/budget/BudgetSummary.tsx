@@ -126,7 +126,16 @@ export function BudgetSummary({
         )}
 
         {/* Total card */}
-        <TotalCard total={total} />
+        <TotalCard total={total} installments={installments} />
+
+        {/* Installment simulator */}
+        <div className="px-5 pb-2">
+          <InstallmentSimulator
+            total={total}
+            installments={installments}
+            onInstallmentsChange={setInstallments}
+          />
+        </div>
 
         {/* Footer */}
         {generatedAt && (
