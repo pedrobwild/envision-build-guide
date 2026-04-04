@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { CategoryDistributionBar } from "@/components/budget/CategoryDistributionBar";
 import { CategoryDetailDialog } from "@/components/budget/CategoryDetailDialog";
 import { SectionSummaryRow } from "@/components/budget/SectionSummaryRow";
+import { CountUpValue } from "@/components/budget/CountUpValue";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
 interface BudgetSummaryProps {
@@ -305,14 +306,10 @@ function TotalCard({ total }: { total: number }) {
       <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-2 relative">
         Investimento Total
       </p>
-      <motion.p
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.4, duration: 0.4 }}
-        className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none relative"
-      >
-        {formatBRL(total)}
-      </motion.p>
+      <CountUpValue
+        value={total}
+        className="font-display font-extrabold text-2xl text-primary tabular-nums leading-none relative block"
+      />
       <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-primary/8 relative">
         <Shield className="h-3.5 w-3.5 text-primary/30" />
         <span className="text-[11px] text-muted-foreground/60 font-body">
