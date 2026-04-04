@@ -797,12 +797,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         budget_id: budgetId,
         title: `${source.title} (cópia)`,
         order_index: order,
-        is_optional: source.is_optional,
-        notes: source.notes,
-        subtitle: source.subtitle,
-        included_bullets: source.included_bullets as any,
-        excluded_bullets: source.excluded_bullets as any,
-        tags: source.tags as any,
+        is_optional: source.is_optional ?? false,
+        subtitle: source.subtitle ?? null,
       })
       .select()
       .single();
@@ -822,7 +818,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           internal_total: item.internal_total,
           bdi_percentage: item.bdi_percentage,
           order_index: item.order_index,
-          coverage_type: item.coverage_type,
           notes: item.notes,
         })
         .select()
