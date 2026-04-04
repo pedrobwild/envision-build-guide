@@ -85,7 +85,7 @@ export function MobileFinancialSheet({
               )}
             >
               {/* ── Total card — always visible at 40% snap ── */}
-              <div className="rounded-xl bg-gradient-to-br from-primary/10 to-primary/4 border border-primary/15 px-4 py-4 shadow-sm mb-3">
+              <div className="rounded-xl bg-gradient-to-br from-primary/10 to-primary/[0.04] border border-primary/[0.15] px-4 py-4 shadow-sm mb-3">
                 <p className="text-xs font-body font-medium text-muted-foreground mb-1">
                   Investimento total
                 </p>
