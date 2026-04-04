@@ -409,10 +409,10 @@ function SortableItemRow({
       style={style}
       {...attributes}
       className={cn(
-        "group/item transition-colors",
+        "group/item transition-colors duration-150 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
         compact && !rowExpanded ? "h-10" : "",
-        searchMatch && "bg-warning/5",
-        isDragging && "bg-muted/40 shadow-lg rounded"
+        searchMatch && "bg-warning/5 hover:bg-warning/8",
+        isDragging && "bg-muted/40 shadow-lg rounded border-b-0"
       )}
     >
       {/* ── Single-line grid row ── */}
