@@ -531,7 +531,7 @@ export default function BudgetEditorV2() {
                 <CollapsibleContent>
                   <div className="pl-7 pb-4 pt-1 space-y-3">
                     <div className="max-w-sm">
-                      <label className="block text-xs text-muted-foreground mb-1 font-body">
+                      <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground block mb-1">
                         Custo da Obra (interno) — R$
                       </label>
                       <input
@@ -544,14 +544,14 @@ export default function BudgetEditorV2() {
                           autoSaveBudgetField("internal_cost", val);
                         }}
                         placeholder="0.00"
-                        className="w-full px-3 py-2 rounded-lg border border-transparent hover:border-border focus:border-border bg-transparent text-foreground text-sm font-body placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all tabular-nums"
+                        className="w-full h-9 px-3 rounded border border-transparent hover:border-border focus:border-border bg-transparent text-foreground text-sm font-mono placeholder:text-muted-foreground/40 focus:outline-none transition-colors duration-100 tabular-nums"
                       />
                       <p className="text-xs text-muted-foreground/60 font-body mt-1">
                         Custo real de execução. Nunca exposto ao cliente.
                       </p>
                     </div>
                     {(budget as any).internal_cost > 0 && (
-                      <div className="text-sm font-body text-muted-foreground tabular-nums">
+                      <div className="text-sm font-mono text-muted-foreground tabular-nums">
                         Custo: {formatBRL((budget as any).internal_cost)}
                       </div>
                     )}

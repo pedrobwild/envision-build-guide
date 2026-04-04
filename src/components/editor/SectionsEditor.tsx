@@ -52,7 +52,7 @@ function BdiInput({ value, onChange }: { value: number | null | undefined; onCha
       onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
       placeholder="0"
       step="0.01"
-      className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors tabular-nums text-right"
+      className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right"
     />
   );
 }
@@ -409,8 +409,8 @@ function SortableItemRow({
       style={style}
       {...attributes}
       className={cn(
-        "group/item transition-colors duration-150 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
-        compact && !rowExpanded ? "h-10" : "",
+        "group/item transition-colors duration-100 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
+        compact && !rowExpanded ? "h-11" : "",
         searchMatch && "bg-warning/5 hover:bg-warning/8",
         isDragging && "bg-muted/40 shadow-lg rounded border-b-0"
       )}
@@ -418,10 +418,10 @@ function SortableItemRow({
       {/* ── Single-line grid row ── */}
       <div className={cn(
         "grid grid-cols-1 lg:grid-cols-12 gap-0 items-center",
-        compact && !rowExpanded ? "h-10" : "py-1.5",
+        compact && !rowExpanded ? "h-11" : "py-2",
       )}>
         {/* Title column */}
-        <div className="lg:col-span-3 flex items-center gap-1 px-2 min-w-0">
+        <div className="lg:col-span-3 flex items-center gap-1 px-3 min-w-0">
           {compact && (
             <button
               onClick={() => setRowExpanded(!rowExpanded)}
@@ -449,7 +449,7 @@ function SortableItemRow({
               value={item.title}
               onChange={(e) => onUpdate(sectionId, item.id, "title", e.target.value)}
               placeholder="Nome do item"
-              className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors"
+              className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100"
             />
           )}
           {/* Compact indicators */}
@@ -468,18 +468,18 @@ function SortableItemRow({
           )}
         </div>
 
-        {/* Qty */}
+        {/* Qty — secondary value */}
         <div className="lg:col-span-1 px-1">
           <input
             type="number"
             value={item.qty ?? ""}
             onChange={(e) => onUpdate(sectionId, item.id, "qty", e.target.value ? Number(e.target.value) : null)}
             placeholder="1"
-            className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors tabular-nums text-right"
+            className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right"
           />
         </div>
 
-        {/* $ Custo (unit) */}
+        {/* $ Custo (unit) — primary financial */}
         <div className="lg:col-span-1 px-1">
           <input
             type="number"
@@ -487,11 +487,11 @@ function SortableItemRow({
             onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
             placeholder="0.00"
             step="0.01"
-            className="w-full h-8 px-2 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors tabular-nums text-right"
+            className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right"
           />
         </div>
 
-        {/* %BDI */}
+        {/* %BDI — secondary value */}
         <div className="lg:col-span-1 px-1">
           <BdiInput
             value={item.bdi_percentage}
@@ -499,9 +499,9 @@ function SortableItemRow({
           />
         </div>
 
-        {/* $ Venda (calculated) */}
+        {/* $ Venda (calculated) — secondary */}
         <div className="lg:col-span-1 px-1">
-          <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground">
+          <div className="h-9 flex items-center justify-end px-3 text-sm font-mono tabular-nums text-muted-foreground">
             {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
@@ -509,7 +509,7 @@ function SortableItemRow({
         {/* $ Total Custo (calculated) — hidden in compact */}
         {showExpanded && (
           <div className="lg:col-span-2 px-1">
-            <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground">
+            <div className="h-9 flex items-center justify-end px-3 text-sm font-mono tabular-nums text-muted-foreground">
               {formatBRL(calcItemCostTotal(item))}
             </div>
           </div>
@@ -517,17 +517,17 @@ function SortableItemRow({
 
         {/* $ Total Venda (calculated) — primary data */}
         <div className={cn("px-1", showExpanded ? "lg:col-span-2" : "lg:col-span-4")}>
-          <div className="h-8 flex items-center justify-end px-2 text-sm font-mono font-semibold tabular-nums text-foreground tracking-[-0.035em]">
+          <div className="h-9 flex items-center justify-end px-3 text-sm font-mono font-semibold tabular-nums text-foreground tracking-[-0.035em]">
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="lg:col-span-1 flex items-center justify-end gap-0.5 px-2">
+        {/* Actions — hidden until hover */}
+        <div className="lg:col-span-1 flex items-center justify-end gap-0.5 px-3">
           {isItemSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />}
           <button
             onClick={() => setDetailOpen(true)}
-            className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-foreground transition-colors opacity-0 group-hover/item:opacity-100"
+            className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-foreground transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
             title="Editar detalhes"
           >
             <Pencil className="h-3 w-3" />
@@ -535,7 +535,7 @@ function SortableItemRow({
           {!item.catalog_item_id && !compact && (
             <button
               onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
-              className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-primary transition-colors opacity-0 group-hover/item:opacity-100"
+              className="p-1.5 rounded hover:bg-muted text-muted-foreground/40 hover:text-primary transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
               title="Salvar no catálogo"
             >
               <BookmarkPlus className="h-3 w-3" />
@@ -545,7 +545,7 @@ function SortableItemRow({
             onClick={() => {
               if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
             }}
-            className="p-1.5 rounded hover:bg-destructive/8 text-muted-foreground/40 hover:text-destructive transition-colors opacity-0 group-hover/item:opacity-100"
+            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive transition-opacity duration-100 opacity-0 group-hover/item:opacity-100"
             title="Excluir item"
           >
             <Trash2 className="h-3 w-3" />
@@ -1096,7 +1096,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                       {/* Section header — 48px fixed height, no change on expand */}
                       <div
                         className={cn(
-                          "h-12 px-3 flex items-center gap-1.5 cursor-pointer transition-colors duration-150",
+                          "h-12 px-3 flex items-center gap-1.5 cursor-pointer transition-colors duration-100",
                           isExpanded ? "bg-muted/20 hover:bg-muted/30" : "hover:bg-muted/30"
                         )}
                         onClick={() => toggleSection(section.id)}
@@ -1144,35 +1144,35 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                         <div>
                           {/* Column headers — sticky label-caps */}
                           {section.items.length > 0 && (
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 px-2 h-8 items-center border-t border-border/40 bg-background sticky top-0 z-10">
-                              <div className="lg:col-span-3 px-2">
-                                <span className="label-caps">Título</span>
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 px-3 h-9 items-center border-t border-border/40 bg-background sticky top-0 z-10">
+                              <div className="lg:col-span-3 px-3">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Título</span>
                               </div>
-                              <div className="lg:col-span-1 px-1 text-right">
-                                <span className="label-caps">Qtd</span>
+                              <div className="lg:col-span-1 px-3 text-right">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Qtd</span>
                               </div>
-                              <div className="lg:col-span-1 px-1 text-right">
-                                <span className="label-caps">Custo</span>
+                              <div className="lg:col-span-1 px-3 text-right">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Custo</span>
                               </div>
-                              <div className="lg:col-span-1 px-1 text-right">
-                                <span className="label-caps">BDI %</span>
+                              <div className="lg:col-span-1 px-3 text-right">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">BDI %</span>
                               </div>
-                              <div className="lg:col-span-1 px-1 text-right">
-                                <span className="label-caps">Venda</span>
+                              <div className="lg:col-span-1 px-3 text-right">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Venda</span>
                               </div>
                               {!compactMode && (
                                 <>
-                                  <div className="lg:col-span-2 px-1 text-right">
-                                    <span className="label-caps">Total Custo</span>
+                                  <div className="lg:col-span-2 px-3 text-right">
+                                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Custo</span>
                                   </div>
-                                  <div className="lg:col-span-2 px-1 text-right">
-                                    <span className="label-caps">Total Venda</span>
+                                  <div className="lg:col-span-2 px-3 text-right">
+                                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
                                   </div>
                                 </>
                               )}
                               {compactMode && (
-                                <div className="lg:col-span-4 px-1 text-right">
-                                  <span className="label-caps">Total Venda</span>
+                                <div className="lg:col-span-4 px-3 text-right">
+                                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Total Venda</span>
                                 </div>
                               )}
                               <div className="lg:col-span-1" />
