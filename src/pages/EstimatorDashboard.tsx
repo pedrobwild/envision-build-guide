@@ -898,6 +898,16 @@ export default function EstimatorDashboard() {
         onOpenChange={setNewBudgetOpen}
         onSuccess={() => loadData()}
       />
+
+      <TemplateSelectorDialog
+        open={templateDialog.open}
+        budgetId={templateDialog.budgetId}
+        onOpenChange={(open) => setTemplateDialog((prev) => ({ ...prev, open }))}
+        onConfirm={() => {
+          changeStatus(templateDialog.budgetId, templateDialog.pendingStatus);
+          setTemplateDialog({ open: false, budgetId: "", pendingStatus: "in_progress" });
+        }}
+      />
     </div>
   );
 }
