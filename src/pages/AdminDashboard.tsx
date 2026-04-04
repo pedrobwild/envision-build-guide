@@ -393,9 +393,14 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       {/* Welcome + Notifications + New Budget */}
-      <div className="flex items-start justify-between gap-4">
+      <motion.div
+        className="flex items-start justify-between gap-4"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
         <div>
-          <h1 className="text-xl font-semibold font-display text-foreground">
+          <h1 className="text-xl font-semibold font-display text-foreground tracking-tight">
             Olá, {profile?.full_name?.split(" ")[0] || user?.email || "Usuário"} 👋
           </h1>
           <div className="flex flex-wrap gap-2 mt-1">
