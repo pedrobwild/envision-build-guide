@@ -82,18 +82,23 @@ export default function OrcamentoPage() {
             <motion.div id="budget-hero" variants={heroVariants}>
               <BudgetHero meta={resolvedBudget.meta} included={resolvedBudget.included} />
             </motion.div>
+            <div className="w-full border-t border-border/30" />
             <motion.div id="services-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1, margin: "0px 0px -60px 0px" }} initial="hidden" whileInView="visible">
               <ServicesSection services={resolvedBudget.services} />
             </motion.div>
+            <div className="w-full border-t border-border/30" />
             <motion.div id="journey-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1, margin: "0px 0px -60px 0px" }} initial="hidden" whileInView="visible">
               <JourneySection steps={resolvedBudget.journey} />
             </motion.div>
+            <div className="w-full border-t border-border/30" />
             <motion.div id="scope-section" variants={sectionVariants} viewport={{ once: true, amount: 0.05, margin: "0px 0px -40px 0px" }} initial="hidden" whileInView="visible">
               <ScopeSection scope={resolvedBudget.scope} />
             </motion.div>
+            <div className="w-full border-t border-border/30" />
             <motion.div id="portal-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1, margin: "0px 0px -60px 0px" }} initial="hidden" whileInView="visible">
               <PortalWarrantyNextSteps portalTabs={resolvedBudget.portalTabs} />
             </motion.div>
+            <div className="w-full border-t border-border/30" />
             <motion.div id="cronograma-section" variants={sectionVariants} viewport={{ once: true, amount: 0.05, margin: "0px 0px -40px 0px" }} initial="hidden" whileInView="visible">
               <ReformTimeline />
             </motion.div>
