@@ -342,17 +342,19 @@ export default function TemplateEditorPage() {
 
   useEffect(() => { loadTemplate(); }, [loadTemplate]);
 
-  // ─── Save all ────────────────────────────────────────────────
-  const saveAll = async () => {
-    if (!template) return;
-    setSaving(true);
+  // ─── Persist (auto-save core) ─────────────────────────────────
+  const persistAll = useCallback(async () => {
+    const tpl = templateRef.current;
+    const secs = sectionsRef.current;
+    if (!tpl) return;
+    setAutoSaveStatus("saving");
     try {
       await supabase
         .from("budget_templates")
-        .update({ name: template.name, description: template.description })
-        .eq("id", template.id);
+        .update({ name: tpl.name, description: tpl.description })
+        .eq("id", tpl.id);
 
-      for (const section of sections) {
+      for (const section of secs) {
         await supabase
           .from("budget_template_sections")
           .update({
@@ -382,12 +384,32 @@ export default function TemplateEditorPage() {
         }
       }
 
-      toast.success("Template salvo com sucesso!");
+      setAutoSaveStatus("saved");
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
     } catch {
-      toast.error("Erro ao salvar template");
+      setAutoSaveStatus("error");
     }
-    setSaving(false);
-  };
+  }, []);
+
+  // ─── Schedule auto-save on data changes ─────────────────────
+  const scheduleSave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => persistAll(), 1500);
+  }, [persistAll]);
+
+  useEffect(() => {
+    if (isInitialLoadRef.current) return;
+    scheduleSave();
+  }, [template, sections, scheduleSave]);
+
+  // Cleanup timers
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   // ─── Section mutations ───────────────────────────────────────
   const toggleSection = (id: string) => {
