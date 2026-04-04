@@ -21,9 +21,7 @@ interface SectionSummaryRowProps {
   section: BudgetSection;
   colorClass: string;
   bgClass: string;
-  /** When true, items are always expanded (used for PDF export) */
   forceExpanded?: boolean;
-  /** Compact mode for mobile */
   compact?: boolean;
 }
 
@@ -39,44 +37,44 @@ export function SectionSummaryRow({
   const items = section.items || [];
   const hasItems = items.length > 0;
 
-  const textSize = compact ? "text-[13px]" : "text-sm";
-  const valueSize = compact ? "text-[13px]" : "text-sm";
-  const py = compact ? "py-2.5" : "py-2.5";
-
   return (
     <div>
       <button
         onClick={() => hasItems && !forceExpanded && setExpanded((v) => !v)}
         className={cn(
-          "w-full flex items-center gap-2.5 rounded-lg transition-all duration-200",
-          compact ? "px-1.5" : "px-2 -mx-2",
-          py,
-          hasItems && !forceExpanded && "hover:bg-muted/50 cursor-pointer",
-          !hasItems && "cursor-default"
+          "w-full flex items-center gap-3 rounded-lg transition-all duration-200",
+          compact ? "px-1 py-3" : "px-2 -mx-2 py-3",
+          hasItems && !forceExpanded && "hover:bg-muted/40 active:bg-muted/60 cursor-pointer",
+          !hasItems && "cursor-default",
+          expanded && !forceExpanded && "bg-muted/30"
         )}
       >
-        {/* Color indicator */}
-        <div className={cn("w-1 rounded-full flex-shrink-0", compact ? "h-4" : "h-6", bgClass)} />
+        {/* Color indicator — thinner, taller */}
+        <div className={cn("w-[3px] rounded-full flex-shrink-0 self-stretch min-h-[20px]", bgClass)} />
 
         {/* Section title */}
-        {/* Section title */}
-        <span className={cn("flex-1 font-body font-medium text-foreground text-left leading-snug", textSize)}>
+        <span className={cn(
+          "flex-1 font-body font-medium text-foreground text-left leading-snug",
+          compact ? "text-[13px]" : "text-sm"
+        )}>
           {toTitleCase(section.title)}
         </span>
-
 
         {/* Chevron */}
         {hasItems && !forceExpanded && (
           <ChevronDown
             className={cn(
-              "h-3.5 w-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-200",
+              "h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 transition-transform duration-200",
               expanded && "rotate-180"
             )}
           />
         )}
 
         {/* Value */}
-        <span className={cn("font-mono tabular-nums font-semibold text-foreground whitespace-nowrap", valueSize)}>
+        <span className={cn(
+          "font-mono tabular-nums font-semibold text-foreground whitespace-nowrap",
+          compact ? "text-[13px]" : "text-sm"
+        )}>
           {formatBRL(subtotal)}
         </span>
       </button>
@@ -91,18 +89,21 @@ export function SectionSummaryRow({
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className={cn("ml-4 border-l-2 border-border/40 pl-3 space-y-0", compact ? "mb-1" : "mb-2")}>
+            <div className={cn(
+              "ml-[15px] border-l border-border/30 pl-4 space-y-0",
+              compact ? "mb-1 pb-1" : "mb-2 pb-1"
+            )}>
               {items.map((item: any) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between py-1.5"
+                  className="flex items-baseline justify-between py-1.5"
                 >
-                  <span className="text-xs font-body text-muted-foreground leading-snug mr-2 flex-1">
+                  <span className="text-xs font-body text-muted-foreground leading-relaxed mr-3 flex-1">
                     {item.qty && item.qty > 1 ? `${item.qty}× ` : ""}
                     {item.title}
                   </span>
                   {item.unit && (
-                    <span className="text-[10px] text-muted-foreground/60 font-body whitespace-nowrap">
+                    <span className="text-[10px] text-muted-foreground/50 font-body whitespace-nowrap">
                       {item.unit}
                     </span>
                   )}
