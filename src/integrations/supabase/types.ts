@@ -162,10 +162,13 @@ export type Database = {
       }
       budget_template_items: {
         Row: {
+          bdi_percentage: number | null
           coverage_type: string
           created_at: string | null
           description: string | null
           id: string
+          internal_total: number | null
+          internal_unit_price: number | null
           order_index: number
           qty: number | null
           reference_url: string | null
@@ -174,10 +177,13 @@ export type Database = {
           unit: string | null
         }
         Insert: {
+          bdi_percentage?: number | null
           coverage_type?: string
           created_at?: string | null
           description?: string | null
           id?: string
+          internal_total?: number | null
+          internal_unit_price?: number | null
           order_index?: number
           qty?: number | null
           reference_url?: string | null
@@ -186,10 +192,13 @@ export type Database = {
           unit?: string | null
         }
         Update: {
+          bdi_percentage?: number | null
           coverage_type?: string
           created_at?: string | null
           description?: string | null
           id?: string
+          internal_total?: number | null
+          internal_unit_price?: number | null
           order_index?: number
           qty?: number | null
           reference_url?: string | null
