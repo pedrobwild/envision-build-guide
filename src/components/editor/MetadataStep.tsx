@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, Save, Timer, Clock, Loader2, ShoppingBag, Users, ExternalLink, ChevronDown } from "lucide-react";
+import { Calendar, MapPin, User, Building, Ruler, Mail, UserCheck, Hash, Timer, Clock, ShoppingBag, ExternalLink, ChevronDown } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MetadataStepProps {
   budget: any;
   onFieldChange: (field: string, value: any) => void;
-  onNext: () => void;
-  saving?: boolean;
 }
 
 /* ── Notion-like property row ── */
@@ -76,8 +74,7 @@ const COMMERCIAL_FIELDS = [
   { key: "email_comercial", label: "E-mail Comercial", placeholder: "email@exemplo.com", icon: Mail, type: "email" },
 ];
 
-export function MetadataStep({ budget, onFieldChange, onNext, saving }: MetadataStepProps) {
-  const hasClientName = !!budget.client_name && budget.client_name !== "Cliente";
+export function MetadataStep({ budget, onFieldChange }: MetadataStepProps) {
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
   const [showMore, setShowMore] = useState(false);
@@ -213,26 +210,6 @@ export function MetadataStep({ budget, onFieldChange, onNext, saving }: Metadata
         </div>
       )}
 
-      {/* ── Publish button ── */}
-      <div className="flex justify-end pt-4">
-        <button
-          onClick={onNext}
-          disabled={!hasClientName || saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-body font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Publicando...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              Salvar e Publicar
-            </>
-          )}
-        </button>
-      </div>
     </div>
   );
 }

@@ -278,6 +278,8 @@ export default function BudgetEditorV2() {
           saveStatus={saveStatus}
           lastSavedAt={lastSavedAt}
           onRetrySave={retrySave}
+          onPublish={handleSaveAndPublish}
+          publishing={saving}
           primaryAction={stickyPrimaryAction}
         />
 
@@ -503,8 +505,6 @@ export default function BudgetEditorV2() {
                   setBudget({ ...budget, [field]: value });
                   autoSaveBudgetField(field, value);
                 }}
-                onNext={handleSaveAndPublish}
-                saving={saving}
               />
 
               {/* Internal Data - Collapsible */}
