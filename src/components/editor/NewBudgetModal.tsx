@@ -245,7 +245,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-180px)]">
-          <form id="new-budget-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
+          <form id="new-budget-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
             {/* Template */}
             {templates.length > 0 && (
               <section className="space-y-3">
