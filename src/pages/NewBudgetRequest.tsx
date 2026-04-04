@@ -57,10 +57,10 @@ function PropertyRow({
   hint?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 py-2 group">
-      <div className="flex items-center gap-2 w-[160px] shrink-0 pt-2.5">
-        <Icon className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-        <span className="text-sm text-muted-foreground font-body truncate">
+    <div className="flex items-start gap-3 py-1.5 group/row rounded-lg hover:bg-muted/30 px-1 -mx-1 transition-colors">
+      <div className="flex items-center gap-2 w-[152px] shrink-0 pt-2.5">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 group-hover/row:text-muted-foreground/80 transition-colors" />
+        <span className="text-[13px] text-muted-foreground font-body truncate">
           {label}
           {required && <span className="text-destructive ml-0.5">*</span>}
         </span>
@@ -68,7 +68,7 @@ function PropertyRow({
       <div className="flex-1 min-w-0">
         {children}
         {hint && (
-          <p className="text-[11px] text-muted-foreground/60 font-body mt-1 ml-0.5">{hint}</p>
+          <p className="text-[11px] text-muted-foreground/50 font-body mt-0.5 ml-0.5">{hint}</p>
         )}
       </div>
     </div>
