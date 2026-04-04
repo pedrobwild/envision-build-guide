@@ -266,6 +266,7 @@ function calcGlobalBdi(sections: SectionData[]): { avgBdi: number; hasData: bool
   return { avgBdi, hasData: true };
 }
 
+interface SectionsEditorProps {
   budgetId: string;
   sections: SectionData[];
   onSectionsChange: (sections: SectionData[]) => void;
