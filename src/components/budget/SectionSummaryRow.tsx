@@ -83,7 +83,7 @@ export function SectionSummaryRow({
             {toTitleCase(section.title)}
           </span>
           {hasItems && !forceExpanded && (
-            <span className="text-[11px] font-body text-muted-foreground/50 mt-0.5 block">
+            <span className="text-[11px] font-body text-muted-foreground mt-0.5 block">
               {items.length} {items.length === 1 ? "item" : "itens"}
             </span>
           )}
