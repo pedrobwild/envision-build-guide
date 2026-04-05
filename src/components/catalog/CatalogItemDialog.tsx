@@ -192,8 +192,13 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
               <Input value={form.unit_of_measure} onChange={(e) => set("unit_of_measure", e.target.value)} placeholder="m², un, vb..." />
             </div>
             <div>
-              <Label>Código interno</Label>
-              <Input value={form.internal_code} onChange={(e) => set("internal_code", e.target.value)} placeholder="Opcional" />
+              <Label>Código</Label>
+              <Input
+                value={item ? (item.internal_code ?? "—") : "Automático"}
+                readOnly
+                disabled
+                className="font-mono bg-muted/50"
+              />
             </div>
           </div>
 
