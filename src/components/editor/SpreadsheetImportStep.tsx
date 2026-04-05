@@ -166,7 +166,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: "array" });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const json: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const json: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
         if (json.length < 2) {
           setError("A planilha precisa ter pelo menos 2 linhas.");
