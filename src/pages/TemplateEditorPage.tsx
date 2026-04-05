@@ -163,7 +163,7 @@ function SortableSectionCard({
   children,
 }: {
   section: TemplateSectionData;
-  children: (dragListeners: any) => React.ReactNode;
+  children: (dragListeners: Record<string, unknown> | undefined) => React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id });
   const style = {
