@@ -369,7 +369,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     setToursSaving(true);
     try {
       // Delete all existing tours for this budget
-      await (supabase as any).from("budget_tours").delete().eq("budget_id", budgetId);
+      await supabase.from("budget_tours").delete().eq("budget_id", budgetId);
 
       // Insert all current tours
       const toInsert = tours
@@ -383,7 +383,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
         }));
 
       if (toInsert.length > 0) {
-        const { error } = await (supabase as any).from("budget_tours").insert(toInsert);
+        const { error } = await supabase.from("budget_tours").insert(toInsert);
         if (error) throw error;
       }
 

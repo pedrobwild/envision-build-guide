@@ -140,6 +140,6 @@ export async function matchAndCopyItemMedia(
     await supabase.from("items").update({ description: upd.description }).eq("id", upd.id);
   }
 
-  console.log(`[ItemMediaMatcher] Matched ${matched} items, copied ${imageInserts.length} images`);
+  if (import.meta.env.DEV) console.log(`[ItemMediaMatcher] Matched ${matched} items, copied ${imageInserts.length} images`);
   return { matched, imagesCopied: imageInserts.length };
 }

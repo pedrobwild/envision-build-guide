@@ -69,14 +69,14 @@ export default function FinancialHistory() {
     const monthMap = new Map<string, { contracts: number; revenue: number; cost: number }>();
 
     budgets.forEach(b => {
-      const closedAt = (b as any).closed_at;
+      const closedAt = b.closed_at;
       if (!closedAt) return;
       const d = new Date(closedAt);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const existing = monthMap.get(key) || { contracts: 0, revenue: 0, cost: 0 };
       existing.contracts += 1;
       existing.revenue += getBudgetTotal(b);
-      existing.cost += Number((b as any).internal_cost) || 0;
+      existing.cost += Number(b.internal_cost) || 0;
       monthMap.set(key, existing);
     });
 
