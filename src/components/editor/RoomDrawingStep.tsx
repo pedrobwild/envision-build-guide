@@ -90,7 +90,7 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
     if (drawMode === "drawing" && currentPoints.length >= 3) {
       finishPolygon(currentPoints);
     }
-  }, [drawMode, currentPoints]);
+  }, [drawMode, currentPoints, finishPolygon]);
 
   const confirmDelete = () => {
     if (!deleteTarget) return;
