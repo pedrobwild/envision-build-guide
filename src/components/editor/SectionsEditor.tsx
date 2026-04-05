@@ -8,7 +8,7 @@ import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
   PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
-  AlertTriangle, Paperclip, Rows3, Rows4, MoreVertical,
+  AlertTriangle, Paperclip, Rows3, Rows4, MoreVertical, Building2,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
