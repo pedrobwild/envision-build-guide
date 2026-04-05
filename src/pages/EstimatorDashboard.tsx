@@ -196,7 +196,7 @@ export default function EstimatorDashboard() {
     const field = assignDialog.type === "estimator" ? "estimator_owner_id" : "commercial_owner_id";
     const { error } = await supabase
       .from("budgets")
-      .update({ [field]: assignValue, updated_at: new Date().toISOString() } as any)
+      .update({ [field]: assignValue, updated_at: new Date().toISOString() } as Record<string, unknown>)
       .eq("id", assignDialog.budgetId);
 
     if (error) {
