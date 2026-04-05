@@ -1260,7 +1260,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
               return (
                 <SortableSectionCard key={section.id} section={section}>
-                  {(dragListeners: any) => (
+                  {(dragListeners: Record<string, unknown> | undefined) => (
                     <div className={cn("group/section", isSearchActive && !sectionHasMatch && "opacity-40")}>
                       {/* Section header — 48px fixed, Linear pattern */}
                       <div
