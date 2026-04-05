@@ -44,7 +44,7 @@ interface SyncLogRow {
   attempts: number | null;
   created_at: string | null;
   synced_at: string | null;
-  payload: any;
+  payload: Record<string, unknown> | null;
 }
 
 const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; label: string }> = {
