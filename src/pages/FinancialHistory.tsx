@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
+import type { BudgetWithSections } from "@/types/budget-common";
+import type { RechartsTooltipProps } from "@/types/budget-common";
 import {
   ArrowLeft, Download, TrendingUp, Award, BarChart3, Percent,
   ArrowUpRight, ArrowDownRight
@@ -31,7 +33,7 @@ interface MonthData {
 export default function FinancialHistory() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [budgets, setBudgets] = useState<any[]>([]);
+  const [budgets, setBudgets] = useState<BudgetWithSections[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState<number>(6);
 
@@ -46,7 +48,7 @@ export default function FinancialHistory() {
         .order("closed_at", { ascending: false });
       if (cancelled) return;
       if (error) console.error('Failed to load closed budgets:', error.message);
-      setBudgets(data || []);
+      setBudgets((data || []) as unknown as BudgetWithSections[]);
       setLoading(false);
     }
 
@@ -54,12 +56,12 @@ export default function FinancialHistory() {
     return () => { cancelled = true; };
   }, []);
 
-  const getBudgetTotal = (budget: any) => {
+  const getBudgetTotal = (budget: BudgetWithSections) => {
     const sectionsTotal = (budget.sections || []).reduce(
-      (sum: number, s: any) => sum + calculateSectionSubtotal(s), 0
+      (sum, s) => sum + calculateSectionSubtotal(s), 0
     );
     const adjustmentsTotal = (budget.adjustments || []).reduce(
-      (sum: number, adj: any) => sum + (adj.sign * Number(adj.amount)), 0
+      (sum, adj) => sum + (adj.sign * Number(adj.amount)), 0
     );
     return sectionsTotal + adjustmentsTotal;
   };
@@ -147,12 +149,12 @@ export default function FinancialHistory() {
     URL.revokeObjectURL(url);
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: RechartsTooltipProps) => {
     if (!active || !payload) return null;
     return (
       <div className="rounded-lg border border-border bg-popover p-3 shadow-lg">
         <p className="font-display font-semibold text-sm text-foreground mb-2">{label}</p>
-        {payload.map((entry: any, i: number) => (
+        {payload.map((entry, i: number) => (
           <div key={i} className="flex items-center gap-2 text-xs font-body">
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
             <span className="text-muted-foreground">{entry.name}:</span>
