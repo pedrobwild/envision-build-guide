@@ -47,7 +47,7 @@ export default function AdminDashboard() {
     }
   }, [profileLoading, profile, isOrcamentista, isAdmin, navigate]);
 
-  const [budgets, setBudgets] = useState<BudgetWithSections[]>([]);
+  const [budgets, setBudgets] = useState<Record<string, unknown>[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
