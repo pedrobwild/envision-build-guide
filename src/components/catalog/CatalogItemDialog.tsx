@@ -345,6 +345,8 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
   const [saving, setSaving] = useState(false);
   const [savedItemId, setSavedItemId] = useState<string | null>(item?.id ?? null);
 
+  const currentItemId = item?.id ?? savedItemId;
+
   useEffect(() => {
     if (item) {
       setImageUrl(item.image_url ?? null);
@@ -356,21 +358,63 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     }
   }, [item]);
 
+  const persistImageOnExistingItem = async (nextImageUrl: string | null) => {
+    const targetId = item?.id ?? savedItemId;
+    if (!targetId) return;
+
+    const { error } = await supabase
+      .from("catalog_items")
+      .update({ image_url: nextImageUrl })
+      .eq("id", targetId);
+
+    if (error) throw error;
+    onSaved();
+  };
+
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
     if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem"); return; }
+
     setUploadingImage(true);
     try {
       const ext = file.name.split(".").pop();
       const path = `catalog/${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true });
-      if (error) { toast.error("Erro no upload"); setUploadingImage(false); return; }
+      if (error) {
+        toast.error(error.message || "Erro no upload");
+        return;
+      }
+
       const { data: urlData } = supabase.storage.from("media").getPublicUrl(path);
-      setImageUrl(urlData.publicUrl);
+      const nextImageUrl = urlData.publicUrl;
+      setImageUrl(nextImageUrl);
+
+      if (currentItemId) {
+        await persistImageOnExistingItem(nextImageUrl);
+      }
+
       toast.success("Imagem carregada");
-    } catch { toast.error("Erro ao fazer upload"); }
-    setUploadingImage(false);
+    } catch {
+      toast.error("Erro ao fazer upload");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    const previousImageUrl = imageUrl;
+    setImageUrl(null);
+
+    if (!currentItemId) return;
+
+    try {
+      await persistImageOnExistingItem(null);
+      toast.success("Imagem removida");
+    } catch {
+      setImageUrl(previousImageUrl);
+      toast.error("Erro ao remover imagem");
+    }
   };
 
   const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
@@ -396,10 +440,11 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
       image_url: imageUrl,
     };
 
-    let itemId = item?.id;
+    const isUpdate = Boolean(currentItemId);
+    let itemId = currentItemId;
 
-    if (item) {
-      const { error } = await supabase.from("catalog_items").update(payload).eq("id", item.id);
+    if (isUpdate && itemId) {
+      const { error } = await supabase.from("catalog_items").update(payload).eq("id", itemId);
       if (error) { toast.error("Erro ao salvar item"); setSaving(false); return; }
     } else {
       const { data, error } = await supabase.from("catalog_items").insert(payload).select("id").single();
@@ -415,10 +460,9 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     }
 
     setSaving(false);
-    toast.success(item ? "Item atualizado" : "Item criado");
+    toast.success(isUpdate ? "Item atualizado" : "Item criado");
     onSaved();
 
-    // If creating new item, don't close — allow adding prices
     if (item) {
       onOpenChange(false);
     }
@@ -428,18 +472,18 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{item ? "Editar Item" : savedItemId && !item ? "Item Criado — Adicione Preços" : "Novo Item do Catálogo"}</DialogTitle>
+          <DialogTitle>{item ? "Editar Item" : savedItemId ? "Novo Item — Continue Editando" : "Novo Item do Catálogo"}</DialogTitle>
           <DialogDescription>Preencha os dados do item e configure fornecedores e preços.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Nome *</Label>
-              <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Ex: Tinta Acrílica Premium" disabled={!!savedItemId && !item} />
+              <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Ex: Tinta Acrílica Premium" />
             </div>
             <div>
               <Label>Tipo</Label>
-              <Select value={form.item_type} onValueChange={(v) => set("item_type", v)} disabled={!!savedItemId && !item}>
+              <Select value={form.item_type} onValueChange={(v) => set("item_type", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="product">Produto</SelectItem>
@@ -451,13 +495,13 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
 
           <div>
             <Label>Descrição</Label>
-            <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} placeholder="Detalhes do item" disabled={!!savedItemId && !item} />
+            <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} placeholder="Detalhes do item" />
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <Label>Categoria</Label>
-              <Select value={form.category_id} onValueChange={(v) => set("category_id", v)} disabled={!!savedItemId && !item}>
+              <Select value={form.category_id} onValueChange={(v) => set("category_id", v)}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {categories.filter((c) => c.is_active).map((c) => (
@@ -468,12 +512,12 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
             </div>
             <div>
               <Label>Unidade</Label>
-              <Input value={form.unit_of_measure} onChange={(e) => set("unit_of_measure", e.target.value)} placeholder="m², un, vb..." disabled={!!savedItemId && !item} />
+              <Input value={form.unit_of_measure} onChange={(e) => set("unit_of_measure", e.target.value)} placeholder="m², un, vb..." />
             </div>
             <div>
               <Label>Código</Label>
               <Input
-                value={item ? (item.internal_code ?? "—") : "Automático"}
+                value={item ? (item.internal_code ?? "—") : savedItemId ? "Gerado ao criar" : "Automático"}
                 readOnly
                 disabled
                 className="font-mono bg-muted/50"
@@ -491,7 +535,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
                   const autoType = getItemTypeFromSupplierCategoria(sup.categoria);
                   if (autoType) set("item_type", autoType);
                 }
-              }} disabled={!!savedItemId && !item}>
+              }}>
                 <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                 <SelectContent>
                   {suppliers.filter((s) => s.is_active).map((s) => (
@@ -501,72 +545,65 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
               </Select>
             </div>
             <div className="flex items-end gap-3 pb-1">
-              <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} id="item-active" disabled={!!savedItemId && !item} />
+              <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} id="item-active" />
               <Label htmlFor="item-active" className="cursor-pointer">Ativo</Label>
             </div>
           </div>
 
-          {/* Image */}
-          {!(savedItemId && !item) && (
-            <div>
-              <Label className="mb-2 block">Imagem do item</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Esta imagem será exibida automaticamente no orçamento público ao selecionar este item.
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleImageUpload(e.target.files)}
-              />
-              {imageUrl ? (
-                <div className="relative inline-block">
-                  <img src={imageUrl} alt="Preview" className="h-24 w-24 object-cover rounded-lg border border-border" />
-                  <button
-                    type="button"
-                    onClick={() => setImageUrl(null)}
-                    className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:opacity-80"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ) : (
+          <div>
+            <Label className="mb-2 block">Imagem do item</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Esta imagem será exibida automaticamente no orçamento público ao selecionar este item.
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImageUpload(e.target.files)}
+            />
+            {imageUrl ? (
+              <div className="relative inline-block">
+                <img src={imageUrl} alt="Preview" className="h-24 w-24 object-cover rounded-lg border border-border" />
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingImage}
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+                  onClick={handleRemoveImage}
+                  className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:opacity-80"
                 >
-                  {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                  {uploadingImage ? "Enviando..." : "Adicionar imagem"}
+                  <X className="h-3 w-3" />
                 </button>
-              )}
-            </div>
-          )}
-
-          {/* Section linking */}
-          {!(savedItemId && !item) && (
-            <div>
-              <Label className="mb-2 block">Seções permitidas do orçamento</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Selecione em quais seções este item pode ser inserido no orçamento.
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {CATALOG_SECTION_OPTIONS.map((section) => (
-                  <label key={section.id} className="flex items-center gap-2 text-sm cursor-pointer rounded-md border border-border px-3 py-2 hover:bg-muted/50 transition-colors">
-                    <Checkbox
-                      checked={selectedSections.includes(section.id)}
-                      onCheckedChange={() => toggleSection(section.id)}
-                    />
-                    {section.label}
-                  </label>
-                ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingImage}
+                className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                {uploadingImage ? "Enviando..." : "Adicionar imagem"}
+              </button>
+            )}
+          </div>
 
-          {/* Supplier Prices — inline */}
+          <div>
+            <Label className="mb-2 block">Seções permitidas do orçamento</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Selecione em quais seções este item pode ser inserido no orçamento.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {CATALOG_SECTION_OPTIONS.map((section) => (
+                <label key={section.id} className="flex items-center gap-2 text-sm cursor-pointer rounded-md border border-border px-3 py-2 hover:bg-muted/50 transition-colors">
+                  <Checkbox
+                    checked={selectedSections.includes(section.id)}
+                    onCheckedChange={() => toggleSection(section.id)}
+                  />
+                  {section.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
           {savedItemId && (
             <>
               <div className="border-t border-border" />
@@ -576,13 +613,11 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {savedItemId && !item ? "Concluir" : "Cancelar"}
+            {savedItemId || item ? "Fechar" : "Cancelar"}
           </Button>
-          {!(savedItemId && !item) && (
-            <Button onClick={handleSave} disabled={saving || !sectionsLoaded}>
-              {saving ? "Salvando..." : item ? "Salvar" : "Criar Item"}
-            </Button>
-          )}
+          <Button onClick={handleSave} disabled={saving || uploadingImage || !sectionsLoaded}>
+            {saving ? "Salvando..." : currentItemId ? "Salvar alterações" : "Criar item"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
