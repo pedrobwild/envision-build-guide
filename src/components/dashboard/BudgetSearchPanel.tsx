@@ -12,16 +12,30 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+interface SearchBudget {
+  id: string;
+  project_name: string;
+  client_name: string;
+  sequential_code?: string | null;
+  internal_status: string;
+  status: string;
+  public_id?: string | null;
+  due_at?: string | null;
+  estimator_owner_id?: string | null;
+  sections?: { section_price?: number | null; items?: { internal_total?: number | null }[] }[];
+  adjustments?: { sign: number; amount: number }[];
+}
+
 interface BudgetSearchPanelProps {
-  budgets: any[];
+  budgets: SearchBudget[];
   profiles: Record<string, string>;
   onRefresh?: () => void;
 }
 
 const STATUS_QUICK_FILTERS = [
   { key: "active", label: "Ativos", statuses: ["requested", "novo", "triage", "assigned", "in_progress", "waiting_info", "blocked", "ready_for_review"] },
-  { key: "overdue", label: "Atrasados", filter: (b: any) => b.due_at && new Date(b.due_at) < new Date() && !["contrato_fechado", "lost", "archived"].includes(b.internal_status) },
-  { key: "published", label: "Publicados", filter: (b: any) => b.status === "published" && b.public_id },
+  { key: "overdue", label: "Atrasados", filter: (b: SearchBudget) => b.due_at && new Date(b.due_at) < new Date() && !["contrato_fechado", "lost", "archived"].includes(b.internal_status) },
+  { key: "published", label: "Publicados", filter: (b: SearchBudget) => b.status === "published" && b.public_id },
   { key: "waiting", label: "Aguardando info", statuses: ["waiting_info"] },
   { key: "review", label: "Em revisão", statuses: ["ready_for_review"] },
   { key: "closed", label: "Fechados", statuses: ["contrato_fechado"] },
