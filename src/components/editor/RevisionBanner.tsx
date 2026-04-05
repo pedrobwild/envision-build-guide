@@ -22,6 +22,7 @@ interface RevisionBannerProps {
   onStartRevision: () => void;
   startingRevision?: boolean;
 }
+}
 
 export function RevisionBanner({ revisionData, onStartRevision, startingRevision }: RevisionBannerProps) {
   const [expanded, setExpanded] = useState(true);

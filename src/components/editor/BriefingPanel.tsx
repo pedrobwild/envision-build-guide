@@ -57,7 +57,7 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
   const isMobile = useIsMobile();
 
   const [expanded, setExpanded] = useState(() => window.innerWidth >= 1280);
-  const [events, setEvents] = useState<Record<string, unknown>[]>([]);
+  const [events, setEvents] = useState<Tables<"budget_events">[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const autoSaveTimers = useRef<Record<string, NodeJS.Timeout>>({});
   const briefingTextareaRef = useRef<HTMLTextAreaElement>(null);

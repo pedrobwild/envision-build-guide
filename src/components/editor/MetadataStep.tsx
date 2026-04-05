@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LOCATION_TYPES } from "@/lib/role-constants";
+import type { BudgetRow } from "@/types/budget-common";
 
 interface MetadataStepProps {
   budget: BudgetRow;
