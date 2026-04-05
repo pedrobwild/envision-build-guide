@@ -359,7 +359,7 @@ function SectionItemsList({ section, templateId }: { section: TemplateSection; t
   const [itemDialog, setItemDialog] = useState<{ open: boolean; item?: TemplateItem | null }>({ open: false });
 
   const deleteItem = async (id: string) => {
-    const { error } = await supabase.from("budget_template_items" as any).delete().eq("id", id);
+    const { error } = await supabase.from("budget_template_items").delete().eq("id", id);
     if (error) { toast.error("Erro ao excluir item"); return; }
     toast.success("Item excluído");
     qc.invalidateQueries({ queryKey: ["admin-budget-template-items", section.id] });
