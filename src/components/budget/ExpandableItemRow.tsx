@@ -37,7 +37,7 @@ export function ExpandableItemRow({
 }: ExpandableItemRowProps) {
   const [itemLightboxOpen, setItemLightboxOpen] = useState(false);
 
-  const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
+  const primaryImage = item.images?.find((img) => img.is_primary) || item.images?.[0];
 
   const isZoneMatch =
     highlightZone &&
