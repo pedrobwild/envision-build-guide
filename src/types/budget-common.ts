@@ -4,7 +4,7 @@
  * and provide typed alternatives to `any` for inline Supabase query results.
  */
 
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, Json } from "@/integrations/supabase/types";
 
 // ─── Budget row from Supabase select("*") ───
 export type BudgetRow = Tables<"budgets">;
