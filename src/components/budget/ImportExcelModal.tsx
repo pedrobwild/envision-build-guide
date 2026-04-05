@@ -608,7 +608,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       try {
         const result = await matchAndCopyItemMedia(budget.id, createdSections);
         if (result.matched > 0) {
-          console.log(`[Import] Auto-matched ${result.matched} items with existing media`);
+          if (import.meta.env.DEV) console.log(`[Import] Auto-matched ${result.matched} items with existing media`);
         }
       } catch (matchErr) {
         console.warn("[Import] Media matching failed (non-critical):", matchErr);
