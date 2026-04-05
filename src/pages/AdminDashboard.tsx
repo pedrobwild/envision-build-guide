@@ -25,6 +25,7 @@ import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBloc
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
+import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
 import { computeDashboardMetrics, type DateRange } from "@/hooks/useDashboardMetrics";
 
 const SECTION_DELAY = 0.05;
