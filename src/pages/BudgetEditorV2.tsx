@@ -33,10 +33,10 @@ export default function BudgetEditorV2() {
   const { isOrcamentista, isComercial, profile } = useUserProfile();
   const { user } = useAuth();
 
-  const backPath = (location.state as any)?.from
+  const backPath = (location.state as { from?: string } | null)?.from
     || (isOrcamentista ? "/admin/producao" : isComercial ? "/admin/comercial" : "/admin");
-  const [budget, setBudget] = useState<any>(null);
-  const [sections, setSections] = useState<any[]>([]);
+  const [budget, setBudget] = useState<Record<string, unknown> | null>(null);
+  const [sections, setSections] = useState<Record<string, unknown>[]>([]);
   const [saving, setSaving] = useState(false);
   const [internalDataOpen, setInternalDataOpen] = useState(false);
   const [versionCount, setVersionCount] = useState(0);
