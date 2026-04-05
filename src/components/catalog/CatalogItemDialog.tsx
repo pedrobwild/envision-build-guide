@@ -618,7 +618,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
                   <Select value={form.category_id} onValueChange={(v) => set("category_id", v)}>
                     <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      {categories.filter((c) => c.is_active).map((c) => (
+                      {availableCategories.filter((c) => c.is_active).map((c) => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
