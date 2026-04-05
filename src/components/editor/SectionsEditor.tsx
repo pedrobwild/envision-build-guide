@@ -528,10 +528,10 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [Venda Unit.] — hidden mobile */}
+        {/* [Margem] — hidden mobile */}
         <div className="hidden md:block w-[100px] flex-shrink-0 px-1">
           <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground bg-muted/30 rounded">
-            {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+            {formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
 
