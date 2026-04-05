@@ -534,6 +534,11 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
                 if (sup?.categoria) {
                   const autoType = getItemTypeFromSupplierCategoria(sup.categoria);
                   if (autoType) set("item_type", autoType);
+                  // Auto-fill category by matching supplier's subcategoria to catalog_categories name
+                  const matchedCat = categories.find(
+                    (c) => c.is_active && c.name.toLowerCase() === sup.categoria!.toLowerCase()
+                  );
+                  if (matchedCat) set("category_id", matchedCat.id);
                 }
               }}>
                 <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
