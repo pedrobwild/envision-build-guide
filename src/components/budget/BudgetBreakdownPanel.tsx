@@ -34,7 +34,7 @@ interface Props {
 }
 
 export function BudgetBreakdownPanel({ budgetId }: Props) {
-  const [sections, setSections] = useState<SectionWithItems[]>([]);
+  const [sections, setSections] = useState<SectionWithItemsLocal[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
 

@@ -64,10 +64,9 @@ export interface ItemImageRow {
   item_id?: string;
 }
 
-// ─── Adjustment row ───
 export interface AdjustmentRow {
   id: string;
-  budget_id: string;
+  budget_id?: string;
   label: string;
   amount: number;
   sign: number;
