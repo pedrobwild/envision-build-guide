@@ -178,7 +178,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {area && (
                 <>
                   <span className="text-white/95 font-medium">{area}</span>
-                  {version && <span className="text-white/40">·</span>}
+                  {version && <span className="text-white/50">·</span>}
                 </>
               )}
               {version && (
