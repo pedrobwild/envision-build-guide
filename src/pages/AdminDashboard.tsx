@@ -46,7 +46,8 @@ export default function AdminDashboard() {
     }
   }, [profileLoading, profile, isOrcamentista, isAdmin, navigate]);
 
-  const [budgets, setBudgets] = useState<Record<string, unknown>[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [budgets, setBudgets] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
