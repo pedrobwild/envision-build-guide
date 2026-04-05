@@ -114,7 +114,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               <ReclameAquiSeal />
             </div>
             {!cfg.hide_consultora && budget.consultora_comercial && (
-              <span className="hidden lg:inline text-xs text-white/80 font-body">
+              <span className="hidden lg:inline text-xs text-white/90 font-body">
                 {budget.consultora_comercial}, sua consultora
               </span>
             )}
