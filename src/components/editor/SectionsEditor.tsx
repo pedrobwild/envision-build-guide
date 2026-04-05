@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
 import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
@@ -203,9 +204,9 @@ interface ItemData {
   internal_unit_price?: number | null;
   internal_total?: number | null;
   bdi_percentage?: number | null;
-  order_index: number;
+  order_index?: number;
   catalog_item_id?: string | null;
-  catalog_snapshot?: Record<string, any> | null;
+  catalog_snapshot?: Record<string, unknown> | Json | null;
   notes?: string | null;
   images?: { id: string; url: string; is_primary?: boolean | null }[];
 }
@@ -610,12 +611,13 @@ function SortableItemRow({
             <div className="flex items-center gap-1.5 max-w-xl">
               <Building2 className="h-3 w-3 text-muted-foreground/40 shrink-0" />
               <select
-                value={item.catalog_snapshot?.supplier_id || ""}
+                value={(item.catalog_snapshot as Record<string, unknown> | null)?.supplier_id as string || ""}
                 onChange={(e) => {
                   const supplierId = e.target.value || null;
                   const supplier = suppliers.find(s => s.id === supplierId);
+                  const prev = (typeof item.catalog_snapshot === 'object' && item.catalog_snapshot && !Array.isArray(item.catalog_snapshot)) ? item.catalog_snapshot : {};
                   const updatedSnapshot = {
-                    ...(item.catalog_snapshot || {}),
+                    ...prev,
                     supplier_id: supplierId,
                     supplier_name: supplier?.name || null,
                   };

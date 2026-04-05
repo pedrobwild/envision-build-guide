@@ -43,8 +43,8 @@ export function ExpandableItemRow({
     highlightZone &&
     (() => {
       const ct = item.coverage_type || "geral";
-      const inc: string[] = item.included_rooms || [];
-      const exc: string[] = item.excluded_rooms || [];
+      const inc: string[] = (item.included_rooms || []) as string[];
+      const exc: string[] = (item.excluded_rooms || []) as string[];
       if (ct === "geral") return !exc.includes(highlightZone);
       return inc.includes(highlightZone);
     })();

@@ -4,7 +4,7 @@
  * and provide typed alternatives to `any` for inline Supabase query results.
  */
 
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, Json } from "@/integrations/supabase/types";
 
 // ─── Budget row from Supabase select("*") ───
 export type BudgetRow = Tables<"budgets">;
@@ -24,9 +24,9 @@ export interface SectionWithItems {
   qty?: number | null;
   section_price?: number | null;
   cover_image_url?: string | null;
-  tags?: unknown;
-  included_bullets?: unknown;
-  excluded_bullets?: unknown;
+  tags?: Json;
+  included_bullets?: Json;
+  excluded_bullets?: Json;
   notes?: string | null;
   is_optional?: boolean;
   budget_id?: string;
@@ -42,15 +42,15 @@ export interface ItemWithImages {
   qty?: number | null;
   unit?: string | null;
   coverage_type?: string;
-  included_rooms?: string[];
-  excluded_rooms?: string[];
+  included_rooms?: Json | string[];
+  excluded_rooms?: Json | string[];
   internal_total?: number | null;
   internal_unit_price?: number | null;
   bdi_percentage?: number | null;
   reference_url?: string | null;
   section_id?: string;
   catalog_item_id?: string | null;
-  catalog_snapshot?: unknown;
+  catalog_snapshot?: Json | Record<string, unknown> | null;
   notes?: string | null;
   images?: ItemImageRow[];
   item_images?: ItemImageRow[];
@@ -58,7 +58,7 @@ export interface ItemWithImages {
 
 // ─── Item image row ───
 export interface ItemImageRow {
-  id: string;
+  id?: string;
   url: string;
   is_primary?: boolean | null;
   item_id?: string;

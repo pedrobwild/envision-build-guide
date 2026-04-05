@@ -15,8 +15,8 @@ export function RoomChecklist({ roomId, roomName, sections, onClear }: RoomCheck
   sections.forEach((section) => {
     (section.items || []).forEach((item) => {
       const coverageType = item.coverage_type || "geral";
-      const inc: string[] = item.included_rooms || [];
-      const exc: string[] = item.excluded_rooms || [];
+      const inc: string[] = (item.included_rooms || []) as string[];
+      const exc: string[] = (item.excluded_rooms || []) as string[];
       let included = false;
       if (coverageType === "geral") {
         included = !exc.includes(roomId);
