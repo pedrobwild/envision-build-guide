@@ -111,7 +111,7 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
           >
             {exporting ? (
               <ul className="space-y-1">
-                {allItems.map((item: any, idx: number) => (
+                {allItems.map((item, idx: number) => (
                   <li
                     key={item.id}
                     className={cn(
