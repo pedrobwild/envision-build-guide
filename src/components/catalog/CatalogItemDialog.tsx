@@ -46,6 +46,7 @@ interface Supplier {
   name: string;
   contact_info: string | null;
   is_active: boolean;
+  categoria?: string | null;
 }
 
 export interface CatalogItem {
