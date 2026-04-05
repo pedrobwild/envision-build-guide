@@ -91,8 +91,8 @@ export default function UserManagement() {
     try {
       const data = await callAdminAPI({ action: "list_users" });
       setUsers(data.users || []);
-    } catch (err: any) {
-      toast.error("Erro ao carregar usuários: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Erro ao carregar usuários: " + (err instanceof Error ? err.message : String(err)));
     }
     setLoading(false);
   }, [callAdminAPI]);
