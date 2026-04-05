@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +10,9 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Search, Plus, Package, Wrench, Edit2, Trash2, Filter, DollarSign,
+  Search, Plus, Package, Wrench, Edit2, Trash2, Filter,
   ToggleLeft, ToggleRight,
 } from "lucide-react";
-import { SupplierPricesPanel } from "@/components/catalog/SupplierPricesPanel";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
 import { CATALOG_SECTION_OPTIONS } from "@/lib/catalog-helpers";
 import type { CatalogItem } from "@/components/catalog/CatalogItemDialog";
@@ -50,7 +48,7 @@ export function ItemsTab({
   statusFilter, onStatusFilterChange,
   onNewItem, onEditItem, onRefresh,
 }: Props) {
-  const [expandedPricesItemId, setExpandedPricesItemId] = useState<string | null>(null);
+  
 
   const handleDeleteItem = async (id: string) => {
     if (!confirm("Excluir item do catálogo? Esta ação não pode ser desfeita.")) return;
@@ -169,7 +167,6 @@ export function ItemsTab({
             </TableHeader>
             <TableBody>
               {items.map((item) => (
-                <>
                   <TableRow key={item.id} className={!item.is_active ? "opacity-50" : ""}>
                     <TableCell>
                       <div className="min-w-0">
@@ -219,11 +216,6 @@ export function ItemsTab({
                     <TableCell className="text-right">
                       <div className="flex gap-0.5 justify-end">
                         <Button variant="ghost" size="icon" className="h-8 w-8"
-                          onClick={() => setExpandedPricesItemId(expandedPricesItemId === item.id ? null : item.id)}
-                          title="Preços por fornecedor">
-                          <DollarSign className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8"
                           onClick={() => onEditItem(item)}>
                           <Edit2 className="h-3.5 w-3.5" />
                         </Button>
@@ -234,18 +226,6 @@ export function ItemsTab({
                       </div>
                     </TableCell>
                   </TableRow>
-                  {expandedPricesItemId === item.id && (
-                    <TableRow key={`${item.id}-prices`}>
-                      <TableCell colSpan={7} className="bg-muted/20 p-4 border-l-2 border-l-primary">
-                        <SupplierPricesPanel
-                          catalogItemId={item.id}
-                          catalogItemName={item.name}
-                          suppliers={suppliers}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </>
               ))}
             </TableBody>
           </Table>
