@@ -5,7 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, Package, DollarSign, TrendingUp, Loader2 } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 
-interface SectionWithItems {
+interface SectionWithItemsLocal {
   id: string;
   title: string;
   order_index: number;
@@ -17,6 +17,7 @@ interface SectionWithItems {
     qty: number | null;
     unit: string | null;
     internal_unit_price: number | null;
+    internal_total: number | null;
     bdi_percentage: number | null;
     order_index: number;
   }[];
