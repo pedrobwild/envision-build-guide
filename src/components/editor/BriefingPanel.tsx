@@ -115,7 +115,7 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
   const debouncedSave = useCallback((field: string, value: any) => {
     if (autoSaveTimers.current[field]) clearTimeout(autoSaveTimers.current[field]);
     autoSaveTimers.current[field] = setTimeout(async () => {
-      await supabase.from("budgets").update({ [field]: value } as any).eq("id", budgetId);
+      await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", budgetId);
     }, 800);
   }, [budgetId]);
 

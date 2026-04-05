@@ -269,7 +269,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
       .limit(1)
       .single();
     if (data?.metadata) {
-      const m = data.metadata as any;
+      const m = data.metadata as Record<string, unknown>;
       setRevisionInstructions({
         instructions: m.instructions || "",
         change_types: m.change_types || [],
