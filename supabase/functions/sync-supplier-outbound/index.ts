@@ -8,10 +8,10 @@ const corsHeaders = {
 
 /**
  * sync-supplier-outbound
- * 
- * Sends supplier data from Envision → Portal BWild.
- * Called via DB webhook trigger or manual invocation.
- * 
+ *
+ * Sends supplier data from Envision → Portal BWild via HTTP POST
+ * to the Portal's sync-supplier-inbound edge function.
+ *
  * POST body:
  *   { supplier_id: string }           — sync a single supplier
  *   { supplier_ids: string[] }        — sync multiple suppliers
@@ -23,19 +23,19 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // --- Config ---
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const PORTAL_BWILD_SUPABASE_URL = Deno.env.get("PORTAL_BWILD_SUPABASE_URL");
-    const PORTAL_BWILD_SERVICE_ROLE_KEY = Deno.env.get("PORTAL_BWILD_SERVICE_ROLE_KEY");
+    const INTEGRATION_KEY = Deno.env.get("INTEGRATION_INBOUND_KEY");
 
-    if (!PORTAL_BWILD_SUPABASE_URL || !PORTAL_BWILD_SERVICE_ROLE_KEY) {
-      throw new Error("Portal BWild credentials not configured (PORTAL_BWILD_SUPABASE_URL, PORTAL_BWILD_SERVICE_ROLE_KEY)");
+    if (!PORTAL_BWILD_SUPABASE_URL) {
+      throw new Error("PORTAL_BWILD_SUPABASE_URL not configured");
+    }
+    if (!INTEGRATION_KEY) {
+      throw new Error("INTEGRATION_INBOUND_KEY not configured");
     }
 
     const localDb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const remoteDb = createClient(PORTAL_BWILD_SUPABASE_URL, PORTAL_BWILD_SERVICE_ROLE_KEY);
-
     const body = await req.json();
     let supplierIds: string[] = [];
 
@@ -54,7 +54,6 @@ Deno.serve(async (req) => {
     } else if (body.supplier_ids) {
       supplierIds = body.supplier_ids;
     } else if (body.type === "INSERT" || body.type === "UPDATE") {
-      // DB webhook payload format
       supplierIds = [body.record?.id ?? body.old_record?.id].filter(Boolean);
     }
 
@@ -74,63 +73,42 @@ Deno.serve(async (req) => {
     if (fetchErr) throw fetchErr;
 
     const results: Array<{ id: string; status: string; error?: string }> = [];
+    const inboundUrl = `${PORTAL_BWILD_SUPABASE_URL}/functions/v1/sync-supplier-inbound`;
 
     for (const supplier of suppliers ?? []) {
       try {
-        // Check existing sync log
-        const { data: existing } = await localDb
+        const existingLog = await localDb
           .from("integration_sync_log")
-          .select("id, target_id, attempts")
+          .select("id, attempts")
           .eq("source_system", "envision")
           .eq("entity_type", "supplier")
           .eq("source_id", supplier.id)
           .maybeSingle();
 
-        // Map Envision supplier → Portal BWild fornecedor
         const fornecedorPayload = mapSupplierToFornecedor(supplier);
 
-        let targetId: string | null = existing?.target_id ?? null;
+        // --- Call Portal BWild's inbound endpoint ---
+        const response = await fetch(inboundUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-integration-key": INTEGRATION_KEY,
+          },
+          body: JSON.stringify({
+            fornecedor: fornecedorPayload,
+            source_id: supplier.id,
+          }),
+        });
 
-        if (targetId) {
-          // Update existing
-          const { error: updateErr } = await remoteDb
-            .from("fornecedores")
-            .update(fornecedorPayload)
-            .eq("id", targetId);
-          if (updateErr) throw updateErr;
-        } else {
-          // Check if already exists by external_id
-          const { data: existingRemote } = await remoteDb
-            .from("fornecedores")
-            .select("id")
-            .eq("external_id", supplier.id)
-            .eq("external_system", "envision")
-            .maybeSingle();
+        const responseData = await response.json().catch(() => ({}));
 
-          if (existingRemote) {
-            targetId = existingRemote.id;
-            const { error: updateErr } = await remoteDb
-              .from("fornecedores")
-              .update(fornecedorPayload)
-              .eq("id", targetId);
-            if (updateErr) throw updateErr;
-          } else {
-            // Insert new
-            const { data: inserted, error: insertErr } = await remoteDb
-              .from("fornecedores")
-              .insert({
-                ...fornecedorPayload,
-                external_id: supplier.id,
-                external_system: "envision",
-              })
-              .select("id")
-              .single();
-            if (insertErr) throw insertErr;
-            targetId = inserted.id;
-          }
+        if (!response.ok) {
+          throw new Error(`Portal returned ${response.status}: ${responseData.error ?? response.statusText}`);
         }
 
-        // Update sync log
+        const targetId = responseData.results?.[0]?.supplier_id ?? null;
+
+        // Log success
         const syncData = {
           source_system: "envision",
           target_system: "portal_bwild",
@@ -140,12 +118,12 @@ Deno.serve(async (req) => {
           sync_status: "success",
           payload: fornecedorPayload,
           error_message: null,
-          attempts: (existing?.attempts ?? 0) + 1,
+          attempts: (existingLog?.data?.attempts ?? 0) + 1,
           synced_at: new Date().toISOString(),
         };
 
-        if (existing) {
-          await localDb.from("integration_sync_log").update(syncData).eq("id", existing.id);
+        if (existingLog?.data) {
+          await localDb.from("integration_sync_log").update(syncData).eq("id", existingLog.data.id);
         } else {
           await localDb.from("integration_sync_log").insert(syncData);
         }
@@ -154,7 +132,6 @@ Deno.serve(async (req) => {
       } catch (err: any) {
         console.error(`Failed to sync supplier ${supplier.id}:`, err);
 
-        // Log failure
         const failData = {
           source_system: "envision",
           target_system: "portal_bwild",
@@ -166,7 +143,7 @@ Deno.serve(async (req) => {
           attempts: 1,
         };
 
-        const { data: existingLog } = await localDb
+        const { data: log } = await localDb
           .from("integration_sync_log")
           .select("id, attempts")
           .eq("source_system", "envision")
@@ -174,11 +151,11 @@ Deno.serve(async (req) => {
           .eq("source_id", supplier.id)
           .maybeSingle();
 
-        if (existingLog) {
+        if (log) {
           await localDb.from("integration_sync_log").update({
             ...failData,
-            attempts: existingLog.attempts + 1,
-          }).eq("id", existingLog.id);
+            attempts: log.attempts + 1,
+          }).eq("id", log.id);
         } else {
           await localDb.from("integration_sync_log").insert(failData);
         }
@@ -201,11 +178,9 @@ Deno.serve(async (req) => {
 });
 
 /**
- * Maps Envision `suppliers` row → Portal BWild `fornecedores` insert payload.
- * Adjust field names to match Portal BWild schema.
+ * Maps Envision `suppliers` row → Portal BWild `fornecedores` payload.
  */
 function mapSupplierToFornecedor(supplier: any) {
-  // Determine tipo based on categoria
   const categoriasServico = [
     "marcenaria", "serralheria", "gesso", "pintura", "elétrica",
     "hidráulica", "ar condicionado", "automação", "impermeabilização",
