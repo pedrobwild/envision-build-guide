@@ -188,7 +188,7 @@ export default function BudgetEditorV2() {
     setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      const { error } = await supabase.from("budgets").update({ [field]: value } as any).eq("id", budgetId);
+      const { error } = await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", budgetId);
       if (error) {
         saveErrorCount.current += 1;
         setSaveStatus("error");
