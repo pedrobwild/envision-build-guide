@@ -198,7 +198,7 @@ export default function SystemToolsPage() {
       console.error(err);
       toast({
         title: "Erro na pesquisa",
-        description: err.message || "Não foi possível completar a pesquisa.",
+        description: (err instanceof Error ? err.message : null) || "Não foi possível completar a pesquisa.",
         variant: "destructive",
       });
     } finally {
