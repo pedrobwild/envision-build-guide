@@ -21,7 +21,7 @@ interface CategoryDetailDialogProps {
 
 function CategoryItemList({ group, budgetId, editable }: { group: CategorizedGroup; budgetId?: string; editable?: boolean }) {
   const allItems = group.sections.flatMap(section =>
-    (section.items || []).map((item: any) => ({ ...item, _sectionTitle: section.title }))
+    (section.items || []).map((item) => ({ ...item, _sectionTitle: section.title }))
   );
 
   return (
@@ -30,7 +30,7 @@ function CategoryItemList({ group, budgetId, editable }: { group: CategorizedGro
         {allItems.length} {allItems.length === 1 ? "item" : "itens"}
       </p>
       <div className="space-y-1">
-        {allItems.map((item: any) => (
+        {allItems.map((item) => (
           <div
             key={item.id}
             className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-muted/40 transition-colors"

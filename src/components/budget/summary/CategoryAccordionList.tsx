@@ -33,7 +33,7 @@ export function CategoryAccordionList({
           bgClass: group.category.bgClass,
           colorClass: group.category.colorClass,
           percentage: total > 0 ? (subtotal / total) * 100 : 0,
-          items: (section.items || []).map((item: any) => ({
+          items: (section.items || []).map((item) => ({
             id: item.id,
             title: item.title,
             description: item.description,

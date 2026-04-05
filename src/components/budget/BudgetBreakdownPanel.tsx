@@ -5,7 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, Package, DollarSign, TrendingUp, Loader2 } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 
-interface SectionWithItems {
+interface SectionWithItemsLocal {
   id: string;
   title: string;
   order_index: number;
@@ -17,6 +17,7 @@ interface SectionWithItems {
     qty: number | null;
     unit: string | null;
     internal_unit_price: number | null;
+    internal_total: number | null;
     bdi_percentage: number | null;
     order_index: number;
   }[];
@@ -33,7 +34,7 @@ interface Props {
 }
 
 export function BudgetBreakdownPanel({ budgetId }: Props) {
-  const [sections, setSections] = useState<SectionWithItems[]>([]);
+  const [sections, setSections] = useState<SectionWithItemsLocal[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
 
@@ -51,9 +52,9 @@ export function BudgetBreakdownPanel({ budgetId }: Props) {
       if (cancelled) return;
       if (error) console.error('Failed to load sections:', error.message);
 
-      const mapped = (data || []).map((s: any) => ({
+      const mapped = (data || []).map((s) => ({
         ...s,
-        items: (s.items || []).sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)),
+        items: (s.items || []).sort((a, b) => (a.order_index || 0) - (b.order_index || 0)),
       }));
       setSections(mapped);
       setLoading(false);
@@ -98,7 +99,7 @@ export function BudgetBreakdownPanel({ budgetId }: Props) {
       const bdi = Number(item.bdi_percentage) || 0;
       const sale = calcSalePrice(cost, bdi);
       // When qty is missing, fall back to internal_total or unit price as the total
-      const totalCost = qty > 0 ? qty * cost : (Number((item as any).internal_total) || cost);
+      const totalCost = qty > 0 ? qty * cost : (Number(item.internal_total) || cost);
       const totalSale = qty > 0 ? qty * sale : calcSalePrice(totalCost, bdi);
       secCost += totalCost;
       secSale += totalSale;
@@ -161,7 +162,17 @@ function MiniStat({ label, value, icon, accent }: { label: string; value: string
   );
 }
 
-function SectionBlock({ section }: { section: any }) {
+interface SectionSummary {
+  id: string;
+  title: string;
+  is_optional: boolean;
+  itemRows: Array<{ id: string; title: string; qty: number; cost: number; bdi: number; sale: number; totalCost: number; totalSale: number }>;
+  secCost: number;
+  secSale: number;
+  secBdi: number;
+}
+
+function SectionBlock({ section }: { section: SectionSummary }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -200,7 +211,7 @@ function SectionBlock({ section }: { section: any }) {
             <span className="text-right">$ Venda</span>
             <span className="text-right">Total Venda</span>
           </div>
-          {section.itemRows.map((item: any) => (
+          {section.itemRows.map((item) => (
             <div key={item.id} className="grid grid-cols-[1fr_60px_80px_60px_80px_80px] gap-2 px-2 py-1.5 text-xs font-body border-b border-border/50 last:border-b-0 hover:bg-muted/20">
               <span className="text-foreground truncate">{item.title || "—"}</span>
               <span className="text-right text-muted-foreground tabular-nums">{item.qty || "—"}</span>

@@ -44,7 +44,7 @@ interface SyncLogRow {
   attempts: number | null;
   created_at: string | null;
   synced_at: string | null;
-  payload: any;
+  payload: Record<string, unknown> | null;
 }
 
 const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; label: string }> = {
@@ -91,14 +91,14 @@ export default function IntegrationSyncPanel() {
     },
     onSuccess: (data) => {
       const results = data?.results ?? [];
-      const ok = results.filter((r: any) => r.status === "success").length;
+      const ok = results.filter((r: { status: string }) => r.status === "success").length;
       toast({
         title: "Retry concluído",
         description: `${ok}/${results.length} fornecedores sincronizados com sucesso.`,
       });
       queryClient.invalidateQueries({ queryKey: ["integration-sync-log"] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast({ title: "Erro no retry", description: err.message, variant: "destructive" });
     },
     onSettled: () => setRetrying(false),

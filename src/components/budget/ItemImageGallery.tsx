@@ -14,15 +14,17 @@ interface ImageRecord {
 
 const MAX_IMAGES = 5;
 
+import type { ItemWithImages } from "@/types/budget-common";
+
 interface ItemImageGalleryProps {
-  item: any;
+  item: ItemWithImages;
   budgetId: string;
   editable: boolean;
 }
 
 export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryProps) {
   const [images, setImages] = useState<ImageRecord[]>(() =>
-    (item.images || []).map((img: any) => ({ id: img.id, url: img.url, is_primary: !!img.is_primary }))
+    (item.images || []).map((img) => ({ id: img.id || "", url: img.url, is_primary: !!img.is_primary }))
   );
   const [activeIdx, setActiveIdx] = useState(0);
   const [uploading, setUploading] = useState(false);

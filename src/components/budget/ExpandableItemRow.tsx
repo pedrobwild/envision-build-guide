@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/formatBRL";
 import { ItemImageGallery } from "./ItemImageGallery";
 import { Lightbox } from "./Lightbox";
+import type { ItemWithImages, ItemImageRow } from "@/types/budget-common";
 
 interface ExpandableItemRowProps {
-  item: any;
+  item: ItemWithImages;
   index: number;
   isLast: boolean;
   isExpanded: boolean;
@@ -36,7 +37,7 @@ export function ExpandableItemRow({
 }: ExpandableItemRowProps) {
   const [itemLightboxOpen, setItemLightboxOpen] = useState(false);
 
-  const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
+  const primaryImage = item.images?.find((img) => img.is_primary) || item.images?.[0];
 
   const isZoneMatch =
     highlightZone &&
@@ -52,7 +53,7 @@ export function ExpandableItemRow({
   const itemUnitPrice = Number(item.internal_unit_price) || 0;
   const itemQty = Number(item.qty) || 0;
 
-  const itemImages = (item.images || []).map((img: any) => ({
+  const itemImages = (item.images || []).map((img) => ({
     url: img.url,
     alt: item.title,
   }));

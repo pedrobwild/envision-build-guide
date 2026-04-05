@@ -54,8 +54,8 @@ export function OptionalSelectionsPanel() {
     }
 
     // Get unique budget IDs and section IDs
-    const budgetIds = [...new Set(selections.map((s: any) => s.budget_id))];
-    const sectionIds = [...new Set(selections.map((s: any) => s.section_id))];
+    const budgetIds = [...new Set(selections.map((s) => s.budget_id))];
+    const sectionIds = [...new Set(selections.map((s) => s.section_id))];
 
     // Fetch budgets
     const { data: budgets } = await supabase
@@ -69,8 +69,8 @@ export function OptionalSelectionsPanel() {
       .select("id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty)")
       .in("id", sectionIds);
 
-    const budgetMap = Object.fromEntries((budgets || []).map((b: any) => [b.id, b]));
-    const sectionMap = Object.fromEntries((sections || []).map((s: any) => [s.id, s]));
+    const budgetMap = Object.fromEntries((budgets || []).map((b) => [b.id, b]));
+    const sectionMap = Object.fromEntries((sections || []).map((s) => [s.id, s]));
 
     // Group by budget + timestamp (same confirmation batch)
     const groupMap = new Map<string, GroupedSelection>();

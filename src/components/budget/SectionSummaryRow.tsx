@@ -142,7 +142,7 @@ export function SectionSummaryRow({
             <div className={cn(
               "mx-3 mb-3 rounded-lg bg-muted/[0.03] border border-border/30 divide-y divide-border/[0.06]"
             )}>
-              {items.map((item: any, idx: number) => {
+              {items.map((item, idx) => {
                 const hasDesc = !!item.description?.trim();
                 const isItemExpanded = expandedItemId === item.id;
 

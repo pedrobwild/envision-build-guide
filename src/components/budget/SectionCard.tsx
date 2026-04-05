@@ -8,12 +8,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from "@/lib/section-icons";
 import { cn } from "@/lib/utils";
 import type { ScopeCategory } from "@/lib/scope-categories";
+import type { SectionWithItems, ItemWithImages } from "@/types/budget-common";
 
 
 const PREVIEW_COUNT = 3;
 
 interface SectionCardProps {
-  section: any;
+  section: SectionWithItems;
   compact: boolean;
   showItemQty: boolean;
   showItemPrices?: boolean;
@@ -69,8 +70,8 @@ export function SectionCard({
   if (section.cover_image_url) {
     allImages.push({ url: section.cover_image_url, alt: section.title });
   }
-  stableItems.forEach((item: any) => {
-    (item.images || []).forEach((img: any) => {
+  stableItems.forEach((item) => {
+    (item.images || []).forEach((img) => {
       allImages.push({ url: img.url, alt: item.title });
     });
   });
@@ -189,8 +190,8 @@ export function SectionCard({
         {/* ── Preview items (collapsed) — mobile-first: show top stableItems ── */}
         {!expanded && stableItems.length > 0 && (
           <div className="px-3 sm:px-4 py-1.5 sm:py-2">
-            {previewItems.map((item: any, i: number) => {
-              const thumb = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
+            {previewItems.map((item, i) => {
+              const thumb = item.images?.find((img) => img.is_primary) || item.images?.[0];
               return (
                 <div
                   key={item.id}
@@ -251,7 +252,7 @@ export function SectionCard({
               className="overflow-hidden"
             >
               <div className="px-3 sm:px-4 py-2.5 sm:py-3">
-                {stableItems.map((item: any, i: number) => (
+                {stableItems.map((item, i) => (
                   <ExpandableItemRow
                     key={item.id}
                     item={item}

@@ -4,11 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Lightbox } from "./Lightbox";
 import { motion } from "framer-motion";
 
+import type { SectionWithItems, ItemWithImages } from "@/types/budget-common";
+
 interface RoomDetailModalProps {
   open: boolean;
   onClose: () => void;
   roomName: string;
-  sections: any[];
+  sections: SectionWithItems[];
   roomId: string;
 }
 
@@ -18,9 +20,9 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // Collect only LOCAL items that include this room
-  const localItems: { item: any; sectionTitle: string }[] = [];
-  sections.forEach((section: any) => {
-    (section.items || []).forEach((item: any) => {
+  const localItems: { item: ItemWithImages; sectionTitle: string }[] = [];
+  sections.forEach((section) => {
+    (section.items || []).forEach((item) => {
       const ct = item.coverage_type || "geral";
       if (ct !== "geral") {
         const inc: string[] = item.included_rooms || [];
@@ -34,7 +36,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
   // Collect all images for gallery
   const allImages: { url: string; alt?: string }[] = [];
   localItems.forEach(({ item }) => {
-    (item.images || []).forEach((img: any) => {
+    (item.images || []).forEach((img) => {
       allImages.push({ url: img.url, alt: item.title });
     });
   });
@@ -78,7 +80,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
               </p>
             ) : (
               Object.entries(
-                localItems.reduce<Record<string, { item: any; sectionTitle: string }[]>>((acc, entry) => {
+                localItems.reduce<Record<string, { item: ItemWithImages; sectionTitle: string }[]>>((acc, entry) => {
                   (acc[entry.sectionTitle] = acc[entry.sectionTitle] || []).push(entry);
                   return acc;
                 }, {})
@@ -98,8 +100,8 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
 
                   <div className="space-y-3">
                     {items.map(({ item }) => {
-                      const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
-                      const extraImages = (item.images || []).filter((img: any) => img !== primaryImage);
+                      const primaryImage = item.images?.find((img) => img.is_primary) || item.images?.[0];
+                      const extraImages = (item.images || []).filter((img) => img !== primaryImage);
 
                       return (
                         <div
@@ -135,7 +137,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
 
                             {extraImages.length > 0 && (
                               <div className="flex gap-1.5 mt-2">
-                                {extraImages.slice(0, 4).map((img: any, idx: number) => (
+                                {extraImages.slice(0, 4).map((img, idx) => (
                                   <button
                                     key={img.id || idx}
                                     onClick={() => openLightbox(img.url)}

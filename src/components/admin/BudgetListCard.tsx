@@ -10,8 +10,10 @@ import {
 import { cn } from "@/lib/utils";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 
+import type { BudgetRow } from "@/types/budget-common";
+
 interface BudgetListCardProps {
-  budget: any;
+  budget: BudgetRow;
   total: number;
   sectionCount: number;
   statusLabel: string;

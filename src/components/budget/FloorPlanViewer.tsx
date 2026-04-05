@@ -8,10 +8,12 @@ export interface FloorPlanRoom {
   polygon: number[][];
 }
 
+import type { SectionWithItems } from "@/types/budget-common";
+
 interface FloorPlanViewerProps {
   floorPlanUrl: string;
   rooms: FloorPlanRoom[];
-  sections: any[];
+  sections: SectionWithItems[];
   activeRoom: string | null;
   onRoomClick: (roomId: string | null) => void;
 }
@@ -41,8 +43,8 @@ export function FloorPlanViewer({
   const roomItemCounts: Record<string, number> = {};
   rooms.forEach((r) => {
     let count = 0;
-    sections.forEach((s: any) => {
-      (s.items || []).forEach((item: any) => {
+    sections.forEach((s) => {
+      (s.items || []).forEach((item) => {
         const coverageType = item.coverage_type || "geral";
         if (coverageType !== "geral") {
           const included: string[] = item.included_rooms || [];

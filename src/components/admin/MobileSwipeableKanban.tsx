@@ -38,7 +38,7 @@ export function MobileSwipeableKanban({
   );
 
   const handleDragEnd = useCallback(
-    (_: any, info: PanInfo) => {
+    (_: unknown, info: PanInfo) => {
       if (info.offset.x < -SWIPE_THRESHOLD && info.velocity.x < 0) {
         goTo(activeIndex + 1);
       } else if (info.offset.x > SWIPE_THRESHOLD && info.velocity.x > 0) {

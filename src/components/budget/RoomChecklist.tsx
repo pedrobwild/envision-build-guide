@@ -1,9 +1,10 @@
 import { Check, X, MapPin } from "lucide-react";
+import type { SectionWithItems } from "@/types/budget-common";
 
 interface RoomChecklistProps {
   roomId: string;
   roomName: string;
-  sections: any[];
+  sections: SectionWithItems[];
   onClear: () => void;
 }
 
@@ -11,8 +12,8 @@ export function RoomChecklist({ roomId, roomName, sections, onClear }: RoomCheck
   // Build a flat list of items with inclusion status for this room
   const itemResults: { title: string; sectionTitle: string; included: boolean }[] = [];
 
-  sections.forEach((section: any) => {
-    (section.items || []).forEach((item: any) => {
+  sections.forEach((section) => {
+    (section.items || []).forEach((item) => {
       const coverageType = item.coverage_type || "geral";
       const inc: string[] = item.included_rooms || [];
       const exc: string[] = item.excluded_rooms || [];

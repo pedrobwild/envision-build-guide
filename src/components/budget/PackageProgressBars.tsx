@@ -1,8 +1,9 @@
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
+import type { SectionWithItems } from "@/types/budget-common";
 
 interface PackageProgressBarsProps {
-  sections: any[];
+  sections: SectionWithItems[];
   total: number;
 }
 
@@ -20,7 +21,7 @@ export function PackageProgressBars({ sections, total }: PackageProgressBarsProp
     "bg-primary/40",
   ];
 
-  const data = sections.map((s: any, idx: number) => {
+  const data = sections.map((s, idx) => {
     const subtotal = calculateSectionSubtotal(s);
     const pct = total > 0 ? (subtotal / total) * 100 : 0;
     return { title: s.title, subtotal, pct, color: COLORS[idx % COLORS.length] };

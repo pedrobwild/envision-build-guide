@@ -10,6 +10,7 @@ export interface BudgetSection {
   included_bullets?: string[] | null;
   excluded_bullets?: string[] | null;
   notes?: string | null;
+  is_optional?: boolean;
   items: BudgetItem[];
 }
 

@@ -11,10 +11,11 @@ import { CountUpValue } from "@/components/budget/CountUpValue";
 import { InstallmentSimulator } from "@/components/budget/summary/InstallmentSimulator";
 import { TrustBadgesRow } from "@/components/budget/summary/TrustBadgesRow";
 import type { CategorizedGroup } from "@/lib/scope-categories";
+import type { SectionWithItems, AdjustmentRow } from "@/types/budget-common";
 
 interface BudgetSummaryProps {
-  sections: any[];
-  adjustments: any[];
+  sections: SectionWithItems[];
+  adjustments: AdjustmentRow[];
   total: number;
   generatedAt: string;
   budgetDate?: string | null;
@@ -43,7 +44,7 @@ export function BudgetSummary({
 }: BudgetSummaryProps) {
   const validity = budgetDate ? getValidityInfo(budgetDate, validityDays) : null;
 
-  const sectionElementIds = sections.map((s: any) => `section-${s.id}`);
+  const sectionElementIds = sections.map((s) => `section-${s.id}`);
   const activeIndex = activeSection
     ? sectionElementIds.indexOf(activeSection)
     : -1;
@@ -229,13 +230,13 @@ function FlatSectionList({
   activeSection,
   activeRef,
 }: {
-  sections: any[];
+  sections: SectionWithItems[];
   activeSection: string | null | undefined;
   activeRef: React.MutableRefObject<HTMLButtonElement | null>;
 }) {
   return (
     <div className="space-y-0.5">
-      {sections.map((section: any) => {
+      {sections.map((section) => {
         const sectionElId = `section-${section.id}`;
         const isActive = activeSection === sectionElId;
         const subtotal = calculateSectionSubtotal(section);
@@ -281,11 +282,11 @@ function FlatSectionList({
   );
 }
 
-function AdjustmentsList({ adjustments }: { adjustments: any[] }) {
+function AdjustmentsList({ adjustments }: { adjustments: AdjustmentRow[] }) {
   return (
     <div className="px-5 pb-3">
       <div className="border-t border-border pt-3 space-y-2">
-        {adjustments.map((adj: any) => (
+        {adjustments.map((adj) => (
           <div key={adj.id} className="flex items-center justify-between">
             <span className="text-[13px] text-muted-foreground font-body">
               {adj.label}

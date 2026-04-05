@@ -56,10 +56,10 @@ export default function AiSyncInsightsPanel() {
 
       if (res.error) throw new Error(res.error.message);
       setAnalysis(res.data?.content ?? "Sem resultado.");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Erro na análise",
-        description: err.message,
+        description: err instanceof Error ? err.message : "Erro desconhecido",
         variant: "destructive",
       });
     } finally {
@@ -91,10 +91,10 @@ export default function AiSyncInsightsPanel() {
           description: "A IA não identificou problemas que precisem de correção automática.",
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Erro na correção",
-        description: err.message,
+        description: err instanceof Error ? err.message : "Erro desconhecido",
         variant: "destructive",
       });
     } finally {
