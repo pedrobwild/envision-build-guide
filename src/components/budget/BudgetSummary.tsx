@@ -44,7 +44,7 @@ export function BudgetSummary({
 }: BudgetSummaryProps) {
   const validity = budgetDate ? getValidityInfo(budgetDate, validityDays) : null;
 
-  const sectionElementIds = sections.map((s: any) => `section-${s.id}`);
+  const sectionElementIds = sections.map((s) => `section-${s.id}`);
   const activeIndex = activeSection
     ? sectionElementIds.indexOf(activeSection)
     : -1;
