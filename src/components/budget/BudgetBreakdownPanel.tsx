@@ -162,7 +162,10 @@ function MiniStat({ label, value, icon, accent }: { label: string; value: string
   );
 }
 
-interface SectionSummary extends SectionWithItems {
+interface SectionSummary {
+  id: string;
+  title: string;
+  is_optional: boolean;
   itemRows: Array<{ id: string; title: string; qty: number; cost: number; bdi: number; sale: number; totalCost: number; totalSale: number }>;
   secCost: number;
   secSale: number;
