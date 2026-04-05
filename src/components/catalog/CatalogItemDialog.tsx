@@ -120,7 +120,7 @@ function InlinePriceForm({
     is_active: price?.is_active ?? true,
   });
   const [saving, setSaving] = useState(false);
-  const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+  const set = (k: string, v: string | boolean | number | null) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleSave = async () => {
     if (!form.supplier_id) { toast.error("Selecione um fornecedor"); return; }
@@ -512,7 +512,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     }
   };
 
-  const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+  const set = (k: string, v: string | boolean | number | null) => setForm((p) => ({ ...p, [k]: v }));
 
   const toggleSection = (sectionId: string) => {
     setSelectedSections((prev) =>
@@ -524,7 +524,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
 
-    const payload: Record<string, any> = {
+    const payload: Record<string, string | boolean | null> = {
       name: form.name.trim(),
       description: form.description.trim() || null,
       item_type: form.item_type,

@@ -66,7 +66,7 @@ export function useUserProfile() {
         id: user!.id,
         full_name: prof?.full_name ?? user!.user_metadata?.full_name ?? "",
         is_active: prof?.is_active ?? true,
-        roles: (rolesData ?? []).map((r: any) => r.role as AppRole),
+        roles: (rolesData ?? []).map((r) => r.role as AppRole),
       });
       setLoading(false);
     }

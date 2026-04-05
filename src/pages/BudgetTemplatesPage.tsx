@@ -74,7 +74,7 @@ function useTemplates() {
     queryKey: ["admin-budget-templates"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("budget_templates" as any)
+        .from("budget_templates")
         .select("*")
         .order("name");
       if (error) throw error;
@@ -89,7 +89,7 @@ function useTemplateSections(templateId: string | null) {
     enabled: !!templateId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("budget_template_sections" as any)
+        .from("budget_template_sections")
         .select("*")
         .eq("template_id", templateId!)
         .order("order_index");
@@ -105,7 +105,7 @@ function useTemplateItems(sectionId: string | null) {
     enabled: !!sectionId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("budget_template_items" as any)
+        .from("budget_template_items")
         .select("*")
         .eq("template_section_id", sectionId!)
         .order("order_index");
@@ -143,13 +143,13 @@ function TemplateDialog({
 
     if (isEdit) {
       const { error } = await supabase
-        .from("budget_templates" as any)
+        .from("budget_templates")
         .update(payload)
         .eq("id", template!.id);
       if (error) { toast.error("Erro ao atualizar"); setSaving(false); return; }
     } else {
       const { error } = await supabase
-        .from("budget_templates" as any)
+        .from("budget_templates")
         .insert(payload);
       if (error) { toast.error("Erro ao criar"); setSaving(false); return; }
     }
@@ -217,18 +217,22 @@ function SectionDialog({
   const handleSave = async () => {
     if (!title.trim()) { toast.error("Título é obrigatório"); return; }
     setSaving(true);
-    const payload = {
-      title: title.trim(),
-      subtitle: subtitle.trim() || null,
-      is_optional: isOptional,
-      ...(isEdit ? {} : { template_id: templateId, order_index: nextIndex }),
-    };
 
     if (isEdit) {
-      const { error } = await supabase.from("budget_template_sections" as any).update(payload).eq("id", section!.id);
+      const { error } = await supabase.from("budget_template_sections").update({
+        title: title.trim(),
+        subtitle: subtitle.trim() || null,
+        is_optional: isOptional,
+      }).eq("id", section!.id);
       if (error) { toast.error("Erro ao atualizar seção"); setSaving(false); return; }
     } else {
-      const { error } = await supabase.from("budget_template_sections" as any).insert(payload);
+      const { error } = await supabase.from("budget_template_sections").insert({
+        template_id: templateId,
+        title: title.trim(),
+        subtitle: subtitle.trim() || null,
+        is_optional: isOptional,
+        order_index: nextIndex,
+      });
       if (error) { toast.error("Erro ao criar seção"); setSaving(false); return; }
     }
 
@@ -298,18 +302,22 @@ function ItemDialog({
   const handleSave = async () => {
     if (!title.trim()) { toast.error("Título é obrigatório"); return; }
     setSaving(true);
-    const payload = {
-      title: title.trim(),
-      description: description.trim() || null,
-      unit: unit.trim() || null,
-      ...(isEdit ? {} : { template_section_id: sectionId, order_index: nextIndex }),
-    };
 
     if (isEdit) {
-      const { error } = await supabase.from("budget_template_items" as any).update(payload).eq("id", item!.id);
+      const { error } = await supabase.from("budget_template_items").update({
+        title: title.trim(),
+        description: description.trim() || null,
+        unit: unit.trim() || null,
+      }).eq("id", item!.id);
       if (error) { toast.error("Erro ao atualizar item"); setSaving(false); return; }
     } else {
-      const { error } = await supabase.from("budget_template_items" as any).insert(payload);
+      const { error } = await supabase.from("budget_template_items").insert({
+        template_section_id: sectionId,
+        title: title.trim(),
+        description: description.trim() || null,
+        unit: unit.trim() || null,
+        order_index: nextIndex,
+      });
       if (error) { toast.error("Erro ao criar item"); setSaving(false); return; }
     }
 
@@ -359,7 +367,7 @@ function SectionItemsList({ section, templateId }: { section: TemplateSection; t
   const [itemDialog, setItemDialog] = useState<{ open: boolean; item?: TemplateItem | null }>({ open: false });
 
   const deleteItem = async (id: string) => {
-    const { error } = await supabase.from("budget_template_items" as any).delete().eq("id", id);
+    const { error } = await supabase.from("budget_template_items").delete().eq("id", id);
     if (error) { toast.error("Erro ao excluir item"); return; }
     toast.success("Item excluído");
     qc.invalidateQueries({ queryKey: ["admin-budget-template-items", section.id] });
@@ -410,7 +418,7 @@ function TemplateDetail({ template }: { template: Template }) {
   const [sectionDialog, setSectionDialog] = useState<{ open: boolean; section?: TemplateSection | null }>({ open: false });
 
   const deleteSection = async (id: string) => {
-    const { error } = await supabase.from("budget_template_sections" as any).delete().eq("id", id);
+    const { error } = await supabase.from("budget_template_sections").delete().eq("id", id);
     if (error) { toast.error("Erro ao excluir seção"); return; }
     toast.success("Seção excluída");
     qc.invalidateQueries({ queryKey: ["admin-budget-template-sections", template.id] });
@@ -476,7 +484,7 @@ export default function BudgetTemplatesPage() {
 
   const toggleActive = async (template: Template) => {
     const { error } = await supabase
-      .from("budget_templates" as any)
+      .from("budget_templates")
       .update({ is_active: !template.is_active })
       .eq("id", template.id);
     if (error) { toast.error("Erro ao atualizar status"); return; }
@@ -485,7 +493,7 @@ export default function BudgetTemplatesPage() {
   };
 
   const deleteTemplate = async (id: string) => {
-    const { error } = await supabase.from("budget_templates" as any).delete().eq("id", id);
+    const { error } = await supabase.from("budget_templates").delete().eq("id", id);
     if (error) { toast.error("Erro ao excluir template"); return; }
     toast.success("Template excluído");
     if (selectedId === id) setSelectedId(null);
@@ -496,23 +504,23 @@ export default function BudgetTemplatesPage() {
   const duplicateTemplate = async (template: Template) => {
     // 1. Clone template
     const { data: newTpl, error: tplErr } = await supabase
-      .from("budget_templates" as any)
+      .from("budget_templates")
       .insert({ name: `${template.name} (cópia)`, description: template.description })
       .select("id")
       .single();
     if (tplErr || !newTpl) { toast.error("Erro ao duplicar"); return; }
-    const newId = (newTpl as any).id;
+    const newId = newTpl.id;
 
     // 2. Clone sections
     const { data: sections } = await supabase
-      .from("budget_template_sections" as any)
+      .from("budget_template_sections")
       .select("*")
       .eq("template_id", template.id)
       .order("order_index");
 
-    for (const sec of (sections ?? []) as any[]) {
+    for (const sec of sections ?? []) {
       const { data: newSec } = await supabase
-        .from("budget_template_sections" as any)
+        .from("budget_template_sections")
         .insert({ template_id: newId, title: sec.title, subtitle: sec.subtitle, order_index: sec.order_index, notes: sec.notes, tags: sec.tags, included_bullets: sec.included_bullets, excluded_bullets: sec.excluded_bullets, is_optional: sec.is_optional })
         .select("id")
         .single();
@@ -520,14 +528,14 @@ export default function BudgetTemplatesPage() {
 
       // 3. Clone items
       const { data: items } = await supabase
-        .from("budget_template_items" as any)
+        .from("budget_template_items")
         .select("*")
         .eq("template_section_id", sec.id)
         .order("order_index");
 
-      for (const item of (items ?? []) as any[]) {
-        await supabase.from("budget_template_items" as any).insert({
-          template_section_id: (newSec as any).id,
+      for (const item of items ?? []) {
+        await supabase.from("budget_template_items").insert({
+          template_section_id: newSec.id,
           title: item.title,
           description: item.description,
           unit: item.unit,
