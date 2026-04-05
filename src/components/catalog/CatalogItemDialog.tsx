@@ -28,12 +28,6 @@ const SUBCATEGORIAS_PRESTADORES = [
   "Instalador Fechadura Digital", "Cortinas", "Marmoraria", "Jardim Vertical",
 ];
 
-function getItemTypeFromSupplierCategoria(categoria: string | null): "product" | "service" | null {
-  if (!categoria) return null;
-  if (SUBCATEGORIAS_PRESTADORES.includes(categoria)) return "service";
-  return "product";
-}
-
 interface CatalogCategory {
   id: string;
   name: string;
@@ -47,6 +41,29 @@ interface Supplier {
   contact_info: string | null;
   is_active: boolean;
   categoria?: string | null;
+}
+
+function normalizeCategoryName(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function mergeCategories(...groups: CatalogCategory[][]) {
+  const map = new Map<string, CatalogCategory>();
+  groups.flat().forEach((category) => {
+    map.set(category.id, category);
+  });
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
+function getItemTypeFromSupplierCategoria(categoria: string | null): "product" | "service" | null {
+  if (!categoria) return null;
+  if (SUBCATEGORIAS_PRESTADORES.includes(categoria)) return "service";
+  return "product";
 }
 
 export interface CatalogItem {
