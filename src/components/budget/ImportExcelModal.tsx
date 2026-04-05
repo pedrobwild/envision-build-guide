@@ -237,8 +237,8 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         const headers = Array.from(headerRow, (c: any) => (c == null ? "" : String(c)));
         const map = detectColumns(headers);
 
-        console.log("[Excel Import] Header row:", headerRowIdx, headers);
-        console.log("[Excel Import] Column map:", map);
+        if (import.meta.env.DEV) console.log("[Excel Import] Header row:", headerRowIdx, headers);
+        if (import.meta.env.DEV) console.log("[Excel Import] Column map:", map);
 
         if (!map.section && !map.title && !map.index) {
           const firstTextCol = headers.findIndex((h) => h.trim().length > 0);
@@ -353,7 +353,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           });
         }
 
-        console.log("[Excel Import] Parsed", rows.length, "items across", new Set(rows.map(r => r.section)).size, "sections");
+        if (import.meta.env.DEV) console.log("[Excel Import] Parsed", rows.length, "items across", new Set(rows.map(r => r.section)).size, "sections");
 
         setParsedSectionTotals(sectionTotals);
         setParsedRows(rows);
@@ -608,7 +608,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       try {
         const result = await matchAndCopyItemMedia(budget.id, createdSections);
         if (result.matched > 0) {
-          console.log(`[Import] Auto-matched ${result.matched} items with existing media`);
+          if (import.meta.env.DEV) console.log(`[Import] Auto-matched ${result.matched} items with existing media`);
         }
       } catch (matchErr) {
         console.warn("[Import] Media matching failed (non-critical):", matchErr);

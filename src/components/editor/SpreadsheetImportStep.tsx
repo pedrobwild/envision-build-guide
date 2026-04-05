@@ -194,8 +194,8 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
         const headers = Array.from(headerRow, (c: any) => (c == null ? "" : String(c)));
         const map = detectColumns(headers);
 
-        console.log("[Excel Import] Header row:", headerRowIdx, headers);
-        console.log("[Excel Import] Column map:", map);
+        if (import.meta.env.DEV) console.log("[Excel Import] Header row:", headerRowIdx, headers);
+        if (import.meta.env.DEV) console.log("[Excel Import] Column map:", map);
 
         if (!map.index && !map.section && !map.title) {
           setError("Não foi possível detectar colunas 'Índice', 'Seção' ou 'Item'.");

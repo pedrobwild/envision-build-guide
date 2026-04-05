@@ -330,12 +330,13 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   // ── Tour 3D management ──
   const loadTours = useCallback(async () => {
     setToursLoading(true);
-    const { data } = await (supabase as any)
+    const { data, error } = await supabase
       .from("budget_tours")
       .select("id, room_id, room_label, tour_url, order_index")
       .eq("budget_id", budgetId)
       .order("order_index", { ascending: true });
-    setTours((data ?? []).map((t: any) => ({
+    if (error) console.error('Failed to load tours:', error.message);
+    setTours((data ?? []).map((t) => ({
       id: t.id,
       room_id: t.room_id,
       room_label: t.room_label,
@@ -368,7 +369,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     setToursSaving(true);
     try {
       // Delete all existing tours for this budget
-      await (supabase as any).from("budget_tours").delete().eq("budget_id", budgetId);
+      await supabase.from("budget_tours").delete().eq("budget_id", budgetId);
 
       // Insert all current tours
       const toInsert = tours
@@ -382,7 +383,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
         }));
 
       if (toInsert.length > 0) {
-        const { error } = await (supabase as any).from("budget_tours").insert(toInsert);
+        const { error } = await supabase.from("budget_tours").insert(toInsert);
         if (error) throw error;
       }
 

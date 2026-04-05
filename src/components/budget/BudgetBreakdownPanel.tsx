@@ -38,13 +38,18 @@ export function BudgetBreakdownPanel({ budgetId }: Props) {
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       setLoading(true);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("sections")
         .select("id, title, order_index, section_price, is_optional, items(id, title, qty, unit, internal_unit_price, internal_total, bdi_percentage, order_index)")
         .eq("budget_id", budgetId)
         .order("order_index", { ascending: true });
+
+      if (cancelled) return;
+      if (error) console.error('Failed to load sections:', error.message);
 
       const mapped = (data || []).map((s: any) => ({
         ...s,
@@ -54,6 +59,7 @@ export function BudgetBreakdownPanel({ budgetId }: Props) {
       setLoading(false);
     }
     load();
+    return () => { cancelled = true; };
   }, [budgetId]);
 
   if (loading) {

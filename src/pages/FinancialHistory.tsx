@@ -36,18 +36,23 @@ export default function FinancialHistory() {
   const [periodFilter, setPeriodFilter] = useState<number>(6);
 
   useEffect(() => {
-    loadClosedBudgets();
-  }, []);
+    let cancelled = false;
 
-  const loadClosedBudgets = async () => {
-    const { data } = await supabase
-      .from("budgets")
-      .select("*, sections(id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)")
-      .eq("status", "contrato_fechado")
-      .order("closed_at", { ascending: false } as any);
-    setBudgets(data || []);
-    setLoading(false);
-  };
+    async function loadClosedBudgets() {
+      const { data, error } = await supabase
+        .from("budgets")
+        .select("*, sections(id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)")
+        .eq("status", "contrato_fechado")
+        .order("closed_at", { ascending: false });
+      if (cancelled) return;
+      if (error) console.error('Failed to load closed budgets:', error.message);
+      setBudgets(data || []);
+      setLoading(false);
+    }
+
+    loadClosedBudgets();
+    return () => { cancelled = true; };
+  }, []);
 
   const getBudgetTotal = (budget: any) => {
     const sectionsTotal = (budget.sections || []).reduce(
@@ -64,14 +69,14 @@ export default function FinancialHistory() {
     const monthMap = new Map<string, { contracts: number; revenue: number; cost: number }>();
 
     budgets.forEach(b => {
-      const closedAt = (b as any).closed_at;
+      const closedAt = b.closed_at;
       if (!closedAt) return;
       const d = new Date(closedAt);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const existing = monthMap.get(key) || { contracts: 0, revenue: 0, cost: 0 };
       existing.contracts += 1;
       existing.revenue += getBudgetTotal(b);
-      existing.cost += Number((b as any).internal_cost) || 0;
+      existing.cost += Number(b.internal_cost) || 0;
       monthMap.set(key, existing);
     });
 

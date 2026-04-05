@@ -19,32 +19,40 @@ export default function BudgetEditor() {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    loadBudget();
-  }, [budgetId]);
+    let cancelled = false;
 
-  const loadBudget = async () => {
-    if (!budgetId) return;
-    const { data: b } = await supabase.from('budgets').select('*').eq('id', budgetId).single();
-    if (!b) { navigate('/admin'); return; }
-    setBudget(b);
+    async function load() {
+      if (!budgetId) return;
+      const { data: b, error: bErr } = await supabase.from('budgets').select('*').eq('id', budgetId).maybeSingle();
+      if (cancelled) return;
+      if (bErr) { console.error('Failed to load budget:', bErr.message); return; }
+      if (!b) { navigate('/admin'); return; }
+      setBudget(b);
 
-    const { data: s } = await supabase.from('sections').select('*').eq('budget_id', budgetId).order('order_index');
-    const sectionList = s || [];
+      const [sectionsRes, adjRes] = await Promise.all([
+        supabase.from('sections').select('*').eq('budget_id', budgetId).order('order_index'),
+        supabase.from('adjustments').select('*').eq('budget_id', budgetId),
+      ]);
+      if (cancelled) return;
 
-    const sectionIds = sectionList.map(sec => sec.id);
-    const { data: items } = await supabase.from('items').select('*').in('section_id', sectionIds.length ? sectionIds : ['__none__']).order('order_index');
+      const sectionList = sectionsRes.data || [];
+      const sectionIds = sectionList.map(sec => sec.id);
+      const { data: items } = await supabase.from('items').select('*').in('section_id', sectionIds.length ? sectionIds : ['__none__']).order('order_index');
+      if (cancelled) return;
 
-    const enriched = sectionList.map(sec => ({
-      ...sec,
-      items: (items || []).filter(i => i.section_id === sec.id),
-      _expanded: true,
-    }));
-    setSections(enriched);
-    setExpandedSections(new Set(sectionList.map(sec => sec.id)));
+      const enriched = sectionList.map(sec => ({
+        ...sec,
+        items: (items || []).filter(i => i.section_id === sec.id),
+        _expanded: true,
+      }));
+      setSections(enriched);
+      setExpandedSections(new Set(sectionList.map(sec => sec.id)));
+      setAdjustments(adjRes.data || []);
+    }
 
-    const { data: adj } = await supabase.from('adjustments').select('*').eq('budget_id', budgetId);
-    setAdjustments(adj || []);
-  };
+    load();
+    return () => { cancelled = true; };
+  }, [budgetId, navigate]);
 
   const saveBudget = async () => {
     if (!budget) return;

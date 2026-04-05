@@ -120,38 +120,48 @@ export default function BudgetInternalDetail() {
 
   useEffect(() => {
     if (!budgetId || !user) return;
-    loadAll();
+    let cancelled = false;
+
+    async function loadAllData() {
+      setLoading(true);
+      const [budgetRes, eventsRes, commentsRes, profilesRes] = await Promise.all([
+        supabase
+          .from("budgets")
+          .select(
+            "id, project_name, client_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code"
+          )
+          .eq("id", budgetId)
+          .single(),
+        supabase
+          .from("budget_events")
+          .select("id, event_type, from_status, to_status, note, user_id, created_at")
+          .eq("budget_id", budgetId)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("budget_comments")
+          .select("id, body, user_id, created_at")
+          .eq("budget_id", budgetId)
+          .order("created_at", { ascending: true }),
+        supabase.from("profiles").select("id, full_name"),
+      ]);
+
+      if (cancelled) return;
+      if (budgetRes.error) console.error('Failed to load budget:', budgetRes.error.message);
+      if (eventsRes.error) console.error('Failed to load events:', eventsRes.error.message);
+
+      if (budgetRes.data) setBudget(budgetRes.data as any);
+      if (eventsRes.data) setEvents(eventsRes.data as EventRow[]);
+      if (commentsRes.data) setComments(commentsRes.data as CommentRow[]);
+      if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
+      setLoading(false);
+    }
+
+    loadAllData();
+    return () => { cancelled = true; };
   }, [budgetId, user]);
 
-  async function loadAll() {
-    setLoading(true);
-    const [budgetRes, eventsRes, commentsRes, profilesRes] = await Promise.all([
-      supabase
-        .from("budgets")
-        .select(
-          "id, project_name, client_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code"
-        )
-        .eq("id", budgetId!)
-        .single(),
-      supabase
-        .from("budget_events")
-        .select("id, event_type, from_status, to_status, note, user_id, created_at")
-        .eq("budget_id", budgetId!)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("budget_comments")
-        .select("id, body, user_id, created_at")
-        .eq("budget_id", budgetId!)
-        .order("created_at", { ascending: true }),
-      supabase.from("profiles").select("id, full_name"),
-    ]);
 
-    if (budgetRes.data) setBudget(budgetRes.data as any);
-    if (eventsRes.data) setEvents(eventsRes.data as EventRow[]);
-    if (commentsRes.data) setComments(commentsRes.data as CommentRow[]);
-    if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
-    setLoading(false);
-  }
+
 
   async function changeStatus(newStatus: InternalStatus, note?: string) {
     if (!budget || !user) return;
