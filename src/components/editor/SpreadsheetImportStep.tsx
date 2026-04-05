@@ -178,7 +178,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
         for (let i = 0; i < Math.min(json.length, 15); i++) {
           const row = json[i];
           if (!row) continue;
-          const lower = row.map((c: any) => (c == null ? "" : String(c)).trim().toLowerCase());
+          const lower = (row as unknown[]).map((c: unknown) => (c == null ? "" : String(c)).trim().toLowerCase());
           if (lower.some((h: string) => h && (h.includes("item") || h.includes("índice") || h.includes("indice")))) {
             headerRowIdx = i;
             break;
