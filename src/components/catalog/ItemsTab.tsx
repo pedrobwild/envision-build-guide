@@ -167,7 +167,6 @@ export function ItemsTab({
             </TableHeader>
             <TableBody>
               {items.map((item) => (
-                <>
                   <TableRow key={item.id} className={!item.is_active ? "opacity-50" : ""}>
                     <TableCell>
                       <div className="min-w-0">
