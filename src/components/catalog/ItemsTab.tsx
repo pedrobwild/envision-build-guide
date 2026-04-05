@@ -1,7 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -10,8 +11,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Search, Plus, Package, Wrench, Edit2, Trash2, Filter,
-  ToggleLeft, ToggleRight,
+  Search, Plus, Edit2, Trash2, Filter,
+  ToggleLeft, ToggleRight, Package,
 } from "lucide-react";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
 import { CATALOG_SECTION_OPTIONS } from "@/lib/catalog-helpers";
@@ -39,6 +40,11 @@ interface Props {
   onRefresh: () => void;
 }
 
+function formatBRL(v: number | null) {
+  if (v == null) return "—";
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+}
+
 export function ItemsTab({
   items, categories, suppliers, isLoading,
   search, onSearchChange,
@@ -48,7 +54,22 @@ export function ItemsTab({
   statusFilter, onStatusFilterChange,
   onNewItem, onEditItem, onRefresh,
 }: Props) {
-  
+  const itemIds = items.map((i) => i.id);
+  const { data: primaryPrices = [] } = useQuery({
+    queryKey: ["catalog_primary_prices", itemIds],
+    queryFn: async () => {
+      if (itemIds.length === 0) return [];
+      const { data } = await supabase
+        .from("catalog_item_supplier_prices")
+        .select("catalog_item_id, unit_price")
+        .in("catalog_item_id", itemIds)
+        .eq("is_primary", true)
+        .eq("is_active", true);
+      return data ?? [];
+    },
+    enabled: itemIds.length > 0,
+  });
+  const priceMap = new Map(primaryPrices.map((p) => [p.catalog_item_id, p.unit_price]));
 
   const handleDeleteItem = async (id: string) => {
     if (!confirm("Excluir item do catálogo? Esta ação não pode ser desfeita.")) return;
@@ -157,7 +178,7 @@ export function ItemsTab({
             <TableHeader>
               <TableRow className="bg-muted/30">
                 <TableHead>Nome</TableHead>
-                <TableHead className="w-24">Tipo</TableHead>
+                <TableHead className="w-28 text-right">Preço unit.</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead className="w-20">Unidade</TableHead>
                 <TableHead>Fornecedor</TableHead>
@@ -181,14 +202,8 @@ export function ItemsTab({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs whitespace-nowrap">
-                        {item.item_type === "product" ? (
-                          <><Package className="h-3 w-3 mr-1" />Produto</>
-                        ) : (
-                          <><Wrench className="h-3 w-3 mr-1" />Serviço</>
-                        )}
-                      </Badge>
+                    <TableCell className="text-right font-mono text-sm">
+                      {formatBRL(priceMap.get(item.id) ?? null)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {(item.catalog_categories as CatalogCategory | null)?.name ?? "—"}

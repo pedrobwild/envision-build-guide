@@ -18,8 +18,21 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections, getSupplierPrices, type SupplierPrice } from "@/lib/catalog-helpers";
+import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections, getSupplierPrices, getPrimarySupplierPrice, type SupplierPrice } from "@/lib/catalog-helpers";
 import { ImagePlus, X, Loader2, Plus, Star, StarOff, Edit2, Trash2 } from "lucide-react";
+
+const SUBCATEGORIAS_PRESTADORES = [
+  "Marcenaria", "Empreita", "Vidraçaria Box", "Vidraçaria Sacada",
+  "Eletricista", "Pintor", "Instalador de Piso", "Técnico Ar-Condicionado",
+  "Gesseiro", "Serviços Gerais", "Limpeza", "Pedreiro",
+  "Instalador Fechadura Digital", "Cortinas", "Marmoraria", "Jardim Vertical",
+];
+
+function getItemTypeFromSupplierCategoria(categoria: string | null): "product" | "service" | null {
+  if (!categoria) return null;
+  if (SUBCATEGORIAS_PRESTADORES.includes(categoria)) return "service";
+  return "product";
+}
 
 interface CatalogCategory {
   id: string;
@@ -33,6 +46,7 @@ interface Supplier {
   name: string;
   contact_info: string | null;
   is_active: boolean;
+  categoria?: string | null;
 }
 
 export interface CatalogItem {
@@ -470,7 +484,14 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Fornecedor principal</Label>
-              <Select value={form.default_supplier_id} onValueChange={(v) => set("default_supplier_id", v)} disabled={!!savedItemId && !item}>
+              <Select value={form.default_supplier_id} onValueChange={(v) => {
+                set("default_supplier_id", v);
+                const sup = suppliers.find((s) => s.id === v);
+                if (sup?.categoria) {
+                  const autoType = getItemTypeFromSupplierCategoria(sup.categoria);
+                  if (autoType) set("item_type", autoType);
+                }
+              }} disabled={!!savedItemId && !item}>
                 <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                 <SelectContent>
                   {suppliers.filter((s) => s.is_active).map((s) => (
