@@ -383,8 +383,8 @@ export const demoBudget = {
 };
 
 // Map floor_zone to coverage_type + included_rooms for demo items
-demoBudget.sections.forEach((section: any) => {
-  (section.items || []).forEach((item: any) => {
+demoBudget.sections.forEach((section) => {
+  (section.items || []).forEach((item: Record<string, unknown>) => {
     if (item.floor_zone) {
       item.coverage_type = 'local';
       item.included_rooms = [item.floor_zone];
