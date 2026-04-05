@@ -90,6 +90,12 @@ function getEstimatorStage(status: string): "pending" | "in_progress" | "review"
   return "finished";
 }
 
+const PENDING_STATUSES: string[] = ["requested", "novo", "triage", "assigned"];
+const IN_PROGRESS_STATUSES: string[] = ["in_progress", "waiting_info", "blocked", "revision_requested"];
+const REVIEW_STATUSES: string[] = ["ready_for_review"];
+const DELIVERED_STATUSES: string[] = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
+const FINISHED_STATUSES: string[] = ["lost", "archived"];
+
 interface BudgetRow {
   id: string;
   client_name: string;
@@ -155,6 +161,7 @@ export default function EstimatorDashboard() {
   useEffect(() => {
     if (!user || profileLoading) return;
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profileLoading]);
 
   async function loadData() {
@@ -256,11 +263,6 @@ export default function EstimatorDashboard() {
   };
 
   // Summary counts aligned with the 5 funnel stages
-  const PENDING_STATUSES = ["requested", "novo", "triage", "assigned"];
-  const IN_PROGRESS_STATUSES = ["in_progress", "waiting_info", "blocked", "revision_requested"];
-  const REVIEW_STATUSES = ["ready_for_review"];
-  const DELIVERED_STATUSES = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
-  const FINISHED_STATUSES = ["lost", "archived"];
 
   const counts = useMemo(() => {
     return {
@@ -283,7 +285,7 @@ export default function EstimatorDashboard() {
 
   // Filter + sort
   const filtered = useMemo(() => {
-    let result = budgets.filter((b) => {
+    const result = budgets.filter((b) => {
       const q = search.toLowerCase();
       const matchSearch =
         !q ||

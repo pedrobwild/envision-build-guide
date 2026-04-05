@@ -48,6 +48,19 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
     return [Math.max(0, Math.min(1, x)), Math.max(0, Math.min(1, y))];
   }, []);
 
+  const finishPolygon = useCallback((points: number[][]) => {
+    const newRoom: Room = {
+      id: crypto.randomUUID(),
+      name: `Cômodo ${rooms.length + 1}`,
+      polygon: points,
+    };
+    onRoomsChange([...rooms, newRoom]);
+    setCurrentPoints([]);
+    setDrawMode("idle");
+    setNamingRoom(newRoom);
+    setNamingValue(newRoom.name);
+  }, [rooms, onRoomsChange]);
+
   const handleSvgClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (drawMode !== "drawing") return;
     const coords = getNormalizedCoords(e);
@@ -64,21 +77,7 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
         finishPolygon(newPoints.slice(0, -1));
       }
     }
-  }, [drawMode, currentPoints, getNormalizedCoords]);
-
-  const finishPolygon = (points: number[][]) => {
-    const newRoom: Room = {
-      id: crypto.randomUUID(),
-      name: `Cômodo ${rooms.length + 1}`,
-      polygon: points,
-    };
-    onRoomsChange([...rooms, newRoom]);
-    setCurrentPoints([]);
-    setDrawMode("idle");
-    // Open naming dialog for the new room
-    setNamingRoom(newRoom);
-    setNamingValue(newRoom.name);
-  };
+  }, [drawMode, currentPoints, getNormalizedCoords, finishPolygon]);
 
   const startRectangleDraw = () => {
     setDrawMode("drawing");
@@ -90,7 +89,7 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
     if (drawMode === "drawing" && currentPoints.length >= 3) {
       finishPolygon(currentPoints);
     }
-  }, [drawMode, currentPoints]);
+  }, [drawMode, currentPoints, finishPolygon]);
 
   const confirmDelete = () => {
     if (!deleteTarget) return;

@@ -77,6 +77,7 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
     setLoading(false);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, [budgetId]);
 
   const handleCreateVersion = async () => {

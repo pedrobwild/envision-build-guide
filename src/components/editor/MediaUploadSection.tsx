@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, forwardRef } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -147,12 +147,12 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const folderMap: Record<StorageTab, string> = {
+  const folderMap: Record<StorageTab, string> = useMemo(() => ({
     "3d": `${publicId}/3d`,
     fotos: `${publicId}/fotos`,
     exec: `${publicId}/exec`,
     video: `${publicId}/video`,
-  };
+  }), [publicId]);
 
   const tabs: { id: MediaTab; label: string; icon: React.ReactNode; accept: string }[] = [
     { id: "3d", label: "Renders 3D", icon: <ImageIcon className="h-4 w-4" />, accept: "image/*" },
@@ -162,7 +162,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     { id: "tour3d", label: "Tour 3D", icon: <Compass className="h-4 w-4" />, accept: "" },
   ];
 
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     setLoading(true);
     const result: Record<StorageTab, MediaFile[]> = { "3d": [], fotos: [], exec: [], video: [] };
 
@@ -180,9 +180,9 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
     setFiles(result);
     setLoading(false);
-  };
+  }, [folderMap]);
 
-  useEffect(() => { loadFiles(); }, [publicId]);
+  useEffect(() => { loadFiles(); }, [loadFiles]);
 
   const sanitizeFileName = (name: string) => {
     return name
@@ -321,7 +321,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
 
     setReordering(false);
-  }, [files, activeTab, folderMap]);
+  }, [files, activeTab, folderMap, loadFiles]);
 
   const currentTab = tabs.find(t => t.id === activeTab)!;
   const currentFiles = activeTab !== "tour3d" ? files[activeTab as StorageTab] : [];

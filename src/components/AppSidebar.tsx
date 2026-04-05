@@ -137,6 +137,7 @@ export function AppSidebar() {
     if (isBudgetEditor && !collapsed && window.innerWidth < 1280) {
       toggleSidebar();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBudgetEditor]);
 
   const comercialItems = COMERCIAL_ITEMS.filter(canSee);

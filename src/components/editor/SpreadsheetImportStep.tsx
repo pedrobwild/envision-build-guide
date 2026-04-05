@@ -83,7 +83,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
     return Number(str) || 0;
   };
 
-  const parseRows = (json: any[][], map: Record<string, number>, headerRowIdx: number) => {
+  const parseRows = useCallback((json: any[][], map: Record<string, number>, headerRowIdx: number) => {
     const packageMap = new Map<string, { items: ParsedItem[]; totalPrice: number }>();
     const hasIndex = map.index !== undefined;
     const hasSection = map.section !== undefined;
@@ -154,7 +154,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
       });
 
     return { packageMap, skipped };
-  };
+  }, []);
 
   const handleFile = useCallback((f: File) => {
     setFile(f);
@@ -227,7 +227,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
       }
     };
     reader.readAsArrayBuffer(f);
-  }, [onImported]);
+  }, [onImported, parseRows]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();

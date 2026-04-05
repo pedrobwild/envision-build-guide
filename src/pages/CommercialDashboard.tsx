@@ -137,6 +137,7 @@ export default function CommercialDashboard() {
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile]);
 
   async function loadData() {
@@ -196,7 +197,7 @@ export default function CommercialDashboard() {
   }, [isAdmin, budgets, getProfileName]);
 
   const filtered = useMemo(() => {
-    let result = budgets.filter(b => {
+    const result = budgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
       const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;

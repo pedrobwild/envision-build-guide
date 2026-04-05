@@ -135,7 +135,9 @@ export function ProjectMap({
     mapRef.current = map;
 
     return () => {
-      markersRef.current.clear();
+      // Copy ref to local var before cleanup per react-hooks/exhaustive-deps
+      const currentMarkers = markersRef.current;
+      currentMarkers.clear();
       map.remove();
       mapRef.current = null;
     };

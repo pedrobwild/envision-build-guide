@@ -36,12 +36,12 @@ export function SectionCard({
   editable = false,
 }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
-  const items = section.items || [];
+  const stableItems = useMemo(() => section.items || [], [section.items]);
 
   // Auto-expand section when any item has media attached
   const hasItemMedia = useMemo(() => {
-    return items.some((item: any) => item.images && item.images.length > 0);
-  }, [items]);
+    return stableItems.some((item) => item.images && item.images.length > 0);
+  }, [stableItems]);
 
   const [expanded, setExpanded] = useState(hasItemMedia);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
@@ -54,22 +54,22 @@ export function SectionCard({
   const hasCover = !!section.cover_image_url;
   const SectionIcon = getIconForSection(section.title);
 
-  // Top items by value for preview
+  // Top stableItems by value for preview
   const previewItems = useMemo(() => {
-    if (items.length <= PREVIEW_COUNT) return items;
-    const sorted = [...items].sort(
-      (a: any, b: any) => (Number(b.internal_total) || 0) - (Number(a.internal_total) || 0)
+    if (stableItems.length <= PREVIEW_COUNT) return stableItems;
+    const sorted = [...stableItems].sort(
+      (a, b) => (Number(b.internal_total) || 0) - (Number(a.internal_total) || 0)
     );
     return sorted.slice(0, PREVIEW_COUNT);
-  }, [items]);
+  }, [stableItems]);
 
-  const hiddenCount = items.length - PREVIEW_COUNT;
+  const hiddenCount = stableItems.length - PREVIEW_COUNT;
 
   const allImages: { url: string; alt?: string }[] = [];
   if (section.cover_image_url) {
     allImages.push({ url: section.cover_image_url, alt: section.title });
   }
-  items.forEach((item: any) => {
+  stableItems.forEach((item: any) => {
     (item.images || []).forEach((img: any) => {
       allImages.push({ url: img.url, alt: item.title });
     });
@@ -177,7 +177,7 @@ export function SectionCard({
         <div className="px-3 sm:px-4 py-1.5 sm:py-2 border-b border-border bg-muted/30 flex items-center justify-between">
           <span className="text-xs text-muted-foreground font-body">
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ""}
-            {items.length} {items.length === 1 ? "item" : "itens"}
+            {stableItems.length} {stableItems.length === 1 ? "item" : "itens"}
           </span>
           {showItemPrices && (
             <span className="font-display font-bold text-base text-foreground tabular-nums">
@@ -186,8 +186,8 @@ export function SectionCard({
           )}
         </div>
 
-        {/* ── Preview items (collapsed) — mobile-first: show top items ── */}
-        {!expanded && items.length > 0 && (
+        {/* ── Preview items (collapsed) — mobile-first: show top stableItems ── */}
+        {!expanded && stableItems.length > 0 && (
           <div className="px-3 sm:px-4 py-1.5 sm:py-2">
             {previewItems.map((item: any, i: number) => {
               const thumb = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
@@ -234,7 +234,7 @@ export function SectionCard({
                 className="mt-1 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1.5 w-full justify-center min-h-[44px]"
               >
                 <ChevronDown className="h-3.5 w-3.5" />
-                Ver todos os {items.length} itens
+                Ver todos os {stableItems.length} itens
               </button>
             )}
           </div>
@@ -251,12 +251,12 @@ export function SectionCard({
               className="overflow-hidden"
             >
               <div className="px-3 sm:px-4 py-2.5 sm:py-3">
-                {items.map((item: any, i: number) => (
+                {stableItems.map((item: any, i: number) => (
                   <ExpandableItemRow
                     key={item.id}
                     item={item}
                     index={i}
-                    isLast={i === items.length - 1}
+                    isLast={i === stableItems.length - 1}
                     isExpanded={expandedItemId === item.id}
                     onToggle={() => setExpandedItemId(prev => prev === item.id ? null : item.id)}
                     showItemQty={showItemQty}
@@ -269,7 +269,7 @@ export function SectionCard({
                   />
                 ))}
 
-                {items.length > PREVIEW_COUNT && (
+                {stableItems.length > PREVIEW_COUNT && (
                   <button
                     onClick={() => setExpanded(false)}
                     className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1 w-full justify-center min-h-[44px]"
@@ -332,13 +332,13 @@ export function SectionCard({
         </AnimatePresence>
 
         {/* Collapsed: expand trigger for cover-image cards */}
-        {!expanded && hasCover && items.length > 0 && (
+        {!expanded && hasCover && stableItems.length > 0 && (
           <button
             onClick={() => setExpanded(true)}
             className="w-full px-4 py-2.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors flex items-center justify-center gap-1.5 min-h-[44px]"
           >
             <ChevronDown className="h-3.5 w-3.5" />
-            Ver {items.length} {items.length === 1 ? "item" : "itens"}
+            Ver {stableItems.length} {stableItems.length === 1 ? "item" : "itens"}
           </button>
         )}
       </motion.div>
