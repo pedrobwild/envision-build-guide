@@ -344,8 +344,25 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
   const [sectionsLoaded, setSectionsLoaded] = useState(!item);
   const [saving, setSaving] = useState(false);
   const [savedItemId, setSavedItemId] = useState<string | null>(item?.id ?? null);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
 
   const currentItemId = item?.id ?? savedItemId;
+
+  const handleCreateCategory = useCallback(async () => {
+    const name = newCategoryName.trim();
+    if (!name) { toast.error("Nome da categoria é obrigatório"); return; }
+    setSavingCategory(true);
+    const { data, error } = await supabase.from("catalog_categories").insert({ name }).select("id").single();
+    setSavingCategory(false);
+    if (error) { toast.error("Erro ao criar categoria"); return; }
+    toast.success("Categoria criada");
+    setCreatingCategory(false);
+    setNewCategoryName("");
+    set("category_id", data.id);
+    onSaved(); // refresh categories list
+  }, [newCategoryName, onSaved]);
 
   useEffect(() => {
     if (item) {
