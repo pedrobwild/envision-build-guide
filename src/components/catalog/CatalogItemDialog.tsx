@@ -18,8 +18,21 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections, getSupplierPrices, type SupplierPrice } from "@/lib/catalog-helpers";
+import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections, getSupplierPrices, getPrimarySupplierPrice, type SupplierPrice } from "@/lib/catalog-helpers";
 import { ImagePlus, X, Loader2, Plus, Star, StarOff, Edit2, Trash2 } from "lucide-react";
+
+const SUBCATEGORIAS_PRESTADORES = [
+  "Marcenaria", "Empreita", "Vidraçaria Box", "Vidraçaria Sacada",
+  "Eletricista", "Pintor", "Instalador de Piso", "Técnico Ar-Condicionado",
+  "Gesseiro", "Serviços Gerais", "Limpeza", "Pedreiro",
+  "Instalador Fechadura Digital", "Cortinas", "Marmoraria", "Jardim Vertical",
+];
+
+function getItemTypeFromSupplierCategoria(categoria: string | null): "product" | "service" | null {
+  if (!categoria) return null;
+  if (SUBCATEGORIAS_PRESTADORES.includes(categoria)) return "service";
+  return "product";
+}
 
 interface CatalogCategory {
   id: string;
