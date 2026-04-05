@@ -1254,8 +1254,24 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           {section.items.length} {section.items.length === 1 ? "item" : "itens"}
                         </span>
 
-                        {/* Right zone: [R$ total] */}
-                        <div className="ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
+                        {/* Right zone: financial metrics */}
+                        <div className="ml-auto flex items-center gap-1.5 sm:gap-3 shrink-0">
+                          {/* Desktop: Custo | BDI% | Margem | Total */}
+                          <div className="hidden md:flex items-center gap-3">
+                            <div className="text-right">
+                              <span className="text-[9px] uppercase tracking-[0.06em] font-medium text-muted-foreground/50 font-body block leading-none mb-0.5">Custo</span>
+                              <span className="text-[11px] font-mono tabular-nums text-muted-foreground">{formatBRL(sectionCostTotal)}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[9px] uppercase tracking-[0.06em] font-medium text-muted-foreground/50 font-body block leading-none mb-0.5">BDI</span>
+                              <span className="text-[11px] font-mono tabular-nums text-muted-foreground">{sectionCostTotal > 0 ? `${(((sectionSaleTotal / sectionCostTotal) - 1) * 100).toFixed(0)}%` : "—"}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[9px] uppercase tracking-[0.06em] font-medium text-muted-foreground/50 font-body block leading-none mb-0.5">Margem</span>
+                              <span className="text-[11px] font-mono tabular-nums text-muted-foreground">{formatBRL(sectionSaleTotal - sectionCostTotal)}</span>
+                            </div>
+                          </div>
+
                           {/* [% barra] — hidden on mobile */}
                           <div className="hidden sm:flex items-center gap-1.5">
                             <div className="h-1 rounded-full bg-primary/10 overflow-hidden" style={{ width: '80px' }}>
@@ -1270,9 +1286,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                           </div>
 
                           {/* [R$ total] */}
-                          <span className="text-xs sm:text-sm font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
-                            {formatBRL(sectionSaleTotal)}
-                          </span>
+                          <div className="text-right">
+                            <span className="hidden md:block text-[9px] uppercase tracking-[0.06em] font-medium text-muted-foreground/50 font-body leading-none mb-0.5">Total</span>
+                            <span className="text-xs sm:text-sm font-mono font-semibold text-foreground tabular-nums tracking-[-0.035em]">
+                              {formatBRL(sectionSaleTotal)}
+                            </span>
+                          </div>
                         </div>
 
                         {/* [⋮] menu — always visible on mobile via tap, hover on desktop */}
