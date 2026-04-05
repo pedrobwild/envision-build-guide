@@ -5,7 +5,6 @@ import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
 import { ReclameAquiSeal } from "./ReclameAquiSeal";
 import { formatDate, getValidityInfo } from "@/lib/formatBRL";
-import { cn } from "@/lib/utils";
 
 export interface HeaderConfig {
   hide_badge?: boolean;
@@ -26,6 +25,10 @@ interface BudgetHeaderProps {
   exporting?: boolean;
 }
 
+/** Shared typography tokens */
+const MONO = "font-mono tabular-nums";
+const LABEL_MICRO = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold";
+
 const fadeUp = {
   hidden: { opacity: 0, y: 14 },
   visible: (i: number) => ({
@@ -34,7 +37,6 @@ const fadeUp = {
     transition: { delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
   }),
 };
-
 
 function sanitizeClientName(value: string): string {
   return value
@@ -48,24 +50,21 @@ function sanitizeClientName(value: string): string {
     .trim();
 }
 
-/** Normalise proper names: lowercase everything then capitalise each word start (handles accented chars) */
 function formatName(str: string): string {
   return str
     .toLowerCase()
     .replace(/(^|\s)\S/g, (char) => char.toUpperCase());
 }
 
+/** Dot separator for meta chips */
+function Dot() {
+  return <span className="text-white/40 select-none" aria-hidden>·</span>;
+}
+
 export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderProps) {
   const validity = budget.date ? getValidityInfo(budget.date, budget.validity_days || 30) : null;
-  const validityLabel = validity
-    ? validity.expired
-      ? "Orçamento expirado"
-      : `Validade: ${formatDate(validity.expiresAt)}`
-    : null;
-
   const cfg: HeaderConfig = (budget.header_config as HeaderConfig) || {};
 
-  // Unified meta line: condomínio · bairro · metragem · versão · data
   const condominio = budget.condominio || "";
   const neighborhood = budget.bairro || "";
   const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
@@ -74,18 +73,20 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const version = String(versionNum);
   const dateStr = budget.date ? formatDate(budget.date) : "";
 
-  const statBadges = [
-    { value: "5 anos", label: "garantia", accent: false },
-  ];
-
   const clientName = budget.client_name ? formatName(sanitizeClientName(budget.client_name)) : "";
-
   const projectTitle = budget.project_name || "Projeto e Reforma";
   const heroTitle = clientName || projectTitle;
-  const showPersonalizedSubtitle = !cfg.hide_subtitle && (!budget.project_name || budget.project_name === "Projeto e Reforma");
 
   const tagline = cfg.custom_tagline || "Projeto personalizado · Gestão completa · Execução com garantia";
-  const subtitleText = cfg.custom_subtitle || `Orçamento personalizado para ${clientName}`;
+
+  /** Build meta chips array for DRY rendering */
+  const metaChips: { label: string; value: string; mono?: boolean }[] = [];
+  if (condominio) metaChips.push({ label: "Condomínio", value: condominio });
+  if (neighborhood) metaChips.push({ label: "Bairro", value: neighborhood });
+  if (area) metaChips.push({ label: "Área", value: area, mono: true });
+  if (version) metaChips.push({ label: "Versão", value: `v${version}`, mono: true });
+  if (dateStr) metaChips.push({ label: "Elaboração", value: dateStr, mono: true });
+  if (budget.prazo_dias_uteis) metaChips.push({ label: "Prazo", value: `${budget.prazo_dias_uteis} dias úteis`, mono: true });
 
   return (
     <header className="relative">
@@ -100,7 +101,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           }}
         />
 
-        {/* ─── FAIXA 1 — Nav (logo + consultora + PDF) ─── */}
+        {/* ─── Nav bar ─── */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -109,12 +110,11 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         >
           <img src={logoWhite} alt="Bwild" className="h-10 sm:h-12 lg:h-11" />
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* ReclameAqui seal — hidden on mobile, shown via TrustStrip instead */}
             <div className="hidden lg:block">
               <ReclameAquiSeal />
             </div>
             {!cfg.hide_consultora && budget.consultora_comercial && (
-              <span className="hidden lg:inline text-xs text-white/90 font-body">
+              <span className="hidden lg:inline text-xs text-white/90 font-body tracking-[-0.01em]">
                 {budget.consultora_comercial}, sua consultora
               </span>
             )}
@@ -126,7 +126,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               whileTap={{ scale: 0.97 }}
               onClick={onExportPdf}
               disabled={exporting}
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg bg-white/15 text-white hover:bg-white/25 backdrop-blur-md transition-all text-xs font-body font-medium disabled:opacity-50 border border-white/15"
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg bg-white/15 text-white hover:bg-white/25 backdrop-blur-md transition-all text-xs font-body font-medium disabled:opacity-50 border border-white/15 tracking-[-0.01em]"
               data-pdf-hide
             >
               {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
@@ -135,26 +135,26 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </div>
         </motion.div>
 
-        {/* ─── Company info strip — desktop only ─── */}
+        {/* ─── Company info strip — desktop ─── */}
         <motion.div
           variants={fadeUp} custom={0} initial="hidden" animate="visible"
           className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3 hidden lg:block"
         >
           <div className="py-2 border-b border-white/[0.12]">
-            <p className="text-xs font-body text-white/70 leading-relaxed">
-              Bwild Reformas LTDA · CNPJ: 47.350.338/0001-37 · Responsável Técnico: Thiago Dantas do Amor · CAU: A162437-7
+            <p className={`${LABEL_MICRO} text-white/60 leading-relaxed`}>
+              Bwild Reformas LTDA <Dot /> CNPJ <span className={MONO}>47.350.338/0001-37</span> <Dot /> Responsável Técnico: Thiago Dantas do Amor <Dot /> CAU <span className={MONO}>A162437-7</span>
             </p>
           </div>
         </motion.div>
 
-        {/* ─── FAIXA 2 — Conteúdo principal ─── */}
+        {/* ─── Main content ─── */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
-          {/* ── MOBILE (<lg) — compact, decision-oriented ── */}
+          {/* ── MOBILE ── */}
           <div className="lg:hidden py-4 space-y-1.5">
             <motion.h1
               variants={fadeUp} custom={0.3} initial="hidden" animate="visible"
-              className="font-display font-bold text-xl text-white leading-tight tracking-tight"
+              className="font-display font-bold text-xl text-white leading-[1.15] tracking-tight"
             >
               {heroTitle}
             </motion.h1>
@@ -163,108 +163,63 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
               className="flex items-center gap-1.5 text-xs font-body flex-wrap"
             >
-              {condominio && (
-                <>
-                  <span className="text-white/95 font-medium">{condominio}</span>
-                  {(neighborhood || area || version) && <span className="text-white/50">·</span>}
-                </>
-              )}
-              {neighborhood && (
-                <>
-                  <span className="text-white/95 font-medium">{neighborhood}</span>
-                  {(area || version) && <span className="text-white/50">·</span>}
-                </>
-              )}
-              {area && (
-                <>
-                  <span className="text-white/95 font-medium">{area}</span>
-                  {version && <span className="text-white/50">·</span>}
-                </>
-              )}
-              {version && (
-                <span className="text-white/95 font-medium">v{version}</span>
-              )}
-              {budget.prazo_dias_uteis && (
-                <>
-                  <span className="text-white/50">·</span>
-                  <span className="text-white/95 font-medium">{budget.prazo_dias_uteis} dias úteis</span>
-                </>
-              )}
+              {metaChips.map((chip, i) => (
+                <span key={chip.label} className="contents">
+                  {i > 0 && <Dot />}
+                  <span className={`text-white font-medium ${chip.mono ? MONO : "tracking-[-0.01em]"}`}>
+                    {chip.value}
+                  </span>
+                </span>
+              ))}
             </motion.div>
 
             {/* Company info — mobile */}
             <motion.p
               variants={fadeUp} custom={0.7} initial="hidden" animate="visible"
-              className="text-[10px] font-body text-white/60 leading-relaxed pt-1"
+              className={`${LABEL_MICRO} text-white/50 leading-relaxed pt-1`}
             >
-              Bwild Reformas LTDA · CNPJ 47.350.338/0001-37
+              Bwild Reformas LTDA <Dot /> CNPJ <span className={MONO}>47.350.338/0001-37</span>
               <br />
-              RT: Thiago Dantas do Amor · CAU A162437-7
+              RT: Thiago Dantas do Amor <Dot /> CAU <span className={MONO}>A162437-7</span>
             </motion.p>
           </div>
 
-          {/* ── DESKTOP (lg+) ── */}
+          {/* ── DESKTOP ── */}
           <div className="hidden lg:flex items-start justify-between py-6">
-            {/* Left — Client name + meta */}
             <div className="flex-1 min-w-0 space-y-2.5">
               <motion.div
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
                 className="space-y-2"
               >
-                <h1 className="font-display font-bold text-3xl text-white leading-tight tracking-tight">
+                <h1 className="font-display font-bold text-3xl text-white leading-[1.15] tracking-tight">
                   {heroTitle}
                 </h1>
 
                 {/* Labeled meta chips */}
                 <div className="flex items-center gap-2 text-sm font-body flex-wrap">
-                  {condominio && (
-                    <>
-                      <span className="text-white/80 text-xs">Condomínio</span>
-                      <span className="text-white font-medium">{condominio}</span>
-                      {(neighborhood || area || version || dateStr) && <span className="text-white/50">·</span>}
-                    </>
-                  )}
-                  {neighborhood && (
-                    <>
-                      <span className="text-white/80 text-xs">Bairro</span>
-                      <span className="text-white font-medium">{neighborhood}</span>
-                      {(area || version || dateStr) && <span className="text-white/50">·</span>}
-                    </>
-                  )}
-                  {area && (
-                    <>
-                      <span className="text-white/80 text-xs">Área</span>
-                      <span className="text-white font-medium">{area}</span>
-                      {(version || dateStr) && <span className="text-white/50">·</span>}
-                    </>
-                  )}
-                  {version && (
-                    <>
-                      <span className="text-white/80 text-xs">Versão</span>
-                      <span className="text-white font-medium">{version}</span>
-                      {dateStr && <span className="text-white/50">·</span>}
-                    </>
-                  )}
-                  {dateStr && (
-                    <>
-                      <span className="text-white/80 text-xs">Elaboração</span>
-                      <span className="text-white font-medium">{dateStr}</span>
-                    </>
-                  )}
+                  {metaChips.map((chip, i) => (
+                    <span key={chip.label} className="contents">
+                      {i > 0 && <Dot />}
+                      <span className={`${LABEL_MICRO} text-white/70`}>{chip.label}</span>
+                      <span className={`text-white font-medium ${chip.mono ? MONO : "tracking-[-0.01em]"}`}>
+                        {chip.value}
+                      </span>
+                    </span>
+                  ))}
                 </div>
               </motion.div>
 
               {!cfg.hide_tagline && (
                 <motion.p
                   variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                  className="text-xs text-white/90 font-body"
+                  className="text-xs text-white/80 font-body tracking-[-0.01em]"
                 >
                   {tagline}
                 </motion.p>
               )}
             </div>
 
-            {/* Right — Video testimonial CTA */}
+            {/* Right — Video testimonial */}
             {!cfg.hide_stat_badges && (
               <motion.div
                 variants={fadeUp} custom={1} initial="hidden" animate="visible"
@@ -275,7 +230,6 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             )}
           </div>
         </div>
-
       </div>
     </header>
   );
