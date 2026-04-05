@@ -470,7 +470,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       setStep("preview");
     } catch (err: unknown) {
       console.error("PDF parse error:", err);
-      setError(err instanceof Error ? err.message || "Erro ao processar o PDF. Tente novamente.");
+      setError(err instanceof Error ? err.message : "Erro ao processar o PDF. Tente novamente.");
       setStep("upload");
     }
   }, [extractStructuredPageText, invokePdfParser, renderPdfPagesAsImages, toNumber]);
