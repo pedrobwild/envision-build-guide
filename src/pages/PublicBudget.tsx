@@ -477,7 +477,7 @@ export default function PublicBudget() {
               <div className="lg:hidden">
                 <OptionalItemsSimulator
                   budgetId={budget.id}
-                  sections={sections as any}
+                  sections={sections}
                   baseTotal={total}
                   clientName={budget.client_name}
                   projectName={budget.project_name}
