@@ -38,7 +38,7 @@ export interface ItemWithImages {
   id: string;
   title: string;
   description?: string | null;
-  order_index: number;
+  order_index?: number;
   qty?: number | null;
   unit?: string | null;
   coverage_type?: string;

@@ -47,7 +47,7 @@ export function FloorPlanViewer({
       (s.items || []).forEach((item) => {
         const coverageType = item.coverage_type || "geral";
         if (coverageType !== "geral") {
-          const included: string[] = item.included_rooms || [];
+          const included: string[] = (item.included_rooms || []) as string[];
           if (included.includes(r.id)) count++;
         }
       });

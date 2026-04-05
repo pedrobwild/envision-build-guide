@@ -25,7 +25,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
     (section.items || []).forEach((item) => {
       const ct = item.coverage_type || "geral";
       if (ct !== "geral") {
-        const inc: string[] = item.included_rooms || [];
+        const inc: string[] = (item.included_rooms || []) as string[];
         if (inc.includes(roomId)) {
           localItems.push({ item, sectionTitle: section.title });
         }
