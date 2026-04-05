@@ -321,7 +321,7 @@ export default function TemplateEditorPage() {
       .eq("template_id", templateId)
       .order("order_index");
 
-    const sectionList = (secs ?? []) as any[];
+    const sectionList = secs ?? [];
     const sectionIds = sectionList.map((s) => s.id);
 
     const { data: items } = await supabase
@@ -332,7 +332,7 @@ export default function TemplateEditorPage() {
 
     const enriched: TemplateSectionData[] = sectionList.map((sec) => ({
       ...sec,
-      items: ((items ?? []) as any[]).filter((i) => i.template_section_id === sec.id),
+      items: (items ?? []).filter((i) => i.template_section_id === sec.id) as TemplateItemData[],
     }));
 
     setSections(enriched);
