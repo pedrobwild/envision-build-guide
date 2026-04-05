@@ -89,7 +89,8 @@ function parseBrazilianNumber(value: unknown): number | null {
 
 function cleanText(value: unknown): string | null {
   if (value === null || value === undefined) return null;
-  const text = String(value).replace(/\s+/g, " ").trim();
+  // Strip any HTML tags to prevent XSS from imported PDFs
+  const text = String(value).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
   return text.length > 0 ? text : null;
 }
 
