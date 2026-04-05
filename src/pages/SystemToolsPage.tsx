@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import {
   Trash2,
   Activity,
@@ -31,6 +31,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import IntegrationSyncPanel from "@/components/admin/IntegrationSyncPanel";
 
 type SearchMode = "ux" | "references" | "benchmarking";
 
@@ -292,6 +293,9 @@ export default function SystemToolsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Integration Sync Monitor */}
+      <IntegrationSyncPanel />
 
       {/* Remaining cards */}
       <div className="space-y-3">
