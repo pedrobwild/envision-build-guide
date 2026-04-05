@@ -9,8 +9,8 @@ const corsHeaders = {
 /**
  * sync-project-outbound
  *
- * When a budget reaches "contrato_fechado", this function creates a
- * corresponding project in Portal BWild with all relevant data.
+ * When a budget reaches "contrato_fechado", this function sends the project
+ * data to Portal BWild's sync-project-inbound edge function via HTTP POST.
  *
  * POST body:
  *   { budget_id: string }
@@ -24,14 +24,16 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const PORTAL_BWILD_SUPABASE_URL = Deno.env.get("PORTAL_BWILD_SUPABASE_URL");
-    const PORTAL_BWILD_SERVICE_ROLE_KEY = Deno.env.get("PORTAL_BWILD_SERVICE_ROLE_KEY");
+    const INTEGRATION_KEY = Deno.env.get("INTEGRATION_INBOUND_KEY");
 
-    if (!PORTAL_BWILD_SUPABASE_URL || !PORTAL_BWILD_SERVICE_ROLE_KEY) {
-      throw new Error("Portal BWild credentials not configured");
+    if (!PORTAL_BWILD_SUPABASE_URL) {
+      throw new Error("PORTAL_BWILD_SUPABASE_URL not configured");
+    }
+    if (!INTEGRATION_KEY) {
+      throw new Error("INTEGRATION_INBOUND_KEY not configured");
     }
 
     const localDb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const remoteDb = createClient(PORTAL_BWILD_SUPABASE_URL, PORTAL_BWILD_SERVICE_ROLE_KEY);
 
     const body = await req.json();
     const budgetId = body.budget_id ?? body.record?.id;
@@ -43,7 +45,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- Fetch budget with sections and items ---
+    // --- Fetch budget ---
     const { data: budget, error: budgetErr } = await localDb
       .from("budgets")
       .select("*")
@@ -85,18 +87,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch sections + items for budget value calculation
-    const { data: sections } = await localDb
-      .from("sections")
-      .select("id, title, section_price, is_optional")
-      .eq("budget_id", budgetId);
+    // Fetch sections + adjustments for value calculation
+    const [{ data: sections }, { data: adjustments }] = await Promise.all([
+      localDb.from("sections").select("id, title, section_price, is_optional").eq("budget_id", budgetId),
+      localDb.from("adjustments").select("amount, sign").eq("budget_id", budgetId),
+    ]);
 
-    const { data: adjustments } = await localDb
-      .from("adjustments")
-      .select("amount, sign")
-      .eq("budget_id", budgetId);
-
-    // Calculate total
     const sectionsTotal = (sections ?? [])
       .filter((s) => !s.is_optional)
       .reduce((sum, s) => sum + (s.section_price ?? 0), 0);
@@ -104,23 +100,31 @@ Deno.serve(async (req) => {
       .reduce((sum, a) => sum + a.amount * a.sign, 0);
     const totalValue = sectionsTotal + adjustmentsTotal;
 
-    // Map budget → Portal BWild project
+    // Build payload
     const projectPayload = mapBudgetToProject(budget, totalValue);
 
-    // Create project in Portal BWild
-    const { data: inserted, error: insertErr } = await remoteDb
-      .from("projects")
-      .insert({
-        ...projectPayload,
-        external_id: budgetId,
-        external_system: "envision",
-      })
-      .select("id")
-      .single();
+    // --- Call Portal BWild's sync-project-inbound ---
+    const inboundUrl = `${PORTAL_BWILD_SUPABASE_URL}/functions/v1/sync-project-inbound`;
 
-    if (insertErr) throw insertErr;
+    const response = await fetch(inboundUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-integration-key": INTEGRATION_KEY,
+      },
+      body: JSON.stringify({
+        project: projectPayload,
+        source_id: budgetId,
+      }),
+    });
 
-    const projectId = inserted.id;
+    const responseData = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(`Portal BWild returned ${response.status}: ${responseData.error ?? response.statusText}`);
+    }
+
+    const projectId = responseData.project_id ?? null;
 
     // Log success
     await localDb.from("integration_sync_log").upsert({
@@ -148,14 +152,14 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error("sync-project-outbound error:", error);
 
-    // Try to log failure
+    // Log failure (best effort)
     try {
       const localDb = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       );
-      const body = await req.clone().json().catch(() => ({}));
-      const budgetId = body.budget_id ?? body.record?.id;
+      const bodyClone = await req.clone().json().catch(() => ({}));
+      const budgetId = bodyClone.budget_id ?? bodyClone.record?.id;
       if (budgetId) {
         await localDb.from("integration_sync_log").upsert({
           source_system: "envision",
@@ -179,8 +183,7 @@ Deno.serve(async (req) => {
 });
 
 /**
- * Maps an Envision budget → Portal BWild project insert payload.
- * Adjust field names to match the Portal BWild `projects` table schema.
+ * Maps an Envision budget → Portal BWild project payload.
  */
 function mapBudgetToProject(budget: any, totalValue: number) {
   return {

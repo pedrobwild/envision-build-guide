@@ -24,11 +24,16 @@ Integração bidirecional entre **Envision Build Guide** (orçamentos) e **Porta
 
 ## Edge Functions
 
-| Função | Direção | Trigger | Descrição |
-|--------|---------|---------|-----------|
-| `sync-supplier-outbound` | Envision → Portal | Auto (trigger DB) + Manual | Envia/atualiza fornecedor no Portal BWild |
-| `sync-supplier-inbound` | Portal → Envision | Webhook (POST externo) | Recebe fornecedor do Portal BWild |
-| `sync-project-outbound` | Envision → Portal | Auto (trigger DB) | Cria projeto quando orçamento vira `contrato_fechado` |
+| Função | Direção | Trigger | Endpoint Destino |
+|--------|---------|---------|-----------------|
+| `sync-supplier-outbound` | Envision → Portal | Auto (trigger DB) + Manual | `POST {PORTAL_BWILD_URL}/functions/v1/sync-supplier-inbound` |
+| `sync-supplier-inbound` | Portal → Envision | Webhook (POST externo) | *(recebe no Envision)* |
+| `sync-project-outbound` | Envision → Portal | Auto (trigger DB on contrato_fechado) | `POST {PORTAL_BWILD_URL}/functions/v1/sync-project-inbound` |
+
+### Protocolo de Comunicação
+- **Outbound**: HTTP POST direto para edge function do sistema destino
+- **Autenticação**: Header `x-integration-key` com chave compartilhada (`INTEGRATION_INBOUND_KEY`)
+- **Não usa Service Role Key** do destino — toda autenticação é via API key
 
 ---
 
