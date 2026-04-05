@@ -119,7 +119,7 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
     }, 800);
   }, [budgetId]);
 
-  const handleFieldChange = useCallback((field: string, value: any) => {
+  const handleFieldChange = useCallback((field: string, value: string | number | boolean | null) => {
     onBudgetFieldChange(field, value);
     debouncedSave(field, value);
   }, [onBudgetFieldChange, debouncedSave]);

@@ -107,8 +107,8 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
       } else {
         toast.error(`Falha ao sincronizar: ${result?.error ?? "erro desconhecido"}`);
       }
-    } catch (err: any) {
-      toast.error(`Erro na sincronização: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Erro na sincronização: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setSyncingId(null);
     }

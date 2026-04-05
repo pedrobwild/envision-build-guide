@@ -91,7 +91,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
       toast.success("Versão ativada como atual");
       await loadVersions();
       onVersionChange?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Erro ao alterar versão");
     }
   };

@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 interface StickyEditorHeaderProps {
-  budget: any;
+  budget: Record<string, unknown>;
   sections: CalcSection[];
   backPath: string;
   saveStatus: SaveStatus;

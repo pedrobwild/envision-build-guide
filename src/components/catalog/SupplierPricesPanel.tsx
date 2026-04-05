@@ -58,7 +58,7 @@ function PriceDialog({
   });
   const [saving, setSaving] = useState(false);
 
-  const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+  const set = (k: string, v: string | number | boolean) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleSave = async () => {
     if (!form.supplier_id) { toast.error("Selecione um fornecedor"); return; }

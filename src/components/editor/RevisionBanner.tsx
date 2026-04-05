@@ -15,7 +15,7 @@ const CHANGE_TYPE_LABELS: Record<string, string> = {
 interface RevisionBannerProps {
   revisionData: {
     id: string;
-    metadata: any;
+    metadata: Record<string, unknown> | null;
     created_at: string;
     note: string | null;
   };

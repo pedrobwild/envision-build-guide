@@ -110,7 +110,7 @@ export default function PhotoLibraryUpload() {
           return updated;
         });
         successCount++;
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Upload error for", pf.itemName, err);
         setFiles((prev) => {
           const updated = [...prev];

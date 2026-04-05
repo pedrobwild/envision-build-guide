@@ -299,7 +299,7 @@ export default function BudgetInternalDetail() {
   const daysLeft = dueDate ? differenceInCalendarDays(dueDate, new Date()) : null;
   const overdue = dueDate ? isPast(dueDate) && !isToday(dueDate) : false;
   const dueToday = dueDate ? isToday(dueDate) : false;
-  const links = (budget.reference_links ?? []).filter((l: any) => typeof l === "string" && l.trim());
+  const links = (budget.reference_links ?? []).filter((l: unknown) => typeof l === "string" && (l as string).trim());
 
   return (
     <div className="min-h-screen bg-background">

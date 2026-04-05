@@ -12,8 +12,8 @@ import { cn } from "@/lib/utils";
 import { LOCATION_TYPES } from "@/lib/role-constants";
 
 interface MetadataStepProps {
-  budget: any;
-  onFieldChange: (field: string, value: any) => void;
+  budget: Record<string, unknown>;
+  onFieldChange: (field: string, value: string | number | boolean | null) => void;
 }
 
 /* ── Notion-like property row ── */
