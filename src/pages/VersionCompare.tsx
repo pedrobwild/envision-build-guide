@@ -51,19 +51,21 @@ interface SectionDiff {
 }
 
 async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; sections: CompareSection[] }> {
-  const { data: budget } = await supabase
+  const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
     .select("id, version_number, versao, project_name, client_name, status, created_at, change_reason")
     .eq("id", budgetId)
     .single();
 
-  if (!budget) throw new Error("Versão não encontrada");
+  if (budgetErr || !budget) throw new Error("Versão não encontrada");
 
-  const { data: sections } = await supabase
+  const { data: sections, error: secErr } = await supabase
     .from("sections")
     .select("id, title, order_index, section_price, qty, items(id, title, description, qty, unit, internal_total, internal_unit_price)")
     .eq("budget_id", budgetId)
     .order("order_index");
+
+  if (secErr) console.error('Failed to load sections for version:', secErr.message);
 
   const mapped = (sections || []).map((s: any) => ({
     ...s,

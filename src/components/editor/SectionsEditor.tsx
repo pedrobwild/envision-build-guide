@@ -1063,34 +1063,41 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     }
   };
 
-  const grandTotalCost = sections.reduce((sum, s) => sum + calcSectionCostTotal(s), 0);
-  const grandTotalSale = sections.reduce((sum, s) => sum + calcSectionSaleTotal(s), 0);
+  const grandTotalCost = useMemo(() => sections.reduce((sum, s) => sum + calcSectionCostTotal(s), 0), [sections]);
+  const grandTotalSale = useMemo(() => sections.reduce((sum, s) => sum + calcSectionSaleTotal(s), 0), [sections]);
   const grandMargin = grandTotalSale - grandTotalCost;
   const grandBdiPercent = grandTotalCost > 0 ? ((grandTotalSale / grandTotalCost) - 1) * 100 : 0;
 
-  /* ── Drag handlers ── */
+  /* ── Drag handlers with rollback ── */
   const handleSectionDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
     const oldIndex = sections.findIndex(s => s.id === active.id);
     const newIndex = sections.findIndex(s => s.id === over.id);
+    const previousOrder = [...sections];
     const reordered = arrayMove(sections, oldIndex, newIndex);
 
     const withNewOrder = reordered.map((s, i) => ({ ...s, order_index: i }));
     onSectionsChange(withNewOrder);
-    await Promise.all(
-      withNewOrder.map(s =>
-        supabase.from("sections").update({ order_index: s.order_index }).eq("id", s.id)
-      )
-    );
-    toast.success("Ordem das seções atualizada");
+    try {
+      await Promise.all(
+        withNewOrder.map(s =>
+          supabase.from("sections").update({ order_index: s.order_index }).eq("id", s.id)
+        )
+      );
+      toast.success("Ordem das seções atualizada");
+    } catch {
+      onSectionsChange(previousOrder);
+      toast.error("Erro ao salvar a ordem. Tente novamente.");
+    }
   };
 
   const handleItemDragEnd = (sectionId: string) => async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
+    const previousSections = [...sections];
     const updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const oldIndex = s.items.findIndex(i => i.id === active.id);
@@ -1103,13 +1110,18 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     });
     onSectionsChange(updated);
 
-    const targetSection = updated.find(s => s.id === sectionId);
-    if (targetSection) {
-      await Promise.all(
-        targetSection.items.map(item =>
-          supabase.from("items").update({ order_index: item.order_index }).eq("id", item.id)
-        )
-      );
+    try {
+      const targetSection = updated.find(s => s.id === sectionId);
+      if (targetSection) {
+        await Promise.all(
+          targetSection.items.map(item =>
+            supabase.from("items").update({ order_index: item.order_index }).eq("id", item.id)
+          )
+        );
+      }
+    } catch {
+      onSectionsChange(previousSections);
+      toast.error("Erro ao salvar a ordem dos itens.");
     }
   };
 

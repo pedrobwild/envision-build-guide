@@ -89,7 +89,8 @@ function parseBrazilianNumber(value: unknown): number | null {
 
 function cleanText(value: unknown): string | null {
   if (value === null || value === undefined) return null;
-  const text = String(value).replace(/\s+/g, " ").trim();
+  // Strip any HTML tags to prevent XSS from imported PDFs
+  const text = String(value).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
   return text.length > 0 ? text : null;
 }
 
@@ -205,14 +206,32 @@ serve(async (req) => {
   }
 
   try {
-    const { textContent, pageImages } = await req.json();
+    const body = await req.json();
+    const { textContent, pageImages } = body ?? {};
 
+    // Input validation
     const hasText = typeof textContent === "string" && textContent.trim().length > 0;
     const hasImages = Array.isArray(pageImages) && pageImages.length > 0;
 
     if (!hasText && !hasImages) {
       return new Response(
         JSON.stringify({ error: "textContent ou pageImages é obrigatório" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate text content size (max 500KB)
+    if (hasText && textContent.length > 500_000) {
+      return new Response(
+        JSON.stringify({ error: "Conteúdo de texto excede o limite de 500KB" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate image count (max 50 pages)
+    if (hasImages && pageImages.length > 50) {
+      return new Response(
+        JSON.stringify({ error: "Máximo de 50 páginas de imagem permitidas" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
