@@ -126,7 +126,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               whileTap={{ scale: 0.97 }}
               onClick={onExportPdf}
               disabled={exporting}
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 backdrop-blur-md transition-all text-xs font-body font-medium disabled:opacity-50 border border-white/10"
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg bg-white/15 text-white hover:bg-white/25 backdrop-blur-md transition-all text-xs font-body font-medium disabled:opacity-50 border border-white/15"
               data-pdf-hide
             >
               {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
