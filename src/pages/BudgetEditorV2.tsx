@@ -148,6 +148,11 @@ export default function BudgetEditorV2() {
     return () => { cancelled = true; };
   }, [budgetId, navigate]);
 
+  // Reload callback for VersionTimeline
+  const reloadBudget = useCallback(() => {
+    window.location.reload();
+  }, []);
+
   // Count media files for badge
   useEffect(() => {
     if (!budgetId) return;
