@@ -182,7 +182,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     setLoading(false);
   };
 
-  useEffect(() => { loadFiles(); }, [publicId]);
+  useEffect(() => { loadFiles(); }, [publicId, loadFiles]);
 
   const sanitizeFileName = (name: string) => {
     return name
