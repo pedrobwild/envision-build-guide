@@ -101,7 +101,7 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
           filter: `budget_id=eq.${budgetId}`,
         },
         (payload) => {
-          setEvents((prev) => [payload.new as any, ...prev].slice(0, 50));
+          setEvents((prev) => [payload.new as EventRow, ...prev].slice(0, 50));
         }
       )
       .subscribe();
