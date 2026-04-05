@@ -216,6 +216,26 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-0.5 justify-end">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={syncingId === sup.id}
+                                onClick={() => handleSyncSupplier(sup)}
+                              >
+                                {syncingId === sup.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <ArrowRightLeft className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Sincronizar com Portal BWild</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <Button variant="ghost" size="icon" className="h-8 w-8"
                           onClick={() => onEditSupplier(sup)}>
                           <Edit2 className="h-3.5 w-3.5" />
