@@ -92,7 +92,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
 
     json.slice(1)
       .forEach((row, rowOffset) => {
-        if (!row || !row.some((cell: any) => cell !== undefined && cell !== "")) return;
+        if (!row || !row.some((cell: unknown) => cell !== undefined && cell !== "")) return;
 
         const indexVal = hasIndex ? String(row[map.index] ?? "").trim() : "";
         const itemName = map.title !== undefined ? String(row[map.title] ?? "").trim() : "";
