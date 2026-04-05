@@ -195,7 +195,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             {/* Company info — mobile */}
             <motion.p
               variants={fadeUp} custom={0.7} initial="hidden" animate="visible"
-              className="text-[10px] font-body text-white/50 leading-relaxed pt-1"
+              className="text-[10px] font-body text-white/60 leading-relaxed pt-1"
             >
               Bwild Reformas LTDA · CNPJ 47.350.338/0001-37
               <br />
