@@ -114,7 +114,7 @@ export default function PhotoLibraryUpload() {
         console.error("Upload error for", pf.itemName, err);
         setFiles((prev) => {
           const updated = [...prev];
-          updated[i] = { ...updated[i], status: "error", error: err.message };
+          updated[i] = { ...updated[i], status: "error", error: err instanceof Error ? err.message : String(err) };
           return updated;
         });
         errorCount++;

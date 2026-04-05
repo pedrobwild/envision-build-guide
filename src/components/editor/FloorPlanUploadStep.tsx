@@ -67,7 +67,7 @@ export function FloorPlanUploadStep({ budgetId, floorPlanUrl, onUploaded, onNext
             input.type = "file";
             input.accept = "image/*,.pdf";
             input.onchange = (ev: Event) => {
-              const f = e.target.files?.[0];
+              const f = (ev.target as HTMLInputElement).files?.[0];
               if (f) handleUpload(f);
             };
             input.click();

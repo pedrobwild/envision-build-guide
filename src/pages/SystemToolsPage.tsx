@@ -246,7 +246,7 @@ export default function SystemToolsPage() {
       console.error(err);
       toast({
         title: "Erro na análise",
-        description: err.message || "Não foi possível gerar as sugestões.",
+        description: (err instanceof Error ? err.message : null) || "Não foi possível gerar as sugestões.",
         variant: "destructive",
       });
     } finally {

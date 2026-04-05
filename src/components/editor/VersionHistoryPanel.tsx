@@ -3,6 +3,7 @@ import { History, Copy, CheckCircle, Upload, FileText, FileSpreadsheet, Loader2,
 import { formatDate } from "@/lib/formatBRL";
 import { getVersionHistory, duplicateBudgetAsVersion, setCurrentVersion } from "@/lib/budget-versioning";
 import { getVersionAuditEvents } from "@/lib/version-audit";
+import type { VersionRow, BudgetEventRow } from "@/types/budget-common";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";

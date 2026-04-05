@@ -99,7 +99,7 @@ export function MetadataStep({ budget, onFieldChange }: MetadataStepProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Reference links helper
-  const links: string[] = Array.isArray(budget.reference_links) ? budget.reference_links : [];
+  const links: string[] = Array.isArray(budget.reference_links) ? (budget.reference_links as unknown as string[]) : [];
   const addLink = () => onFieldChange("reference_links", [...links, ""]);
   const removeLink = (i: number) => onFieldChange("reference_links", links.filter((_, idx) => idx !== i));
   const updateLink = (i: number, val: string) =>

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/lib/formatBRL";
 import { getVersionHistory, duplicateBudgetAsVersion } from "@/lib/budget-versioning";
 import { getVersionAuditEvents } from "@/lib/version-audit";
+import type { VersionRow, BudgetEventRow } from "@/types/budget-common";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
