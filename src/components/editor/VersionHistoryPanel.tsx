@@ -74,8 +74,8 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
       setShowReasonDialog(null);
       toast.success("Nova versão criada com sucesso!");
       navigate(`/admin/budget/${newId}`);
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao duplicar versão");
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : null) || "Erro ao duplicar versão");
     }
     setDuplicating(false);
   };
