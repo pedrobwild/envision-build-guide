@@ -11,10 +11,11 @@ import { CountUpValue } from "@/components/budget/CountUpValue";
 import { InstallmentSimulator } from "@/components/budget/summary/InstallmentSimulator";
 import { TrustBadgesRow } from "@/components/budget/summary/TrustBadgesRow";
 import type { CategorizedGroup } from "@/lib/scope-categories";
+import type { SectionWithItems, AdjustmentRow } from "@/types/budget-common";
 
 interface BudgetSummaryProps {
-  sections: any[];
-  adjustments: any[];
+  sections: SectionWithItems[];
+  adjustments: AdjustmentRow[];
   total: number;
   generatedAt: string;
   budgetDate?: string | null;
