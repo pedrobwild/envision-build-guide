@@ -141,7 +141,7 @@ export default function BudgetEditorV2() {
             ...item,
             images: item.item_images || [],
           })),
-      }));
+      })) as unknown as EditorSection[];
       setSections(sorted);
     }
 
