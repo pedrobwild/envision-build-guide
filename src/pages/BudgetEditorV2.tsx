@@ -548,7 +548,7 @@ export default function BudgetEditorV2() {
                       <input
                         type="number"
                         step="0.01"
-                        value={(budget as any).internal_cost ?? ""}
+                        value={(budget as Record<string, unknown>).internal_cost as number ?? ""}
                         onChange={(e) => {
                           const val = e.target.value ? Number(e.target.value) : null;
                           setBudget({ ...budget, internal_cost: val });
