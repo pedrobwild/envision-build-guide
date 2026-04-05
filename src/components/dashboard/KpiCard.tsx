@@ -95,8 +95,13 @@ export function KpiCard({ label, kpi, meta, format: fmt = "number", tooltip, inv
         </div>
       </div>
 
-      <div className="font-display text-2xl font-semibold text-foreground tracking-tight leading-none mb-2 tabular-nums font-mono">
-        {formatValue(kpi.value, fmt)}
+      <div className="flex items-end justify-between gap-2 mb-2">
+        <div className="font-display text-2xl font-semibold text-foreground tracking-tight leading-none tabular-nums font-mono">
+          {formatValue(kpi.value, fmt)}
+        </div>
+        {kpi.sparkline && kpi.sparkline.length > 1 && (
+          <Sparkline data={kpi.sparkline} positive={!invertTrend ? isPositive : isNegative} negative={!invertTrend ? isNegative : isPositive} />
+        )}
       </div>
 
       {kpi.change !== null && (
