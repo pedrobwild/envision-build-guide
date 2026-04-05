@@ -117,8 +117,8 @@ export default function UserManagement() {
       setInviteName("");
       setInviteRole("comercial");
       loadUsers();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
     }
     setInviting(false);
   }
