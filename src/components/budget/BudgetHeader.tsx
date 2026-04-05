@@ -219,36 +219,36 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 <div className="flex items-center gap-2 text-sm font-body flex-wrap">
                   {condominio && (
                     <>
-                      <span className="text-white/70 text-xs">Condomínio</span>
-                      <span className="text-white/95 font-medium">{condominio}</span>
-                      {(neighborhood || area || version || dateStr) && <span className="text-white/40">·</span>}
+                      <span className="text-white/80 text-xs">Condomínio</span>
+                      <span className="text-white font-medium">{condominio}</span>
+                      {(neighborhood || area || version || dateStr) && <span className="text-white/50">·</span>}
                     </>
                   )}
                   {neighborhood && (
                     <>
-                      <span className="text-white/70 text-xs">Bairro</span>
-                      <span className="text-white/95 font-medium">{neighborhood}</span>
-                      {(area || version || dateStr) && <span className="text-white/40">·</span>}
+                      <span className="text-white/80 text-xs">Bairro</span>
+                      <span className="text-white font-medium">{neighborhood}</span>
+                      {(area || version || dateStr) && <span className="text-white/50">·</span>}
                     </>
                   )}
                   {area && (
                     <>
-                      <span className="text-white/70 text-xs">Área</span>
-                      <span className="text-white/95 font-medium">{area}</span>
-                      {(version || dateStr) && <span className="text-white/40">·</span>}
+                      <span className="text-white/80 text-xs">Área</span>
+                      <span className="text-white font-medium">{area}</span>
+                      {(version || dateStr) && <span className="text-white/50">·</span>}
                     </>
                   )}
                   {version && (
                     <>
-                      <span className="text-white/70 text-xs">Versão</span>
-                      <span className="text-white/95 font-medium">{version}</span>
-                      {dateStr && <span className="text-white/40">·</span>}
+                      <span className="text-white/80 text-xs">Versão</span>
+                      <span className="text-white font-medium">{version}</span>
+                      {dateStr && <span className="text-white/50">·</span>}
                     </>
                   )}
                   {dateStr && (
                     <>
-                      <span className="text-white/70 text-xs">Elaboração</span>
-                      <span className="text-white/95 font-medium">{dateStr}</span>
+                      <span className="text-white/80 text-xs">Elaboração</span>
+                      <span className="text-white font-medium">{dateStr}</span>
                     </>
                   )}
                 </div>
