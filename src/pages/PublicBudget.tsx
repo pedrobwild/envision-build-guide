@@ -251,6 +251,17 @@ export default function PublicBudget() {
     return <PublicBudgetSkeleton />;
   }
 
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">Erro ao carregar</h1>
+          <p className="text-sm text-muted-foreground font-body">{loadError}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!budget) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
