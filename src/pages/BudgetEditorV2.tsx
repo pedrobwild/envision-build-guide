@@ -135,8 +135,8 @@ export default function BudgetEditorV2() {
       const sorted = (secs || []).map(s => ({
         ...s,
         items: (s.items || [])
-          .sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
-          .map((item: any) => ({
+          .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+          .map((item) => ({
             ...item,
             images: item.item_images || [],
           })),
