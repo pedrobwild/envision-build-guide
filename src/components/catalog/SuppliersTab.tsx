@@ -101,7 +101,7 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
             className="pl-9"
           />
         </div>
-        <Select value={tipoFilter} onValueChange={setTipoFilter}>
+        <Select value={tipoFilter} onValueChange={(v) => { setTipoFilter(v); setSubcategoriaFilter("all"); }}>
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
@@ -109,6 +109,17 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
             <SelectItem value="all">Todos os tipos</SelectItem>
             <SelectItem value="Prestadores">Prestadores</SelectItem>
             <SelectItem value="Produtos">Produtos</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={subcategoriaFilter} onValueChange={setSubcategoriaFilter}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Subcategoria" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas subcategorias</SelectItem>
+            {subcategoriasDisponiveis.map((sub) => (
+              <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Button size="sm" onClick={onNewSupplier}>
