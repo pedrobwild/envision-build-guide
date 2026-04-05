@@ -422,7 +422,7 @@ export default function TemplateEditorPage() {
     });
   };
 
-  const updateSection = (sectionId: string, field: string, value: any) => {
+  const updateSection = (sectionId: string, field: string, value: string | boolean | null) => {
     setSections((prev) =>
       prev.map((s) => (s.id === sectionId ? { ...s, [field]: value } : s))
     );
