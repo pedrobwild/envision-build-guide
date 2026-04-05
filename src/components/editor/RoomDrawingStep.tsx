@@ -64,7 +64,7 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
         finishPolygon(newPoints.slice(0, -1));
       }
     }
-  }, [drawMode, currentPoints, getNormalizedCoords]);
+  }, [drawMode, currentPoints, getNormalizedCoords, finishPolygon]);
 
   const finishPolygon = useCallback((points: number[][]) => {
     const newRoom: Room = {
