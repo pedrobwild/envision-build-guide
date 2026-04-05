@@ -186,7 +186,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               )}
               {budget.prazo_dias_uteis && (
                 <>
-                  <span className="text-white/40">·</span>
+                  <span className="text-white/50">·</span>
                   <span className="text-white/95 font-medium">{budget.prazo_dias_uteis} dias úteis</span>
                 </>
               )}
