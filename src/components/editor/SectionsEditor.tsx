@@ -682,6 +682,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   });
   const searchRef = useRef<HTMLInputElement>(null);
   const timers = useRef<Record<string, NodeJS.Timeout>>({});
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
+
+  // Load suppliers once
+  useEffect(() => {
+    supabase.from("suppliers").select("id, name").eq("is_active", true).order("name").then(({ data }) => {
+      if (data) setSuppliers(data);
+    });
+  }, []);
 
   // Persist expanded state
   useEffect(() => {
