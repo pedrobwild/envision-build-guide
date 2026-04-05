@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.sync-supplier-inbound]
 verify_jwt = false
+
+[functions.sync-project-outbound]
+verify_jwt = false

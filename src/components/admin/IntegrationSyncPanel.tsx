@@ -132,7 +132,7 @@ export default function IntegrationSyncPanel() {
                 Monitor de Integração
               </h2>
               <p className="text-sm text-muted-foreground font-body mt-0.5">
-                Sincronização de fornecedores entre Envision e Portal BWild
+                Sincronização de fornecedores e projetos entre Envision e Portal BWild
               </p>
             </div>
           </div>
