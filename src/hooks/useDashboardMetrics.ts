@@ -665,15 +665,62 @@ export function computeDashboardMetrics(
     insights.push({ type: "positive", message: "Operação dentro dos padrões esperados no período" });
   }
 
+  // ─── Weekly Sparklines (last 8 weeks) ───
+  const WEEKS = 8;
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const sparkEnd = range.to;
+
+  function weeklyCount(filter: (b: any, weekFrom: Date, weekTo: Date) => boolean): number[] {
+    const counts: number[] = [];
+    for (let w = WEEKS - 1; w >= 0; w--) {
+      const wTo = new Date(sparkEnd.getTime() - w * weekMs);
+      const wFrom = new Date(wTo.getTime() - weekMs);
+      counts.push(budgets.filter((b) => filter(b, wFrom, wTo)).length);
+    }
+    return counts;
+  }
+
+  const sparkReceived = weeklyCount((b, wFrom, wTo) => {
+    if (!b.created_at) return false;
+    const d = new Date(b.created_at);
+    return d >= wFrom && d < wTo;
+  });
+
+  const sparkClosed = weeklyCount((b, wFrom, wTo) => {
+    const d = b.closed_at || b.updated_at;
+    return d && b.status === "contrato_fechado" && new Date(d) >= wFrom && new Date(d) < wTo;
+  });
+
+  const sparkDelivered = weeklyCount((b, wFrom, wTo) => {
+    const d = b.generated_at || b.closed_at;
+    return d && DELIVERED_STATUSES.includes(b.status) && new Date(d) >= wFrom && new Date(d) < wTo;
+  });
+
+  // Backlog snapshot per week (approximate: count items created before week-end that are still active)
+  const sparkBacklog = (() => {
+    const counts: number[] = [];
+    for (let w = WEEKS - 1; w >= 0; w--) {
+      const wTo = new Date(sparkEnd.getTime() - w * weekMs);
+      counts.push(budgets.filter((b) =>
+        ACTIVE_STATUSES.includes(b.internal_status) && b.created_at && new Date(b.created_at) <= wTo
+      ).length);
+    }
+    return counts;
+  })();
+
+  const sparkOverdue = weeklyCount((b, wFrom, wTo) => {
+    return ACTIVE_STATUSES.includes(b.internal_status) && b.due_at && new Date(b.due_at) < wTo && new Date(b.due_at) >= wFrom;
+  });
+
   return {
-    received: makeKpi(receivedCurrent, receivedPrev),
-    backlog: makeKpi(backlogCount, prevBacklogSnapshot > 0 ? prevBacklogSnapshot : null),
+    received: { ...makeKpi(receivedCurrent, receivedPrev), sparkline: sparkReceived },
+    backlog: { ...makeKpi(backlogCount, prevBacklogSnapshot > 0 ? prevBacklogSnapshot : null), sparkline: sparkBacklog },
     slaOnTime: { value: Math.round(sla * 10) / 10, change: null, trend: sla >= 80 ? "up" : sla < 60 ? "down" : "stable" },
-    overdue: { value: overdueList.length, change: null, trend: overdueList.length === 0 ? "up" : "down" },
+    overdue: { value: overdueList.length, change: null, trend: overdueList.length === 0 ? "up" : "down", sparkline: sparkOverdue },
     avgLeadTime: makeKpi(avgLT !== null ? Math.round(avgLT * 10) / 10 : null, prevAvgLT !== null ? Math.round(prevAvgLT * 10) / 10 : null),
-    conversionRate: makeKpi(conversion !== null ? Math.round(conversion * 10) / 10 : null, prevConversion !== null ? Math.round(prevConversion * 10) / 10 : null),
+    conversionRate: { ...makeKpi(conversion !== null ? Math.round(conversion * 10) / 10 : null, prevConversion !== null ? Math.round(prevConversion * 10) / 10 : null), sparkline: sparkClosed },
     portfolioValue: { value: portfolio, change: null, trend: null },
-    grossMargin: makeKpi(margin !== null ? Math.round(margin * 10) / 10 : null, prevMargin !== null ? Math.round(prevMargin * 10) / 10 : null),
+    grossMargin: { ...makeKpi(margin !== null ? Math.round(margin * 10) / 10 : null, prevMargin !== null ? Math.round(prevMargin * 10) / 10 : null), sparkline: sparkDelivered },
     kpiMeta,
     revenue: periodRevenue,
     revenueChange: prevRevenue > 0 ? Math.round(((periodRevenue - prevRevenue) / prevRevenue) * 100 * 10) / 10 : null,

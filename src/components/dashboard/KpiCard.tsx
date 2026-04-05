@@ -21,6 +21,39 @@ const HEALTH_STYLES: Record<string, { border: string; dot: string }> = {
   critical: { border: "border-destructive/30", dot: "bg-destructive" },
 };
 
+function Sparkline({ data, positive, negative }: { data: number[]; positive?: boolean; negative?: boolean }) {
+  const max = Math.max(...data, 1);
+  const min = Math.min(...data, 0);
+  const range = max - min || 1;
+  const w = 64;
+  const h = 20;
+  const pad = 1;
+  const points = data.map((v, i) => {
+    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+    const y = h - pad - ((v - min) / range) * (h - pad * 2);
+    return `${x},${y}`;
+  });
+  const stroke = negative
+    ? "hsl(var(--destructive))"
+    : positive
+    ? "hsl(142 71% 45%)"
+    : "hsl(var(--muted-foreground) / 0.4)";
+
+  return (
+    <svg width={w} height={h} className="shrink-0" aria-hidden>
+      <polyline
+        points={points.join(" ")}
+        fill="none"
+        stroke={stroke}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx={points.at(-1)?.split(",")[0]} cy={points.at(-1)?.split(",")[1]} r={2} fill={stroke} />
+    </svg>
+  );
+}
+
 function formatValue(value: number | null, fmt: string): string {
   if (value === null) return "—";
   switch (fmt) {
