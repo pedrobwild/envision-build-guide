@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 import {
   Search, Plus, Edit2, Trash2, Filter,
-  ToggleLeft, ToggleRight,
+  ToggleLeft, ToggleRight, Package,
 } from "lucide-react";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
 import { CATALOG_SECTION_OPTIONS } from "@/lib/catalog-helpers";
