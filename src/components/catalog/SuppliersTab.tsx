@@ -3,14 +3,39 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Search, Plus, Edit2, Trash2, Building2, ToggleLeft, ToggleRight,
 } from "lucide-react";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
 import type { Supplier } from "@/components/catalog/SupplierDialog";
+
+const SUBCATEGORIAS_PRESTADORES = [
+  "Marcenaria", "Empreita", "Vidraçaria Box", "Vidraçaria Sacada",
+  "Eletricista", "Pintor", "Instalador de Piso", "Técnico Ar-Condicionado",
+  "Gesseiro", "Serviços Gerais", "Limpeza", "Pedreiro",
+  "Instalador Fechadura Digital", "Cortinas", "Marmoraria", "Jardim Vertical",
+];
+
+const SUBCATEGORIAS_PRODUTOS = [
+  "Eletrodomésticos", "Enxoval", "Espelhos", "Decoração", "Revestimentos",
+  "Luminárias", "Torneiras", "Cadeiras e Mesas", "Camas", "Sofás e Poltronas",
+  "Tapeçaria", "Torneiras e Cubas", "Materiais Elétricos",
+  "Materiais de Construção", "Acessórios Banheiro", "Fechadura Digital", "Tintas",
+];
+
+function getTipo(categoria: string | null | undefined): string {
+  if (!categoria) return "—";
+  if (SUBCATEGORIAS_PRESTADORES.includes(categoria)) return "Prestadores";
+  if (SUBCATEGORIAS_PRODUTOS.includes(categoria)) return "Produtos";
+  return "—";
+}
 
 interface Props {
   suppliers: Supplier[];
@@ -21,11 +46,17 @@ interface Props {
 
 export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefresh }: Props) {
   const [search, setSearch] = useState("");
+  const [tipoFilter, setTipoFilter] = useState("all");
 
-  const filtered = suppliers.filter((s) =>
-    !search || s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.contact_info?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = suppliers.filter((s) => {
+    if (search && !s.name.toLowerCase().includes(search.toLowerCase()) &&
+        !s.contact_info?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (tipoFilter !== "all") {
+      const tipo = getTipo(s.categoria);
+      if (tipo !== tipoFilter) return false;
+    }
+    return true;
+  });
 
   const handleToggleActive = async (sup: Supplier) => {
     const { error } = await supabase
@@ -50,7 +81,7 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -60,6 +91,16 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
             className="pl-9"
           />
         </div>
+        <Select value={tipoFilter} onValueChange={setTipoFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os tipos</SelectItem>
+            <SelectItem value="Prestadores">Prestadores</SelectItem>
+            <SelectItem value="Produtos">Produtos</SelectItem>
+          </SelectContent>
+        </Select>
         <Button size="sm" onClick={onNewSupplier}>
           <Plus className="h-4 w-4 mr-1" /> Novo Fornecedor
         </Button>
@@ -68,9 +109,9 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
       {filtered.length === 0 ? (
         <CatalogEmptyState
           icon={Building2}
-          title={search ? "Nenhum fornecedor encontrado" : "Nenhum fornecedor"}
-          description={search ? "Tente outro termo de busca." : "Cadastre fornecedores para vincular aos itens do catálogo."}
-          action={!search ? (
+          title={search || tipoFilter !== "all" ? "Nenhum fornecedor encontrado" : "Nenhum fornecedor"}
+          description={search || tipoFilter !== "all" ? "Tente outro termo ou filtro." : "Cadastre fornecedores para vincular aos itens do catálogo."}
+          action={!search && tipoFilter === "all" ? (
             <Button size="sm" onClick={onNewSupplier}>
               <Plus className="h-4 w-4 mr-1" /> Novo Fornecedor
             </Button>
@@ -82,44 +123,59 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
             <TableHeader>
               <TableRow className="bg-muted/30">
                 <TableHead>Nome</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Subcategoria</TableHead>
                 <TableHead>Contato</TableHead>
                 <TableHead className="w-20">Status</TableHead>
                 <TableHead className="w-24 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((sup) => (
-                <TableRow key={sup.id} className={!sup.is_active ? "opacity-50" : ""}>
-                  <TableCell className="font-medium">{sup.name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{sup.contact_info ?? "—"}</TableCell>
-                  <TableCell>
-                    <button
-                      onClick={() => handleToggleActive(sup)}
-                      className="group flex items-center gap-1.5"
-                      title={sup.is_active ? "Desativar" : "Ativar"}
-                    >
-                      {sup.is_active ? (
-                        <ToggleRight className="h-5 w-5 text-primary group-hover:text-primary/70 transition-colors" />
+              {filtered.map((sup) => {
+                const tipo = getTipo(sup.categoria);
+                return (
+                  <TableRow key={sup.id} className={!sup.is_active ? "opacity-50" : ""}>
+                    <TableCell className="font-medium">{sup.name}</TableCell>
+                    <TableCell>
+                      {tipo !== "—" ? (
+                        <Badge variant={tipo === "Prestadores" ? "default" : "secondary"} className="text-xs">
+                          {tipo}
+                        </Badge>
                       ) : (
-                        <ToggleLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                        <span className="text-muted-foreground text-sm">—</span>
                       )}
-                      <span className="text-xs">{sup.is_active ? "Ativo" : "Inativo"}</span>
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-0.5 justify-end">
-                      <Button variant="ghost" size="icon" className="h-8 w-8"
-                        onClick={() => onEditSupplier(sup)}>
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(sup)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{sup.categoria ?? "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{sup.contact_info ?? "—"}</TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => handleToggleActive(sup)}
+                        className="group flex items-center gap-1.5"
+                        title={sup.is_active ? "Desativar" : "Ativar"}
+                      >
+                        {sup.is_active ? (
+                          <ToggleRight className="h-5 w-5 text-primary group-hover:text-primary/70 transition-colors" />
+                        ) : (
+                          <ToggleLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                        )}
+                        <span className="text-xs">{sup.is_active ? "Ativo" : "Inativo"}</span>
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-0.5 justify-end">
+                        <Button variant="ghost" size="icon" className="h-8 w-8"
+                          onClick={() => onEditSupplier(sup)}>
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(sup)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
