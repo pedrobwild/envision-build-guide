@@ -32,6 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import IntegrationSyncPanel from "@/components/admin/IntegrationSyncPanel";
+import AiSyncInsightsPanel from "@/components/admin/AiSyncInsightsPanel";
 
 type SearchMode = "ux" | "references" | "benchmarking";
 
