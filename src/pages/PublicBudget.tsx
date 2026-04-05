@@ -426,7 +426,7 @@ export default function PublicBudget() {
                         ...section,
                         items: exporting
                           ? (section.items || [])
-                          : (section.items || []).filter((item: any) => item.images && item.images.length > 0),
+                          : (section.items || []).filter((item) => item.images && item.images.length > 0),
                       })).filter(section => section.items.length > 0),
                     }))
                     .filter(group => group.sections.length > 0);
