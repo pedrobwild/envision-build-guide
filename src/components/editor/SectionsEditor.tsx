@@ -217,6 +217,12 @@ function calcSaleUnitPrice(cost: number | null | undefined, bdi: number | null |
   return c * (1 + b / 100);
 }
 
+function calcMargin(cost: number | null | undefined, bdi: number | null | undefined): number {
+  const c = Number(cost) || 0;
+  const b = Number(bdi) || 0;
+  return c * (b / 100);
+}
+
 function calcItemSaleTotal(item: ItemData): number {
   const qty = Number(item.qty) || 1;
   const saleUnit = calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage);
@@ -522,10 +528,10 @@ function SortableItemRow({
           />
         </div>
 
-        {/* [Venda Unit.] — hidden mobile */}
+        {/* [Margem] — hidden mobile */}
         <div className="hidden md:block w-[100px] flex-shrink-0 px-1">
           <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground bg-muted/30 rounded">
-            {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+            {formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}
           </div>
         </div>
 
@@ -611,7 +617,7 @@ function SortableItemRow({
             </div>
             <div className="pt-4">
               <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
-                Venda unit: {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+                Margem: {formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}
               </span>
             </div>
           </div>
@@ -1305,7 +1311,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                 <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">BDI%</span>
                               </div>
                               <div className="hidden md:block w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Venda Un.</span>
+                                <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Margem</span>
                               </div>
                               <div className="w-[72px] sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
                                 <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Total</span>
