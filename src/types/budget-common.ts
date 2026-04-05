@@ -149,7 +149,8 @@ export interface BudgetEventRow {
   budget_id: string;
   event_type: string;
   note: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata: Json | null;
   user_id: string | null;
+  user_name?: string;
   created_at: string;
 }
