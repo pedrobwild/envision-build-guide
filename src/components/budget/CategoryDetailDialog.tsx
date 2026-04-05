@@ -21,7 +21,7 @@ interface CategoryDetailDialogProps {
 
 function CategoryItemList({ group, budgetId, editable }: { group: CategorizedGroup; budgetId?: string; editable?: boolean }) {
   const allItems = group.sections.flatMap(section =>
-    (section.items || []).map((item: any) => ({ ...item, _sectionTitle: section.title }))
+    (section.items || []).map((item) => ({ ...item, _sectionTitle: section.title }))
   );
 
   return (
