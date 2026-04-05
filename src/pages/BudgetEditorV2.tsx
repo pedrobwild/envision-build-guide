@@ -35,10 +35,8 @@ export default function BudgetEditorV2() {
 
   const backPath = (location.state as { from?: string } | null)?.from
     || (isOrcamentista ? "/admin/producao" : isComercial ? "/admin/comercial" : "/admin");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- budget shape is dynamic from Supabase select("*")
-  const [budget, setBudget] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [sections, setSections] = useState<any[]>([]);
+  const [budget, setBudget] = useState<BudgetRow | null>(null);
+  const [sections, setSections] = useState<EditorSection[]>([]);
   const [saving, setSaving] = useState(false);
   const [internalDataOpen, setInternalDataOpen] = useState(false);
   const [versionCount, setVersionCount] = useState(0);
