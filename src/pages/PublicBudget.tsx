@@ -208,19 +208,28 @@ export default function PublicBudget() {
       return;
     }
     if (publicId) {
-      fetchPublicBudget(publicId).then((data) => {
-        setBudget(data as BudgetData | null);
-        setLoading(false);
-        if (data && !viewTracked.current) {
-          viewTracked.current = true;
-          Promise.resolve(supabase.rpc('increment_view_count' as any, { p_public_id: publicId })).catch(() => {});
-          if ((data.view_count || 0) === 0) {
-            supabase.functions.invoke('notify-budget-view', {
-              body: { public_id: publicId },
-            }).catch(() => {});
+      setLoadError(null);
+      fetchPublicBudget(publicId)
+        .then((data) => {
+          setBudget(data as BudgetData | null);
+          setLoading(false);
+          if (data && !viewTracked.current) {
+            viewTracked.current = true;
+            supabase.rpc('increment_view_count', { p_public_id: publicId }).then(({ error }) => {
+              if (error) console.error('increment_view_count failed:', error.message);
+            });
+            if ((data.view_count || 0) === 0) {
+              supabase.functions.invoke('notify-budget-view', {
+                body: { public_id: publicId },
+              }).catch(() => {});
+            }
           }
-        }
-      });
+        })
+        .catch((err) => {
+          console.error('Failed to load public budget:', err);
+          setLoadError('Não foi possível carregar o orçamento. Tente novamente.');
+          setLoading(false);
+        });
     }
   }, [publicId]);
 
