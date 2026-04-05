@@ -58,7 +58,7 @@ export interface ItemWithImages {
 
 // ─── Item image row ───
 export interface ItemImageRow {
-  id?: string;
+  id: string;
   url: string;
   is_primary?: boolean | null;
   item_id?: string;
