@@ -772,7 +772,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const debouncedSave = useCallback((table: string, id: string, updates: Record<string, any>) => {
+  const debouncedSave = useCallback((table: string, id: string, updates: Record<string, string | number | boolean | null>) => {
     const key = `${table}-${id}`;
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
