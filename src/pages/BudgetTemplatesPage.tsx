@@ -485,7 +485,7 @@ export default function BudgetTemplatesPage() {
   };
 
   const deleteTemplate = async (id: string) => {
-    const { error } = await supabase.from("budget_templates" as any).delete().eq("id", id);
+    const { error } = await supabase.from("budget_templates").delete().eq("id", id);
     if (error) { toast.error("Erro ao excluir template"); return; }
     toast.success("Template excluído");
     if (selectedId === id) setSelectedId(null);
