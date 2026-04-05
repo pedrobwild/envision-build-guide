@@ -135,7 +135,7 @@ export function ProjectMap({
     mapRef.current = map;
 
     return () => {
-      markersRef.current.clear();
+      const currentMarkers = markersRef.current;
       map.remove();
       mapRef.current = null;
     };

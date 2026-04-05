@@ -495,7 +495,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         );
       }
     },
-    [parseExcel, parsePdf]
+    [parseExcel, parsePdf, fileFilter]
   );
 
   const handleDrop = useCallback(

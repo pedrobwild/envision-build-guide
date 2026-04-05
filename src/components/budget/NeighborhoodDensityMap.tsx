@@ -367,7 +367,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       map?.remove();
       mapRef.current = null;
     };
-  }, [handleSelect, styleCandidates]);
+  }, [handleSelect, styleCandidates, isMobileViewport]);
 
 
   return (
