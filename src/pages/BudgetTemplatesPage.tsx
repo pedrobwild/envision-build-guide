@@ -302,18 +302,22 @@ function ItemDialog({
   const handleSave = async () => {
     if (!title.trim()) { toast.error("Título é obrigatório"); return; }
     setSaving(true);
-    const payload = {
-      title: title.trim(),
-      description: description.trim() || null,
-      unit: unit.trim() || null,
-      ...(isEdit ? {} : { template_section_id: sectionId, order_index: nextIndex }),
-    };
 
     if (isEdit) {
-      const { error } = await supabase.from("budget_template_items").update(payload).eq("id", item!.id);
+      const { error } = await supabase.from("budget_template_items").update({
+        title: title.trim(),
+        description: description.trim() || null,
+        unit: unit.trim() || null,
+      }).eq("id", item!.id);
       if (error) { toast.error("Erro ao atualizar item"); setSaving(false); return; }
     } else {
-      const { error } = await supabase.from("budget_template_items").insert(payload);
+      const { error } = await supabase.from("budget_template_items").insert({
+        template_section_id: sectionId,
+        title: title.trim(),
+        description: description.trim() || null,
+        unit: unit.trim() || null,
+        order_index: nextIndex,
+      });
       if (error) { toast.error("Erro ao criar item"); setSaving(false); return; }
     }
 
