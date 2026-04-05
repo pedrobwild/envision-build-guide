@@ -91,7 +91,7 @@ export default function IntegrationSyncPanel() {
     },
     onSuccess: (data) => {
       const results = data?.results ?? [];
-      const ok = results.filter((r: any) => r.status === "success").length;
+      const ok = results.filter((r: { status: string }) => r.status === "success").length;
       toast({
         title: "Retry concluído",
         description: `${ok}/${results.length} fornecedores sincronizados com sucesso.`,
