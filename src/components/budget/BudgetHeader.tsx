@@ -257,7 +257,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {!cfg.hide_tagline && (
                 <motion.p
                   variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                  className="text-xs text-white/80 font-body"
+                  className="text-xs text-white/90 font-body"
                 >
                   {tagline}
                 </motion.p>
