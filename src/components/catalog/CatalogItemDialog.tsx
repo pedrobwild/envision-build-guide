@@ -370,19 +370,67 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
 
   const currentItemId = item?.id ?? savedItemId;
 
+  const ensureCategoryForSupplier = useCallback(async (supplierCategoria: string) => {
+    const normalizedSupplierCategory = normalizeCategoryName(supplierCategoria);
+    const existingCategory = availableCategories.find(
+      (category) => normalizeCategoryName(category.name) === normalizedSupplierCategory
+    );
+
+    if (existingCategory) {
+      set("category_id", existingCategory.id);
+      return existingCategory.id;
+    }
+
+    const { data, error } = await supabase
+      .from("catalog_categories")
+      .insert({ name: supplierCategoria.trim() })
+      .select("id, name, description, is_active")
+      .single();
+
+    if (error) {
+      toast.error("Não foi possível vincular a categoria automaticamente");
+      return null;
+    }
+
+    setLocalCategories((prev) => mergeCategories(prev, [data as CatalogCategory]));
+    queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
+    set("category_id", data.id);
+    toast.success("Categoria criada automaticamente a partir do fornecedor");
+    return data.id;
+  }, [availableCategories, queryClient]);
+
+  const handleSupplierChange = useCallback(async (supplierId: string) => {
+    set("default_supplier_id", supplierId);
+
+    const supplier = suppliers.find((entry) => entry.id === supplierId);
+    if (!supplier?.categoria) return;
+
+    const autoType = getItemTypeFromSupplierCategoria(supplier.categoria);
+    if (autoType) set("item_type", autoType);
+
+    await ensureCategoryForSupplier(supplier.categoria);
+  }, [suppliers, ensureCategoryForSupplier]);
+
   const handleCreateCategory = useCallback(async () => {
     const name = newCategoryName.trim();
     if (!name) { toast.error("Nome da categoria é obrigatório"); return; }
     setSavingCategory(true);
-    const { data, error } = await supabase.from("catalog_categories").insert({ name }).select("id").single();
+    const { data, error } = await supabase
+      .from("catalog_categories")
+      .insert({ name })
+      .select("id, name, description, is_active")
+      .single();
     setSavingCategory(false);
     if (error) { toast.error("Erro ao criar categoria"); return; }
+    const createdCategory = data as CatalogCategory;
+    setLocalCategories((prev) => mergeCategories(prev, [createdCategory]));
+    queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
     toast.success("Categoria criada");
     setCreatingCategory(false);
     setNewCategoryName("");
-    set("category_id", data.id);
-    onSaved(); // refresh categories list
-  }, [newCategoryName, onSaved]);
+    set("category_id", createdCategory.id);
+    onSaved();
+  }, [newCategoryName, onSaved, queryClient]);
 
   useEffect(() => {
     if (item) {
