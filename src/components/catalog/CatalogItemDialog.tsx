@@ -658,13 +658,6 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
                   ))}
                 </SelectContent>
               </Select>
-                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                <SelectContent>
-                  {suppliers.filter((s) => s.is_active).map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="flex items-end gap-3 pb-1">
               <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} id="item-active" />
