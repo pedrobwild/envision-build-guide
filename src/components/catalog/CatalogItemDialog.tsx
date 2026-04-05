@@ -647,19 +647,14 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Fornecedor principal</Label>
-              <Select value={form.default_supplier_id} onValueChange={(v) => {
-                set("default_supplier_id", v);
-                const sup = suppliers.find((s) => s.id === v);
-                if (sup?.categoria) {
-                  const autoType = getItemTypeFromSupplierCategoria(sup.categoria);
-                  if (autoType) set("item_type", autoType);
-                  // Auto-fill category by matching supplier's subcategoria to catalog_categories name
-                  const matchedCat = categories.find(
-                    (c) => c.is_active && c.name.toLowerCase() === sup.categoria!.toLowerCase()
-                  );
-                  if (matchedCat) set("category_id", matchedCat.id);
-                }
-              }}>
+              <Select value={form.default_supplier_id} onValueChange={(value) => { void handleSupplierChange(value); }}>
+                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                <SelectContent>
+                  {suppliers.filter((s) => s.is_active).map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
                 <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                 <SelectContent>
                   {suppliers.filter((s) => s.is_active).map((s) => (
