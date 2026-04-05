@@ -48,7 +48,7 @@ export function ItemsTab({
   statusFilter, onStatusFilterChange,
   onNewItem, onEditItem, onRefresh,
 }: Props) {
-  const [expandedPricesItemId, setExpandedPricesItemId] = useState<string | null>(null);
+  
 
   const handleDeleteItem = async (id: string) => {
     if (!confirm("Excluir item do catálogo? Esta ação não pode ser desfeita.")) return;
