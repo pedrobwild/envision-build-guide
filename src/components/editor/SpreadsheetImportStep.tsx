@@ -227,7 +227,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
       }
     };
     reader.readAsArrayBuffer(f);
-  }, [onImported]);
+  }, [onImported, parseRows]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();

@@ -321,7 +321,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
 
     setReordering(false);
-  }, [files, activeTab, folderMap]);
+  }, [files, activeTab, folderMap, loadFiles]);
 
   const currentTab = tabs.find(t => t.id === activeTab)!;
   const currentFiles = activeTab !== "tour3d" ? files[activeTab as StorageTab] : [];

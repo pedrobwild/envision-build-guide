@@ -66,7 +66,7 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
     }
   }, [drawMode, currentPoints, getNormalizedCoords]);
 
-  const finishPolygon = (points: number[][]) => {
+  const finishPolygon = useCallback((points: number[][]) => {
     const newRoom: Room = {
       id: crypto.randomUUID(),
       name: `Cômodo ${rooms.length + 1}`,
@@ -78,7 +78,7 @@ export function RoomDrawingStep({ floorPlanUrl, rooms, onRoomsChange, onNext, on
     // Open naming dialog for the new room
     setNamingRoom(newRoom);
     setNamingValue(newRoom.name);
-  };
+  }, [rooms, onRoomsChange]);
 
   const startRectangleDraw = () => {
     setDrawMode("drawing");

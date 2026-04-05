@@ -55,6 +55,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
 
   useEffect(() => {
     loadVersions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [budgetId]);
 
   const [changeReasonInput, setChangeReasonInput] = useState("");

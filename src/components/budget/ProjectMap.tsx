@@ -135,11 +135,12 @@ export function ProjectMap({
     mapRef.current = map;
 
     return () => {
+      // Copy ref to local var before cleanup per react-hooks/exhaustive-deps
       const currentMarkers = markersRef.current;
+      currentMarkers.clear();
       map.remove();
       mapRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]);
 
 

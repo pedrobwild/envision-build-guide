@@ -36,12 +36,12 @@ export function SectionCard({
   editable = false,
 }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
-  const items = section.items || [];
+  const stableItems = useMemo(() => section.items || [], [section.items]);
 
   // Auto-expand section when any item has media attached
   const hasItemMedia = useMemo(() => {
-    return items.some((item: any) => item.images && item.images.length > 0);
-  }, [items]);
+    return stableItems.some((item) => item.images && item.images.length > 0);
+  }, [stableItems]);
 
   const [expanded, setExpanded] = useState(hasItemMedia);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
@@ -56,14 +56,14 @@ export function SectionCard({
 
   // Top items by value for preview
   const previewItems = useMemo(() => {
-    if (items.length <= PREVIEW_COUNT) return items;
-    const sorted = [...items].sort(
-      (a: any, b: any) => (Number(b.internal_total) || 0) - (Number(a.internal_total) || 0)
+    if (stableItems.length <= PREVIEW_COUNT) return stableItems;
+    const sorted = [...stableItems].sort(
+      (a, b) => (Number(b.internal_total) || 0) - (Number(a.internal_total) || 0)
     );
     return sorted.slice(0, PREVIEW_COUNT);
-  }, [items]);
+  }, [stableItems]);
 
-  const hiddenCount = items.length - PREVIEW_COUNT;
+  const hiddenCount = stableItems.length - PREVIEW_COUNT;
 
   const allImages: { url: string; alt?: string }[] = [];
   if (section.cover_image_url) {
