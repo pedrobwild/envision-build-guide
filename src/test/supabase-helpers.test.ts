@@ -89,6 +89,6 @@ describe("calculateBudgetTotal", () => {
 
   it("handles null adjustments", () => {
     const sections = [{ items: [{ internal_total: 1000 }], qty: 1 }];
-    expect(calculateBudgetTotal(sections, null as any)).toBe(1000);
+    expect(calculateBudgetTotal(sections, null as unknown as { sign: number; amount: number }[])).toBe(1000);
   });
 });

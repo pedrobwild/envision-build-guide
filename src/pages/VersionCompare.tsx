@@ -67,9 +67,9 @@ async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; secti
 
   if (secErr) console.error('Failed to load sections for version:', secErr.message);
 
-  const mapped = (sections || []).map((s: any) => ({
+  const mapped: CompareSection[] = (sections || []).map((s) => ({
     ...s,
-    items: (s.items || []).sort((a: any, b: any) => (a.title || "").localeCompare(b.title || "")),
+    items: ((s.items as CompareItem[]) || []).sort((a, b) => (a.title || "").localeCompare(b.title || "")),
   }));
 
   return { meta: budget as VersionMeta, sections: mapped };
