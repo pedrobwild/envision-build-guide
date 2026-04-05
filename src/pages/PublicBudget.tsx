@@ -453,7 +453,7 @@ export default function PublicBudget() {
                       </div>
 
                       {photoGroups.map((group) => {
-                        const allItems = group.sections.flatMap(s => (s.items || []).map((item: any) => ({ ...item, _sectionTitle: s.title })));
+                        const allItems = group.sections.flatMap(s => (s.items || []).map((item) => ({ ...item, _sectionTitle: s.title })));
                         if (allItems.length === 0) return null;
 
                         return (

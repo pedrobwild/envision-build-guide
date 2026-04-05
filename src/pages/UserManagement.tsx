@@ -150,8 +150,8 @@ export default function UserManagement() {
       });
       toast.success(user.is_active ? "Usuário desativado." : "Usuário reativado.");
       loadUsers();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 
