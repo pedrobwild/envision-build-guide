@@ -364,9 +364,9 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     try {
       const ext = file.name.split(".").pop();
       const path = `catalog/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("budget-assets").upload(path, file, { upsert: true });
+      const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true });
       if (error) { toast.error("Erro no upload"); setUploadingImage(false); return; }
-      const { data: urlData } = supabase.storage.from("budget-assets").getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from("media").getPublicUrl(path);
       setImageUrl(urlData.publicUrl);
       toast.success("Imagem carregada");
     } catch { toast.error("Erro ao fazer upload"); }
