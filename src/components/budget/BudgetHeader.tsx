@@ -166,7 +166,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {condominio && (
                 <>
                   <span className="text-white/95 font-medium">{condominio}</span>
-                  {(neighborhood || area || version) && <span className="text-white/40">·</span>}
+                  {(neighborhood || area || version) && <span className="text-white/50">·</span>}
                 </>
               )}
               {neighborhood && (
