@@ -484,7 +484,14 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Fornecedor principal</Label>
-              <Select value={form.default_supplier_id} onValueChange={(v) => set("default_supplier_id", v)} disabled={!!savedItemId && !item}>
+              <Select value={form.default_supplier_id} onValueChange={(v) => {
+                set("default_supplier_id", v);
+                const sup = suppliers.find((s) => s.id === v);
+                if (sup?.categoria) {
+                  const autoType = getItemTypeFromSupplierCategoria(sup.categoria);
+                  if (autoType) set("item_type", autoType);
+                }
+              }} disabled={!!savedItemId && !item}>
                 <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                 <SelectContent>
                   {suppliers.filter((s) => s.is_active).map((s) => (
