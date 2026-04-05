@@ -80,7 +80,7 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
           <div className="p-3">
             <Calendar
               mode="range"
-              selected={tempRange as { from?: Date; to?: Date }}
+              selected={tempRange as { from: Date; to?: Date }}
               onSelect={(range: { from?: Date; to?: Date } | undefined) => setTempRange(range || {})}
               numberOfMonths={2}
               locale={ptBR}
