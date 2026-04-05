@@ -196,7 +196,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           budget_id: budget.id,
           user_id: user.id,
           body: `[${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}] ${note}`,
-        } as any);
+        });
       }
     }
 
