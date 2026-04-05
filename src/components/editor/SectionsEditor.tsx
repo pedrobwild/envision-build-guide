@@ -1382,6 +1382,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                       onUpdate={updateItem}
                                       onDelete={deleteItem}
                                       onImagesChange={handleImagesChange}
+                                      suppliers={suppliers}
                                       onPromoteToCatalog={promoteToCatalog}
                                     />
                                   ))
