@@ -410,7 +410,7 @@ function TemplateDetail({ template }: { template: Template }) {
   const [sectionDialog, setSectionDialog] = useState<{ open: boolean; section?: TemplateSection | null }>({ open: false });
 
   const deleteSection = async (id: string) => {
-    const { error } = await supabase.from("budget_template_sections" as any).delete().eq("id", id);
+    const { error } = await supabase.from("budget_template_sections").delete().eq("id", id);
     if (error) { toast.error("Erro ao excluir seção"); return; }
     toast.success("Seção excluída");
     qc.invalidateQueries({ queryKey: ["admin-budget-template-sections", template.id] });
