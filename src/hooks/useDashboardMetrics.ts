@@ -9,6 +9,7 @@ export interface KpiData {
   value: number | null;
   change: number | null;
   trend: "up" | "down" | "stable" | null;
+  sparkline?: number[];
 }
 
 export type HealthStatus = "healthy" | "warning" | "critical" | null;
