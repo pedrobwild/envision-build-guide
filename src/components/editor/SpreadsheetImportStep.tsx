@@ -257,7 +257,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
             input.type = "file";
             input.accept = ".xlsx,.xls";
             input.onchange = (ev: Event) => {
-              const f = e.target.files?.[0];
+              const f = (ev.target as HTMLInputElement).files?.[0];
               if (f) handleFile(f);
             };
             input.click();
