@@ -125,7 +125,7 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
       contact_info: form.telefone.trim() || form.email.trim() || null,
       razao_social: form.razao_social.trim() || null,
       cnpj_cpf: form.cnpj_cpf.trim() || null,
-      categoria: form.categoria,
+      categoria: form.subcategoria || form.tipo || null,
       is_active: form.is_active,
       telefone: form.telefone.trim() || null,
       email: form.email.trim() || null,
