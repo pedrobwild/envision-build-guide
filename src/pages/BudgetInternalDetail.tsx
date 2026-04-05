@@ -150,7 +150,7 @@ export default function BudgetInternalDetail() {
       if (budgetRes.error) console.error('Failed to load budget:', budgetRes.error.message);
       if (eventsRes.error) console.error('Failed to load events:', eventsRes.error.message);
 
-      if (budgetRes.data) setBudget(budgetRes.data as any);
+      if (budgetRes.data) setBudget(budgetRes.data as BudgetDetail);
       if (eventsRes.data) setEvents(eventsRes.data as EventRow[]);
       if (commentsRes.data) setComments(commentsRes.data as CommentRow[]);
       if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
