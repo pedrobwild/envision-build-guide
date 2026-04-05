@@ -9,9 +9,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   Search, Plus, Edit2, Trash2, Building2, ToggleLeft, ToggleRight,
+  ArrowRightLeft, Loader2,
 } from "lucide-react";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
 import type { Supplier } from "@/components/catalog/SupplierDialog";
