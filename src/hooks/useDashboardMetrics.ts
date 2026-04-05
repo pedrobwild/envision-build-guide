@@ -26,6 +26,12 @@ export interface TeamMember {
   completedInPeriod: number;
   avgLeadTimeDays: number | null;
   overloaded: boolean;
+  overdueCount: number;
+  waitingInfoCount: number;
+  inReviewCount: number;
+  slaRate: number;
+  /** health: balanced load vs risk */
+  health: "healthy" | "warning" | "critical";
 }
 
 export interface BacklogStatus {
