@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Search, Plus, Package, Wrench, Edit2, Trash2, Filter,
+  Search, Plus, Edit2, Trash2, Filter,
   ToggleLeft, ToggleRight,
 } from "lucide-react";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
