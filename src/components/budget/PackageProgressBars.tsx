@@ -1,8 +1,9 @@
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
+import type { SectionWithItems } from "@/types/budget-common";
 
 interface PackageProgressBarsProps {
-  sections: any[];
+  sections: SectionWithItems[];
   total: number;
 }
 
