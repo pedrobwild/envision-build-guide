@@ -190,8 +190,8 @@ export function SectionCard({
         {/* ── Preview items (collapsed) — mobile-first: show top stableItems ── */}
         {!expanded && stableItems.length > 0 && (
           <div className="px-3 sm:px-4 py-1.5 sm:py-2">
-            {previewItems.map((item: any, i: number) => {
-              const thumb = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
+            {previewItems.map((item, i) => {
+              const thumb = item.images?.find((img) => img.is_primary) || item.images?.[0];
               return (
                 <div
                   key={item.id}
