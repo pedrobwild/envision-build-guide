@@ -283,7 +283,7 @@ export default function EstimatorDashboard() {
 
   // Filter + sort
   const filtered = useMemo(() => {
-    let result = budgets.filter((b) => {
+    const result = budgets.filter((b) => {
       const q = search.toLowerCase();
       const matchSearch =
         !q ||

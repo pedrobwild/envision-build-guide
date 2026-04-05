@@ -172,7 +172,7 @@ export default function AdminOperationsDashboard() {
 
   // Filtered list
   const filtered = useMemo(() => {
-    let result = budgets.filter(b => {
+    const result = budgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q);
       const matchStatus = statusFilter === "all" || b.internal_status === statusFilter;

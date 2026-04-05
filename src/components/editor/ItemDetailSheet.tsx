@@ -92,7 +92,7 @@ export function ItemDetailSheet({ open, onOpenChange, item, sectionId, budgetId,
 
   const removeImage = async (imgId: string) => {
     await supabase.from("item_images").delete().eq("id", imgId);
-    let updated = images.filter(i => i.id !== imgId);
+    const updated = images.filter(i => i.id !== imgId);
     if (updated.length > 0 && !updated.some(i => i.is_primary)) {
       updated[0] = { ...updated[0], is_primary: true };
       await supabase.from("item_images").update({ is_primary: true }).eq("id", updated[0].id);

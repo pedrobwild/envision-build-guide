@@ -196,7 +196,7 @@ export default function CommercialDashboard() {
   }, [isAdmin, budgets, getProfileName]);
 
   const filtered = useMemo(() => {
-    let result = budgets.filter(b => {
+    const result = budgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
       const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
