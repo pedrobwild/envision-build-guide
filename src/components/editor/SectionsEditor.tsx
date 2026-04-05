@@ -615,8 +615,9 @@ function SortableItemRow({
                 onChange={(e) => {
                   const supplierId = e.target.value || null;
                   const supplier = suppliers.find(s => s.id === supplierId);
+                  const prev = (typeof item.catalog_snapshot === 'object' && item.catalog_snapshot && !Array.isArray(item.catalog_snapshot)) ? item.catalog_snapshot : {};
                   const updatedSnapshot = {
-                    ...(item.catalog_snapshot || {}),
+                    ...prev,
                     supplier_id: supplierId,
                     supplier_name: supplier?.name || null,
                   };
