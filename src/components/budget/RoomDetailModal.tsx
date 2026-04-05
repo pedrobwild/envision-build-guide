@@ -36,7 +36,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
   // Collect all images for gallery
   const allImages: { url: string; alt?: string }[] = [];
   localItems.forEach(({ item }) => {
-    (item.images || []).forEach((img: any) => {
+    (item.images || []).forEach((img) => {
       allImages.push({ url: img.url, alt: item.title });
     });
   });
