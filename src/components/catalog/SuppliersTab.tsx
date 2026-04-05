@@ -9,9 +9,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   Search, Plus, Edit2, Trash2, Building2, ToggleLeft, ToggleRight,
+  ArrowRightLeft, Loader2,
 } from "lucide-react";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
 import type { Supplier } from "@/components/catalog/SupplierDialog";
@@ -48,6 +52,7 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
   const [search, setSearch] = useState("");
   const [tipoFilter, setTipoFilter] = useState("all");
   const [subcategoriaFilter, setSubcategoriaFilter] = useState("all");
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const subcategoriasDisponiveis = tipoFilter === "Prestadores"
     ? SUBCATEGORIAS_PRESTADORES
@@ -87,6 +92,26 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
     }
     toast.success("Fornecedor excluído");
     onRefresh();
+  };
+
+  const handleSyncSupplier = async (sup: Supplier) => {
+    setSyncingId(sup.id);
+    try {
+      const res = await supabase.functions.invoke("sync-supplier-outbound", {
+        body: { supplier_id: sup.id },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const result = res.data?.results?.[0];
+      if (result?.status === "success") {
+        toast.success(`"${sup.name}" sincronizado com o Portal BWild`);
+      } else {
+        toast.error(`Falha ao sincronizar: ${result?.error ?? "erro desconhecido"}`);
+      }
+    } catch (err: any) {
+      toast.error(`Erro na sincronização: ${err.message}`);
+    } finally {
+      setSyncingId(null);
+    }
   };
 
   return (
@@ -192,6 +217,26 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-0.5 justify-end">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={syncingId === sup.id}
+                                onClick={() => handleSyncSupplier(sup)}
+                              >
+                                {syncingId === sup.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <ArrowRightLeft className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Sincronizar com Portal BWild</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <Button variant="ghost" size="icon" className="h-8 w-8"
                           onClick={() => onEditSupplier(sup)}>
                           <Edit2 className="h-3.5 w-3.5" />
