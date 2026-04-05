@@ -91,7 +91,7 @@ export default function AiSyncInsightsPanel() {
           description: "A IA não identificou problemas que precisem de correção automática.",
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Erro na correção",
         description: err.message,
