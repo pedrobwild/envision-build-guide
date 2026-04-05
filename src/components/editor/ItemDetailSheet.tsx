@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
 
 interface ItemImage {
-  id: string;
+  id?: string;
   url: string;
   is_primary?: boolean | null;
 }

@@ -105,9 +105,11 @@ export interface ParsedPdfSection {
 
 export interface ParsedPdfItem {
   title?: string;
+  description?: string;
   total?: number | string | null;
   qty?: number | null;
   unit?: string | null;
+  unitPrice?: number | string | null;
 }
 
 // ─── Sync result row ───

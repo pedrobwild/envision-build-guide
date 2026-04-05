@@ -454,14 +454,15 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       }
 
       if (parsedData?.meta) {
+        const meta = parsedData.meta as Record<string, unknown>;
         setParsedMeta({
-          clientName: normalizeClientName(parsedData.meta.clientName),
-          projectName: parsedData.meta.projectName || null,
-          area: parsedData.meta.area || null,
-          bairro: parsedData.meta.bairro || null,
-          version: parsedData.meta.version || null,
-          date: parsedData.meta.date || null,
-          grandTotal: toNumber(parsedData.meta.grandTotal) || null,
+          clientName: normalizeClientName(meta.clientName),
+          projectName: typeof meta.projectName === "string" ? meta.projectName : null,
+          area: typeof meta.area === "string" ? meta.area : null,
+          bairro: typeof meta.bairro === "string" ? meta.bairro : null,
+          version: typeof meta.version === "string" ? meta.version : null,
+          date: typeof meta.date === "string" ? meta.date : null,
+          grandTotal: toNumber(meta.grandTotal) || null,
         });
       }
 
@@ -470,7 +471,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       setStep("preview");
     } catch (err: unknown) {
       console.error("PDF parse error:", err);
-      setError(err instanceof Error ? err.message || "Erro ao processar o PDF. Tente novamente.");
+      setError(err instanceof Error ? err.message : "Erro ao processar o PDF. Tente novamente.");
       setStep("upload");
     }
   }, [extractStructuredPageText, invokePdfParser, renderPdfPagesAsImages, toNumber]);
@@ -632,7 +633,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       setCreatedBudgetId(budget.id);
       setStep("done");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message || "Erro ao importar.");
+      setError(err instanceof Error ? err.message : "Erro ao importar.");
       setStep("preview");
     }
   };

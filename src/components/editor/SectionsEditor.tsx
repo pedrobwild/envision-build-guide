@@ -70,8 +70,8 @@ function ItemImageInline({
   itemId: string;
   itemTitle: string;
   budgetId: string;
-  images: { id: string; url: string; is_primary?: boolean | null }[];
-  onImagesChange: (imgs: { id: string; url: string; is_primary?: boolean | null }[]) => void;
+  images: { id?: string; url: string; is_primary?: boolean | null }[];
+  onImagesChange: (imgs: { id?: string; url: string; is_primary?: boolean | null }[]) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -208,7 +208,7 @@ interface ItemData {
   catalog_item_id?: string | null;
   catalog_snapshot?: Record<string, unknown> | Json | null;
   notes?: string | null;
-  images?: { id: string; url: string; is_primary?: boolean | null }[];
+  images?: { id?: string; url: string; is_primary?: boolean | null }[];
 }
 
 /* ── BDI helpers ── */

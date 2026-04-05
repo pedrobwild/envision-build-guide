@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Trash2, X } from "lucide-react";
 
 interface LightboxImage {
-  id: string;
+  id?: string;
   url: string;
   is_primary?: boolean | null;
 }
