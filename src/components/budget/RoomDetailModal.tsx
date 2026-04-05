@@ -100,8 +100,8 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
 
                   <div className="space-y-3">
                     {items.map(({ item }) => {
-                      const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
-                      const extraImages = (item.images || []).filter((img: any) => img !== primaryImage);
+                      const primaryImage = item.images?.find((img) => img.is_primary) || item.images?.[0];
+                      const extraImages = (item.images || []).filter((img) => img !== primaryImage);
 
                       return (
                         <div
