@@ -786,7 +786,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     }, 600);
   }, []);
 
-  const updateSection = (sectionId: string, field: string, value: any) => {
+  const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
     const updated = sections.map(s =>
       s.id === sectionId ? { ...s, [field]: value } : s
     );
