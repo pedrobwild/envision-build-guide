@@ -28,7 +28,7 @@ export interface SectionWithItems {
   included_bullets?: unknown;
   excluded_bullets?: unknown;
   notes?: string | null;
-  is_optional: boolean;
+  is_optional?: boolean;
   budget_id?: string;
   items: ItemWithImages[];
 }
