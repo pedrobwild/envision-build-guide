@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { BudgetMeta } from "@/lib/orcamento-types";
 
+const LABEL = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold";
+const MONO = "font-mono tabular-nums";
+
 interface StickyBudgetSummaryProps {
   meta: BudgetMeta;
   included: string[];
@@ -48,31 +51,40 @@ export function StickyBudgetSummary({ meta, included }: StickyBudgetSummaryProps
       {/* Meta */}
       <div className="rounded-lg border border-border bg-card p-4 space-y-3">
         <div className="space-y-1 text-xs font-body text-muted-foreground">
-          <p><span className="font-semibold text-foreground">Área:</span> {meta.area}</p>
-          <p><span className="font-semibold text-foreground">Versão:</span> {meta.version}</p>
-          <p><span className="font-semibold text-foreground">Validade:</span> {meta.validUntil}</p>
+          <p>
+            <span className="font-semibold text-foreground">Área:</span>{" "}
+            <span className={MONO}>{meta.area}</span>
+          </p>
+          <p>
+            <span className="font-semibold text-foreground">Versão:</span>{" "}
+            <span className={MONO}>{meta.version}</span>
+          </p>
+          <p>
+            <span className="font-semibold text-foreground">Validade:</span>{" "}
+            <span className={MONO}>{meta.validUntil}</span>
+          </p>
         </div>
 
         <div className="border-t border-border pt-3">
-          <p className="text-[10px] font-body font-semibold text-foreground uppercase tracking-[0.08em] mb-2">
+          <p className={`${LABEL} text-foreground mb-2`}>
             Inclui
           </p>
           <ul className="space-y-1">
             {included.map((item) => (
-              <li key={item} className="flex items-start gap-1.5 text-xs font-body text-foreground">
+              <li key={item} className="flex items-start gap-1.5 text-xs font-body text-foreground leading-snug tracking-[-0.01em]">
                 <CheckCircle2 className="h-3 w-3 text-primary flex-shrink-0 mt-0.5" />
-                <span className="leading-tight">{item}</span>
+                <span>{item}</span>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="space-y-2 pt-2">
-          <Button className="w-full gap-2" size="sm">
+          <Button className="w-full gap-2 font-body" size="sm">
             <FileSignature className="h-3.5 w-3.5" />
             Solicitar Contrato
           </Button>
-          <Button variant="outline" className="w-full gap-2" size="sm">
+          <Button variant="outline" className="w-full gap-2 font-body" size="sm">
             <MessageCircle className="h-3.5 w-3.5" />
             WhatsApp
           </Button>
@@ -81,7 +93,7 @@ export function StickyBudgetSummary({ meta, included }: StickyBudgetSummaryProps
 
       {/* Section progress */}
       <div className="rounded-lg border border-border bg-card p-3 space-y-1">
-        <p className="text-[10px] font-body font-semibold text-muted-foreground/60 uppercase tracking-[0.08em] mb-1">
+        <p className={`${LABEL} text-muted-foreground/60 mb-1`}>
           Navegação
         </p>
         {sectionAnchors.map(({ label, id }) => (
@@ -89,7 +101,7 @@ export function StickyBudgetSummary({ meta, included }: StickyBudgetSummaryProps
             key={id}
             onClick={() => scrollTo(id)}
             className={cn(
-              "block w-full text-left text-xs font-body px-2 py-1.5 rounded transition-colors border-l-2",
+              "block w-full text-left text-xs font-body px-2 py-1.5 rounded transition-colors border-l-2 tracking-[-0.01em]",
               activeId === id
                 ? "border-primary text-primary font-semibold bg-primary/5"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"

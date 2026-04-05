@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Search, List, AlignJustify } from "lucide-react";
 import type { ScopeCategory } from "@/lib/orcamento-types";
 
+const LABEL = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60";
+
 interface ScopeSectionProps {
   scope: ScopeCategory[];
 }
@@ -50,10 +52,8 @@ export function ScopeSection({ scope }: ScopeSectionProps) {
   return (
     <section className="space-y-4">
       <div>
-        <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/60 mb-1">
-          Detalhamento
-        </p>
-        <h2 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-tight">
+        <p className={`${LABEL} mb-1`}>Detalhamento</p>
+        <h2 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-tight leading-[1.15]">
           Escopo da reforma
         </h2>
       </div>
@@ -65,14 +65,14 @@ export function ScopeSection({ scope }: ScopeSectionProps) {
             placeholder="Buscar seção ou item…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm"
+            className="pl-9 h-9 text-sm font-body"
           />
         </div>
         <div className="flex rounded-md border border-border overflow-hidden self-start">
           <Button
             variant={!detailed ? "default" : "ghost"}
             size="sm"
-            className="rounded-none h-9 text-xs gap-1.5"
+            className="rounded-none h-9 text-xs gap-1.5 font-body"
             onClick={() => setDetailed(false)}
           >
             <List className="h-3.5 w-3.5" />
@@ -81,7 +81,7 @@ export function ScopeSection({ scope }: ScopeSectionProps) {
           <Button
             variant={detailed ? "default" : "ghost"}
             size="sm"
-            className="rounded-none h-9 text-xs gap-1.5"
+            className="rounded-none h-9 text-xs gap-1.5 font-body"
             onClick={() => setDetailed(true)}
           >
             <AlignJustify className="h-3.5 w-3.5" />
@@ -91,7 +91,7 @@ export function ScopeSection({ scope }: ScopeSectionProps) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground font-body py-6 text-center">
+        <p className="text-sm text-muted-foreground font-body py-6 text-center tracking-[-0.01em]">
           Nenhum item encontrado para "{search}".
         </p>
       ) : (
@@ -103,7 +103,7 @@ export function ScopeSection({ scope }: ScopeSectionProps) {
           {filtered.map((cat) => (
             <AccordionItem key={cat.id} value={cat.id} className="border-border">
               <AccordionTrigger className="hover:no-underline py-3">
-                <span className="text-sm font-display font-semibold text-foreground">
+                <span className="text-sm font-display font-semibold text-foreground tracking-[-0.01em]">
                   {highlightText(cat.title, search)}
                 </span>
               </AccordionTrigger>
@@ -111,16 +111,16 @@ export function ScopeSection({ scope }: ScopeSectionProps) {
                 <div className="space-y-3 pl-1">
                   {cat.items.map((item) => (
                     <div key={item.title}>
-                      <p className="text-sm font-body font-medium text-foreground">
+                      <p className="text-sm font-body font-medium text-foreground tracking-[-0.01em]">
                         {highlightText(item.title, search)}
                       </p>
-                      <p className="text-xs text-muted-foreground font-body">
+                      <p className="text-xs text-muted-foreground font-body tracking-[-0.01em]">
                         {highlightText(item.summary, search)}
                       </p>
                       {detailed && (
                         <ul className="mt-1.5 space-y-1 pl-4">
                           {item.bullets.map((b) => (
-                            <li key={b} className="text-xs font-body text-muted-foreground list-disc">
+                            <li key={b} className="text-xs font-body text-muted-foreground list-disc tracking-[-0.01em]">
                               {highlightText(b, search)}
                             </li>
                           ))}
