@@ -191,7 +191,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
           return;
         }
 
-        const headers = Array.from(headerRow, (c: any) => (c == null ? "" : String(c)));
+        const headers = Array.from(headerRow as unknown[], (c: unknown) => (c == null ? "" : String(c)));
         const map = detectColumns(headers);
 
         if (import.meta.env.DEV) console.log("[Excel Import] Header row:", headerRowIdx, headers);
