@@ -199,10 +199,10 @@ export function ItemDetailSheet({ open, onOpenChange, item, sectionId, budgetId,
             <div className="grid grid-cols-3 gap-3 pt-2">
               <div className="space-y-1.5">
                 <Label className="text-xs font-body flex items-center gap-1">
-                  Venda unit. <Lock className="h-2.5 w-2.5 text-muted-foreground/40" />
+                  Margem <Lock className="h-2.5 w-2.5 text-muted-foreground/40" />
                 </Label>
-                <div className="px-3 py-2 rounded-md bg-muted/40 text-sm tabular-nums text-muted-foreground" title="Campo calculado automaticamente">
-                  {formatBRL(saleUnit)}
+                <div className="px-3 py-2 rounded-md bg-muted/40 text-sm tabular-nums text-muted-foreground" title="Margem = Custo × BDI%">
+                  {formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}
                 </div>
               </div>
               <div className="space-y-1.5">
