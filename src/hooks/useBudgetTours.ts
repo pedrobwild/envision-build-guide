@@ -35,7 +35,7 @@ export function useBudgetTours(publicId: string | undefined) {
         return;
       }
 
-      const { data: tours } = await (supabase as any)
+      const { data: tours } = await supabase
         .from("budget_tours")
         .select("room_id, room_label, tour_url")
         .eq("budget_id", budget.id)
@@ -44,7 +44,7 @@ export function useBudgetTours(publicId: string | undefined) {
       if (cancelled) return;
 
       setRooms(
-        (tours ?? []).map((t: any) => ({
+        (tours ?? []).map((t) => ({
           id: t.room_id,
           label: t.room_label,
           url: t.tour_url,

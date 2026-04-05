@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 export type VersionEventType =
   | "version_created"
@@ -40,7 +41,7 @@ export async function logVersionEvent({
       user_id: user_id ?? null,
       from_status: from_status ?? null,
       to_status: to_status ?? null,
-      metadata: metadata as any,
+      metadata: metadata as Json,
       note: note ?? buildNote(event_type, metadata),
     });
   } catch (err) {
