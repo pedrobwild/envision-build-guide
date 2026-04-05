@@ -154,7 +154,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
       });
 
     return { packageMap, skipped };
-  };
+  }, []);
 
   const handleFile = useCallback((f: File) => {
     setFile(f);
