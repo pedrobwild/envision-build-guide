@@ -273,7 +273,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
         commercial_owner_id: commercialOwnerId || user.id,
         estimator_owner_id: estimatorOwnerId || null,
         created_by: user.id,
-      } as any)
+      } as Record<string, unknown>)
       .select("id")
       .single();
 

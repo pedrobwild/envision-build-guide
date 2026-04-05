@@ -151,7 +151,8 @@ export function BudgetActionsMenu({
       if (!newBudget) { toast.error("Erro ao duplicar"); return; }
 
       // Clone sections and items
-      for (const section of (original as any).sections || []) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- sections shape from nested select
+      for (const section of ((original as any).sections || []) as any[]) {
         const { data: newSection } = await supabase
           .from("sections")
           .insert({

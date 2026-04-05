@@ -148,7 +148,7 @@ export function CoverageMappingStep({
           includedRooms: cov.includedRooms,
           excludedRooms: cov.excludedRooms,
           images: imgs,
-        } as any;
+        } as typeof item;
       }),
     }));
     onPackagesChange(updated);

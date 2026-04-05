@@ -33,9 +33,11 @@ export default function BudgetEditorV2() {
   const { isOrcamentista, isComercial, profile } = useUserProfile();
   const { user } = useAuth();
 
-  const backPath = (location.state as any)?.from
+  const backPath = (location.state as { from?: string } | null)?.from
     || (isOrcamentista ? "/admin/producao" : isComercial ? "/admin/comercial" : "/admin");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- budget shape is dynamic from Supabase select("*")
   const [budget, setBudget] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [sections, setSections] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [internalDataOpen, setInternalDataOpen] = useState(false);
@@ -188,7 +190,7 @@ export default function BudgetEditorV2() {
     setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      const { error } = await supabase.from("budgets").update({ [field]: value } as any).eq("id", budgetId);
+      const { error } = await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", budgetId);
       if (error) {
         saveErrorCount.current += 1;
         setSaveStatus("error");
@@ -548,7 +550,7 @@ export default function BudgetEditorV2() {
                       <input
                         type="number"
                         step="0.01"
-                        value={(budget as any).internal_cost ?? ""}
+                        value={budget.internal_cost ?? ""}
                         onChange={(e) => {
                           const val = e.target.value ? Number(e.target.value) : null;
                           setBudget({ ...budget, internal_cost: val });
@@ -561,9 +563,9 @@ export default function BudgetEditorV2() {
                         Custo real de execução. Nunca exposto ao cliente.
                       </p>
                     </div>
-                    {(budget as any).internal_cost > 0 && (
+                    {Number(budget.internal_cost) > 0 && (
                       <div className="text-sm font-mono text-muted-foreground tabular-nums">
-                        Custo: {formatBRL((budget as any).internal_cost)}
+                        Custo: {formatBRL(Number(budget.internal_cost))}
                       </div>
                     )}
                   </div>

@@ -419,7 +419,7 @@ function SortableItemRow({
   const imageCount = item.images?.length || 0;
   const showExpanded = !compact || rowExpanded;
 
-  const isOptional = !!(item as any).is_optional;
+  const isOptional = !!(item as ItemData & { is_optional?: boolean }).is_optional;
   const hasBdiWarning = (Number(item.bdi_percentage) || 0) > 150;
 
   return (
@@ -775,7 +775,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
     timers.current[key] = setTimeout(async () => {
-      await supabase.from(table as any).update(updates).eq("id", id);
+      await supabase.from(table as "sections" | "items").update(updates).eq("id", id);
       setSavingIds(prev => {
         const next = new Set(prev);
         next.delete(id);
@@ -945,7 +945,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       internal_total: itemData?.internal_total || null,
       order_index: order,
       catalog_item_id: itemData?.catalog_item_id || null,
-      catalog_snapshot: (itemData?.catalog_snapshot || null) as any,
+      catalog_snapshot: (itemData?.catalog_snapshot || null) as import("@/integrations/supabase/types").Json,
     };
 
     const { data } = await supabase
@@ -955,7 +955,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       .single();
     if (data) {
       const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
-      let itemImages: any[] = [];
+      let itemImages: { id: string; url: string; is_primary: boolean | null }[] = [];
       if (catalogImageUrl) {
         const { data: imgRow } = await supabase.from("item_images").insert({
           item_id: data.id,

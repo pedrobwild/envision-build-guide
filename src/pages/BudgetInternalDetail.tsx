@@ -71,6 +71,7 @@ interface BudgetDetail {
   notes: string | null;
   status: string;
   public_id: string | null;
+  sequential_code?: string | null;
 }
 
 interface EventRow {
@@ -149,7 +150,7 @@ export default function BudgetInternalDetail() {
       if (budgetRes.error) console.error('Failed to load budget:', budgetRes.error.message);
       if (eventsRes.error) console.error('Failed to load events:', eventsRes.error.message);
 
-      if (budgetRes.data) setBudget(budgetRes.data as any);
+      if (budgetRes.data) setBudget(budgetRes.data as BudgetDetail);
       if (eventsRes.data) setEvents(eventsRes.data as EventRow[]);
       if (commentsRes.data) setComments(commentsRes.data as CommentRow[]);
       if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
@@ -169,7 +170,7 @@ export default function BudgetInternalDetail() {
 
     const { error } = await supabase
       .from("budgets")
-      .update({ internal_status: newStatus, updated_at: new Date().toISOString() } as any)
+      .update({ internal_status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", budget.id);
 
     if (error) {
@@ -185,7 +186,7 @@ export default function BudgetInternalDetail() {
       from_status: oldStatus,
       to_status: newStatus,
       note: note || null,
-    } as any);
+    });
 
     // If note provided, also save as comment
     if (note) {
@@ -194,7 +195,7 @@ export default function BudgetInternalDetail() {
         budget_id: budget.id,
         user_id: user.id,
         body: commentBody,
-      } as any);
+      });
       setComments((prev) => [
         ...prev,
         { id: crypto.randomUUID(), body: commentBody, user_id: user.id, created_at: new Date().toISOString() },
@@ -231,7 +232,7 @@ export default function BudgetInternalDetail() {
       budget_id: budget.id,
       user_id: user.id,
       body: newComment.trim(),
-    } as any);
+    });
 
     if (error) {
       toast.error("Erro ao salvar comentário.");
@@ -245,7 +246,7 @@ export default function BudgetInternalDetail() {
       user_id: user.id,
       event_type: "comment",
       note: newComment.trim().slice(0, 200),
-    } as any);
+    });
 
     setComments((prev) => [
       ...prev,
@@ -311,8 +312,8 @@ export default function BudgetInternalDetail() {
             </Button>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                {(budget as any).sequential_code && (
-                  <span className="text-xs font-mono text-muted-foreground/70">{(budget as any).sequential_code}</span>
+                {budget.sequential_code && (
+                  <span className="text-xs font-mono text-muted-foreground/70">{budget.sequential_code}</span>
                 )}
                 <h1 className="text-lg font-semibold font-display text-foreground truncate">
                   {budget.project_name}

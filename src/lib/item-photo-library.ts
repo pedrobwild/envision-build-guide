@@ -12,7 +12,7 @@ export async function saveToPhotoLibrary(itemName: string, url: string) {
   if (!user) return;
 
   await supabase
-    .from("item_photo_library" as any)
+    .from("item_photo_library")
     .upsert(
       {
         item_name: itemName.trim(),
@@ -34,14 +34,14 @@ export async function lookupPhotoFromLibrary(itemName: string): Promise<string |
   if (!normalized) return null;
 
   const { data } = await supabase
-    .from("item_photo_library" as any)
+    .from("item_photo_library")
     .select("url")
     .eq("item_name_normalized", normalized)
     .order("updated_at", { ascending: false })
     .limit(1)
     .single();
 
-  return (data as any)?.url || null;
+  return data?.url || null;
 }
 
 /**
@@ -53,14 +53,14 @@ export async function lookupPhotosFromLibrary(itemNames: string[]): Promise<Map<
   if (normalized.length === 0) return new Map();
 
   const { data } = await supabase
-    .from("item_photo_library" as any)
+    .from("item_photo_library")
     .select("item_name_normalized, url")
     .in("item_name_normalized", normalized)
     .order("updated_at", { ascending: false });
 
   const result = new Map<string, string>();
   if (data) {
-    for (const row of data as any[]) {
+    for (const row of data) {
       // First match wins (most recent due to order)
       if (!result.has(row.item_name_normalized)) {
         result.set(row.item_name_normalized, row.url);

@@ -79,7 +79,7 @@ export function RevisionRequestDialog({
         .update({
           internal_status: "revision_requested",
           updated_at: new Date().toISOString(),
-        } as any)
+        })
         .eq("id", budgetId);
 
       if (updateErr) throw updateErr;
@@ -99,7 +99,7 @@ export function RevisionRequestDialog({
         budget_id: budgetId,
         user_id: user!.id,
         body: `🔄 **Revisão solicitada:**\n${trimmed}`,
-      } as any);
+      });
 
       toast.success("Solicitação de revisão enviada ao orçamentista.");
       onSuccess();

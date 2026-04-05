@@ -1,4 +1,30 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
+
+interface TemplateSectionRow {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  order_index: number;
+  notes: string | null;
+  tags: unknown;
+  included_bullets: unknown;
+  excluded_bullets: unknown;
+  is_optional: boolean;
+}
+
+interface TemplateItemRow {
+  title: string;
+  description: string | null;
+  unit: string | null;
+  qty: number | null;
+  order_index: number;
+  coverage_type: string;
+  reference_url: string | null;
+  internal_unit_price: number | null;
+  internal_total: number | null;
+  bdi_percentage: number | null;
+}
 
 /**
  * Seed a budget's sections and items from a template.
@@ -13,7 +39,7 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
 
   // Load template sections with their items
   const { data: templateSections, error: secErr } = await supabase
-    .from("budget_template_sections" as any)
+    .from("budget_template_sections")
     .select("id, title, subtitle, order_index, notes, tags, included_bullets, excluded_bullets, is_optional")
     .eq("template_id", templateId)
     .order("order_index");
@@ -21,20 +47,21 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
   if (secErr) throw secErr;
   if (!templateSections || templateSections.length === 0) return;
 
-  for (const tSec of templateSections as any[]) {
+  for (const tSec of templateSections as TemplateSectionRow[]) {
+    const sectionPayload = {
+      budget_id: budgetId,
+      title: tSec.title,
+      subtitle: tSec.subtitle || null,
+      order_index: tSec.order_index,
+      notes: tSec.notes || null,
+      tags: (tSec.tags || []) as Json,
+      included_bullets: (tSec.included_bullets || []) as Json,
+      excluded_bullets: (tSec.excluded_bullets || []) as Json,
+      is_optional: tSec.is_optional || false,
+    };
     const { data: section } = await supabase
       .from("sections")
-      .insert({
-        budget_id: budgetId,
-        title: tSec.title,
-        subtitle: tSec.subtitle || null,
-        order_index: tSec.order_index,
-        notes: tSec.notes || null,
-        tags: tSec.tags || [],
-        included_bullets: tSec.included_bullets || [],
-        excluded_bullets: tSec.excluded_bullets || [],
-        is_optional: tSec.is_optional || false,
-      })
+      .insert(sectionPayload)
       .select("id")
       .single();
 
@@ -42,14 +69,14 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
 
     // Load items for this template section
     const { data: templateItems } = await supabase
-      .from("budget_template_items" as any)
+      .from("budget_template_items")
       .select("title, description, unit, qty, order_index, coverage_type, reference_url, internal_unit_price, internal_total, bdi_percentage")
       .eq("template_section_id", tSec.id)
       .order("order_index");
 
     if (!templateItems || templateItems.length === 0) continue;
 
-    for (const tItem of templateItems as any[]) {
+    for (const tItem of templateItems as TemplateItemRow[]) {
       await supabase.from("items").insert({
         section_id: section.id,
         title: tItem.title,

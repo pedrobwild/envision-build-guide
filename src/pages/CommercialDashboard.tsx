@@ -233,7 +233,7 @@ export default function CommercialDashboard() {
     const current = budgets.find(b => b.id === budgetId);
     const { error } = await supabase
       .from("budgets")
-      .update({ internal_status: newStatus, updated_at: new Date().toISOString() } as any)
+      .update({ internal_status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", budgetId);
     if (error) { toast.error("Erro ao atualizar status."); return; }
 
