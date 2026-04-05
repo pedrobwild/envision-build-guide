@@ -49,7 +49,7 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
       setGroupId(result.groupId);
 
       // Load audit events
-      const allIds = result.versions.map((v: any) => v.id);
+      const allIds = result.versions.map((v: Record<string, unknown>) => v.id as string);
       const events = await getVersionAuditEvents(allIds);
       setAuditEvents(events);
 
