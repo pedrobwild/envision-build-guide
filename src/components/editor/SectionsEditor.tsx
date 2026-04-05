@@ -957,11 +957,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       .single();
     if (data) {
       const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
-      let itemImages: { id: string; url: string; is_primary: boolean | null }[] = [];
+      let itemImages: { id?: string; url: string; is_primary: boolean | null }[] = [];
       if (catalogImageUrl) {
         const { data: imgRow } = await supabase.from("item_images").insert({
           item_id: data.id,
-          url: catalogImageUrl,
+          url: String(catalogImageUrl),
           is_primary: true,
         }).select().single();
         if (imgRow) itemImages = [imgRow];
