@@ -213,7 +213,7 @@ function BudgetSearchRow({
   profiles,
   onRefresh,
 }: {
-  budget: any;
+  budget: SearchBudget;
   profiles: Record<string, string>;
   onRefresh?: () => void;
 }) {
