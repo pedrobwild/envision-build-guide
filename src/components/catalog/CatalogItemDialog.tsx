@@ -444,10 +444,13 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
   }, [item]);
 
   useEffect(() => {
+    if (!open) return;
     setLocalCategories([]);
-    if (form.default_supplier_id) {
-      void handleSupplierChange(form.default_supplier_id);
-    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !form.default_supplier_id) return;
+    void handleSupplierChange(form.default_supplier_id);
   }, [form.default_supplier_id, handleSupplierChange, open]);
 
   const persistImageOnExistingItem = async (nextImageUrl: string | null) => {
