@@ -31,8 +31,8 @@ import { CommentQuickTemplates } from "@/components/editor/CommentQuickTemplates
 
 interface BriefingPanelProps {
   budgetId: string;
-  budget: any;
-  onBudgetFieldChange: (field: string, value: any) => void;
+  budget: Record<string, unknown>;
+  onBudgetFieldChange: (field: string, value: string | number | boolean | null) => void;
 }
 
 const EVENT_ICONS: Record<string, React.ElementType> = {
