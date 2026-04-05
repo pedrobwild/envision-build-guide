@@ -346,7 +346,7 @@ function SupplierPricesSection({ catalogItemId, suppliers }: { catalogItemId: st
 export function CatalogItemDialog({ open, onOpenChange, item, categories, suppliers, onSaved }: Props) {
   const queryClient = useQueryClient();
   const [localCategories, setLocalCategories] = useState<CatalogCategory[]>([]);
-  const availableCategories = mergeCategories(categories, localCategories);
+  const availableCategories = useMemo(() => mergeCategories(categories, localCategories), [categories, localCategories]);
   const [form, setForm] = useState({
     name: item?.name ?? "",
     description: item?.description ?? "",
