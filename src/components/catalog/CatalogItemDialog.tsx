@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -344,8 +344,25 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
   const [sectionsLoaded, setSectionsLoaded] = useState(!item);
   const [saving, setSaving] = useState(false);
   const [savedItemId, setSavedItemId] = useState<string | null>(item?.id ?? null);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
 
   const currentItemId = item?.id ?? savedItemId;
+
+  const handleCreateCategory = useCallback(async () => {
+    const name = newCategoryName.trim();
+    if (!name) { toast.error("Nome da categoria é obrigatório"); return; }
+    setSavingCategory(true);
+    const { data, error } = await supabase.from("catalog_categories").insert({ name }).select("id").single();
+    setSavingCategory(false);
+    if (error) { toast.error("Erro ao criar categoria"); return; }
+    toast.success("Categoria criada");
+    setCreatingCategory(false);
+    setNewCategoryName("");
+    set("category_id", data.id);
+    onSaved(); // refresh categories list
+  }, [newCategoryName, onSaved]);
 
   useEffect(() => {
     if (item) {
@@ -501,14 +518,41 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <Label>Categoria</Label>
-              <Select value={form.category_id} onValueChange={(v) => set("category_id", v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {categories.filter((c) => c.is_active).map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {creatingCategory ? (
+                <div className="flex gap-1.5">
+                  <Input
+                    autoFocus
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Nome da categoria"
+                    className="h-9 text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreateCategory();
+                      if (e.key === "Escape") { setCreatingCategory(false); setNewCategoryName(""); }
+                    }}
+                  />
+                  <Button size="sm" className="h-9 px-2.5" onClick={handleCreateCategory} disabled={savingCategory}>
+                    {savingCategory ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-9 px-2" onClick={() => { setCreatingCategory(false); setNewCategoryName(""); }}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-1.5">
+                  <Select value={form.category_id} onValueChange={(v) => set("category_id", v)}>
+                    <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {categories.filter((c) => c.is_active).map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="outline" className="h-9 px-2.5 shrink-0" onClick={() => setCreatingCategory(true)} title="Criar nova categoria">
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
             </div>
             <div>
               <Label>Unidade</Label>
