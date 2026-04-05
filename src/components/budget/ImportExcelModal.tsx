@@ -207,10 +207,10 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: "array", cellDates: false, cellNF: false, cellText: false });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const json: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+        const json: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
 
         // Filter out completely empty rows
-        const nonEmptyRows = json.filter((row) => Array.isArray(row) && row.some((cell: any) => cell !== undefined && cell !== null && cell !== ""));
+        const nonEmptyRows = json.filter((row) => Array.isArray(row) && row.some((cell) => cell !== undefined && cell !== null && cell !== ""));
 
         if (nonEmptyRows.length < 2) {
           setError("A planilha precisa ter pelo menos 2 linhas (cabeçalho + dados).");
@@ -222,7 +222,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         for (let i = 0; i < Math.min(nonEmptyRows.length, 15); i++) {
           const row = nonEmptyRows[i];
           if (!row) continue;
-          const lower = row.map((c: any) => (c == null ? "" : String(c)).trim().toLowerCase());
+          const lower = row.map((c: unknown) => (c == null ? "" : String(c)).trim().toLowerCase());
           if (lower.some((h: string) => h && (h.includes("item") || h.includes("índice") || h.includes("indice") || h.includes("seção") || h.includes("secao") || h.includes("título") || h.includes("titulo")))) {
             headerRowIdx = i;
             break;
@@ -235,7 +235,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           return;
         }
 
-        const headers = Array.from(headerRow, (c: any) => (c == null ? "" : String(c)));
+        const headers = Array.from(headerRow, (c: unknown) => (c == null ? "" : String(c)));
         const map = detectColumns(headers);
 
         if (import.meta.env.DEV) console.log("[Excel Import] Header row:", headerRowIdx, headers);
@@ -259,7 +259,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         for (let i = 0; i < headerRowIdx && i < nonEmptyRows.length; i++) {
           const row = nonEmptyRows[i];
           if (!row) continue;
-          const rowText = row.map((c: any) => String(c ?? "").trim()).join(" ").toLowerCase();
+          const rowText = row.map((c: unknown) => String(c ?? "").trim()).join(" ").toLowerCase();
           for (let j = 0; j < row.length; j++) {
             const cellText = String(row[j] ?? "").trim().toLowerCase();
             if (cellText.includes("cliente")) {
@@ -285,7 +285,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
 
         for (const row of dataRows) {
           if (!Array.isArray(row)) continue;
-          const cells = row.map((c: any) => (c == null ? "" : c));
+          const cells = row.map((c: unknown) => (c == null ? "" : c));
 
           const indexVal = indexCol >= 0 ? String(cells[indexCol] ?? "").trim() : "";
           const itemName = map.title !== undefined ? String(cells[map.title] ?? "").trim() : "";
@@ -386,12 +386,12 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        const pageText = extractStructuredPageText(content.items as any[]);
+        const pageText = extractStructuredPageText(content.items as PdfTextItem[]);
         textContent += `\n--- Página ${i} ---\n${pageText}\n`;
       }
 
       const isScanned = !textContent.trim() || textContent.trim().length < 120;
-      let parsedData: any;
+      let parsedData: { sections?: ParsedPdfSection[]; meta?: Record<string, unknown> };
 
       if (isScanned) {
         const pageImages = await renderPdfPagesAsImages(pdf, 10);
@@ -402,11 +402,11 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         parsedData = await invokePdfParser({ textContent, pageImages });
       }
 
-      const hasValues = (sections: any[]) =>
+      const hasValues = (sections: ParsedPdfSection[]) =>
         sections.some(
-          (section: any) =>
+          (section: ParsedPdfSection) =>
             (toNumber(section?.total) || 0) > 0 ||
-            (section?.items || []).some((item: any) => (toNumber(item?.total) || 0) > 0)
+            (section?.items || []).some((item: ParsedPdfItem) => (toNumber(item?.total) || 0) > 0)
         );
 
       if (
@@ -468,9 +468,9 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       setParsedSectionTotals(sectionTotals);
       setParsedRows(rows);
       setStep("preview");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("PDF parse error:", err);
-      setError(err?.message || "Erro ao processar o PDF. Tente novamente.");
+      setError(err instanceof Error ? err.message || "Erro ao processar o PDF. Tente novamente.");
       setStep("upload");
     }
   }, [extractStructuredPageText, invokePdfParser, renderPdfPagesAsImages, toNumber]);
@@ -631,8 +631,8 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
 
       setCreatedBudgetId(budget.id);
       setStep("done");
-    } catch (err: any) {
-      setError(err?.message || "Erro ao importar.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message || "Erro ao importar.");
       setStep("preview");
     }
   };
@@ -673,8 +673,8 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
               const input = document.createElement("input");
               input.type = "file";
               input.accept = fileFilter === 'pdf' ? '.pdf' : fileFilter === 'excel' ? '.xlsx,.xls,.csv' : '.xlsx,.xls,.csv,.pdf';
-              input.onchange = (e: any) => {
-                const f = e.target.files?.[0];
+              input.onchange = (e: Event) => {
+                const f = (e.target as HTMLInputElement).files?.[0];
                 if (f) handleFile(f);
               };
               input.click();
