@@ -353,7 +353,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           });
         }
 
-        console.log("[Excel Import] Parsed", rows.length, "items across", new Set(rows.map(r => r.section)).size, "sections");
+        if (import.meta.env.DEV) console.log("[Excel Import] Parsed", rows.length, "items across", new Set(rows.map(r => r.section)).size, "sections");
 
         setParsedSectionTotals(sectionTotals);
         setParsedRows(rows);
