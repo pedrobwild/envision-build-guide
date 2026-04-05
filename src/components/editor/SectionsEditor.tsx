@@ -945,7 +945,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       internal_total: itemData?.internal_total || null,
       order_index: order,
       catalog_item_id: itemData?.catalog_item_id || null,
-      catalog_snapshot: (itemData?.catalog_snapshot || null) as Record<string, unknown> | null,
+      catalog_snapshot: (itemData?.catalog_snapshot || null) as import("@/integrations/supabase/types").Json,
     };
 
     const { data } = await supabase
@@ -955,7 +955,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       .single();
     if (data) {
       const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
-      let itemImages: any[] = [];
+      let itemImages: { id: string; url: string; is_primary: boolean | null }[] = [];
       if (catalogImageUrl) {
         const { data: imgRow } = await supabase.from("item_images").insert({
           item_id: data.id,

@@ -71,6 +71,7 @@ interface BudgetDetail {
   notes: string | null;
   status: string;
   public_id: string | null;
+  sequential_code?: string | null;
 }
 
 interface EventRow {
