@@ -217,6 +217,12 @@ function calcSaleUnitPrice(cost: number | null | undefined, bdi: number | null |
   return c * (1 + b / 100);
 }
 
+function calcMargin(cost: number | null | undefined, bdi: number | null | undefined): number {
+  const c = Number(cost) || 0;
+  const b = Number(bdi) || 0;
+  return c * (b / 100);
+}
+
 function calcItemSaleTotal(item: ItemData): number {
   const qty = Number(item.qty) || 1;
   const saleUnit = calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage);
