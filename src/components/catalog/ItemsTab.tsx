@@ -217,11 +217,6 @@ export function ItemsTab({
                     <TableCell className="text-right">
                       <div className="flex gap-0.5 justify-end">
                         <Button variant="ghost" size="icon" className="h-8 w-8"
-                          onClick={() => setExpandedPricesItemId(expandedPricesItemId === item.id ? null : item.id)}
-                          title="Preços por fornecedor">
-                          <DollarSign className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8"
                           onClick={() => onEditItem(item)}>
                           <Edit2 className="h-3.5 w-3.5" />
                         </Button>
@@ -232,18 +227,6 @@ export function ItemsTab({
                       </div>
                     </TableCell>
                   </TableRow>
-                  {expandedPricesItemId === item.id && (
-                    <TableRow key={`${item.id}-prices`}>
-                      <TableCell colSpan={7} className="bg-muted/20 p-4 border-l-2 border-l-primary">
-                        <SupplierPricesPanel
-                          catalogItemId={item.id}
-                          catalogItemName={item.name}
-                          suppliers={suppliers}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </>
               ))}
             </TableBody>
           </Table>
