@@ -195,7 +195,7 @@ export default function BudgetInternalDetail() {
         budget_id: budget.id,
         user_id: user.id,
         body: commentBody,
-      } as any);
+      });
       setComments((prev) => [
         ...prev,
         { id: crypto.randomUUID(), body: commentBody, user_id: user.id, created_at: new Date().toISOString() },
