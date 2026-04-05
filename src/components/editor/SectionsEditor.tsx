@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { formatBRL } from "@/lib/formatBRL";
 import { toast } from "sonner";
 import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
