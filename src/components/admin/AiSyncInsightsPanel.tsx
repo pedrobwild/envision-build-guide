@@ -56,7 +56,7 @@ export default function AiSyncInsightsPanel() {
 
       if (res.error) throw new Error(res.error.message);
       setAnalysis(res.data?.content ?? "Sem resultado.");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Erro na análise",
         description: err.message,
