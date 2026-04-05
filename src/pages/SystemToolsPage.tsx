@@ -295,8 +295,10 @@ export default function SystemToolsPage() {
         </CardContent>
       </Card>
 
-      {/* Integration Sync Monitor */}
       <IntegrationSyncPanel />
+
+      {/* AI Sync Monitor */}
+      <AiSyncInsightsPanel />
 
       {/* Remaining cards */}
       <div className="space-y-3">
