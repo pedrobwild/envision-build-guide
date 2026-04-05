@@ -545,7 +545,7 @@ export default function TemplateEditorPage() {
   };
 
   // ─── Item mutations ──────────────────────────────────────────
-  const updateItem = (sectionId: string, itemId: string, field: string, value: any) => {
+  const updateItem = (sectionId: string, itemId: string, field: string, value: string | number | null) => {
     setSections((prev) =>
       prev.map((s) =>
         s.id === sectionId
