@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
 /**
  * Tracks which section is currently visible in the viewport.
@@ -6,15 +6,14 @@ import { useState, useEffect, useRef } from "react";
  */
 export function useScrollspy(sectionIds: string[]): string | null {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const idsRef = useRef(sectionIds);
-  idsRef.current = sectionIds;
+  const stableKey = sectionIds.join(",");
 
   useEffect(() => {
-    if (!sectionIds.length) return;
+    const ids = stableKey.split(",").filter(Boolean);
+    if (!ids.length) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // Find the topmost visible entry
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
@@ -30,7 +29,7 @@ export function useScrollspy(sectionIds: string[]): string | null {
     );
 
     const elements: Element[] = [];
-    for (const id of sectionIds) {
+    for (const id of ids) {
       const el = document.getElementById(id);
       if (el) {
         observer.observe(el);
@@ -42,7 +41,7 @@ export function useScrollspy(sectionIds: string[]): string | null {
       elements.forEach((el) => observer.unobserve(el));
       observer.disconnect();
     };
-  }, [sectionIds.join(",")]); // re-run only when the list changes
+  }, [stableKey]);
 
   return activeId;
 }
