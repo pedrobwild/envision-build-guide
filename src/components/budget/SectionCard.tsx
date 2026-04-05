@@ -36,7 +36,7 @@ export function SectionCard({
   editable = false,
 }: SectionCardProps) {
   const subtotal = calculateSectionSubtotal(section);
-  const stableItems = useMemo(() => section.stableItems || [], [section.stableItems]);
+  const stableItems = useMemo(() => section.items || [], [section.items]);
 
   // Auto-expand section when any item has media attached
   const hasItemMedia = useMemo(() => {
@@ -143,10 +143,10 @@ export function SectionCard({
             onClick={() => setExpanded(!expanded)}
             className="w-full text-left px-3 sm:px-4 pt-3 sm:pt-4 pb-0 min-h-[44px]"
           >
-            <div className="flex stableItems-start gap-2.5 sm:gap-3">
+            <div className="flex items-start gap-2.5 sm:gap-3">
               <div
                 className={cn(
-                  "w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex stableItems-center justify-center flex-shrink-0",
+                  "w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0",
                   iconColors
                 )}
               >
@@ -174,7 +174,7 @@ export function SectionCard({
         )}
 
         {/* ── Subtotal strip — always visible ── */}
-        <div className="px-3 sm:px-4 py-1.5 sm:py-2 border-b border-border bg-muted/30 flex stableItems-center justify-between">
+        <div className="px-3 sm:px-4 py-1.5 sm:py-2 border-b border-border bg-muted/30 flex items-center justify-between">
           <span className="text-xs text-muted-foreground font-body">
             {section.qty && section.qty > 1 ? `${section.qty}× ` : ""}
             {stableItems.length} {stableItems.length === 1 ? "item" : "itens"}
@@ -186,7 +186,7 @@ export function SectionCard({
           )}
         </div>
 
-        {/* ── Preview stableItems (collapsed) — mobile-first: show top stableItems ── */}
+        {/* ── Preview items (collapsed) — mobile-first: show top stableItems ── */}
         {!expanded && stableItems.length > 0 && (
           <div className="px-3 sm:px-4 py-1.5 sm:py-2">
             {previewItems.map((item: any, i: number) => {
@@ -195,7 +195,7 @@ export function SectionCard({
                 <div
                   key={item.id}
                   className={cn(
-                    "flex stableItems-center gap-2 sm:gap-2.5 py-1.5 sm:py-2",
+                    "flex items-center gap-2 sm:gap-2.5 py-1.5 sm:py-2",
                     i < previewItems.length - 1 && "border-b border-border/30"
                   )}
                 >
@@ -231,7 +231,7 @@ export function SectionCard({
             {hiddenCount > 0 && (
               <button
                 onClick={() => setExpanded(true)}
-                className="mt-1 flex stableItems-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1.5 w-full justify-center min-h-[44px]"
+                className="mt-1 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1.5 w-full justify-center min-h-[44px]"
               >
                 <ChevronDown className="h-3.5 w-3.5" />
                 Ver todos os {stableItems.length} itens
@@ -240,7 +240,7 @@ export function SectionCard({
           </div>
         )}
 
-        {/* ── Full stableItems list (expanded) ── */}
+        {/* ── Full items list (expanded) ── */}
         <AnimatePresence>
           {expanded && (
             <motion.div
@@ -272,7 +272,7 @@ export function SectionCard({
                 {stableItems.length > PREVIEW_COUNT && (
                   <button
                     onClick={() => setExpanded(false)}
-                    className="mt-2 flex stableItems-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1 w-full justify-center min-h-[44px]"
+                    className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors py-1 w-full justify-center min-h-[44px]"
                   >
                     <ChevronUp className="h-3.5 w-3.5" />
                     Ocultar
@@ -284,14 +284,14 @@ export function SectionCard({
                   <div className="mt-3 pt-3 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {included.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-semibold text-success uppercase tracking-wider mb-1.5 font-body flex stableItems-center gap-1">
+                        <h4 className="text-xs font-semibold text-success uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
                           <Check className="h-3 w-3" /> Incluso
                         </h4>
                         <ul className="space-y-1">
                           {included.map((b: string, i: number) => (
                             <li
                               key={i}
-                              className="text-xs text-foreground/80 font-body flex stableItems-start gap-1.5 leading-relaxed"
+                              className="text-xs text-foreground/80 font-body flex items-start gap-1.5 leading-relaxed"
                             >
                               <Check className="h-3 w-3 text-success mt-0.5 flex-shrink-0" />
                               {b}
@@ -302,14 +302,14 @@ export function SectionCard({
                     )}
                     {excluded.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-semibold text-destructive uppercase tracking-wider mb-1.5 font-body flex stableItems-center gap-1">
+                        <h4 className="text-xs font-semibold text-destructive uppercase tracking-wider mb-1.5 font-body flex items-center gap-1">
                           <X className="h-3 w-3" /> Não incluso
                         </h4>
                         <ul className="space-y-1">
                           {excluded.map((b: string, i: number) => (
                             <li
                               key={i}
-                              className="text-xs text-foreground/60 font-body flex stableItems-start gap-1.5 leading-relaxed"
+                              className="text-xs text-foreground/60 font-body flex items-start gap-1.5 leading-relaxed"
                             >
                               <X className="h-3 w-3 text-destructive/60 mt-0.5 flex-shrink-0" />
                               {b}
@@ -335,7 +335,7 @@ export function SectionCard({
         {!expanded && hasCover && stableItems.length > 0 && (
           <button
             onClick={() => setExpanded(true)}
-            className="w-full px-4 py-2.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors flex stableItems-center justify-center gap-1.5 min-h-[44px]"
+            className="w-full px-4 py-2.5 text-xs text-primary hover:text-primary/80 font-medium font-body transition-colors flex items-center justify-center gap-1.5 min-h-[44px]"
           >
             <ChevronDown className="h-3.5 w-3.5" />
             Ver {stableItems.length} {stableItems.length === 1 ? "item" : "itens"}
