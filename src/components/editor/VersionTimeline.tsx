@@ -26,8 +26,8 @@ interface VersionTimelineProps {
 export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelineProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [versions, setVersions] = useState<any[]>([]);
-  const [auditEvents, setAuditEvents] = useState<any[]>([]);
+  const [versions, setVersions] = useState<Record<string, unknown>[]>([]);
+  const [auditEvents, setAuditEvents] = useState<Record<string, unknown>[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [revisionReasons, setRevisionReasons] = useState<Record<string, string>>({});
