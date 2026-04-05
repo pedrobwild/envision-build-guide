@@ -161,7 +161,14 @@ function MiniStat({ label, value, icon, accent }: { label: string; value: string
   );
 }
 
-function SectionBlock({ section }: { section: any }) {
+interface SectionSummary extends SectionWithItems {
+  itemRows: Array<{ id: string; title: string; qty: number; cost: number; bdi: number; sale: number; totalCost: number; totalSale: number }>;
+  secCost: number;
+  secSale: number;
+  secBdi: number;
+}
+
+function SectionBlock({ section }: { section: SectionSummary }) {
   const [open, setOpen] = useState(false);
 
   return (
