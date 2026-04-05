@@ -201,7 +201,7 @@ function BudgetSearchRow({
   profiles,
   onRefresh,
 }: {
-  budget: SearchBudget;
+  budget: BudgetWithSections;
   profiles: Record<string, string>;
   onRefresh?: () => void;
 }) {
