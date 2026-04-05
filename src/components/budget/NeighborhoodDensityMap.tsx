@@ -138,7 +138,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       autoSelectedRef.current = true;
       setTimeout(() => handleSelect(match.id, { userInitiated: false }), 800);
     }
-  }, [mapLoaded, clientNeighborhood, handleSelect]);
+  }, [mapLoaded, clientNeighborhood, handleSelect, isMobile]);
 
   // Sync map with selection
   useEffect(() => {
