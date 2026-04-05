@@ -269,11 +269,11 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
       .limit(1)
       .single();
     if (data?.metadata) {
-      const m = data.metadata as Record<string, unknown>;
+      const m = data.metadata as { instructions?: string; change_types?: string[]; requested_by_name?: string } | null;
       setRevisionInstructions({
-        instructions: m.instructions || "",
-        change_types: m.change_types || [],
-        requested_by_name: m.requested_by_name || "—",
+        instructions: m?.instructions || "",
+        change_types: m?.change_types || [],
+        requested_by_name: m?.requested_by_name || "—",
       });
     }
     setLoadingInstructions(false);
