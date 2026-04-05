@@ -3,6 +3,7 @@ import { RotateCcw, ChevronDown, ChevronUp, User, Clock, Loader2, GitBranch } fr
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatBRL";
+import type { Json } from "@/integrations/supabase/types";
 
 const CHANGE_TYPE_LABELS: Record<string, string> = {
   inclusion: "Inclusão de itens ou escopo",
