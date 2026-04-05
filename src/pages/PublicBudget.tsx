@@ -156,6 +156,7 @@ export default function PublicBudget() {
   const { publicId } = useParams<{ projectId?: string; publicId?: string }>();
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [showPrices] = useState(true);
@@ -207,19 +208,28 @@ export default function PublicBudget() {
       return;
     }
     if (publicId) {
-      fetchPublicBudget(publicId).then((data) => {
-        setBudget(data as BudgetData | null);
-        setLoading(false);
-        if (data && !viewTracked.current) {
-          viewTracked.current = true;
-          Promise.resolve(supabase.rpc('increment_view_count' as any, { p_public_id: publicId })).catch(() => {});
-          if ((data.view_count || 0) === 0) {
-            supabase.functions.invoke('notify-budget-view', {
-              body: { public_id: publicId },
-            }).catch(() => {});
+      setLoadError(null);
+      fetchPublicBudget(publicId)
+        .then((data) => {
+          setBudget(data as BudgetData | null);
+          setLoading(false);
+          if (data && !viewTracked.current) {
+            viewTracked.current = true;
+            supabase.rpc('increment_view_count', { p_public_id: publicId }).then(({ error }) => {
+              if (error) console.error('increment_view_count failed:', error.message);
+            });
+            if ((data.view_count || 0) === 0) {
+              supabase.functions.invoke('notify-budget-view', {
+                body: { public_id: publicId },
+              }).catch(() => {});
+            }
           }
-        }
-      });
+        })
+        .catch((err) => {
+          console.error('Failed to load public budget:', err);
+          setLoadError('Não foi possível carregar o orçamento. Tente novamente.');
+          setLoading(false);
+        });
     }
   }, [publicId]);
 
@@ -239,6 +249,17 @@ export default function PublicBudget() {
 
   if (loading) {
     return <PublicBudgetSkeleton />;
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">Erro ao carregar</h1>
+          <p className="text-sm text-muted-foreground font-body">{loadError}</p>
+        </div>
+      </div>
+    );
   }
 
   if (!budget) {
@@ -452,11 +473,11 @@ export default function PublicBudget() {
             )}
 
             {/* ── Mobile optional items simulator ── */}
-            {(budget as any).show_optional_items && (
+            {budget.show_optional_items && (
               <div className="lg:hidden">
                 <OptionalItemsSimulator
                   budgetId={budget.id}
-                  sections={sections as any}
+                  sections={sections}
                   baseTotal={total}
                   clientName={budget.client_name}
                   projectName={budget.project_name}
@@ -509,10 +530,10 @@ export default function PublicBudget() {
                 allCategoriesOpenSheet={["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "")}
                 forceExpandItems={exporting}
               />
-              {(budget as any).show_optional_items && (
+              {budget.show_optional_items && (
                 <OptionalItemsSimulator
                   budgetId={budget.id}
-                  sections={sections as any}
+                  sections={sections}
                   baseTotal={total}
                   clientName={budget.client_name}
                   projectName={budget.project_name}

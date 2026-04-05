@@ -72,7 +72,9 @@ export interface BudgetData {
   show_item_qty?: boolean | null;
   show_item_prices?: boolean | null;
   show_progress_bars?: boolean | null;
+  show_optional_items?: boolean;
   generated_at?: string | null;
+  header_config?: Record<string, unknown> | null;
   disclaimer?: string | null;
   notes?: string | null;
   floor_plan_url?: string | null;
