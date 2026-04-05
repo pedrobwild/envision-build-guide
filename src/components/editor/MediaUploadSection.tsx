@@ -330,12 +330,13 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   // ── Tour 3D management ──
   const loadTours = useCallback(async () => {
     setToursLoading(true);
-    const { data } = await (supabase as any)
+    const { data, error } = await supabase
       .from("budget_tours")
       .select("id, room_id, room_label, tour_url, order_index")
       .eq("budget_id", budgetId)
       .order("order_index", { ascending: true });
-    setTours((data ?? []).map((t: any) => ({
+    if (error) console.error('Failed to load tours:', error.message);
+    setTours((data ?? []).map((t) => ({
       id: t.id,
       room_id: t.room_id,
       room_label: t.room_label,
