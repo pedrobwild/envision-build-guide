@@ -208,7 +208,7 @@ interface ItemData {
   catalog_item_id?: string | null;
   catalog_snapshot?: Record<string, unknown> | Json | null;
   notes?: string | null;
-  images?: { id: string; url: string; is_primary?: boolean | null }[];
+  images?: { id?: string; url: string; is_primary?: boolean | null }[];
 }
 
 /* ── BDI helpers ── */
