@@ -945,7 +945,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       internal_total: itemData?.internal_total || null,
       order_index: order,
       catalog_item_id: itemData?.catalog_item_id || null,
-      catalog_snapshot: (itemData?.catalog_snapshot || null) as Json,
+      catalog_snapshot: (itemData?.catalog_snapshot || null) as Record<string, unknown> | null,
     };
 
     const { data } = await supabase
