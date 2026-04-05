@@ -1311,7 +1311,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                 <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">BDI%</span>
                               </div>
                               <div className="hidden md:block w-[100px] flex-shrink-0 px-1 text-right">
-                                <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Venda Un.</span>
+                                <span className="text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Margem</span>
                               </div>
                               <div className="w-[72px] sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1 text-right">
                                 <span className="text-[10px] sm:text-[11px] font-medium font-body uppercase tracking-wide text-muted-foreground">Total</span>
