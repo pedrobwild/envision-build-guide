@@ -11,7 +11,7 @@ async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
     .from("budgets")
     .select(PUBLIC_BUDGET_SELECT)
     .eq("id", projectId)
-    .single() as { data: any; error: any };
+    .single();
 
   if (budgetError) throw new Error(`Erro ao carregar orçamento: ${budgetError.message}`);
   if (!budget) throw new Error("Orçamento não encontrado");
@@ -21,19 +21,20 @@ async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
     .from("sections")
     .select(PUBLIC_SECTION_SELECT)
     .eq("budget_id", projectId)
-    .order("order_index", { ascending: true }) as { data: any[]; error: any };
+    .order("order_index", { ascending: true });
 
   if (sectionsError) throw new Error(`Erro ao carregar seções: ${sectionsError.message}`);
 
   // Fetch all items for these sections
   const sectionIds = (sections ?? []).map((s) => s.id);
-  let items: any[] = [];
+  let items: typeof itemsData = [];
+  let itemsData: Awaited<ReturnType<typeof supabase.from<"items">>>["data"] = [];
   if (sectionIds.length > 0) {
-    const { data: itemsData, error: itemsError } = await supabase
+    const { data: fetchedItems, error: itemsError } = await supabase
       .from("items")
       .select(PUBLIC_ITEM_SELECT)
       .in("section_id", sectionIds)
-      .order("order_index", { ascending: true }) as { data: any[]; error: any };
+      .order("order_index", { ascending: true });
 
     if (itemsError) throw new Error(`Erro ao carregar itens: ${itemsError.message}`);
     items = itemsData ?? [];

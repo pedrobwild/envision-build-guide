@@ -524,7 +524,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
 
-    const payload: Record<string, any> = {
+    const payload: Record<string, string | boolean | null> = {
       name: form.name.trim(),
       description: form.description.trim() || null,
       item_type: form.item_type,

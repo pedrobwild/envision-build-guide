@@ -120,7 +120,7 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
 
-    const payload: Record<string, any> = {
+    const payload: Record<string, string | boolean | number | null> = {
       name: form.name.trim(),
       contact_info: form.telefone.trim() || form.email.trim() || null,
       razao_social: form.razao_social.trim() || null,

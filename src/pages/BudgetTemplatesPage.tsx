@@ -496,23 +496,23 @@ export default function BudgetTemplatesPage() {
   const duplicateTemplate = async (template: Template) => {
     // 1. Clone template
     const { data: newTpl, error: tplErr } = await supabase
-      .from("budget_templates" as any)
+      .from("budget_templates")
       .insert({ name: `${template.name} (cópia)`, description: template.description })
       .select("id")
       .single();
     if (tplErr || !newTpl) { toast.error("Erro ao duplicar"); return; }
-    const newId = (newTpl as any).id;
+    const newId = newTpl.id;
 
     // 2. Clone sections
     const { data: sections } = await supabase
-      .from("budget_template_sections" as any)
+      .from("budget_template_sections")
       .select("*")
       .eq("template_id", template.id)
       .order("order_index");
 
-    for (const sec of (sections ?? []) as any[]) {
+    for (const sec of sections ?? []) {
       const { data: newSec } = await supabase
-        .from("budget_template_sections" as any)
+        .from("budget_template_sections")
         .insert({ template_id: newId, title: sec.title, subtitle: sec.subtitle, order_index: sec.order_index, notes: sec.notes, tags: sec.tags, included_bullets: sec.included_bullets, excluded_bullets: sec.excluded_bullets, is_optional: sec.is_optional })
         .select("id")
         .single();
@@ -520,14 +520,14 @@ export default function BudgetTemplatesPage() {
 
       // 3. Clone items
       const { data: items } = await supabase
-        .from("budget_template_items" as any)
+        .from("budget_template_items")
         .select("*")
         .eq("template_section_id", sec.id)
         .order("order_index");
 
-      for (const item of (items ?? []) as any[]) {
-        await supabase.from("budget_template_items" as any).insert({
-          template_section_id: (newSec as any).id,
+      for (const item of items ?? []) {
+        await supabase.from("budget_template_items").insert({
+          template_section_id: newSec.id,
           title: item.title,
           description: item.description,
           unit: item.unit,
