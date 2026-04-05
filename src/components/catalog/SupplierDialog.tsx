@@ -71,7 +71,8 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
     name: "",
     razao_social: "",
     cnpj_cpf: "",
-    categoria: "Outros",
+    tipo: "",
+    subcategoria: "",
     is_active: true,
     telefone: "",
     email: "",
@@ -89,11 +90,13 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
 
   useEffect(() => {
     if (open) {
+      const parsed = parseTipoFromCategoria(supplier?.categoria);
       setForm({
         name: supplier?.name ?? "",
         razao_social: supplier?.razao_social ?? "",
         cnpj_cpf: supplier?.cnpj_cpf ?? "",
-        categoria: supplier?.categoria ?? "Outros",
+        tipo: parsed.tipo,
+        subcategoria: parsed.subcategoria,
         is_active: supplier?.is_active ?? true,
         telefone: supplier?.telefone ?? "",
         email: supplier?.email ?? "",
