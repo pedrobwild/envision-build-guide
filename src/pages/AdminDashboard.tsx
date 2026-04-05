@@ -19,18 +19,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
 import { KpiCard, KpiCardCompact } from "@/components/dashboard/KpiCard";
-import { BacklogByStatusChart, SimpleFunnel } from "@/components/dashboard/OperationalCharts";
+import { BacklogByStatusChart } from "@/components/dashboard/OperationalCharts";
 import { RevenueChart } from "@/components/dashboard/FinancialCharts";
 import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBlock";
-import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
+import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
+import { DualFunnel } from "@/components/dashboard/DualFunnel";
+import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
 import { computeDashboardMetrics, type DateRange } from "@/hooks/useDashboardMetrics";
+
+const SECTION_DELAY = 0.05;
+const anim = (delay: number) => ({
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.4, delay },
+});
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, loading: profileLoading, isAdmin, isOrcamentista } = useUserProfile();
 
-  // Redirect orcamentistas to their dedicated workspace
   useEffect(() => {
     if (!profileLoading && profile && isOrcamentista && !isAdmin) {
       navigate("/admin/producao", { replace: true });
@@ -52,9 +60,7 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (user) {
-      loadData();
-    }
+    if (user) loadData();
   }, [user]);
 
   const loadData = async () => {
@@ -65,9 +71,7 @@ export default function AdminDashboard() {
         .order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, full_name"),
     ]);
-
     setBudgets(budgetsRes.data || []);
-
     const profileMap: Record<string, string> = {};
     (profilesRes.data || []).forEach((p: any) => {
       profileMap[p.id] = p.full_name || "";
@@ -76,31 +80,10 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  const getBudgetTotal = (budget: any) => {
-    const sectionsTotal = (budget.sections || []).reduce((sum: number, s: any) => sum + calculateSectionSubtotal(s), 0);
-    const adjustmentsTotal = (budget.adjustments || []).reduce((sum: number, adj: any) => sum + adj.sign * Number(adj.amount), 0);
-    return sectionsTotal + adjustmentsTotal;
-  };
-
-  // Compute all metrics
   const metrics = useMemo(() => {
     if (loading || budgets.length === 0) return null;
     return computeDashboardMetrics(budgets, dateRange, profiles);
   }, [budgets, dateRange, profiles, loading]);
-
-  // Funnel data
-  const funnelData = useMemo(() => {
-    if (!metrics) return { received: 0, published: 0, closed: 0 };
-    return {
-      received: metrics.received.value ?? 0,
-      published: budgets.filter((b) => {
-        const d = b.generated_at || b.updated_at;
-        return d && new Date(d) >= dateRange.from && new Date(d) <= dateRange.to &&
-          ["published", "contrato_fechado", "minuta_solicitada"].includes(b.status);
-      }).length,
-      closed: metrics.closedCount,
-    };
-  }, [metrics, budgets, dateRange]);
 
   // Budget creation
   const createBudget = async () => {
@@ -136,30 +119,25 @@ export default function AdminDashboard() {
     }
   };
 
-  const firstName = profile?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Usuário";
+  let step = 0;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8">
       {/* ───── HEADER ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-      >
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold font-display text-foreground tracking-tight">
               Painel Executivo
             </h1>
             <p className="text-sm text-muted-foreground font-body mt-0.5">
-              Visão geral da operação no período selecionado
+              Centro de comando — visão geral da operação
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <PeriodFilter value={dateRange} onChange={setDateRange} />
 
-            {/* New budget dropdown */}
             <div className="relative">
               <Button size="sm" className="gap-1.5 h-8" onClick={() => setNewMenuOpen(!newMenuOpen)}>
                 <Plus className="h-3.5 w-3.5" /> Novo
@@ -168,30 +146,18 @@ export default function AdminDashboard() {
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setNewMenuOpen(false)} />
                   <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-lg border border-border bg-popover shadow-lg py-1">
-                    <button
-                      onClick={() => { setNewMenuOpen(false); createBudget(); }}
-                      className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
-                    >
+                    <button onClick={() => { setNewMenuOpen(false); createBudget(); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
                       <FileText className="h-4 w-4 text-muted-foreground" /> Em branco
                     </button>
                     {(isAdmin || isOrcamentista) && (
-                      <button
-                        onClick={() => { setNewMenuOpen(false); createBudgetForTemplate(); }}
-                        className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
-                      >
+                      <button onClick={() => { setNewMenuOpen(false); createBudgetForTemplate(); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
                         <LayoutTemplate className="h-4 w-4 text-muted-foreground" /> Usar template
                       </button>
                     )}
-                    <button
-                      onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("pdf"); }}
-                      className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
-                    >
+                    <button onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("pdf"); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
                       <Upload className="h-4 w-4 text-muted-foreground" /> Importar PDF
                     </button>
-                    <button
-                      onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("excel"); }}
-                      className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5"
-                    >
+                    <button onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("excel"); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
                       <FileSpreadsheet className="h-4 w-4 text-muted-foreground" /> Importar Planilha
                     </button>
                   </div>
@@ -202,12 +168,18 @@ export default function AdminDashboard() {
         </div>
       </motion.div>
 
+      {/* ───── ALERTS CENTER (only if alerts exist) ───── */}
+      {(loading || (metrics?.alerts && metrics.alerts.length > 0)) && (
+        <motion.div {...anim(step++ * SECTION_DELAY)}>
+          <AlertsPanel
+            alerts={metrics?.alerts ?? []}
+            loading={loading}
+          />
+        </motion.div>
+      )}
+
       {/* ───── KPI CARDS — ROW 1 ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.05 }}
-      >
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
         <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground/60 font-body mb-3">
           Indicadores-chave de eficiência e resultado
         </p>
@@ -215,59 +187,63 @@ export default function AdminDashboard() {
           <KpiCard
             label="Recebidos"
             kpi={metrics?.received ?? { value: null, change: null, trend: null }}
+            meta={metrics?.kpiMeta.received}
             tooltip="Orçamentos criados no período selecionado"
             loading={loading}
           />
           <KpiCard
             label="Backlog ativo"
             kpi={metrics?.backlog ?? { value: null, change: null, trend: null }}
+            meta={metrics?.kpiMeta.backlog}
             tooltip="Orçamentos em etapas ativas do processo"
             loading={loading}
+            onClick={() => navigate("/admin/operacoes")}
           />
           <KpiCard
             label="SLA no prazo"
             kpi={metrics?.slaOnTime ?? { value: null, change: null, trend: null }}
+            meta={metrics?.kpiMeta.slaOnTime}
             format="percent"
             tooltip="Percentual de orçamentos dentro do prazo"
             loading={loading}
-            alert={metrics ? (metrics.slaOnTime.value ?? 100) < 70 : false}
           />
           <KpiCard
             label="Atrasados"
             kpi={metrics?.overdue ?? { value: null, change: null, trend: null }}
+            meta={metrics?.kpiMeta.overdue}
             tooltip="Orçamentos com prazo de entrega vencido"
             invertTrend
             loading={loading}
-            alert={metrics ? (metrics.overdue.value ?? 0) > 0 : false}
+            onClick={() => navigate("/admin/operacoes?filter=overdue")}
           />
         </div>
       </motion.div>
 
       {/* ───── KPI CARDS — ROW 2 ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-      >
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard
             label="Lead time médio"
             kpi={metrics?.avgLeadTime ?? { value: null, change: null, trend: null }}
+            meta={metrics?.kpiMeta.avgLeadTime}
             format="days"
-            tooltip="Tempo médio do recebimento até entrega da proposta"
+            tooltip="Tempo médio do recebimento até entrega"
             invertTrend
             loading={loading}
           />
           <KpiCard
             label="Taxa de conversão"
             kpi={metrics?.conversionRate ?? { value: null, change: null, trend: null }}
+            meta={metrics?.kpiMeta.conversionRate}
             format="percent"
-            tooltip="Contratos fechados sobre total de propostas enviadas"
+            tooltip="Contratos fechados / propostas enviadas"
             loading={loading}
+            onClick={() => navigate("/admin/comercial")}
           />
           <KpiCard
             label="Valor em carteira"
             kpi={metrics?.portfolioValue ?? { value: null, change: null, trend: null }}
+            meta={metrics?.kpiMeta.portfolioValue}
             format="currency"
             tooltip="Valor total dos orçamentos em andamento"
             loading={loading}
@@ -275,67 +251,77 @@ export default function AdminDashboard() {
           <KpiCard
             label="Margem bruta"
             kpi={metrics?.grossMargin ?? { value: null, change: null, trend: null }}
+            meta={metrics?.kpiMeta.grossMargin}
             format="percent"
-            tooltip="(Receita − Custo) ÷ Receita no período"
+            tooltip="(Receita − Custo) ÷ Receita"
             loading={loading}
-            alert={metrics ? (metrics.grossMargin.value ?? 100) < 15 && (metrics.grossMargin.value ?? 100) > 0 : false}
+            onClick={() => navigate("/admin/financeiro")}
           />
         </div>
       </motion.div>
 
-      {/* ───── EFICIÊNCIA OPERACIONAL ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.15 }}
-      >
+      {/* ───── DUAL FUNNEL ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
         <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
-          Eficiência operacional
+          Funil operacional e comercial
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <DualFunnel
+          operationalFunnel={metrics?.operationalFunnel ?? []}
+          commercialFunnel={metrics?.commercialFunnel ?? []}
+          loading={loading}
+        />
+      </motion.div>
+
+      {/* ───── AGING & SLA RISK ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
+          Aging do backlog e risco de SLA
+        </h2>
+        <BacklogAgingPanel
+          agingBuckets={metrics?.agingBuckets ?? []}
+          slaRiskItems={metrics?.slaRiskItems ?? []}
+          stalledByStage={metrics?.stalledByStage ?? []}
+          loading={loading}
+        />
+      </motion.div>
+
+      {/* ───── BACKLOG BY STATUS + FINANCIAL ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
+          Eficiência operacional e resultado financeiro
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <BacklogByStatusChart
             data={metrics?.backlogByStatus ?? []}
             loading={loading}
           />
-          <SimpleFunnel
-            data={funnelData}
-            loading={loading}
-          />
-        </div>
-      </motion.div>
-
-      {/* ───── RESULTADO FINANCEIRO ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-      >
-        <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
-          Resultado financeiro e comercial
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
             <RevenueChart
               data={metrics?.monthlyFinancials ?? []}
               loading={loading}
             />
           </div>
-          <div className="rounded-xl border border-border bg-card p-5 space-y-5">
-            <h3 className="text-[11px] font-medium uppercase tracking-[0.05em] text-muted-foreground font-body">
-              Resumo do período
-            </h3>
+        </div>
+
+        {/* Financial summary */}
+        <div className="grid grid-cols-3 gap-4 mt-4">
+          <div className="rounded-xl border border-border bg-card p-4">
             <KpiCardCompact
               label="Receita fechada"
               value={metrics ? formatBRL(metrics.revenue) : "—"}
               subtitle={metrics != null && metrics.revenueChange != null ? `${metrics.revenueChange > 0 ? "+" : ""}${metrics.revenueChange}% vs anterior` : undefined}
               loading={loading}
             />
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
             <KpiCardCompact
               label="Ticket médio"
               value={metrics?.avgTicket ? formatBRL(metrics.avgTicket) : "—"}
-              subtitle={metrics ? `${metrics.closedCount} contrato${metrics.closedCount !== 1 ? "s" : ""} fechado${metrics.closedCount !== 1 ? "s" : ""}` : undefined}
+              subtitle={metrics ? `${metrics.closedCount} contrato${metrics.closedCount !== 1 ? "s" : ""}` : undefined}
               loading={loading}
             />
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
             <KpiCardCompact
               label="Contratos no período"
               value={metrics ? String(metrics.closedCount) : "—"}
@@ -346,28 +332,12 @@ export default function AdminDashboard() {
       </motion.div>
 
       {/* ───── PERFORMANCE DA EQUIPE ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.25 }}
-      >
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
         <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
           Performance da equipe
         </h2>
         <TeamPerformanceBlock
           data={metrics?.teamMetrics ?? []}
-          loading={loading}
-        />
-      </motion.div>
-
-      {/* ───── INSIGHTS ───── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
-      >
-        <InsightsPanel
-          insights={metrics?.insights ?? []}
           loading={loading}
         />
       </motion.div>
