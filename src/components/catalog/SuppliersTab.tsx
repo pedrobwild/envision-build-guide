@@ -47,6 +47,13 @@ interface Props {
 export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefresh }: Props) {
   const [search, setSearch] = useState("");
   const [tipoFilter, setTipoFilter] = useState("all");
+  const [subcategoriaFilter, setSubcategoriaFilter] = useState("all");
+
+  const subcategoriasDisponiveis = tipoFilter === "Prestadores"
+    ? SUBCATEGORIAS_PRESTADORES
+    : tipoFilter === "Produtos"
+      ? SUBCATEGORIAS_PRODUTOS
+      : [...SUBCATEGORIAS_PRESTADORES, ...SUBCATEGORIAS_PRODUTOS].sort();
 
   const filtered = suppliers.filter((s) => {
     if (search && !s.name.toLowerCase().includes(search.toLowerCase()) &&
@@ -54,6 +61,9 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
     if (tipoFilter !== "all") {
       const tipo = getTipo(s.categoria);
       if (tipo !== tipoFilter) return false;
+    }
+    if (subcategoriaFilter !== "all") {
+      if (s.categoria !== subcategoriaFilter) return false;
     }
     return true;
   });
