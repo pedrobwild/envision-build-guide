@@ -898,7 +898,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       .single();
     if (!newSec) return;
     // Duplicate items
-    const newItems: any[] = [];
+    const newItems: ItemData[] = [];
     for (const item of source.items) {
       const { data: newItem } = await supabase
         .from("items")
