@@ -97,8 +97,8 @@ export default function BudgetEditorV2() {
       const newId = await duplicateBudgetAsVersion(budgetId, user.id, reason);
       toast.success("Nova versão criada para revisão!");
       navigate(`/admin/budget/${newId}`);
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao criar versão de revisão.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao criar versão de revisão.");
     }
     setStartingRevision(false);
   };
