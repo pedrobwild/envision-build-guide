@@ -5,39 +5,69 @@ import { mockBudget } from "@/lib/orcamento-mock-data";
 import { format, addDays } from "date-fns";
 import { PUBLIC_BUDGET_SELECT, PUBLIC_SECTION_SELECT, PUBLIC_ITEM_SELECT } from "@/lib/public-columns";
 
+interface PublicBudgetRow {
+  id: string;
+  project_name: string;
+  client_name: string;
+  metragem: string | null;
+  versao: string | null;
+  date: string | null;
+  validity_days: number | null;
+  consultora_comercial: string | null;
+}
+
+interface PublicSectionRow {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  notes: string | null;
+  included_bullets: string[] | null;
+}
+
+interface PublicItemRow {
+  id: string;
+  section_id: string;
+  title: string;
+  description: string | null;
+  qty: number | null;
+  unit: string | null;
+  included_rooms: string[] | null;
+}
+
 async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
   // Fetch budget — public-safe columns only
-  const { data: budget, error: budgetError } = await supabase
+  const { data: budgetRaw, error: budgetError } = await supabase
     .from("budgets")
     .select(PUBLIC_BUDGET_SELECT)
     .eq("id", projectId)
     .single();
 
   if (budgetError) throw new Error(`Erro ao carregar orçamento: ${budgetError.message}`);
-  if (!budget) throw new Error("Orçamento não encontrado");
+  if (!budgetRaw) throw new Error("Orçamento não encontrado");
+  const budget = budgetRaw as unknown as PublicBudgetRow;
 
   // Fetch sections ordered — public-safe columns only
-  const { data: sections, error: sectionsError } = await supabase
+  const { data: sectionsRaw, error: sectionsError } = await supabase
     .from("sections")
     .select(PUBLIC_SECTION_SELECT)
     .eq("budget_id", projectId)
     .order("order_index", { ascending: true });
 
   if (sectionsError) throw new Error(`Erro ao carregar seções: ${sectionsError.message}`);
+  const sections = (sectionsRaw ?? []) as unknown as PublicSectionRow[];
 
   // Fetch all items for these sections
-  const sectionIds = (sections ?? []).map((s) => s.id);
-  let items: typeof itemsData = [];
-  let itemsData: Awaited<ReturnType<typeof supabase.from<"items">>>["data"] = [];
+  const sectionIds = sections.map((s) => s.id);
+  let items: PublicItemRow[] = [];
   if (sectionIds.length > 0) {
-    const { data: fetchedItems, error: itemsError } = await supabase
+    const { data: itemsData, error: itemsError } = await supabase
       .from("items")
       .select(PUBLIC_ITEM_SELECT)
       .in("section_id", sectionIds)
       .order("order_index", { ascending: true });
 
     if (itemsError) throw new Error(`Erro ao carregar itens: ${itemsError.message}`);
-    items = itemsData ?? [];
+    items = (itemsData ?? []) as unknown as PublicItemRow[];
   }
 
   // Map to BudgetMeta

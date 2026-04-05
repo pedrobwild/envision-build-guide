@@ -74,7 +74,7 @@ function useTemplates() {
     queryKey: ["admin-budget-templates"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("budget_templates" as any)
+        .from("budget_templates")
         .select("*")
         .order("name");
       if (error) throw error;
@@ -89,7 +89,7 @@ function useTemplateSections(templateId: string | null) {
     enabled: !!templateId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("budget_template_sections" as any)
+        .from("budget_template_sections")
         .select("*")
         .eq("template_id", templateId!)
         .order("order_index");
@@ -105,7 +105,7 @@ function useTemplateItems(sectionId: string | null) {
     enabled: !!sectionId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("budget_template_items" as any)
+        .from("budget_template_items")
         .select("*")
         .eq("template_section_id", sectionId!)
         .order("order_index");
@@ -143,13 +143,13 @@ function TemplateDialog({
 
     if (isEdit) {
       const { error } = await supabase
-        .from("budget_templates" as any)
+        .from("budget_templates")
         .update(payload)
         .eq("id", template!.id);
       if (error) { toast.error("Erro ao atualizar"); setSaving(false); return; }
     } else {
       const { error } = await supabase
-        .from("budget_templates" as any)
+        .from("budget_templates")
         .insert(payload);
       if (error) { toast.error("Erro ao criar"); setSaving(false); return; }
     }
@@ -225,10 +225,10 @@ function SectionDialog({
     };
 
     if (isEdit) {
-      const { error } = await supabase.from("budget_template_sections" as any).update(payload).eq("id", section!.id);
+      const { error } = await supabase.from("budget_template_sections").update(payload).eq("id", section!.id);
       if (error) { toast.error("Erro ao atualizar seção"); setSaving(false); return; }
     } else {
-      const { error } = await supabase.from("budget_template_sections" as any).insert(payload);
+      const { error } = await supabase.from("budget_template_sections").insert(payload);
       if (error) { toast.error("Erro ao criar seção"); setSaving(false); return; }
     }
 
@@ -306,10 +306,10 @@ function ItemDialog({
     };
 
     if (isEdit) {
-      const { error } = await supabase.from("budget_template_items" as any).update(payload).eq("id", item!.id);
+      const { error } = await supabase.from("budget_template_items").update(payload).eq("id", item!.id);
       if (error) { toast.error("Erro ao atualizar item"); setSaving(false); return; }
     } else {
-      const { error } = await supabase.from("budget_template_items" as any).insert(payload);
+      const { error } = await supabase.from("budget_template_items").insert(payload);
       if (error) { toast.error("Erro ao criar item"); setSaving(false); return; }
     }
 
@@ -476,7 +476,7 @@ export default function BudgetTemplatesPage() {
 
   const toggleActive = async (template: Template) => {
     const { error } = await supabase
-      .from("budget_templates" as any)
+      .from("budget_templates")
       .update({ is_active: !template.is_active })
       .eq("id", template.id);
     if (error) { toast.error("Erro ao atualizar status"); return; }
