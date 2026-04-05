@@ -119,7 +119,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               </span>
             )}
             {!cfg.hide_consultora && budget.consultora_comercial && (
-              <span className="hidden lg:block w-px h-4 bg-white/20" />
+              <span className="hidden lg:block w-px h-4 bg-white/30" />
             )}
             <motion.button
               whileHover={{ scale: 1.03 }}
