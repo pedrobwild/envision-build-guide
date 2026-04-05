@@ -89,7 +89,7 @@ export function CompactKanbanCard({
   const [revealed, setRevealed] = useState(false);
   const actionsOpacity = useTransform(x, [-ACTION_WIDTH, -40, 0], [1, 0.5, 0]);
 
-  const handleDragEnd = (_: any, info: PanInfo) => {
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.x < SWIPE_THRESHOLD) {
       setRevealed(true);
     } else {

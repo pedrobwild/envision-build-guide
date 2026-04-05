@@ -24,7 +24,7 @@ export function OptionalItemsSimulator({
   projectName,
 }: OptionalItemsSimulatorProps) {
   const optionalSections = useMemo(
-    () => sections.filter((s: any) => s.is_optional),
+    () => sections.filter((s) => s.is_optional),
     [sections]
   );
 

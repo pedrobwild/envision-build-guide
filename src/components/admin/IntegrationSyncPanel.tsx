@@ -98,7 +98,7 @@ export default function IntegrationSyncPanel() {
       });
       queryClient.invalidateQueries({ queryKey: ["integration-sync-log"] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast({ title: "Erro no retry", description: err.message, variant: "destructive" });
     },
     onSettled: () => setRetrying(false),

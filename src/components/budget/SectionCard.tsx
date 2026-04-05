@@ -252,7 +252,7 @@ export function SectionCard({
               className="overflow-hidden"
             >
               <div className="px-3 sm:px-4 py-2.5 sm:py-3">
-                {stableItems.map((item: any, i: number) => (
+                {stableItems.map((item, i) => (
                   <ExpandableItemRow
                     key={item.id}
                     item={item}
