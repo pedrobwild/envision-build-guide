@@ -626,7 +626,7 @@ export default function AdminOperationsDashboard() {
 
   async function quickChangeStatus(b: BudgetRow, newStatus: InternalStatus) {
     const { error } = await supabase.from("budgets")
-      .update({ internal_status: newStatus, updated_at: new Date().toISOString() } as any)
+      .update({ internal_status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", b.id);
     if (error) { toast.error("Erro ao atualizar"); return; }
     if (user) {

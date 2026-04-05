@@ -561,9 +561,9 @@ export default function BudgetEditorV2() {
                         Custo real de execução. Nunca exposto ao cliente.
                       </p>
                     </div>
-                    {(budget as any).internal_cost > 0 && (
+                    {Number(budget.internal_cost) > 0 && (
                       <div className="text-sm font-mono text-muted-foreground tabular-nums">
-                        Custo: {formatBRL((budget as any).internal_cost)}
+                        Custo: {formatBRL(Number(budget.internal_cost))}
                       </div>
                     )}
                   </div>

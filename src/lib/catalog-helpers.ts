@@ -63,7 +63,7 @@ export function buildSupplierPriceSnapshot(price: SupplierPrice) {
   return {
     catalog_item_supplier_price_id: price.id,
     supplier_id: price.supplier_id,
-    supplier_name: (price.suppliers as any)?.name ?? null,
+    supplier_name: (price.suppliers as { name?: string } | null)?.name ?? null,
     supplier_sku: price.supplier_sku,
     unit_price: price.unit_price,
     currency: price.currency,

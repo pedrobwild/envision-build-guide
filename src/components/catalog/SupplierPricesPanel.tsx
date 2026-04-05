@@ -240,7 +240,7 @@ export function SupplierPricesPanel({ catalogItemId, catalogItemName, suppliers 
                     )}
                   </TableCell>
                   <TableCell className="font-medium">
-                    {(p.suppliers as any)?.name ?? "—"}
+                    {(p.suppliers as { name?: string } | null)?.name ?? "—"}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{p.supplier_sku ?? "—"}</TableCell>
                   <TableCell className="text-right font-mono text-sm">{formatBRL(p.unit_price)}</TableCell>

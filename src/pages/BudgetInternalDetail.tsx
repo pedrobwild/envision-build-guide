@@ -312,8 +312,8 @@ export default function BudgetInternalDetail() {
             </Button>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                {(budget as any).sequential_code && (
-                  <span className="text-xs font-mono text-muted-foreground/70">{(budget as any).sequential_code}</span>
+                {budget.sequential_code && (
+                  <span className="text-xs font-mono text-muted-foreground/70">{budget.sequential_code}</span>
                 )}
                 <h1 className="text-lg font-semibold font-display text-foreground truncate">
                   {budget.project_name}

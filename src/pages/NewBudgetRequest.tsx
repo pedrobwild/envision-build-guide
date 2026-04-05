@@ -233,7 +233,7 @@ export default function NewBudgetRequest() {
       commercial_owner_id: commercialOwnerId || user.id,
       estimator_owner_id: estimatorOwnerId || null,
       created_by: user.id,
-    } as any).select("id").single();
+    } as Record<string, unknown>).select("id").single();
 
     if (error || !inserted) {
       console.error(error);

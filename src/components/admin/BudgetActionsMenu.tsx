@@ -151,7 +151,7 @@ export function BudgetActionsMenu({
       if (!newBudget) { toast.error("Erro ao duplicar"); return; }
 
       // Clone sections and items
-      for (const section of (original as any).sections || []) {
+      for (const section of (original.sections ?? []) as { id: string; title: string; subtitle: string | null; order_index: number; notes: string | null; tags: unknown; included_bullets: unknown; excluded_bullets: unknown; is_optional: boolean; section_price: number | null; cover_image_url: string | null; items: { id: string; title: string; description: string | null; qty: number | null; unit: string | null; internal_unit_price: number | null; internal_total: number | null; order_index: number; bdi_percentage: number | null }[] }[]) {
         const { data: newSection } = await supabase
           .from("sections")
           .insert({

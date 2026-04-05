@@ -295,7 +295,7 @@ function SupplierPricesSection({ catalogItemId, suppliers }: { catalogItemId: st
                         )}
                       </TableCell>
                       <TableCell className="text-sm font-medium">
-                        {(p.suppliers as any)?.name ?? "—"}
+                        {(p.suppliers as { name?: string } | null)?.name ?? "—"}
                         {p.supplier_sku && <span className="text-xs text-muted-foreground ml-1">({p.supplier_sku})</span>}
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm">{formatBRL(p.unit_price)}</TableCell>

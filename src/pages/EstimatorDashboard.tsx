@@ -344,7 +344,7 @@ export default function EstimatorDashboard() {
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
     const { error } = await supabase
       .from("budgets")
-      .update({ internal_status: newStatus, updated_at: new Date().toISOString() } as any)
+      .update({ internal_status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", budgetId);
 
     if (error) {
