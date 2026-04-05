@@ -51,9 +51,9 @@ export function BudgetBreakdownPanel({ budgetId }: Props) {
       if (cancelled) return;
       if (error) console.error('Failed to load sections:', error.message);
 
-      const mapped = (data || []).map((s: any) => ({
+      const mapped = (data || []).map((s) => ({
         ...s,
-        items: (s.items || []).sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)),
+        items: (s.items || []).sort((a, b) => (a.order_index || 0) - (b.order_index || 0)),
       }));
       setSections(mapped);
       setLoading(false);
