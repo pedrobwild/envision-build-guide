@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import type { BudgetWithSections } from "@/types/budget-common";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { formatBRL } from "@/lib/formatBRL";
