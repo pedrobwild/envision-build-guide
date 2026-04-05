@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +10,9 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Search, Plus, Package, Wrench, Edit2, Trash2, Filter, DollarSign,
+  Search, Plus, Package, Wrench, Edit2, Trash2, Filter,
   ToggleLeft, ToggleRight,
 } from "lucide-react";
-import { SupplierPricesPanel } from "@/components/catalog/SupplierPricesPanel";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
 import { CATALOG_SECTION_OPTIONS } from "@/lib/catalog-helpers";
 import type { CatalogItem } from "@/components/catalog/CatalogItemDialog";
