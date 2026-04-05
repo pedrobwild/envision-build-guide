@@ -8,7 +8,7 @@ import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
   PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
-  AlertTriangle, Paperclip, Rows3, Rows4, MoreVertical,
+  AlertTriangle, Paperclip, Rows3, Rows4, MoreVertical, Building2,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
@@ -378,6 +378,7 @@ function SortableItemRow({
   isItemSaving,
   searchMatch,
   compact,
+  suppliers,
   onUpdate,
   onDelete,
   onImagesChange,
@@ -390,6 +391,7 @@ function SortableItemRow({
   isItemSaving: boolean;
   searchMatch?: boolean;
   compact: boolean;
+  suppliers: { id: string; name: string }[];
   onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
@@ -602,7 +604,33 @@ function SortableItemRow({
             </div>
           </div>
 
-          {/* Mobile-only: BDI field when expanded */}
+          {/* Supplier selector */}
+          <div className="space-y-0.5">
+            <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">Fornecedor</label>
+            <div className="flex items-center gap-1.5 max-w-xl">
+              <Building2 className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+              <select
+                value={item.catalog_snapshot?.supplier_id || ""}
+                onChange={(e) => {
+                  const supplierId = e.target.value || null;
+                  const supplier = suppliers.find(s => s.id === supplierId);
+                  const updatedSnapshot = {
+                    ...(item.catalog_snapshot || {}),
+                    supplier_id: supplierId,
+                    supplier_name: supplier?.name || null,
+                  };
+                  onUpdate(sectionId, item.id, "catalog_snapshot", updatedSnapshot);
+                }}
+                className="w-full h-7 px-2 rounded-md border border-border/40 bg-background text-xs font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Sem fornecedor</option>
+                {suppliers.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="flex items-center gap-3 md:hidden pt-0.5">
             <div className="space-y-0.5">
               <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">BDI%</label>
@@ -682,6 +710,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   });
   const searchRef = useRef<HTMLInputElement>(null);
   const timers = useRef<Record<string, NodeJS.Timeout>>({});
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
+
+  // Load suppliers once
+  useEffect(() => {
+    supabase.from("suppliers").select("id, name").eq("is_active", true).order("name").then(({ data }) => {
+      if (data) setSuppliers(data);
+    });
+  }, []);
 
   // Persist expanded state
   useEffect(() => {
@@ -1372,6 +1408,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                       onUpdate={updateItem}
                                       onDelete={deleteItem}
                                       onImagesChange={handleImagesChange}
+                                      suppliers={suppliers}
                                       onPromoteToCatalog={promoteToCatalog}
                                     />
                                   ))
