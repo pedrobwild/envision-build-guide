@@ -610,7 +610,7 @@ function SortableItemRow({
             <div className="flex items-center gap-1.5 max-w-xl">
               <Building2 className="h-3 w-3 text-muted-foreground/40 shrink-0" />
               <select
-                value={item.catalog_snapshot?.supplier_id || ""}
+                value={(item.catalog_snapshot as Record<string, unknown> | null)?.supplier_id as string || ""}
                 onChange={(e) => {
                   const supplierId = e.target.value || null;
                   const supplier = suppliers.find(s => s.id === supplierId);
