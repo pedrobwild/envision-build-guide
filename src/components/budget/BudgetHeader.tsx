@@ -114,19 +114,19 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               <ReclameAquiSeal />
             </div>
             {!cfg.hide_consultora && budget.consultora_comercial && (
-              <span className="hidden lg:inline text-xs text-white/80 font-body">
+              <span className="hidden lg:inline text-xs text-white/90 font-body">
                 {budget.consultora_comercial}, sua consultora
               </span>
             )}
             {!cfg.hide_consultora && budget.consultora_comercial && (
-              <span className="hidden lg:block w-px h-4 bg-white/20" />
+              <span className="hidden lg:block w-px h-4 bg-white/30" />
             )}
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={onExportPdf}
               disabled={exporting}
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 backdrop-blur-md transition-all text-xs font-body font-medium disabled:opacity-50 border border-white/10"
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg bg-white/15 text-white hover:bg-white/25 backdrop-blur-md transition-all text-xs font-body font-medium disabled:opacity-50 border border-white/15"
               data-pdf-hide
             >
               {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
@@ -140,8 +140,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           variants={fadeUp} custom={0} initial="hidden" animate="visible"
           className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3 hidden lg:block"
         >
-          <div className="py-2 border-b border-white/[0.08]">
-            <p className="text-xs font-body text-white/60 leading-relaxed">
+          <div className="py-2 border-b border-white/[0.12]">
+            <p className="text-xs font-body text-white/70 leading-relaxed">
               Bwild Reformas LTDA · CNPJ: 47.350.338/0001-37 · Responsável Técnico: Thiago Dantas do Amor · CAU: A162437-7
             </p>
           </div>
@@ -166,19 +166,19 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {condominio && (
                 <>
                   <span className="text-white/95 font-medium">{condominio}</span>
-                  {(neighborhood || area || version) && <span className="text-white/40">·</span>}
+                  {(neighborhood || area || version) && <span className="text-white/50">·</span>}
                 </>
               )}
               {neighborhood && (
                 <>
                   <span className="text-white/95 font-medium">{neighborhood}</span>
-                  {(area || version) && <span className="text-white/40">·</span>}
+                  {(area || version) && <span className="text-white/50">·</span>}
                 </>
               )}
               {area && (
                 <>
                   <span className="text-white/95 font-medium">{area}</span>
-                  {version && <span className="text-white/40">·</span>}
+                  {version && <span className="text-white/50">·</span>}
                 </>
               )}
               {version && (
@@ -186,7 +186,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               )}
               {budget.prazo_dias_uteis && (
                 <>
-                  <span className="text-white/40">·</span>
+                  <span className="text-white/50">·</span>
                   <span className="text-white/95 font-medium">{budget.prazo_dias_uteis} dias úteis</span>
                 </>
               )}
@@ -195,7 +195,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             {/* Company info — mobile */}
             <motion.p
               variants={fadeUp} custom={0.7} initial="hidden" animate="visible"
-              className="text-[10px] font-body text-white/50 leading-relaxed pt-1"
+              className="text-[10px] font-body text-white/60 leading-relaxed pt-1"
             >
               Bwild Reformas LTDA · CNPJ 47.350.338/0001-37
               <br />
@@ -219,36 +219,36 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 <div className="flex items-center gap-2 text-sm font-body flex-wrap">
                   {condominio && (
                     <>
-                      <span className="text-white/70 text-xs">Condomínio</span>
-                      <span className="text-white/95 font-medium">{condominio}</span>
-                      {(neighborhood || area || version || dateStr) && <span className="text-white/40">·</span>}
+                      <span className="text-white/80 text-xs">Condomínio</span>
+                      <span className="text-white font-medium">{condominio}</span>
+                      {(neighborhood || area || version || dateStr) && <span className="text-white/50">·</span>}
                     </>
                   )}
                   {neighborhood && (
                     <>
-                      <span className="text-white/70 text-xs">Bairro</span>
-                      <span className="text-white/95 font-medium">{neighborhood}</span>
-                      {(area || version || dateStr) && <span className="text-white/40">·</span>}
+                      <span className="text-white/80 text-xs">Bairro</span>
+                      <span className="text-white font-medium">{neighborhood}</span>
+                      {(area || version || dateStr) && <span className="text-white/50">·</span>}
                     </>
                   )}
                   {area && (
                     <>
-                      <span className="text-white/70 text-xs">Área</span>
-                      <span className="text-white/95 font-medium">{area}</span>
-                      {(version || dateStr) && <span className="text-white/40">·</span>}
+                      <span className="text-white/80 text-xs">Área</span>
+                      <span className="text-white font-medium">{area}</span>
+                      {(version || dateStr) && <span className="text-white/50">·</span>}
                     </>
                   )}
                   {version && (
                     <>
-                      <span className="text-white/70 text-xs">Versão</span>
-                      <span className="text-white/95 font-medium">{version}</span>
-                      {dateStr && <span className="text-white/40">·</span>}
+                      <span className="text-white/80 text-xs">Versão</span>
+                      <span className="text-white font-medium">{version}</span>
+                      {dateStr && <span className="text-white/50">·</span>}
                     </>
                   )}
                   {dateStr && (
                     <>
-                      <span className="text-white/70 text-xs">Elaboração</span>
-                      <span className="text-white/95 font-medium">{dateStr}</span>
+                      <span className="text-white/80 text-xs">Elaboração</span>
+                      <span className="text-white font-medium">{dateStr}</span>
                     </>
                   )}
                 </div>
@@ -257,7 +257,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {!cfg.hide_tagline && (
                 <motion.p
                   variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                  className="text-xs text-white/80 font-body"
+                  className="text-xs text-white/90 font-body"
                 >
                   {tagline}
                 </motion.p>
