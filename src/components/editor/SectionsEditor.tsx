@@ -343,7 +343,7 @@ function SortableSectionCard({
   children,
 }: {
   section: SectionData;
-  children: (listeners: any) => React.ReactNode;
+  children: (listeners: Record<string, unknown> | undefined) => React.ReactNode;
 }) {
   const {
     attributes,
