@@ -155,6 +155,7 @@ export default function EstimatorDashboard() {
   useEffect(() => {
     if (!user || profileLoading) return;
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profileLoading]);
 
   async function loadData() {
