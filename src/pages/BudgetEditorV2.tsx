@@ -349,8 +349,8 @@ export default function BudgetEditorV2() {
                       const newId = await duplicateBudgetAsVersion(budgetId!, user.id, "Edição pós-publicação");
                       toast.success("Nova versão criada!");
                       navigate(`/admin/budget/${newId}`);
-                    } catch (err: any) {
-                      toast.error(err?.message || "Erro ao criar versão");
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Erro ao criar versão");
                     }
                     setCreatingVersionFromBanner(false);
                   }}
