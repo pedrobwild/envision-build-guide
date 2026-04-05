@@ -172,22 +172,11 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
             </div>
           </div>
 
-          {/* Row 2: CNPJ/CPF + Categoria + Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Row 2: CNPJ/CPF + Status */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>CNPJ/CPF</Label>
               <Input value={form.cnpj_cpf} onChange={set("cnpj_cpf")} />
-            </div>
-            <div>
-              <Label>Categoria</Label>
-              <Select value={form.categoria} onValueChange={(v) => setForm((p) => ({ ...p, categoria: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIAS.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div>
               <Label>Status</Label>
@@ -199,6 +188,36 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
                 <SelectContent>
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Row 3: Tipo + Subcategoria */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>Tipo *</Label>
+              <Select value={form.tipo} onValueChange={(v) => setForm((p) => ({ ...p, tipo: v, subcategoria: "" }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS_FORNECEDOR.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Subcategoria</Label>
+              <Select
+                value={form.subcategoria}
+                onValueChange={(v) => setForm((p) => ({ ...p, subcategoria: v }))}
+                disabled={!form.tipo}
+              >
+                <SelectTrigger><SelectValue placeholder={form.tipo ? "Selecione" : "Escolha o tipo primeiro"} /></SelectTrigger>
+                <SelectContent>
+                  {(SUBCATEGORIAS[form.tipo] ?? []).map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
