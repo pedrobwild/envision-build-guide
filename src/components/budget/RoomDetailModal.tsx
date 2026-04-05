@@ -4,11 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Lightbox } from "./Lightbox";
 import { motion } from "framer-motion";
 
+import type { SectionWithItems, ItemWithImages } from "@/types/budget-common";
+
 interface RoomDetailModalProps {
   open: boolean;
   onClose: () => void;
   roomName: string;
-  sections: any[];
+  sections: SectionWithItems[];
   roomId: string;
 }
 
@@ -18,9 +20,9 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // Collect only LOCAL items that include this room
-  const localItems: { item: any; sectionTitle: string }[] = [];
-  sections.forEach((section: any) => {
-    (section.items || []).forEach((item: any) => {
+  const localItems: { item: ItemWithImages; sectionTitle: string }[] = [];
+  sections.forEach((section) => {
+    (section.items || []).forEach((item) => {
       const ct = item.coverage_type || "geral";
       if (ct !== "geral") {
         const inc: string[] = item.included_rooms || [];
