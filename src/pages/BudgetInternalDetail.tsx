@@ -170,7 +170,7 @@ export default function BudgetInternalDetail() {
 
     const { error } = await supabase
       .from("budgets")
-      .update({ internal_status: newStatus, updated_at: new Date().toISOString() } as any)
+      .update({ internal_status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", budget.id);
 
     if (error) {
