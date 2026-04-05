@@ -104,16 +104,57 @@ export default function BudgetEditorV2() {
   };
 
   useEffect(() => {
-    loadBudget();
-  }, [budgetId]);
+    let cancelled = false;
+
+    async function loadBudgetData() {
+      if (!budgetId) return;
+      const { data: b, error: bErr } = await supabase.from("budgets").select("*").eq("id", budgetId).single();
+      if (cancelled) return;
+      if (bErr || !b) { navigate("/admin"); return; }
+      setBudget(b);
+
+      if (b.version_group_id) {
+        const { count } = await supabase
+          .from("budgets")
+          .select("id", { count: "exact", head: true })
+          .eq("version_group_id", b.version_group_id);
+        if (!cancelled) setVersionCount(count ?? 1);
+      } else {
+        if (!cancelled) setVersionCount(1);
+      }
+
+      const { data: secs, error: secsErr } = await supabase
+        .from("sections")
+        .select("*, items(*, item_images(*))")
+        .eq("budget_id", budgetId)
+        .order("order_index", { ascending: true });
+
+      if (cancelled) return;
+      if (secsErr) console.error('Failed to load sections:', secsErr.message);
+
+      const sorted = (secs || []).map(s => ({
+        ...s,
+        items: (s.items || [])
+          .sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
+          .map((item: any) => ({
+            ...item,
+            images: item.item_images || [],
+          })),
+      }));
+      setSections(sorted);
+    }
+
+    loadBudgetData();
+    return () => { cancelled = true; };
+  }, [budgetId, navigate]);
 
   // Count media files for badge
   useEffect(() => {
     if (!budgetId) return;
     const publicId = budget?.public_id || budget?.id;
     if (!publicId) return;
+    let cancelled = false;
     const folders = ["3d", "fotos", "exec", "video"].map(f => `${publicId}/${f}`);
-    let total = 0;
     Promise.all(
       folders.map(folder =>
         supabase.storage.from("budget-assets").list(folder, { limit: 100 }).then(({ data }) =>
@@ -121,44 +162,10 @@ export default function BudgetEditorV2() {
         )
       )
     ).then(counts => {
-      total = counts.reduce((a, b) => a + b, 0);
-      setMediaCount(total);
+      if (!cancelled) setMediaCount(counts.reduce((a, b) => a + b, 0));
     });
+    return () => { cancelled = true; };
   }, [budgetId, budget?.public_id, budget?.id]);
-
-  const loadBudget = async () => {
-    if (!budgetId) return;
-    const { data: b } = await supabase.from("budgets").select("*").eq("id", budgetId).single();
-    if (!b) { navigate("/admin"); return; }
-    setBudget(b);
-
-    if (b.version_group_id) {
-      const { count } = await supabase
-        .from("budgets")
-        .select("id", { count: "exact", head: true })
-        .eq("version_group_id", b.version_group_id);
-      setVersionCount(count ?? 1);
-    } else {
-      setVersionCount(1);
-    }
-
-    const { data: secs } = await supabase
-      .from("sections")
-      .select("*, items(*, item_images(*))")
-      .eq("budget_id", budgetId)
-      .order("order_index", { ascending: true });
-
-    const sorted = (secs || []).map(s => ({
-      ...s,
-      items: (s.items || [])
-        .sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
-        .map((item: any) => ({
-          ...item,
-          images: item.item_images || [],
-        })),
-    }));
-    setSections(sorted);
-  };
 
   // Fields that must never be changed via auto-save (only via WorkflowBar or explicit actions)
   const PROTECTED_FIELDS = useRef(new Set([
