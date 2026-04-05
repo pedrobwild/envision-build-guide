@@ -569,13 +569,13 @@ export default function TemplateEditorPage() {
         template_section_id: sectionId,
         title: "",
         order_index: section.items.length,
-      } as any)
+      })
       .select("*")
       .single();
     if (error || !data) { toast.error("Erro ao criar item"); return; }
     setSections((prev) =>
       prev.map((s) =>
-        s.id === sectionId ? { ...s, items: [...s.items, data as any] } : s
+        s.id === sectionId ? { ...s, items: [...s.items, data as TemplateItemData] } : s
       )
     );
   };
