@@ -41,6 +41,11 @@ interface Props {
   onRefresh: () => void;
 }
 
+function formatBRL(v: number | null) {
+  if (v == null) return "—";
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+}
+
 export function ItemsTab({
   items, categories, suppliers, isLoading,
   search, onSearchChange,
@@ -50,7 +55,22 @@ export function ItemsTab({
   statusFilter, onStatusFilterChange,
   onNewItem, onEditItem, onRefresh,
 }: Props) {
-  
+  const itemIds = items.map((i) => i.id);
+  const { data: primaryPrices = [] } = useQuery({
+    queryKey: ["catalog_primary_prices", itemIds],
+    queryFn: async () => {
+      if (itemIds.length === 0) return [];
+      const { data } = await supabase
+        .from("catalog_item_supplier_prices")
+        .select("catalog_item_id, unit_price")
+        .in("catalog_item_id", itemIds)
+        .eq("is_primary", true)
+        .eq("is_active", true);
+      return data ?? [];
+    },
+    enabled: itemIds.length > 0,
+  });
+  const priceMap = new Map(primaryPrices.map((p) => [p.catalog_item_id, p.unit_price]));
 
   const handleDeleteItem = async (id: string) => {
     if (!confirm("Excluir item do catálogo? Esta ação não pode ser desfeita.")) return;
