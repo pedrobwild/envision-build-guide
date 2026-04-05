@@ -8,10 +8,12 @@ export interface FloorPlanRoom {
   polygon: number[][];
 }
 
+import type { SectionWithItems } from "@/types/budget-common";
+
 interface FloorPlanViewerProps {
   floorPlanUrl: string;
   rooms: FloorPlanRoom[];
-  sections: any[];
+  sections: SectionWithItems[];
   activeRoom: string | null;
   onRoomClick: (roomId: string | null) => void;
 }
