@@ -12,10 +12,31 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-const CATEGORIAS = [
-  "Outros", "Materiais", "Mão de obra", "Equipamentos", "Projetos",
-  "Acabamentos", "Elétrica", "Hidráulica", "Marcenaria", "Vidros",
-];
+const TIPOS_FORNECEDOR = ["Prestadores", "Produtos"] as const;
+
+const SUBCATEGORIAS: Record<string, string[]> = {
+  Prestadores: [
+    "Marcenaria", "Empreita", "Vidraçaria Box", "Vidraçaria Sacada",
+    "Eletricista", "Pintor", "Instalador de Piso", "Técnico Ar-Condicionado",
+    "Gesseiro", "Serviços Gerais", "Limpeza", "Pedreiro",
+    "Instalador Fechadura Digital", "Cortinas", "Marmoraria", "Jardim Vertical",
+  ],
+  Produtos: [
+    "Eletrodomésticos", "Enxoval", "Espelhos", "Decoração", "Revestimentos",
+    "Luminárias", "Torneiras", "Cadeiras e Mesas", "Camas", "Sofás e Poltronas",
+    "Tapeçaria", "Torneiras e Cubas", "Materiais Elétricos",
+    "Materiais de Construção", "Acessórios Banheiro", "Fechadura Digital", "Tintas",
+  ],
+};
+
+function parseTipoFromCategoria(cat: string | null | undefined): { tipo: string; subcategoria: string } {
+  if (!cat) return { tipo: "", subcategoria: "" };
+  for (const tipo of TIPOS_FORNECEDOR) {
+    if (SUBCATEGORIAS[tipo].includes(cat)) return { tipo, subcategoria: cat };
+  }
+  // Legacy fallback
+  return { tipo: "", subcategoria: cat };
+}
 
 export interface Supplier {
   id: string;
@@ -50,7 +71,8 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
     name: "",
     razao_social: "",
     cnpj_cpf: "",
-    categoria: "Outros",
+    tipo: "",
+    subcategoria: "",
     is_active: true,
     telefone: "",
     email: "",
@@ -68,11 +90,13 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
 
   useEffect(() => {
     if (open) {
+      const parsed = parseTipoFromCategoria(supplier?.categoria);
       setForm({
         name: supplier?.name ?? "",
         razao_social: supplier?.razao_social ?? "",
         cnpj_cpf: supplier?.cnpj_cpf ?? "",
-        categoria: supplier?.categoria ?? "Outros",
+        tipo: parsed.tipo,
+        subcategoria: parsed.subcategoria,
         is_active: supplier?.is_active ?? true,
         telefone: supplier?.telefone ?? "",
         email: supplier?.email ?? "",
@@ -101,7 +125,7 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
       contact_info: form.telefone.trim() || form.email.trim() || null,
       razao_social: form.razao_social.trim() || null,
       cnpj_cpf: form.cnpj_cpf.trim() || null,
-      categoria: form.categoria,
+      categoria: form.subcategoria || form.tipo || null,
       is_active: form.is_active,
       telefone: form.telefone.trim() || null,
       email: form.email.trim() || null,
@@ -148,22 +172,11 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
             </div>
           </div>
 
-          {/* Row 2: CNPJ/CPF + Categoria + Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Row 2: CNPJ/CPF + Status */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>CNPJ/CPF</Label>
               <Input value={form.cnpj_cpf} onChange={set("cnpj_cpf")} />
-            </div>
-            <div>
-              <Label>Categoria</Label>
-              <Select value={form.categoria} onValueChange={(v) => setForm((p) => ({ ...p, categoria: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIAS.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div>
               <Label>Status</Label>
@@ -175,6 +188,36 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
                 <SelectContent>
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Row 3: Tipo + Subcategoria */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>Tipo *</Label>
+              <Select value={form.tipo} onValueChange={(v) => setForm((p) => ({ ...p, tipo: v, subcategoria: "" }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS_FORNECEDOR.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Subcategoria</Label>
+              <Select
+                value={form.subcategoria}
+                onValueChange={(v) => setForm((p) => ({ ...p, subcategoria: v }))}
+                disabled={!form.tipo}
+              >
+                <SelectTrigger><SelectValue placeholder={form.tipo ? "Selecione" : "Escolha o tipo primeiro"} /></SelectTrigger>
+                <SelectContent>
+                  {(SUBCATEGORIAS[form.tipo] ?? []).map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
