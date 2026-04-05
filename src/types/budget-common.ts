@@ -24,9 +24,9 @@ export interface SectionWithItems {
   qty?: number | null;
   section_price?: number | null;
   cover_image_url?: string | null;
-  tags?: unknown;
-  included_bullets?: unknown;
-  excluded_bullets?: unknown;
+  tags?: Json;
+  included_bullets?: Json;
+  excluded_bullets?: Json;
   notes?: string | null;
   is_optional?: boolean;
   budget_id?: string;
