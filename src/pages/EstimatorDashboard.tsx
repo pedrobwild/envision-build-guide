@@ -256,12 +256,7 @@ export default function EstimatorDashboard() {
     };
   };
 
-  // Summary counts aligned with the 5 funnel stages
-  const PENDING_STATUSES: string[] = ["requested", "novo", "triage", "assigned"];
-  const IN_PROGRESS_STATUSES: string[] = ["in_progress", "waiting_info", "blocked", "revision_requested"];
-  const REVIEW_STATUSES: string[] = ["ready_for_review"];
-  const DELIVERED_STATUSES: string[] = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
-  const FINISHED_STATUSES: string[] = ["lost", "archived"];
+  // Summary counts aligned with the 5 funnel stages (module-level for stable deps)
 
   const counts = useMemo(() => {
     return {
