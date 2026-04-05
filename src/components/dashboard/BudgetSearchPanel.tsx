@@ -278,13 +278,13 @@ function BudgetSearchRow({
   );
 }
 
-function getBudgetTotalQuick(b: any): number {
+function getBudgetTotalQuick(b: SearchBudget): number {
   const sectionsTotal = (b.sections || []).reduce(
-    (sum: number, s: any) => sum + calculateSectionSubtotal(s),
+    (sum: number, s: { section_price?: number | null; items?: { internal_total?: number | null }[] }) => sum + calculateSectionSubtotal(s),
     0
   );
   const adjustmentsTotal = (b.adjustments || []).reduce(
-    (sum: number, adj: any) => sum + adj.sign * Number(adj.amount),
+    (sum: number, adj: { sign: number; amount: number }) => sum + adj.sign * Number(adj.amount),
     0
   );
   return sectionsTotal + adjustmentsTotal;
