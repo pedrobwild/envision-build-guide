@@ -128,6 +128,7 @@ interface BudgetRow {
   id: string;
   client_name: string;
   project_name: string;
+  sequential_code?: string | null;
   property_type: string | null;
   city: string | null;
   bairro: string | null;
