@@ -47,19 +47,20 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
   if (!templateSections || templateSections.length === 0) return;
 
   for (const tSec of templateSections as TemplateSectionRow[]) {
+    const sectionPayload = {
+      budget_id: budgetId,
+      title: tSec.title,
+      subtitle: tSec.subtitle || null,
+      order_index: tSec.order_index,
+      notes: tSec.notes || null,
+      tags: (tSec.tags || []) as Json,
+      included_bullets: (tSec.included_bullets || []) as Json,
+      excluded_bullets: (tSec.excluded_bullets || []) as Json,
+      is_optional: tSec.is_optional || false,
+    };
     const { data: section } = await supabase
       .from("sections")
-      .insert({
-        budget_id: budgetId,
-        title: tSec.title,
-        subtitle: tSec.subtitle || null,
-        order_index: tSec.order_index,
-        notes: tSec.notes || null,
-        tags: tSec.tags || [],
-        included_bullets: tSec.included_bullets || [],
-        excluded_bullets: tSec.excluded_bullets || [],
-        is_optional: tSec.is_optional || false,
-      })
+      .insert(sectionPayload)
       .select("id")
       .single();
 
