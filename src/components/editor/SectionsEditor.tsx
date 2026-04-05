@@ -775,7 +775,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
     timers.current[key] = setTimeout(async () => {
-      await supabase.from(table as any).update(updates).eq("id", id);
+      await supabase.from(table as "sections" | "items").update(updates).eq("id", id);
       setSavingIds(prev => {
         const next = new Set(prev);
         next.delete(id);
