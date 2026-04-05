@@ -512,7 +512,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     }
   };
 
-  const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+  const set = (k: string, v: string | boolean | number | null) => setForm((p) => ({ ...p, [k]: v }));
 
   const toggleSection = (sectionId: string) => {
     setSelectedSections((prev) =>
