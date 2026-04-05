@@ -152,7 +152,7 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
 }
 
 
-import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
+import type { BudgetData, BudgetSection, BudgetItem, BudgetAdjustment, BudgetRoom } from "@/types/budget";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ projectId?: string; publicId?: string }>();
