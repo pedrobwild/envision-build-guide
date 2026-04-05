@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,12 +28,6 @@ const SUBCATEGORIAS_PRESTADORES = [
   "Instalador Fechadura Digital", "Cortinas", "Marmoraria", "Jardim Vertical",
 ];
 
-function getItemTypeFromSupplierCategoria(categoria: string | null): "product" | "service" | null {
-  if (!categoria) return null;
-  if (SUBCATEGORIAS_PRESTADORES.includes(categoria)) return "service";
-  return "product";
-}
-
 interface CatalogCategory {
   id: string;
   name: string;
@@ -47,6 +41,29 @@ interface Supplier {
   contact_info: string | null;
   is_active: boolean;
   categoria?: string | null;
+}
+
+function normalizeCategoryName(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function mergeCategories(...groups: CatalogCategory[][]) {
+  const map = new Map<string, CatalogCategory>();
+  groups.flat().forEach((category) => {
+    map.set(category.id, category);
+  });
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
+function getItemTypeFromSupplierCategoria(categoria: string | null): "product" | "service" | null {
+  if (!categoria) return null;
+  if (SUBCATEGORIAS_PRESTADORES.includes(categoria)) return "service";
+  return "product";
 }
 
 export interface CatalogItem {
@@ -327,6 +344,9 @@ function SupplierPricesSection({ catalogItemId, suppliers }: { catalogItemId: st
 
 // ─── Main Dialog ────────────────────────────────────────────────
 export function CatalogItemDialog({ open, onOpenChange, item, categories, suppliers, onSaved }: Props) {
+  const queryClient = useQueryClient();
+  const [localCategories, setLocalCategories] = useState<CatalogCategory[]>([]);
+  const availableCategories = useMemo(() => mergeCategories(categories, localCategories), [categories, localCategories]);
   const [form, setForm] = useState({
     name: item?.name ?? "",
     description: item?.description ?? "",
@@ -350,19 +370,67 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
 
   const currentItemId = item?.id ?? savedItemId;
 
+  const ensureCategoryForSupplier = useCallback(async (supplierCategoria: string) => {
+    const normalizedSupplierCategory = normalizeCategoryName(supplierCategoria);
+    const existingCategory = availableCategories.find(
+      (category) => normalizeCategoryName(category.name) === normalizedSupplierCategory
+    );
+
+    if (existingCategory) {
+      set("category_id", existingCategory.id);
+      return existingCategory.id;
+    }
+
+    const { data, error } = await supabase
+      .from("catalog_categories")
+      .insert({ name: supplierCategoria.trim() })
+      .select("id, name, description, is_active")
+      .single();
+
+    if (error) {
+      toast.error("Não foi possível vincular a categoria automaticamente");
+      return null;
+    }
+
+    setLocalCategories((prev) => mergeCategories(prev, [data as CatalogCategory]));
+    queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
+    set("category_id", data.id);
+    toast.success("Categoria criada automaticamente a partir do fornecedor");
+    return data.id;
+  }, [availableCategories, queryClient]);
+
+  const handleSupplierChange = useCallback(async (supplierId: string) => {
+    set("default_supplier_id", supplierId);
+
+    const supplier = suppliers.find((entry) => entry.id === supplierId);
+    if (!supplier?.categoria) return;
+
+    const autoType = getItemTypeFromSupplierCategoria(supplier.categoria);
+    if (autoType) set("item_type", autoType);
+
+    await ensureCategoryForSupplier(supplier.categoria);
+  }, [suppliers, ensureCategoryForSupplier]);
+
   const handleCreateCategory = useCallback(async () => {
     const name = newCategoryName.trim();
     if (!name) { toast.error("Nome da categoria é obrigatório"); return; }
     setSavingCategory(true);
-    const { data, error } = await supabase.from("catalog_categories").insert({ name }).select("id").single();
+    const { data, error } = await supabase
+      .from("catalog_categories")
+      .insert({ name })
+      .select("id, name, description, is_active")
+      .single();
     setSavingCategory(false);
     if (error) { toast.error("Erro ao criar categoria"); return; }
+    const createdCategory = data as CatalogCategory;
+    setLocalCategories((prev) => mergeCategories(prev, [createdCategory]));
+    queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
     toast.success("Categoria criada");
     setCreatingCategory(false);
     setNewCategoryName("");
-    set("category_id", data.id);
-    onSaved(); // refresh categories list
-  }, [newCategoryName, onSaved]);
+    set("category_id", createdCategory.id);
+    onSaved();
+  }, [newCategoryName, onSaved, queryClient]);
 
   useEffect(() => {
     if (item) {
@@ -374,6 +442,16 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
       });
     }
   }, [item]);
+
+  useEffect(() => {
+    if (!open) return;
+    setLocalCategories([]);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !form.default_supplier_id) return;
+    void handleSupplierChange(form.default_supplier_id);
+  }, [form.default_supplier_id, handleSupplierChange, open]);
 
   const persistImageOnExistingItem = async (nextImageUrl: string | null) => {
     const targetId = item?.id ?? savedItemId;
@@ -543,7 +621,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
                   <Select value={form.category_id} onValueChange={(v) => set("category_id", v)}>
                     <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      {categories.filter((c) => c.is_active).map((c) => (
+                      {availableCategories.filter((c) => c.is_active).map((c) => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -572,19 +650,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Fornecedor principal</Label>
-              <Select value={form.default_supplier_id} onValueChange={(v) => {
-                set("default_supplier_id", v);
-                const sup = suppliers.find((s) => s.id === v);
-                if (sup?.categoria) {
-                  const autoType = getItemTypeFromSupplierCategoria(sup.categoria);
-                  if (autoType) set("item_type", autoType);
-                  // Auto-fill category by matching supplier's subcategoria to catalog_categories name
-                  const matchedCat = categories.find(
-                    (c) => c.is_active && c.name.toLowerCase() === sup.categoria!.toLowerCase()
-                  );
-                  if (matchedCat) set("category_id", matchedCat.id);
-                }
-              }}>
+              <Select value={form.default_supplier_id} onValueChange={(value) => { void handleSupplierChange(value); }}>
                 <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                 <SelectContent>
                   {suppliers.filter((s) => s.is_active).map((s) => (
