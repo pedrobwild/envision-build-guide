@@ -45,6 +45,10 @@ function calcSaleUnit(cost: number | null | undefined, bdi: number | null | unde
   return (Number(cost) || 0) * (1 + (Number(bdi) || 0) / 100);
 }
 
+function calcMargin(cost: number | null | undefined, bdi: number | null | undefined): number {
+  return (Number(cost) || 0) * ((Number(bdi) || 0) / 100);
+}
+
 export function ItemDetailSheet({ open, onOpenChange, item, sectionId, budgetId, onUpdate, onImagesChange }: ItemDetailSheetProps) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
