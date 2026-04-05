@@ -189,7 +189,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         from_status: oldStatus,
         to_status: newStatus,
         note: note || null,
-      } as any);
+      });
 
       if (note) {
         await supabase.from("budget_comments").insert({
