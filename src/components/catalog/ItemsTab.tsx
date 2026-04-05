@@ -159,7 +159,7 @@ export function ItemsTab({
             <TableHeader>
               <TableRow className="bg-muted/30">
                 <TableHead>Nome</TableHead>
-                <TableHead className="w-24">Tipo</TableHead>
+                <TableHead className="w-28 text-right">Preço unit.</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead className="w-20">Unidade</TableHead>
                 <TableHead>Fornecedor</TableHead>
@@ -183,14 +183,8 @@ export function ItemsTab({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs whitespace-nowrap">
-                        {item.item_type === "product" ? (
-                          <><Package className="h-3 w-3 mr-1" />Produto</>
-                        ) : (
-                          <><Wrench className="h-3 w-3 mr-1" />Serviço</>
-                        )}
-                      </Badge>
+                    <TableCell className="text-right font-mono text-sm">
+                      {formatBRL(priceMap.get(item.id) ?? null)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {(item.catalog_categories as CatalogCategory | null)?.name ?? "—"}
