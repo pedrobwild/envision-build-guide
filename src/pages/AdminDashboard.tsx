@@ -169,6 +169,15 @@ export default function AdminDashboard() {
         </div>
       </motion.div>
 
+      {/* ───── QUICK SEARCH ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <BudgetSearchPanel
+          budgets={budgets}
+          profiles={profiles}
+          onRefresh={loadData}
+        />
+      </motion.div>
+
       {/* ───── ALERTS CENTER (only if alerts exist) ───── */}
       {(loading || (metrics?.alerts && metrics.alerts.length > 0)) && (
         <motion.div {...anim(step++ * SECTION_DELAY)}>
