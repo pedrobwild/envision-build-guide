@@ -52,6 +52,7 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
   const [search, setSearch] = useState("");
   const [tipoFilter, setTipoFilter] = useState("all");
   const [subcategoriaFilter, setSubcategoriaFilter] = useState("all");
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const subcategoriasDisponiveis = tipoFilter === "Prestadores"
     ? SUBCATEGORIAS_PRESTADORES
