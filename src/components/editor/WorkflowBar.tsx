@@ -137,12 +137,16 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const [confirmLoading, setConfirmLoading] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     supabase
       .from("profiles")
       .select("id, full_name")
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) console.error('Failed to load profiles:', error.message);
         if (data) setProfiles(data as ProfileRow[]);
       });
+    return () => { cancelled = true; };
   }, []);
 
   const getProfileName = useCallback(
