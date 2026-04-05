@@ -693,6 +693,51 @@ export type Database = {
           },
         ]
       }
+      integration_sync_log: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          entity_type: string
+          error_message: string | null
+          id: string
+          payload: Json | null
+          source_id: string
+          source_system: string
+          sync_status: string
+          synced_at: string | null
+          target_id: string | null
+          target_system: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          entity_type: string
+          error_message?: string | null
+          id?: string
+          payload?: Json | null
+          source_id: string
+          source_system: string
+          sync_status?: string
+          synced_at?: string | null
+          target_id?: string | null
+          target_system: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          entity_type?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json | null
+          source_id?: string
+          source_system?: string
+          sync_status?: string
+          synced_at?: string | null
+          target_id?: string | null
+          target_system?: string
+        }
+        Relationships: []
+      }
       item_images: {
         Row: {
           created_at: string | null
@@ -1026,6 +1071,8 @@ export type Database = {
           email: string | null
           endereco: string | null
           estado: string | null
+          external_id: string | null
+          external_system: string | null
           id: string
           is_active: boolean
           name: string
@@ -1048,6 +1095,8 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          external_id?: string | null
+          external_system?: string | null
           id?: string
           is_active?: boolean
           name?: string
@@ -1070,6 +1119,8 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          external_id?: string | null
+          external_system?: string | null
           id?: string
           is_active?: boolean
           name?: string

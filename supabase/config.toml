@@ -5,3 +5,9 @@ file_size_limit = "500MiB"
 
 [functions.notify-budget-view]
 verify_jwt = false
+
+[functions.sync-supplier-outbound]
+verify_jwt = false
+
+[functions.sync-supplier-inbound]
+verify_jwt = false
