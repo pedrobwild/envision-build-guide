@@ -632,7 +632,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       setCreatedBudgetId(budget.id);
       setStep("done");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message || "Erro ao importar.");
+      setError(err instanceof Error ? err.message : "Erro ao importar.");
       setStep("preview");
     }
   };
