@@ -190,7 +190,7 @@ function SortableItemRow({
 }: {
   item: TemplateItemData;
   sectionId: string;
-  onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
+  onUpdate: (sectionId: string, itemId: string, field: string, value: string | number | null) => void;
   onDelete: (sectionId: string, itemId: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
