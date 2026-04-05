@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/formatBRL";
 import { ItemImageGallery } from "./ItemImageGallery";
 import { Lightbox } from "./Lightbox";
+import type { ItemWithImages, ItemImageRow } from "@/types/budget-common";
 
 interface ExpandableItemRowProps {
-  item: any;
+  item: ItemWithImages;
   index: number;
   isLast: boolean;
   isExpanded: boolean;
