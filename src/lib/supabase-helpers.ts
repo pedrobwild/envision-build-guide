@@ -182,27 +182,39 @@ export async function fetchPublicBudget(publicId: string): Promise<BudgetData | 
   };
 }
 
-/**
- * Calculate the SALE subtotal for a section (applies BDI markup when available).
- * This is the value displayed to all users in lists, funnels, and summaries.
- */
-export function calculateSectionSubtotal(section: Pick<BudgetSection, 'items' | 'qty' | 'section_price'>): number {
+interface SectionLike {
+  items?: ItemLike[];
+  qty?: number | null;
+  section_price?: number | null;
+}
+
+interface ItemLike {
+  internal_total?: number | null;
+  internal_unit_price?: number | null;
+  qty?: number | null;
+  bdi_percentage?: number | null;
+}
+
+interface AdjustmentLike {
+  sign: number;
+  amount: number;
+}
+
+export function calculateSectionSubtotal(section: SectionLike): number {
   const items = section.items || [];
   const qty = section.qty || 1;
 
   if (items.length > 0) {
     const itemsSum = items.reduce(
-      (sum: number, item: BudgetItem) => {
+      (sum: number, item: ItemLike) => {
         const cost = Number(item.internal_total) || 0;
         const unitPrice = Number(item.internal_unit_price) || 0;
         const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
         const bdi = Number(item.bdi_percentage) || 0;
 
-        // If item has BDI, calculate sale price from unit price
         if (bdi > 0 && unitPrice > 0) {
           return sum + unitPrice * (1 + bdi / 100) * itemQty;
         }
-        // Fallback: use internal_total as-is (already the sale value when no BDI)
         if (cost > 0) return sum + cost;
         return sum + unitPrice * itemQty;
       },
@@ -211,20 +223,19 @@ export function calculateSectionSubtotal(section: Pick<BudgetSection, 'items' | 
     if (itemsSum > 0) return itemsSum * qty;
   }
 
-  // Flat section price (no item-level breakdown or all items have null totals)
   if (section.section_price != null) {
     return Number(section.section_price) * qty;
   }
   return 0;
 }
 
-export function calculateBudgetTotal(sections: Pick<BudgetSection, 'items' | 'qty' | 'section_price'>[], adjustments: BudgetAdjustment[] | null | undefined): number {
+export function calculateBudgetTotal(sections: SectionLike[], adjustments: AdjustmentLike[] | null | undefined): number {
   const sectionsTotal = sections.reduce(
     (sum, s) => sum + calculateSectionSubtotal(s),
     0
   );
   const adjustmentsTotal = (adjustments || []).reduce(
-    (sum: number, adj: BudgetAdjustment) => sum + (adj.sign * Number(adj.amount)),
+    (sum: number, adj: AdjustmentLike) => sum + (adj.sign * Number(adj.amount)),
     0
   );
   return sectionsTotal + adjustmentsTotal;
