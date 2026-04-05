@@ -617,7 +617,7 @@ function SortableItemRow({
             </div>
             <div className="pt-4">
               <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
-                Venda unit: {formatBRL(calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage))}
+                Margem: {formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}
               </span>
             </div>
           </div>
