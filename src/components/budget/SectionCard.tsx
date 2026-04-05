@@ -8,12 +8,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getIconForSection, SECTION_ACCENT_COLORS, SECTION_ICON_BG_COLORS } from "@/lib/section-icons";
 import { cn } from "@/lib/utils";
 import type { ScopeCategory } from "@/lib/scope-categories";
+import type { SectionWithItems, ItemWithImages } from "@/types/budget-common";
 
 
 const PREVIEW_COUNT = 3;
 
 interface SectionCardProps {
-  section: any;
+  section: SectionWithItems;
   compact: boolean;
   showItemQty: boolean;
   showItemPrices?: boolean;
