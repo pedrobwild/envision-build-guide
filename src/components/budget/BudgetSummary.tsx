@@ -230,13 +230,13 @@ function FlatSectionList({
   activeSection,
   activeRef,
 }: {
-  sections: any[];
+  sections: SectionWithItems[];
   activeSection: string | null | undefined;
   activeRef: React.MutableRefObject<HTMLButtonElement | null>;
 }) {
   return (
     <div className="space-y-0.5">
-      {sections.map((section: any) => {
+      {sections.map((section) => {
         const sectionElId = `section-${section.id}`;
         const isActive = activeSection === sectionElId;
         const subtotal = calculateSectionSubtotal(section);
