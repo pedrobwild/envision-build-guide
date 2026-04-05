@@ -932,7 +932,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     internal_unit_price: number | null;
     internal_total: number | null;
     catalog_item_id: string | null;
-    catalog_snapshot: Record<string, any> | null;
+    catalog_snapshot: Record<string, unknown> | null;
   }) => {
     const section = sections.find(s => s.id === sectionId);
     const order = section?.items.length || 0;
