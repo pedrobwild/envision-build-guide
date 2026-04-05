@@ -22,15 +22,14 @@ interface RevisionBannerProps {
   onStartRevision: () => void;
   startingRevision?: boolean;
 }
-}
 
 export function RevisionBanner({ revisionData, onStartRevision, startingRevision }: RevisionBannerProps) {
   const [expanded, setExpanded] = useState(true);
 
   const meta = revisionData.metadata ?? {};
-  const instructions: string = meta.instructions ?? "";
-  const changeTypes: string[] = meta.change_types ?? [];
-  const requestedBy: string = meta.requested_by_name ?? "Comercial";
+  const instructions = String((meta as Record<string, unknown>).instructions ?? "");
+  const changeTypes = Array.isArray((meta as Record<string, unknown>).change_types) ? (meta as Record<string, unknown>).change_types as string[] : [];
+  const requestedBy = String((meta as Record<string, unknown>).requested_by_name ?? "Comercial");
 
   return (
     <div className="rounded-xl border-2 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/30 overflow-hidden">
