@@ -75,7 +75,7 @@ export default function UserManagement() {
   const [savingRoles, setSavingRoles] = useState(false);
 
   const callAdminAPI = useCallback(
-    async (body: Record<string, any>) => {
+    async (body: Record<string, unknown>) => {
       const { data, error } = await supabase.functions.invoke("admin-users", {
         body,
       });
