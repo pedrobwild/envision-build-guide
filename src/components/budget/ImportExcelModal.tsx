@@ -121,14 +121,14 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
     onOpenChange(val);
   };
 
-  const extractStructuredPageText = useCallback((items: any[]): string => {
+  const extractStructuredPageText = useCallback((items: PdfTextItem[]): string => {
     const tokens = (items || [])
-      .map((item: any) => ({
+      .map((item) => ({
         text: String(item?.str || "").trim(),
         x: Number(item?.transform?.[4] ?? 0),
         y: Number(item?.transform?.[5] ?? 0),
       }))
-      .filter((token: any) => token.text.length > 0);
+      .filter((token) => token.text.length > 0);
 
     if (tokens.length === 0) return "";
 
