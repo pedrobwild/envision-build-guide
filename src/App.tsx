@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminLayout } from "@/components/AdminLayout";
 import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
+import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 import logoDark from "@/assets/logo-bwild-dark.png";
 
 const Login = lazy(() => import("./pages/Login"));
@@ -46,7 +47,9 @@ function LoadingFallback() {
 function AdminPage({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
-      <AdminLayout>{children}</AdminLayout>
+      <AdminLayout>
+        <PageErrorBoundary>{children}</PageErrorBoundary>
+      </AdminLayout>
     </ProtectedRoute>
   );
 }
