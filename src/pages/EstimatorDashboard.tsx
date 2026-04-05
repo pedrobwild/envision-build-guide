@@ -256,7 +256,7 @@ export default function EstimatorDashboard() {
     };
   };
 
-  // Summary counts aligned with the 5 funnel stages (module-level for stable deps)
+  // Summary counts aligned with the 5 funnel stages
 
   const counts = useMemo(() => {
     return {
