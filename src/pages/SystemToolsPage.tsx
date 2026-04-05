@@ -293,6 +293,9 @@ export default function SystemToolsPage() {
         </CardContent>
       </Card>
 
+      {/* Integration Sync Monitor */}
+      <IntegrationSyncPanel />
+
       {/* Remaining cards */}
       <div className="space-y-3">
         {TOOL_CARDS.slice(1).map((card) => (
