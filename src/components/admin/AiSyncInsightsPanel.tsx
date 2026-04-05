@@ -59,7 +59,7 @@ export default function AiSyncInsightsPanel() {
     } catch (err: unknown) {
       toast({
         title: "Erro na análise",
-        description: err.message,
+        description: err instanceof Error ? err.message : "Erro desconhecido",
         variant: "destructive",
       });
     } finally {
