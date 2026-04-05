@@ -473,7 +473,7 @@ export default function PublicBudget() {
             )}
 
             {/* ── Mobile optional items simulator ── */}
-            {(budget as any).show_optional_items && (
+            {budget.show_optional_items && (
               <div className="lg:hidden">
                 <OptionalItemsSimulator
                   budgetId={budget.id}
