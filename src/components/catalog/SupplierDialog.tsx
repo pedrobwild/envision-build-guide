@@ -12,10 +12,31 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-const CATEGORIAS = [
-  "Outros", "Materiais", "Mão de obra", "Equipamentos", "Projetos",
-  "Acabamentos", "Elétrica", "Hidráulica", "Marcenaria", "Vidros",
-];
+const TIPOS_FORNECEDOR = ["Prestadores", "Produtos"] as const;
+
+const SUBCATEGORIAS: Record<string, string[]> = {
+  Prestadores: [
+    "Marcenaria", "Empreita", "Vidraçaria Box", "Vidraçaria Sacada",
+    "Eletricista", "Pintor", "Instalador de Piso", "Técnico Ar-Condicionado",
+    "Gesseiro", "Serviços Gerais", "Limpeza", "Pedreiro",
+    "Instalador Fechadura Digital", "Cortinas", "Marmoraria", "Jardim Vertical",
+  ],
+  Produtos: [
+    "Eletrodomésticos", "Enxoval", "Espelhos", "Decoração", "Revestimentos",
+    "Luminárias", "Torneiras", "Cadeiras e Mesas", "Camas", "Sofás e Poltronas",
+    "Tapeçaria", "Torneiras e Cubas", "Materiais Elétricos",
+    "Materiais de Construção", "Acessórios Banheiro", "Fechadura Digital", "Tintas",
+  ],
+};
+
+function parseTipoFromCategoria(cat: string | null | undefined): { tipo: string; subcategoria: string } {
+  if (!cat) return { tipo: "", subcategoria: "" };
+  for (const tipo of TIPOS_FORNECEDOR) {
+    if (SUBCATEGORIAS[tipo].includes(cat)) return { tipo, subcategoria: cat };
+  }
+  // Legacy fallback
+  return { tipo: "", subcategoria: cat };
+}
 
 export interface Supplier {
   id: string;
