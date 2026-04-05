@@ -344,6 +344,9 @@ function SupplierPricesSection({ catalogItemId, suppliers }: { catalogItemId: st
 
 // ─── Main Dialog ────────────────────────────────────────────────
 export function CatalogItemDialog({ open, onOpenChange, item, categories, suppliers, onSaved }: Props) {
+  const queryClient = useQueryClient();
+  const [localCategories, setLocalCategories] = useState<CatalogCategory[]>([]);
+  const availableCategories = mergeCategories(categories, localCategories);
   const [form, setForm] = useState({
     name: item?.name ?? "",
     description: item?.description ?? "",
