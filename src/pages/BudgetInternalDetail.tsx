@@ -246,7 +246,7 @@ export default function BudgetInternalDetail() {
       user_id: user.id,
       event_type: "comment",
       note: newComment.trim().slice(0, 200),
-    } as any);
+    });
 
     setComments((prev) => [
       ...prev,
