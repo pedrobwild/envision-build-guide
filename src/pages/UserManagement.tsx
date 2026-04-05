@@ -135,8 +135,8 @@ export default function UserManagement() {
       toast.success("Perfis atualizados.");
       setEditUser(null);
       loadUsers();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
     }
     setSavingRoles(false);
   }
