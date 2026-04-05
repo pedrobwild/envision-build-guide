@@ -419,7 +419,7 @@ function SortableItemRow({
   const imageCount = item.images?.length || 0;
   const showExpanded = !compact || rowExpanded;
 
-  const isOptional = !!(item as any).is_optional;
+  const isOptional = !!(item as ItemData & { is_optional?: boolean }).is_optional;
   const hasBdiWarning = (Number(item.bdi_percentage) || 0) > 150;
 
   return (
