@@ -218,7 +218,7 @@ export default function SystemToolsPage() {
 
       if (res.error) throw new Error(res.error.message || "Erro na análise");
       setUxResult(res.data?.content ?? "Sem resultados.");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast({
         title: "Erro na análise",
