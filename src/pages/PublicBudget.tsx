@@ -131,7 +131,7 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
               </ul>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {allItems.map((item: any) => (
+                {allItems.map((item) => (
                   <ProductShowcaseCard
                     key={item.id}
                     item={item}
