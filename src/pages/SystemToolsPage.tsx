@@ -194,7 +194,7 @@ export default function SystemToolsPage() {
 
       setResult(res.data?.content ?? "Sem resultados.");
       setCitations(res.data?.citations ?? []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast({
         title: "Erro na pesquisa",
