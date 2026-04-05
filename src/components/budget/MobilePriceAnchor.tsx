@@ -32,12 +32,6 @@ export function MobilePriceAnchor({ total, validityDaysLeft, expired }: MobilePr
           <p className="text-2xl font-display font-bold text-foreground leading-none" style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}>
             {formatBRL(total)}
           </p>
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <CreditCard className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-            <span className="text-xs text-muted-foreground font-body">
-              ou <strong className="text-foreground">18× {formatBRL(installment18x)}</strong> sem juros
-            </span>
-          </div>
         </div>
 
         {/* Validity badge */}
