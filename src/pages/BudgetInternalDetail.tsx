@@ -186,7 +186,7 @@ export default function BudgetInternalDetail() {
       from_status: oldStatus,
       to_status: newStatus,
       note: note || null,
-    } as any);
+    });
 
     // If note provided, also save as comment
     if (note) {
