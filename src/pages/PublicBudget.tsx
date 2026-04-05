@@ -49,8 +49,10 @@ function LazyFallback() {
 }
 
 /** Collapsible photo group — collapses on mobile, always open on desktop */
+import type { ScopeCategory, CategorizedGroup } from "@/lib/scope-categories";
+
 function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
-  group: { category: { id: string; label: string }; sections: BudgetSection[] };
+  group: CategorizedGroup;
   allItems: (BudgetItem & { _sectionTitle: string })[];
   budgetId: string;
   exporting: boolean;
