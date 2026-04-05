@@ -175,7 +175,7 @@ export function StickyEditorHeader({
       {/* Layer 2 — Financial totals (compact grid on mobile) */}
       <div className="border-t border-border/20">
         <div className="max-w-[1200px] mx-auto px-3 sm:px-6 py-1.5 sm:py-0 sm:h-10 flex items-center">
-          <div className="grid grid-cols-4 gap-2 sm:flex sm:gap-6 w-full text-xs font-body">
+          <div className="grid grid-cols-5 gap-2 sm:flex sm:gap-6 w-full text-xs font-body">
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
               <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Venda</span>
               <span className="font-bold tabular-nums text-success tracking-tight text-[11px] sm:text-xs">
@@ -198,7 +198,14 @@ export function StickyEditorHeader({
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem</span>
+              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem R$</span>
+              <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
+                {formatBRL(totals.margin)}
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem %</span>
               <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
                 {totals.marginPercent.toFixed(1)}%
               </span>
