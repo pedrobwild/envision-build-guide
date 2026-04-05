@@ -152,7 +152,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       .join("\n");
   }, []);
 
-  const renderPdfPagesAsImages = useCallback(async (pdf: any, maxPages = 8) => {
+  const renderPdfPagesAsImages = useCallback(async (pdf: { numPages: number; getPage: (n: number) => Promise<{ getViewport: (opts: { scale: number }) => { width: number; height: number }; render: (opts: { canvasContext: CanvasRenderingContext2D; viewport: { width: number; height: number } }) => { promise: Promise<void> } }> }, maxPages = 8) => {
     const pageImages: string[] = [];
     const scale = 1.8;
 
