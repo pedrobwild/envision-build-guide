@@ -113,14 +113,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             <div className="hidden lg:block">
               <ReclameAquiSeal />
             </div>
-            {!cfg.hide_consultora && budget.consultora_comercial && (
-              <span className="hidden lg:inline text-xs text-white/90 font-body tracking-[-0.01em]">
-                {budget.consultora_comercial}, sua consultora
-              </span>
-            )}
-            {!cfg.hide_consultora && budget.consultora_comercial && (
-              <span className="hidden lg:block w-px h-4 bg-white/30" />
-            )}
+            {/* Consultora info hidden on public view */}
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
