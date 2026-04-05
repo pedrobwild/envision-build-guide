@@ -97,7 +97,7 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
 
   const currentVersionId = versions.find(v => v.is_current_version)?.id;
 
-  const statusBadge = (v: Record<string, unknown>) => {
+  const statusBadge = (v: VersionRow) => {
     const badges: React.ReactNode[] = [];
     if (v.is_current_version) {
       badges.push(

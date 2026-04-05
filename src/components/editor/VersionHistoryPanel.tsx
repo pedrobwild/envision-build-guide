@@ -44,7 +44,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
       setVersions(result.versions);
       setGroupId(result.groupId);
       // Fetch audit events for all versions in the group
-      const allIds = result.versions.map((v: Record<string, unknown>) => v.id as string);
+      const allIds = result.versions.map((v: VersionRow) => v.id);
       const events = await getVersionAuditEvents(allIds);
       setAuditEvents(events);
     } catch (err) {

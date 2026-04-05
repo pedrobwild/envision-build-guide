@@ -125,3 +125,31 @@ export type EditorBudgetRow = BudgetRow;
 export interface EditorSection extends SectionWithItems {
   _expanded?: boolean;
 }
+
+// ─── Version row (from getVersionHistory) ───
+export interface VersionRow {
+  id: string;
+  version_number: number | null;
+  is_current_version: boolean | null;
+  is_published_version: boolean | null;
+  status: string;
+  created_at: string | null;
+  versao: string | null;
+  project_name: string;
+  client_name: string;
+  change_reason: string | null;
+  parent_budget_id: string | null;
+  created_by: string | null;
+  created_by_name: string;
+}
+
+// ─── Budget event row (from budget_events table) ───
+export interface BudgetEventRow {
+  id: string;
+  budget_id: string;
+  event_type: string;
+  note: string | null;
+  metadata: Record<string, unknown> | null;
+  user_id: string | null;
+  created_at: string;
+}
