@@ -41,7 +41,7 @@ export interface ItemWithImages {
   order_index?: number;
   qty?: number | null;
   unit?: string | null;
-  coverage_type: string;
+  coverage_type?: string;
   included_rooms?: string[];
   excluded_rooms?: string[];
   internal_total?: number | null;
