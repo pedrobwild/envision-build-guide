@@ -89,8 +89,8 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
       setDialogOpen(false);
       setNewVersionReason("");
       navigate(`/admin/budget/${newId}`);
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao criar versão");
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : null) || "Erro ao criar versão");
     }
     setCreating(false);
   };
