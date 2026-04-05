@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TeamMember } from "@/hooks/useDashboardMetrics";
 
@@ -7,6 +9,8 @@ interface Props {
 }
 
 export function TeamPerformanceBlock({ data, loading }: Props) {
+  const navigate = useNavigate();
+
   if (loading) {
     return (
       <div className="rounded-xl border border-border bg-card p-5">
@@ -67,19 +71,34 @@ export function TeamPerformanceBlock({ data, loading }: Props) {
           </thead>
           <tbody>
             {data.map((member) => (
-              <tr key={member.id} className="border-b border-border/50 last:border-0">
+              <tr
+                key={member.id}
+                className="border-b border-border/50 last:border-0 cursor-pointer hover:bg-muted/30 transition-colors"
+                onClick={() => navigate(`/admin/operacoes?estimator=${member.id}`)}
+              >
                 <td className="py-3 pr-4">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground font-display">
+                    <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold font-display ${
+                      member.overloaded
+                        ? "bg-destructive/10 text-destructive"
+                        : "bg-muted text-muted-foreground"
+                    }`}>
                       {member.name.charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-sm font-body text-foreground font-medium truncate max-w-[140px]">
-                      {member.name}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-body text-foreground font-medium truncate max-w-[140px]">
+                        {member.name}
+                      </span>
+                      {member.overloaded && (
+                        <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                      )}
+                    </div>
                   </div>
                 </td>
                 <td className="py-3 px-2 text-center">
-                  <span className="text-sm font-mono tabular-nums font-semibold text-foreground">
+                  <span className={`text-sm font-mono tabular-nums font-semibold ${
+                    member.overloaded ? "text-destructive" : "text-foreground"
+                  }`}>
                     {member.activeBudgets}
                   </span>
                 </td>
@@ -89,8 +108,12 @@ export function TeamPerformanceBlock({ data, loading }: Props) {
                   </span>
                 </td>
                 <td className="py-3 px-2 text-center">
-                  <span className="text-sm font-mono tabular-nums text-muted-foreground">
-                    {member.avgLeadTimeDays !== null ? `${member.avgLeadTimeDays} dias` : "—"}
+                  <span className={`text-sm font-mono tabular-nums ${
+                    member.avgLeadTimeDays !== null && member.avgLeadTimeDays > 10
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-muted-foreground"
+                  }`}>
+                    {member.avgLeadTimeDays !== null ? `${member.avgLeadTimeDays}d` : "—"}
                   </span>
                 </td>
                 <td className="py-3 pl-4">
@@ -100,7 +123,7 @@ export function TeamPerformanceBlock({ data, loading }: Props) {
                         className="h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${(member.activeBudgets / maxActive) * 100}%`,
-                          backgroundColor: member.activeBudgets >= 4 ? "#ef4444" : "#0070F3",
+                          backgroundColor: member.overloaded ? "hsl(var(--destructive))" : "#0070F3",
                         }}
                       />
                     </div>
