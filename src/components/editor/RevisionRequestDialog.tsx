@@ -79,7 +79,7 @@ export function RevisionRequestDialog({
         .update({
           internal_status: "revision_requested",
           updated_at: new Date().toISOString(),
-        } as any)
+        })
         .eq("id", budgetId);
 
       if (updateErr) throw updateErr;
