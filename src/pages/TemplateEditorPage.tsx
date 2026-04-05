@@ -436,11 +436,11 @@ export default function TemplateEditorPage() {
         template_id: templateId,
         title: "Nova Seção",
         order_index: sections.length,
-      } as any)
+      })
       .select("*")
       .single();
     if (error || !data) { toast.error("Erro ao criar seção"); return; }
-    const newSec: TemplateSectionData = { ...(data as any), items: [] };
+    const newSec: TemplateSectionData = { ...data, items: [] };
     setSections((prev) => [...prev, newSec]);
     setExpandedSections((prev) => new Set(prev).add(newSec.id));
   };
@@ -456,7 +456,7 @@ export default function TemplateEditorPage() {
         order_index: sections.length,
         is_optional: section.is_optional,
         notes: section.notes,
-      } as any)
+      })
       .select("*")
       .single();
     if (!newSec) { toast.error("Erro ao duplicar"); return; }
@@ -466,7 +466,7 @@ export default function TemplateEditorPage() {
       const { data: newItem } = await supabase
         .from("budget_template_items")
         .insert({
-          template_section_id: (newSec as any).id,
+          template_section_id: newSec.id,
           title: item.title,
           description: item.description,
           unit: item.unit,
@@ -476,13 +476,13 @@ export default function TemplateEditorPage() {
           internal_total: item.internal_total,
           bdi_percentage: item.bdi_percentage,
           reference_url: item.reference_url,
-        } as any)
+        })
         .select("*")
         .single();
-      if (newItem) newItems.push(newItem as any);
+      if (newItem) newItems.push(newItem as TemplateItemData);
     }
 
-    setSections((prev) => [...prev, { ...(newSec as any), items: newItems }]);
+    setSections((prev) => [...prev, { ...newSec, items: newItems } as TemplateSectionData]);
     toast.success("Seção duplicada");
   };
 
