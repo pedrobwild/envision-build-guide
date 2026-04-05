@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { BudgetRow } from "@/types/budget-common";
+import type { Tables } from "@/integrations/supabase/types";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -31,8 +33,8 @@ import { CommentQuickTemplates } from "@/components/editor/CommentQuickTemplates
 
 interface BriefingPanelProps {
   budgetId: string;
-  budget: any;
-  onBudgetFieldChange: (field: string, value: any) => void;
+  budget: BudgetRow;
+  onBudgetFieldChange: (field: string, value: string | number | boolean | string[] | null) => void;
 }
 
 const EVENT_ICONS: Record<string, React.ElementType> = {
@@ -55,7 +57,7 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
   const isMobile = useIsMobile();
 
   const [expanded, setExpanded] = useState(() => window.innerWidth >= 1280);
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<Tables<"budget_events">[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const autoSaveTimers = useRef<Record<string, NodeJS.Timeout>>({});
   const briefingTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -101,7 +103,7 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
           filter: `budget_id=eq.${budgetId}`,
         },
         (payload) => {
-          setEvents((prev) => [payload.new as Record<string, unknown>, ...prev].slice(0, 50));
+          setEvents((prev) => [payload.new as Tables<"budget_events">, ...prev].slice(0, 50));
         }
       )
       .subscribe();
@@ -112,14 +114,14 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
     };
   }, [budgetId]);
 
-  const debouncedSave = useCallback((field: string, value: any) => {
+  const debouncedSave = useCallback((field: string, value: string | number | boolean | string[] | null) => {
     if (autoSaveTimers.current[field]) clearTimeout(autoSaveTimers.current[field]);
     autoSaveTimers.current[field] = setTimeout(async () => {
       await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", budgetId);
     }, 800);
   }, [budgetId]);
 
-  const handleFieldChange = useCallback((field: string, value: any) => {
+  const handleFieldChange = useCallback((field: string, value: string | number | boolean | string[] | null) => {
     onBudgetFieldChange(field, value);
     debouncedSave(field, value);
   }, [onBudgetFieldChange, debouncedSave]);

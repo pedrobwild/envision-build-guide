@@ -214,7 +214,7 @@ export default function AdminOperationsDashboard() {
   async function saveEdit() {
     if (!editBudget || !user) return;
     setSaving(true);
-    const updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
       priority: editPriority,
       internal_status: editStatus,
       updated_at: new Date().toISOString(),

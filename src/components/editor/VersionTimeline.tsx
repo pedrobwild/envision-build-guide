@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/lib/formatBRL";
 import { getVersionHistory, duplicateBudgetAsVersion } from "@/lib/budget-versioning";
 import { getVersionAuditEvents } from "@/lib/version-audit";
+import type { VersionRow, BudgetEventRow } from "@/types/budget-common";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -26,8 +27,8 @@ interface VersionTimelineProps {
 export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelineProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [versions, setVersions] = useState<any[]>([]);
-  const [auditEvents, setAuditEvents] = useState<any[]>([]);
+  const [versions, setVersions] = useState<VersionRow[]>([]);
+  const [auditEvents, setAuditEvents] = useState<BudgetEventRow[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [revisionReasons, setRevisionReasons] = useState<Record<string, string>>({});
@@ -49,7 +50,7 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
       setGroupId(result.groupId);
 
       // Load audit events
-      const allIds = result.versions.map((v: any) => v.id);
+      const allIds = result.versions.map((v: VersionRow) => v.id);
       const events = await getVersionAuditEvents(allIds);
       setAuditEvents(events);
 
@@ -89,15 +90,15 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
       setDialogOpen(false);
       setNewVersionReason("");
       navigate(`/admin/budget/${newId}`);
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao criar versão");
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : null) || "Erro ao criar versão");
     }
     setCreating(false);
   };
 
   const currentVersionId = versions.find(v => v.is_current_version)?.id;
 
-  const statusBadge = (v: any) => {
+  const statusBadge = (v: VersionRow) => {
     const badges: React.ReactNode[] = [];
     if (v.is_current_version) {
       badges.push(

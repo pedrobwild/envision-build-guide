@@ -75,7 +75,7 @@ export default function UserManagement() {
   const [savingRoles, setSavingRoles] = useState(false);
 
   const callAdminAPI = useCallback(
-    async (body: Record<string, any>) => {
+    async (body: Record<string, unknown>) => {
       const { data, error } = await supabase.functions.invoke("admin-users", {
         body,
       });
@@ -91,8 +91,8 @@ export default function UserManagement() {
     try {
       const data = await callAdminAPI({ action: "list_users" });
       setUsers(data.users || []);
-    } catch (err: any) {
-      toast.error("Erro ao carregar usuários: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Erro ao carregar usuários: " + (err instanceof Error ? err.message : String(err)));
     }
     setLoading(false);
   }, [callAdminAPI]);
@@ -117,8 +117,8 @@ export default function UserManagement() {
       setInviteName("");
       setInviteRole("comercial");
       loadUsers();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
     }
     setInviting(false);
   }
@@ -135,8 +135,8 @@ export default function UserManagement() {
       toast.success("Perfis atualizados.");
       setEditUser(null);
       loadUsers();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
     }
     setSavingRoles(false);
   }
@@ -150,8 +150,8 @@ export default function UserManagement() {
       });
       toast.success(user.is_active ? "Usuário desativado." : "Usuário reativado.");
       loadUsers();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 

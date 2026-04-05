@@ -343,7 +343,7 @@ function SortableSectionCard({
   children,
 }: {
   section: SectionData;
-  children: (listeners: any) => React.ReactNode;
+  children: (listeners: Record<string, unknown> | undefined) => React.ReactNode;
 }) {
   const {
     attributes,
@@ -393,7 +393,7 @@ function SortableItemRow({
   searchMatch?: boolean;
   compact: boolean;
   suppliers: { id: string; name: string }[];
-  onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
+  onUpdate: (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => void;
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
@@ -772,7 +772,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const debouncedSave = useCallback((table: string, id: string, updates: Record<string, any>) => {
+  const debouncedSave = useCallback((table: string, id: string, updates: Record<string, unknown>) => {
     const key = `${table}-${id}`;
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
@@ -786,7 +786,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     }, 600);
   }, []);
 
-  const updateSection = (sectionId: string, field: string, value: any) => {
+  const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
     const updated = sections.map(s =>
       s.id === sectionId ? { ...s, [field]: value } : s
     );
@@ -841,7 +841,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     return updated;
   }, [debouncedSave]);
 
-  const updateItem = (sectionId: string, itemId: string, field: string, value: any) => {
+  const updateItem = (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => {
     let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.map(i =>
@@ -898,7 +898,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       .single();
     if (!newSec) return;
     // Duplicate items
-    const newItems: any[] = [];
+    const newItems: ItemData[] = [];
     for (const item of source.items) {
       const { data: newItem } = await supabase
         .from("items")
@@ -932,7 +932,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     internal_unit_price: number | null;
     internal_total: number | null;
     catalog_item_id: string | null;
-    catalog_snapshot: Record<string, any> | null;
+    catalog_snapshot: Record<string, unknown> | null;
   }) => {
     const section = sections.find(s => s.id === sectionId);
     const order = section?.items.length || 0;
@@ -957,11 +957,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       .single();
     if (data) {
       const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
-      let itemImages: { id: string; url: string; is_primary: boolean | null }[] = [];
+      let itemImages: { id?: string; url: string; is_primary: boolean | null }[] = [];
       if (catalogImageUrl) {
         const { data: imgRow } = await supabase.from("item_images").insert({
           item_id: data.id,
-          url: catalogImageUrl,
+          url: String(catalogImageUrl),
           is_primary: true,
         }).select().single();
         if (imgRow) itemImages = [imgRow];
@@ -1260,7 +1260,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
               return (
                 <SortableSectionCard key={section.id} section={section}>
-                  {(dragListeners: any) => (
+                  {(dragListeners: Record<string, unknown> | undefined) => (
                     <div className={cn("group/section", isSearchActive && !sectionHasMatch && "opacity-40")}>
                       {/* Section header — 48px fixed, Linear pattern */}
                       <div

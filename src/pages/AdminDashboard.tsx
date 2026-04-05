@@ -46,6 +46,7 @@ export default function AdminDashboard() {
     }
   }, [profileLoading, profile, isOrcamentista, isAdmin, navigate]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -74,7 +75,7 @@ export default function AdminDashboard() {
     ]);
     setBudgets(budgetsRes.data || []);
     const profileMap: Record<string, string> = {};
-    (profilesRes.data || []).forEach((p: any) => {
+    (profilesRes.data || []).forEach((p: { id: string; full_name: string | null }) => {
       profileMap[p.id] = p.full_name || "";
     });
     setProfiles(profileMap);

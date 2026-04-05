@@ -49,9 +49,11 @@ function LazyFallback() {
 }
 
 /** Collapsible photo group — collapses on mobile, always open on desktop */
+import type { ScopeCategory, CategorizedGroup } from "@/lib/scope-categories";
+
 function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
-  group: any;
-  allItems: any[];
+  group: CategorizedGroup;
+  allItems: (BudgetItem & { _sectionTitle: string })[];
   budgetId: string;
   exporting: boolean;
 }) {
@@ -111,7 +113,7 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
           >
             {exporting ? (
               <ul className="space-y-1">
-                {allItems.map((item: any, idx: number) => (
+                {allItems.map((item, idx: number) => (
                   <li
                     key={item.id}
                     className={cn(
@@ -131,7 +133,7 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
               </ul>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {allItems.map((item: any) => (
+                {allItems.map((item) => (
                   <ProductShowcaseCard
                     key={item.id}
                     item={item}
@@ -150,7 +152,7 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
 }
 
 
-import type { BudgetData, BudgetSection, BudgetAdjustment, BudgetRoom } from "@/types/budget";
+import type { BudgetData, BudgetSection, BudgetItem, BudgetAdjustment, BudgetRoom } from "@/types/budget";
 
 export default function PublicBudget() {
   const { publicId } = useParams<{ projectId?: string; publicId?: string }>();
@@ -426,7 +428,7 @@ export default function PublicBudget() {
                         ...section,
                         items: exporting
                           ? (section.items || [])
-                          : (section.items || []).filter((item: any) => item.images && item.images.length > 0),
+                          : (section.items || []).filter((item) => item.images && item.images.length > 0),
                       })).filter(section => section.items.length > 0),
                     }))
                     .filter(group => group.sections.length > 0);
@@ -453,7 +455,7 @@ export default function PublicBudget() {
                       </div>
 
                       {photoGroups.map((group) => {
-                        const allItems = group.sections.flatMap(s => (s.items || []).map((item: any) => ({ ...item, _sectionTitle: s.title })));
+                        const allItems = group.sections.flatMap(s => (s.items || []).map((item) => ({ ...item, _sectionTitle: s.title })));
                         if (allItems.length === 0) return null;
 
                         return (

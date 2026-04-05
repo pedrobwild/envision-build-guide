@@ -323,7 +323,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       requestAnimationFrame(() => safeResize());
     });
 
-    map.on("error", (event: any) => {
+    map.on("error", (event: { error?: { message?: string } }) => {
       const message = String(event?.error?.message ?? "").toLowerCase();
       const isStyleError =
         message.includes("style") ||

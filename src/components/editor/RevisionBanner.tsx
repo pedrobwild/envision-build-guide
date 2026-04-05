@@ -3,6 +3,7 @@ import { RotateCcw, ChevronDown, ChevronUp, User, Clock, Loader2, GitBranch } fr
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatBRL";
+import type { Json } from "@/integrations/supabase/types";
 
 const CHANGE_TYPE_LABELS: Record<string, string> = {
   inclusion: "Inclusão de itens ou escopo",
@@ -15,7 +16,7 @@ const CHANGE_TYPE_LABELS: Record<string, string> = {
 interface RevisionBannerProps {
   revisionData: {
     id: string;
-    metadata: any;
+    metadata: Json | null;
     created_at: string;
     note: string | null;
   };
@@ -27,9 +28,9 @@ export function RevisionBanner({ revisionData, onStartRevision, startingRevision
   const [expanded, setExpanded] = useState(true);
 
   const meta = revisionData.metadata ?? {};
-  const instructions: string = meta.instructions ?? "";
-  const changeTypes: string[] = meta.change_types ?? [];
-  const requestedBy: string = meta.requested_by_name ?? "Comercial";
+  const instructions = String((meta as Record<string, unknown>).instructions ?? "");
+  const changeTypes = Array.isArray((meta as Record<string, unknown>).change_types) ? (meta as Record<string, unknown>).change_types as string[] : [];
+  const requestedBy = String((meta as Record<string, unknown>).requested_by_name ?? "Comercial");
 
   return (
     <div className="rounded-xl border-2 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/30 overflow-hidden">

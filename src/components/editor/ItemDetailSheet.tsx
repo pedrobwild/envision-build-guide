@@ -37,7 +37,7 @@ interface ItemDetailSheetProps {
   item: ItemDetailData;
   sectionId: string;
   budgetId: string;
-  onUpdate: (sectionId: string, itemId: string, field: string, value: any) => void;
+  onUpdate: (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemImage[]) => void;
 }
 

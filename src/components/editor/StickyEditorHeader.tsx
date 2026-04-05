@@ -7,11 +7,12 @@ import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 import { formatBRL } from "@/lib/formatBRL";
 import { calcGrandTotals, type CalcSection } from "@/lib/budget-calc";
 import { cn } from "@/lib/utils";
+import type { BudgetRow } from "@/types/budget-common";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 interface StickyEditorHeaderProps {
-  budget: any;
+  budget: BudgetRow;
   sections: CalcSection[];
   backPath: string;
   saveStatus: SaveStatus;

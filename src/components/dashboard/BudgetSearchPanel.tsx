@@ -12,16 +12,18 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+import type { BudgetWithSections } from "@/types/budget-common";
+
 interface BudgetSearchPanelProps {
-  budgets: any[];
+  budgets: BudgetWithSections[];
   profiles: Record<string, string>;
   onRefresh?: () => void;
 }
 
 const STATUS_QUICK_FILTERS = [
   { key: "active", label: "Ativos", statuses: ["requested", "novo", "triage", "assigned", "in_progress", "waiting_info", "blocked", "ready_for_review"] },
-  { key: "overdue", label: "Atrasados", filter: (b: any) => b.due_at && new Date(b.due_at) < new Date() && !["contrato_fechado", "lost", "archived"].includes(b.internal_status) },
-  { key: "published", label: "Publicados", filter: (b: any) => b.status === "published" && b.public_id },
+  { key: "overdue", label: "Atrasados", filter: (b: BudgetWithSections) => b.due_at && new Date(b.due_at) < new Date() && !["contrato_fechado", "lost", "archived"].includes(b.internal_status) },
+  { key: "published", label: "Publicados", filter: (b: BudgetWithSections) => b.status === "published" && b.public_id },
   { key: "waiting", label: "Aguardando info", statuses: ["waiting_info"] },
   { key: "review", label: "Em revisão", statuses: ["ready_for_review"] },
   { key: "closed", label: "Fechados", statuses: ["contrato_fechado"] },
@@ -199,7 +201,7 @@ function BudgetSearchRow({
   profiles,
   onRefresh,
 }: {
-  budget: any;
+  budget: BudgetWithSections;
   profiles: Record<string, string>;
   onRefresh?: () => void;
 }) {
@@ -264,13 +266,13 @@ function BudgetSearchRow({
   );
 }
 
-function getBudgetTotalQuick(b: any): number {
+function getBudgetTotalQuick(b: BudgetWithSections): number {
   const sectionsTotal = (b.sections || []).reduce(
-    (sum: number, s: any) => sum + calculateSectionSubtotal(s),
+    (sum, s) => sum + calculateSectionSubtotal(s),
     0
   );
   const adjustmentsTotal = (b.adjustments || []).reduce(
-    (sum: number, adj: any) => sum + adj.sign * Number(adj.amount),
+    (sum, adj) => sum + adj.sign * Number(adj.amount),
     0
   );
   return sectionsTotal + adjustmentsTotal;

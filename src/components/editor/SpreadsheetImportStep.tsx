@@ -76,14 +76,14 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
     return parts.length === 2 && parts.every(p => /^\d+$/.test(p));
   };
 
-  const parseNumber = (val: any): number => {
+  const parseNumber = (val: unknown): number => {
     if (typeof val === "number") return val;
     if (!val) return 0;
     const str = String(val).replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
     return Number(str) || 0;
   };
 
-  const parseRows = useCallback((json: any[][], map: Record<string, number>, headerRowIdx: number) => {
+  const parseRows = useCallback((json: unknown[][], map: Record<string, number>, headerRowIdx: number) => {
     const packageMap = new Map<string, { items: ParsedItem[]; totalPrice: number }>();
     const hasIndex = map.index !== undefined;
     const hasSection = map.section !== undefined;
@@ -92,7 +92,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
 
     json.slice(1)
       .forEach((row, rowOffset) => {
-        if (!row || !row.some((cell: any) => cell !== undefined && cell !== "")) return;
+        if (!row || !row.some((cell: unknown) => cell !== undefined && cell !== "")) return;
 
         const indexVal = hasIndex ? String(row[map.index] ?? "").trim() : "";
         const itemName = map.title !== undefined ? String(row[map.title] ?? "").trim() : "";
@@ -166,7 +166,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: "array" });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const json: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const json: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
         if (json.length < 2) {
           setError("A planilha precisa ter pelo menos 2 linhas.");
@@ -178,7 +178,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
         for (let i = 0; i < Math.min(json.length, 15); i++) {
           const row = json[i];
           if (!row) continue;
-          const lower = row.map((c: any) => (c == null ? "" : String(c)).trim().toLowerCase());
+          const lower = (row as unknown[]).map((c: unknown) => (c == null ? "" : String(c)).trim().toLowerCase());
           if (lower.some((h: string) => h && (h.includes("item") || h.includes("índice") || h.includes("indice")))) {
             headerRowIdx = i;
             break;
@@ -191,7 +191,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
           return;
         }
 
-        const headers = Array.from(headerRow, (c: any) => (c == null ? "" : String(c)));
+        const headers = Array.from(headerRow as unknown[], (c: unknown) => (c == null ? "" : String(c)));
         const map = detectColumns(headers);
 
         if (import.meta.env.DEV) console.log("[Excel Import] Header row:", headerRowIdx, headers);
@@ -256,8 +256,8 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
             const input = document.createElement("input");
             input.type = "file";
             input.accept = ".xlsx,.xls";
-            input.onchange = (e: any) => {
-              const f = e.target.files?.[0];
+            input.onchange = (ev: Event) => {
+              const f = (ev.target as HTMLInputElement).files?.[0];
               if (f) handleFile(f);
             };
             input.click();

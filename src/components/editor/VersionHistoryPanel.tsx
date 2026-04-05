@@ -3,6 +3,7 @@ import { History, Copy, CheckCircle, Upload, FileText, FileSpreadsheet, Loader2,
 import { formatDate } from "@/lib/formatBRL";
 import { getVersionHistory, duplicateBudgetAsVersion, setCurrentVersion } from "@/lib/budget-versioning";
 import { getVersionAuditEvents } from "@/lib/version-audit";
+import type { VersionRow, BudgetEventRow } from "@/types/budget-common";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -27,8 +28,8 @@ interface VersionHistoryPanelProps {
 export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded = false }: VersionHistoryPanelProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [versions, setVersions] = useState<any[]>([]);
-  const [auditEvents, setAuditEvents] = useState<any[]>([]);
+  const [versions, setVersions] = useState<VersionRow[]>([]);
+  const [auditEvents, setAuditEvents] = useState<BudgetEventRow[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
@@ -44,7 +45,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
       setVersions(result.versions);
       setGroupId(result.groupId);
       // Fetch audit events for all versions in the group
-      const allIds = result.versions.map((v: any) => v.id);
+      const allIds = result.versions.map((v: VersionRow) => v.id);
       const events = await getVersionAuditEvents(allIds);
       setAuditEvents(events);
     } catch (err) {
@@ -74,8 +75,8 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
       setShowReasonDialog(null);
       toast.success("Nova versão criada com sucesso!");
       navigate(`/admin/budget/${newId}`);
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao duplicar versão");
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : null) || "Erro ao duplicar versão");
     }
     setDuplicating(false);
   };
@@ -91,7 +92,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
       toast.success("Versão ativada como atual");
       await loadVersions();
       onVersionChange?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Erro ao alterar versão");
     }
   };

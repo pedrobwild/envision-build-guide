@@ -10,10 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LOCATION_TYPES } from "@/lib/role-constants";
+import type { BudgetRow } from "@/types/budget-common";
 
 interface MetadataStepProps {
-  budget: any;
-  onFieldChange: (field: string, value: any) => void;
+  budget: BudgetRow;
+  onFieldChange: (field: string, value: string | number | boolean | string[] | null) => void;
 }
 
 /* ── Notion-like property row ── */
@@ -98,7 +99,7 @@ export function MetadataStep({ budget, onFieldChange }: MetadataStepProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Reference links helper
-  const links: string[] = Array.isArray(budget.reference_links) ? budget.reference_links : [];
+  const links: string[] = Array.isArray(budget.reference_links) ? (budget.reference_links as unknown as string[]) : [];
   const addLink = () => onFieldChange("reference_links", [...links, ""]);
   const removeLink = (i: number) => onFieldChange("reference_links", links.filter((_, idx) => idx !== i));
   const updateLink = (i: number, val: string) =>
