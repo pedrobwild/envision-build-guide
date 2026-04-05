@@ -137,7 +137,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
 
                             {extraImages.length > 0 && (
                               <div className="flex gap-1.5 mt-2">
-                                {extraImages.slice(0, 4).map((img: any, idx: number) => (
+                                {extraImages.slice(0, 4).map((img, idx) => (
                                   <button
                                     key={img.id || idx}
                                     onClick={() => openLightbox(img.url)}

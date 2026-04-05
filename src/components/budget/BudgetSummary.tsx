@@ -282,11 +282,11 @@ function FlatSectionList({
   );
 }
 
-function AdjustmentsList({ adjustments }: { adjustments: any[] }) {
+function AdjustmentsList({ adjustments }: { adjustments: AdjustmentRow[] }) {
   return (
     <div className="px-5 pb-3">
       <div className="border-t border-border pt-3 space-y-2">
-        {adjustments.map((adj: any) => (
+        {adjustments.map((adj) => (
           <div key={adj.id} className="flex items-center justify-between">
             <span className="text-[13px] text-muted-foreground font-body">
               {adj.label}

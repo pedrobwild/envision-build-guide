@@ -1,23 +1,25 @@
 import { formatBRL } from "@/lib/formatBRL";
 import { Layers, Home, Package, TrendingUp, Globe, MapPin } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import type { SectionWithItems } from "@/types/budget-common";
+import type { BudgetRoom } from "@/types/budget";
 
 interface ExecutiveSummaryProps {
-  sections: any[];
-  rooms: any[];
+  sections: SectionWithItems[];
+  rooms: BudgetRoom[];
   total: number;
   projectName: string;
 }
 
 export function ExecutiveSummary({ sections, rooms, total, projectName }: ExecutiveSummaryProps) {
-  const totalItems = sections.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0);
+  const totalItems = sections.reduce((sum: number, s) => sum + (s.items?.length || 0), 0);
   const totalPackages = sections.length;
   const totalRooms = rooms.length;
 
   let generalCount = 0;
   let localCount = 0;
-  sections.forEach((s: any) => {
-    (s.items || []).forEach((item: any) => {
+  sections.forEach((s) => {
+    (s.items || []).forEach((item) => {
       if ((item.coverage_type || "geral") === "geral") generalCount++;
       else localCount++;
     });

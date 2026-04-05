@@ -4,9 +4,10 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL } from "@/lib/formatBRL";
 import { List, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { SectionWithItems } from "@/types/budget-common";
 
 interface SectionNavProps {
-  sections: any[];
+  sections: SectionWithItems[];
 }
 
 export function SectionNav({ sections }: SectionNavProps) {

@@ -19,8 +19,10 @@ export interface HeaderConfig {
   custom_subtitle?: string;
 }
 
+import type { BudgetData } from "@/types/budget";
+
 interface BudgetHeaderProps {
-  budget: any;
+  budget: BudgetData;
   onExportPdf?: () => void;
   exporting?: boolean;
 }

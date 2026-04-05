@@ -53,7 +53,7 @@ export function ExpandableItemRow({
   const itemUnitPrice = Number(item.internal_unit_price) || 0;
   const itemQty = Number(item.qty) || 0;
 
-  const itemImages = (item.images || []).map((img: any) => ({
+  const itemImages = (item.images || []).map((img) => ({
     url: img.url,
     alt: item.title,
   }));

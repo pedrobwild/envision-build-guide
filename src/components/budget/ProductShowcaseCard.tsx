@@ -3,9 +3,10 @@ import { ZoomIn } from "lucide-react";
 import { motion } from "framer-motion";
 import { Lightbox } from "./Lightbox";
 import { ItemImageGallery } from "./ItemImageGallery";
+import type { ItemWithImages } from "@/types/budget-common";
 
 interface ProductShowcaseCardProps {
-  item: any;
+  item: ItemWithImages;
   budgetId?: string;
   editable?: boolean;
   showGallery?: boolean;
@@ -16,9 +17,9 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const hasImages = item.images && item.images.length > 0;
-  const primaryImage = item.images?.find((img: any) => img.is_primary) || item.images?.[0];
+  const primaryImage = item.images?.find((img) => img.is_primary) || item.images?.[0];
 
-  const itemImages = (item.images || []).map((img: any) => ({
+  const itemImages = (item.images || []).map((img) => ({
     url: img.url,
     alt: item.title,
   }));

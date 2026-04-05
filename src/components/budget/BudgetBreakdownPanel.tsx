@@ -207,7 +207,7 @@ function SectionBlock({ section }: { section: SectionSummary }) {
             <span className="text-right">$ Venda</span>
             <span className="text-right">Total Venda</span>
           </div>
-          {section.itemRows.map((item: any) => (
+          {section.itemRows.map((item) => (
             <div key={item.id} className="grid grid-cols-[1fr_60px_80px_60px_80px_80px] gap-2 px-2 py-1.5 text-xs font-body border-b border-border/50 last:border-b-0 hover:bg-muted/20">
               <span className="text-foreground truncate">{item.title || "—"}</span>
               <span className="text-right text-muted-foreground tabular-nums">{item.qty || "—"}</span>
