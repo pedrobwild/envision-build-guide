@@ -443,6 +443,13 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     }
   }, [item]);
 
+  useEffect(() => {
+    setLocalCategories([]);
+    if (form.default_supplier_id) {
+      void handleSupplierChange(form.default_supplier_id);
+    }
+  }, [form.default_supplier_id, handleSupplierChange, open]);
+
   const persistImageOnExistingItem = async (nextImageUrl: string | null) => {
     const targetId = item?.id ?? savedItemId;
     if (!targetId) return;
