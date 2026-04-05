@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import type { BudgetRow, EditorSection } from "@/types/budget-common";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -35,10 +36,8 @@ export default function BudgetEditorV2() {
 
   const backPath = (location.state as { from?: string } | null)?.from
     || (isOrcamentista ? "/admin/producao" : isComercial ? "/admin/comercial" : "/admin");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- budget shape is dynamic from Supabase select("*")
-  const [budget, setBudget] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [sections, setSections] = useState<any[]>([]);
+  const [budget, setBudget] = useState<BudgetRow | null>(null);
+  const [sections, setSections] = useState<EditorSection[]>([]);
   const [saving, setSaving] = useState(false);
   const [internalDataOpen, setInternalDataOpen] = useState(false);
   const [versionCount, setVersionCount] = useState(0);
@@ -47,7 +46,7 @@ export default function BudgetEditorV2() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-  const lastSavePayload = useRef<{ field: string; value: any } | null>(null);
+  const lastSavePayload = useRef<{ field: string; value: unknown } | null>(null);
   const saveErrorCount = useRef(0);
   const errorToastId = useRef<string | number | null>(null);
   const [activeTab, setActiveTab] = useState("planilha");
@@ -99,8 +98,8 @@ export default function BudgetEditorV2() {
       const newId = await duplicateBudgetAsVersion(budgetId, user.id, reason);
       toast.success("Nova versão criada para revisão!");
       navigate(`/admin/budget/${newId}`);
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao criar versão de revisão.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao criar versão de revisão.");
     }
     setStartingRevision(false);
   };
@@ -137,12 +136,12 @@ export default function BudgetEditorV2() {
       const sorted = (secs || []).map(s => ({
         ...s,
         items: (s.items || [])
-          .sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
-          .map((item: any) => ({
+          .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+          .map((item) => ({
             ...item,
             images: item.item_images || [],
           })),
-      }));
+      })) as unknown as EditorSection[];
       setSections(sorted);
     }
 
@@ -180,7 +179,7 @@ export default function BudgetEditorV2() {
     "is_current_version", "version_group_id", "version_number",
   ]));
 
-  const autoSaveBudgetField = useCallback((field: string, value: any) => {
+  const autoSaveBudgetField = useCallback((field: string, value: unknown) => {
     if (!budgetId) return;
     if (PROTECTED_FIELDS.current.has(field)) {
       console.warn(`[autoSave] Blocked attempt to save protected field: ${field}`);
@@ -351,8 +350,8 @@ export default function BudgetEditorV2() {
                       const newId = await duplicateBudgetAsVersion(budgetId!, user.id, "Edição pós-publicação");
                       toast.success("Nova versão criada!");
                       navigate(`/admin/budget/${newId}`);
-                    } catch (err: any) {
-                      toast.error(err?.message || "Erro ao criar versão");
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Erro ao criar versão");
                     }
                     setCreatingVersionFromBanner(false);
                   }}

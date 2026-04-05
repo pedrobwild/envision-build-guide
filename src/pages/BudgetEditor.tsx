@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/formatBRL";
 import { calculateSectionSubtotal, calculateBudgetTotal } from "@/lib/supabase-helpers";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import type { BudgetRow, EditorSection, ItemWithImages, AdjustmentRow } from "@/types/budget-common";
 import {
   Plus, Trash2, GripVertical, Save, ExternalLink, ArrowLeft,
   ChevronDown, ChevronUp, ImageIcon, Copy
@@ -12,9 +13,9 @@ import {
 export default function BudgetEditor() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
-  const [budget, setBudget] = useState<any>(null);
-  const [sections, setSections] = useState<any[]>([]);
-  const [adjustments, setAdjustments] = useState<any[]>([]);
+  const [budget, setBudget] = useState<BudgetRow | null>(null);
+  const [sections, setSections] = useState<EditorSection[]>([]);
+  const [adjustments, setAdjustments] = useState<AdjustmentRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
@@ -40,14 +41,14 @@ export default function BudgetEditor() {
       const { data: items } = await supabase.from('items').select('*').in('section_id', sectionIds.length ? sectionIds : ['__none__']).order('order_index');
       if (cancelled) return;
 
-      const enriched = sectionList.map(sec => ({
+      const enriched: EditorSection[] = sectionList.map(sec => ({
         ...sec,
-        items: (items || []).filter(i => i.section_id === sec.id),
+        items: (items || []).filter(i => i.section_id === sec.id) as ItemWithImages[],
         _expanded: true,
       }));
       setSections(enriched);
       setExpandedSections(new Set(sectionList.map(sec => sec.id)));
-      setAdjustments(adjRes.data || []);
+      setAdjustments((adjRes.data || []) as AdjustmentRow[]);
     }
 
     load();
@@ -75,8 +76,8 @@ export default function BudgetEditor() {
         section_price: section.section_price,
         qty: section.qty,
         order_index: section.order_index,
-        included_bullets: section.included_bullets,
-        excluded_bullets: section.excluded_bullets,
+        included_bullets: section.included_bullets as import("@/integrations/supabase/types").Json,
+        excluded_bullets: section.excluded_bullets as import("@/integrations/supabase/types").Json,
         notes: section.notes,
         cover_image_url: section.cover_image_url,
       }).eq('id', section.id);
@@ -136,7 +137,7 @@ export default function BudgetEditor() {
     }).select().single();
     if (data) {
       setSections(sections.map(s =>
-        s.id === sectionId ? { ...s, items: [...(s.items || []), data] } : s
+        s.id === sectionId ? { ...s, items: [...(s.items || []), data as ItemWithImages] } : s
       ));
     }
   };
@@ -144,7 +145,7 @@ export default function BudgetEditor() {
   const deleteItem = async (sectionId: string, itemId: string) => {
     await supabase.from('items').delete().eq('id', itemId);
     setSections(sections.map(s =>
-      s.id === sectionId ? { ...s, items: (s.items || []).filter((i: any) => i.id !== itemId) } : s
+      s.id === sectionId ? { ...s, items: (s.items || []).filter((i) => i.id !== itemId) } : s
     ));
   };
 
@@ -156,7 +157,7 @@ export default function BudgetEditor() {
       sign: 1,
       amount: 0,
     }).select().single();
-    if (data) setAdjustments([...adjustments, data]);
+    if (data) setAdjustments([...adjustments, data as AdjustmentRow]);
   };
 
   const deleteAdjustment = async (adjId: string) => {
@@ -171,14 +172,14 @@ export default function BudgetEditor() {
     setBudget({ ...budget, status: 'published', public_id: publicId });
   };
 
-  const updateSection = (sectionId: string, field: string, value: any) => {
+  const updateSection = (sectionId: string, field: string, value: string | number | null) => {
     setSections(sections.map(s => s.id === sectionId ? { ...s, [field]: value } : s));
   };
 
-  const updateItem = (sectionId: string, itemId: string, field: string, value: any) => {
+  const updateItem = (sectionId: string, itemId: string, field: string, value: string | number | null) => {
     setSections(sections.map(s =>
       s.id === sectionId
-        ? { ...s, items: (s.items || []).map((i: any) => i.id === itemId ? { ...i, [field]: value } : i) }
+        ? { ...s, items: (s.items || []).map((i) => i.id === itemId ? { ...i, [field]: value } : i) }
         : s
     ));
   };
@@ -272,7 +273,7 @@ export default function BudgetEditor() {
               </div>
               <div className="flex items-end gap-4">
                 <label className="flex items-center gap-2 text-sm text-muted-foreground font-body cursor-pointer">
-                  <input type="checkbox" checked={budget.show_item_qty} onChange={(e) => setBudget({ ...budget, show_item_qty: e.target.checked })} className="rounded border-border" />
+                  <input type="checkbox" checked={budget.show_item_qty ?? true} onChange={(e) => setBudget({ ...budget, show_item_qty: e.target.checked })} className="rounded border-border" />
                   Mostrar qtd dos itens
                 </label>
               </div>
@@ -293,7 +294,7 @@ export default function BudgetEditor() {
               </button>
             </div>
 
-            {sections.map((section, sIdx) => (
+            {sections.map((section) => (
               <div key={section.id} className="rounded-xl border border-border bg-card overflow-hidden">
                 {/* Section header */}
                 <div className="p-4 flex items-center gap-3 border-b border-border bg-muted/30">
@@ -363,7 +364,7 @@ export default function BudgetEditor() {
                         </button>
                       </div>
                       <div className="space-y-2">
-                        {(section.items || []).map((item: any, iIdx: number) => (
+                        {(section.items || []).map((item) => (
                           <div key={item.id} className="rounded-lg bg-muted/30 border border-transparent hover:border-border transition-colors p-3 space-y-3">
                             <div className="flex items-center gap-2">
                               <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 cursor-grab flex-shrink-0" />

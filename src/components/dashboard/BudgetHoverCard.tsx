@@ -2,6 +2,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 import { formatBRL } from "@/lib/formatBRL";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import type { BudgetWithSections, SectionWithItems, AdjustmentRow } from "@/types/budget-common";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -9,7 +10,7 @@ import {
 } from "lucide-react";
 
 interface BudgetHoverCardProps {
-  budget: any;
+  budget: BudgetWithSections;
   profiles: Record<string, string>;
   children: React.ReactNode;
 }
@@ -76,42 +77,29 @@ export function BudgetHoverCard({ budget: b, profiles, children }: BudgetHoverCa
 
         {/* Details */}
         <div className="px-4 py-2.5 space-y-2">
-          {/* Value */}
           {total > 0 && (
             <DetailRow icon={null} label="Valor" value={formatBRL(total)} mono />
           )}
-
-          {/* Estimator */}
           {b.estimator_owner_id && profiles[b.estimator_owner_id] && (
             <DetailRow icon={<Hammer className="h-3 w-3" />} label="Orçamentista" value={profiles[b.estimator_owner_id]} />
           )}
-
-          {/* Commercial */}
           {b.commercial_owner_id && profiles[b.commercial_owner_id] && (
             <DetailRow icon={<User className="h-3 w-3" />} label="Comercial" value={profiles[b.commercial_owner_id]} />
           )}
-
-          {/* Due date */}
           {b.due_at && (
             <DetailRow
               icon={<Calendar className="h-3 w-3" />}
               label="Prazo"
               value={format(new Date(b.due_at), "dd/MM/yyyy")}
-              alert={isOverdue}
+              alert={!!isOverdue}
             />
           )}
-
-          {/* Views */}
           {b.view_count > 0 && (
             <DetailRow icon={<Eye className="h-3 w-3" />} label="Visualizações" value={String(b.view_count)} mono />
           )}
-
-          {/* Version */}
           {(b.version_number ?? 1) > 1 && (
             <DetailRow icon={null} label="Versão" value={`v${b.version_number}`} mono />
           )}
-
-          {/* Location */}
           {(b.bairro || b.condominio) && (
             <DetailRow icon={null} label="Local" value={[b.condominio, b.bairro].filter(Boolean).join(", ")} />
           )}
@@ -169,13 +157,13 @@ function DetailRow({
   );
 }
 
-function getBudgetTotalQuick(b: any): number {
+function getBudgetTotalQuick(b: BudgetWithSections): number {
   const sectionsTotal = (b.sections || []).reduce(
-    (sum: number, s: any) => sum + calculateSectionSubtotal(s),
+    (sum: number, s: SectionWithItems) => sum + calculateSectionSubtotal(s),
     0
   );
   const adjustmentsTotal = (b.adjustments || []).reduce(
-    (sum: number, adj: any) => sum + adj.sign * Number(adj.amount),
+    (sum: number, adj: AdjustmentRow) => sum + adj.sign * Number(adj.amount),
     0
   );
   return sectionsTotal + adjustmentsTotal;

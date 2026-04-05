@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { BudgetRow, ProfileRow } from "@/types/budget-common";
 import {
   Tooltip,
   TooltipContent,
@@ -58,14 +59,9 @@ import { BlockingDialog } from "./BlockingDialog";
 import { RevisionRequestDialog } from "./RevisionRequestDialog";
 import { publishVersion, ensureVersionGroup } from "@/lib/budget-versioning";
 
-interface ProfileRow {
-  id: string;
-  full_name: string;
-}
-
 interface WorkflowBarProps {
-  budget: any;
-  onBudgetUpdate: (fields: Record<string, any>) => void;
+  budget: BudgetRow;
+  onBudgetUpdate: (fields: Record<string, unknown>) => void;
 }
 
 // Status badge color mapping
@@ -471,33 +467,35 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               Instruções da Revisão
             </DialogTitle>
             {revisionInstructions && (
-              <DialogDescription className="text-xs font-body">
+              <DialogDescription>
                 Solicitada por {revisionInstructions.requested_by_name}
               </DialogDescription>
             )}
           </DialogHeader>
           {loadingInstructions ? (
             <div className="flex items-center justify-center py-8">
-              <span className="text-sm text-muted-foreground">Carregando...</span>
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : revisionInstructions ? (
             <div className="space-y-4">
               {revisionInstructions.change_types.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground">Tipo de alteração</p>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Tipos de alteração:</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {revisionInstructions.change_types.map((t) => (
-                      <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
+                    {revisionInstructions.change_types.map((type) => (
+                      <Badge key={type} variant="secondary" className="text-[10px]">{type}</Badge>
                     ))}
                   </div>
                 </div>
               )}
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">Instruções</p>
-                <p className="text-sm whitespace-pre-wrap bg-muted/50 rounded-md p-3 border">
-                  {revisionInstructions.instructions}
-                </p>
-              </div>
+              {revisionInstructions.instructions && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Instruções:</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap bg-muted/50 rounded-lg p-3 border border-border/50">
+                    {revisionInstructions.instructions}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground py-4">Nenhuma instrução encontrada.</p>
@@ -505,22 +503,18 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm transition dialog */}
       <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {primaryTransition?.label ?? "Confirmar"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Confirmar ação</AlertDialogTitle>
             <AlertDialogDescription>
-              {primaryTransition?.confirmMessage ??
-                `Confirmar envio do orçamento ao cliente "${budget.client_name}"? O link público será ativado.`}
+              {primaryTransition?.confirmMessage || `Deseja avançar para "${INTERNAL_STATUSES[primaryTransition?.newStatus ?? "requested"]?.label}"?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={confirmLoading}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmedTransition} disabled={confirmLoading}>
-              {confirmLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {confirmLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>

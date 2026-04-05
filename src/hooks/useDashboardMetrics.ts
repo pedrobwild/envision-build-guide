@@ -1,4 +1,5 @@
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import type { BudgetWithSections, SectionWithItems, AdjustmentRow } from "@/types/budget-common";
 
 export interface DateRange {
   from: Date;
@@ -31,7 +32,6 @@ export interface TeamMember {
   waitingInfoCount: number;
   inReviewCount: number;
   slaRate: number;
-  /** health: balanced load vs risk */
   health: "healthy" | "warning" | "critical";
 }
 
@@ -97,7 +97,6 @@ export interface DashboardMetrics {
   conversionRate: KpiData;
   portfolioValue: KpiData;
   grossMargin: KpiData;
-  // KPI health metadata
   kpiMeta: {
     received: KpiMeta;
     backlog: KpiMeta;
@@ -116,15 +115,11 @@ export interface DashboardMetrics {
   monthlyFinancials: MonthlyFinancial[];
   teamMetrics: TeamMember[];
   insights: Insight[];
-  // New: alerts
   alerts: AlertItem[];
-  // New: dual funnels
   operationalFunnel: FunnelStage[];
   commercialFunnel: FunnelStage[];
-  // New: aging
   agingBuckets: AgingBucket[];
   slaRiskItems: SlaRiskItem[];
-  // New: stalled items
   stalledByStage: { stage: string; label: string; count: number; avgDays: number }[];
 }
 
@@ -175,13 +170,13 @@ function isInRange(dateStr: string | null | undefined, range: DateRange): boolea
   return d >= range.from && d <= range.to;
 }
 
-function getBudgetTotal(b: any): number {
+function getBudgetTotal(b: BudgetWithSections): number {
   const sectionsTotal = (b.sections || []).reduce(
-    (sum: number, s: any) => sum + calculateSectionSubtotal(s),
+    (sum: number, s: SectionWithItems) => sum + calculateSectionSubtotal(s),
     0
   );
   const adjustmentsTotal = (b.adjustments || []).reduce(
-    (sum: number, adj: any) => sum + adj.sign * Number(adj.amount),
+    (sum: number, adj: AdjustmentRow) => sum + adj.sign * Number(adj.amount),
     0
   );
   return sectionsTotal + adjustmentsTotal;
@@ -197,7 +192,7 @@ function hoursUntil(dateStr: string): number {
 }
 
 export function computeDashboardMetrics(
-  budgets: any[],
+  budgets: BudgetWithSections[],
   range: DateRange,
   profiles: Record<string, string>,
 ): DashboardMetrics {
@@ -218,7 +213,7 @@ export function computeDashboardMetrics(
 
   // ─── SLA & Overdue ───
   const withDueDate = backlogBudgets.filter((b) => b.due_at);
-  const overdueList = withDueDate.filter((b) => new Date(b.due_at) < now);
+  const overdueList = withDueDate.filter((b) => new Date(b.due_at!) < now);
   const sla = backlogBudgets.length > 0
     ? ((backlogBudgets.length - overdueList.length) / backlogBudgets.length) * 100
     : 100;
@@ -227,15 +222,15 @@ export function computeDashboardMetrics(
   const slaRiskItems: SlaRiskItem[] = backlogBudgets
     .filter((b) => b.due_at)
     .filter((b) => {
-      const h = hoursUntil(b.due_at);
+      const h = hoursUntil(b.due_at!);
       return h > 0 && h <= 48;
     })
     .map((b) => ({
       id: b.id,
       projectName: b.project_name,
       clientName: b.client_name,
-      dueAt: b.due_at,
-      hoursLeft: Math.round(hoursUntil(b.due_at)),
+      dueAt: b.due_at!,
+      hoursLeft: Math.round(hoursUntil(b.due_at!)),
       status: b.internal_status,
     }))
     .sort((a, b) => a.hoursLeft - b.hoursLeft);
@@ -246,11 +241,11 @@ export function computeDashboardMetrics(
     const deliveredDate = b.generated_at || b.closed_at;
     return deliveredDate && isInRange(deliveredDate, range) && DELIVERED_STATUSES.includes(b.status);
   });
-  const calcLeadTimes = (list: any[]) =>
+  const calcLeadTimes = (list: BudgetWithSections[]) =>
     list
       .map((b) => {
-        const start = new Date(b.created_at).getTime();
-        const end = new Date(b.generated_at || b.closed_at).getTime();
+        const start = new Date(b.created_at!).getTime();
+        const end = new Date((b.generated_at || b.closed_at)!).getTime();
         return (end - start) / (1000 * 60 * 60 * 24);
       })
       .filter((lt) => lt > 0 && lt < 365);
@@ -313,7 +308,7 @@ export function computeDashboardMetrics(
   budgets
     .filter((b) => b.status === "contrato_fechado" && b.closed_at)
     .forEach((b) => {
-      const d = new Date(b.closed_at);
+      const d = new Date(b.closed_at!);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const existing = monthlyMap.get(key) || { revenue: 0, cost: 0 };
       existing.revenue += getBudgetTotal(b);
@@ -332,7 +327,7 @@ export function computeDashboardMetrics(
     }));
 
   // ─── Team Metrics ───
-  const estimatorIds = [...new Set(budgets.map((b) => b.estimator_owner_id).filter(Boolean))];
+  const estimatorIds = [...new Set(budgets.map((b) => b.estimator_owner_id).filter(Boolean))] as string[];
   const teamMetrics: TeamMember[] = estimatorIds
     .map((id) => {
       const memberBacklog = backlogBudgets.filter((b) => b.estimator_owner_id === id);
@@ -367,7 +362,6 @@ export function computeDashboardMetrics(
       };
     })
     .sort((a, b) => {
-      // Critical first, then by active load descending
       const hOrder = { critical: 0, warning: 1, healthy: 2 };
       if (hOrder[a.health] !== hOrder[b.health]) return hOrder[a.health] - hOrder[b.health];
       return b.activeBudgets - a.activeBudgets;
@@ -549,7 +543,6 @@ export function computeDashboardMetrics(
     });
   }
 
-  // Sort: critical first, then warning, then info/opportunity
   const severityOrder = { critical: 0, warning: 1, info: 2, opportunity: 3 };
   alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
@@ -580,15 +573,22 @@ export function computeDashboardMetrics(
   }));
 
   // ─── Commercial Funnel ───
-  const comStages = [
+  interface ComStage {
+    key: string;
+    label: string;
+    statuses?: string[];
+    filter?: (b: BudgetWithSections) => boolean;
+  }
+
+  const comStages: ComStage[] = [
     { key: "sent", label: "Enviado", statuses: ["sent_to_client"] },
-    { key: "viewed", label: "Visualizado", filter: (b: any) => b.status === "published" && b.view_count > 0 },
+    { key: "viewed", label: "Visualizado", filter: (b) => b.status === "published" && b.view_count > 0 },
     { key: "negotiation", label: "Em negociação", statuses: ["minuta_solicitada", "revision_requested"] },
     { key: "closed", label: "Contrato fechado", statuses: ["contrato_fechado"] },
   ];
 
   const comCounts = comStages.map((s) => {
-    if ("filter" in s && s.filter) {
+    if (s.filter) {
       return budgets.filter(s.filter).length;
     }
     return budgets.filter((b) => s.statuses!.includes(b.internal_status) || s.statuses!.includes(b.status)).length;
@@ -670,7 +670,7 @@ export function computeDashboardMetrics(
   const weekMs = 7 * 24 * 60 * 60 * 1000;
   const sparkEnd = range.to;
 
-  function weeklyCount(filter: (b: any, weekFrom: Date, weekTo: Date) => boolean): number[] {
+  function weeklyCount(filter: (b: BudgetWithSections, weekFrom: Date, weekTo: Date) => boolean): number[] {
     const counts: number[] = [];
     for (let w = WEEKS - 1; w >= 0; w--) {
       const wTo = new Date(sparkEnd.getTime() - w * weekMs);
@@ -688,15 +688,14 @@ export function computeDashboardMetrics(
 
   const sparkClosed = weeklyCount((b, wFrom, wTo) => {
     const d = b.closed_at || b.updated_at;
-    return d && b.status === "contrato_fechado" && new Date(d) >= wFrom && new Date(d) < wTo;
+    return d != null && b.status === "contrato_fechado" && new Date(d) >= wFrom && new Date(d) < wTo;
   });
 
   const sparkDelivered = weeklyCount((b, wFrom, wTo) => {
     const d = b.generated_at || b.closed_at;
-    return d && DELIVERED_STATUSES.includes(b.status) && new Date(d) >= wFrom && new Date(d) < wTo;
+    return d != null && DELIVERED_STATUSES.includes(b.status) && new Date(d) >= wFrom && new Date(d) < wTo;
   });
 
-  // Backlog snapshot per week (approximate: count items created before week-end that are still active)
   const sparkBacklog = (() => {
     const counts: number[] = [];
     for (let w = WEEKS - 1; w >= 0; w--) {
@@ -709,7 +708,7 @@ export function computeDashboardMetrics(
   })();
 
   const sparkOverdue = weeklyCount((b, wFrom, wTo) => {
-    return ACTIVE_STATUSES.includes(b.internal_status) && b.due_at && new Date(b.due_at) < wTo && new Date(b.due_at) >= wFrom;
+    return ACTIVE_STATUSES.includes(b.internal_status) && b.due_at != null && new Date(b.due_at) < wTo && new Date(b.due_at) >= wFrom;
   });
 
   return {
