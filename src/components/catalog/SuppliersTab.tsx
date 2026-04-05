@@ -138,14 +138,22 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
                     <TableCell className="font-medium">{sup.name}</TableCell>
                     <TableCell>
                       {tipo !== "—" ? (
-                        <Badge variant={tipo === "Prestadores" ? "default" : "secondary"} className="text-xs">
+                        <Badge variant="outline" className={`text-xs ${tipo === "Prestadores" ? "bg-primary/15 text-primary border-primary/30" : "bg-secondary text-secondary-foreground border-secondary"}`}>
                           {tipo}
                         </Badge>
                       ) : (
                         <span className="text-muted-foreground text-sm">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{sup.categoria ?? "—"}</TableCell>
+                    <TableCell>
+                      {sup.categoria ? (
+                        <Badge variant="outline" className="text-xs bg-muted/50 text-foreground/80 border-border">
+                          {sup.categoria}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{sup.contact_info ?? "—"}</TableCell>
                     <TableCell>
                       <button
