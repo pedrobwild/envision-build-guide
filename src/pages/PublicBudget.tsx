@@ -50,8 +50,8 @@ function LazyFallback() {
 
 /** Collapsible photo group — collapses on mobile, always open on desktop */
 function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
-  group: any;
-  allItems: any[];
+  group: { category: { id: string; label: string }; sections: BudgetSection[] };
+  allItems: (BudgetItem & { _sectionTitle: string })[];
   budgetId: string;
   exporting: boolean;
 }) {
