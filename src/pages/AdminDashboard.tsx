@@ -25,6 +25,7 @@ import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBloc
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
+import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
 import { computeDashboardMetrics, type DateRange } from "@/hooks/useDashboardMetrics";
 
 const SECTION_DELAY = 0.05;
@@ -166,6 +167,15 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* ───── QUICK SEARCH ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <BudgetSearchPanel
+          budgets={budgets}
+          profiles={profiles}
+          onRefresh={loadData}
+        />
       </motion.div>
 
       {/* ───── ALERTS CENTER (only if alerts exist) ───── */}

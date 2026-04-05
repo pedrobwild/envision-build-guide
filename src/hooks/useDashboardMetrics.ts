@@ -26,6 +26,12 @@ export interface TeamMember {
   completedInPeriod: number;
   avgLeadTimeDays: number | null;
   overloaded: boolean;
+  overdueCount: number;
+  waitingInfoCount: number;
+  inReviewCount: number;
+  slaRate: number;
+  /** health: balanced load vs risk */
+  health: "healthy" | "warning" | "critical";
 }
 
 export interface BacklogStatus {
@@ -328,11 +334,21 @@ export function computeDashboardMetrics(
   const estimatorIds = [...new Set(budgets.map((b) => b.estimator_owner_id).filter(Boolean))];
   const teamMetrics: TeamMember[] = estimatorIds
     .map((id) => {
-      const active = backlogBudgets.filter((b) => b.estimator_owner_id === id).length;
+      const memberBacklog = backlogBudgets.filter((b) => b.estimator_owner_id === id);
+      const active = memberBacklog.length;
       const completed = deliveredInPeriod.filter((b) => b.estimator_owner_id === id).length;
       const memberLTs = calcLeadTimes(
         deliveredInPeriod.filter((b) => b.estimator_owner_id === id)
       );
+      const overdueCount = memberBacklog.filter((b) => b.due_at && new Date(b.due_at) < now).length;
+      const waitingInfoCount = memberBacklog.filter((b) => b.internal_status === "waiting_info").length;
+      const inReviewCount = memberBacklog.filter((b) => b.internal_status === "ready_for_review").length;
+      const slaRate = active > 0 ? Math.round(((active - overdueCount) / active) * 100) : 100;
+      const isOverloaded = active >= 5;
+      const health: "healthy" | "warning" | "critical" =
+        overdueCount >= 3 || (isOverloaded && overdueCount > 0) ? "critical"
+        : isOverloaded || overdueCount > 0 || waitingInfoCount >= 2 ? "warning"
+        : "healthy";
       return {
         id,
         name: profiles[id] || "Sem nome",
@@ -341,10 +357,20 @@ export function computeDashboardMetrics(
         avgLeadTimeDays: memberLTs.length > 0
           ? Math.round((memberLTs.reduce((a, b) => a + b, 0) / memberLTs.length) * 10) / 10
           : null,
-        overloaded: active >= 5,
+        overloaded: isOverloaded,
+        overdueCount,
+        waitingInfoCount,
+        inReviewCount,
+        slaRate,
+        health,
       };
     })
-    .sort((a, b) => b.completedInPeriod - a.completedInPeriod);
+    .sort((a, b) => {
+      // Critical first, then by active load descending
+      const hOrder = { critical: 0, warning: 1, healthy: 2 };
+      if (hOrder[a.health] !== hOrder[b.health]) return hOrder[a.health] - hOrder[b.health];
+      return b.activeBudgets - a.activeBudgets;
+    });
 
   // ─── KPI Health Metadata ───
   const kpiMeta: DashboardMetrics["kpiMeta"] = {
