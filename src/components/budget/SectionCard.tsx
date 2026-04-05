@@ -70,8 +70,8 @@ export function SectionCard({
   if (section.cover_image_url) {
     allImages.push({ url: section.cover_image_url, alt: section.title });
   }
-  stableItems.forEach((item: any) => {
-    (item.images || []).forEach((img: any) => {
+  stableItems.forEach((item) => {
+    (item.images || []).forEach((img) => {
       allImages.push({ url: img.url, alt: item.title });
     });
   });
