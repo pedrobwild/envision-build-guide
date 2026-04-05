@@ -27,8 +27,8 @@ interface VersionHistoryPanelProps {
 export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded = false }: VersionHistoryPanelProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [versions, setVersions] = useState<any[]>([]);
-  const [auditEvents, setAuditEvents] = useState<any[]>([]);
+  const [versions, setVersions] = useState<Record<string, unknown>[]>([]);
+  const [auditEvents, setAuditEvents] = useState<Record<string, unknown>[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
