@@ -80,7 +80,7 @@ export function RoomDetailModal({ open, onClose, roomName, sections, roomId }: R
               </p>
             ) : (
               Object.entries(
-                localItems.reduce<Record<string, { item: any; sectionTitle: string }[]>>((acc, entry) => {
+                localItems.reduce<Record<string, { item: ItemWithImages; sectionTitle: string }[]>>((acc, entry) => {
                   (acc[entry.sectionTitle] = acc[entry.sectionTitle] || []).push(entry);
                   return acc;
                 }, {})
