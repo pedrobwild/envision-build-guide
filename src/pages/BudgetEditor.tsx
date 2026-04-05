@@ -76,8 +76,8 @@ export default function BudgetEditor() {
         section_price: section.section_price,
         qty: section.qty,
         order_index: section.order_index,
-        included_bullets: section.included_bullets,
-        excluded_bullets: section.excluded_bullets,
+        included_bullets: section.included_bullets as import("@/integrations/supabase/types").Json,
+        excluded_bullets: section.excluded_bullets as import("@/integrations/supabase/types").Json,
         notes: section.notes,
         cover_image_url: section.cover_image_url,
       }).eq('id', section.id);
