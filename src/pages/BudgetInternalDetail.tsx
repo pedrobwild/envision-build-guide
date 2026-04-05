@@ -232,7 +232,7 @@ export default function BudgetInternalDetail() {
       budget_id: budget.id,
       user_id: user.id,
       body: newComment.trim(),
-    } as any);
+    });
 
     if (error) {
       toast.error("Erro ao salvar comentário.");
