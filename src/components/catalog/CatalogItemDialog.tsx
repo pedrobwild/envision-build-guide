@@ -111,13 +111,12 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
 
-    const payload = {
+    const payload: Record<string, any> = {
       name: form.name.trim(),
       description: form.description.trim() || null,
       item_type: form.item_type,
       category_id: form.category_id || null,
       unit_of_measure: form.unit_of_measure.trim() || null,
-      internal_code: form.internal_code.trim() || null,
       default_supplier_id: form.default_supplier_id || null,
       is_active: form.is_active,
       image_url: imageUrl,
