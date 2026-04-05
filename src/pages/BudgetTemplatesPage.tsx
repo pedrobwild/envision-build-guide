@@ -217,18 +217,22 @@ function SectionDialog({
   const handleSave = async () => {
     if (!title.trim()) { toast.error("Título é obrigatório"); return; }
     setSaving(true);
-    const payload = {
-      title: title.trim(),
-      subtitle: subtitle.trim() || null,
-      is_optional: isOptional,
-      ...(isEdit ? {} : { template_id: templateId, order_index: nextIndex }),
-    };
 
     if (isEdit) {
-      const { error } = await supabase.from("budget_template_sections").update(payload).eq("id", section!.id);
+      const { error } = await supabase.from("budget_template_sections").update({
+        title: title.trim(),
+        subtitle: subtitle.trim() || null,
+        is_optional: isOptional,
+      }).eq("id", section!.id);
       if (error) { toast.error("Erro ao atualizar seção"); setSaving(false); return; }
     } else {
-      const { error } = await supabase.from("budget_template_sections").insert(payload);
+      const { error } = await supabase.from("budget_template_sections").insert({
+        template_id: templateId,
+        title: title.trim(),
+        subtitle: subtitle.trim() || null,
+        is_optional: isOptional,
+        order_index: nextIndex,
+      });
       if (error) { toast.error("Erro ao criar seção"); setSaving(false); return; }
     }
 
