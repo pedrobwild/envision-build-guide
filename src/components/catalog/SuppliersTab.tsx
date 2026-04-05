@@ -93,6 +93,26 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
     onRefresh();
   };
 
+  const handleSyncSupplier = async (sup: Supplier) => {
+    setSyncingId(sup.id);
+    try {
+      const res = await supabase.functions.invoke("sync-supplier-outbound", {
+        body: { supplier_id: sup.id },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const result = res.data?.results?.[0];
+      if (result?.status === "success") {
+        toast.success(`"${sup.name}" sincronizado com o Portal BWild`);
+      } else {
+        toast.error(`Falha ao sincronizar: ${result?.error ?? "erro desconhecido"}`);
+      }
+    } catch (err: any) {
+      toast.error(`Erro na sincronização: ${err.message}`);
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
