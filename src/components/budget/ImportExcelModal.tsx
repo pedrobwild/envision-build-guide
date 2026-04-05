@@ -237,8 +237,8 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         const headers = Array.from(headerRow, (c: any) => (c == null ? "" : String(c)));
         const map = detectColumns(headers);
 
-        console.log("[Excel Import] Header row:", headerRowIdx, headers);
-        console.log("[Excel Import] Column map:", map);
+        if (import.meta.env.DEV) console.log("[Excel Import] Header row:", headerRowIdx, headers);
+        if (import.meta.env.DEV) console.log("[Excel Import] Column map:", map);
 
         if (!map.section && !map.title && !map.index) {
           const firstTextCol = headers.findIndex((h) => h.trim().length > 0);
