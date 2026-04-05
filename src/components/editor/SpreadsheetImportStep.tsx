@@ -76,7 +76,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
     return parts.length === 2 && parts.every(p => /^\d+$/.test(p));
   };
 
-  const parseNumber = (val: any): number => {
+  const parseNumber = (val: unknown): number => {
     if (typeof val === "number") return val;
     if (!val) return 0;
     const str = String(val).replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
