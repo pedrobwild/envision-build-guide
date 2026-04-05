@@ -1,5 +1,5 @@
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BacklogStatus } from "@/hooks/useDashboardMetrics";
@@ -60,6 +60,17 @@ export function BacklogByStatusChart({ data, loading }: BacklogChartProps) {
               labelFormatter={() => ""}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={24}>
+              <LabelList
+                dataKey="count"
+                position="right"
+                style={{
+                  fontSize: 11,
+                  fontFamily: "var(--font-mono, monospace)",
+                  fontWeight: 600,
+                  fill: "hsl(var(--foreground))",
+                }}
+                offset={6}
+              />
               {data.map((entry, i) => (
                 <Cell
                   key={entry.status}
