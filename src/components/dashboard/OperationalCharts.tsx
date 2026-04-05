@@ -1,5 +1,5 @@
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BacklogStatus } from "@/hooks/useDashboardMetrics";
