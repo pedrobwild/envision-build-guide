@@ -281,12 +281,10 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         trackResize: true,
       });
 
-      // On mobile, fit all pins after load
-      if (isMobileViewport) {
-        map.on("load", () => {
-          map?.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 0 });
-        });
-      }
+      // Fit all pins after load — show entire territory on every device
+      map.on("load", () => {
+        map?.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 0 });
+      });
 
       // Prevent map canvas from stealing page scroll position on init
       map.getCanvas().setAttribute("tabindex", "-1");
