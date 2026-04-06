@@ -213,6 +213,11 @@ export function CompactKanbanCard({
               V{versionNumber}
             </span>
           )}
+          {isSynced && (
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-medium font-body px-1.5 py-0.5 rounded-full bg-success/10 text-success" title="Sincronizado com Portal BWild">
+              ✓ Portal
+            </span>
+          )}
         </div>
       </motion.div>
     </div>
