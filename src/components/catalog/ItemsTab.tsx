@@ -41,10 +41,6 @@ interface Props {
   onRefresh: () => void;
 }
 
-function formatBRL(v: number | null) {
-  if (v == null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-}
 
 export function ItemsTab({
   items, categories, suppliers, isLoading,

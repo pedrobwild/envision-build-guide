@@ -32,10 +32,6 @@ interface Props {
   suppliers: Supplier[];
 }
 
-function formatBRL(v: number | null) {
-  if (v == null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-}
 
 function PriceDialog({
   open, onOpenChange, price, catalogItemId, suppliers, onSaved,
