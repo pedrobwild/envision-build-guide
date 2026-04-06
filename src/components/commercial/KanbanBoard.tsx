@@ -155,6 +155,7 @@ interface KanbanBoardProps {
   onCardClick: (budgetId: string) => void;
   getProfileName: (id: string | null) => string;
   dueFilter?: DueFilter;
+  syncedBudgetIds?: Set<string>;
 }
 
 function getColumnForBudget(internalStatus: string) {

@@ -507,6 +507,7 @@ export default function CommercialDashboard() {
               onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
               getProfileName={getProfileName}
               dueFilter={dueFilter}
+              syncedBudgetIds={syncedBudgetIds}
             />
           )}
 

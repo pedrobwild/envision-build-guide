@@ -19,6 +19,7 @@ interface CompactKanbanCardProps {
   commercialName?: string;
   estimatorName?: string;
   highPriority?: boolean;
+  isSynced?: boolean;
   onClick: () => void;
   onQuickAction?: (action: "open" | "whatsapp" | "advance") => void;
 }
