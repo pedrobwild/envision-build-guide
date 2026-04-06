@@ -612,6 +612,19 @@ export default function BudgetEditorV2() {
           </Tabs>
         </main>
       </div>
+
+      {/* Template Selector Dialog */}
+      {budgetId && (
+        <TemplateSelectorDialog
+          open={templateDialogOpen}
+          budgetId={budgetId}
+          onOpenChange={setTemplateDialogOpen}
+          onConfirm={() => {
+            // Reload sections after template application
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }
