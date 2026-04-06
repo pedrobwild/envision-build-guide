@@ -618,13 +618,22 @@ export default function CommercialDashboard() {
         onSuccess={handleRevisionRequestSuccess}
       />
 
-      {/* Confirmation dialog for "Contrato fechado" */}
+      {/* Contract Upload Modal */}
+      <ContractUploadModal
+        open={!!contractUploadBudget}
+        onOpenChange={(open) => { if (!open) setContractUploadBudget(null); }}
+        budgetId={contractUploadBudget?.id ?? ""}
+        projectName={contractUploadBudget?.project_name || contractUploadBudget?.client_name || ""}
+        onSuccess={handleContractUploadSuccess}
+      />
+
+      {/* Confirmation dialog for "Enviar ao cliente" */}
       <AlertDialog open={!!confirmCloseBudgetId} onOpenChange={(open) => { if (!open) setConfirmCloseBudgetId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Registrar contrato fechado?</AlertDialogTitle>
+            <AlertDialogTitle>Registrar envio ao cliente?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação marca o orçamento como contrato fechado. Deseja continuar?
+              Esta ação marca o orçamento como enviado ao cliente. Deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
