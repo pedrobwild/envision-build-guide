@@ -485,7 +485,7 @@ export default function EstimatorDashboard() {
             count={counts.pending}
             icon={<Inbox className="h-4 w-4" />}
             accent="text-primary"
-            onClick={() => setStatusFilter("assigned")}
+            onClick={() => setStatusFilter("_pending")}
           />
           <SummaryCard
             label="Em Elaboração"
