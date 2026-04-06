@@ -445,8 +445,11 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     setLocalCategories([]);
   }, [open]);
 
+  // Guard: only auto-detect category on explicit user action, not on mount
+  const supplierChangeIsUserAction = useRef(false);
   useEffect(() => {
-    if (!open || !form.default_supplier_id) return;
+    if (!open || !form.default_supplier_id || !supplierChangeIsUserAction.current) return;
+    supplierChangeIsUserAction.current = false;
     void handleSupplierChange(form.default_supplier_id);
   }, [form.default_supplier_id, handleSupplierChange, open]);
 
