@@ -33,6 +33,9 @@ import {
   MapPin,
   Ruler,
   AlertOctagon,
+  RefreshCw,
+  CheckCircle2,
+  ArrowRightLeft,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -110,6 +113,8 @@ export default function BudgetInternalDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<{ status: string; target_id: string | null } | null>(null);
 
   const getProfileName = useCallback(
     (id: string | null) => {
@@ -161,8 +166,44 @@ export default function BudgetInternalDetail() {
     return () => { cancelled = true; };
   }, [budgetId, user]);
 
+  // Fetch sync status for this budget
+  useEffect(() => {
+    if (!budgetId) return;
+    supabase
+      .from("integration_sync_log")
+      .select("sync_status, target_id")
+      .eq("source_system", "envision")
+      .eq("entity_type", "project")
+      .eq("source_id", budgetId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setSyncStatus({ status: data.sync_status, target_id: data.target_id });
+      });
+  }, [budgetId]);
 
-
+  async function handleManualSync() {
+    if (!budgetId) return;
+    setSyncing(true);
+    try {
+      const res = await supabase.functions.invoke("sync-project-outbound", {
+        body: { budget_id: budgetId },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const data = res.data;
+      if (data?.status === "success") {
+        toast.success("Projeto sincronizado com o Portal!");
+        setSyncStatus({ status: "success", target_id: data.project_id });
+      } else if (data?.message) {
+        toast.info(data.message);
+      } else {
+        toast.error(data?.error ?? "Erro desconhecido ao sincronizar");
+      }
+    } catch (err: any) {
+      toast.error(`Erro ao sincronizar: ${err.message}`);
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function changeStatus(newStatus: InternalStatus, note?: string) {
     if (!budget || !user) return;
@@ -768,6 +809,34 @@ export default function BudgetInternalDetail() {
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                     Ver proposta pública
+                  </Button>
+                )}
+
+                {/* Sync to Portal BWild */}
+                {budget.internal_status === "contrato_fechado" && (
+                  <Button
+                    variant={syncStatus?.status === "success" ? "outline" : "default"}
+                    size="sm"
+                    className="w-full justify-start gap-2"
+                    onClick={handleManualSync}
+                    disabled={syncing}
+                  >
+                    {syncing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : syncStatus?.status === "success" ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : syncStatus?.status === "failed" ? (
+                      <RefreshCw className="h-3.5 w-3.5 text-destructive" />
+                    ) : (
+                      <ArrowRightLeft className="h-3.5 w-3.5" />
+                    )}
+                    {syncing
+                      ? "Sincronizando..."
+                      : syncStatus?.status === "success"
+                      ? "✓ Sincronizado com Portal"
+                      : syncStatus?.status === "failed"
+                      ? "Re-sincronizar com Portal"
+                      : "Enviar para Portal BWild"}
                   </Button>
                 )}
               </CardContent>
