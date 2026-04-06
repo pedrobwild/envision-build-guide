@@ -849,19 +849,21 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const debouncedSave = useCallback((table: string, id: string, updates: Record<string, unknown>) => {
-    const key = `${table}-${id}`;
+  const debouncedSave = useCallback((logicalTable: string, id: string, updates: Record<string, unknown>) => {
+    const key = `${logicalTable}-${id}`;
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
     timers.current[key] = setTimeout(async () => {
-      await supabase.from(table as "sections" | "items").update(updates).eq("id", id);
+      const actualTable = logicalTable === "sections" ? cfg.sectionTable : cfg.itemTable;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from(actualTable as any) as any).update(updates).eq("id", id);
       setSavingIds(prev => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
     }, 600);
-  }, []);
+  }, [cfg]);
 
   const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
     const updated = sections.map(s =>
