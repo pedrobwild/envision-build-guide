@@ -62,6 +62,7 @@ export function BudgetActionsMenu({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [closingContract, setClosingContract] = useState(false);
+  const [contractModalOpen, setContractModalOpen] = useState(false);
 
   const editPath = `/admin/budget/${budget.id}`;
   const hasPublicPage = !!budget.public_id;
