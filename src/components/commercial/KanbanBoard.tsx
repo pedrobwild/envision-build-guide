@@ -700,6 +700,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             onCardClick={onCardClick}
                             getProfileName={getProfileName}
                             compact
+                            syncedBudgetIds={syncedBudgetIds}
                           />
                         </div>
                       ));
