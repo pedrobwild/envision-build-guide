@@ -73,7 +73,7 @@ const App = () => (
           <ChunkErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
-                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/" element={<RoleRedirectPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
