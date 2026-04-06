@@ -524,8 +524,8 @@ export default function EstimatorDashboard() {
             { id: "overdue", label: "Atrasados", icon: AlertTriangle, count: counts.overdue, color: "destructive" },
             { id: "urgente", label: "Urgentes", icon: Flame, count: budgets.filter(b => b.priority === "urgente").length },
             { id: "today", label: "Hoje", icon: Clock, count: counts.dueToday },
-            { id: "assigned", label: "Pendente", icon: Inbox, count: counts.pending },
-            { id: "in_progress", label: "Em Elaboração", count: counts.inProgress },
+            { id: "_pending", label: "Pendente", icon: Inbox, count: counts.pending },
+            { id: "_in_progress", label: "Em Elaboração", count: counts.inProgress },
             { id: "ready_for_review", label: "Revisão", count: counts.review },
           ] as FilterChip[]}
           activeChipId={
