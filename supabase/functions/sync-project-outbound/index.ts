@@ -342,7 +342,7 @@ function mapBudgetToProject(budget: any, totalValue: number) {
     estimated_duration_weeks: budget.estimated_weeks,
     budget_value: totalValue,
     budget_code: budget.sequential_code,
-    status: "planning",
+    status: "draft",
     notes: budget.internal_notes,
     consultora_comercial: budget.consultora_comercial,
     contract_file_url: budget.contract_file_url ?? null,
