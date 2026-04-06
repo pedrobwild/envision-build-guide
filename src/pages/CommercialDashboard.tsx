@@ -233,6 +233,15 @@ export default function CommercialDashboard() {
   }, [budgets, search, statusFilter, sortBy, commercialFilter]);
 
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
+    // Intercept contrato_fechado → show contract upload modal
+    if (newStatus === "contrato_fechado") {
+      const target = budgets.find(b => b.id === budgetId);
+      if (target) {
+        setContractUploadBudget(target);
+        return;
+      }
+    }
+
     const current = budgets.find(b => b.id === budgetId);
     const { error } = await supabase
       .from("budgets")
@@ -253,6 +262,28 @@ export default function CommercialDashboard() {
 
     setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, internal_status: newStatus, updated_at: new Date().toISOString() } : b));
     toast.success(`Status atualizado para "${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}"`);
+  }
+
+  function handleContractUploadSuccess() {
+    if (!contractUploadBudget || !user) return;
+    const budgetId = contractUploadBudget.id;
+    const fromStatus = contractUploadBudget.internal_status;
+
+    // Log event
+    supabase.from("budget_events").insert({
+      budget_id: budgetId,
+      user_id: user.id,
+      event_type: "status_change",
+      from_status: fromStatus,
+      to_status: "contrato_fechado",
+    });
+
+    setBudgets(prev => prev.map(b =>
+      b.id === budgetId
+        ? { ...b, internal_status: "contrato_fechado", updated_at: new Date().toISOString() }
+        : b
+    ));
+    setContractUploadBudget(null);
   }
 
   function copyPublicLink(publicId: string | null) {
