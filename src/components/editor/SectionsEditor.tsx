@@ -648,6 +648,7 @@ function SortableItemRow({
           </div>
 
           {/* Supplier selector */}
+          {!disableCatalog && (
           <div className="space-y-0.5">
             <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">Fornecedor</label>
             <div className="flex items-center gap-1.5 max-w-xl">
@@ -658,7 +659,6 @@ function SortableItemRow({
                   const supplierId = e.target.value || null;
                   const supplier = suppliers.find(s => s.id === supplierId);
                   const prev = (typeof item.catalog_snapshot === 'object' && item.catalog_snapshot && !Array.isArray(item.catalog_snapshot)) ? item.catalog_snapshot : {};
-                  // Auto-fill item_category from supplier's categoria
                   const autoCategory = supplier?.categoria
                     ? (supplier.categoria === "Prestadores" ? "prestador" : "produto")
                     : prev.item_category;
@@ -679,8 +679,10 @@ function SortableItemRow({
               </select>
             </div>
           </div>
+          )}
 
           {/* Item category selector */}
+          {!disableCatalog && (
           <div className="space-y-0.5">
             <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">Categoria</label>
             <div className="flex items-center gap-1.5 max-w-xl">
@@ -701,6 +703,7 @@ function SortableItemRow({
               </select>
             </div>
           </div>
+          )}
 
           <div className="flex items-center gap-3 md:hidden pt-0.5">
             <div className="space-y-0.5">
