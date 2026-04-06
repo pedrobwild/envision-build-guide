@@ -144,6 +144,8 @@ export function BudgetActionsMenu({
           header_config: original.header_config,
           commercial_owner_id: original.commercial_owner_id,
           estimator_owner_id: original.estimator_owner_id,
+          internal_status: "delivered_to_sales",
+          status: original.status,
         })
         .select("id")
         .single();
