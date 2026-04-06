@@ -198,7 +198,7 @@ function Column({
   const Icon = column.icon;
   const sorted = sortBudgets(budgets);
   const overdueCount = budgets.filter((b) => {
-    const d = getDueInfo(b.due_at);
+    const d = getDueInfo(b.due_at, b.internal_status);
     return d?.variant === "overdue" || d?.variant === "today";
   }).length;
 
@@ -309,7 +309,7 @@ function EstimatorCard({
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const statusMeta = INTERNAL_STATUSES[b.internal_status as InternalStatus];
-  const due = getDueInfo(b.due_at);
+  const due = getDueInfo(b.due_at, b.internal_status);
   const highPrio = isHighPriority(b.priority);
   const borderColor = due ? dueBorderStyles[due.variant] : "border-l-transparent";
 
@@ -434,7 +434,7 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
     visibleColumns.map((col) => {
       const items = columnBudgets(col);
       const overdueCount = items.filter((b) => {
-        const d = getDueInfo(b.due_at);
+        const d = getDueInfo(b.due_at, b.internal_status);
         return d?.variant === "overdue" || d?.variant === "today";
       }).length;
       return {
