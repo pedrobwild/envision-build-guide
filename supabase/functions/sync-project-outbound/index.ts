@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     if (sectionIds.length > 0) {
       const { data: itemsData } = await localDb
         .from("items")
-        .select("id, section_id, title, description, qty, unit, order_index, internal_unit_price, internal_total, bdi_percentage, included_rooms, excluded_rooms, coverage_type, reference_url, notes")
+        .select("id, section_id, title, description, qty, unit, order_index, internal_unit_price, internal_total, bdi_percentage, included_rooms, excluded_rooms, coverage_type, reference_url, notes, catalog_snapshot, catalog_item_id")
         .in("section_id", sectionIds)
         .order("order_index", { ascending: true });
       items = itemsData ?? [];
