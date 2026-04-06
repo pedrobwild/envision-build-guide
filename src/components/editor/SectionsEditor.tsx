@@ -1017,8 +1017,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     const section = sections.find(s => s.id === sectionId);
     const order = section?.items.length || 0;
 
-    const insertPayload = {
-      section_id: sectionId,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const insertPayload: Record<string, any> = {
+      [cfg.itemForeignKey]: sectionId,
       title: itemData?.title || "Novo Item",
       description: itemData?.description || null,
       unit: itemData?.unit || null,
@@ -1026,25 +1027,30 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       internal_unit_price: itemData?.internal_unit_price || null,
       internal_total: itemData?.internal_total || null,
       order_index: order,
-      catalog_item_id: itemData?.catalog_item_id || null,
-      catalog_snapshot: (itemData?.catalog_snapshot || null) as import("@/integrations/supabase/types").Json,
     };
 
-    const { data } = await supabase
-      .from("items")
+    if (!cfg.disableCatalog) {
+      insertPayload.catalog_item_id = itemData?.catalog_item_id || null;
+      insertPayload.catalog_snapshot = itemData?.catalog_snapshot || null;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase.from(cfg.itemTable as any) as any)
       .insert(insertPayload)
       .select()
       .single();
     if (data) {
-      const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
       let itemImages: { id?: string; url: string; is_primary: boolean | null }[] = [];
-      if (catalogImageUrl) {
-        const { data: imgRow } = await supabase.from("item_images").insert({
-          item_id: data.id,
-          url: String(catalogImageUrl),
-          is_primary: true,
-        }).select().single();
-        if (imgRow) itemImages = [imgRow];
+      if (!cfg.disableImages) {
+        const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
+        if (catalogImageUrl) {
+          const { data: imgRow } = await supabase.from("item_images").insert({
+            item_id: data.id,
+            url: String(catalogImageUrl),
+            is_primary: true,
+          }).select().single();
+          if (imgRow) itemImages = [imgRow];
+        }
       }
 
       let updated = sections.map(s => {
@@ -1053,7 +1059,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
         const newItems = [...s.items, newItem];
         const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
         if (newSaleTotal > 0) {
-          supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase.from(cfg.sectionTable as any) as any).update({ section_price: newSaleTotal }).eq("id", sectionId);
         }
         return { ...s, items: newItems, section_price: newSaleTotal > 0 ? newSaleTotal : s.section_price };
       });
