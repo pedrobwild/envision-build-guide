@@ -57,7 +57,7 @@ export default function Login() {
         return;
       }
       if (session?.user) {
-        navigate("/admin", { replace: true });
+        navigate("/", { replace: true });
       }
       finishSessionCheck();
     }).catch(() => {
