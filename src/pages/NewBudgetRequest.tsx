@@ -509,7 +509,7 @@ export default function NewBudgetRequest() {
               type="date"
               value={dueAt}
               onChange={(e) => setDueAt(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
+              
               className="px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
             />
           </PropertyRow>
