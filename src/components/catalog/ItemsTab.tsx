@@ -39,6 +39,10 @@ interface Props {
   onNewItem: () => void;
   onEditItem: (item: CatalogItem) => void;
   onRefresh: () => void;
+  page: number;
+  totalPages: number;
+  totalCount: number;
+  onPageChange: (page: number) => void;
 }
 
 
@@ -50,6 +54,7 @@ export function ItemsTab({
   sectionFilter, onSectionFilterChange,
   statusFilter, onStatusFilterChange,
   onNewItem, onEditItem, onRefresh,
+  page, totalPages, totalCount, onPageChange,
 }: Props) {
   const itemIds = items.map((i) => i.id);
   const { data: primaryPrices = [] } = useQuery({
@@ -147,9 +152,10 @@ export function ItemsTab({
       </div>
 
       {/* Results count */}
-      {!isLoading && items.length > 0 && (
+      {!isLoading && totalCount > 0 && (
         <p className="text-xs text-muted-foreground">
-          {items.length} {items.length === 1 ? "item encontrado" : "itens encontrados"}
+          {totalCount} {totalCount === 1 ? "item encontrado" : "itens encontrados"}
+          {totalPages > 1 && ` · Página ${page + 1} de ${totalPages}`}
         </p>
       )}
 
@@ -236,6 +242,31 @@ export function ItemsTab({
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => onPageChange(page - 1)}
+          >
+            Anterior
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            {page + 1} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => onPageChange(page + 1)}
+          >
+            Próxima
+          </Button>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { SuppliersTab } from "@/components/catalog/SuppliersTab";
 import { CatalogItemDialog, type CatalogItem } from "@/components/catalog/CatalogItemDialog";
 import { CategoryDialog, type CatalogCategory } from "@/components/catalog/CategoryDialog";
 import { SupplierDialog, type Supplier } from "@/components/catalog/SupplierDialog";
+
+const PAGE_SIZE = 50;
 
 // ─── Hooks ────────────────────────────────────────────────────────
 function useCategories() {
@@ -41,9 +43,19 @@ function useSuppliers() {
   });
 }
 
-function useCatalogItems(search: string, typeFilter: string, categoryFilter: string, sectionFilter: string, statusFilter: string) {
+/** Debounce hook */
+function useDebouncedValue(value: string, delay = 400) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
+function useCatalogItems(search: string, typeFilter: string, categoryFilter: string, sectionFilter: string, statusFilter: string, page: number) {
   return useQuery({
-    queryKey: ["catalog_items", search, typeFilter, categoryFilter, sectionFilter, statusFilter],
+    queryKey: ["catalog_items", search, typeFilter, categoryFilter, sectionFilter, statusFilter, page],
     queryFn: async () => {
       let allowedItemIds: string[] | null = null;
       if (sectionFilter && sectionFilter !== "all") {
@@ -52,13 +64,14 @@ function useCatalogItems(search: string, typeFilter: string, categoryFilter: str
           .select("catalog_item_id")
           .eq("section_title", sectionFilter);
         allowedItemIds = (links ?? []).map((l) => l.catalog_item_id);
-        if (allowedItemIds.length === 0) return [];
+        if (allowedItemIds.length === 0) return { items: [], total: 0 };
       }
 
       let query = supabase
         .from("catalog_items")
-        .select("*, catalog_categories(*), suppliers:default_supplier_id(*)")
-        .order("name");
+        .select("*, catalog_categories(*), suppliers:default_supplier_id(*)", { count: "exact" })
+        .order("name")
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
       if (search) {
         query = query.ilike("search_text", `%${search.toLowerCase()}%`);
@@ -78,9 +91,9 @@ function useCatalogItems(search: string, typeFilter: string, categoryFilter: str
         query = query.in("id", allowedItemIds);
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       if (error) throw error;
-      return data as CatalogItem[];
+      return { items: (data ?? []) as CatalogItem[], total: count ?? 0 };
     },
   });
 }
@@ -93,6 +106,14 @@ export default function CatalogPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sectionFilter, setSectionFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(0);
+
+  const debouncedSearch = useDebouncedValue(search);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch, typeFilter, categoryFilter, sectionFilter, statusFilter]);
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
@@ -105,7 +126,10 @@ export default function CatalogPage() {
 
   const { data: categories = [] } = useCategories();
   const { data: suppliers = [] } = useSuppliers();
-  const { data: items = [], isLoading } = useCatalogItems(search, typeFilter, categoryFilter, sectionFilter, statusFilter);
+  const { data: result, isLoading } = useCatalogItems(debouncedSearch, typeFilter, categoryFilter, sectionFilter, statusFilter, page);
+  const items = result?.items ?? [];
+  const totalCount = result?.total ?? 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["catalog_items"] });
@@ -138,7 +162,7 @@ export default function CatalogPage() {
       <Tabs defaultValue="items">
         <TabsList>
           <TabsTrigger value="items" className="gap-1.5">
-            <Package className="h-3.5 w-3.5" /> Itens ({items.length})
+            <Package className="h-3.5 w-3.5" /> Itens ({totalCount})
           </TabsTrigger>
           <TabsTrigger value="categories" className="gap-1.5">
             <FolderOpen className="h-3.5 w-3.5" /> Categorias ({categories.length})
@@ -167,6 +191,10 @@ export default function CatalogPage() {
             onNewItem={() => { setEditingItem(null); setItemDialogOpen(true); }}
             onEditItem={(item) => { setEditingItem(item); setItemDialogOpen(true); }}
             onRefresh={invalidateAll}
+            page={page}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            onPageChange={setPage}
           />
         </TabsContent>
 
