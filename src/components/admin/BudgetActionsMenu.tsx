@@ -323,6 +323,15 @@ export function BudgetActionsMenu({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Contract Upload Modal */}
+      <ContractUploadModal
+        open={contractModalOpen}
+        onOpenChange={setContractModalOpen}
+        budgetId={budget.id}
+        projectName={budget.project_name || ""}
+        onSuccess={handleContractUploadSuccess}
+      />
     </>
   );
 }
