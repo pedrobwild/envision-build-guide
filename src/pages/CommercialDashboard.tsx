@@ -153,12 +153,18 @@ export default function CommercialDashboard() {
     if (!isAdmin) {
       budgetQuery = budgetQuery.eq("commercial_owner_id", user!.id);
     }
-    const [budgetsRes, profilesRes] = await Promise.all([
+    const [budgetsRes, profilesRes, syncRes] = await Promise.all([
       budgetQuery,
       supabase.from("profiles").select("id, full_name"),
+      supabase.from("integration_sync_log")
+        .select("source_id")
+        .eq("source_system", "envision")
+        .eq("entity_type", "project")
+        .eq("sync_status", "success"),
     ]);
     if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetRow[]);
     if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
+    if (syncRes.data) setSyncedBudgetIds(new Set(syncRes.data.map(r => r.source_id)));
     setLoading(false);
   }
 
