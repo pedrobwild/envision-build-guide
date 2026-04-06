@@ -175,7 +175,7 @@ export default function EstimatorDashboard() {
       )
       .order("created_at", { ascending: false });
     if (!adminCheck) {
-      budgetQuery = budgetQuery.eq("estimator_owner_id", user!.id);
+      budgetQuery = budgetQuery.or(`estimator_owner_id.eq.${user!.id},estimator_owner_id.is.null`);
     }
     const [budgetsRes, profilesRes, rolesRes] = await Promise.all([
       budgetQuery,
