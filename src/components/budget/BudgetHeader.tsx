@@ -85,7 +85,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   if (condominio) metaChips.push({ label: "Condomínio", value: condominio });
   if (neighborhood) metaChips.push({ label: "Bairro", value: neighborhood });
   if (area) metaChips.push({ label: "Área", value: area, mono: true });
-  if (version) metaChips.push({ label: "Versão", value: `v${version}`, mono: true });
+  if (versionStr) metaChips.push({ label: "Versão", value: `v${versionStr}`, mono: true });
   if (budget.prazo_dias_uteis) metaChips.push({ label: "Prazo", value: `${budget.prazo_dias_uteis} dias úteis`, mono: true });
 
   return (
