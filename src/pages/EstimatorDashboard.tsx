@@ -293,7 +293,10 @@ export default function EstimatorDashboard() {
         b.client_name.toLowerCase().includes(q) ||
         b.project_name.toLowerCase().includes(q) ||
         (b.bairro ?? "").toLowerCase().includes(q);
-      const matchStatus = statusFilter === "all" || b.internal_status === statusFilter;
+      // When "all" is selected, hide delivered/finished by default
+      const matchStatus = statusFilter === "all"
+        ? !HIDDEN_BY_DEFAULT_STATUSES.has(b.internal_status)
+        : b.internal_status === statusFilter;
       const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
       const matchCommercial =
         commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
