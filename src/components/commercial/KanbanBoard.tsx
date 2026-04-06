@@ -423,6 +423,7 @@ function KanbanColumn({
                   locked={column.locked}
                   onCardClick={onCardClick}
                   getProfileName={getProfileName}
+                  syncedBudgetIds={syncedBudgetIds}
                 />
               </div>
             ))}
