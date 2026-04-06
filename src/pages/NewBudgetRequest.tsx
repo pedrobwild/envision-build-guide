@@ -27,7 +27,7 @@ import {
   X,
   CheckCircle2,
   UserCheck,
-  LayoutTemplate,
+  
   MapPin,
   Ruler,
   Phone,
