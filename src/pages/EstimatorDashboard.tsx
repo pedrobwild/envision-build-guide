@@ -299,6 +299,10 @@ export default function EstimatorDashboard() {
       // When "all" is selected, hide delivered/finished by default
       const matchStatus = statusFilter === "all"
         ? !HIDDEN_BY_DEFAULT_STATUSES.has(b.internal_status)
+        : statusFilter === "_pending"
+        ? PENDING_STATUSES.includes(b.internal_status)
+        : statusFilter === "_in_progress"
+        ? IN_PROGRESS_STATUSES.includes(b.internal_status)
         : b.internal_status === statusFilter;
       const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
       const matchCommercial =
