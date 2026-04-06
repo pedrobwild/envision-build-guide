@@ -166,8 +166,44 @@ export default function BudgetInternalDetail() {
     return () => { cancelled = true; };
   }, [budgetId, user]);
 
+  // Fetch sync status for this budget
+  useEffect(() => {
+    if (!budgetId) return;
+    supabase
+      .from("integration_sync_log")
+      .select("sync_status, target_id")
+      .eq("source_system", "envision")
+      .eq("entity_type", "project")
+      .eq("source_id", budgetId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setSyncStatus({ status: data.sync_status, target_id: data.target_id });
+      });
+  }, [budgetId]);
 
-
+  async function handleManualSync() {
+    if (!budgetId) return;
+    setSyncing(true);
+    try {
+      const res = await supabase.functions.invoke("sync-project-outbound", {
+        body: { budget_id: budgetId },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const data = res.data;
+      if (data?.status === "success") {
+        toast.success("Projeto sincronizado com o Portal!");
+        setSyncStatus({ status: "success", target_id: data.project_id });
+      } else if (data?.message) {
+        toast.info(data.message);
+      } else {
+        toast.error(data?.error ?? "Erro desconhecido ao sincronizar");
+      }
+    } catch (err: any) {
+      toast.error(`Erro ao sincronizar: ${err.message}`);
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function changeStatus(newStatus: InternalStatus, note?: string) {
     if (!budget || !user) return;
