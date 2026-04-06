@@ -552,6 +552,20 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
       if (error) { toast.error("Erro ao salvar item"); setSaving(false); return; }
       itemId = data.id;
       setSavedItemId(data.id);
+
+      // Create initial supplier price if provided during creation
+      if (form.initial_unit_price && form.default_supplier_id) {
+        const priceVal = parseFloat(form.initial_unit_price);
+        if (!isNaN(priceVal) && priceVal > 0) {
+          await supabase.from("catalog_item_supplier_prices").insert({
+            catalog_item_id: itemId,
+            supplier_id: form.default_supplier_id,
+            unit_price: priceVal,
+            is_primary: true,
+            is_active: true,
+          });
+        }
+      }
     }
 
     try {
