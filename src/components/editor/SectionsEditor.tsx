@@ -1209,7 +1209,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       if (targetSection) {
         await Promise.all(
           targetSection.items.map(item =>
-            supabase.from("items").update({ order_index: item.order_index }).eq("id", item.id)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (supabase.from(cfg.itemTable as any) as any).update({ order_index: item.order_index }).eq("id", item.id)
           )
         );
       }
