@@ -502,12 +502,14 @@ function KanbanCard({
   locked,
   onClick,
   getProfileName,
+  isSynced,
 }: {
   budget: BudgetRow;
   isDragging?: boolean;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
+  isSynced?: boolean;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at);
