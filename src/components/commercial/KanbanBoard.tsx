@@ -733,6 +733,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             sequentialCode={b.sequential_code}
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                            isSynced={syncedBudgetIds.has(b.id)}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
