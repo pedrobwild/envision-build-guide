@@ -712,11 +712,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   });
   const searchRef = useRef<HTMLInputElement>(null);
   const timers = useRef<Record<string, NodeJS.Timeout>>({});
-  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string; categoria: string | null }[]>([]);
 
   // Load suppliers once
   useEffect(() => {
-    supabase.from("suppliers").select("id, name").eq("is_active", true).order("name").then(({ data }) => {
+    supabase.from("suppliers").select("id, name, categoria").eq("is_active", true).order("name").then(({ data }) => {
       if (data) setSuppliers(data);
     });
   }, []);
