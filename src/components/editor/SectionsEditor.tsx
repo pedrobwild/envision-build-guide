@@ -1091,9 +1091,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     const section = sections.find(s => s.id === sectionId);
     if (section && section.items.length > 0) {
       const itemIds = section.items.map(i => i.id);
-      await supabase.from("items").delete().in("id", itemIds);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from(cfg.itemTable as any) as any).delete().in("id", itemIds);
     }
-    await supabase.from("sections").delete().eq("id", sectionId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from(cfg.sectionTable as any) as any).delete().eq("id", sectionId);
     onSectionsChange(sections.filter(s => s.id !== sectionId));
     toast.success("Seção removida");
   };
