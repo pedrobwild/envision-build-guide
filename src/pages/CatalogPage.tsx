@@ -191,6 +191,10 @@ export default function CatalogPage() {
             onNewItem={() => { setEditingItem(null); setItemDialogOpen(true); }}
             onEditItem={(item) => { setEditingItem(item); setItemDialogOpen(true); }}
             onRefresh={invalidateAll}
+            page={page}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            onPageChange={setPage}
           />
         </TabsContent>
 
