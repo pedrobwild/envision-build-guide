@@ -948,9 +948,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
   const addSection = async () => {
     const order = sections.length;
-    const { data } = await supabase
-      .from("sections")
-      .insert({ budget_id: budgetId, title: "Nova Seção", order_index: order })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase.from(cfg.sectionTable as any) as any)
+      .insert({ [cfg.sectionForeignKey]: budgetId, title: "Nova Seção", order_index: order })
       .select()
       .single();
     if (data) {
