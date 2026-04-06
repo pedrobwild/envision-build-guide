@@ -137,6 +137,7 @@ export default function CommercialDashboard() {
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
+  const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile]);
