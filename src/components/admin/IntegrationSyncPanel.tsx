@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Loader2,
   ArrowRightLeft,
-  Send,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,9 +56,29 @@ const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; la
 export default function IntegrationSyncPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [retrying, setRetrying] = useState(false);
+  const [retrying, setRetrying] = useState<"supplier" | "project" | null>(null);
 
-  const { data: logs = [], isLoading, refetch } = useQuery({
+  // Fetch real stats via count queries + recent logs for the table
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["integration-sync-stats"],
+    queryFn: async () => {
+      const [total, success, failed, pending] = await Promise.all([
+        supabase.from("integration_sync_log").select("id", { count: "exact", head: true }),
+        supabase.from("integration_sync_log").select("id", { count: "exact", head: true }).eq("sync_status", "success"),
+        supabase.from("integration_sync_log").select("id", { count: "exact", head: true }).eq("sync_status", "failed"),
+        supabase.from("integration_sync_log").select("id", { count: "exact", head: true }).eq("sync_status", "pending"),
+      ]);
+      return {
+        total: total.count ?? 0,
+        success: success.count ?? 0,
+        failed: failed.count ?? 0,
+        pending: pending.count ?? 0,
+      };
+    },
+    refetchInterval: 30_000,
+  });
+
+  const { data: logs = [], isLoading: logsLoading, refetch } = useQuery({
     queryKey: ["integration-sync-log"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -73,16 +92,11 @@ export default function IntegrationSyncPanel() {
     refetchInterval: 30_000,
   });
 
-  const stats = {
-    total: logs.length,
-    success: logs.filter((l) => l.sync_status === "success").length,
-    failed: logs.filter((l) => l.sync_status === "failed").length,
-    pending: logs.filter((l) => l.sync_status === "pending").length,
-  };
+  const isLoading = statsLoading || logsLoading;
 
-  const retryFailed = useMutation({
+  const retrySuppliersFailed = useMutation({
     mutationFn: async () => {
-      setRetrying(true);
+      setRetrying("supplier");
       const res = await supabase.functions.invoke("sync-supplier-outbound", {
         body: { action: "retry_failed" },
       });
@@ -93,16 +107,51 @@ export default function IntegrationSyncPanel() {
       const results = data?.results ?? [];
       const ok = results.filter((r: { status: string }) => r.status === "success").length;
       toast({
-        title: "Retry concluído",
-        description: `${ok}/${results.length} fornecedores sincronizados com sucesso.`,
+        title: "Retry de fornecedores concluído",
+        description: `${ok}/${results.length} sincronizados com sucesso.`,
       });
       queryClient.invalidateQueries({ queryKey: ["integration-sync-log"] });
+      queryClient.invalidateQueries({ queryKey: ["integration-sync-stats"] });
     },
     onError: (err: Error) => {
       toast({ title: "Erro no retry", description: err.message, variant: "destructive" });
     },
-    onSettled: () => setRetrying(false),
+    onSettled: () => setRetrying(null),
   });
+
+  const retryProjectsFailed = useMutation({
+    mutationFn: async () => {
+      setRetrying("project");
+      const res = await supabase.functions.invoke("sync-project-outbound", {
+        body: { action: "retry_failed" },
+      });
+      if (res.error) throw new Error(res.error.message);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      const results = data?.results ?? [];
+      const ok = results.filter((r: { status: string }) => r.status === "success").length;
+      toast({
+        title: "Retry de projetos concluído",
+        description: `${ok}/${results.length} sincronizados com sucesso.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["integration-sync-log"] });
+      queryClient.invalidateQueries({ queryKey: ["integration-sync-stats"] });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Erro no retry", description: err.message, variant: "destructive" });
+    },
+    onSettled: () => setRetrying(null),
+  });
+
+  // Count failed by entity type from logs (for button labels)
+  const failedSuppliers = logs.filter((l) => l.sync_status === "failed" && l.entity_type === "supplier").length;
+  const failedProjects = logs.filter((l) => l.sync_status === "failed" && l.entity_type === "project").length;
+
+  const handleRefresh = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ["integration-sync-stats"] });
+  };
 
   const formatTime = (date: string | null) => {
     if (!date) return "—";
@@ -117,6 +166,8 @@ export default function IntegrationSyncPanel() {
     if (source === "envision") return { label: "Envision → Portal", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" };
     return { label: "Portal → Envision", color: "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300" };
   };
+
+  const displayStats = stats ?? { total: 0, success: 0, failed: 0, pending: 0 };
 
   return (
     <Card className="border bg-card">
@@ -139,7 +190,7 @@ export default function IntegrationSyncPanel() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => refetch()}
+            onClick={handleRefresh}
             disabled={isLoading}
             className="shrink-0"
           >
@@ -150,10 +201,10 @@ export default function IntegrationSyncPanel() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Total", value: stats.total, color: "text-foreground" },
-            { label: "Sucesso", value: stats.success, color: "text-emerald-600 dark:text-emerald-400" },
-            { label: "Falhas", value: stats.failed, color: "text-destructive" },
-            { label: "Pendentes", value: stats.pending, color: "text-amber-600 dark:text-amber-400" },
+            { label: "Total", value: displayStats.total, color: "text-foreground" },
+            { label: "Sucesso", value: displayStats.success, color: "text-emerald-600 dark:text-emerald-400" },
+            { label: "Falhas", value: displayStats.failed, color: "text-destructive" },
+            { label: "Pendentes", value: displayStats.pending, color: "text-amber-600 dark:text-amber-400" },
           ].map((kpi) => (
             <div
               key={kpi.label}
@@ -173,20 +224,34 @@ export default function IntegrationSyncPanel() {
             variant="outline"
             size="sm"
             className="gap-1.5"
-            onClick={() => retryFailed.mutate()}
-            disabled={retrying || stats.failed === 0}
+            onClick={() => retrySuppliersFailed.mutate()}
+            disabled={retrying !== null || failedSuppliers === 0}
           >
-            {retrying ? (
+            {retrying === "supplier" ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <RefreshCw className="h-3.5 w-3.5" />
             )}
-            Retentar falhas ({stats.failed})
+            Retentar fornecedores ({failedSuppliers})
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => retryProjectsFailed.mutate()}
+            disabled={retrying !== null || failedProjects === 0}
+          >
+            {retrying === "project" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+            Retentar projetos ({failedProjects})
           </Button>
         </div>
 
         {/* Table */}
-        {isLoading ? (
+        {logsLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>

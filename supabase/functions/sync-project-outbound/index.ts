@@ -15,11 +15,15 @@ const corsHeaders = {
  *
  * POST body:
  *   { budget_id: string }
+ *   { action: "retry_failed" }  — retry all failed project syncs
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Clone request early so body can be read again in error handler
+  const reqClone = req.clone();
 
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -35,8 +39,41 @@ Deno.serve(async (req) => {
     }
 
     const localDb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
     const body = await req.json();
+
+    // --- Retry failed project syncs ---
+    if (body.action === "retry_failed") {
+      const { data: failed } = await localDb
+        .from("integration_sync_log")
+        .select("source_id, attempts")
+        .eq("source_system", "envision")
+        .eq("entity_type", "project")
+        .eq("sync_status", "failed")
+        .lt("attempts", 5);
+
+      const budgetIds = (failed ?? []).map((r: { source_id: string }) => r.source_id);
+      if (budgetIds.length === 0) {
+        return new Response(JSON.stringify({ message: "No failed projects to retry", results: [] }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const results: Array<{ id: string; status: string; error?: string }> = [];
+      for (const bid of budgetIds) {
+        try {
+          const result = await syncSingleProject(localDb, bid, PORTAL_BWILD_SUPABASE_URL, INTEGRATION_KEY);
+          results.push({ id: bid, status: "success", ...result });
+        } catch (err: any) {
+          results.push({ id: bid, status: "failed", error: err.message });
+        }
+      }
+      return new Response(JSON.stringify({ results }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const budgetId = body.budget_id ?? body.record?.id;
 
     if (!budgetId) {
@@ -46,129 +83,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- Fetch budget ---
-    const { data: budget, error: budgetErr } = await localDb
-      .from("budgets")
-      .select("*")
-      .eq("id", budgetId)
-      .single();
+    const result = await syncSingleProject(localDb, budgetId, PORTAL_BWILD_SUPABASE_URL, INTEGRATION_KEY);
 
-    if (budgetErr || !budget) {
-      throw new Error(`Budget not found: ${budgetErr?.message ?? budgetId}`);
-    }
-
-    // Only sync if contrato_fechado
-    if (budget.internal_status !== "contrato_fechado") {
-      return new Response(JSON.stringify({
-        message: "Budget is not in contrato_fechado status, skipping",
-        status: budget.internal_status,
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Check if already synced
-    const { data: existingSync } = await localDb
-      .from("integration_sync_log")
-      .select("id, target_id")
-      .eq("source_system", "envision")
-      .eq("entity_type", "project")
-      .eq("source_id", budgetId)
-      .eq("sync_status", "success")
-      .maybeSingle();
-
-    if (existingSync?.target_id) {
-      return new Response(JSON.stringify({
-        message: "Project already synced",
-        project_id: existingSync.target_id,
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Fetch sections, items, adjustments in parallel
-    const [{ data: sections }, { data: adjustments }] = await Promise.all([
-      localDb
-        .from("sections")
-        .select("id, title, subtitle, notes, section_price, is_optional, order_index, included_bullets, excluded_bullets, cover_image_url, tags")
-        .eq("budget_id", budgetId)
-        .order("order_index", { ascending: true }),
-      localDb
-        .from("adjustments")
-        .select("id, label, amount, sign")
-        .eq("budget_id", budgetId),
-    ]);
-
-    // Fetch all items for the budget's sections
-    const sectionIds = (sections ?? []).map((s: any) => s.id);
-    let items: any[] = [];
-    if (sectionIds.length > 0) {
-      const { data: itemsData } = await localDb
-        .from("items")
-        .select("id, section_id, title, description, qty, unit, order_index, internal_unit_price, internal_total, bdi_percentage, included_rooms, excluded_rooms, coverage_type, reference_url, notes, catalog_snapshot, catalog_item_id")
-        .in("section_id", sectionIds)
-        .order("order_index", { ascending: true });
-      items = itemsData ?? [];
-    }
-
-    // Calculate totals
-    const sectionsTotal = (sections ?? [])
-      .filter((s: any) => !s.is_optional)
-      .reduce((sum: number, s: any) => sum + (s.section_price ?? 0), 0);
-    const adjustmentsTotal = (adjustments ?? [])
-      .reduce((sum: number, a: any) => sum + a.amount * a.sign, 0);
-    const totalValue = sectionsTotal + adjustmentsTotal;
-
-    // Build payload with full budget breakdown
-    const projectPayload = mapBudgetToProject(budget, totalValue);
-    const budgetBreakdown = buildBudgetBreakdown(sections ?? [], items, adjustments ?? [], totalValue);
-
-    // --- Call Portal BWild's sync-project-inbound ---
-    const inboundUrl = `${PORTAL_BWILD_SUPABASE_URL}/functions/v1/sync-project-inbound`;
-
-    const response = await fetch(inboundUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-integration-key": INTEGRATION_KEY,
-      },
-      body: JSON.stringify({
-        project: projectPayload,
-        budget: budgetBreakdown,
-        source_id: budgetId,
-      }),
-    });
-
-    const responseData = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(`Portal BWild returned ${response.status}: ${responseData.error ?? response.statusText}`);
-    }
-
-    const projectId = responseData.project_id ?? null;
-
-    // Log success
-    await localDb.from("integration_sync_log").upsert({
-      source_system: "envision",
-      target_system: "portal_bwild",
-      entity_type: "project",
-      source_id: budgetId,
-      target_id: projectId,
-      sync_status: "success",
-      payload: { ...projectPayload, budget: budgetBreakdown },
-      attempts: 1,
-      synced_at: new Date().toISOString(),
-    }, {
-      onConflict: "source_system,entity_type,source_id",
-    });
-
-    return new Response(JSON.stringify({
-      status: "success",
-      budget_id: budgetId,
-      project_id: projectId,
-    }), {
+    return new Response(JSON.stringify(result), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -181,20 +98,35 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       );
-      const bodyClone = await req.clone().json().catch(() => ({}));
+      const bodyClone = await reqClone.json().catch(() => ({}));
       const budgetId = bodyClone.budget_id ?? bodyClone.record?.id;
       if (budgetId) {
-        await localDb.from("integration_sync_log").upsert({
-          source_system: "envision",
-          target_system: "portal_bwild",
-          entity_type: "project",
-          source_id: budgetId,
-          sync_status: "failed",
-          error_message: error.message,
-          attempts: 1,
-        }, {
-          onConflict: "source_system,entity_type,source_id",
-        });
+        // Increment attempts instead of hardcoding 1
+        const { data: existingLog } = await localDb
+          .from("integration_sync_log")
+          .select("id, attempts")
+          .eq("source_system", "envision")
+          .eq("entity_type", "project")
+          .eq("source_id", budgetId)
+          .maybeSingle();
+
+        if (existingLog) {
+          await localDb.from("integration_sync_log").update({
+            sync_status: "failed",
+            error_message: error.message,
+            attempts: (existingLog.attempts ?? 0) + 1,
+          }).eq("id", existingLog.id);
+        } else {
+          await localDb.from("integration_sync_log").insert({
+            source_system: "envision",
+            target_system: "portal_bwild",
+            entity_type: "project",
+            source_id: budgetId,
+            sync_status: "failed",
+            error_message: error.message,
+            attempts: 1,
+          });
+        }
       }
     } catch (_) { /* best effort */ }
 
@@ -204,6 +136,164 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+/**
+ * Syncs a single budget/project to Portal BWild.
+ */
+async function syncSingleProject(
+  localDb: ReturnType<typeof createClient>,
+  budgetId: string,
+  portalUrl: string,
+  integrationKey: string,
+) {
+  // --- Fetch budget ---
+  const { data: budget, error: budgetErr } = await localDb
+    .from("budgets")
+    .select("*")
+    .eq("id", budgetId)
+    .single();
+
+  if (budgetErr || !budget) {
+    throw new Error(`Budget not found: ${budgetErr?.message ?? budgetId}`);
+  }
+
+  // Only sync if contrato_fechado
+  if (budget.internal_status !== "contrato_fechado") {
+    return {
+      message: "Budget is not in contrato_fechado status, skipping",
+      status: budget.internal_status,
+    };
+  }
+
+  // Check if already synced
+  const { data: existingSync } = await localDb
+    .from("integration_sync_log")
+    .select("id, target_id, sync_status, attempts")
+    .eq("source_system", "envision")
+    .eq("entity_type", "project")
+    .eq("source_id", budgetId)
+    .maybeSingle();
+
+  // Skip if already successfully synced (unless this is a retry)
+  if (existingSync?.target_id && existingSync.sync_status === "success") {
+    return {
+      message: "Project already synced",
+      project_id: existingSync.target_id,
+    };
+  }
+
+  // Fetch sections, items, adjustments in parallel
+  const [{ data: sections }, { data: adjustments }] = await Promise.all([
+    localDb
+      .from("sections")
+      .select("id, title, subtitle, notes, section_price, is_optional, order_index, included_bullets, excluded_bullets, cover_image_url, tags")
+      .eq("budget_id", budgetId)
+      .order("order_index", { ascending: true }),
+    localDb
+      .from("adjustments")
+      .select("id, label, amount, sign")
+      .eq("budget_id", budgetId),
+  ]);
+
+  // Fetch all items for the budget's sections
+  const sectionIds = (sections ?? []).map((s: any) => s.id);
+  let items: any[] = [];
+  if (sectionIds.length > 0) {
+    const { data: itemsData } = await localDb
+      .from("items")
+      .select("id, section_id, title, description, qty, unit, order_index, internal_unit_price, internal_total, bdi_percentage, included_rooms, excluded_rooms, coverage_type, reference_url, notes, catalog_snapshot, catalog_item_id")
+      .in("section_id", sectionIds)
+      .order("order_index", { ascending: true });
+    items = itemsData ?? [];
+  }
+
+  // Calculate totals
+  const sectionsTotal = (sections ?? [])
+    .filter((s: any) => !s.is_optional)
+    .reduce((sum: number, s: any) => sum + (s.section_price ?? 0), 0);
+  const adjustmentsTotal = (adjustments ?? [])
+    .reduce((sum: number, a: any) => sum + a.amount * a.sign, 0);
+  const totalValue = sectionsTotal + adjustmentsTotal;
+
+  // Build payload with full budget breakdown
+  const projectPayload = mapBudgetToProject(budget, totalValue);
+  const budgetBreakdown = buildBudgetBreakdown(sections ?? [], items, adjustments ?? [], totalValue);
+
+  // --- Call Portal BWild's sync-project-inbound ---
+  const inboundUrl = `${portalUrl}/functions/v1/sync-project-inbound`;
+
+  const response = await fetch(inboundUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-integration-key": integrationKey,
+    },
+    body: JSON.stringify({
+      project: projectPayload,
+      budget: budgetBreakdown,
+      source_id: budgetId,
+    }),
+  });
+
+  const responseData = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const errMsg = `Portal BWild returned ${response.status}: ${responseData.error ?? response.statusText}`;
+
+    // Log failure with proper attempt increment
+    const currentAttempts = existingSync?.attempts ?? 0;
+    if (existingSync) {
+      await localDb.from("integration_sync_log").update({
+        sync_status: "failed",
+        error_message: errMsg,
+        attempts: currentAttempts + 1,
+        payload: { ...projectPayload, budget: budgetBreakdown },
+      }).eq("id", existingSync.id);
+    } else {
+      await localDb.from("integration_sync_log").insert({
+        source_system: "envision",
+        target_system: "portal_bwild",
+        entity_type: "project",
+        source_id: budgetId,
+        sync_status: "failed",
+        error_message: errMsg,
+        attempts: 1,
+        payload: { ...projectPayload, budget: budgetBreakdown },
+      });
+    }
+
+    throw new Error(errMsg);
+  }
+
+  const projectId = responseData.project_id ?? null;
+  const currentAttempts = existingSync?.attempts ?? 0;
+
+  // Log success
+  const syncData = {
+    source_system: "envision",
+    target_system: "portal_bwild",
+    entity_type: "project",
+    source_id: budgetId,
+    target_id: projectId,
+    sync_status: "success",
+    error_message: null,
+    payload: { ...projectPayload, budget: budgetBreakdown },
+    attempts: currentAttempts + 1,
+    synced_at: new Date().toISOString(),
+  };
+
+  if (existingSync) {
+    await localDb.from("integration_sync_log").update(syncData).eq("id", existingSync.id);
+  } else {
+    await localDb.from("integration_sync_log").insert(syncData);
+  }
+
+  return {
+    status: "success",
+    budget_id: budgetId,
+    project_id: projectId,
+  };
+}
 
 /**
  * Maps an Envision budget → Portal BWild project payload.
@@ -235,10 +325,8 @@ function mapBudgetToProject(budget: any, totalValue: number) {
 
 /**
  * Builds the full budget breakdown payload for the Portal.
- * Includes sections with their items, adjustments, and financial summary.
  */
 function buildBudgetBreakdown(sections: any[], items: any[], adjustments: any[], totalValue: number) {
-  // Map items by section_id
   const itemsBySection: Record<string, any[]> = {};
   for (const item of items) {
     if (!itemsBySection[item.section_id]) {
@@ -247,7 +335,6 @@ function buildBudgetBreakdown(sections: any[], items: any[], adjustments: any[],
     itemsBySection[item.section_id].push(item);
   }
 
-  // Calculate financial summary
   let totalCost = 0;
   let totalSale = 0;
 
