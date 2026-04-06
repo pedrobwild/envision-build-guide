@@ -22,6 +22,7 @@ function useCategories() {
       const { data, error } = await supabase
         .from("catalog_categories")
         .select("*")
+        .order("category_type")
         .order("name");
       if (error) throw error;
       return data as CatalogCategory[];

@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -14,6 +17,7 @@ export interface CatalogCategory {
   name: string;
   description: string | null;
   is_active: boolean;
+  category_type: string;
 }
 
 interface Props {
@@ -26,12 +30,17 @@ interface Props {
 export function CategoryDialog({ open, onOpenChange, category, onSaved }: Props) {
   const [name, setName] = useState(category?.name ?? "");
   const [description, setDescription] = useState(category?.description ?? "");
+  const [categoryType, setCategoryType] = useState(category?.category_type ?? "Produtos");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
-    const payload = { name: name.trim(), description: description.trim() || null };
+    const payload = {
+      name: name.trim(),
+      description: description.trim() || null,
+      category_type: categoryType,
+    };
 
     const { error } = category
       ? await supabase.from("catalog_categories").update(payload).eq("id", category.id)
@@ -59,6 +68,18 @@ export function CategoryDialog({ open, onOpenChange, category, onSaved }: Props)
           <div>
             <Label>Nome</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Pintura" />
+          </div>
+          <div>
+            <Label>Tipo</Label>
+            <Select value={categoryType} onValueChange={setCategoryType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Prestadores">Prestadores</SelectItem>
+                <SelectItem value="Produtos">Produtos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Descrição</Label>
