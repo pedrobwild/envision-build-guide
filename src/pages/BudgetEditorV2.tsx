@@ -32,7 +32,7 @@ export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isOrcamentista, isComercial, profile } = useUserProfile();
+  const { isOrcamentista, isComercial, isAdmin, profile } = useUserProfile();
   const { user } = useAuth();
 
   const backPath = (location.state as { from?: string } | null)?.from
