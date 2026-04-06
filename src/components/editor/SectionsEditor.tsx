@@ -1176,7 +1176,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     try {
       await Promise.all(
         withNewOrder.map(s =>
-          supabase.from("sections").update({ order_index: s.order_index }).eq("id", s.id)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase.from(cfg.sectionTable as any) as any).update({ order_index: s.order_index }).eq("id", s.id)
         )
       );
       toast.success("Ordem das seções atualizada");
