@@ -331,13 +331,20 @@ export default function EstimatorDashboard() {
   // Check if we should show template selector before changing status
   const PENDING_STATUSES_SET = new Set(["requested", "novo", "triage", "assigned"]);
 
-  function requestStatusChange(budgetId: string, newStatus: InternalStatus) {
+  async function requestStatusChange(budgetId: string, newStatus: InternalStatus) {
     // If moving to in_progress from a pending status, show template selector
+    // BUT skip if budget already has sections (e.g. duplicated budgets)
     if (newStatus === "in_progress") {
       const budget = budgets.find((b) => b.id === budgetId);
       if (budget && PENDING_STATUSES_SET.has(budget.internal_status)) {
-        setTemplateDialog({ open: true, budgetId, pendingStatus: newStatus });
-        return;
+        const { count } = await supabase
+          .from("sections")
+          .select("id", { count: "exact", head: true })
+          .eq("budget_id", budgetId);
+        if ((count ?? 0) === 0) {
+          setTemplateDialog({ open: true, budgetId, pendingStatus: newStatus });
+          return;
+        }
       }
     }
     changeStatus(budgetId, newStatus);
