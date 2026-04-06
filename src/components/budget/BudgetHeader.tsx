@@ -58,9 +58,9 @@ function formatName(str: string): string {
     .replace(/(^|\s)\S/g, (char) => char.toUpperCase());
 }
 
-/** Dot separator for meta chips */
+/** Dot separator */
 function Dot() {
-  return <span className="text-white/40 select-none" aria-hidden>·</span>;
+  return <span className="text-white/30 select-none mx-0.5" aria-hidden>·</span>;
 }
 
 export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderProps) {
@@ -81,7 +81,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
   const tagline = cfg.custom_tagline || "Projeto personalizado · Gestão completa · Execução com garantia";
 
-  /** Build meta chips array for DRY rendering */
+  /** Build meta chips array */
   const metaChips: { label: string; value: string; mono?: boolean }[] = [];
   if (condominio) metaChips.push({ label: "Condomínio", value: condominio });
   if (neighborhood) metaChips.push({ label: "Bairro", value: neighborhood });
@@ -95,9 +95,9 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
       <div className="relative overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${headerBg})` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/25 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/65" />
         <div
-          className="absolute inset-0 hidden lg:block opacity-[0.015] pointer-events-none"
+          className="absolute inset-0 hidden lg:block opacity-[0.012] pointer-events-none"
           style={{
             backgroundImage: 'repeating-linear-gradient(120deg, transparent, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 3px)',
           }}
@@ -115,13 +115,12 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             <div className="hidden lg:block">
               <ReclameAquiSeal />
             </div>
-            {/* Consultora info hidden on public view */}
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={onExportPdf}
               disabled={exporting}
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg bg-white/15 text-white hover:bg-white/25 backdrop-blur-md transition-all text-xs font-body font-medium disabled:opacity-50 border border-white/15 tracking-[-0.01em]"
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg bg-white/12 text-white hover:bg-white/20 backdrop-blur-md transition-all text-xs font-body font-medium disabled:opacity-50 border border-white/10 tracking-[-0.01em]"
               data-pdf-hide
             >
               {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
@@ -135,8 +134,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           variants={fadeUp} custom={0} initial="hidden" animate="visible"
           className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3 hidden lg:block"
         >
-          <div className="py-2 border-b border-white/[0.12]">
-            <p className={`${LABEL_MICRO} text-white/60 leading-relaxed`}>
+          <div className="py-2 border-b border-white/[0.08]">
+            <p className={`${LABEL_MICRO} text-white/45 leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis`}>
               Bwild Reformas LTDA <Dot /> CNPJ <span className={MONO}>47.350.338/0001-37</span> <Dot /> Responsável Técnico: Thiago Dantas do Amor <Dot /> CAU <span className={MONO}>A162437-7</span>
             </p>
           </div>
@@ -146,57 +145,55 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
           {/* ── MOBILE ── */}
-          <div className="lg:hidden py-4 space-y-1.5">
+          <div className="lg:hidden py-5 space-y-2">
             <motion.h1
               variants={fadeUp} custom={0.3} initial="hidden" animate="visible"
-              className="font-display font-bold text-xl text-white leading-[1.15] tracking-tight"
+              className="font-display font-extrabold text-[22px] text-white leading-[1.1] tracking-[-0.025em] whitespace-nowrap overflow-hidden text-ellipsis"
             >
               {heroTitle}
             </motion.h1>
 
             <motion.div
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
-              className="flex items-center gap-1.5 text-xs font-body flex-wrap"
+              className="flex items-center gap-0 text-[11px] font-body whitespace-nowrap overflow-hidden text-ellipsis"
             >
               {metaChips.map((chip, i) => (
-                <span key={chip.label} className="contents">
+                <span key={chip.label} className="inline-flex items-center shrink-0">
                   {i > 0 && <Dot />}
-                  <span className={`text-white font-medium ${chip.mono ? MONO : "tracking-[-0.01em]"}`}>
+                  <span className={`text-white/90 font-medium ${chip.mono ? MONO : "tracking-[-0.01em]"}`}>
                     {chip.value}
                   </span>
                 </span>
               ))}
             </motion.div>
 
-            {/* Company info — mobile */}
+            {/* Company info — mobile, single line */}
             <motion.p
               variants={fadeUp} custom={0.7} initial="hidden" animate="visible"
-              className={`${LABEL_MICRO} text-white/50 leading-relaxed pt-1`}
+              className={`${LABEL_MICRO} text-white/40 whitespace-nowrap overflow-hidden text-ellipsis pt-0.5`}
             >
-              Bwild Reformas LTDA <Dot /> CNPJ <span className={MONO}>47.350.338/0001-37</span>
-              <br />
-              RT: Thiago Dantas do Amor <Dot /> CAU <span className={MONO}>A162437-7</span>
+              Bwild Reformas LTDA <Dot /> CNPJ <span className={MONO}>47.350.338/0001-37</span> <Dot /> CAU <span className={MONO}>A162437-7</span>
             </motion.p>
           </div>
 
           {/* ── DESKTOP ── */}
-          <div className="hidden lg:flex items-start justify-between py-6">
-            <div className="flex-1 min-w-0 space-y-2.5">
+          <div className="hidden lg:flex items-start justify-between py-8">
+            <div className="flex-1 min-w-0 space-y-3">
               <motion.div
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
-                className="space-y-2"
+                className="space-y-2.5"
               >
-                <h1 className="font-display font-bold text-3xl text-white leading-[1.15] tracking-tight">
+                <h1 className="font-display font-extrabold text-[2.25rem] text-white leading-[1.08] tracking-[-0.03em] whitespace-nowrap overflow-hidden text-ellipsis">
                   {heroTitle}
                 </h1>
 
-                {/* Labeled meta chips */}
-                <div className="flex items-center gap-2 text-sm font-body flex-wrap">
+                {/* Meta chips — single line */}
+                <div className="flex items-center gap-0 text-sm font-body whitespace-nowrap overflow-hidden">
                   {metaChips.map((chip, i) => (
-                    <span key={chip.label} className="contents">
+                    <span key={chip.label} className="inline-flex items-center shrink-0">
                       {i > 0 && <Dot />}
-                      <span className={`${LABEL_MICRO} text-white/70`}>{chip.label}</span>
-                      <span className={`text-white font-medium ${chip.mono ? MONO : "tracking-[-0.01em]"}`}>
+                      <span className={`${LABEL_MICRO} text-white/50 mr-1`}>{chip.label}</span>
+                      <span className={`text-white/95 font-medium ${chip.mono ? MONO : "tracking-[-0.01em]"}`}>
                         {chip.value}
                       </span>
                     </span>
@@ -207,7 +204,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               {!cfg.hide_tagline && (
                 <motion.p
                   variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                  className="text-xs text-white/80 font-body tracking-[-0.01em]"
+                  className="text-[13px] text-white/60 font-body tracking-[-0.01em] font-medium"
                 >
                   {tagline}
                 </motion.p>
