@@ -80,7 +80,7 @@ export function MobileHeroCard({
 
         <div className="px-4 pt-3.5 pb-3 space-y-2.5">
           <div>
-            <h2 className="font-display font-bold text-lg text-foreground leading-tight tracking-tight">
+            <h2 className="font-display font-bold text-[clamp(14px,4.5vw,18px)] text-foreground leading-tight tracking-tight">
               {displayName ? `${displayName}, sua proposta está pronta` : "Sua proposta está pronta"}
             </h2>
             <p className="text-sm font-body text-muted-foreground mt-0.5 leading-snug">
