@@ -450,6 +450,7 @@ function KanbanColumn({
                     locked={column.locked}
                     onClick={() => onCardClick(b.id)}
                     getProfileName={getProfileName}
+                    isSynced={syncedBudgetIds.has(b.id)}
                   />
                 </div>
               );
