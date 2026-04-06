@@ -139,10 +139,9 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     if (selected) {
       const n = NEIGHBORHOOD_DATA.find((d) => d.id === selected);
       if (n) mapRef.current.flyTo({ center: [n.lng, n.lat], zoom: 14, duration: 800 });
-    } else if (isMobile) {
-      mapRef.current.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 600 });
     } else {
-      mapRef.current.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 600 });
+      // Always show all pins (no auto-zoom to neighborhood)
+      mapRef.current.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 600 });
     }
 
     // Update marker styles
