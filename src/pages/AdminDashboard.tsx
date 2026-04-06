@@ -38,13 +38,17 @@ const anim = (delay: number) => ({
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, loading: profileLoading, isAdmin, isOrcamentista } = useUserProfile();
+  const { profile, loading: profileLoading, isAdmin, isOrcamentista, isComercial } = useUserProfile();
 
   useEffect(() => {
-    if (!profileLoading && profile && isOrcamentista && !isAdmin) {
-      navigate("/admin/producao", { replace: true });
+    if (!profileLoading && profile && !isAdmin) {
+      if (isOrcamentista) {
+        navigate("/admin/producao", { replace: true });
+      } else if (isComercial) {
+        navigate("/admin/comercial", { replace: true });
+      }
     }
-  }, [profileLoading, profile, isOrcamentista, isAdmin, navigate]);
+  }, [profileLoading, profile, isOrcamentista, isComercial, isAdmin, navigate]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
