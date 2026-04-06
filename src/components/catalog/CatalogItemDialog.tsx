@@ -669,9 +669,17 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Fornecedor principal</Label>
-              <Select value={form.default_supplier_id} onValueChange={(value) => { void handleSupplierChange(value); }}>
+              <Select value={form.default_supplier_id || "__none__"} onValueChange={(value) => {
+                const realValue = value === "__none__" ? "" : value;
+                supplierChangeIsUserAction.current = Boolean(realValue);
+                set("default_supplier_id", realValue);
+                if (!realValue) {
+                  // Clear auto-filled category when supplier is removed
+                }
+              }}>
                 <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
                   {suppliers.filter((s) => s.is_active).map((s) => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
