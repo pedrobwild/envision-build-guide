@@ -29,8 +29,16 @@ interface TemplateItemRow {
 /**
  * Seed a budget's sections and items from a template.
  * Falls back to default sections if no template is provided.
+ * Deletes existing sections first to avoid duplicates.
  */
 export async function seedFromTemplate(budgetId: string, templateId: string | null) {
+  // Delete existing sections (cascade deletes items via FK)
+  await supabase.from("items").delete().in(
+    "section_id",
+    (await supabase.from("sections").select("id").eq("budget_id", budgetId)).data?.map(s => s.id) ?? []
+  );
+  await supabase.from("sections").delete().eq("budget_id", budgetId);
+
   if (!templateId) {
     // Fallback to legacy default sections
     const { seedDefaultSections } = await import("@/lib/default-budget-sections");
@@ -82,7 +90,7 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
         title: tItem.title,
         description: tItem.description || null,
         unit: tItem.unit || null,
-        qty: tItem.qty || null,
+        qty: tItem.qty ?? null,
         order_index: tItem.order_index,
         coverage_type: tItem.coverage_type || "geral",
         reference_url: tItem.reference_url || null,

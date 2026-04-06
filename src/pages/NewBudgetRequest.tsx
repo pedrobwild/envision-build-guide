@@ -239,11 +239,7 @@ export default function NewBudgetRequest() {
       return;
     }
 
-    try {
-      await seedFromTemplate(inserted.id, null);
-    } catch (seedErr) {
-      console.error("Erro ao criar seções:", seedErr);
-    }
+    // Seções serão criadas pela orçamentista ao aplicar um template no editor
 
     setLoading(false);
     const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
