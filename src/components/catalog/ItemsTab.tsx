@@ -39,6 +39,10 @@ interface Props {
   onNewItem: () => void;
   onEditItem: (item: CatalogItem) => void;
   onRefresh: () => void;
+  page: number;
+  totalPages: number;
+  totalCount: number;
+  onPageChange: (page: number) => void;
 }
 
 
