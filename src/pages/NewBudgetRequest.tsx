@@ -349,30 +349,6 @@ export default function NewBudgetRequest() {
           </div>
         )}
 
-        {/* ── Template ── */}
-        {templates.length > 0 && (
-          <>
-            <SectionTitle icon={LayoutTemplate} title="Template" />
-            <PropertyRow icon={LayoutTemplate} label="Modelo base">
-              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
-                  <SelectValue placeholder="Selecione um template (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem template (seções padrão)</SelectItem>
-                  {templates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </PropertyRow>
-            {selectedTemplateId && selectedTemplateId !== "none" && (
-              <p className="text-[11px] text-muted-foreground font-body ml-[176px] -mt-1 mb-1">
-                {templates.find((t) => t.id === selectedTemplateId)?.description}
-              </p>
-            )}
-          </>
-        )}
 
         {/* ── Cliente ── */}
         <SectionTitle icon={User} title="Cliente" />
