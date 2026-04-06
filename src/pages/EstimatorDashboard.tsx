@@ -299,6 +299,10 @@ export default function EstimatorDashboard() {
       // When "all" is selected, hide delivered/finished by default
       const matchStatus = statusFilter === "all"
         ? !HIDDEN_BY_DEFAULT_STATUSES.has(b.internal_status)
+        : statusFilter === "_pending"
+        ? PENDING_STATUSES.includes(b.internal_status)
+        : statusFilter === "_in_progress"
+        ? IN_PROGRESS_STATUSES.includes(b.internal_status)
         : b.internal_status === statusFilter;
       const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
       const matchCommercial =
@@ -481,14 +485,14 @@ export default function EstimatorDashboard() {
             count={counts.pending}
             icon={<Inbox className="h-4 w-4" />}
             accent="text-primary"
-            onClick={() => setStatusFilter("assigned")}
+            onClick={() => setStatusFilter("_pending")}
           />
           <SummaryCard
             label="Em Elaboração"
             count={counts.inProgress}
             icon={<Clock className="h-4 w-4" />}
             accent="text-warning"
-            onClick={() => setStatusFilter("in_progress")}
+            onClick={() => setStatusFilter("_in_progress")}
           />
           <SummaryCard
             label="Em Revisão"
@@ -520,8 +524,8 @@ export default function EstimatorDashboard() {
             { id: "overdue", label: "Atrasados", icon: AlertTriangle, count: counts.overdue, color: "destructive" },
             { id: "urgente", label: "Urgentes", icon: Flame, count: budgets.filter(b => b.priority === "urgente").length },
             { id: "today", label: "Hoje", icon: Clock, count: counts.dueToday },
-            { id: "assigned", label: "Pendente", icon: Inbox, count: counts.pending },
-            { id: "in_progress", label: "Em Elaboração", count: counts.inProgress },
+            { id: "_pending", label: "Pendente", icon: Inbox, count: counts.pending },
+            { id: "_in_progress", label: "Em Elaboração", count: counts.inProgress },
             { id: "ready_for_review", label: "Revisão", count: counts.review },
           ] as FilterChip[]}
           activeChipId={
