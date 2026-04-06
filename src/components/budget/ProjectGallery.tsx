@@ -170,7 +170,8 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
     availableTabs.push({ id: "tour3d", label: "Tour 3D" });
   }
 
-  const [activeTab, setActiveTab] = useState<GalleryTab>(availableTabs[0]?.id ?? "video3d");
+  const defaultTab = availableTabs.find(t => t.id === "fotos3d")?.id ?? availableTabs[0]?.id ?? "video3d";
+  const [activeTab, setActiveTab] = useState<GalleryTab>(defaultTab);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
