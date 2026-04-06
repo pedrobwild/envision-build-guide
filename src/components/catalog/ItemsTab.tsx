@@ -54,6 +54,7 @@ export function ItemsTab({
   sectionFilter, onSectionFilterChange,
   statusFilter, onStatusFilterChange,
   onNewItem, onEditItem, onRefresh,
+  page, totalPages, totalCount, onPageChange,
 }: Props) {
   const itemIds = items.map((i) => i.id);
   const { data: primaryPrices = [] } = useQuery({
