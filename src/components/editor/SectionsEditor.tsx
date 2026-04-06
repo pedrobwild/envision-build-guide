@@ -965,10 +965,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     const source = sections.find(s => s.id === sectionId);
     if (!source) return;
     const order = sections.length;
-    const { data: newSec } = await supabase
-      .from("sections")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: newSec } = await (supabase.from(cfg.sectionTable as any) as any)
       .insert({
-        budget_id: budgetId,
+        [cfg.sectionForeignKey]: budgetId,
         title: `${source.title} (cópia)`,
         order_index: order,
         is_optional: source.is_optional ?? false,
@@ -980,10 +980,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     // Duplicate items
     const newItems: ItemData[] = [];
     for (const item of source.items) {
-      const { data: newItem } = await supabase
-        .from("items")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: newItem } = await (supabase.from(cfg.itemTable as any) as any)
         .insert({
-          section_id: newSec.id,
+          [cfg.itemForeignKey]: newSec.id,
           title: item.title,
           description: item.description,
           unit: item.unit,
@@ -992,7 +992,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
           internal_total: item.internal_total,
           bdi_percentage: item.bdi_percentage,
           order_index: item.order_index,
-          notes: item.notes,
+          ...(cfg.disableCatalog ? {} : { notes: item.notes }),
         })
         .select()
         .single();
