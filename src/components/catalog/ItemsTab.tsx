@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatBRL } from "@/lib/formatBRL";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
