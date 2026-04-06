@@ -596,7 +596,21 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <Label>Categoria</Label>
-              {creatingCategory ? (
+              {form.default_supplier_id ? (
+                <div className="space-y-1">
+                  <div className="flex gap-1.5">
+                    <Select value={form.category_id} disabled>
+                      <SelectTrigger className="flex-1 opacity-70"><SelectValue placeholder="Definida pelo fornecedor" /></SelectTrigger>
+                      <SelectContent>
+                        {availableCategories.filter((c) => c.is_active).map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Preenchida automaticamente pelo fornecedor</p>
+                </div>
+              ) : creatingCategory ? (
                 <div className="flex gap-1.5">
                   <Input
                     autoFocus
@@ -619,7 +633,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
               ) : (
                 <div className="flex gap-1.5">
                   <Select value={form.category_id} onValueChange={(v) => set("category_id", v)}>
-                    <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
                     <SelectContent>
                       {availableCategories.filter((c) => c.is_active).map((c) => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
