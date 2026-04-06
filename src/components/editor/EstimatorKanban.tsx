@@ -416,8 +416,14 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
     [budgets]
   );
 
+  const HIDDEN_COLUMN_IDS = new Set(["delivered", "closed"]);
+  const visibleColumns = useMemo(
+    () => hideDelivered ? ESTIMATOR_COLUMNS.filter(c => !HIDDEN_COLUMN_IDS.has(c.id)) : ESTIMATOR_COLUMNS,
+    [hideDelivered]
+  );
+
   const mobileColumns = useMemo(() =>
-    ESTIMATOR_COLUMNS.map((col) => {
+    visibleColumns.map((col) => {
       const items = columnBudgets(col);
       const overdueCount = items.filter((b) => {
         const d = getDueInfo(b.due_at);
@@ -433,7 +439,7 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
         overdueCount,
       };
     }),
-    [columnBudgets]
+    [columnBudgets, visibleColumns]
   );
 
   // Mobile: swipeable single-column view
