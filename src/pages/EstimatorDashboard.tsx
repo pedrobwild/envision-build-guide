@@ -95,6 +95,7 @@ const IN_PROGRESS_STATUSES: string[] = ["in_progress", "waiting_info", "blocked"
 const REVIEW_STATUSES: string[] = ["ready_for_review"];
 const DELIVERED_STATUSES: string[] = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
 const FINISHED_STATUSES: string[] = ["lost", "archived"];
+const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_STATUSES]);
 
 interface BudgetRow {
   id: string;
@@ -292,7 +293,10 @@ export default function EstimatorDashboard() {
         b.client_name.toLowerCase().includes(q) ||
         b.project_name.toLowerCase().includes(q) ||
         (b.bairro ?? "").toLowerCase().includes(q);
-      const matchStatus = statusFilter === "all" || b.internal_status === statusFilter;
+      // When "all" is selected, hide delivered/finished by default
+      const matchStatus = statusFilter === "all"
+        ? !HIDDEN_BY_DEFAULT_STATUSES.has(b.internal_status)
+        : b.internal_status === statusFilter;
       const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
       const matchCommercial =
         commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
@@ -553,6 +557,7 @@ export default function EstimatorDashboard() {
         {viewMode === "kanban" && !loading && (
           <EstimatorKanban
             budgets={budgets.filter(b => (commercialFilter === "all" || b.commercial_owner_id === commercialFilter) && (estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter))}
+            hideDelivered={statusFilter === "all"}
             onStatusChange={async (budgetId, newStatus) => {
               requestStatusChange(budgetId, newStatus);
             }}

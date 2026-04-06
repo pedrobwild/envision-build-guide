@@ -120,6 +120,7 @@ interface BudgetRow {
 
 interface EstimatorKanbanProps {
   budgets: BudgetRow[];
+  hideDelivered?: boolean;
   onStatusChange: (budgetId: string, newStatus: InternalStatus) => Promise<void>;
   onCardClick: (budgetId: string) => void;
   getProfileName: (id: string | null) => string;
@@ -379,7 +380,7 @@ function EstimatorCard({
 }
 
 /* ── Main Kanban Board ── */
-export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
+export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
@@ -415,8 +416,14 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
     [budgets]
   );
 
+  const HIDDEN_COLUMN_IDS = new Set(["delivered", "closed"]);
+  const visibleColumns = useMemo(
+    () => hideDelivered ? ESTIMATOR_COLUMNS.filter(c => !HIDDEN_COLUMN_IDS.has(c.id)) : ESTIMATOR_COLUMNS,
+    [hideDelivered]
+  );
+
   const mobileColumns = useMemo(() =>
-    ESTIMATOR_COLUMNS.map((col) => {
+    visibleColumns.map((col) => {
       const items = columnBudgets(col);
       const overdueCount = items.filter((b) => {
         const d = getDueInfo(b.due_at);
@@ -432,7 +439,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
         overdueCount,
       };
     }),
-    [columnBudgets]
+    [columnBudgets, visibleColumns]
   );
 
   // Mobile: swipeable single-column view
@@ -444,7 +451,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
         onChangeIndex={setMobileColIndex}
       >
         {(colIndex) => {
-          const col = ESTIMATOR_COLUMNS[colIndex];
+          const col = visibleColumns[colIndex];
           const items = columnBudgets(col);
           const sorted = sortBudgets(items);
           return (
@@ -502,7 +509,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
   return (
     <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-        {ESTIMATOR_COLUMNS.map((col) => (
+        {visibleColumns.map((col) => (
           <Column
             key={col.id}
             column={col}
