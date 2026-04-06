@@ -10,6 +10,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 import logoDark from "@/assets/logo-bwild-dark.png";
+import { RoleRedirect } from "@/components/RoleRedirect";
 
 const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
