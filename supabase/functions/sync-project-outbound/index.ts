@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     if (sectionIds.length > 0) {
       const { data: itemsData } = await localDb
         .from("items")
-        .select("id, section_id, title, description, qty, unit, order_index, internal_unit_price, internal_total, bdi_percentage, included_rooms, excluded_rooms, coverage_type, reference_url, notes")
+        .select("id, section_id, title, description, qty, unit, order_index, internal_unit_price, internal_total, bdi_percentage, included_rooms, excluded_rooms, coverage_type, reference_url, notes, catalog_snapshot, catalog_item_id")
         .in("section_id", sectionIds)
         .order("order_index", { ascending: true });
       items = itemsData ?? [];
@@ -281,22 +281,29 @@ function buildBudgetBreakdown(sections: any[], items: any[], adjustments: any[],
       cost: sectionCost,
       bdi_percentage: Math.round(sectionBdi * 10) / 10,
       item_count: sectionItems.length,
-      items: sectionItems.map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        qty: item.qty,
-        unit: item.unit,
-        order_index: item.order_index,
-        internal_unit_price: item.internal_unit_price,
-        internal_total: item.internal_total,
-        bdi_percentage: item.bdi_percentage,
-        included_rooms: item.included_rooms,
-        excluded_rooms: item.excluded_rooms,
-        coverage_type: item.coverage_type,
-        reference_url: item.reference_url,
-        notes: item.notes,
-      })),
+      items: sectionItems.map((item: any) => {
+        const snapshot = item.catalog_snapshot ?? {};
+        return {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          qty: item.qty,
+          unit: item.unit,
+          order_index: item.order_index,
+          internal_unit_price: item.internal_unit_price,
+          internal_total: item.internal_total,
+          bdi_percentage: item.bdi_percentage,
+          included_rooms: item.included_rooms,
+          excluded_rooms: item.excluded_rooms,
+          coverage_type: item.coverage_type,
+          reference_url: item.reference_url,
+          notes: item.notes,
+          catalog_item_id: item.catalog_item_id,
+          item_category: snapshot.item_category ?? null,
+          supplier_id: snapshot.supplier_id ?? null,
+          supplier_name: snapshot.supplier_name ?? null,
+        };
+      }),
     };
   });
 
