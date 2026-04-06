@@ -128,6 +128,7 @@ export default function CommercialDashboard() {
   const { profile } = useUserProfile();
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [syncedBudgetIds, setSyncedBudgetIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -152,12 +153,18 @@ export default function CommercialDashboard() {
     if (!isAdmin) {
       budgetQuery = budgetQuery.eq("commercial_owner_id", user!.id);
     }
-    const [budgetsRes, profilesRes] = await Promise.all([
+    const [budgetsRes, profilesRes, syncRes] = await Promise.all([
       budgetQuery,
       supabase.from("profiles").select("id, full_name"),
+      supabase.from("integration_sync_log")
+        .select("source_id")
+        .eq("source_system", "envision")
+        .eq("entity_type", "project")
+        .eq("sync_status", "success"),
     ]);
     if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetRow[]);
     if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
+    if (syncRes.data) setSyncedBudgetIds(new Set(syncRes.data.map(r => r.source_id)));
     setLoading(false);
   }
 
@@ -500,6 +507,7 @@ export default function CommercialDashboard() {
               onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
               getProfileName={getProfileName}
               dueFilter={dueFilter}
+              syncedBudgetIds={syncedBudgetIds}
             />
           )}
 

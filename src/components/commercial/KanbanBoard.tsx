@@ -155,6 +155,7 @@ interface KanbanBoardProps {
   onCardClick: (budgetId: string) => void;
   getProfileName: (id: string | null) => string;
   dueFilter?: DueFilter;
+  syncedBudgetIds?: Set<string>;
 }
 
 function getColumnForBudget(internalStatus: string) {
@@ -266,6 +267,7 @@ function SubSectionGroup({
   onCardClick,
   getProfileName,
   compact = false,
+  syncedBudgetIds = new Set(),
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -273,6 +275,7 @@ function SubSectionGroup({
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
   compact?: boolean;
+  syncedBudgetIds?: Set<string>;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
@@ -315,6 +318,7 @@ function SubSectionGroup({
                 sequentialCode={b.sequential_code}
                 commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                 estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                isSynced={syncedBudgetIds.has(b.id)}
                 onClick={() => onCardClick(b.id)}
                 onQuickAction={(action) => {
                   if (action === "open") onCardClick(b.id);
@@ -326,6 +330,7 @@ function SubSectionGroup({
                 locked={locked}
                 onClick={() => onCardClick(b.id)}
                 getProfileName={getProfileName}
+                isSynced={syncedBudgetIds.has(b.id)}
               />
             )}
           </div>
@@ -342,12 +347,14 @@ function KanbanColumn({
   onCardClick,
   getProfileName,
   dueFilter,
+  syncedBudgetIds = new Set(),
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
   dueFilter: DueFilter;
+  syncedBudgetIds?: Set<string>;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
@@ -416,6 +423,7 @@ function KanbanColumn({
                   locked={column.locked}
                   onCardClick={onCardClick}
                   getProfileName={getProfileName}
+                  syncedBudgetIds={syncedBudgetIds}
                 />
               </div>
             ))}
@@ -442,6 +450,7 @@ function KanbanColumn({
                     locked={column.locked}
                     onClick={() => onCardClick(b.id)}
                     getProfileName={getProfileName}
+                    isSynced={syncedBudgetIds.has(b.id)}
                   />
                 </div>
               );
@@ -464,11 +473,13 @@ function DraggableCard({
   locked,
   onClick,
   getProfileName,
+  isSynced,
 }: {
   budget: BudgetRow;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
+  isSynced?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: budget.id,
@@ -482,7 +493,7 @@ function DraggableCard({
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} />
+      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} isSynced={isSynced} />
     </div>
   );
 }
@@ -493,12 +504,14 @@ function KanbanCard({
   locked,
   onClick,
   getProfileName,
+  isSynced,
 }: {
   budget: BudgetRow;
   isDragging?: boolean;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
+  isSynced?: boolean;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at);
@@ -570,13 +583,18 @@ function KanbanCard({
             V{b.version_number}
           </span>
         )}
+        {isSynced && (
+          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium font-body px-1.5 py-0.5 rounded-full bg-success/10 text-success" title="Sincronizado com Portal BWild">
+            ✓ Portal
+          </span>
+        )}
       </div>
     </Card>
   );
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all" }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set() }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
@@ -682,6 +700,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             onCardClick={onCardClick}
                             getProfileName={getProfileName}
                             compact
+                            syncedBudgetIds={syncedBudgetIds}
                           />
                         </div>
                       ));
@@ -714,6 +733,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             sequentialCode={b.sequential_code}
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                            isSynced={syncedBudgetIds.has(b.id)}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
@@ -747,6 +767,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             onCardClick={onCardClick}
             getProfileName={getProfileName}
             dueFilter={dueFilter}
+            syncedBudgetIds={syncedBudgetIds}
           />
         ))}
       </div>

@@ -19,6 +19,7 @@ interface CompactKanbanCardProps {
   commercialName?: string;
   estimatorName?: string;
   highPriority?: boolean;
+  isSynced?: boolean;
   onClick: () => void;
   onQuickAction?: (action: "open" | "whatsapp" | "advance") => void;
 }
@@ -76,6 +77,7 @@ export function CompactKanbanCard({
   sequentialCode,
   commercialName,
   estimatorName,
+  isSynced,
   onClick,
   onQuickAction,
 }: CompactKanbanCardProps) {
@@ -209,6 +211,11 @@ export function CompactKanbanCard({
           {(versionNumber ?? 1) > 1 && (
             <span className="text-[9px] font-body px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
               V{versionNumber}
+            </span>
+          )}
+          {isSynced && (
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-medium font-body px-1.5 py-0.5 rounded-full bg-success/10 text-success" title="Sincronizado com Portal BWild">
+              ✓ Portal
             </span>
           )}
         </div>
