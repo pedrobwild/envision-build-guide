@@ -392,7 +392,7 @@ function SortableItemRow({
   isItemSaving: boolean;
   searchMatch?: boolean;
   compact: boolean;
-  suppliers: { id: string; name: string }[];
+  suppliers: { id: string; name: string; categoria: string | null }[];
   onUpdate: (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => void;
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
