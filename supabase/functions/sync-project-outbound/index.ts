@@ -244,7 +244,8 @@ async function syncSingleProject(
   };
 
   console.log(`[sync-project-outbound] POST ${inboundUrl}`);
-  console.log(`[sync-project-outbound] Full payload: ${JSON.stringify(outboundBody)}`);
+  console.log(`[sync-project-outbound] Integration key length: ${integrationKey.length}, prefix: ${integrationKey.substring(0, 4)}...`);
+  console.log(`[sync-project-outbound] Full payload size: ${JSON.stringify(outboundBody).length} chars`);
 
   const response = await fetch(inboundUrl, {
     method: "POST",
