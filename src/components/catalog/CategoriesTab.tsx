@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import {
-  Search, Plus, Edit2, Trash2, FolderOpen, ToggleLeft, ToggleRight,
+  Search, Plus, Edit2, Trash2, FolderOpen, ToggleLeft, ToggleRight, Wrench, Package,
 } from "lucide-react";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
 import type { CatalogCategory } from "@/components/catalog/CategoryDialog";
@@ -22,11 +25,20 @@ interface Props {
 
 export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRefresh }: Props) {
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const filtered = categories.filter((c) =>
-    !search || c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.description?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = categories.filter((c) => {
+    if (search && !c.name.toLowerCase().includes(search.toLowerCase()) &&
+        !c.description?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (typeFilter !== "all" && c.category_type !== typeFilter) return false;
+    if (statusFilter === "active" && !c.is_active) return false;
+    if (statusFilter === "inactive" && c.is_active) return false;
+    return true;
+  });
+
+  const prestadoresCount = categories.filter(c => c.category_type === "Prestadores").length;
+  const produtosCount = categories.filter(c => c.category_type === "Produtos").length;
 
   const handleToggleActive = async (cat: CatalogCategory) => {
     const { error } = await supabase
@@ -51,8 +63,21 @@ export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRef
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
+      {/* Summary chips */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Badge variant="outline" className="gap-1.5 px-2.5 py-1">
+          <Wrench className="h-3 w-3 text-blue-500" />
+          <span className="text-xs">{prestadoresCount} Prestadores</span>
+        </Badge>
+        <Badge variant="outline" className="gap-1.5 px-2.5 py-1">
+          <Package className="h-3 w-3 text-muted-foreground" />
+          <span className="text-xs">{produtosCount} Produtos</span>
+        </Badge>
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[180px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
@@ -61,6 +86,26 @@ export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRef
             className="pl-9"
           />
         </div>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os tipos</SelectItem>
+            <SelectItem value="Prestadores">Prestadores</SelectItem>
+            <SelectItem value="Produtos">Produtos</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="active">Ativos</SelectItem>
+            <SelectItem value="inactive">Inativos</SelectItem>
+          </SelectContent>
+        </Select>
         <Button size="sm" onClick={onNewCategory}>
           <Plus className="h-4 w-4 mr-1" /> Nova Categoria
         </Button>
@@ -69,9 +114,9 @@ export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRef
       {filtered.length === 0 ? (
         <CatalogEmptyState
           icon={FolderOpen}
-          title={search ? "Nenhuma categoria encontrada" : "Nenhuma categoria"}
-          description={search ? "Tente outro termo de busca." : "Crie categorias para organizar os itens do catálogo."}
-          action={!search ? (
+          title={search || typeFilter !== "all" ? "Nenhuma categoria encontrada" : "Nenhuma categoria"}
+          description={search || typeFilter !== "all" ? "Tente outros filtros." : "Crie categorias para organizar os itens do catálogo."}
+          action={!search && typeFilter === "all" ? (
             <Button size="sm" onClick={onNewCategory}>
               <Plus className="h-4 w-4 mr-1" /> Nova Categoria
             </Button>
@@ -83,6 +128,7 @@ export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRef
             <TableHeader>
               <TableRow className="bg-muted/30">
                 <TableHead>Nome</TableHead>
+                <TableHead className="w-32">Tipo</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead className="w-20">Status</TableHead>
                 <TableHead className="w-24 text-right">Ações</TableHead>
@@ -92,6 +138,23 @@ export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRef
               {filtered.map((cat) => (
                 <TableRow key={cat.id} className={!cat.is_active ? "opacity-50" : ""}>
                   <TableCell className="font-medium">{cat.name}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="secondary"
+                      className={
+                        cat.category_type === "Prestadores"
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          : "bg-muted text-muted-foreground"
+                      }
+                    >
+                      {cat.category_type === "Prestadores" ? (
+                        <Wrench className="h-3 w-3 mr-1" />
+                      ) : (
+                        <Package className="h-3 w-3 mr-1" />
+                      )}
+                      {cat.category_type}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{cat.description ?? "—"}</TableCell>
                   <TableCell>
                     <button
