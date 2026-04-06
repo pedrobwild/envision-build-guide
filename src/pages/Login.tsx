@@ -57,7 +57,7 @@ export default function Login() {
         return;
       }
       if (session?.user) {
-        navigate("/admin", { replace: true });
+        navigate("/", { replace: true });
       }
       finishSessionCheck();
     }).catch(() => {
@@ -69,7 +69,7 @@ export default function Login() {
         if (!isMounted) return;
         if (event === "SIGNED_IN" && session?.user) {
           setTimeout(() => {
-            if (isMounted) navigate("/admin", { replace: true });
+            if (isMounted) navigate("/", { replace: true });
           }, 0);
         }
         if (event === "SIGNED_OUT") finishSessionCheck();
