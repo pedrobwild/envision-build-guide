@@ -95,6 +95,7 @@ const IN_PROGRESS_STATUSES: string[] = ["in_progress", "waiting_info", "blocked"
 const REVIEW_STATUSES: string[] = ["ready_for_review"];
 const DELIVERED_STATUSES: string[] = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
 const FINISHED_STATUSES: string[] = ["lost", "archived"];
+const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_STATUSES]);
 
 interface BudgetRow {
   id: string;
