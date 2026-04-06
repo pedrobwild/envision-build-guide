@@ -37,6 +37,7 @@ import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFil
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
+import { ContractUploadModal } from "@/components/commercial/ContractUploadModal";
 
 // Pipeline groups for the commercial view
 // Statuses in "solicitado" and "em_elaboracao" are read-only for commercial
