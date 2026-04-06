@@ -10,7 +10,8 @@ const corsHeaders = {
  * sync-project-outbound
  *
  * When a budget reaches "contrato_fechado", this function sends the project
- * data to Portal BWild's sync-project-inbound edge function via HTTP POST.
+ * data (including full budget breakdown) to Portal BWild's sync-project-inbound
+ * edge function via HTTP POST.
  *
  * POST body:
  *   { budget_id: string }
@@ -87,21 +88,42 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch sections + adjustments for value calculation
+    // Fetch sections, items, adjustments in parallel
     const [{ data: sections }, { data: adjustments }] = await Promise.all([
-      localDb.from("sections").select("id, title, section_price, is_optional").eq("budget_id", budgetId),
-      localDb.from("adjustments").select("amount, sign").eq("budget_id", budgetId),
+      localDb
+        .from("sections")
+        .select("id, title, subtitle, notes, section_price, is_optional, order_index, included_bullets, excluded_bullets, cover_image_url, tags")
+        .eq("budget_id", budgetId)
+        .order("order_index", { ascending: true }),
+      localDb
+        .from("adjustments")
+        .select("id, label, amount, sign")
+        .eq("budget_id", budgetId),
     ]);
 
+    // Fetch all items for the budget's sections
+    const sectionIds = (sections ?? []).map((s: any) => s.id);
+    let items: any[] = [];
+    if (sectionIds.length > 0) {
+      const { data: itemsData } = await localDb
+        .from("items")
+        .select("id, section_id, title, description, qty, unit, order_index, internal_unit_price, internal_total, bdi_percentage, included_rooms, excluded_rooms, coverage_type, reference_url, notes")
+        .in("section_id", sectionIds)
+        .order("order_index", { ascending: true });
+      items = itemsData ?? [];
+    }
+
+    // Calculate totals
     const sectionsTotal = (sections ?? [])
-      .filter((s) => !s.is_optional)
-      .reduce((sum, s) => sum + (s.section_price ?? 0), 0);
+      .filter((s: any) => !s.is_optional)
+      .reduce((sum: number, s: any) => sum + (s.section_price ?? 0), 0);
     const adjustmentsTotal = (adjustments ?? [])
-      .reduce((sum, a) => sum + a.amount * a.sign, 0);
+      .reduce((sum: number, a: any) => sum + a.amount * a.sign, 0);
     const totalValue = sectionsTotal + adjustmentsTotal;
 
-    // Build payload
+    // Build payload with full budget breakdown
     const projectPayload = mapBudgetToProject(budget, totalValue);
+    const budgetBreakdown = buildBudgetBreakdown(sections ?? [], items, adjustments ?? [], totalValue);
 
     // --- Call Portal BWild's sync-project-inbound ---
     const inboundUrl = `${PORTAL_BWILD_SUPABASE_URL}/functions/v1/sync-project-inbound`;
@@ -114,6 +136,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         project: projectPayload,
+        budget: budgetBreakdown,
         source_id: budgetId,
       }),
     });
@@ -134,7 +157,7 @@ Deno.serve(async (req) => {
       source_id: budgetId,
       target_id: projectId,
       sync_status: "success",
-      payload: projectPayload,
+      payload: { ...projectPayload, budget: budgetBreakdown },
       attempts: 1,
       synced_at: new Date().toISOString(),
     }, {
@@ -207,5 +230,92 @@ function mapBudgetToProject(budget: any, totalValue: number) {
     notes: budget.internal_notes,
     consultora_comercial: budget.consultora_comercial,
     contract_file_url: budget.contract_file_url ?? null,
+  };
+}
+
+/**
+ * Builds the full budget breakdown payload for the Portal.
+ * Includes sections with their items, adjustments, and financial summary.
+ */
+function buildBudgetBreakdown(sections: any[], items: any[], adjustments: any[], totalValue: number) {
+  // Map items by section_id
+  const itemsBySection: Record<string, any[]> = {};
+  for (const item of items) {
+    if (!itemsBySection[item.section_id]) {
+      itemsBySection[item.section_id] = [];
+    }
+    itemsBySection[item.section_id].push(item);
+  }
+
+  // Calculate financial summary
+  let totalCost = 0;
+  let totalSale = 0;
+
+  const mappedSections = sections.map((section) => {
+    const sectionItems = itemsBySection[section.id] ?? [];
+
+    const sectionCost = sectionItems.reduce(
+      (sum: number, i: any) => sum + (i.internal_total ?? (i.internal_unit_price ?? 0) * (i.qty ?? 1)),
+      0
+    );
+    const sectionSale = section.section_price ?? 0;
+    const sectionBdi = sectionCost > 0
+      ? ((sectionSale - sectionCost) / sectionCost) * 100
+      : 0;
+
+    totalCost += sectionCost;
+    totalSale += sectionSale;
+
+    return {
+      id: section.id,
+      title: section.title,
+      subtitle: section.subtitle,
+      notes: section.notes,
+      order_index: section.order_index,
+      is_optional: section.is_optional,
+      section_price: sectionSale,
+      cover_image_url: section.cover_image_url,
+      included_bullets: section.included_bullets,
+      excluded_bullets: section.excluded_bullets,
+      tags: section.tags,
+      cost: sectionCost,
+      bdi_percentage: Math.round(sectionBdi * 10) / 10,
+      item_count: sectionItems.length,
+      items: sectionItems.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        qty: item.qty,
+        unit: item.unit,
+        order_index: item.order_index,
+        internal_unit_price: item.internal_unit_price,
+        internal_total: item.internal_total,
+        bdi_percentage: item.bdi_percentage,
+        included_rooms: item.included_rooms,
+        excluded_rooms: item.excluded_rooms,
+        coverage_type: item.coverage_type,
+        reference_url: item.reference_url,
+        notes: item.notes,
+      })),
+    };
+  });
+
+  const avgBdi = totalCost > 0
+    ? ((totalSale - totalCost) / totalCost) * 100
+    : 0;
+
+  return {
+    total_value: totalValue,
+    total_sale: totalSale,
+    total_cost: totalCost,
+    avg_bdi: Math.round(avgBdi * 10) / 10,
+    net_margin: totalSale - totalCost,
+    sections: mappedSections,
+    adjustments: adjustments.map((a: any) => ({
+      id: a.id,
+      label: a.label,
+      amount: a.amount,
+      sign: a.sign,
+    })),
   };
 }
