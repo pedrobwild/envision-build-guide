@@ -347,12 +347,14 @@ function KanbanColumn({
   onCardClick,
   getProfileName,
   dueFilter,
+  syncedBudgetIds = new Set(),
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
   dueFilter: DueFilter;
+  syncedBudgetIds?: Set<string>;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
