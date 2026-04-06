@@ -38,7 +38,11 @@ export function CategoryDialog({ open, onOpenChange, category, onSaved }: Props)
       : await supabase.from("catalog_categories").insert(payload);
 
     setSaving(false);
-    if (error) { toast.error("Erro ao salvar categoria"); return; }
+    if (error) {
+      const isDuplicate = error.code === "23505" || error.message?.includes("duplicate") || error.message?.includes("unique");
+      toast.error(isDuplicate ? `Já existe uma categoria com o nome "${name.trim()}"` : "Erro ao salvar categoria");
+      return;
+    }
     toast.success(category ? "Categoria atualizada" : "Categoria criada");
     onSaved();
     onOpenChange(false);
