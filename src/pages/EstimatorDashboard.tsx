@@ -557,6 +557,7 @@ export default function EstimatorDashboard() {
         {viewMode === "kanban" && !loading && (
           <EstimatorKanban
             budgets={budgets.filter(b => (commercialFilter === "all" || b.commercial_owner_id === commercialFilter) && (estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter))}
+            hideDelivered={statusFilter === "all"}
             onStatusChange={async (budgetId, newStatus) => {
               requestStatusChange(budgetId, newStatus);
             }}
