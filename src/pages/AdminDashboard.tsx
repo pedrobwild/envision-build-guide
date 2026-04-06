@@ -38,7 +38,7 @@ const anim = (delay: number) => ({
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, loading: profileLoading, isAdmin, isOrcamentista } = useUserProfile();
+  const { profile, loading: profileLoading, isAdmin, isOrcamentista, isComercial } = useUserProfile();
 
   useEffect(() => {
     if (!profileLoading && profile && !isAdmin) {
