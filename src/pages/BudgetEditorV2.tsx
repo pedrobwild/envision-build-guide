@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, User, ChevronDown, DollarSign, RotateCcw, PackageCheck, Send, Handshake, MessageSquare, ClipboardList, Image as ImageIcon, ScrollText, AlertTriangle, Info, Copy } from "lucide-react";
+import { Loader2, User, ChevronDown, DollarSign, RotateCcw, PackageCheck, Send, Handshake, MessageSquare, ClipboardList, Image as ImageIcon, ScrollText, AlertTriangle, Info, Copy, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { MetadataStep } from "@/components/editor/MetadataStep";
@@ -26,12 +26,13 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import type { BudgetRow, EditorSection } from "@/types/budget-common";
+import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isOrcamentista, isComercial, profile } = useUserProfile();
+  const { isOrcamentista, isComercial, isAdmin, profile } = useUserProfile();
   const { user } = useAuth();
 
   const backPath = (location.state as { from?: string } | null)?.from
@@ -53,6 +54,7 @@ export default function BudgetEditorV2() {
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [mediaCount, setMediaCount] = useState(0);
   const [creatingVersionFromBanner, setCreatingVersionFromBanner] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
 
   // Query current version id for "go to current" banner
   const { data: currentVersionId } = useQuery({
@@ -431,6 +433,32 @@ export default function BudgetEditorV2() {
             <TabsContent value="planilha" className="mt-0 flex-1">
               <div className="flex">
                 <div className={cn("flex-1 min-w-0", briefingOpen && "mr-[320px]")}>
+                  {/* Apply template button for orçamentista/admin */}
+                  {(isOrcamentista || isAdmin) && sections.length === 0 && (
+                    <div className="flex items-center justify-center py-8">
+                      <Button
+                        variant="outline"
+                        className="gap-2 border-dashed border-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50"
+                        onClick={() => setTemplateDialogOpen(true)}
+                      >
+                        <LayoutTemplate className="h-4 w-4" />
+                        Aplicar Template
+                      </Button>
+                    </div>
+                  )}
+                  {(isOrcamentista || isAdmin) && sections.length > 0 && (
+                    <div className="flex justify-end py-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5 text-xs text-muted-foreground hover:text-primary"
+                        onClick={() => setTemplateDialogOpen(true)}
+                      >
+                        <LayoutTemplate className="h-3.5 w-3.5" />
+                        Aplicar Template
+                      </Button>
+                    </div>
+                  )}
                   <SectionsEditor
                     budgetId={budgetId!}
                     sections={sections}
@@ -584,6 +612,19 @@ export default function BudgetEditorV2() {
           </Tabs>
         </main>
       </div>
+
+      {/* Template Selector Dialog */}
+      {budgetId && (
+        <TemplateSelectorDialog
+          open={templateDialogOpen}
+          budgetId={budgetId}
+          onOpenChange={setTemplateDialogOpen}
+          onConfirm={() => {
+            // Reload sections after template application
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

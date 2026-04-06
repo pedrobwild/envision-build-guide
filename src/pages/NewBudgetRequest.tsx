@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { seedFromTemplate } from "@/lib/seed-from-template";
-import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,7 @@ import {
   X,
   CheckCircle2,
   UserCheck,
-  LayoutTemplate,
+  
   MapPin,
   Ruler,
   Phone,
@@ -133,9 +132,7 @@ export default function NewBudgetRequest() {
 
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
-  const { data: templates = [] } = useBudgetTemplates();
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -243,8 +240,7 @@ export default function NewBudgetRequest() {
     }
 
     try {
-      const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
-      await seedFromTemplate(inserted.id, tplId);
+      await seedFromTemplate(inserted.id, null);
     } catch (seedErr) {
       console.error("Erro ao criar seções:", seedErr);
     }
@@ -353,30 +349,6 @@ export default function NewBudgetRequest() {
           </div>
         )}
 
-        {/* ── Template ── */}
-        {templates.length > 0 && (
-          <>
-            <SectionTitle icon={LayoutTemplate} title="Template" />
-            <PropertyRow icon={LayoutTemplate} label="Modelo base">
-              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
-                  <SelectValue placeholder="Selecione um template (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem template (seções padrão)</SelectItem>
-                  {templates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </PropertyRow>
-            {selectedTemplateId && selectedTemplateId !== "none" && (
-              <p className="text-[11px] text-muted-foreground font-body ml-[176px] -mt-1 mb-1">
-                {templates.find((t) => t.id === selectedTemplateId)?.description}
-              </p>
-            )}
-          </>
-        )}
 
         {/* ── Cliente ── */}
         <SectionTitle icon={User} title="Cliente" />
