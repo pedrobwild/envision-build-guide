@@ -128,6 +128,7 @@ export default function CommercialDashboard() {
   const { profile } = useUserProfile();
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [syncedBudgetIds, setSyncedBudgetIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
