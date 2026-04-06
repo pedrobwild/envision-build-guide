@@ -20,8 +20,15 @@ export function calcSaleUnitPrice(cost: number | null | undefined, bdi: number |
 }
 
 export function calcItemSaleTotal(item: CalcItem): number {
-  const qty = Number(item.qty) || 1;
-  return calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage) * qty;
+  const unitPrice = Number(item.internal_unit_price) || 0;
+  const qty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
+  if (unitPrice > 0) {
+    return calcSaleUnitPrice(unitPrice, item.bdi_percentage) * qty;
+  }
+  // Fallback: use internal_total as sale price when no unit price
+  const total = Number(item.internal_total) || 0;
+  if (total > 0) return total;
+  return 0;
 }
 
 export function calcItemCostTotal(item: CalcItem): number {
