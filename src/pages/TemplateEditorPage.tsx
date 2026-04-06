@@ -245,11 +245,11 @@ function SortableItemRow({
   );
 }
 
-// ─── Auto-save status chip ───────────────────────────────────────
+// ─── Auto-save status chip (matches BudgetEditorV2 style) ────────
 
 type AutoSaveStatus = "idle" | "saving" | "saved" | "error";
 
-function AutoSaveChip({ status }: { status: AutoSaveStatus }) {
+function AutoSaveChip({ status, onRetry }: { status: AutoSaveStatus; onRetry?: () => void }) {
   if (status === "saving") {
     return (
       <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground font-body px-2.5 py-1 rounded-full bg-muted/60">
@@ -262,7 +262,12 @@ function AutoSaveChip({ status }: { status: AutoSaveStatus }) {
     return (
       <span className="inline-flex items-center gap-1.5 text-[11px] text-destructive font-body px-2.5 py-1 rounded-full bg-destructive/10">
         <X className="h-3 w-3" />
-        Erro ao salvar
+        Erro
+        {onRetry && (
+          <button onClick={onRetry} className="underline hover:no-underline ml-0.5">
+            Tentar novamente
+          </button>
+        )}
       </span>
     );
   }
@@ -338,7 +343,6 @@ export default function TemplateEditorPage() {
     setSections(enriched);
     setExpandedSections(new Set(sectionList.map((s) => s.id)));
     setLoading(false);
-    // Allow auto-save to kick in only after initial load
     setTimeout(() => { isInitialLoadRef.current = false; }, 100);
   }, [templateId, navigate]);
 
@@ -405,7 +409,6 @@ export default function TemplateEditorPage() {
     scheduleSave();
   }, [template, sections, scheduleSave]);
 
-  // Cleanup timers
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -508,7 +511,6 @@ export default function TemplateEditorPage() {
     }));
     setSections(reordered);
 
-    // Persist
     await Promise.all(
       reordered.map((s) =>
         supabase.from("budget_template_sections").update({ order_index: s.order_index }).eq("id", s.id)
@@ -532,7 +534,6 @@ export default function TemplateEditorPage() {
           order_index: i,
         }));
 
-        // Persist in background
         Promise.all(
           reordered.map((item) =>
             supabase.from("budget_template_items").update({ order_index: item.order_index }).eq("id", item.id)
@@ -594,175 +595,278 @@ export default function TemplateEditorPage() {
   // ─── Totals ──────────────────────────────────────────────────
   const totalCost = sections.reduce((s, sec) => s + calcSectionCostTotal(sec), 0);
   const totalSale = sections.reduce((s, sec) => s + calcSectionSaleTotal(sec), 0);
+  const totalMargin = totalSale - totalCost;
+  const marginPercent = totalSale > 0 ? (totalMargin / totalSale) * 100 : 0;
+  const bdiPercent = totalCost > 0 ? ((totalSale - totalCost) / totalCost) * 100 : 0;
   const totalItems = sections.reduce((s, sec) => s + sec.items.length, 0);
+
+  const marginColor = marginPercent >= 15
+    ? "text-success"
+    : marginPercent >= 10
+    ? "text-warning"
+    : "text-destructive";
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="h-14 border-b border-border/40 bg-card/50 backdrop-blur-xl">
+          <div className="max-w-[1200px] mx-auto px-6 h-full flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-muted animate-pulse" />
+            <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+            <div className="h-5 w-20 rounded-full bg-muted animate-pulse ml-2" />
+          </div>
+        </div>
+        <div className="h-10 border-b border-border/20 bg-card/30">
+          <div className="max-w-[1200px] mx-auto px-6 h-full flex items-center gap-6">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-3 w-16 rounded bg-muted animate-pulse" />
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
       </div>
     );
   }
 
   if (!template) return null;
 
+  const templateName = template.name || "Sem nome";
+  const truncatedName = templateName.length > 30 ? templateName.slice(0, 30) + "…" : templateName;
+
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/templates")} className="shrink-0">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <LayoutTemplate className="h-5 w-5 text-primary shrink-0" />
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* ── Sticky two-layer header (mirrors BudgetEditorV2) ── */}
+      <div className="sticky top-0 z-50 bg-card/85 backdrop-blur-xl border-b border-border/40 shadow-sm">
+        {/* Layer 1 — Breadcrumb + template badge + auto-save */}
+        <div className="max-w-[1200px] mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <button
+              onClick={() => navigate("/admin/templates")}
+              className="p-1.5 sm:p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+
+            <LayoutTemplate className="h-4 w-4 text-primary shrink-0" />
+
             <input
               type="text"
               value={template.name}
               onChange={(e) => setTemplate({ ...template, name: e.target.value })}
-              className="text-lg font-semibold font-display bg-transparent border-none outline-none w-full focus:ring-0 text-foreground"
+              className="text-foreground font-semibold font-display text-sm tracking-tight min-w-0 bg-transparent border-none outline-none focus:ring-0 flex-1 truncate"
               placeholder="Nome do template"
             />
+
+            <Badge className="text-[10px] font-body border shrink-0 rounded-full px-2 bg-primary/10 text-primary border-primary/20">
+              <LayoutTemplate className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Template</span>
+            </Badge>
           </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <div className="hidden sm:block">
+              <AutoSaveChip status={autoSaveStatus} onRetry={persistAll} />
+            </div>
+
+            <Button
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={persistAll}
+              disabled={autoSaveStatus === "saving"}
+            >
+              {autoSaveStatus === "saving" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              <span className="hidden sm:inline">{autoSaveStatus === "saving" ? "Salvando…" : "Salvar Template"}</span>
+              <span className="sm:hidden">{autoSaveStatus === "saving" ? "…" : "Salvar"}</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Layer 2 — Financial totals (same grid as budget editor) */}
+        <div className="border-t border-border/20">
+          <div className="max-w-[1200px] mx-auto px-3 sm:px-6 py-1.5 sm:py-0 sm:h-10 flex items-center">
+            <div className="grid grid-cols-5 gap-2 sm:flex sm:gap-6 w-full text-xs font-body">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Venda</span>
+                <span className="font-bold tabular-nums text-success tracking-tight text-[11px] sm:text-xs">
+                  {formatBRL(totalSale)}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Custo</span>
+                <span className="font-semibold tabular-nums text-muted-foreground tracking-tight text-[11px] sm:text-xs">
+                  {formatBRL(totalCost)}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">BDI</span>
+                <span className="font-semibold tabular-nums text-primary tracking-tight text-[11px] sm:text-xs">
+                  {bdiPercent.toFixed(1)}%
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem R$</span>
+                <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
+                  {formatBRL(totalMargin)}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem %</span>
+                <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
+                  {marginPercent.toFixed(1)}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <main className="max-w-[1200px] w-full mx-auto px-3 sm:px-6 py-4 flex-1 flex flex-col">
+        {/* Template info banner */}
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-primary/15 bg-primary/5 mb-4">
+          <LayoutTemplate className="h-5 w-5 text-primary shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-body text-foreground font-medium">
+              Você está editando um <strong>template</strong>
+            </p>
+            <p className="text-xs text-muted-foreground font-body mt-0.5">
+              Alterações aqui não afetam orçamentos existentes. Este template será usado como base para novos orçamentos.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground font-body shrink-0">
+            <span>{sections.length} seções</span>
+            <span className="text-border">•</span>
+            <span>{totalItems} itens</span>
+          </div>
+        </div>
+
+        {/* Description field */}
+        <div className="mb-4">
           <input
             type="text"
             value={template.description ?? ""}
             onChange={(e) => setTemplate({ ...template, description: e.target.value || null })}
-            className="text-sm text-muted-foreground bg-transparent border-none outline-none w-full focus:ring-0 mt-0.5 font-body"
-            placeholder="Descrição do template..."
+            className="w-full text-sm text-muted-foreground bg-transparent border-none outline-none focus:ring-0 font-body px-1"
+            placeholder="Descrição do template (opcional)..."
           />
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <AutoSaveChip status={autoSaveStatus} />
-          <Button onClick={persistAll} disabled={autoSaveStatus === "saving"} variant="outline" size="sm" className="gap-1.5">
-            <Save className="h-3.5 w-3.5" />
-            Salvar agora
-          </Button>
-        </div>
-      </div>
 
-      {/* Summary bar */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground font-body bg-muted/50 rounded-lg px-4 py-2.5 flex-wrap">
-        <span>{sections.length} seções</span>
-        <span className="text-border">•</span>
-        <span>{totalItems} itens</span>
-        <span className="text-border">•</span>
-        <span>Custo: <strong className="text-foreground">{formatBRL(totalCost)}</strong></span>
-        <span className="text-border">•</span>
-        <span>Venda: <strong className="text-foreground">{formatBRL(totalSale)}</strong></span>
-        {totalCost > 0 && (
-          <>
-            <span className="text-border">•</span>
-            <span>BDI médio: <strong className="text-foreground">{(((totalSale - totalCost) / totalCost) * 100).toFixed(1)}%</strong></span>
-          </>
-        )}
-      </div>
+        {/* Sections with DnD */}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+          <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-3">
+              {sections.map((section) => {
+                const isExpanded = expandedSections.has(section.id);
+                const sectionSale = calcSectionSaleTotal(section);
 
-      {/* Sections with DnD */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
-        <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3">
-            {sections.map((section) => {
-              const isExpanded = expandedSections.has(section.id);
-              const sectionSale = calcSectionSaleTotal(section);
-
-              return (
-                <SortableSectionCard key={section.id} section={section}>
-                  {(dragListeners) => (
-                    <div className="rounded-md border border-border/60 bg-card overflow-hidden">
-                      {/* Section header */}
-                      <button
-                        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
-                        onClick={() => toggleSection(section.id)}
-                      >
-                        <span {...dragListeners} className="cursor-grab active:cursor-grabbing shrink-0 touch-none" onClick={(e) => e.stopPropagation()}>
-                          <GripVertical className="h-4 w-4 text-muted-foreground/30" />
-                        </span>
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                        )}
-                        <input
-                          type="text"
-                          value={section.title}
-                          onChange={(e) => updateSection(section.id, "title", e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-foreground font-body"
-                          placeholder="Nome da seção"
-                        />
-                        {section.is_optional && (
-                          <Badge variant="secondary" className="text-[10px] shrink-0">Opcional</Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
-                          {section.items.length} itens
-                        </span>
-                        {sectionSale > 0 && (
-                          <span className="text-xs font-medium text-foreground font-mono tabular-nums shrink-0">
-                            {formatBRL(sectionSale)}
+                return (
+                  <SortableSectionCard key={section.id} section={section}>
+                    {(dragListeners) => (
+                      <div className="rounded-md border border-border/60 bg-card overflow-hidden">
+                        {/* Section header */}
+                        <button
+                          className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+                          onClick={() => toggleSection(section.id)}
+                        >
+                          <span {...dragListeners} className="cursor-grab active:cursor-grabbing shrink-0 touch-none" onClick={(e) => e.stopPropagation()}>
+                            <GripVertical className="h-4 w-4 text-muted-foreground/30" />
                           </span>
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                          )}
+                          <input
+                            type="text"
+                            value={section.title}
+                            onChange={(e) => updateSection(section.id, "title", e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-foreground font-body"
+                            placeholder="Nome da seção"
+                          />
+                          {section.is_optional && (
+                            <Badge variant="secondary" className="text-[10px] shrink-0">Opcional</Badge>
+                          )}
+                          <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
+                            {section.items.length} itens
+                          </span>
+                          {sectionSale > 0 && (
+                            <span className="text-xs font-medium text-foreground font-mono tabular-nums shrink-0">
+                              {formatBRL(sectionSale)}
+                            </span>
+                          )}
+                          <SectionMenu
+                            onDuplicate={() => duplicateSection(section)}
+                            onDelete={() => deleteSection(section.id)}
+                          />
+                        </button>
+
+                        {/* Items table with DnD */}
+                        {isExpanded && (
+                          <div className="border-t border-border/40">
+                            {/* Table header */}
+                            <div className="grid grid-cols-[1fr_80px_60px_100px_70px_100px_36px] gap-px bg-muted/50 px-4 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground font-body">
+                              <span>Item</span>
+                              <span className="text-right">Unidade</span>
+                              <span className="text-right">Qtd</span>
+                              <span className="text-right">Custo Unit.</span>
+                              <span className="text-right">BDI %</span>
+                              <span className="text-right">Venda Total</span>
+                              <span />
+                            </div>
+
+                            {/* Items */}
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleItemDragEnd(section.id)}>
+                              <SortableContext items={section.items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                                {section.items.map((item) => (
+                                  <SortableItemRow
+                                    key={item.id}
+                                    item={item}
+                                    sectionId={section.id}
+                                    onUpdate={updateItem}
+                                    onDelete={deleteItem}
+                                  />
+                                ))}
+                              </SortableContext>
+                            </DndContext>
+
+                            {/* Add item */}
+                            <div className="px-4 py-2 border-t border-border/20">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => addItem(section.id)}
+                              >
+                                <Plus className="h-3.5 w-3.5" /> Adicionar item
+                              </Button>
+                            </div>
+                          </div>
                         )}
-                        <SectionMenu
-                          onDuplicate={() => duplicateSection(section)}
-                          onDelete={() => deleteSection(section.id)}
-                        />
-                      </button>
+                      </div>
+                    )}
+                  </SortableSectionCard>
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
 
-                      {/* Items table with DnD */}
-                      {isExpanded && (
-                        <div className="border-t border-border/40">
-                          {/* Table header */}
-                          <div className="grid grid-cols-[1fr_80px_60px_100px_70px_100px_36px] gap-px bg-muted/50 px-4 py-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground font-body">
-                            <span>Item</span>
-                            <span className="text-right">Unidade</span>
-                            <span className="text-right">Qtd</span>
-                            <span className="text-right">Custo Unit.</span>
-                            <span className="text-right">BDI %</span>
-                            <span className="text-right">Venda Total</span>
-                            <span />
-                          </div>
-
-                          {/* Items */}
-                          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleItemDragEnd(section.id)}>
-                            <SortableContext items={section.items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-                              {section.items.map((item) => (
-                                <SortableItemRow
-                                  key={item.id}
-                                  item={item}
-                                  sectionId={section.id}
-                                  onUpdate={updateItem}
-                                  onDelete={deleteItem}
-                                />
-                              ))}
-                            </SortableContext>
-                          </DndContext>
-
-                          {/* Add item */}
-                          <div className="px-4 py-2 border-t border-border/20">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                              onClick={() => addItem(section.id)}
-                            >
-                              <Plus className="h-3.5 w-3.5" /> Adicionar item
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </SortableSectionCard>
-              );
-            })}
-          </div>
-        </SortableContext>
-      </DndContext>
-
-      {/* Add section */}
-      <Button variant="outline" className="gap-2 w-full" onClick={addSection}>
-        <Plus className="h-4 w-4" /> Adicionar seção
-      </Button>
+        {/* Add section */}
+        <Button variant="outline" className="gap-2 w-full mt-4" onClick={addSection}>
+          <Plus className="h-4 w-4" /> Adicionar seção
+        </Button>
+      </main>
     </div>
   );
 }
