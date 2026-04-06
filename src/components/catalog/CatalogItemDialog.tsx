@@ -525,10 +525,6 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
 
-    const nameNorm = form.name.trim().toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const searchText = [nameNorm, form.description.trim().toLowerCase(), form.internal_code].filter(Boolean).join(" ");
-
     const payload: Record<string, string | boolean | null> = {
       name: form.name.trim(),
       description: form.description.trim() || null,
@@ -538,7 +534,6 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
       default_supplier_id: form.default_supplier_id || null,
       is_active: form.is_active,
       image_url: imageUrl,
-      search_text: searchText,
     };
 
     const isUpdate = Boolean(currentItemId);
