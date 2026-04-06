@@ -120,6 +120,7 @@ interface BudgetRow {
 
 interface EstimatorKanbanProps {
   budgets: BudgetRow[];
+  hideDelivered?: boolean;
   onStatusChange: (budgetId: string, newStatus: InternalStatus) => Promise<void>;
   onCardClick: (budgetId: string) => void;
   getProfileName: (id: string | null) => string;
