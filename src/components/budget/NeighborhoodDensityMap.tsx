@@ -130,15 +130,8 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     setSelected((prev) => (prev === id ? null : id));
   }, []);
 
-  // Auto-select client neighborhood on mount (desktop only — mobile shows all pins)
-  useEffect(() => {
-    if (!mapLoaded || !clientNeighborhood || autoSelectedRef.current || isMobile) return;
-    const match = NEIGHBORHOOD_DATA.find((n) => normalize(n.name) === normalize(clientNeighborhood));
-    if (match) {
-      autoSelectedRef.current = true;
-      setTimeout(() => handleSelect(match.id, { userInitiated: false }), 800);
-    }
-  }, [mapLoaded, clientNeighborhood, handleSelect, isMobile]);
+  // Auto-select disabled — always show all pins on both mobile and desktop
+  // to maximise perception of regional coverage.
 
   // Sync map with selection
   useEffect(() => {
@@ -146,10 +139,9 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     if (selected) {
       const n = NEIGHBORHOOD_DATA.find((d) => d.id === selected);
       if (n) mapRef.current.flyTo({ center: [n.lng, n.lat], zoom: 14, duration: 800 });
-    } else if (isMobile) {
-      mapRef.current.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 600 });
     } else {
-      mapRef.current.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 600 });
+      // Always show all pins (no auto-zoom to neighborhood)
+      mapRef.current.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 600 });
     }
 
     // Update marker styles
@@ -289,12 +281,10 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         trackResize: true,
       });
 
-      // On mobile, fit all pins after load
-      if (isMobileViewport) {
-        map.on("load", () => {
-          map?.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 0 });
-        });
-      }
+      // Fit all pins after load — show entire territory on every device
+      map.on("load", () => {
+        map?.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 0 });
+      });
 
       // Prevent map canvas from stealing page scroll position on init
       map.getCanvas().setAttribute("tabindex", "-1");
