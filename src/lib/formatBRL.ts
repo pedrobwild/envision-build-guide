@@ -1,4 +1,5 @@
-export function formatBRL(value: number): string {
+export function formatBRL(value: number | null | undefined): string {
+  if (value == null) return "—";
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatBRL } from "@/lib/formatBRL";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,10 +41,6 @@ interface Props {
   onRefresh: () => void;
 }
 
-function formatBRL(v: number | null) {
-  if (v == null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-}
 
 export function ItemsTab({
   items, categories, suppliers, isLoading,

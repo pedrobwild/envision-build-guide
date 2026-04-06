@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatBRL } from "@/lib/formatBRL";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,10 +91,6 @@ interface Props {
   onSaved: () => void;
 }
 
-function formatBRL(v: number | null) {
-  if (v == null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-}
 
 // ─── Inline price row editor ────────────────────────────────────
 function InlinePriceForm({
@@ -448,8 +445,11 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     setLocalCategories([]);
   }, [open]);
 
+  // Guard: only auto-detect category on explicit user action, not on mount
+  const supplierChangeIsUserAction = useRef(false);
   useEffect(() => {
-    if (!open || !form.default_supplier_id) return;
+    if (!open || !form.default_supplier_id || !supplierChangeIsUserAction.current) return;
+    supplierChangeIsUserAction.current = false;
     void handleSupplierChange(form.default_supplier_id);
   }, [form.default_supplier_id, handleSupplierChange, open]);
 
@@ -524,6 +524,10 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
 
+    const nameNorm = form.name.trim().toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const searchText = [nameNorm, form.description.trim().toLowerCase(), form.internal_code].filter(Boolean).join(" ");
+
     const payload: Record<string, string | boolean | null> = {
       name: form.name.trim(),
       description: form.description.trim() || null,
@@ -533,6 +537,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
       default_supplier_id: form.default_supplier_id || null,
       is_active: form.is_active,
       image_url: imageUrl,
+      search_text: searchText,
     };
 
     const isUpdate = Boolean(currentItemId);
@@ -664,9 +669,17 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Fornecedor principal</Label>
-              <Select value={form.default_supplier_id} onValueChange={(value) => { void handleSupplierChange(value); }}>
+              <Select value={form.default_supplier_id || "__none__"} onValueChange={(value) => {
+                const realValue = value === "__none__" ? "" : value;
+                supplierChangeIsUserAction.current = Boolean(realValue);
+                set("default_supplier_id", realValue);
+                if (!realValue) {
+                  // Clear auto-filled category when supplier is removed
+                }
+              }}>
                 <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
                   {suppliers.filter((s) => s.is_active).map((s) => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
