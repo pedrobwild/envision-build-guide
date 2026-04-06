@@ -157,7 +157,7 @@ export function ContractUploadModal({
           </Button>
           <Button onClick={handleUpload} disabled={!file || uploading}>
             {uploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            Fechar Contrato
+            Enviar para Portal
           </Button>
         </DialogFooter>
       </DialogContent>
