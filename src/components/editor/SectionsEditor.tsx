@@ -726,13 +726,15 @@ function SortableItemRow({
 
           {/* Action buttons */}
           <div className="flex items-center gap-1 pt-1 flex-wrap">
+            {!disableImages && (
             <button
               onClick={() => setDetailOpen(true)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-body font-medium text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border/40 transition-all"
             >
               <Pencil className="h-3 w-3" /> Editar detalhes
             </button>
-            {!item.catalog_item_id && (
+            )}
+            {!disableCatalog && !item.catalog_item_id && (
               <button
                 onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-body font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-all"
@@ -743,6 +745,7 @@ function SortableItemRow({
           </div>
 
           {/* Item images */}
+          {!disableImages && (
           <ItemImageInline
             itemId={item.id}
             itemTitle={item.title}
@@ -750,6 +753,7 @@ function SortableItemRow({
             images={item.images || []}
             onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
           />
+          )}
         </div>
       )}
 
