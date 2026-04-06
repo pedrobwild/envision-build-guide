@@ -53,7 +53,7 @@ export function ContractUploadModal({
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "pdf";
-      const filePath = `contracts/${budgetId}/contrato.${ext}`;
+      const filePath = `${budgetId}/contracts/contrato.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("budget-assets")
