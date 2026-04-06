@@ -54,6 +54,7 @@ export default function BudgetEditorV2() {
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [mediaCount, setMediaCount] = useState(0);
   const [creatingVersionFromBanner, setCreatingVersionFromBanner] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
 
   // Query current version id for "go to current" banner
   const { data: currentVersionId } = useQuery({
