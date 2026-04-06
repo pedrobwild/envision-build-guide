@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import type { BudgetRow, EditorSection } from "@/types/budget-common";
+import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
