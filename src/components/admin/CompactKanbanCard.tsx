@@ -77,6 +77,7 @@ export function CompactKanbanCard({
   sequentialCode,
   commercialName,
   estimatorName,
+  isSynced,
   onClick,
   onQuickAction,
 }: CompactKanbanCardProps) {
