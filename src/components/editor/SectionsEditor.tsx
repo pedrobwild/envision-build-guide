@@ -413,6 +413,8 @@ function SortableItemRow({
   onDelete,
   onImagesChange,
   onPromoteToCatalog,
+  disableImages,
+  disableCatalog,
 }: {
   item: ItemData;
   sectionId: string;
@@ -426,6 +428,8 @@ function SortableItemRow({
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
+  disableImages?: boolean;
+  disableCatalog?: boolean;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
