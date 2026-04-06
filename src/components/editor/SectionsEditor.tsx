@@ -273,10 +273,39 @@ function calcGlobalBdi(sections: SectionData[]): { avgBdi: number; hasData: bool
   return { avgBdi, hasData: true };
 }
 
+/* ── Table configuration for multi-table support ── */
+export interface TableConfig {
+  sectionTable: string;
+  itemTable: string;
+  sectionForeignKey: string;
+  itemForeignKey: string;
+  disableImages?: boolean;
+  disableCatalog?: boolean;
+  disableTaxRecalc?: boolean;
+}
+
+export const DEFAULT_TABLE_CONFIG: TableConfig = {
+  sectionTable: "sections",
+  itemTable: "items",
+  sectionForeignKey: "budget_id",
+  itemForeignKey: "section_id",
+};
+
+export const TEMPLATE_TABLE_CONFIG: TableConfig = {
+  sectionTable: "budget_template_sections",
+  itemTable: "budget_template_items",
+  sectionForeignKey: "template_id",
+  itemForeignKey: "template_section_id",
+  disableImages: true,
+  disableCatalog: true,
+  disableTaxRecalc: true,
+};
+
 interface SectionsEditorProps {
   budgetId: string;
   sections: SectionData[];
   onSectionsChange: (sections: SectionData[]) => void;
+  tableConfig?: TableConfig;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
