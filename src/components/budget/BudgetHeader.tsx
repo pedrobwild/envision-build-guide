@@ -72,7 +72,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
   const area = rawArea ? `${rawArea}m²` : "";
   const versionNum = budget.versao ? budget.versao.replace(/^v/i, '') : (budget.version_number ?? "1");
-  const version = String(versionNum);
+  const versionStr = String(versionNum);
   const version = String(versionNum);
 
   const clientName = budget.client_name ? formatName(sanitizeClientName(budget.client_name)) : "";
