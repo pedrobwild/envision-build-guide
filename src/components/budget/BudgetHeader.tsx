@@ -73,7 +73,6 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const area = rawArea ? `${rawArea}m²` : "";
   const versionNum = budget.versao ? budget.versao.replace(/^v/i, '') : (budget.version_number ?? "1");
   const versionStr = String(versionNum);
-  const version = String(versionNum);
 
   const clientName = budget.client_name ? formatName(sanitizeClientName(budget.client_name)) : "";
   const projectTitle = budget.project_name || "Projeto e Reforma";
