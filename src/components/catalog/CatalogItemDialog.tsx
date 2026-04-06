@@ -353,6 +353,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     internal_code: item?.internal_code ?? "",
     default_supplier_id: item?.default_supplier_id ?? "",
     is_active: item?.is_active ?? true,
+    initial_unit_price: "",
   });
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
   const [uploadingImage, setUploadingImage] = useState(false);
