@@ -492,7 +492,7 @@ export default function EstimatorDashboard() {
             count={counts.inProgress}
             icon={<Clock className="h-4 w-4" />}
             accent="text-warning"
-            onClick={() => setStatusFilter("in_progress")}
+            onClick={() => setStatusFilter("_in_progress")}
           />
           <SummaryCard
             label="Em Revisão"
