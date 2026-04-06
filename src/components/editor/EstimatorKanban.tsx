@@ -88,7 +88,7 @@ const ESTIMATOR_COLUMNS = [
     id: "closed",
     label: "Finalizado",
     icon: FileSignature,
-    statuses: ["lost", "archived"],
+    statuses: ["lost", "archived", "contrato_fechado"],
     accent: "border-t-muted-foreground",
     headerColor: "text-muted-foreground",
     bgColor: "bg-muted/30",
