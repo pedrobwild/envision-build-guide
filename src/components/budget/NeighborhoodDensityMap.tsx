@@ -130,15 +130,8 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     setSelected((prev) => (prev === id ? null : id));
   }, []);
 
-  // Auto-select client neighborhood on mount (desktop only — mobile shows all pins)
-  useEffect(() => {
-    if (!mapLoaded || !clientNeighborhood || autoSelectedRef.current || isMobile) return;
-    const match = NEIGHBORHOOD_DATA.find((n) => normalize(n.name) === normalize(clientNeighborhood));
-    if (match) {
-      autoSelectedRef.current = true;
-      setTimeout(() => handleSelect(match.id, { userInitiated: false }), 800);
-    }
-  }, [mapLoaded, clientNeighborhood, handleSelect, isMobile]);
+  // Auto-select disabled — always show all pins on both mobile and desktop
+  // to maximise perception of regional coverage.
 
   // Sync map with selection
   useEffect(() => {
