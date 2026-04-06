@@ -74,7 +74,11 @@ export const PUBLIC_ITEM_COLUMNS = [
   "coverage_type",
   "included_rooms",
   "excluded_rooms",
-  // internal_unit_price and internal_total are EXCLUDED from public view
+  // Pricing fields are needed for accurate total/subtotal calculation
+  // even though individual item prices are not displayed to the client.
+  "internal_unit_price",
+  "internal_total",
+  "bdi_percentage",
 ] as const;
 
 export const PUBLIC_ITEM_SELECT = PUBLIC_ITEM_COLUMNS.join(", ");
