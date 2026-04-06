@@ -380,7 +380,7 @@ function EstimatorCard({
 }
 
 /* ── Main Kanban Board ── */
-export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
+export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
