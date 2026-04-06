@@ -874,6 +874,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const recalcTaxItem = useCallback((currentSections: SectionData[]): SectionData[] => {
+    if (cfg.disableTaxRecalc) return currentSections;
     let taxSectionId: string | null = null;
     let taxItemId: string | null = null;
 
