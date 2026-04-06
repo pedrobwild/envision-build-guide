@@ -243,20 +243,23 @@ export default function EstimatorDashboard() {
   }, [isAdmin, budgets, getProfileName]);
 
   // Deadline helpers
-  const getDueInfo = (dueAt: string | null) => {
+  const getDueInfo = (dueAt: string | null, internalStatus?: string) => {
     if (!dueAt) return { label: null, variant: "default" as const };
     const dueDate = new Date(dueAt);
     const days = differenceInCalendarDays(dueDate, new Date());
+    const isDelivered = internalStatus ? HIDDEN_BY_DEFAULT_STATUSES.has(internalStatus) : false;
 
-    if (isPast(dueDate) && !isToday(dueDate))
+    if (isPast(dueDate) && !isToday(dueDate)) {
+      if (isDelivered) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
       return {
         label: `${Math.abs(days)}d atrasado`,
         variant: "overdue" as const,
       };
+    }
     if (isToday(dueDate))
-      return { label: "Vence hoje", variant: "today" as const };
+      return { label: "Vence hoje", variant: isDelivered ? "default" as const : "today" as const };
     if (days <= 2)
-      return { label: `${days}d restante${days > 1 ? "s" : ""}`, variant: "soon" as const };
+      return { label: `${days}d restante${days > 1 ? "s" : ""}`, variant: isDelivered ? "default" as const : "soon" as const };
     return {
       label: format(dueDate, "dd MMM", { locale: ptBR }),
       variant: "default" as const,
@@ -670,7 +673,7 @@ export default function EstimatorDashboard() {
                     INTERNAL_STATUSES[b.internal_status as InternalStatus] ??
                     INTERNAL_STATUSES.assigned;
                   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-                  const due = getDueInfo(b.due_at);
+                  const due = getDueInfo(b.due_at, b.internal_status);
 
                   return (
                     <Card

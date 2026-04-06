@@ -129,14 +129,22 @@ interface EstimatorKanbanProps {
 /* ── Helpers ── */
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
 
-function getDueInfo(dueAt: string | null): { label: string; variant: DueVariant } | null {
+const DELIVERED_OR_FINISHED = new Set([
+  "delivered_to_sales", "sent_to_client", "minuta_solicitada",
+  "lost", "archived", "contrato_fechado",
+]);
+
+function getDueInfo(dueAt: string | null, internalStatus?: string): { label: string; variant: DueVariant } | null {
   if (!dueAt) return null;
   const dueDate = new Date(dueAt);
   const days = differenceInCalendarDays(dueDate, new Date());
-  if (isPast(dueDate) && !isToday(dueDate))
+  const isDelivered = internalStatus ? DELIVERED_OR_FINISHED.has(internalStatus) : false;
+  if (isPast(dueDate) && !isToday(dueDate)) {
+    if (isDelivered) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" };
     return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" };
-  if (isToday(dueDate)) return { label: "Vence hoje", variant: "today" };
-  if (days <= 2) return { label: `${days}d`, variant: "soon" };
+  }
+  if (isToday(dueDate)) return { label: "Vence hoje", variant: isDelivered ? "default" : "today" };
+  if (days <= 2) return { label: `${days}d`, variant: isDelivered ? "default" : "soon" };
   if (days <= 7) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "ok" };
   return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" };
 }
@@ -190,7 +198,7 @@ function Column({
   const Icon = column.icon;
   const sorted = sortBudgets(budgets);
   const overdueCount = budgets.filter((b) => {
-    const d = getDueInfo(b.due_at);
+    const d = getDueInfo(b.due_at, b.internal_status);
     return d?.variant === "overdue" || d?.variant === "today";
   }).length;
 
@@ -301,7 +309,7 @@ function EstimatorCard({
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const statusMeta = INTERNAL_STATUSES[b.internal_status as InternalStatus];
-  const due = getDueInfo(b.due_at);
+  const due = getDueInfo(b.due_at, b.internal_status);
   const highPrio = isHighPriority(b.priority);
   const borderColor = due ? dueBorderStyles[due.variant] : "border-l-transparent";
 
@@ -426,7 +434,7 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
     visibleColumns.map((col) => {
       const items = columnBudgets(col);
       const overdueCount = items.filter((b) => {
-        const d = getDueInfo(b.due_at);
+        const d = getDueInfo(b.due_at, b.internal_status);
         return d?.variant === "overdue" || d?.variant === "today";
       }).length;
       return {

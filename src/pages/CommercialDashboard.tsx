@@ -173,13 +173,18 @@ export default function CommercialDashboard() {
     [profiles],
   );
 
-  const getDueInfo = (dueAt: string | null) => {
+  const DELIVERED_FINISHED = new Set(["delivered_to_sales", "sent_to_client", "minuta_solicitada", "lost", "archived", "contrato_fechado"]);
+  const getDueInfo = (dueAt: string | null, internalStatus?: string) => {
     if (!dueAt) return { label: null, variant: "default" as const };
     const dueDate = new Date(dueAt);
     const days = differenceInCalendarDays(dueDate, new Date());
-    if (isPast(dueDate) && !isToday(dueDate)) return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" as const };
-    if (isToday(dueDate)) return { label: "Vence hoje", variant: "today" as const };
-    if (days <= 2) return { label: `${days}d restante${days > 1 ? "s" : ""}`, variant: "soon" as const };
+    const isDelivered = internalStatus ? DELIVERED_FINISHED.has(internalStatus) : false;
+    if (isPast(dueDate) && !isToday(dueDate)) {
+      if (isDelivered) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
+      return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" as const };
+    }
+    if (isToday(dueDate)) return { label: "Vence hoje", variant: isDelivered ? "default" as const : "today" as const };
+    if (days <= 2) return { label: `${days}d restante${days > 1 ? "s" : ""}`, variant: isDelivered ? "default" as const : "soon" as const };
     return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
   };
 
@@ -517,7 +522,7 @@ export default function CommercialDashboard() {
               {filtered.map(b => {
                 const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
                 const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-                const due = getDueInfo(b.due_at);
+                const due = getDueInfo(b.due_at, b.internal_status);
                 const isLocked = LOCKED_STATUSES.includes(b.internal_status);
                 const isEntregue = b.internal_status === "delivered_to_sales";
 
