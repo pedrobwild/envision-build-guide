@@ -267,6 +267,7 @@ function SubSectionGroup({
   onCardClick,
   getProfileName,
   compact = false,
+  syncedBudgetIds = new Set(),
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -274,6 +275,7 @@ function SubSectionGroup({
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
   compact?: boolean;
+  syncedBudgetIds?: Set<string>;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
