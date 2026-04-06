@@ -494,7 +494,7 @@ export default function AdminOperationsDashboard() {
             {filtered.map(b => {
               const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
               const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-              const due = getDueInfo(b.due_at);
+              const due = getDueInfo(b.due_at, b.internal_status);
               const isOverdue = due.variant === "overdue";
 
               return (
