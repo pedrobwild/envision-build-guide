@@ -219,8 +219,32 @@ async function syncSingleProject(
   const projectPayload = mapBudgetToProject(budget, totalValue);
   const budgetBreakdown = buildBudgetBreakdown(sections ?? [], items, adjustments ?? [], totalValue);
 
+  // --- Detailed logging for debugging ---
+  console.log(`[sync-project-outbound] Budget ${budgetId} → preparing payload`);
+  console.log(`[sync-project-outbound] Project: ${JSON.stringify({
+    name: projectPayload.name,
+    client: projectPayload.client_name,
+    budget_code: projectPayload.budget_code,
+    budget_value: projectPayload.budget_value,
+    sections_count: budgetBreakdown.sections.length,
+    items_count: budgetBreakdown.sections.reduce((s: number, sec: any) => s + sec.items.length, 0),
+    adjustments_count: budgetBreakdown.adjustments.length,
+    total_cost: budgetBreakdown.total_cost,
+    total_sale: budgetBreakdown.total_sale,
+    avg_bdi: budgetBreakdown.avg_bdi,
+    has_contract: !!projectPayload.contract_file_url,
+  })}`);
+
   // --- Call Portal BWild's sync-project-inbound ---
   const inboundUrl = `${portalUrl}/functions/v1/sync-project-inbound`;
+  const outboundBody = {
+    project: projectPayload,
+    budget: budgetBreakdown,
+    source_id: budgetId,
+  };
+
+  console.log(`[sync-project-outbound] POST ${inboundUrl}`);
+  console.log(`[sync-project-outbound] Full payload: ${JSON.stringify(outboundBody)}`);
 
   const response = await fetch(inboundUrl, {
     method: "POST",
@@ -228,14 +252,14 @@ async function syncSingleProject(
       "Content-Type": "application/json",
       "x-integration-key": integrationKey,
     },
-    body: JSON.stringify({
-      project: projectPayload,
-      budget: budgetBreakdown,
-      source_id: budgetId,
-    }),
+    body: JSON.stringify(outboundBody),
   });
 
-  const responseData = await response.json().catch(() => ({}));
+  const responseText = await response.text();
+  let responseData: any = {};
+  try { responseData = JSON.parse(responseText); } catch { responseData = { raw: responseText }; }
+
+  console.log(`[sync-project-outbound] Response ${response.status}: ${responseText.substring(0, 500)}`);
 
   if (!response.ok) {
     const errMsg = `Portal BWild returned ${response.status}: ${responseData.error ?? response.statusText}`;
