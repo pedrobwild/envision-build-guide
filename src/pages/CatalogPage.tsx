@@ -106,6 +106,14 @@ export default function CatalogPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sectionFilter, setSectionFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(0);
+
+  const debouncedSearch = useDebouncedValue(search);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch, typeFilter, categoryFilter, sectionFilter, statusFilter]);
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
@@ -118,7 +126,10 @@ export default function CatalogPage() {
 
   const { data: categories = [] } = useCategories();
   const { data: suppliers = [] } = useSuppliers();
-  const { data: items = [], isLoading } = useCatalogItems(search, typeFilter, categoryFilter, sectionFilter, statusFilter);
+  const { data: result, isLoading } = useCatalogItems(debouncedSearch, typeFilter, categoryFilter, sectionFilter, statusFilter, page);
+  const items = result?.items ?? [];
+  const totalCount = result?.total ?? 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["catalog_items"] });
