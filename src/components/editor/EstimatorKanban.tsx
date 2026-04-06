@@ -451,7 +451,7 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
         onChangeIndex={setMobileColIndex}
       >
         {(colIndex) => {
-          const col = ESTIMATOR_COLUMNS[colIndex];
+          const col = visibleColumns[colIndex];
           const items = columnBudgets(col);
           const sorted = sortBudgets(items);
           return (
