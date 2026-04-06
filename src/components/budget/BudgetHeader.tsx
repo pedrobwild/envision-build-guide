@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
 import { ReclameAquiSeal } from "./ReclameAquiSeal";
-import { formatDate, getValidityInfo } from "@/lib/formatBRL";
+import { getValidityInfo } from "@/lib/formatBRL";
 
 export interface HeaderConfig {
   hide_badge?: boolean;
@@ -72,8 +72,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
   const area = rawArea ? `${rawArea}m²` : "";
   const versionNum = budget.versao ? budget.versao.replace(/^v/i, '') : (budget.version_number ?? "1");
-  const version = String(versionNum);
-  const dateStr = budget.date ? formatDate(budget.date) : "";
+  const versionStr = String(versionNum);
 
   const clientName = budget.client_name ? formatName(sanitizeClientName(budget.client_name)) : "";
   const projectTitle = budget.project_name || "Projeto e Reforma";
@@ -86,8 +85,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   if (condominio) metaChips.push({ label: "Condomínio", value: condominio });
   if (neighborhood) metaChips.push({ label: "Bairro", value: neighborhood });
   if (area) metaChips.push({ label: "Área", value: area, mono: true });
-  if (version) metaChips.push({ label: "Versão", value: `v${version}`, mono: true });
-  if (dateStr) metaChips.push({ label: "Elaboração", value: dateStr, mono: true });
+  if (versionStr) metaChips.push({ label: "Versão", value: `v${versionStr}`, mono: true });
   if (budget.prazo_dias_uteis) metaChips.push({ label: "Prazo", value: `${budget.prazo_dias_uteis} dias úteis`, mono: true });
 
   return (
@@ -155,12 +153,13 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
             <motion.div
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
-              className="flex items-center gap-0 text-[11px] font-body whitespace-nowrap overflow-hidden text-ellipsis"
+              className="flex items-center gap-0 text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
             >
               {metaChips.map((chip, i) => (
                 <span key={chip.label} className="inline-flex items-center shrink-0">
                   {i > 0 && <Dot />}
-                  <span className={`text-white/90 font-medium ${chip.mono ? MONO : "tracking-[-0.01em]"}`}>
+                  <span className={`${LABEL_MICRO} text-white/50 mr-1`}>{chip.label}</span>
+                  <span className={`text-white/90 font-medium ${chip.mono ? MONO : "font-body tracking-[-0.01em]"}`}>
                     {chip.value}
                   </span>
                 </span>
