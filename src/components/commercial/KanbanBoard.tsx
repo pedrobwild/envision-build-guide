@@ -581,6 +581,11 @@ function KanbanCard({
             V{b.version_number}
           </span>
         )}
+        {isSynced && (
+          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium font-body px-1.5 py-0.5 rounded-full bg-success/10 text-success" title="Sincronizado com Portal BWild">
+            ✓ Portal
+          </span>
+        )}
       </div>
     </Card>
   );
