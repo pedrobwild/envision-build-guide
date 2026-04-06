@@ -616,10 +616,15 @@ function SortableItemRow({
                   const supplierId = e.target.value || null;
                   const supplier = suppliers.find(s => s.id === supplierId);
                   const prev = (typeof item.catalog_snapshot === 'object' && item.catalog_snapshot && !Array.isArray(item.catalog_snapshot)) ? item.catalog_snapshot : {};
+                  // Auto-fill item_category from supplier's categoria
+                  const autoCategory = supplier?.categoria
+                    ? (supplier.categoria === "Prestadores" ? "prestador" : "produto")
+                    : prev.item_category;
                   const updatedSnapshot = {
                     ...prev,
                     supplier_id: supplierId,
                     supplier_name: supplier?.name || null,
+                    item_category: autoCategory || null,
                   };
                   onUpdate(sectionId, item.id, "catalog_snapshot", updatedSnapshot);
                 }}
@@ -629,6 +634,28 @@ function SortableItemRow({
                 {suppliers.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Item category selector */}
+          <div className="space-y-0.5">
+            <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">Categoria</label>
+            <div className="flex items-center gap-1.5 max-w-xl">
+              <Package className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+              <select
+                value={(item.catalog_snapshot as Record<string, unknown> | null)?.item_category as string || ""}
+                onChange={(e) => {
+                  const category = e.target.value || null;
+                  const prev = (typeof item.catalog_snapshot === 'object' && item.catalog_snapshot && !Array.isArray(item.catalog_snapshot)) ? item.catalog_snapshot : {};
+                  const updatedSnapshot = { ...prev, item_category: category };
+                  onUpdate(sectionId, item.id, "catalog_snapshot", updatedSnapshot);
+                }}
+                className="w-full h-7 px-2 rounded-md border border-border/40 bg-background text-xs font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Sem categoria</option>
+                <option value="produto">Produto</option>
+                <option value="prestador">Prestador</option>
               </select>
             </div>
           </div>
