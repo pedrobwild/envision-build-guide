@@ -177,10 +177,10 @@ export function ItemsTab({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
+                <TableHead className="w-24">Código</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead className="w-28 text-right">Preço unit.</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead className="w-20">Unidade</TableHead>
                 <TableHead>Fornecedor</TableHead>
                 <TableHead className="w-20">Status</TableHead>
                 <TableHead className="w-28 text-right">Ações</TableHead>
@@ -189,14 +189,12 @@ export function ItemsTab({
             <TableBody>
               {items.map((item) => (
                   <TableRow key={item.id} className={!item.is_active ? "opacity-50" : ""}>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {item.internal_code ?? "—"}
+                    </TableCell>
                     <TableCell>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground truncate">{item.name}</span>
-                          {item.internal_code && (
-                            <span className="text-xs text-muted-foreground font-mono shrink-0">#{item.internal_code}</span>
-                          )}
-                        </div>
+                        <span className="font-medium text-foreground truncate">{item.name}</span>
                         {item.description && (
                           <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{item.description}</p>
                         )}
@@ -207,9 +205,6 @@ export function ItemsTab({
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {(item.catalog_categories as CatalogCategory | null)?.name ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {item.unit_of_measure ?? "—"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {(item.suppliers as Supplier | null)?.name ?? "—"}
