@@ -112,8 +112,7 @@ function VideoPlayer({ src }: { src: string }) {
     </div>
   );
 }
-
-
+interface ProjectGalleryProps {
   publicId?: string;
 }
 
