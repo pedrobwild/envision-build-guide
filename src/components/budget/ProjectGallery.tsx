@@ -46,8 +46,74 @@ function ImageWithFallback({ src, alt, className }: { src: string; alt: string; 
     />
   );
 }
+/** Native video player with auto-fullscreen on play */
+function VideoPlayer({ src }: { src: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [playing, setPlaying] = useState(false);
 
-interface ProjectGalleryProps {
+  const handlePlay = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    try {
+      // Try native video fullscreen first (works best on iOS)
+      if ('webkitEnterFullscreen' in video && typeof (video as any).webkitEnterFullscreen === 'function') {
+        await video.play();
+        (video as any).webkitEnterFullscreen();
+      } else if (containerRef.current?.requestFullscreen) {
+        await containerRef.current.requestFullscreen();
+        await video.play();
+      } else if ((containerRef.current as any)?.webkitRequestFullscreen) {
+        (containerRef.current as any).webkitRequestFullscreen();
+        await video.play();
+      } else {
+        // Fallback: just play inline
+        await video.play();
+      }
+      setPlaying(true);
+    } catch {
+      // Autoplay blocked — still try to play
+      try { await video.play(); } catch { /* noop */ }
+      setPlaying(true);
+    }
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10]"
+    >
+      <video
+        ref={videoRef}
+        src={src}
+        controls={playing}
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        onEnded={() => setPlaying(false)}
+      />
+      {!playing && (
+        <button
+          onClick={handlePlay}
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/30 hover:bg-black/20 transition-colors cursor-pointer group"
+          aria-label="Reproduzir vídeo em tela cheia"
+        >
+          <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <Play className="h-6 w-6 text-foreground fill-foreground ml-0.5" />
+          </div>
+          <span className="mt-2 text-xs font-body font-medium text-white/90">Vídeo 3D</span>
+        </button>
+      )}
+      {playing && (
+        <span className="absolute top-2 left-2 flex items-center gap-1 text-xs font-display font-semibold text-white bg-primary/80 backdrop-blur-sm rounded px-2 py-0.5 z-10 pointer-events-none">
+          <Play className="h-3 w-3" /> Vídeo 3D
+        </span>
+      )}
+    </div>
+  );
+}
+
+
   publicId?: string;
 }
 
