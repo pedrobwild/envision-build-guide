@@ -44,6 +44,20 @@ interface Supplier {
   categoria?: string | null;
 }
 
+function buildInitialItemForm(item?: CatalogItem | null) {
+  return {
+    name: item?.name ?? "",
+    description: item?.description ?? "",
+    item_type: (item?.item_type ?? "product") as "product" | "service",
+    category_id: item?.category_id ?? "",
+    unit_of_measure: item?.unit_of_measure ?? "",
+    internal_code: item?.internal_code ?? "",
+    default_supplier_id: item?.default_supplier_id ?? "",
+    is_active: item?.is_active ?? true,
+    initial_unit_price: "",
+  };
+}
+
 function normalizeCategoryName(value: string | null | undefined) {
   return (value ?? "")
     .normalize("NFD")
@@ -344,17 +358,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
   const queryClient = useQueryClient();
   const [localCategories, setLocalCategories] = useState<CatalogCategory[]>([]);
   const availableCategories = useMemo(() => mergeCategories(categories, localCategories), [categories, localCategories]);
-  const [form, setForm] = useState({
-    name: item?.name ?? "",
-    description: item?.description ?? "",
-    item_type: item?.item_type ?? "product" as "product" | "service",
-    category_id: item?.category_id ?? "",
-    unit_of_measure: item?.unit_of_measure ?? "",
-    internal_code: item?.internal_code ?? "",
-    default_supplier_id: item?.default_supplier_id ?? "",
-    is_active: item?.is_active ?? true,
-    initial_unit_price: "",
-  });
+  const [form, setForm] = useState(() => buildInitialItemForm(item));
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -431,20 +435,42 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
   }, [newCategoryName, onSaved, queryClient]);
 
   useEffect(() => {
-    if (item) {
-      setImageUrl(item.image_url ?? null);
-      setSavedItemId(item.id);
-      getItemSections(item.id).then((sections) => {
-        setSelectedSections(sections);
-        setSectionsLoaded(true);
-      });
-    }
-  }, [item]);
-
-  useEffect(() => {
     if (!open) return;
     setLocalCategories([]);
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    setForm(buildInitialItemForm(item));
+    setImageUrl(item?.image_url ?? null);
+    setSavedItemId(item?.id ?? null);
+    setCreatingCategory(false);
+    setNewCategoryName("");
+
+    if (!item) {
+      setSelectedSections([]);
+      setSectionsLoaded(true);
+      return;
+    }
+
+    let cancelled = false;
+    setSectionsLoaded(false);
+
+    getItemSections(item.id).then((sections) => {
+      if (cancelled) return;
+      setSelectedSections(sections);
+      setSectionsLoaded(true);
+    }).catch(() => {
+      if (cancelled) return;
+      setSelectedSections([]);
+      setSectionsLoaded(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [item, open]);
 
   // Guard: only auto-detect category on explicit user action, not on mount
   const supplierChangeIsUserAction = useRef(false);
@@ -541,10 +567,10 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
 
     if (isUpdate && itemId) {
       const { error } = await supabase.from("catalog_items").update(payload).eq("id", itemId);
-      if (error) { toast.error("Erro ao salvar item"); setSaving(false); return; }
+      if (error) { toast.error(error.message || "Erro ao salvar item"); setSaving(false); return; }
     } else {
       const { data, error } = await supabase.from("catalog_items").insert(payload).select("id").single();
-      if (error) { toast.error("Erro ao salvar item"); setSaving(false); return; }
+      if (error) { toast.error(error.message || "Erro ao salvar item"); setSaving(false); return; }
       itemId = data.id;
       setSavedItemId(data.id);
 
