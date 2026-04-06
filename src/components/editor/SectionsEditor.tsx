@@ -441,6 +441,15 @@ function SortableItemRow({
         "flex items-center gap-0",
         compact && !rowExpanded ? "h-11" : "py-2",
       )}>
+        {/* [⋮⋮] drag handle */}
+        <button
+          {...listeners}
+          className="hidden sm:flex w-4 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/item:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-3 w-3" />
+        </button>
+
         {/* [▶ expand] — 20px mobile, 24px desktop */}
         <div className="w-5 sm:w-6 flex-shrink-0 flex items-center justify-center">
           <button
