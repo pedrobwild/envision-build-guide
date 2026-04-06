@@ -471,11 +471,13 @@ function DraggableCard({
   locked,
   onClick,
   getProfileName,
+  isSynced,
 }: {
   budget: BudgetRow;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
+  isSynced?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: budget.id,
@@ -489,7 +491,7 @@ function DraggableCard({
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} />
+      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} isSynced={isSynced} />
     </div>
   );
 }
