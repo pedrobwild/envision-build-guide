@@ -765,6 +765,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             onCardClick={onCardClick}
             getProfileName={getProfileName}
             dueFilter={dueFilter}
+            syncedBudgetIds={syncedBudgetIds}
           />
         ))}
       </div>
