@@ -160,13 +160,17 @@ export default function AdminOperationsDashboard() {
     }).sort((a, b) => b.open - a.open);
   }, [budgets, commercials]);
 
-  const getDueInfo = (dueAt: string | null) => {
+  const getDueInfo = (dueAt: string | null, internalStatus?: string) => {
     if (!dueAt) return { label: null, variant: "default" as const };
     const dueDate = new Date(dueAt);
     const days = differenceInCalendarDays(dueDate, new Date());
-    if (isPast(dueDate) && !isToday(dueDate)) return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" as const };
-    if (isToday(dueDate)) return { label: "Vence hoje", variant: "today" as const };
-    if (days <= 2) return { label: `${days}d`, variant: "soon" as const };
+    const isDelivered = internalStatus ? !ACTIVE_STATUSES.includes(internalStatus as InternalStatus) : false;
+    if (isPast(dueDate) && !isToday(dueDate)) {
+      if (isDelivered) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
+      return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" as const };
+    }
+    if (isToday(dueDate)) return { label: "Vence hoje", variant: isDelivered ? "default" as const : "today" as const };
+    if (days <= 2) return { label: `${days}d`, variant: isDelivered ? "default" as const : "soon" as const };
     return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
   };
 
