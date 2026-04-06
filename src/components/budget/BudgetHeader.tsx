@@ -154,12 +154,13 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
 
             <motion.div
               variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
-              className="flex items-center gap-0 text-[11px] font-body whitespace-nowrap overflow-hidden text-ellipsis"
+              className="flex items-center gap-0 text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
             >
               {metaChips.map((chip, i) => (
                 <span key={chip.label} className="inline-flex items-center shrink-0">
                   {i > 0 && <Dot />}
-                  <span className={`text-white/90 font-medium ${chip.mono ? MONO : "tracking-[-0.01em]"}`}>
+                  <span className={`${LABEL_MICRO} text-white/50 mr-1`}>{chip.label}</span>
+                  <span className={`text-white/90 font-medium ${chip.mono ? MONO : "font-body tracking-[-0.01em]"}`}>
                     {chip.value}
                   </span>
                 </span>
