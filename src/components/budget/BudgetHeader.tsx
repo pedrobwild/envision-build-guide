@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
 import headerBg from "@/assets/header-bg.png";
 import { ReclameAquiSeal } from "./ReclameAquiSeal";
-import { formatDate, getValidityInfo } from "@/lib/formatBRL";
+import { getValidityInfo } from "@/lib/formatBRL";
 
 export interface HeaderConfig {
   hide_badge?: boolean;
