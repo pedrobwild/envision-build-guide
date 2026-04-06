@@ -273,10 +273,39 @@ function calcGlobalBdi(sections: SectionData[]): { avgBdi: number; hasData: bool
   return { avgBdi, hasData: true };
 }
 
+/* ── Table configuration for multi-table support ── */
+export interface TableConfig {
+  sectionTable: string;
+  itemTable: string;
+  sectionForeignKey: string;
+  itemForeignKey: string;
+  disableImages?: boolean;
+  disableCatalog?: boolean;
+  disableTaxRecalc?: boolean;
+}
+
+export const DEFAULT_TABLE_CONFIG: TableConfig = {
+  sectionTable: "sections",
+  itemTable: "items",
+  sectionForeignKey: "budget_id",
+  itemForeignKey: "section_id",
+};
+
+export const TEMPLATE_TABLE_CONFIG: TableConfig = {
+  sectionTable: "budget_template_sections",
+  itemTable: "budget_template_items",
+  sectionForeignKey: "template_id",
+  itemForeignKey: "template_section_id",
+  disableImages: true,
+  disableCatalog: true,
+  disableTaxRecalc: true,
+};
+
 interface SectionsEditorProps {
   budgetId: string;
   sections: SectionData[];
   onSectionsChange: (sections: SectionData[]) => void;
+  tableConfig?: TableConfig;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
@@ -384,6 +413,8 @@ function SortableItemRow({
   onDelete,
   onImagesChange,
   onPromoteToCatalog,
+  disableImages,
+  disableCatalog,
 }: {
   item: ItemData;
   sectionId: string;
@@ -397,6 +428,8 @@ function SortableItemRow({
   onDelete: (sectionId: string, itemId: string) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemData["images"]) => void;
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
+  disableImages?: boolean;
+  disableCatalog?: boolean;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
@@ -615,6 +648,7 @@ function SortableItemRow({
           </div>
 
           {/* Supplier selector */}
+          {!disableCatalog && (
           <div className="space-y-0.5">
             <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">Fornecedor</label>
             <div className="flex items-center gap-1.5 max-w-xl">
@@ -625,7 +659,6 @@ function SortableItemRow({
                   const supplierId = e.target.value || null;
                   const supplier = suppliers.find(s => s.id === supplierId);
                   const prev = (typeof item.catalog_snapshot === 'object' && item.catalog_snapshot && !Array.isArray(item.catalog_snapshot)) ? item.catalog_snapshot : {};
-                  // Auto-fill item_category from supplier's categoria
                   const autoCategory = supplier?.categoria
                     ? (supplier.categoria === "Prestadores" ? "prestador" : "produto")
                     : prev.item_category;
@@ -646,8 +679,10 @@ function SortableItemRow({
               </select>
             </div>
           </div>
+          )}
 
           {/* Item category selector */}
+          {!disableCatalog && (
           <div className="space-y-0.5">
             <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">Categoria</label>
             <div className="flex items-center gap-1.5 max-w-xl">
@@ -668,6 +703,7 @@ function SortableItemRow({
               </select>
             </div>
           </div>
+          )}
 
           <div className="flex items-center gap-3 md:hidden pt-0.5">
             <div className="space-y-0.5">
@@ -690,13 +726,15 @@ function SortableItemRow({
 
           {/* Action buttons */}
           <div className="flex items-center gap-1 pt-1 flex-wrap">
+            {!disableImages && (
             <button
               onClick={() => setDetailOpen(true)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-body font-medium text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border/40 transition-all"
             >
               <Pencil className="h-3 w-3" /> Editar detalhes
             </button>
-            {!item.catalog_item_id && (
+            )}
+            {!disableCatalog && !item.catalog_item_id && (
               <button
                 onClick={() => onPromoteToCatalog(sectionId, item, sectionTitle)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-body font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent hover:border-primary/20 transition-all"
@@ -707,6 +745,7 @@ function SortableItemRow({
           </div>
 
           {/* Item images */}
+          {!disableImages && (
           <ItemImageInline
             itemId={item.id}
             itemTitle={item.title}
@@ -714,6 +753,7 @@ function SortableItemRow({
             images={item.images || []}
             onImagesChange={(imgs) => onImagesChange(sectionId, item.id, imgs)}
           />
+          )}
         </div>
       )}
 
@@ -731,7 +771,8 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange }: SectionsEditorProps) {
+export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig }: SectionsEditorProps) {
+  const cfg = tableConfig ?? DEFAULT_TABLE_CONFIG;
   const storageKey = `budget-sections-state-${budgetId}`;
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
     try {
@@ -808,19 +849,21 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const debouncedSave = useCallback((table: string, id: string, updates: Record<string, unknown>) => {
-    const key = `${table}-${id}`;
+  const debouncedSave = useCallback((logicalTable: string, id: string, updates: Record<string, unknown>) => {
+    const key = `${logicalTable}-${id}`;
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
     timers.current[key] = setTimeout(async () => {
-      await supabase.from(table as "sections" | "items").update(updates).eq("id", id);
+      const actualTable = logicalTable === "sections" ? cfg.sectionTable : cfg.itemTable;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from(actualTable as any) as any).update(updates).eq("id", id);
       setSavingIds(prev => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
     }, 600);
-  }, []);
+  }, [cfg]);
 
   const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
     const updated = sections.map(s =>
@@ -831,6 +874,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   };
 
   const recalcTaxItem = useCallback((currentSections: SectionData[]): SectionData[] => {
+    if (cfg.disableTaxRecalc) return currentSections;
     let taxSectionId: string | null = null;
     let taxItemId: string | null = null;
 
@@ -904,9 +948,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
 
   const addSection = async () => {
     const order = sections.length;
-    const { data } = await supabase
-      .from("sections")
-      .insert({ budget_id: budgetId, title: "Nova Seção", order_index: order })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase.from(cfg.sectionTable as any) as any)
+      .insert({ [cfg.sectionForeignKey]: budgetId, title: "Nova Seção", order_index: order })
       .select()
       .single();
     if (data) {
@@ -921,10 +965,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     const source = sections.find(s => s.id === sectionId);
     if (!source) return;
     const order = sections.length;
-    const { data: newSec } = await supabase
-      .from("sections")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: newSec } = await (supabase.from(cfg.sectionTable as any) as any)
       .insert({
-        budget_id: budgetId,
+        [cfg.sectionForeignKey]: budgetId,
         title: `${source.title} (cópia)`,
         order_index: order,
         is_optional: source.is_optional ?? false,
@@ -936,10 +980,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     // Duplicate items
     const newItems: ItemData[] = [];
     for (const item of source.items) {
-      const { data: newItem } = await supabase
-        .from("items")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: newItem } = await (supabase.from(cfg.itemTable as any) as any)
         .insert({
-          section_id: newSec.id,
+          [cfg.itemForeignKey]: newSec.id,
           title: item.title,
           description: item.description,
           unit: item.unit,
@@ -948,7 +992,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
           internal_total: item.internal_total,
           bdi_percentage: item.bdi_percentage,
           order_index: item.order_index,
-          notes: item.notes,
+          ...(cfg.disableCatalog ? {} : { notes: item.notes }),
         })
         .select()
         .single();
@@ -973,8 +1017,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     const section = sections.find(s => s.id === sectionId);
     const order = section?.items.length || 0;
 
-    const insertPayload = {
-      section_id: sectionId,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const insertPayload: Record<string, any> = {
+      [cfg.itemForeignKey]: sectionId,
       title: itemData?.title || "Novo Item",
       description: itemData?.description || null,
       unit: itemData?.unit || null,
@@ -982,25 +1027,30 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       internal_unit_price: itemData?.internal_unit_price || null,
       internal_total: itemData?.internal_total || null,
       order_index: order,
-      catalog_item_id: itemData?.catalog_item_id || null,
-      catalog_snapshot: (itemData?.catalog_snapshot || null) as import("@/integrations/supabase/types").Json,
     };
 
-    const { data } = await supabase
-      .from("items")
+    if (!cfg.disableCatalog) {
+      insertPayload.catalog_item_id = itemData?.catalog_item_id || null;
+      insertPayload.catalog_snapshot = itemData?.catalog_snapshot || null;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase.from(cfg.itemTable as any) as any)
       .insert(insertPayload)
       .select()
       .single();
     if (data) {
-      const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
       let itemImages: { id?: string; url: string; is_primary: boolean | null }[] = [];
-      if (catalogImageUrl) {
-        const { data: imgRow } = await supabase.from("item_images").insert({
-          item_id: data.id,
-          url: String(catalogImageUrl),
-          is_primary: true,
-        }).select().single();
-        if (imgRow) itemImages = [imgRow];
+      if (!cfg.disableImages) {
+        const catalogImageUrl = itemData?.catalog_snapshot?.image_url;
+        if (catalogImageUrl) {
+          const { data: imgRow } = await supabase.from("item_images").insert({
+            item_id: data.id,
+            url: String(catalogImageUrl),
+            is_primary: true,
+          }).select().single();
+          if (imgRow) itemImages = [imgRow];
+        }
       }
 
       let updated = sections.map(s => {
@@ -1009,7 +1059,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
         const newItems = [...s.items, newItem];
         const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
         if (newSaleTotal > 0) {
-          supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase.from(cfg.sectionTable as any) as any).update({ section_price: newSaleTotal }).eq("id", sectionId);
         }
         return { ...s, items: newItems, section_price: newSaleTotal > 0 ? newSaleTotal : s.section_price };
       });
@@ -1021,12 +1072,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
   };
 
   const deleteItem = async (sectionId: string, itemId: string) => {
-    await supabase.from("items").delete().eq("id", itemId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from(cfg.itemTable as any) as any).delete().eq("id", itemId);
     let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.filter(i => i.id !== itemId);
       const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
-      supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase.from(cfg.sectionTable as any) as any).update({ section_price: newSaleTotal }).eq("id", sectionId);
       return { ...s, items: newItems, section_price: newSaleTotal };
     });
     updated = recalcTaxItem(updated);
@@ -1038,9 +1091,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     const section = sections.find(s => s.id === sectionId);
     if (section && section.items.length > 0) {
       const itemIds = section.items.map(i => i.id);
-      await supabase.from("items").delete().in("id", itemIds);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from(cfg.itemTable as any) as any).delete().in("id", itemIds);
     }
-    await supabase.from("sections").delete().eq("id", sectionId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from(cfg.sectionTable as any) as any).delete().eq("id", sectionId);
     onSectionsChange(sections.filter(s => s.id !== sectionId));
     toast.success("Seção removida");
   };
@@ -1121,7 +1176,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
     try {
       await Promise.all(
         withNewOrder.map(s =>
-          supabase.from("sections").update({ order_index: s.order_index }).eq("id", s.id)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase.from(cfg.sectionTable as any) as any).update({ order_index: s.order_index }).eq("id", s.id)
         )
       );
       toast.success("Ordem das seções atualizada");
@@ -1153,7 +1209,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
       if (targetSection) {
         await Promise.all(
           targetSection.items.map(item =>
-            supabase.from("items").update({ order_index: item.order_index }).eq("id", item.id)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (supabase.from(cfg.itemTable as any) as any).update({ order_index: item.order_index }).eq("id", item.id)
           )
         );
       }
@@ -1460,6 +1517,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange }: Section
                                       onImagesChange={handleImagesChange}
                                       suppliers={suppliers}
                                       onPromoteToCatalog={promoteToCatalog}
+                                      disableImages={cfg.disableImages}
+                                      disableCatalog={cfg.disableCatalog}
                                     />
                                   ))
                                 )}
