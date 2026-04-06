@@ -148,7 +148,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           <div className="lg:hidden py-5 space-y-2">
             <motion.h1
               variants={fadeUp} custom={0.3} initial="hidden" animate="visible"
-              className="font-display font-extrabold text-[22px] text-white leading-[1.1] tracking-[-0.025em] whitespace-nowrap overflow-hidden text-ellipsis"
+              className="font-display font-extrabold text-[clamp(16px,5vw,22px)] text-white leading-[1.1] tracking-[-0.025em] truncate"
             >
               {heroTitle}
             </motion.h1>
