@@ -162,7 +162,7 @@ export default function CatalogPage() {
       <Tabs defaultValue="items">
         <TabsList>
           <TabsTrigger value="items" className="gap-1.5">
-            <Package className="h-3.5 w-3.5" /> Itens ({items.length})
+            <Package className="h-3.5 w-3.5" /> Itens ({totalCount})
           </TabsTrigger>
           <TabsTrigger value="categories" className="gap-1.5">
             <FolderOpen className="h-3.5 w-3.5" /> Categorias ({categories.length})
