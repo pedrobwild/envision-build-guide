@@ -291,6 +291,7 @@ async function syncSingleProject(
 
   const projectId = responseData.project_id ?? null;
   const currentAttempts = existingSync?.attempts ?? 0;
+  console.log(`[sync-project-outbound] ✅ Success! Budget ${budgetId} → Project ${projectId}`);
 
   // Log success
   const syncData = {
