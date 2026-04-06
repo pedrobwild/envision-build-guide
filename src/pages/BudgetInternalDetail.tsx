@@ -811,6 +811,34 @@ export default function BudgetInternalDetail() {
                     Ver proposta pública
                   </Button>
                 )}
+
+                {/* Sync to Portal BWild */}
+                {budget.internal_status === "contrato_fechado" && (
+                  <Button
+                    variant={syncStatus?.status === "success" ? "outline" : "default"}
+                    size="sm"
+                    className="w-full justify-start gap-2"
+                    onClick={handleManualSync}
+                    disabled={syncing}
+                  >
+                    {syncing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : syncStatus?.status === "success" ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : syncStatus?.status === "failed" ? (
+                      <RefreshCw className="h-3.5 w-3.5 text-destructive" />
+                    ) : (
+                      <ArrowRightLeft className="h-3.5 w-3.5" />
+                    )}
+                    {syncing
+                      ? "Sincronizando..."
+                      : syncStatus?.status === "success"
+                      ? "✓ Sincronizado com Portal"
+                      : syncStatus?.status === "failed"
+                      ? "Re-sincronizar com Portal"
+                      : "Enviar para Portal BWild"}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>
