@@ -10,6 +10,7 @@ export const ROLES: Record<AppRole, { label: string; description: string }> = {
 };
 
 export const INTERNAL_STATUSES = {
+  novo: { label: 'Novo', color: 'bg-blue-100 text-blue-800', icon: '🆕' },
   requested: { label: 'Solicitado', color: 'bg-blue-100 text-blue-800', icon: '📩' },
   triage: { label: 'Triagem', color: 'bg-purple-100 text-purple-800', icon: '🔍' },
   assigned: { label: 'Atribuído', color: 'bg-indigo-100 text-indigo-800', icon: '👤' },
