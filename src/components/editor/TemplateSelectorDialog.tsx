@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutTemplate, Loader2, Check, FileText } from "lucide-react";
+import { LayoutTemplate, Loader2, Check, FileText, AlertTriangle } from "lucide-react";
 import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
 import { seedFromTemplate } from "@/lib/seed-from-template";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,8 +33,6 @@ export function TemplateSelectorDialog({
   const { data: templates = [], isLoading: templatesLoading } = useBudgetTemplates();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
-
-  // Check if budget already has sections
   const [hasExistingSections, setHasExistingSections] = useState<boolean | null>(null);
 
   const handleOpen = async (isOpen: boolean) => {
@@ -50,23 +48,20 @@ export function TemplateSelectorDialog({
   };
 
   const handleConfirm = async () => {
+    if (!selectedId) return;
     setSeeding(true);
     try {
-      if (selectedId && selectedId !== "skip") {
-        // Only seed if no existing sections, or user explicitly chose
-        if (!hasExistingSections) {
-          await seedFromTemplate(budgetId, selectedId);
-          toast.success("Template aplicado com sucesso!");
-        }
-      } else if (selectedId === "skip" && !hasExistingSections) {
-        // Seed with default sections
+      if (selectedId === "default") {
         await seedFromTemplate(budgetId, null);
+        toast.success("Seções padrão aplicadas!");
+      } else {
+        await seedFromTemplate(budgetId, selectedId);
+        toast.success("Template aplicado com sucesso!");
       }
       onConfirm();
     } catch (err) {
       console.error("Erro ao aplicar template:", err);
-      toast.error("Erro ao aplicar template. O orçamento foi iniciado sem template.");
-      onConfirm();
+      toast.error("Erro ao aplicar template.");
     } finally {
       setSeeding(false);
       onOpenChange(false);
@@ -81,61 +76,45 @@ export function TemplateSelectorDialog({
             <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
               <LayoutTemplate className="h-4 w-4 text-primary" />
             </div>
-            Escolher Template
+            Aplicar Template
           </DialogTitle>
           <DialogDescription className="text-sm font-body">
-            {hasExistingSections
-              ? "Este orçamento já possui seções. Selecione como deseja prosseguir."
-              : "Selecione um modelo base para iniciar o orçamento."}
+            Selecione um modelo base para iniciar o orçamento.
           </DialogDescription>
         </DialogHeader>
 
+        {hasExistingSections && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm font-body">
+            <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+            <span className="text-foreground">
+              Este orçamento já possui seções. Aplicar um template irá <strong>substituir todas as seções e itens existentes</strong>.
+            </span>
+          </div>
+        )}
+
         <ScrollArea className="max-h-[350px] pr-2">
           <div className="space-y-2 py-2">
-            {/* Skip option */}
-            {hasExistingSections ? (
-              <Card
-                className={`p-3 cursor-pointer transition-all border-2 ${
-                  selectedId === "skip"
-                    ? "border-primary bg-primary/5"
-                    : "border-transparent hover:border-border"
-                }`}
-                onClick={() => setSelectedId("skip")}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                    selectedId === "skip" ? "bg-primary text-primary-foreground" : "bg-muted"
-                  }`}>
-                    {selectedId === "skip" ? <Check className="h-4 w-4" /> : <FileText className="h-4 w-4 text-muted-foreground" />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold font-display">Manter seções existentes</p>
-                    <p className="text-xs text-muted-foreground font-body">Continuar com as seções já criadas</p>
-                  </div>
+            {/* Default sections option */}
+            <Card
+              className={`p-3 cursor-pointer transition-all border-2 ${
+                selectedId === "default"
+                  ? "border-primary bg-primary/5"
+                  : "border-transparent hover:border-border"
+              }`}
+              onClick={() => setSelectedId("default")}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                  selectedId === "default" ? "bg-primary text-primary-foreground" : "bg-muted"
+                }`}>
+                  {selectedId === "default" ? <Check className="h-4 w-4" /> : <FileText className="h-4 w-4 text-muted-foreground" />}
                 </div>
-              </Card>
-            ) : (
-              <Card
-                className={`p-3 cursor-pointer transition-all border-2 ${
-                  selectedId === "skip"
-                    ? "border-primary bg-primary/5"
-                    : "border-transparent hover:border-border"
-                }`}
-                onClick={() => setSelectedId("skip")}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                    selectedId === "skip" ? "bg-primary text-primary-foreground" : "bg-muted"
-                  }`}>
-                    {selectedId === "skip" ? <Check className="h-4 w-4" /> : <FileText className="h-4 w-4 text-muted-foreground" />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold font-display">Seções padrão</p>
-                    <p className="text-xs text-muted-foreground font-body">Usar a estrutura padrão de seções</p>
-                  </div>
+                <div>
+                  <p className="text-sm font-semibold font-display">Seções padrão</p>
+                  <p className="text-xs text-muted-foreground font-body">Usar a estrutura padrão de seções</p>
                 </div>
-              </Card>
-            )}
+              </div>
+            </Card>
 
             {/* Template options */}
             {templatesLoading ? (
@@ -150,8 +129,8 @@ export function TemplateSelectorDialog({
                     selectedId === t.id
                       ? "border-primary bg-primary/5"
                       : "border-transparent hover:border-border"
-                  } ${hasExistingSections ? "opacity-50 pointer-events-none" : ""}`}
-                  onClick={() => !hasExistingSections && setSelectedId(t.id)}
+                  }`}
+                  onClick={() => setSelectedId(t.id)}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
@@ -181,7 +160,7 @@ export function TemplateSelectorDialog({
           </Button>
           <Button onClick={handleConfirm} disabled={!selectedId || seeding}>
             {seeding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {hasExistingSections ? "Continuar" : "Aplicar e iniciar"}
+            {hasExistingSections ? "Substituir e aplicar" : "Aplicar e iniciar"}
           </Button>
         </DialogFooter>
       </DialogContent>
