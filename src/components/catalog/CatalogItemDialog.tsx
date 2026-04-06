@@ -701,10 +701,31 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end gap-3 pb-1">
-              <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} id="item-active" />
-              <Label htmlFor="item-active" className="cursor-pointer">Ativo</Label>
+            <div>
+              <Label>Preço unitário (R$)</Label>
+              {currentItemId ? (
+                <Input
+                  value="Gerencie abaixo"
+                  readOnly
+                  disabled
+                  className="bg-muted/50 text-xs"
+                />
+              ) : (
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.initial_unit_price}
+                  onChange={(e) => set("initial_unit_price", e.target.value)}
+                  placeholder="0,00"
+                />
+              )}
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} id="item-active" />
+            <Label htmlFor="item-active" className="cursor-pointer">Ativo</Label>
           </div>
 
           <div>
