@@ -353,6 +353,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     internal_code: item?.internal_code ?? "",
     default_supplier_id: item?.default_supplier_id ?? "",
     is_active: item?.is_active ?? true,
+    initial_unit_price: "",
   });
   const [imageUrl, setImageUrl] = useState<string | null>(item?.image_url ?? null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -551,6 +552,20 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
       if (error) { toast.error("Erro ao salvar item"); setSaving(false); return; }
       itemId = data.id;
       setSavedItemId(data.id);
+
+      // Create initial supplier price if provided during creation
+      if (form.initial_unit_price && form.default_supplier_id) {
+        const priceVal = parseFloat(form.initial_unit_price);
+        if (!isNaN(priceVal) && priceVal > 0) {
+          await supabase.from("catalog_item_supplier_prices").insert({
+            catalog_item_id: itemId,
+            supplier_id: form.default_supplier_id,
+            unit_price: priceVal,
+            is_primary: true,
+            is_active: true,
+          });
+        }
+      }
     }
 
     try {
@@ -686,10 +701,31 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end gap-3 pb-1">
-              <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} id="item-active" />
-              <Label htmlFor="item-active" className="cursor-pointer">Ativo</Label>
+            <div>
+              <Label>Preço unitário (R$)</Label>
+              {currentItemId ? (
+                <Input
+                  value="Gerencie abaixo"
+                  readOnly
+                  disabled
+                  className="bg-muted/50 text-xs"
+                />
+              ) : (
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.initial_unit_price}
+                  onChange={(e) => set("initial_unit_price", e.target.value)}
+                  placeholder="0,00"
+                />
+              )}
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} id="item-active" />
+            <Label htmlFor="item-active" className="cursor-pointer">Ativo</Label>
           </div>
 
           <div>
