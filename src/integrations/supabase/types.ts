@@ -345,6 +345,7 @@ export type Database = {
           commercial_owner_id: string | null
           condominio: string | null
           consultora_comercial: string | null
+          contract_file_url: string | null
           created_at: string | null
           created_by: string | null
           date: string | null
@@ -405,6 +406,7 @@ export type Database = {
           commercial_owner_id?: string | null
           condominio?: string | null
           consultora_comercial?: string | null
+          contract_file_url?: string | null
           created_at?: string | null
           created_by?: string | null
           date?: string | null
@@ -465,6 +467,7 @@ export type Database = {
           commercial_owner_id?: string | null
           condominio?: string | null
           consultora_comercial?: string | null
+          contract_file_url?: string | null
           created_at?: string | null
           created_by?: string | null
           date?: string | null

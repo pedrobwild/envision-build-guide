@@ -206,5 +206,6 @@ function mapBudgetToProject(budget: any, totalValue: number) {
     status: "planning",
     notes: budget.internal_notes,
     consultora_comercial: budget.consultora_comercial,
+    contract_file_url: budget.contract_file_url ?? null,
   };
 }

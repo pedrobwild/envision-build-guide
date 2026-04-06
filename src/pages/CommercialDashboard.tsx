@@ -37,6 +37,7 @@ import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFil
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
+import { ContractUploadModal } from "@/components/commercial/ContractUploadModal";
 
 // Pipeline groups for the commercial view
 // Statuses in "solicitado" and "em_elaboracao" are read-only for commercial
@@ -136,6 +137,7 @@ export default function CommercialDashboard() {
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
+  const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile]);
@@ -231,6 +233,15 @@ export default function CommercialDashboard() {
   }, [budgets, search, statusFilter, sortBy, commercialFilter]);
 
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
+    // Intercept contrato_fechado → show contract upload modal
+    if (newStatus === "contrato_fechado") {
+      const target = budgets.find(b => b.id === budgetId);
+      if (target) {
+        setContractUploadBudget(target);
+        return;
+      }
+    }
+
     const current = budgets.find(b => b.id === budgetId);
     const { error } = await supabase
       .from("budgets")
@@ -251,6 +262,28 @@ export default function CommercialDashboard() {
 
     setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, internal_status: newStatus, updated_at: new Date().toISOString() } : b));
     toast.success(`Status atualizado para "${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}"`);
+  }
+
+  function handleContractUploadSuccess() {
+    if (!contractUploadBudget || !user) return;
+    const budgetId = contractUploadBudget.id;
+    const fromStatus = contractUploadBudget.internal_status;
+
+    // Log event
+    supabase.from("budget_events").insert({
+      budget_id: budgetId,
+      user_id: user.id,
+      event_type: "status_change",
+      from_status: fromStatus,
+      to_status: "contrato_fechado",
+    });
+
+    setBudgets(prev => prev.map(b =>
+      b.id === budgetId
+        ? { ...b, internal_status: "contrato_fechado", updated_at: new Date().toISOString() }
+        : b
+    ));
+    setContractUploadBudget(null);
   }
 
   function copyPublicLink(publicId: string | null) {
@@ -585,13 +618,22 @@ export default function CommercialDashboard() {
         onSuccess={handleRevisionRequestSuccess}
       />
 
-      {/* Confirmation dialog for "Contrato fechado" */}
+      {/* Contract Upload Modal */}
+      <ContractUploadModal
+        open={!!contractUploadBudget}
+        onOpenChange={(open) => { if (!open) setContractUploadBudget(null); }}
+        budgetId={contractUploadBudget?.id ?? ""}
+        projectName={contractUploadBudget?.project_name || contractUploadBudget?.client_name || ""}
+        onSuccess={handleContractUploadSuccess}
+      />
+
+      {/* Confirmation dialog for "Enviar ao cliente" */}
       <AlertDialog open={!!confirmCloseBudgetId} onOpenChange={(open) => { if (!open) setConfirmCloseBudgetId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Registrar contrato fechado?</AlertDialogTitle>
+            <AlertDialogTitle>Registrar envio ao cliente?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação marca o orçamento como contrato fechado. Deseja continuar?
+              Esta ação marca o orçamento como enviado ao cliente. Deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

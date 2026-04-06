@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { ContractUploadModal } from "@/components/commercial/ContractUploadModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +62,7 @@ export function BudgetActionsMenu({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [closingContract, setClosingContract] = useState(false);
+  const [contractModalOpen, setContractModalOpen] = useState(false);
 
   const editPath = `/admin/budget/${budget.id}`;
   const hasPublicPage = !!budget.public_id;
@@ -76,23 +78,12 @@ export function BudgetActionsMenu({
     window.open(getPublicBudgetUrl(budget.public_id), "_blank");
   };
 
-  const markContractClosed = async () => {
-    setClosingContract(true);
-    try {
-      await supabase
-        .from("budgets")
-        .update({
-          status: "contrato_fechado",
-          internal_status: "contrato_fechado",
-          closed_at: new Date().toISOString(),
-        })
-        .eq("id", budget.id);
-      toast.success("Contrato marcado como fechado!");
-      onRefresh?.();
-    } catch {
-      toast.error("Erro ao fechar contrato");
-    }
-    setClosingContract(false);
+  const markContractClosed = () => {
+    setContractModalOpen(true);
+  };
+
+  const handleContractUploadSuccess = () => {
+    onRefresh?.();
   };
 
   const toggleOptionals = async () => {
@@ -332,6 +323,15 @@ export function BudgetActionsMenu({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Contract Upload Modal */}
+      <ContractUploadModal
+        open={contractModalOpen}
+        onOpenChange={setContractModalOpen}
+        budgetId={budget.id}
+        projectName={budget.project_name || ""}
+        onSuccess={handleContractUploadSuccess}
+      />
     </>
   );
 }
