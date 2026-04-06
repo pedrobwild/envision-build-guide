@@ -152,9 +152,10 @@ export function ItemsTab({
       </div>
 
       {/* Results count */}
-      {!isLoading && items.length > 0 && (
+      {!isLoading && totalCount > 0 && (
         <p className="text-xs text-muted-foreground">
-          {items.length} {items.length === 1 ? "item encontrado" : "itens encontrados"}
+          {totalCount} {totalCount === 1 ? "item encontrado" : "itens encontrados"}
+          {totalPages > 1 && ` · Página ${page + 1} de ${totalPages}`}
         </p>
       )}
 
