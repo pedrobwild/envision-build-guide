@@ -233,8 +233,8 @@ export default function NewBudgetRequest() {
     } as Record<string, unknown>).select("id").single();
 
     if (error || !inserted) {
-      console.error(error);
-      toast.error("Erro ao criar solicitação. Tente novamente.");
+      console.error("Budget insert error:", error?.message, error?.details, error?.hint, error);
+      toast.error(`Erro ao criar solicitação: ${error?.message || "resposta vazia"}`);
       setLoading(false);
       return;
     }
