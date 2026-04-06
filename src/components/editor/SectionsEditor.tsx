@@ -1072,12 +1072,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const deleteItem = async (sectionId: string, itemId: string) => {
-    await supabase.from("items").delete().eq("id", itemId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from(cfg.itemTable as any) as any).delete().eq("id", itemId);
     let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.filter(i => i.id !== itemId);
       const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
-      supabase.from("sections").update({ section_price: newSaleTotal }).eq("id", sectionId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase.from(cfg.sectionTable as any) as any).update({ section_price: newSaleTotal }).eq("id", sectionId);
       return { ...s, items: newItems, section_price: newSaleTotal };
     });
     updated = recalcTaxItem(updated);
