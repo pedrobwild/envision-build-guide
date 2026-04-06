@@ -207,16 +207,18 @@ export function calculateSectionSubtotal(section: SectionLike): number {
   if (items.length > 0) {
     const itemsSum = items.reduce(
       (sum: number, item: ItemLike) => {
-        const cost = Number(item.internal_total) || 0;
         const unitPrice = Number(item.internal_unit_price) || 0;
         const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
         const bdi = Number(item.bdi_percentage) || 0;
 
-        if (bdi > 0 && unitPrice > 0) {
+        // Match calcItemSaleTotal: always use unit_price * (1 + bdi%) * qty
+        if (unitPrice > 0) {
           return sum + unitPrice * (1 + bdi / 100) * itemQty;
         }
+        // Fallback to internal_total only when no unit price
+        const cost = Number(item.internal_total) || 0;
         if (cost > 0) return sum + cost;
-        return sum + unitPrice * itemQty;
+        return sum;
       },
       0
     );
