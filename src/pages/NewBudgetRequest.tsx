@@ -240,8 +240,7 @@ export default function NewBudgetRequest() {
     }
 
     try {
-      const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
-      await seedFromTemplate(inserted.id, tplId);
+      await seedFromTemplate(inserted.id, null);
     } catch (seedErr) {
       console.error("Erro ao criar seções:", seedErr);
     }
