@@ -231,9 +231,11 @@ function calcItemSaleTotal(item: ItemData): number {
 }
 
 function calcItemCostTotal(item: ItemData): number {
-  if (item.internal_total != null && Number(item.internal_total) > 0) return Number(item.internal_total);
-  const qty = Number(item.qty) || 1;
-  return (Number(item.internal_unit_price) || 0) * qty;
+  const unitPrice = Number(item.internal_unit_price) || 0;
+  if (unitPrice > 0) return unitPrice * (Number(item.qty) || 1);
+  const total = Number(item.internal_total) || 0;
+  if (total > 0) return total;
+  return 0;
 }
 
 function calcSectionCostTotal(section: SectionData): number {
