@@ -645,8 +645,8 @@ export default function BudgetEditorV2() {
           budgetId={budgetId}
           onOpenChange={setTemplateDialogOpen}
           onConfirm={() => {
-            // Reload sections after template application
-            window.location.reload();
+            // Reload sections after template application without full page reload
+            reloadSections();
           }}
         />
       )}
