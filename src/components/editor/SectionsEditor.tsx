@@ -772,7 +772,7 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig }: SectionsEditorProps) {
+export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading }: SectionsEditorProps) {
   const cfg = tableConfig ?? DEFAULT_TABLE_CONFIG;
   const storageKey = `budget-sections-state-${budgetId}`;
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
