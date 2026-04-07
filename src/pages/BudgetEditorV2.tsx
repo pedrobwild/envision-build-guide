@@ -155,6 +155,7 @@ export default function BudgetEditorV2() {
   // Reload sections from DB without full page reload
   const reloadSections = useCallback(async () => {
     if (!budgetId) return;
+    setSectionsLoading(true);
     const { data: secs } = await supabase
       .from("sections")
       .select("*, items(*, item_images(*))")
@@ -170,6 +171,7 @@ export default function BudgetEditorV2() {
         })),
     })) as unknown as EditorSection[];
     setSections(sorted);
+    setSectionsLoading(false);
   }, [budgetId]);
 
   // Reload callback for VersionTimeline — navigate to new version instead of full reload
