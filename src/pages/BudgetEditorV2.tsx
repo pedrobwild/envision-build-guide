@@ -40,6 +40,7 @@ export default function BudgetEditorV2() {
   const [budget, setBudget] = useState<BudgetRow | null>(null);
   const [sections, setSections] = useState<EditorSection[]>([]);
   const [saving, setSaving] = useState(false);
+  const [sectionsLoading, setSectionsLoading] = useState(false);
   const [internalDataOpen, setInternalDataOpen] = useState(false);
   const [versionCount, setVersionCount] = useState(0);
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
@@ -154,6 +155,7 @@ export default function BudgetEditorV2() {
   // Reload sections from DB without full page reload
   const reloadSections = useCallback(async () => {
     if (!budgetId) return;
+    setSectionsLoading(true);
     const { data: secs } = await supabase
       .from("sections")
       .select("*, items(*, item_images(*))")
@@ -169,6 +171,7 @@ export default function BudgetEditorV2() {
         })),
     })) as unknown as EditorSection[];
     setSections(sorted);
+    setSectionsLoading(false);
   }, [budgetId]);
 
   // Reload callback for VersionTimeline — navigate to new version instead of full reload
@@ -488,6 +491,7 @@ export default function BudgetEditorV2() {
                     budgetId={budgetId!}
                     sections={sections}
                     onSectionsChange={setSections}
+                    loading={sectionsLoading}
                   />
                 </div>
 
