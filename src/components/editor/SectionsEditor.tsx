@@ -1236,6 +1236,35 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
   const marginPercent = grandTotalSale > 0 ? (grandMargin / grandTotalSale) * 100 : 0;
 
+  if (loading) {
+    return (
+      <div className="mt-6 pb-20 space-y-3">
+        <div className="flex items-center justify-between mb-4 px-1">
+          <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+          <div className="h-8 w-24 rounded-lg bg-muted animate-pulse" />
+        </div>
+        {[1, 2, 3].map(i => (
+          <div key={i} className="rounded-md border border-border/60 bg-card p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+              <div className="h-4 w-48 rounded bg-muted animate-pulse" />
+              <div className="ml-auto h-4 w-20 rounded bg-muted animate-pulse" />
+            </div>
+            <div className="space-y-2 pl-7">
+              {[1, 2].map(j => (
+                <div key={j} className="h-9 w-full rounded bg-muted/50 animate-pulse" />
+              ))}
+            </div>
+          </div>
+        ))}
+        <div className="flex items-center justify-center gap-2 py-6 text-xs text-muted-foreground font-body">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Carregando seções do template…
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-6 pb-20">
       {/* ── Header ── */}
