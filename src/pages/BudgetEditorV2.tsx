@@ -491,6 +491,7 @@ export default function BudgetEditorV2() {
                     budgetId={budgetId!}
                     sections={sections}
                     onSectionsChange={setSections}
+                    loading={sectionsLoading}
                   />
                 </div>
 
