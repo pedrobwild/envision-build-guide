@@ -83,9 +83,10 @@ export function ContractUploadModal({
       toast.success("Contrato anexado e status atualizado!");
       onSuccess(contractUrl);
       handleClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Contract upload error:", err);
-      toast.error("Erro ao enviar contrato: " + (err.message || "Tente novamente"));
+      const msg = err instanceof Error ? err.message : "Tente novamente";
+      toast.error("Erro ao enviar contrato: " + msg);
     } finally {
       setUploading(false);
     }

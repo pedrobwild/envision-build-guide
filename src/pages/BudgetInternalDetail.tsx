@@ -198,8 +198,9 @@ export default function BudgetInternalDetail() {
       } else {
         toast.error(data?.error ?? "Erro desconhecido ao sincronizar");
       }
-    } catch (err: any) {
-      toast.error(`Erro ao sincronizar: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error(`Erro ao sincronizar: ${msg}`);
     } finally {
       setSyncing(false);
     }

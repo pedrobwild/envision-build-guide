@@ -58,14 +58,16 @@ function VideoPlayer({ src }: { src: string }) {
 
     try {
       // Try native video fullscreen first (works best on iOS)
-      if ('webkitEnterFullscreen' in video && typeof (video as any).webkitEnterFullscreen === 'function') {
+      const videoEl = video as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+      const container = containerRef.current as HTMLElement & { webkitRequestFullscreen?: () => void } | null;
+      if (videoEl.webkitEnterFullscreen) {
         await video.play();
-        (video as any).webkitEnterFullscreen();
-      } else if (containerRef.current?.requestFullscreen) {
-        await containerRef.current.requestFullscreen();
+        videoEl.webkitEnterFullscreen();
+      } else if (container?.requestFullscreen) {
+        await container.requestFullscreen();
         await video.play();
-      } else if ((containerRef.current as any)?.webkitRequestFullscreen) {
-        (containerRef.current as any).webkitRequestFullscreen();
+      } else if (container?.webkitRequestFullscreen) {
+        container.webkitRequestFullscreen();
         await video.play();
       } else {
         // Fallback: just play inline
