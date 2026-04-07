@@ -32,9 +32,16 @@ export function calcItemSaleTotal(item: CalcItem): number {
 }
 
 export function calcItemCostTotal(item: CalcItem): number {
-  if (item.internal_total != null && Number(item.internal_total) > 0) return Number(item.internal_total);
-  const qty = Number(item.qty) || 1;
-  return (Number(item.internal_unit_price) || 0) * qty;
+  const unitPrice = Number(item.internal_unit_price) || 0;
+  // When unit price exists, cost = unit_price * qty (mirrors sale calc base)
+  if (unitPrice > 0) {
+    const qty = Number(item.qty) || 1;
+    return unitPrice * qty;
+  }
+  // Fallback: use internal_total as lump-sum cost when no unit price
+  const total = Number(item.internal_total) || 0;
+  if (total > 0) return total;
+  return 0;
 }
 
 export function calcSectionCostTotal(section: CalcSection): number {
