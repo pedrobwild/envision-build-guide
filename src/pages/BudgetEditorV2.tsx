@@ -151,10 +151,35 @@ export default function BudgetEditorV2() {
     return () => { cancelled = true; };
   }, [budgetId, navigate]);
 
-  // Reload callback for VersionTimeline
-  const reloadBudget = useCallback(() => {
-    window.location.reload();
-  }, []);
+  // Reload sections from DB without full page reload
+  const reloadSections = useCallback(async () => {
+    if (!budgetId) return;
+    const { data: secs } = await supabase
+      .from("sections")
+      .select("*, items(*, item_images(*))")
+      .eq("budget_id", budgetId)
+      .order("order_index", { ascending: true });
+    const sorted = (secs || []).map(s => ({
+      ...s,
+      items: (s.items || [])
+        .sort((a: Record<string, unknown>, b: Record<string, unknown>) => ((a.order_index as number) || 0) - ((b.order_index as number) || 0))
+        .map((item: Record<string, unknown>) => ({
+          ...item,
+          images: (item as Record<string, unknown>).item_images || [],
+        })),
+    })) as unknown as EditorSection[];
+    setSections(sorted);
+  }, [budgetId]);
+
+  // Reload callback for VersionTimeline — navigate to new version instead of full reload
+  const reloadBudget = useCallback((newBudgetId?: string) => {
+    if (newBudgetId && newBudgetId !== budgetId) {
+      navigate(`/admin/budget/${newBudgetId}`);
+    } else {
+      // Re-fetch current budget data
+      window.location.reload();
+    }
+  }, [budgetId, navigate]);
 
   // Count media files for badge
   useEffect(() => {
@@ -620,8 +645,8 @@ export default function BudgetEditorV2() {
           budgetId={budgetId}
           onOpenChange={setTemplateDialogOpen}
           onConfirm={() => {
-            // Reload sections after template application
-            window.location.reload();
+            // Reload sections after template application without full page reload
+            reloadSections();
           }}
         />
       )}

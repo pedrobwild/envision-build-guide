@@ -32,12 +32,19 @@ interface TemplateItemRow {
  * Deletes existing sections first to avoid duplicates.
  */
 export async function seedFromTemplate(budgetId: string, templateId: string | null) {
-  // Delete existing sections (cascade deletes items via FK)
-  await supabase.from("items").delete().in(
-    "section_id",
-    (await supabase.from("sections").select("id").eq("budget_id", budgetId)).data?.map(s => s.id) ?? []
-  );
-  await supabase.from("sections").delete().eq("budget_id", budgetId);
+  // Delete existing items first, then sections
+  const { data: existingSections } = await supabase
+    .from("sections")
+    .select("id")
+    .eq("budget_id", budgetId);
+
+  const sectionIds = existingSections?.map(s => s.id) ?? [];
+  if (sectionIds.length > 0) {
+    const { error: itemsDelErr } = await supabase.from("items").delete().in("section_id", sectionIds);
+    if (itemsDelErr) console.error("Erro ao deletar itens:", itemsDelErr.message);
+  }
+  const { error: secDelErr } = await supabase.from("sections").delete().eq("budget_id", budgetId);
+  if (secDelErr) console.error("Erro ao deletar seções:", secDelErr.message);
 
   if (!templateId) {
     // Fallback to legacy default sections
