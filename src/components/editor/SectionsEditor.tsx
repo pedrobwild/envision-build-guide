@@ -306,6 +306,7 @@ interface SectionsEditorProps {
   sections: SectionData[];
   onSectionsChange: (sections: SectionData[]) => void;
   tableConfig?: TableConfig;
+  loading?: boolean;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
