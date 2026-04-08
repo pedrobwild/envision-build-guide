@@ -146,6 +146,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"new" | "import">("new");
 
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
@@ -170,6 +171,11 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
   const [commercialOwnerId, setCommercialOwnerId] = useState("");
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
   const [hubspotDealUrl, setHubspotDealUrl] = useState("");
+
+  // Import mode fields
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [manualTotalRaw, setManualTotalRaw] = useState("");
+  const [importNotes, setImportNotes] = useState("");
 
   const projectName = useMemo(() => {
     const parts = [
