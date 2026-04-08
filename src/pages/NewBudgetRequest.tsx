@@ -290,13 +290,13 @@ export default function NewBudgetRequest() {
 
     // Log event for imported budgets
     if (isImport) {
-      await supabase.from("budget_events").insert({
+      await supabase.from("budget_events").insert([{
         budget_id: inserted.id,
         user_id: user.id,
         event_type: "imported_ready",
         to_status: "delivered_to_sales",
         metadata: { manual_total: manualTotal, pdf_file: pdfFile?.name },
-      } as Record<string, unknown>);
+      }]);
     }
 
     setLoading(false);
