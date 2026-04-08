@@ -608,59 +608,65 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
                   </SelectContent>
                 </Select>
               </PropertyRow>
-              <PropertyRow icon={UserCheck} label="Orçamentista">
-                <div>
-                  <Select value={estimatorOwnerId} onValueChange={setEstimatorOwnerId}>
-                    <SelectTrigger className={selectTriggerClass}>
-                      <SelectValue placeholder="Selecione o orçamentista" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {orcamentistas.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
-                    <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
-                      <UserCheck className="h-3 w-3 text-success" />
-                      Rodízio automático: <span className="font-medium">{orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name}</span>
-                    </p>
-                  )}
-                  {nextEstimatorId && estimatorOwnerId && estimatorOwnerId !== nextEstimatorId && (
-                    <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
-                      <UserCheck className="h-3 w-3 text-primary" />
-                      Manual (rodízio: {orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name})
-                    </p>
-                  )}
-                </div>
-              </PropertyRow>
+              {mode !== "import" && (
+                <PropertyRow icon={UserCheck} label="Orçamentista">
+                  <div>
+                    <Select value={estimatorOwnerId} onValueChange={setEstimatorOwnerId}>
+                      <SelectTrigger className={selectTriggerClass}>
+                        <SelectValue placeholder="Selecione o orçamentista" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {orcamentistas.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
+                      <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
+                        <UserCheck className="h-3 w-3 text-success" />
+                        Rodízio automático: <span className="font-medium">{orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name}</span>
+                      </p>
+                    )}
+                    {nextEstimatorId && estimatorOwnerId && estimatorOwnerId !== nextEstimatorId && (
+                      <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
+                        <UserCheck className="h-3 w-3 text-primary" />
+                        Manual (rodízio: {orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name})
+                      </p>
+                    )}
+                  </div>
+                </PropertyRow>
+              )}
             </div>
 
             {/* ── Prazo e Prioridade ── */}
-            <SectionTitle icon={Calendar} title="Prazo e Prioridade" />
-            <div className="border-b border-border/30 pb-1 mb-1">
-              <PropertyRow icon={Calendar} label="Prazo desejado">
-                <input
-                  type="date"
-                  value={dueAt}
-                  onChange={(e) => setDueAt(e.target.value)}
-                  min={new Date().toISOString().split("T")[0]}
-                  className="px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
-                />
-              </PropertyRow>
-              <PropertyRow icon={AlertTriangle} label="Prioridade">
-                <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                  <SelectTrigger className={selectTriggerClass}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PRIORITIES).map(([key, { label }]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </PropertyRow>
-            </div>
+            {mode !== "import" && (
+              <>
+                <SectionTitle icon={Calendar} title="Prazo e Prioridade" />
+                <div className="border-b border-border/30 pb-1 mb-1">
+                  <PropertyRow icon={Calendar} label="Prazo desejado">
+                    <input
+                      type="date"
+                      value={dueAt}
+                      onChange={(e) => setDueAt(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+                    />
+                  </PropertyRow>
+                  <PropertyRow icon={AlertTriangle} label="Prioridade">
+                    <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+                      <SelectTrigger className={selectTriggerClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PRIORITIES).map(([key, { label }]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </PropertyRow>
+                </div>
+              </>
+            )}
 
             {/* ── Links ── */}
             <SectionTitle icon={LinkIcon} title="Links e Referências" />
