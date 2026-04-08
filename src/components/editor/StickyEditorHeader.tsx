@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Check, X, RotateCcw, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
@@ -27,6 +27,12 @@ interface StickyEditorHeaderProps {
     icon?: React.ReactNode;
     className?: string;
   } | null;
+}
+
+function getPdfUrl(budget: BudgetRow): string | null {
+  const path = (budget as Record<string, unknown>).budget_pdf_url;
+  if (!path || typeof path !== "string") return null;
+  return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/budget-pdfs/${path}`;
 }
 
 function getStatusBadgeClass(status: InternalStatus): string {
