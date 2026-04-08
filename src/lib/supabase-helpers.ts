@@ -40,6 +40,8 @@ interface RpcBudgetRow {
   lead_email?: string | null;
   lead_name?: string | null;
   header_config?: Record<string, unknown> | null;
+  budget_pdf_url?: string | null;
+  manual_total?: number | null;
 }
 
 interface SectionRow {
