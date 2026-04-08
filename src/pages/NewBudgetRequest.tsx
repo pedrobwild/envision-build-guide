@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { seedFromTemplate } from "@/lib/seed-from-template";
@@ -129,6 +129,7 @@ export default function NewBudgetRequest() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"new" | "import">("new");
 
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
@@ -152,6 +153,11 @@ export default function NewBudgetRequest() {
   const [commercialOwnerId, setCommercialOwnerId] = useState("");
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
   const [hubspotDealUrl, setHubspotDealUrl] = useState("");
+
+  // Import mode fields
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [manualTotalRaw, setManualTotalRaw] = useState("");
+  const [importNotes, setImportNotes] = useState("");
 
   const projectName = useMemo(() => {
     const parts = [
