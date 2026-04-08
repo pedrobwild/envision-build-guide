@@ -48,7 +48,7 @@ const LOCKED_STATUSES: readonly string[] = [
 const PIPELINE_SECTIONS = {
   solicitado: {
     label: "Solicitado",
-    statuses: ["requested"] as InternalStatus[],
+    statuses: ["requested", "novo"] as InternalStatus[],
     icon: FileText,
     accent: "text-primary",
   },
@@ -118,6 +118,8 @@ interface BudgetRow {
   version_group_id: string | null;
   is_current_version: boolean | null;
   is_published_version: boolean | null;
+  budget_pdf_url: string | null;
+  manual_total: number | null;
 }
 
 interface ProfileRow { id: string; full_name: string; }
@@ -148,7 +150,7 @@ export default function CommercialDashboard() {
     const isAdmin = profile?.roles.includes("admin");
     let budgetQuery = supabase
       .from("budgets")
-      .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code")
+      .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total")
       .order("created_at", { ascending: false });
     if (!isAdmin) {
       budgetQuery = budgetQuery.eq("commercial_owner_id", user!.id);
@@ -548,6 +550,23 @@ export default function CommercialDashboard() {
                           {(b.version_number ?? 1) > 1 && (
                             <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
                               V{b.version_number}
+                            </span>
+                          )}
+                          {b.budget_pdf_url && (
+                            <a
+                              href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/budget-pdfs/${b.budget_pdf_url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                              title="Ver PDF original"
+                            >
+                              <FileText className="h-3 w-3" />PDF
+                            </a>
+                          )}
+                          {b.manual_total && b.manual_total > 0 && (
+                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success tabular-nums" title="Valor informado manualmente">
+                              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(b.manual_total)}
                             </span>
                           )}
                           {b.is_published_version && (

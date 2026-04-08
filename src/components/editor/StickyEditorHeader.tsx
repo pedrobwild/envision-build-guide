@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Check, X, RotateCcw, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
@@ -27,6 +27,12 @@ interface StickyEditorHeaderProps {
     icon?: React.ReactNode;
     className?: string;
   } | null;
+}
+
+function getPdfUrl(budget: BudgetRow): string | null {
+  const path = (budget as Record<string, unknown>).budget_pdf_url;
+  if (!path || typeof path !== "string") return null;
+  return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/budget-pdfs/${path}`;
 }
 
 function getStatusBadgeClass(status: InternalStatus): string {
@@ -107,6 +113,9 @@ export function StickyEditorHeader({
   const statusInfo = INTERNAL_STATUSES[internalStatus] ?? INTERNAL_STATUSES.requested;
 
   const totals = useMemo(() => calcGrandTotals(sections), [sections]);
+  const pdfUrl = getPdfUrl(budget);
+  const manualTotal = (budget as Record<string, unknown>).manual_total as number | null;
+  const isPdfOnly = !!pdfUrl && sections.length === 0 && totals.sale === 0;
 
   const projectName = budget.project_name || "Sem nome";
   const truncatedName = projectName.length > 30 ? projectName.slice(0, 30) + "…" : projectName;
@@ -139,6 +148,18 @@ export function StickyEditorHeader({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {pdfUrl && (
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] font-body font-medium text-primary hover:text-primary/80 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/15 transition-colors shrink-0"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Ver PDF original</span>
+              <span className="sm:hidden">PDF</span>
+            </a>
+          )}
           <div className="hidden sm:block">
             <AutoSaveChip status={saveStatus} lastSavedAt={lastSavedAt} onRetry={onRetrySave} />
           </div>
@@ -173,45 +194,57 @@ export function StickyEditorHeader({
         </div>
       </div>
 
-      {/* Layer 2 — Financial totals (compact grid on mobile) */}
+      {/* Layer 2 — Financial totals or PDF-only mode */}
       <div className="border-t border-border/20">
         <div className="max-w-[1200px] mx-auto px-3 sm:px-6 py-1.5 sm:py-0 sm:h-10 flex items-center">
-          <div className="grid grid-cols-5 gap-2 sm:flex sm:gap-6 w-full text-xs font-body">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Venda</span>
-              <span className="font-bold tabular-nums text-success tracking-tight text-[11px] sm:text-xs">
-                {formatBRL(totals.sale)}
-              </span>
+          {isPdfOnly && manualTotal ? (
+            <div className="flex items-center gap-3 text-xs font-body">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Valor do orçamento (PDF externo)</span>
+                <span className="font-bold tabular-nums text-success tracking-tight text-[11px] sm:text-xs">
+                  {formatBRL(manualTotal)}
+                </span>
+              </div>
+              <span className="text-[9px] text-muted-foreground/60 bg-muted/60 px-2 py-0.5 rounded-full">Valor informado manualmente</span>
             </div>
+          ) : (
+            <div className="grid grid-cols-5 gap-2 sm:flex sm:gap-6 w-full text-xs font-body">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Venda</span>
+                <span className="font-bold tabular-nums text-success tracking-tight text-[11px] sm:text-xs">
+                  {formatBRL(totals.sale)}
+                </span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Custo</span>
-              <span className="font-semibold tabular-nums text-muted-foreground tracking-tight text-[11px] sm:text-xs">
-                {formatBRL(totals.cost)}
-              </span>
-            </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Custo</span>
+                <span className="font-semibold tabular-nums text-muted-foreground tracking-tight text-[11px] sm:text-xs">
+                  {formatBRL(totals.cost)}
+                </span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">BDI</span>
-              <span className="font-semibold tabular-nums text-primary tracking-tight text-[11px] sm:text-xs">
-                {totals.bdiPercent.toFixed(1)}%
-              </span>
-            </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">BDI</span>
+                <span className="font-semibold tabular-nums text-primary tracking-tight text-[11px] sm:text-xs">
+                  {totals.bdiPercent.toFixed(1)}%
+                </span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem R$</span>
-              <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
-                {formatBRL(totals.margin)}
-              </span>
-            </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem R$</span>
+                <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
+                  {formatBRL(totals.margin)}
+                </span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem %</span>
-              <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
-                {totals.marginPercent.toFixed(1)}%
-              </span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem %</span>
+                <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
+                  {totals.marginPercent.toFixed(1)}%
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

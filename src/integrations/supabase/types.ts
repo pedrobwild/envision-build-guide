@@ -337,6 +337,7 @@ export type Database = {
           approved_by_name: string | null
           bairro: string | null
           briefing: string | null
+          budget_pdf_url: string | null
           change_reason: string | null
           city: string | null
           client_name: string
@@ -369,6 +370,7 @@ export type Database = {
           lead_email: string | null
           lead_name: string | null
           location_type: string | null
+          manual_total: number | null
           metragem: string | null
           notes: string | null
           parent_budget_id: string | null
@@ -398,6 +400,7 @@ export type Database = {
           approved_by_name?: string | null
           bairro?: string | null
           briefing?: string | null
+          budget_pdf_url?: string | null
           change_reason?: string | null
           city?: string | null
           client_name?: string
@@ -430,6 +433,7 @@ export type Database = {
           lead_email?: string | null
           lead_name?: string | null
           location_type?: string | null
+          manual_total?: number | null
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
@@ -459,6 +463,7 @@ export type Database = {
           approved_by_name?: string | null
           bairro?: string | null
           briefing?: string | null
+          budget_pdf_url?: string | null
           change_reason?: string | null
           city?: string | null
           client_name?: string
@@ -491,6 +496,7 @@ export type Database = {
           lead_email?: string | null
           lead_name?: string | null
           location_type?: string | null
+          manual_total?: number | null
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
