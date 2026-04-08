@@ -375,16 +375,18 @@ export default function NewBudgetRequest() {
             <Button
               type="submit"
               form="budget-form"
-              disabled={loading || !clientName.trim()}
+              disabled={loading || !clientName.trim() || (mode === "import" && (!pdfFile || !manualTotalRaw.trim()))}
               size="sm"
               className="h-8 text-xs gap-1.5 shadow-sm"
             >
               {loading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : mode === "import" ? (
+                <PackageCheck className="h-3.5 w-3.5" />
               ) : (
                 <CheckCircle2 className="h-3.5 w-3.5" />
               )}
-              {loading ? "Criando…" : "Criar Solicitação"}
+              {loading ? "Criando…" : mode === "import" ? "Importar Orçamento" : "Criar Solicitação"}
             </Button>
           </div>
         </div>
@@ -403,6 +405,32 @@ export default function NewBudgetRequest() {
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto px-4 sm:px-6 py-6"
       >
+        {/* Mode toggle */}
+        <div className="flex items-center gap-2 mb-6 p-1 rounded-xl bg-muted/50 border border-border/30">
+          <button
+            type="button"
+            onClick={() => setMode("new")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-body font-medium transition-all",
+              mode === "new" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <FileText className="h-3.5 w-3.5" />
+            Nova solicitação
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("import")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-body font-medium transition-all",
+              mode === "import" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Importar orçamento pronto
+          </button>
+        </div>
+
         {/* Project name preview */}
         {projectName && (
           <div className="mb-6 px-1 py-2 rounded-lg bg-primary/3 border border-primary/8">
@@ -414,6 +442,64 @@ export default function NewBudgetRequest() {
           </div>
         )}
 
+        {/* ── Import-specific fields ── */}
+        {mode === "import" && (
+          <>
+            <SectionTitle icon={Upload} title="Orçamento (PDF)" />
+            <div className="border-b border-border/30 pb-1 mb-1">
+              <PropertyRow icon={Upload} label="Arquivo PDF" required>
+                <div className="space-y-2">
+                  {pdfFile ? (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-success/5 border border-success/20">
+                      <FileText className="h-4 w-4 text-success shrink-0" />
+                      <span className="text-sm font-body text-foreground truncate flex-1">{pdfFile.name}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">{(pdfFile.size / 1024 / 1024).toFixed(1)}MB</span>
+                      <button type="button" onClick={() => setPdfFile(null)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 cursor-pointer transition-colors bg-muted/20">
+                      <Upload className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-xs font-body text-muted-foreground">Clique ou arraste o PDF do orçamento</span>
+                      <span className="text-[10px] text-muted-foreground/50">Máximo 20MB</span>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f && f.size > 20 * 1024 * 1024) { toast.error("Arquivo excede 20MB."); return; }
+                          if (f) setPdfFile(f);
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+              </PropertyRow>
+              <PropertyRow icon={DollarSign} label="Valor total" required hint="Valor de venda do orçamento">
+                <NotionInput
+                  value={manualTotalRaw}
+                  onChange={setManualTotalRaw}
+                  placeholder="150.000,00"
+                  maxLength={20}
+                  required
+                  suffix="R$"
+                />
+              </PropertyRow>
+              <PropertyRow icon={StickyNote} label="Observações" hint="Ex: Orçamento feito no Obra Prima, versão final">
+                <Textarea
+                  value={importNotes}
+                  onChange={(e) => setImportNotes(e.target.value)}
+                  placeholder="Notas sobre este orçamento importado..."
+                  rows={2}
+                  maxLength={2000}
+                  className="border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body placeholder:text-muted-foreground/40 focus:ring-1 focus:ring-primary/20 resize-none"
+                />
+              </PropertyRow>
+            </div>
+          </>
+        )}
 
         {/* ── Cliente ── */}
         <SectionTitle icon={User} title="Cliente" />
