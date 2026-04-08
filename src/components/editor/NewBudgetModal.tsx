@@ -780,16 +780,18 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
               <Button
                 type="submit"
                 form="new-budget-form"
-                disabled={loading || !clientName.trim()}
+                disabled={loading || !clientName.trim() || (mode === "import" && (!pdfFile || !manualTotalRaw.trim()))}
                 size="sm"
                 className="gap-1.5 text-xs h-8"
               >
                 {loading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : mode === "import" ? (
+                  <PackageCheck className="h-3.5 w-3.5" />
                 ) : (
                   <CheckCircle2 className="h-3.5 w-3.5" />
                 )}
-                {loading ? "Criando…" : "Criar Solicitação"}
+                {loading ? "Criando…" : mode === "import" ? "Importar Orçamento" : "Criar Solicitação"}
               </Button>
             </div>
           </div>
