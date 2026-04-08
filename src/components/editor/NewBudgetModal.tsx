@@ -396,12 +396,12 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
         <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 relative">
           <DialogTitle className="text-base font-display font-bold flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Plus className="h-3.5 w-3.5 text-primary" />
+              {mode === "import" ? <Upload className="h-3.5 w-3.5 text-primary" /> : <Plus className="h-3.5 w-3.5 text-primary" />}
             </div>
-            Nova Solicitação
+            {mode === "import" ? "Importar Orçamento Pronto" : "Nova Solicitação"}
           </DialogTitle>
           <DialogDescription className="text-xs font-body text-muted-foreground">
-            Preencha o briefing para iniciar a produção
+            {mode === "import" ? "Anexe o PDF e registre no pipeline" : "Preencha o briefing para iniciar a produção"}
           </DialogDescription>
           {/* Progress bar */}
           <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-transparent">
