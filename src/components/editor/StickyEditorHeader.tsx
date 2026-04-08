@@ -194,45 +194,57 @@ export function StickyEditorHeader({
         </div>
       </div>
 
-      {/* Layer 2 — Financial totals (compact grid on mobile) */}
+      {/* Layer 2 — Financial totals or PDF-only mode */}
       <div className="border-t border-border/20">
         <div className="max-w-[1200px] mx-auto px-3 sm:px-6 py-1.5 sm:py-0 sm:h-10 flex items-center">
-          <div className="grid grid-cols-5 gap-2 sm:flex sm:gap-6 w-full text-xs font-body">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Venda</span>
-              <span className="font-bold tabular-nums text-success tracking-tight text-[11px] sm:text-xs">
-                {formatBRL(totals.sale)}
-              </span>
+          {isPdfOnly && manualTotal ? (
+            <div className="flex items-center gap-3 text-xs font-body">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Valor do orçamento (PDF externo)</span>
+                <span className="font-bold tabular-nums text-success tracking-tight text-[11px] sm:text-xs">
+                  {formatBRL(manualTotal)}
+                </span>
+              </div>
+              <span className="text-[9px] text-muted-foreground/60 bg-muted/60 px-2 py-0.5 rounded-full">Valor informado manualmente</span>
             </div>
+          ) : (
+            <div className="grid grid-cols-5 gap-2 sm:flex sm:gap-6 w-full text-xs font-body">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Venda</span>
+                <span className="font-bold tabular-nums text-success tracking-tight text-[11px] sm:text-xs">
+                  {formatBRL(totals.sale)}
+                </span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Custo</span>
-              <span className="font-semibold tabular-nums text-muted-foreground tracking-tight text-[11px] sm:text-xs">
-                {formatBRL(totals.cost)}
-              </span>
-            </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Custo</span>
+                <span className="font-semibold tabular-nums text-muted-foreground tracking-tight text-[11px] sm:text-xs">
+                  {formatBRL(totals.cost)}
+                </span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">BDI</span>
-              <span className="font-semibold tabular-nums text-primary tracking-tight text-[11px] sm:text-xs">
-                {totals.bdiPercent.toFixed(1)}%
-              </span>
-            </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">BDI</span>
+                <span className="font-semibold tabular-nums text-primary tracking-tight text-[11px] sm:text-xs">
+                  {totals.bdiPercent.toFixed(1)}%
+                </span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem R$</span>
-              <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
-                {formatBRL(totals.margin)}
-              </span>
-            </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem R$</span>
+                <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
+                  {formatBRL(totals.margin)}
+                </span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem %</span>
-              <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
-                {totals.marginPercent.toFixed(1)}%
-              </span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-muted-foreground uppercase tracking-widest text-[9px] sm:text-[10px] font-medium">Margem %</span>
+                <span className={cn("font-bold tabular-nums tracking-tight text-[11px] sm:text-xs", marginColor)}>
+                  {totals.marginPercent.toFixed(1)}%
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
