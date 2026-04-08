@@ -113,6 +113,9 @@ export function StickyEditorHeader({
   const statusInfo = INTERNAL_STATUSES[internalStatus] ?? INTERNAL_STATUSES.requested;
 
   const totals = useMemo(() => calcGrandTotals(sections), [sections]);
+  const pdfUrl = getPdfUrl(budget);
+  const manualTotal = (budget as Record<string, unknown>).manual_total as number | null;
+  const isPdfOnly = !!pdfUrl && sections.length === 0 && totals.sale === 0;
 
   const projectName = budget.project_name || "Sem nome";
   const truncatedName = projectName.length > 30 ? projectName.slice(0, 30) + "…" : projectName;
@@ -145,6 +148,18 @@ export function StickyEditorHeader({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {pdfUrl && (
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] font-body font-medium text-primary hover:text-primary/80 px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/15 transition-colors shrink-0"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Ver PDF original</span>
+              <span className="sm:hidden">PDF</span>
+            </a>
+          )}
           <div className="hidden sm:block">
             <AutoSaveChip status={saveStatus} lastSavedAt={lastSavedAt} onRetry={onRetrySave} />
           </div>
