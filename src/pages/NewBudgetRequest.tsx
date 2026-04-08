@@ -322,11 +322,8 @@ export default function NewBudgetRequest() {
       setTimeout(() => navigate("/admin/solicitacoes"), 1000);
     }
   };
-      },
-      duration: 8000,
-    });
-    setTimeout(() => navigate("/admin/solicitacoes"), 1000);
-  };
+
+
 
   const completionItems = [
     { done: !!clientName.trim(), label: "Nome do cliente" },
