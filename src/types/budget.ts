@@ -76,6 +76,8 @@ export interface BudgetData {
   show_optional_items?: boolean;
   generated_at?: string | null;
   header_config?: Record<string, unknown> | null;
+  budget_pdf_url?: string | null;
+  manual_total?: number | null;
   disclaimer?: string | null;
   notes?: string | null;
   floor_plan_url?: string | null;

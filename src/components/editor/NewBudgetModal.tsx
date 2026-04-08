@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +42,9 @@ import {
   ExternalLink,
   StickyNote,
   Sparkles,
+  Upload,
+  DollarSign,
+  PackageCheck,
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -143,6 +146,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"new" | "import">("new");
 
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
@@ -167,6 +171,11 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
   const [commercialOwnerId, setCommercialOwnerId] = useState("");
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
   const [hubspotDealUrl, setHubspotDealUrl] = useState("");
+
+  // Import mode fields
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [manualTotalRaw, setManualTotalRaw] = useState("");
+  const [importNotes, setImportNotes] = useState("");
 
   const projectName = useMemo(() => {
     const parts = [
@@ -222,6 +231,10 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
     setCommercialOwnerId("");
     setHubspotDealUrl("");
     setSelectedTemplateId("");
+    setPdfFile(null);
+    setManualTotalRaw("");
+    setImportNotes("");
+    setMode("new");
     if (nextEstimatorId) setEstimatorOwnerId(nextEstimatorId);
   };
 
@@ -238,6 +251,12 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
   const updateLink = (i: number, val: string) =>
     setReferenceLinks((prev) => prev.map((l, idx) => (idx === i ? val : l)));
 
+  const parseManualTotal = useCallback((): number | null => {
+    const raw = manualTotalRaw.replace(/[R$\s.]/g, "").replace(",", ".");
+    const num = Number(raw);
+    return Number.isFinite(num) && num > 0 ? num : null;
+  }, [manualTotalRaw]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -245,10 +264,40 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
       toast.error("Preencha ao menos o nome do cliente.");
       return;
     }
+
+    const isImport = mode === "import";
+    if (isImport) {
+      if (!pdfFile) { toast.error("Anexe o PDF do orçamento."); return; }
+      const total = parseManualTotal();
+      if (!total) { toast.error("Informe o valor total do orçamento."); return; }
+    }
+
     setLoading(true);
 
     const links = referenceLinks.filter((l) => l.trim().length > 0);
     const metragemFormatted = metargemRaw.trim() ? `${metargemRaw.trim()}m²` : null;
+
+    // Upload PDF if import mode
+    let budgetPdfPath: string | null = null;
+    if (isImport && pdfFile) {
+      const timestamp = Date.now();
+      const safeName = clientName.trim().replace(/[^a-zA-Z0-9]/g, "_").slice(0, 30);
+      const fileName = `${safeName}_${timestamp}.pdf`;
+      const filePath = `imports/${fileName}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("budget-pdfs")
+        .upload(filePath, pdfFile, { contentType: "application/pdf" });
+      if (uploadErr) {
+        console.error("PDF upload error:", uploadErr);
+        toast.error("Erro ao fazer upload do PDF.");
+        setLoading(false);
+        return;
+      }
+      budgetPdfPath = filePath;
+    }
+
+    const manualTotal = isImport ? parseManualTotal() : null;
+    const publicId = isImport ? crypto.randomUUID().replace(/-/g, "").slice(0, 12) : null;
 
     const { data, error } = await supabase
       .from("budgets")
@@ -263,16 +312,19 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
         location_type: locationType || null,
         demand_context: demandContext.trim() || null,
         briefing: briefing.trim() || null,
-        due_at: dueAt || null,
-        priority: priority,
-        internal_notes: internalNotes.trim() || null,
+        due_at: isImport ? null : (dueAt || null),
+        priority: isImport ? "normal" : priority,
+        internal_notes: (isImport && importNotes.trim()) ? importNotes.trim() : (internalNotes.trim() || null),
         reference_links: links.length > 0 ? links : [],
         hubspot_deal_url: hubspotDealUrl.trim() || null,
-        internal_status: "requested",
+        internal_status: isImport ? "delivered_to_sales" : "requested",
         status: "draft",
         commercial_owner_id: commercialOwnerId || user.id,
-        estimator_owner_id: estimatorOwnerId || null,
+        estimator_owner_id: isImport ? null : (estimatorOwnerId || null),
         created_by: user.id,
+        budget_pdf_url: budgetPdfPath,
+        manual_total: manualTotal,
+        public_id: publicId,
       } as Record<string, unknown>)
       .select("id")
       .single();
@@ -284,26 +336,42 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
       return;
     }
 
-    try {
-      const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
-      await seedFromTemplate(data.id, tplId);
-    } catch (seedErr) {
-      console.error("Erro ao criar seções padrão:", seedErr);
+    if (isImport) {
+      await supabase.from("budget_events").insert([{
+        budget_id: data.id,
+        user_id: user.id,
+        event_type: "imported_ready",
+        to_status: "delivered_to_sales",
+        metadata: { manual_total: manualTotal, pdf_file: pdfFile?.name },
+      }]);
+    } else {
+      try {
+        const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
+        await seedFromTemplate(data.id, tplId);
+      } catch (seedErr) {
+        console.error("Erro ao criar seções padrão:", seedErr);
+      }
     }
 
     setLoading(false);
 
-    const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
-    const newId = data.id;
+    if (isImport) {
+      toast.success("Orçamento importado!", {
+        description: "Aparece na coluna \"Entregue\" do pipeline comercial.",
+        duration: 6000,
+      });
+    } else {
+      const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
+      toast.success("Solicitação criada!", {
+        description: estimatorName ? `Atribuída para ${estimatorName}` : "O orçamento entrará na fila de triagem.",
+        action: {
+          label: "Abrir orçamento",
+          onClick: () => navigate(`/admin/budget/${data.id}`),
+        },
+        duration: 8000,
+      });
+    }
 
-    toast.success("Solicitação criada!", {
-      description: estimatorName ? `Atribuída para ${estimatorName}` : "O orçamento entrará na fila de triagem.",
-      action: {
-        label: "Abrir orçamento",
-        onClick: () => navigate(`/admin/budget/${newId}`),
-      },
-      duration: 8000,
-    });
     resetForm();
     onOpenChange(false);
     onSuccess?.(data.id);
@@ -328,12 +396,12 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
         <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 relative">
           <DialogTitle className="text-base font-display font-bold flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Plus className="h-3.5 w-3.5 text-primary" />
+              {mode === "import" ? <Upload className="h-3.5 w-3.5 text-primary" /> : <Plus className="h-3.5 w-3.5 text-primary" />}
             </div>
-            Nova Solicitação
+            {mode === "import" ? "Importar Orçamento Pronto" : "Nova Solicitação"}
           </DialogTitle>
           <DialogDescription className="text-xs font-body text-muted-foreground">
-            Preencha o briefing para iniciar a produção
+            {mode === "import" ? "Anexe o PDF e registre no pipeline" : "Preencha o briefing para iniciar a produção"}
           </DialogDescription>
           {/* Progress bar */}
           <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-transparent">
@@ -346,6 +414,32 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
 
         <ScrollArea className="max-h-[calc(90vh-160px)]">
           <form id="new-budget-form" onSubmit={handleSubmit} className="px-6 py-4">
+            {/* Mode toggle */}
+            <div className="flex items-center gap-2 mb-4 p-1 rounded-xl bg-muted/50 border border-border/30">
+              <button
+                type="button"
+                onClick={() => setMode("new")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-body font-medium transition-all",
+                  mode === "new" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Nova solicitação
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("import")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-body font-medium transition-all",
+                  mode === "import" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Importar pronto
+              </button>
+            </div>
+
             {/* Project name preview */}
             {projectName && (
               <div className="mb-4 px-3 py-2 rounded-lg bg-primary/3 border border-primary/8">
@@ -357,8 +451,60 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
               </div>
             )}
 
+            {/* ── Import-specific fields ── */}
+            {mode === "import" && (
+              <>
+                <SectionTitle icon={Upload} title="Orçamento (PDF)" />
+                <div className="border-b border-border/30 pb-1 mb-1">
+                  <PropertyRow icon={Upload} label="Arquivo PDF" required>
+                    <div className="space-y-2">
+                      {pdfFile ? (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-success/5 border border-success/20">
+                          <FileText className="h-4 w-4 text-success shrink-0" />
+                          <span className="text-sm font-body text-foreground truncate flex-1">{pdfFile.name}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">{(pdfFile.size / 1024 / 1024).toFixed(1)}MB</span>
+                          <button type="button" onClick={() => setPdfFile(null)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center gap-2 px-4 py-5 rounded-lg border-2 border-dashed border-border/60 hover:border-primary/40 cursor-pointer transition-colors bg-muted/20">
+                          <Upload className="h-5 w-5 text-muted-foreground" />
+                          <span className="text-xs font-body text-muted-foreground">Clique ou arraste o PDF</span>
+                          <span className="text-[10px] text-muted-foreground/50">Máximo 20MB</span>
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f && f.size > 20 * 1024 * 1024) { toast.error("Arquivo excede 20MB."); return; }
+                              if (f) setPdfFile(f);
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </PropertyRow>
+                  <PropertyRow icon={DollarSign} label="Valor total" required hint="Valor de venda do orçamento">
+                    <NotionInput value={manualTotalRaw} onChange={setManualTotalRaw} placeholder="150.000,00" maxLength={20} required suffix="R$" />
+                  </PropertyRow>
+                  <PropertyRow icon={StickyNote} label="Observações" hint="Ex: Orçamento feito no Obra Prima">
+                    <Textarea
+                      value={importNotes}
+                      onChange={(e) => setImportNotes(e.target.value)}
+                      placeholder="Notas sobre este orçamento importado..."
+                      rows={2}
+                      maxLength={2000}
+                      className="border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body placeholder:text-muted-foreground/40 focus:ring-1 focus:ring-primary/20 resize-none"
+                    />
+                  </PropertyRow>
+                </div>
+              </>
+            )}
+
             {/* ── Template ── */}
-            {templates.length > 0 && (
+            {mode !== "import" && templates.length > 0 && (
               <>
                 <SectionTitle icon={LayoutTemplate} title="Template" />
                 <PropertyRow icon={LayoutTemplate} label="Modelo base">
@@ -462,59 +608,65 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
                   </SelectContent>
                 </Select>
               </PropertyRow>
-              <PropertyRow icon={UserCheck} label="Orçamentista">
-                <div>
-                  <Select value={estimatorOwnerId} onValueChange={setEstimatorOwnerId}>
-                    <SelectTrigger className={selectTriggerClass}>
-                      <SelectValue placeholder="Selecione o orçamentista" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {orcamentistas.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
-                    <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
-                      <UserCheck className="h-3 w-3 text-success" />
-                      Rodízio automático: <span className="font-medium">{orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name}</span>
-                    </p>
-                  )}
-                  {nextEstimatorId && estimatorOwnerId && estimatorOwnerId !== nextEstimatorId && (
-                    <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
-                      <UserCheck className="h-3 w-3 text-primary" />
-                      Manual (rodízio: {orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name})
-                    </p>
-                  )}
-                </div>
-              </PropertyRow>
+              {mode !== "import" && (
+                <PropertyRow icon={UserCheck} label="Orçamentista">
+                  <div>
+                    <Select value={estimatorOwnerId} onValueChange={setEstimatorOwnerId}>
+                      <SelectTrigger className={selectTriggerClass}>
+                        <SelectValue placeholder="Selecione o orçamentista" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {orcamentistas.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {nextEstimatorId && estimatorOwnerId === nextEstimatorId && (
+                      <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
+                        <UserCheck className="h-3 w-3 text-success" />
+                        Rodízio automático: <span className="font-medium">{orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name}</span>
+                      </p>
+                    )}
+                    {nextEstimatorId && estimatorOwnerId && estimatorOwnerId !== nextEstimatorId && (
+                      <p className="text-[11px] text-muted-foreground font-body flex items-center gap-1 mt-1 ml-2.5">
+                        <UserCheck className="h-3 w-3 text-primary" />
+                        Manual (rodízio: {orcamentistas.find((m) => m.id === nextEstimatorId)?.full_name})
+                      </p>
+                    )}
+                  </div>
+                </PropertyRow>
+              )}
             </div>
 
             {/* ── Prazo e Prioridade ── */}
-            <SectionTitle icon={Calendar} title="Prazo e Prioridade" />
-            <div className="border-b border-border/30 pb-1 mb-1">
-              <PropertyRow icon={Calendar} label="Prazo desejado">
-                <input
-                  type="date"
-                  value={dueAt}
-                  onChange={(e) => setDueAt(e.target.value)}
-                  min={new Date().toISOString().split("T")[0]}
-                  className="px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
-                />
-              </PropertyRow>
-              <PropertyRow icon={AlertTriangle} label="Prioridade">
-                <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                  <SelectTrigger className={selectTriggerClass}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PRIORITIES).map(([key, { label }]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </PropertyRow>
-            </div>
+            {mode !== "import" && (
+              <>
+                <SectionTitle icon={Calendar} title="Prazo e Prioridade" />
+                <div className="border-b border-border/30 pb-1 mb-1">
+                  <PropertyRow icon={Calendar} label="Prazo desejado">
+                    <input
+                      type="date"
+                      value={dueAt}
+                      onChange={(e) => setDueAt(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+                    />
+                  </PropertyRow>
+                  <PropertyRow icon={AlertTriangle} label="Prioridade">
+                    <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+                      <SelectTrigger className={selectTriggerClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PRIORITIES).map(([key, { label }]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </PropertyRow>
+                </div>
+              </>
+            )}
 
             {/* ── Links ── */}
             <SectionTitle icon={LinkIcon} title="Links e Referências" />
@@ -628,16 +780,18 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
               <Button
                 type="submit"
                 form="new-budget-form"
-                disabled={loading || !clientName.trim()}
+                disabled={loading || !clientName.trim() || (mode === "import" && (!pdfFile || !manualTotalRaw.trim()))}
                 size="sm"
                 className="gap-1.5 text-xs h-8"
               >
                 {loading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : mode === "import" ? (
+                  <PackageCheck className="h-3.5 w-3.5" />
                 ) : (
                   <CheckCircle2 className="h-3.5 w-3.5" />
                 )}
-                {loading ? "Criando…" : "Criar Solicitação"}
+                {loading ? "Criando…" : mode === "import" ? "Importar Orçamento" : "Criar Solicitação"}
               </Button>
             </div>
           </div>

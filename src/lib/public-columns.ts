@@ -34,6 +34,8 @@ export const PUBLIC_BUDGET_COLUMNS = [
   "lead_email",
   "lead_name",
   "header_config",
+  "budget_pdf_url",
+  "manual_total",
 ] as const;
 
 export const PUBLIC_BUDGET_SELECT = PUBLIC_BUDGET_COLUMNS.join(", ");
