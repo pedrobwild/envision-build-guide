@@ -231,6 +231,10 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
     setCommercialOwnerId("");
     setHubspotDealUrl("");
     setSelectedTemplateId("");
+    setPdfFile(null);
+    setManualTotalRaw("");
+    setImportNotes("");
+    setMode("new");
     if (nextEstimatorId) setEstimatorOwnerId(nextEstimatorId);
   };
 
