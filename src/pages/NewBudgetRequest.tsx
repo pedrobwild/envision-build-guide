@@ -27,7 +27,6 @@ import {
   X,
   CheckCircle2,
   UserCheck,
-  
   MapPin,
   Ruler,
   Phone,
@@ -36,6 +35,9 @@ import {
   ExternalLink,
   StickyNote,
   Sparkles,
+  Upload,
+  DollarSign,
+  PackageCheck,
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
