@@ -350,10 +350,10 @@ export default function NewBudgetRequest() {
             </button>
             <div className="min-w-0">
               <h1 className="text-sm font-display font-bold text-foreground tracking-tight truncate">
-                Nova Solicitação
+                {mode === "import" ? "Importar Orçamento Pronto" : "Nova Solicitação"}
               </h1>
               <p className="text-[11px] text-muted-foreground/70 font-body">
-                Preencha o briefing para iniciar a produção
+                {mode === "import" ? "Anexe o PDF e registre no pipeline" : "Preencha o briefing para iniciar a produção"}
               </p>
             </div>
           </div>
