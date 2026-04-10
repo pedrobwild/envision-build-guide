@@ -93,7 +93,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
       <div className="relative overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${headerBg})` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/65" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/70 lg:from-black/50 lg:via-black/30 lg:to-black/65" />
         <div
           className="absolute inset-0 hidden lg:block opacity-[0.012] pointer-events-none"
           style={{
