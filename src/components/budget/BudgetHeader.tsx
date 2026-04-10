@@ -143,20 +143,29 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
           {/* ── MOBILE ── */}
-          <div className="lg:hidden pt-4 pb-6 space-y-3">
+          <div className="lg:hidden pt-4 pb-6 space-y-2.5">
             <motion.div
               variants={fadeUp} custom={0.3} initial="hidden" animate="visible"
-              className="space-y-0.5"
+              className="space-y-1"
             >
-              <h1 className="font-display font-extrabold text-[clamp(18px,5.5vw,24px)] text-white leading-[1.1] tracking-[-0.03em] truncate">
+              <h1 className="font-display font-extrabold text-[clamp(18px,5.5vw,24px)] text-white leading-[1.15] tracking-[-0.03em] break-words">
                 {heroTitle}
               </h1>
               {clientName && projectTitle && !projectTitle.toLowerCase().includes(clientName.toLowerCase()) && (
-                <p className="text-[13px] font-body text-white/55 font-medium tracking-[-0.01em] truncate">
+                <p className="text-[13px] font-body text-white/55 font-medium tracking-[-0.01em] break-words">
                   {projectTitle}
                 </p>
               )}
             </motion.div>
+
+            {!cfg.hide_tagline && (
+              <motion.p
+                variants={fadeUp} custom={0.4} initial="hidden" animate="visible"
+                className="text-[12px] text-white/50 font-body tracking-[-0.01em] font-medium leading-snug"
+              >
+                {tagline}
+              </motion.p>
+            )}
 
             {metaChips.length > 0 && (
               <motion.div
