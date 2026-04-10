@@ -143,36 +143,39 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
           {/* ── MOBILE ── */}
-          <div className="lg:hidden py-5 space-y-2">
-            <motion.h1
-              variants={fadeUp} custom={0.3} initial="hidden" animate="visible"
-              className="font-display font-extrabold text-[clamp(16px,5vw,22px)] text-white leading-[1.1] tracking-[-0.025em] truncate"
-            >
-              {heroTitle}
-            </motion.h1>
-
+          <div className="lg:hidden pt-4 pb-6 space-y-3">
             <motion.div
-              variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
-              className="flex items-center gap-0 text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
+              variants={fadeUp} custom={0.3} initial="hidden" animate="visible"
+              className="space-y-0.5"
             >
-              {metaChips.map((chip, i) => (
-                <span key={chip.label} className="inline-flex items-center shrink-0">
-                  {i > 0 && <Dot />}
-                  <span className={`${LABEL_MICRO} text-white/50 mr-1`}>{chip.label}</span>
-                  <span className={`text-white/90 font-medium ${chip.mono ? MONO : "font-body tracking-[-0.01em]"}`}>
-                    {chip.value}
-                  </span>
-                </span>
-              ))}
+              <h1 className="font-display font-extrabold text-[clamp(18px,5.5vw,24px)] text-white leading-[1.1] tracking-[-0.03em] truncate">
+                {heroTitle}
+              </h1>
+              {clientName && projectTitle !== heroTitle && (
+                <p className="text-[13px] font-body text-white/60 font-medium tracking-[-0.01em] truncate">
+                  {projectTitle}
+                </p>
+              )}
             </motion.div>
 
-            {/* Company info — mobile, single line */}
-            <motion.p
-              variants={fadeUp} custom={0.7} initial="hidden" animate="visible"
-              className={`${LABEL_MICRO} text-white/40 whitespace-nowrap overflow-hidden text-ellipsis pt-0.5`}
-            >
-              Bwild Reformas LTDA <Dot /> CNPJ <span className={MONO}>47.350.338/0001-37</span> <Dot /> CAU <span className={MONO}>A162437-7</span>
-            </motion.p>
+            {metaChips.length > 0 && (
+              <motion.div
+                variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
+                className="flex flex-wrap gap-1.5"
+              >
+                {metaChips.map((chip) => (
+                  <span
+                    key={chip.label}
+                    className="inline-flex items-center gap-1 rounded-md bg-white/10 backdrop-blur-sm px-2 py-0.5 text-[11px]"
+                  >
+                    <span className="text-white/50 font-body font-medium uppercase tracking-[0.04em]">{chip.label}</span>
+                    <span className={`text-white/90 font-semibold ${chip.mono ? MONO : "font-body tracking-[-0.01em]"}`}>
+                      {chip.value}
+                    </span>
+                  </span>
+                ))}
+              </motion.div>
+            )}
           </div>
 
           {/* ── DESKTOP ── */}
