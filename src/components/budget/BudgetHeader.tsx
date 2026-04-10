@@ -151,8 +151,8 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               <h1 className="font-display font-extrabold text-[clamp(18px,5.5vw,24px)] text-white leading-[1.1] tracking-[-0.03em] truncate">
                 {heroTitle}
               </h1>
-              {clientName && projectTitle !== heroTitle && (
-                <p className="text-[13px] font-body text-white/60 font-medium tracking-[-0.01em] truncate">
+              {clientName && projectTitle && !projectTitle.toLowerCase().includes(clientName.toLowerCase()) && (
+                <p className="text-[13px] font-body text-white/55 font-medium tracking-[-0.01em] truncate">
                   {projectTitle}
                 </p>
               )}
