@@ -928,6 +928,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   }, [debouncedSave]);
 
   const updateItem = (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => {
+    if (readOnly) return;
     let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.map(i =>
