@@ -59,13 +59,15 @@ function useCatalogItems(search: string, typeFilter: string, categoryFilter: str
     queryKey: ["catalog_items", search, typeFilter, categoryFilter, sectionFilter, statusFilter, page],
     queryFn: async () => {
       let allowedItemIds: string[] | null = null;
+
       if (sectionFilter && sectionFilter !== "all") {
         const { data: links } = await supabase
           .from("catalog_item_sections")
           .select("catalog_item_id")
-          .eq("section_title", sectionFilter);
+          .eq("section_title", sectionFilter)
+          .limit(500);
         allowedItemIds = (links ?? []).map((l) => l.catalog_item_id);
-        if (allowedItemIds.length === 0) return { items: [], total: 0 };
+        if (allowedItemIds.length === 0) return { items: [] as CatalogItem[], total: 0 };
       }
 
       let query = supabase
