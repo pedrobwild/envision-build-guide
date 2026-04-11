@@ -70,41 +70,43 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <UserProfileProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ChunkErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                <Route path="/" element={<RoleRedirect />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
-                <Route path="/admin/budget/:budgetId" element={<AdminPage><BudgetEditorV2 /></AdminPage>} />
-                <Route path="/admin/budget/:budgetId/legacy" element={<AdminPage><BudgetEditor /></AdminPage>} />
-                <Route path="/admin/financeiro" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><FinancialHistory /></RoleGuard></AdminPage>} />
-                <Route path="/admin/solicitacoes" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><BudgetRequestsList /></RoleGuard></AdminPage>} />
-                <Route path="/admin/solicitacoes/nova" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><NewBudgetRequest /></RoleGuard></AdminPage>} />
-                <Route path="/admin/producao" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><EstimatorDashboard /></RoleGuard></AdminPage>} />
-                <Route path="/admin/comercial" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><CommercialDashboard /></RoleGuard></AdminPage>} />
-                <Route path="/admin/operacoes" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AdminOperationsDashboard /></RoleGuard></AdminPage>} />
-                <Route path="/admin/usuarios" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><UserManagement /></RoleGuard></AdminPage>} />
-                <Route path="/admin/demanda/:budgetId" element={<AdminPage><BudgetInternalDetail /></AdminPage>} />
-                <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
-                <Route path="/admin/catalogo" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><CatalogPage /></RoleGuard></AdminPage>} />
-                <Route path="/admin/sistema" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><SystemToolsPage /></RoleGuard></AdminPage>} />
-                <Route path="/admin/biblioteca-fotos" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><PhotoLibraryUpload /></RoleGuard></AdminPage>} />
-                <Route path="/admin/templates" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><BudgetTemplatesPage /></RoleGuard></AdminPage>} />
-                <Route path="/admin/templates/:templateId/editar" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><TemplateEditorPage /></RoleGuard></AdminPage>} />
-                <Route path="/o/:publicId" element={<PublicBudget />} />
-                <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
-                <Route path="/qa" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><QAEvaluator /></RoleGuard></AdminPage>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </ChunkErrorBoundary>
-        </BrowserRouter>
-      </TooltipProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ChunkErrorBoundary>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  <Route path="/" element={<RoleRedirect />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
+                  <Route path="/admin/budget/:budgetId" element={<AdminPage><BudgetEditorV2 /></AdminPage>} />
+                  <Route path="/admin/budget/:budgetId/legacy" element={<AdminPage><BudgetEditor /></AdminPage>} />
+                  <Route path="/admin/financeiro" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><FinancialHistory /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/solicitacoes" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><BudgetRequestsList /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/solicitacoes/nova" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><NewBudgetRequest /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/producao" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><EstimatorDashboard /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/comercial" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><CommercialDashboard /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/operacoes" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AdminOperationsDashboard /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/usuarios" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><UserManagement /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/demanda/:budgetId" element={<AdminPage><BudgetInternalDetail /></AdminPage>} />
+                  <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
+                  <Route path="/admin/catalogo" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><CatalogPage /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/sistema" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><SystemToolsPage /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/biblioteca-fotos" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><PhotoLibraryUpload /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/templates" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><BudgetTemplatesPage /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/templates/:templateId/editar" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><TemplateEditorPage /></RoleGuard></AdminPage>} />
+                  <Route path="/o/:publicId" element={<PublicBudget />} />
+                  <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
+                  <Route path="/qa" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><QAEvaluator /></RoleGuard></AdminPage>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </ChunkErrorBoundary>
+          </BrowserRouter>
+        </TooltipProvider>
+      </UserProfileProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
