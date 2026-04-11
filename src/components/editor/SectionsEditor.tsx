@@ -1175,6 +1175,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
   /* ── Drag handlers with rollback ── */
   const handleSectionDragEnd = async (event: DragEndEvent) => {
+    if (readOnly) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
