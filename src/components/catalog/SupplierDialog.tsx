@@ -116,8 +116,14 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  const subcategoriaMissing = !!form.tipo && !form.subcategoria;
+
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
+    if (form.tipo && !form.subcategoria) {
+      toast.error("Selecione uma subcategoria para o fornecedor");
+      return;
+    }
     setSaving(true);
 
     const payload: Record<string, string | boolean | number | null> = {
@@ -125,7 +131,7 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
       contact_info: form.telefone.trim() || form.email.trim() || null,
       razao_social: form.razao_social.trim() || null,
       cnpj_cpf: form.cnpj_cpf.trim() || null,
-      categoria: form.subcategoria || form.tipo || null,
+      categoria: form.subcategoria || null,
       is_active: form.is_active,
       telefone: form.telefone.trim() || null,
       email: form.email.trim() || null,
@@ -207,19 +213,24 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSaved }: Props)
               </Select>
             </div>
             <div>
-              <Label>Subcategoria</Label>
+              <Label>Subcategoria {form.tipo ? "*" : ""}</Label>
               <Select
                 value={form.subcategoria}
                 onValueChange={(v) => setForm((p) => ({ ...p, subcategoria: v }))}
                 disabled={!form.tipo}
               >
-                <SelectTrigger><SelectValue placeholder={form.tipo ? "Selecione" : "Escolha o tipo primeiro"} /></SelectTrigger>
+                <SelectTrigger className={subcategoriaMissing ? "border-destructive" : ""}>
+                  <SelectValue placeholder={form.tipo ? "Selecione" : "Escolha o tipo primeiro"} />
+                </SelectTrigger>
                 <SelectContent>
                   {(SUBCATEGORIAS[form.tipo] ?? []).map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {subcategoriaMissing && (
+                <p className="text-xs text-destructive mt-1">Obrigatório quando tipo está selecionado</p>
+              )}
             </div>
           </div>
 

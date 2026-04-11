@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { inferTipo } from "../_shared/taxonomy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -179,22 +180,14 @@ Deno.serve(async (req) => {
 
 /**
  * Maps Envision `suppliers` row → Portal BWild `fornecedores` payload.
+ * Uses shared taxonomy for accurate tipo inference.
  */
 function mapSupplierToFornecedor(supplier: any) {
-  const categoriasServico = [
-    "marcenaria", "serralheria", "gesso", "pintura", "elétrica",
-    "hidráulica", "ar condicionado", "automação", "impermeabilização",
-    "mão de obra", "instalação", "projeto", "demolição",
-  ];
-  const isServico = categoriasServico.some(
-    (c) => supplier.categoria?.toLowerCase().includes(c)
-  );
-
   return {
     nome: supplier.name,
     razao_social: supplier.razao_social,
     cnpj_cpf: supplier.cnpj_cpf,
-    tipo: isServico ? "prestadores" : "produtos",
+    tipo: inferTipo(supplier.categoria) ?? "produtos",
     subcategoria: supplier.categoria ?? "Outros",
     endereco: supplier.endereco,
     cidade: supplier.cidade,
