@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,9 +63,26 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
   const [tipoFilter, setTipoFilter] = useState("all");
   const [subcategoriaFilter, setSubcategoriaFilter] = useState("all");
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [syncFailures, setSyncFailures] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Pre-load suppliers with persistent sync failures
+  useEffect(() => {
+    const loadSyncFailures = async () => {
+      const { data } = await supabase
+        .from("integration_sync_log")
+        .select("source_id")
+        .eq("entity_type", "supplier")
+        .eq("sync_status", "failed")
+        .gte("attempts", 5);
+      if (data && data.length > 0) {
+        setSyncFailures(new Set(data.map((d) => d.source_id)));
+      }
+    };
+    loadSyncFailures();
+  }, [suppliers]);
 
   const subcategoriasDisponiveis = tipoFilter === "Prestadores"
     ? SUBCATEGORIAS_PRESTADORES
@@ -140,6 +157,7 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
       }
     } catch (err: unknown) {
       toast.error(`Erro na sincronização: ${err instanceof Error ? err.message : String(err)}`);
+      setSyncFailures((prev) => new Set(prev).add(sup.id));
     } finally {
       setSyncingId(null);
     }
@@ -212,7 +230,12 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
                 const tipo = getTipo(sup.categoria);
                 return (
                   <TableRow key={sup.id} className={!sup.is_active ? "opacity-50" : ""}>
-                    <TableCell className="font-medium">{sup.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {sup.name}
+                      {syncFailures.has(sup.id) && (
+                        <Badge variant="destructive" className="text-xs ml-1.5">Sync falhou</Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {tipo !== "—" ? (
                         <Badge variant="outline" className={`text-xs ${tipo === "Prestadores" ? "bg-primary/15 text-primary border-primary/30" : "bg-secondary text-secondary-foreground border-secondary"}`}>

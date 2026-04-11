@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatBRL } from "@/lib/formatBRL";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,7 +58,7 @@ export function ItemsTab({
   onNewItem, onEditItem, onRefresh,
   page, totalPages, totalCount, onPageChange,
 }: Props) {
-  const itemIds = items.map((i) => i.id);
+  const itemIds = useMemo(() => items.map((i) => i.id), [items]);
   const { data: primaryPrices = [] } = useQuery({
     queryKey: ["catalog_primary_prices", itemIds],
     queryFn: async () => {
