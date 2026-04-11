@@ -1,4 +1,13 @@
-import { useEffect, useState, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { createElement } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import type { AppRole } from "@/lib/role-constants";
@@ -10,12 +19,29 @@ export interface UserProfile {
   roles: AppRole[];
 }
 
+interface UserProfileContextType {
+  profile: UserProfile | null;
+  loading: boolean;
+  hasRole: (role: AppRole) => boolean;
+  isAdmin: boolean;
+  isComercial: boolean;
+  isOrcamentista: boolean;
+}
+
+const UserProfileContext = createContext<UserProfileContextType>({
+  profile: null,
+  loading: true,
+  hasRole: () => false,
+  isAdmin: false,
+  isComercial: false,
+  isOrcamentista: false,
+});
+
 /**
- * Fetches (and auto-creates) the current user's profile + roles.
- * Re-runs whenever the auth user changes.
- * Does NOT flash loading on tab-focus token refreshes.
+ * Provider that fetches the current user's profile + roles ONCE
+ * and shares the result across all consumers via context.
  */
-export function useUserProfile() {
+export function UserProfileProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,13 +98,30 @@ export function useUserProfile() {
     }
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
-  const hasRole = (role: AppRole) => profile?.roles.includes(role) ?? false;
-  const isAdmin = hasRole("admin");
-  const isComercial = hasRole("comercial");
-  const isOrcamentista = hasRole("orcamentista");
+  const value = useMemo(() => {
+    const hasRole = (role: AppRole) => profile?.roles.includes(role) ?? false;
+    return {
+      profile,
+      loading,
+      hasRole,
+      isAdmin: hasRole("admin"),
+      isComercial: hasRole("comercial"),
+      isOrcamentista: hasRole("orcamentista"),
+    };
+  }, [profile, loading]);
 
-  return { profile, loading, hasRole, isAdmin, isComercial, isOrcamentista };
+  return createElement(UserProfileContext.Provider, { value }, children);
+}
+
+/**
+ * Hook to access the current user's profile + roles.
+ * Must be used within a UserProfileProvider.
+ */
+export function useUserProfile() {
+  return useContext(UserProfileContext);
 }
