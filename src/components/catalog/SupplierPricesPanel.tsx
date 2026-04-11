@@ -73,25 +73,27 @@ function PriceDialog({
       is_active: form.is_active,
     };
 
-    // If setting as primary, unset others first
-    if (form.is_primary) {
-      await supabase
-        .from("catalog_item_supplier_prices")
-        .update({ is_primary: false })
-        .eq("catalog_item_id", catalogItemId)
-        .neq("id", price?.id ?? "00000000-0000-0000-0000-000000000000");
+    let savedId: string | null = null;
+
+    if (price) {
+      const { error } = await supabase.from("catalog_item_supplier_prices").update(payload).eq("id", price.id);
+      if (error) { setSaving(false); toast.error(error.code === "23505" ? "Fornecedor já cadastrado para este item" : "Erro ao salvar"); return; }
+      savedId = price.id;
+    } else {
+      const { data, error } = await supabase.from("catalog_item_supplier_prices").insert(payload).select("id").single();
+      if (error) { setSaving(false); toast.error(error.code === "23505" ? "Fornecedor já cadastrado para este item" : "Erro ao salvar"); return; }
+      savedId = data.id;
     }
 
-    const { error } = price
-      ? await supabase.from("catalog_item_supplier_prices").update(payload).eq("id", price.id)
-      : await supabase.from("catalog_item_supplier_prices").insert(payload);
+    // Atomically set primary via RPC (no race condition)
+    if (form.is_primary && savedId) {
+      await supabase.rpc("set_primary_supplier_price", {
+        p_catalog_item_id: catalogItemId,
+        p_price_id: savedId,
+      });
+    }
 
     setSaving(false);
-    if (error) {
-      if (error.code === "23505") toast.error("Fornecedor já cadastrado para este item");
-      else toast.error("Erro ao salvar");
-      return;
-    }
     toast.success(price ? "Preço atualizado" : "Fornecedor adicionado");
     onSaved();
     onOpenChange(false);
