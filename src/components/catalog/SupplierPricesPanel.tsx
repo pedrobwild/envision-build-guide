@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Plus, Star, StarOff, Edit2, Trash2 } from "lucide-react";
+import { ConfirmDeleteDialog } from "@/components/catalog/ConfirmDeleteDialog";
 
 interface Supplier {
   id: string;
@@ -55,10 +56,17 @@ function PriceDialog({
   });
   const [saving, setSaving] = useState(false);
 
-  const set = (k: string, v: string | number | boolean) => setForm((p) => ({ ...p, [k]: v }));
+  const set = (k: string, v: string | number | boolean) => {
+    if (k === "is_primary" && v === true) {
+      setForm((p) => ({ ...p, is_primary: true, is_active: true }));
+    } else {
+      setForm((p) => ({ ...p, [k]: v }));
+    }
+  };
 
   const handleSave = async () => {
     if (!form.supplier_id) { toast.error("Selecione um fornecedor"); return; }
+    if (form.is_primary && !form.is_active) { toast.error("O fornecedor principal não pode estar inativo"); return; }
     setSaving(true);
 
     const payload = {
@@ -158,8 +166,15 @@ function PriceDialog({
               <Label htmlFor="sp-primary" className="cursor-pointer">Fornecedor principal</Label>
             </div>
             <div className="flex items-center gap-2">
-              <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} id="sp-active" />
-              <Label htmlFor="sp-active" className="cursor-pointer">Ativo</Label>
+              <Switch
+                checked={form.is_active}
+                onCheckedChange={(v) => set("is_active", v)}
+                id="sp-active"
+                disabled={form.is_primary}
+              />
+              <Label htmlFor="sp-active" className="cursor-pointer">
+                Ativo {form.is_primary && <span className="text-xs text-muted-foreground">(obrigatório quando principal)</span>}
+              </Label>
             </div>
           </div>
         </div>
@@ -176,6 +191,8 @@ export function SupplierPricesPanel({ catalogItemId, catalogItemName, suppliers 
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPrice, setEditingPrice] = useState<SupplierPrice | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: prices = [], isLoading } = useQuery({
     queryKey: ["catalog_item_supplier_prices", catalogItemId],
@@ -184,11 +201,14 @@ export function SupplierPricesPanel({ catalogItemId, catalogItemName, suppliers 
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["catalog_item_supplier_prices", catalogItemId] });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Remover fornecedor deste item?")) return;
-    const { error } = await supabase.from("catalog_item_supplier_prices").delete().eq("id", id);
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    const { error } = await supabase.from("catalog_item_supplier_prices").delete().eq("id", deleteId);
+    setDeleting(false);
     if (error) { toast.error("Erro ao remover"); return; }
     toast.success("Removido");
+    setDeleteId(null);
     refresh();
   };
 
@@ -260,7 +280,7 @@ export function SupplierPricesPanel({ catalogItemId, catalogItemName, suppliers 
                         <Edit2 className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive"
-                        onClick={() => handleDelete(p.id)}>
+                        onClick={() => setDeleteId(p.id)}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -271,6 +291,15 @@ export function SupplierPricesPanel({ catalogItemId, catalogItemName, suppliers 
           </Table>
         </div>
       )}
+
+      <ConfirmDeleteDialog
+        open={!!deleteId}
+        onOpenChange={(v) => !v && setDeleteId(null)}
+        title="Remover fornecedor deste item?"
+        description="O vínculo de preço será excluído permanentemente."
+        onConfirm={confirmDelete}
+        loading={deleting}
+      />
 
       {dialogOpen && (
         <PriceDialog

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatBRL } from "@/lib/formatBRL";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ import {
   ToggleLeft, ToggleRight, Package,
 } from "lucide-react";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
+import { ConfirmDeleteDialog } from "@/components/catalog/ConfirmDeleteDialog";
 import { CATALOG_SECTION_OPTIONS } from "@/lib/catalog-helpers";
 import type { CatalogItem } from "@/components/catalog/CatalogItemDialog";
 import type { CatalogCategory } from "@/components/catalog/CategoryDialog";
@@ -73,11 +75,17 @@ export function ItemsTab({
   });
   const priceMap = new Map(primaryPrices.map((p) => [p.catalog_item_id, p.unit_price]));
 
-  const handleDeleteItem = async (id: string) => {
-    if (!confirm("Excluir item do catálogo? Esta ação não pode ser desfeita.")) return;
-    const { error } = await supabase.from("catalog_items").delete().eq("id", id);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDeleteItem = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    const { error } = await supabase.from("catalog_items").delete().eq("id", deleteId);
+    setDeleting(false);
     if (error) { toast.error("Erro ao excluir"); return; }
     toast.success("Item excluído");
+    setDeleteId(null);
     onRefresh();
   };
 
@@ -233,7 +241,7 @@ export function ItemsTab({
                           <Edit2 className="h-3.5 w-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteItem(item.id)}>
+                          onClick={() => setDeleteId(item.id)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -269,6 +277,14 @@ export function ItemsTab({
           </Button>
         </div>
       )}
+      <ConfirmDeleteDialog
+        open={!!deleteId}
+        onOpenChange={(v) => !v && setDeleteId(null)}
+        title="Excluir item do catálogo?"
+        description="Esta ação não pode ser desfeita. Orçamentos existentes que referenciam este item não serão afetados."
+        onConfirm={confirmDeleteItem}
+        loading={deleting}
+      />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   Search, Plus, Edit2, Trash2, FolderOpen, ToggleLeft, ToggleRight, Wrench, Package,
 } from "lucide-react";
 import { CatalogEmptyState } from "@/components/catalog/CatalogEmptyState";
+import { ConfirmDeleteDialog } from "@/components/catalog/ConfirmDeleteDialog";
 import type { CatalogCategory } from "@/components/catalog/CategoryDialog";
 
 interface Props {
@@ -27,6 +28,8 @@ export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRef
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [deleteTarget, setDeleteTarget] = useState<CatalogCategory | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const filtered = categories.filter((c) => {
     if (search && !c.name.toLowerCase().includes(search.toLowerCase()) &&
@@ -50,14 +53,17 @@ export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRef
     onRefresh();
   };
 
-  const handleDelete = async (cat: CatalogCategory) => {
-    if (!confirm(`Excluir a categoria "${cat.name}"? Itens vinculados perderão a referência.`)) return;
-    const { error } = await supabase.from("catalog_categories").delete().eq("id", cat.id);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from("catalog_categories").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
     if (error) {
       toast.error("Erro ao excluir. Pode haver itens vinculados.");
       return;
     }
     toast.success("Categoria excluída");
+    setDeleteTarget(null);
     onRefresh();
   };
 
@@ -177,7 +183,7 @@ export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRef
                         <Edit2 className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(cat)}>
+                        onClick={() => setDeleteTarget(cat)}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -188,6 +194,14 @@ export function CategoriesTab({ categories, onNewCategory, onEditCategory, onRef
           </Table>
         </div>
       )}
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => !v && setDeleteTarget(null)}
+        title={`Excluir "${deleteTarget?.name}"?`}
+        description="Itens vinculados a esta categoria perderão a referência. Esta ação não pode ser desfeita."
+        onConfirm={confirmDelete}
+        loading={deleting}
+      />
     </div>
   );
 }
