@@ -472,7 +472,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
   useEffect(() => {
     if (!open || !form.default_supplier_id || !supplierChangeIsUserAction.current) return;
     supplierChangeIsUserAction.current = false;
-    void handleSupplierChange(form.default_supplier_id);
+    handleSupplierChange(form.default_supplier_id);
   }, [form.default_supplier_id, handleSupplierChange, open]);
 
   const persistImageOnExistingItem = async (nextImageUrl: string | null) => {
