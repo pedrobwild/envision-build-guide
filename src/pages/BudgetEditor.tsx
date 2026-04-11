@@ -57,6 +57,10 @@ export default function BudgetEditor() {
 
   const saveBudget = async () => {
     if (!budget) return;
+    if (budget.status === 'published') {
+      toast.error("Orçamento publicado não pode ser editado.");
+      return;
+    }
     setSaving(true);
     await supabase.from('budgets').update({
       project_name: budget.project_name,
