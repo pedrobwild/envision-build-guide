@@ -1201,6 +1201,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const handleItemDragEnd = (sectionId: string) => async (event: DragEndEvent) => {
+    if (readOnly) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
