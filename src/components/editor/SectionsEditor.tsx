@@ -970,6 +970,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const duplicateSection = async (sectionId: string) => {
+    if (readOnly) return;
     const source = sections.find(s => s.id === sectionId);
     if (!source) return;
     const order = sections.length;
