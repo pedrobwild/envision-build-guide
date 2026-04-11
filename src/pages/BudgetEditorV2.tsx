@@ -209,8 +209,14 @@ export default function BudgetEditorV2() {
     "is_current_version", "version_group_id", "version_number",
   ]));
 
+  const isPublishedVersion = budget?.status === "published" && budget?.is_published_version === true;
+
   const autoSaveBudgetField = useCallback((field: string, value: unknown) => {
     if (!budgetId) return;
+    if (isPublishedVersion) {
+      console.warn(`[autoSave] Blocked: budget is published`);
+      return;
+    }
     if (PROTECTED_FIELDS.current.has(field)) {
       console.warn(`[autoSave] Blocked attempt to save protected field: ${field}`);
       return;
@@ -492,6 +498,7 @@ export default function BudgetEditorV2() {
                     sections={sections}
                     onSectionsChange={setSections}
                     loading={sectionsLoading}
+                    readOnly={budget.status === "published" && budget.is_published_version === true}
                   />
                 </div>
 

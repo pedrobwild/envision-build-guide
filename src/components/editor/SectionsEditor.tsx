@@ -309,6 +309,7 @@ interface SectionsEditorProps {
   onSectionsChange: (sections: SectionData[]) => void;
   tableConfig?: TableConfig;
   loading?: boolean;
+  readOnly?: boolean;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
@@ -774,7 +775,7 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading }: SectionsEditorProps) {
+export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, readOnly = false }: SectionsEditorProps) {
   const cfg = tableConfig ?? DEFAULT_TABLE_CONFIG;
   const storageKey = `budget-sections-state-${budgetId}`;
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
@@ -853,6 +854,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   );
 
   const debouncedSave = useCallback((logicalTable: string, id: string, updates: Record<string, unknown>) => {
+    if (readOnly) return;
     const key = `${logicalTable}-${id}`;
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
@@ -866,9 +868,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
         return next;
       });
     }, 600);
-  }, [cfg]);
+  }, [cfg, readOnly]);
 
   const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
+    if (readOnly) return;
     const updated = sections.map(s =>
       s.id === sectionId ? { ...s, [field]: value } : s
     );
@@ -925,6 +928,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   }, [debouncedSave]);
 
   const updateItem = (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => {
+    if (readOnly) return;
     let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.map(i =>
@@ -950,6 +954,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const addSection = async () => {
+    if (readOnly) return;
     const order = sections.length;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase.from(cfg.sectionTable as any) as any)
@@ -965,6 +970,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const duplicateSection = async (sectionId: string) => {
+    if (readOnly) return;
     const source = sections.find(s => s.id === sectionId);
     if (!source) return;
     const order = sections.length;
@@ -1017,6 +1023,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     catalog_item_id: string | null;
     catalog_snapshot: Record<string, unknown> | null;
   }) => {
+    if (readOnly) return;
     const section = sections.find(s => s.id === sectionId);
     const order = section?.items.length || 0;
 
@@ -1075,6 +1082,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const deleteItem = async (sectionId: string, itemId: string) => {
+    if (readOnly) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase.from(cfg.itemTable as any) as any).delete().eq("id", itemId);
     let updated = sections.map(s => {
@@ -1091,6 +1099,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const deleteSection = async (sectionId: string) => {
+    if (readOnly) return;
     const section = sections.find(s => s.id === sectionId);
     if (section && section.items.length > 0) {
       const itemIds = section.items.map(i => i.id);
@@ -1166,6 +1175,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
   /* ── Drag handlers with rollback ── */
   const handleSectionDragEnd = async (event: DragEndEvent) => {
+    if (readOnly) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -1191,6 +1201,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const handleItemDragEnd = (sectionId: string) => async (event: DragEndEvent) => {
+    if (readOnly) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
