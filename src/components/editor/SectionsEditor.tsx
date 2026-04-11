@@ -309,6 +309,7 @@ interface SectionsEditorProps {
   onSectionsChange: (sections: SectionData[]) => void;
   tableConfig?: TableConfig;
   loading?: boolean;
+  readOnly?: boolean;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
@@ -774,7 +775,7 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading }: SectionsEditorProps) {
+export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, readOnly = false }: SectionsEditorProps) {
   const cfg = tableConfig ?? DEFAULT_TABLE_CONFIG;
   const storageKey = `budget-sections-state-${budgetId}`;
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
