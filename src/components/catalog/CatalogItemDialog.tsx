@@ -372,7 +372,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
 
   const currentItemId = item?.id ?? savedItemId;
 
-  const ensureCategoryForSupplier = useCallback(async (supplierCategoria: string) => {
+  const suggestCategoryForSupplier = useCallback((supplierCategoria: string) => {
     const normalizedSupplierCategory = normalizeCategoryName(supplierCategoria);
     const existingCategory = availableCategories.find(
       (category) => normalizeCategoryName(category.name) === normalizedSupplierCategory
@@ -380,28 +380,23 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
 
     if (existingCategory) {
       set("category_id", existingCategory.id);
-      return existingCategory.id;
+      return;
     }
 
-    const { data, error } = await supabase
-      .from("catalog_categories")
-      .insert({ name: supplierCategoria.trim() })
-      .select("id, name, description, is_active")
-      .single();
+    // Store the category name as a suggestion — will be resolved on save
+    // Use a special prefix to distinguish from UUIDs
+    const suggestionKey = `__new__${supplierCategoria.trim()}`;
+    setLocalCategories((prev) => mergeCategories(prev, [{
+      id: suggestionKey,
+      name: supplierCategoria.trim(),
+      description: null,
+      is_active: true,
+    }]));
+    set("category_id", suggestionKey);
+    toast.info("Categoria será criada ao salvar o item");
+  }, [availableCategories]);
 
-    if (error) {
-      toast.error("Não foi possível vincular a categoria automaticamente");
-      return null;
-    }
-
-    setLocalCategories((prev) => mergeCategories(prev, [data as CatalogCategory]));
-    queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
-    set("category_id", data.id);
-    toast.success("Categoria criada automaticamente a partir do fornecedor");
-    return data.id;
-  }, [availableCategories, queryClient]);
-
-  const handleSupplierChange = useCallback(async (supplierId: string) => {
+  const handleSupplierChange = useCallback((supplierId: string) => {
     set("default_supplier_id", supplierId);
 
     const supplier = suppliers.find((entry) => entry.id === supplierId);
@@ -410,8 +405,8 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     const autoType = getItemTypeFromSupplierCategoria(supplier.categoria);
     if (autoType) set("item_type", autoType);
 
-    await ensureCategoryForSupplier(supplier.categoria);
-  }, [suppliers, ensureCategoryForSupplier]);
+    suggestCategoryForSupplier(supplier.categoria);
+  }, [suppliers, suggestCategoryForSupplier]);
 
   const handleCreateCategory = useCallback(async () => {
     const name = newCategoryName.trim();
@@ -477,7 +472,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
   useEffect(() => {
     if (!open || !form.default_supplier_id || !supplierChangeIsUserAction.current) return;
     supplierChangeIsUserAction.current = false;
-    void handleSupplierChange(form.default_supplier_id);
+    handleSupplierChange(form.default_supplier_id);
   }, [form.default_supplier_id, handleSupplierChange, open]);
 
   const persistImageOnExistingItem = async (nextImageUrl: string | null) => {
@@ -551,11 +546,40 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
 
+    // Resolve suggested category (created on-the-fly from supplier)
+    let resolvedCategoryId: string | null = form.category_id || null;
+    if (resolvedCategoryId && resolvedCategoryId.startsWith("__new__")) {
+      const categoryName = resolvedCategoryId.replace("__new__", "");
+      // Find-or-create
+      const { data: existing } = await supabase
+        .from("catalog_categories")
+        .select("id")
+        .eq("name", categoryName)
+        .maybeSingle();
+      if (existing) {
+        resolvedCategoryId = existing.id;
+      } else {
+        const inferredType = SUBCATEGORIAS_PRESTADORES.includes(categoryName) ? "Prestadores" : "Produtos";
+        const { data: newCat, error: catErr } = await supabase
+          .from("catalog_categories")
+          .insert({ name: categoryName, category_type: inferredType })
+          .select("id")
+          .single();
+        if (catErr || !newCat) {
+          toast.error("Erro ao criar categoria");
+          setSaving(false);
+          return;
+        }
+        resolvedCategoryId = newCat.id;
+        queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
+      }
+    }
+
     const payload: Record<string, string | boolean | null> = {
       name: form.name.trim(),
       description: form.description.trim() || null,
       item_type: form.item_type,
-      category_id: form.category_id || null,
+      category_id: resolvedCategoryId,
       unit_of_measure: form.unit_of_measure.trim() || null,
       default_supplier_id: form.default_supplier_id || null,
       is_active: form.is_active,
