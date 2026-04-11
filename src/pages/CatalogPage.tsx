@@ -177,10 +177,10 @@ export default function CatalogPage() {
             <Package className="h-3.5 w-3.5" /> Itens ({totalCount})
           </TabsTrigger>
           <TabsTrigger value="categories" className="gap-1.5">
-            <FolderOpen className="h-3.5 w-3.5" /> Categorias ({categories.length})
+            <FolderOpen className="h-3.5 w-3.5" /> Categorias ({allCategories.length})
           </TabsTrigger>
           <TabsTrigger value="suppliers" className="gap-1.5">
-            <Building2 className="h-3.5 w-3.5" /> Fornecedores ({suppliers.length})
+            <Building2 className="h-3.5 w-3.5" /> Fornecedores ({allSuppliers.length})
           </TabsTrigger>
         </TabsList>
 
@@ -212,7 +212,7 @@ export default function CatalogPage() {
 
         <TabsContent value="categories">
           <CategoriesTab
-            categories={categories}
+            categories={allCategories}
             onNewCategory={() => { setEditingCategory(null); setCategoryDialogOpen(true); }}
             onEditCategory={(cat) => { setEditingCategory(cat); setCategoryDialogOpen(true); }}
             onRefresh={invalidateAll}
@@ -221,7 +221,7 @@ export default function CatalogPage() {
 
         <TabsContent value="suppliers">
           <SuppliersTab
-            suppliers={suppliers}
+            suppliers={allSuppliers}
             onNewSupplier={() => { setEditingSupplier(null); setSupplierDialogOpen(true); }}
             onEditSupplier={(sup) => { setEditingSupplier(sup); setSupplierDialogOpen(true); }}
             onRefresh={invalidateAll}
