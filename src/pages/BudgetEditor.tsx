@@ -113,8 +113,10 @@ export default function BudgetEditor() {
     setSaving(false);
   };
 
+  const isPublished = budget?.status === 'published';
+
   const addSection = async () => {
-    if (!budgetId) return;
+    if (!budgetId || isPublished) return;
     const { data } = await supabase.from('sections').insert({
       budget_id: budgetId,
       title: 'Nova Seção',
@@ -127,11 +129,13 @@ export default function BudgetEditor() {
   };
 
   const deleteSection = async (sectionId: string) => {
+    if (isPublished) return;
     await supabase.from('sections').delete().eq('id', sectionId);
     setSections(sections.filter(s => s.id !== sectionId));
   };
 
   const addItem = async (sectionId: string) => {
+    if (isPublished) return;
     const section = sections.find(s => s.id === sectionId);
     const { data } = await supabase.from('items').insert({
       section_id: sectionId,
@@ -148,6 +152,7 @@ export default function BudgetEditor() {
   };
 
   const deleteItem = async (sectionId: string, itemId: string) => {
+    if (isPublished) return;
     await supabase.from('items').delete().eq('id', itemId);
     setSections(sections.map(s =>
       s.id === sectionId ? { ...s, items: (s.items || []).filter((i) => i.id !== itemId) } : s
@@ -155,7 +160,7 @@ export default function BudgetEditor() {
   };
 
   const addAdjustment = async () => {
-    if (!budgetId) return;
+    if (!budgetId || isPublished) return;
     const { data } = await supabase.from('adjustments').insert({
       budget_id: budgetId,
       label: 'Ajuste',
@@ -166,6 +171,7 @@ export default function BudgetEditor() {
   };
 
   const deleteAdjustment = async (adjId: string) => {
+    if (isPublished) return;
     await supabase.from('adjustments').delete().eq('id', adjId);
     setAdjustments(adjustments.filter(a => a.id !== adjId));
   };
