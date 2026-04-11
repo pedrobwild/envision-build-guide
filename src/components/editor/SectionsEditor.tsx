@@ -1082,6 +1082,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const deleteItem = async (sectionId: string, itemId: string) => {
+    if (readOnly) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase.from(cfg.itemTable as any) as any).delete().eq("id", itemId);
     let updated = sections.map(s => {
@@ -1098,6 +1099,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const deleteSection = async (sectionId: string) => {
+    if (readOnly) return;
     const section = sections.find(s => s.id === sectionId);
     if (section && section.items.length > 0) {
       const itemIds = section.items.map(i => i.id);
