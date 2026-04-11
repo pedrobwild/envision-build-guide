@@ -1014,7 +1014,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const addItem = async (sectionId: string, itemData?: {
-    if (readOnly) return;
     title: string;
     description: string | null;
     unit: string | null;
@@ -1024,6 +1023,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     catalog_item_id: string | null;
     catalog_snapshot: Record<string, unknown> | null;
   }) => {
+    if (readOnly) return;
     const section = sections.find(s => s.id === sectionId);
     const order = section?.items.length || 0;
 
