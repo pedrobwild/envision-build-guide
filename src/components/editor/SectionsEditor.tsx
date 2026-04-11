@@ -871,6 +871,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   }, [cfg, readOnly]);
 
   const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
+    if (readOnly) return;
     const updated = sections.map(s =>
       s.id === sectionId ? { ...s, [field]: value } : s
     );
