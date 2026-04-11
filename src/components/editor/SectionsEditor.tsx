@@ -1014,6 +1014,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const addItem = async (sectionId: string, itemData?: {
+    if (readOnly) return;
     title: string;
     description: string | null;
     unit: string | null;
