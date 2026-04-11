@@ -133,8 +133,11 @@ export default function CatalogPage() {
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
+  // Active-only for selects/filters; all for tab listings
   const { data: categories = [] } = useCategories();
+  const { data: allCategories = [] } = useCategories(true);
   const { data: suppliers = [] } = useSuppliers();
+  const { data: allSuppliers = [] } = useSuppliers(true);
   const { data: result, isLoading } = useCatalogItems(debouncedSearch, typeFilter, categoryFilter, sectionFilter, statusFilter, page);
   const items = result?.items ?? [];
   const totalCount = result?.total ?? 0;
