@@ -58,22 +58,22 @@ function useCatalogItems(search: string, typeFilter: string, categoryFilter: str
   return useQuery({
     queryKey: ["catalog_items", search, typeFilter, categoryFilter, sectionFilter, statusFilter, page],
     queryFn: async () => {
-      let allowedItemIds: string[] | null = null;
-      if (sectionFilter && sectionFilter !== "all") {
-        const { data: links } = await supabase
-          .from("catalog_item_sections")
-          .select("catalog_item_id")
-          .eq("section_title", sectionFilter);
-        allowedItemIds = (links ?? []).map((l) => l.catalog_item_id);
-        if (allowedItemIds.length === 0) return { items: [], total: 0 };
-      }
+      const hasSectionFilter = sectionFilter && sectionFilter !== "all";
+
+      // When filtering by section, use inner join to avoid loading all IDs
+      const selectClause = hasSectionFilter
+        ? "*, catalog_categories(*), suppliers:default_supplier_id(*), catalog_item_sections!inner(section_title)"
+        : "*, catalog_categories(*), suppliers:default_supplier_id(*)";
 
       let query = supabase
         .from("catalog_items")
-        .select("*, catalog_categories(*), suppliers:default_supplier_id(*)", { count: "exact" })
+        .select(selectClause, { count: "exact" })
         .order("name")
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
+      if (hasSectionFilter) {
+        query = query.eq("catalog_item_sections.section_title", sectionFilter);
+      }
       if (search) {
         query = query.ilike("search_text", `%${search.toLowerCase()}%`);
       }
@@ -87,9 +87,6 @@ function useCatalogItems(search: string, typeFilter: string, categoryFilter: str
         query = query.eq("is_active", true);
       } else if (statusFilter === "inactive") {
         query = query.eq("is_active", false);
-      }
-      if (allowedItemIds) {
-        query = query.in("id", allowedItemIds);
       }
 
       const { data, error, count } = await query;

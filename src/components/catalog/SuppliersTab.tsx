@@ -12,6 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   Search, Plus, Edit2, Trash2, Building2, ToggleLeft, ToggleRight,
@@ -41,6 +45,12 @@ function getTipo(categoria: string | null | undefined): string {
   return "—";
 }
 
+interface DeleteTarget {
+  supplier: Supplier;
+  priceCount: number;
+  itemCount: number;
+}
+
 interface Props {
   suppliers: Supplier[];
   onNewSupplier: () => void;
@@ -53,6 +63,9 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
   const [tipoFilter, setTipoFilter] = useState("all");
   const [subcategoriaFilter, setSubcategoriaFilter] = useState("all");
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const subcategoriasDisponiveis = tipoFilter === "Prestadores"
     ? SUBCATEGORIAS_PRESTADORES
@@ -83,14 +96,32 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
     onRefresh();
   };
 
-  const handleDelete = async (sup: Supplier) => {
-    if (!confirm(`Excluir o fornecedor "${sup.name}"? Itens vinculados perderão a referência.`)) return;
-    const { error } = await supabase.from("suppliers").delete().eq("id", sup.id);
+  const handleDeleteClick = async (sup: Supplier) => {
+    const [{ count: priceCount }, { count: itemCount }] = await Promise.all([
+      supabase.from("catalog_item_supplier_prices")
+        .select("*", { count: "exact", head: true })
+        .eq("supplier_id", sup.id),
+      supabase.from("catalog_items")
+        .select("*", { count: "exact", head: true })
+        .eq("default_supplier_id", sup.id),
+    ]);
+    setDeleteTarget({ supplier: sup, priceCount: priceCount ?? 0, itemCount: itemCount ?? 0 });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from("suppliers").delete().eq("id", deleteTarget.supplier.id);
+    setDeleting(false);
     if (error) {
-      toast.error("Erro ao excluir. Pode haver itens vinculados.");
+      toast.error("Erro ao excluir. Remova os vínculos (preços e itens) antes de excluir este fornecedor.");
+      setDeleteDialogOpen(false);
       return;
     }
     toast.success("Fornecedor excluído");
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
     onRefresh();
   };
 
@@ -242,7 +273,7 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
                           <Edit2 className="h-3.5 w-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(sup)}>
+                          onClick={() => handleDeleteClick(sup)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -254,6 +285,35 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
           </Table>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir "{deleteTarget?.supplier.name}"?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span>Esta ação não pode ser desfeita.</span>
+              {deleteTarget && (deleteTarget.priceCount > 0 || deleteTarget.itemCount > 0) && (
+                <span className="block mt-2 text-destructive font-medium">
+                  Isso afetará {deleteTarget.priceCount > 0 && `${deleteTarget.priceCount} preço(s) vinculado(s)`}
+                  {deleteTarget.priceCount > 0 && deleteTarget.itemCount > 0 && " e "}
+                  {deleteTarget.itemCount > 0 && `${deleteTarget.itemCount} item(ns) com este fornecedor como padrão`}.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
