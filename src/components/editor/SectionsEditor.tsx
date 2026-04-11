@@ -954,6 +954,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const addSection = async () => {
+    if (readOnly) return;
     const order = sections.length;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase.from(cfg.sectionTable as any) as any)
