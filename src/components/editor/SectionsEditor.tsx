@@ -854,6 +854,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   );
 
   const debouncedSave = useCallback((logicalTable: string, id: string, updates: Record<string, unknown>) => {
+    if (readOnly) return;
     const key = `${logicalTable}-${id}`;
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
@@ -867,7 +868,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
         return next;
       });
     }, 600);
-  }, [cfg]);
+  }, [cfg, readOnly]);
 
   const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
     const updated = sections.map(s =>
