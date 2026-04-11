@@ -546,11 +546,40 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
     if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
 
+    // Resolve suggested category (created on-the-fly from supplier)
+    let resolvedCategoryId: string | null = form.category_id || null;
+    if (resolvedCategoryId && resolvedCategoryId.startsWith("__new__")) {
+      const categoryName = resolvedCategoryId.replace("__new__", "");
+      // Find-or-create
+      const { data: existing } = await supabase
+        .from("catalog_categories")
+        .select("id")
+        .eq("name", categoryName)
+        .maybeSingle();
+      if (existing) {
+        resolvedCategoryId = existing.id;
+      } else {
+        const inferredType = SUBCATEGORIAS_PRESTADORES.includes(categoryName) ? "Prestadores" : "Produtos";
+        const { data: newCat, error: catErr } = await supabase
+          .from("catalog_categories")
+          .insert({ name: categoryName, category_type: inferredType })
+          .select("id")
+          .single();
+        if (catErr || !newCat) {
+          toast.error("Erro ao criar categoria");
+          setSaving(false);
+          return;
+        }
+        resolvedCategoryId = newCat.id;
+        queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
+      }
+    }
+
     const payload: Record<string, string | boolean | null> = {
       name: form.name.trim(),
       description: form.description.trim() || null,
       item_type: form.item_type,
-      category_id: form.category_id || null,
+      category_id: resolvedCategoryId,
       unit_of_measure: form.unit_of_measure.trim() || null,
       default_supplier_id: form.default_supplier_id || null,
       is_active: form.is_active,
