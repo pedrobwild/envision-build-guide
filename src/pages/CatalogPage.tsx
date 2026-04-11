@@ -15,29 +15,35 @@ import { SupplierDialog, type Supplier } from "@/components/catalog/SupplierDial
 const PAGE_SIZE = 50;
 
 // ─── Hooks ────────────────────────────────────────────────────────
-function useCategories() {
+function useCategories(includeInactive = false) {
   return useQuery({
-    queryKey: ["catalog_categories"],
+    queryKey: ["catalog_categories", includeInactive ? "all" : "active"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("catalog_categories")
-        .select("*")
+        .select("id, name, category_type, is_active, description")
         .order("category_type")
-        .order("name");
+        .order("name")
+        .limit(300);
+      if (!includeInactive) query = query.eq("is_active", true);
+      const { data, error } = await query;
       if (error) throw error;
       return data as CatalogCategory[];
     },
   });
 }
 
-function useSuppliers() {
+function useSuppliers(includeInactive = false) {
   return useQuery({
-    queryKey: ["suppliers"],
+    queryKey: ["suppliers", includeInactive ? "all" : "active"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("suppliers")
-        .select("*")
-        .order("name");
+        .select("id, name, categoria, is_active, contact_info, external_id, external_system, email, telefone, cnpj_cpf, razao_social, cidade, estado, produtos_servicos, nota, observacoes, prazo_entrega_dias, condicoes_pagamento, site, endereco")
+        .order("name")
+        .limit(500);
+      if (!includeInactive) query = query.eq("is_active", true);
+      const { data, error } = await query;
       if (error) throw error;
       return data as Supplier[];
     },
