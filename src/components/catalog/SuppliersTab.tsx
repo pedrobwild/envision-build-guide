@@ -152,8 +152,10 @@ export function SuppliersTab({ suppliers, onNewSupplier, onEditSupplier, onRefre
       const result = res.data?.results?.[0];
       if (result?.status === "success") {
         toast.success(`"${sup.name}" sincronizado com o Portal BWild`);
+        setSyncFailures((prev) => { const next = new Set(prev); next.delete(sup.id); return next; });
       } else {
         toast.error(`Falha ao sincronizar: ${result?.error ?? "erro desconhecido"}`);
+        setSyncFailures((prev) => new Set(prev).add(sup.id));
       }
     } catch (err: unknown) {
       toast.error(`Erro na sincronização: ${err instanceof Error ? err.message : String(err)}`);
