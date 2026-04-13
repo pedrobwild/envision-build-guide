@@ -7,13 +7,13 @@ interface InstallmentSimulatorProps {
   total: number;
 }
 
-const options = Array.from({ length: 18 }, (_, i) => ({
+const options = Array.from({ length: 12 }, (_, i) => ({
   months: i + 1,
   label: `${i + 1} ${i === 0 ? 'parcela' : 'parcelas'}`,
 }));
 
 export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
-  const [selected, setSelected] = useState(18);
+  const [selected, setSelected] = useState(12);
   const [open, setOpen] = useState(false);
 
   const selectedOption = options.find((o) => o.months === selected)!;
@@ -26,7 +26,7 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
       </div>
 
       <p className="text-sm text-muted-foreground font-body mb-4">
-        Cartão de crédito em até <strong className="text-foreground">18× sem juros</strong>.
+        Cartão de crédito em até <strong className="text-foreground">12× sem juros</strong>.
       </p>
 
       {/* Dropdown selector */}
