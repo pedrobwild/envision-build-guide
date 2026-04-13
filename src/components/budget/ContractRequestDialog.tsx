@@ -31,7 +31,7 @@ interface ContractRequestDialogProps {
   consultoraComercial?: string;
 }
 
-const installmentOptions = Array.from({ length: 18 }, (_, i) => ({
+const installmentOptions = Array.from({ length: 12 }, (_, i) => ({
   months: i + 1,
   label: `${i + 1}× sem juros`,
 }));
@@ -335,7 +335,7 @@ function ContractForm({
             {step === 2 && (
               <div className="space-y-3">
                 <p className="text-xs text-muted-foreground font-body">
-                  Cartão de crédito em até 18× sem juros.
+                  Cartão de crédito em até 12× sem juros.
                 </p>
                 <div className="relative">
                   <button
