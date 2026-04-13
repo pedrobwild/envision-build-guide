@@ -49,7 +49,7 @@ export function MobileInlineSummary({
   revised,
   contractRequested,
 }: MobileInlineSummaryProps) {
-  const [installments, setInstallments] = useState(18);
+  const [installments, setInstallments] = useState(12);
   const [contractOpen, setContractOpen] = useState(false);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const totalCardRef = useRef<HTMLDivElement>(null);

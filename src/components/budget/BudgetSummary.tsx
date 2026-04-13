@@ -62,7 +62,7 @@ export function BudgetSummary({
   }, [activeSection]);
 
   const [detailGroup, setDetailGroup] = useState<CategorizedGroup | null>(null);
-  const [installments, setInstallments] = useState(18);
+  const [installments, setInstallments] = useState(12);
 
   const DISPLAYED_CATEGORIES = allCategoriesOpenSheet ? [] : ["marcenaria", "mobiliario", "eletro"];
 

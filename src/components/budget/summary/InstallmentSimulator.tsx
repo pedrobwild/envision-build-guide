@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const MONO_VALUE = "font-mono tabular-nums font-semibold text-primary";
 const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
-const INSTALLMENT_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 18];
+const INSTALLMENT_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 12];
 
 interface InstallmentSimulatorProps {
   total: number;
