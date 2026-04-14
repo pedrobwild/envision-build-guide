@@ -5,7 +5,8 @@ export type BudgetMedia = {
   fotos: string[];
 };
 
-const STORAGE_BASE = "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+const STORAGE_BASE = `${SUPABASE_URL}/storage/v1/object/public/media`;
 
 const f865Media: BudgetMedia = {
   video3d: `${STORAGE_BASE}/f865e54c9a5f/video/video-3d.mp4`,

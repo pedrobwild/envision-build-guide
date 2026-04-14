@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/formatBRL";
+import { calcItemSaleTotal, calcItemCostTotal } from "@/lib/budget-calc";
 import { ArrowLeft, LayoutTemplate, Loader2, Save, Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,23 +44,7 @@ interface ItemData {
   images?: { id?: string; url: string; is_primary?: boolean | null }[];
 }
 
-// ─── Calc helpers ────────────────────────────────────────────────
-
-function calcSaleUnit(cost: number | null | undefined, bdi: number | null | undefined): number {
-  return (Number(cost) || 0) * (1 + (Number(bdi) || 0) / 100);
-}
-
-function calcItemSaleTotal(item: ItemData): number {
-  return calcSaleUnit(item.internal_unit_price, item.bdi_percentage) * (Number(item.qty) || 1);
-}
-
-function calcItemCostTotal(item: ItemData): number {
-  const unitPrice = Number(item.internal_unit_price) || 0;
-  if (unitPrice > 0) return unitPrice * (Number(item.qty) || 1);
-  const total = Number(item.internal_total) || 0;
-  if (total > 0) return total;
-  return 0;
-}
+// ─── Calc helpers (imported from budget-calc.ts) ────────────────
 
 // ─── Auto-save status chip ──────────────────────────────────────
 
