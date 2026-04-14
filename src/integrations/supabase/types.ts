@@ -272,6 +272,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          media_config: Json | null
           name: string
           updated_at: string | null
         }
@@ -280,6 +281,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          media_config?: Json | null
           name: string
           updated_at?: string | null
         }
@@ -288,6 +290,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          media_config?: Json | null
           name?: string
           updated_at?: string | null
         }
@@ -371,6 +374,7 @@ export type Database = {
           lead_name: string | null
           location_type: string | null
           manual_total: number | null
+          media_config: Json | null
           metragem: string | null
           notes: string | null
           parent_budget_id: string | null
@@ -434,6 +438,7 @@ export type Database = {
           lead_name?: string | null
           location_type?: string | null
           manual_total?: number | null
+          media_config?: Json | null
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
@@ -497,6 +502,7 @@ export type Database = {
           lead_name?: string | null
           location_type?: string | null
           manual_total?: number | null
+          media_config?: Json | null
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
