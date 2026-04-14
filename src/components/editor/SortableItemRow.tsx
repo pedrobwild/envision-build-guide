@@ -431,15 +431,13 @@ export function SortableItemRow({
         onImagesChange={onImagesChange}
       />
 
-      {/* Mobile BDI drawer */}
-      <MobileBdiDrawer
-        open={bdiDrawerOpen}
-        onOpenChange={setBdiDrawerOpen}
-        itemTitle={item.title}
-        bdiPercentage={item.bdi_percentage}
-        unitCost={item.internal_unit_price}
-        qty={item.qty}
-        onBdiChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
+      {/* Mobile item editor */}
+      <MobileItemEditor
+        open={mobileEditorOpen}
+        onOpenChange={setMobileEditorOpen}
+        item={item}
+        sectionId={sectionId}
+        onUpdate={onUpdate}
       />
     </div>
   );
