@@ -668,7 +668,7 @@ export default function CommercialDashboard() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 lg:hidden shrink-0"
+                            className="h-8 w-8 shrink-0"
                             onClick={(e) => { e.stopPropagation(); copyPublicLink(b.public_id); }}
                             title="Copiar link público"
                           >
