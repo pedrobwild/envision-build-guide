@@ -220,6 +220,11 @@ export function SortableItemRow({
           </div>
         </div>
 
+        {/* [BDI chip] — mobile only */}
+        <div className="md:hidden flex-shrink-0 flex items-center">
+          <BdiChip bdi={item.bdi_percentage} onClick={() => setBdiDrawerOpen(true)} />
+        </div>
+
         {/* [Total Venda] — 72px mobile, 100px desktop */}
         <div className="w-[72px] sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
           <div className="h-7 sm:h-8 flex items-center justify-end px-1 sm:px-2 text-[11px] sm:text-sm font-semibold font-mono tabular-nums text-foreground">
