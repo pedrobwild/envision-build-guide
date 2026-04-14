@@ -168,6 +168,10 @@ export default function PublicBudget() {
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const { media: budgetMedia, loading: mediaLoading } = useBudgetMedia(publicId, budget?.id);
+  const hasRealMedia = !mediaLoading && budgetMedia && (
+    !!budgetMedia.video3d || budgetMedia.projeto3d.length > 0 || budgetMedia.projetoExecutivo.length > 0 || budgetMedia.fotos.length > 0
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
