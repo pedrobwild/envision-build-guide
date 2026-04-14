@@ -221,116 +221,117 @@ export default function NewBudgetRequest() {
       return;
     }
 
-    if (mode === "import") {
-      if (!pdfFile) { toast.error("Anexe o PDF do orçamento."); return; }
+    const isImport = mode === "import";
+    if (isImport) {
+      if (!pdfFile) {
+        toast.error("Anexe o PDF do orçamento.");
+        return;
+      }
       const total = parseManualTotal();
-      if (!total) { toast.error("Informe o valor total do orçamento."); return; }
+      if (!total) {
+        toast.error("Informe o valor total do orçamento.");
+        return;
+      }
     }
 
     setLoading(true);
 
-    const links = referenceLinks.filter((l) => l.trim().length > 0);
-    const metragemFormatted = metargemRaw.trim() ? `${metargemRaw.trim()}m²` : null;
+    try {
+      const links = referenceLinks.filter((l) => l.trim().length > 0);
+      const metragemFormatted = metargemRaw.trim() ? `${metargemRaw.trim()}m²` : null;
 
-    // Upload PDF if import mode
-    let budgetPdfPath: string | null = null;
-    if (mode === "import" && pdfFile) {
-      const timestamp = Date.now();
-      const safeName = clientName.trim().replace(/[^a-zA-Z0-9]/g, "_").slice(0, 30);
-      const fileName = `${safeName}_${timestamp}.pdf`;
-      const filePath = `imports/${fileName}`;
+      let budgetPdfPath: string | null = null;
+      if (isImport && pdfFile) {
+        const timestamp = Date.now();
+        const safeName = clientName.trim().replace(/[^a-zA-Z0-9]/g, "_").slice(0, 30);
+        const fileName = `${safeName}_${timestamp}.pdf`;
+        const filePath = `imports/${fileName}`;
 
-      const { error: uploadErr } = await supabase.storage
-        .from("budget-pdfs")
-        .upload(filePath, pdfFile, { contentType: "application/pdf" });
+        const { error: uploadErr } = await supabase.storage
+          .from("budget-pdfs")
+          .upload(filePath, pdfFile, { contentType: "application/pdf" });
 
-      if (uploadErr) {
-        
-        toast.error("Erro ao fazer upload do PDF.");
-        setLoading(false);
+        if (uploadErr) {
+          console.error("PDF upload error:", uploadErr);
+          toast.error("Erro ao fazer upload do PDF.");
+          return;
+        }
+        budgetPdfPath = filePath;
+      }
+
+      const manualTotal = isImport ? parseManualTotal() : null;
+      const publicId = isImport ? crypto.randomUUID().replace(/-/g, "").slice(0, 12) : null;
+
+      const { data: inserted, error } = await supabase
+        .from("budgets")
+        .insert({
+          client_name: clientName.trim(),
+          project_name: projectName || clientName.trim(),
+          lead_email: clientEmail.trim() || null,
+          client_phone: clientPhone.trim() || null,
+          condominio: condominio.trim() || null,
+          bairro: bairro.trim() || null,
+          metragem: metragemFormatted,
+          property_type: propertyType || null,
+          city: city.trim() || null,
+          location_type: locationType || null,
+          demand_context: demandContext.trim() || null,
+          briefing: briefing.trim() || null,
+          due_at: isImport ? null : (dueAt || null),
+          priority: isImport ? "normal" : priority,
+          internal_notes: (isImport && importNotes.trim()) ? importNotes.trim() : (internalNotes.trim() || null),
+          reference_links: links.length > 0 ? links : [],
+          hubspot_deal_url: hubspotDealUrl.trim() || null,
+          internal_status: isImport ? "delivered_to_sales" : "requested",
+          status: "draft",
+          commercial_owner_id: commercialOwnerId || user.id,
+          estimator_owner_id: isImport ? null : (estimatorOwnerId || null),
+          created_by: user.id,
+          budget_pdf_url: budgetPdfPath,
+          manual_total: manualTotal,
+          public_id: publicId,
+        } as Record<string, unknown>)
+        .select("id")
+        .single();
+
+      if (error || !inserted) {
+        console.error("Budget insert error:", error?.message, error?.details, error?.hint, error);
+        toast.error(`Erro ao criar solicitação: ${error?.message || "resposta vazia"}`);
         return;
       }
-      budgetPdfPath = filePath;
-    }
 
-    const isImport = mode === "import";
-    const manualTotal = isImport ? parseManualTotal() : null;
-    const publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+      if (isImport) {
+        const { error: eventError } = await supabase.from("budget_events").insert([{
+          budget_id: inserted.id,
+          user_id: user.id,
+          event_type: "imported_ready",
+          to_status: "delivered_to_sales",
+          metadata: { manual_total: manualTotal, pdf_file: pdfFile?.name },
+        }]);
 
-    const { data: inserted, error } = await supabase.from("budgets").insert({
-      client_name: clientName.trim(),
-      project_name: projectName || clientName.trim(),
-      lead_email: clientEmail.trim() || null,
-      client_phone: clientPhone.trim() || null,
-      condominio: condominio.trim() || null,
-      bairro: bairro.trim() || null,
-      metragem: metragemFormatted,
-      property_type: propertyType || null,
-      city: city.trim() || null,
-      location_type: locationType || null,
-      demand_context: demandContext.trim() || null,
-      briefing: briefing.trim() || null,
-      due_at: isImport ? null : (dueAt || null),
-      priority: isImport ? "normal" : priority,
-      internal_notes: (isImport && importNotes.trim()) ? importNotes.trim() : (internalNotes.trim() || null),
-      reference_links: links.length > 0 ? links : [],
-      hubspot_deal_url: hubspotDealUrl.trim() || null,
-      internal_status: isImport ? "delivered_to_sales" : "requested",
-      status: "draft",
-      commercial_owner_id: commercialOwnerId || user.id,
-      estimator_owner_id: isImport ? null : (estimatorOwnerId || null),
-      created_by: user.id,
-      budget_pdf_url: budgetPdfPath,
-      manual_total: manualTotal,
-      public_id: isImport ? publicId : null,
-    } as Record<string, unknown>).select("id").single();
-
-    if (error || !inserted) {
-      
-      toast.error(`Erro ao criar solicitação: ${error?.message || "resposta vazia"}`);
-      setLoading(false);
-      return;
-    }
-
-    // Log event for imported budgets
-    if (isImport) {
-      await supabase.from("budget_events").insert([{
-        budget_id: inserted.id,
-        user_id: user.id,
-        event_type: "imported_ready",
-        to_status: "delivered_to_sales",
-        metadata: { manual_total: manualTotal, pdf_file: pdfFile?.name },
-      }]);
-    }
-
-    setLoading(false);
-
-    if (isImport) {
-      toast.success("Orçamento importado!", {
-        description: "O orçamento aparece na coluna \"Entregue\" do pipeline comercial.",
-        duration: 6000,
-      });
-      setTimeout(() => navigate("/admin/comercial"), 800);
-    } else {
-      const newId = inserted.id;
-
-      // Apply template if selected
-      if (selectedTemplateId) {
-        try {
-          await seedFromTemplate(newId, selectedTemplateId);
-        } catch (err) {
-          toast.error(
-            err instanceof Error
-              ? `Erro ao aplicar template: ${err.message}`
-              : "Não foi possível aplicar o template selecionado."
-          );
-          setLoading(false);
-          return; // Block navigation — let user decide
+        if (eventError) {
+          console.error("Budget event insert error:", eventError);
         }
+
+        toast.success("Orçamento importado!", {
+          description: "O orçamento aparece na coluna \"Entregue\" do pipeline comercial.",
+          duration: 6000,
+        });
+        setTimeout(() => navigate("/admin/comercial"), 800);
+        return;
+      }
+
+      try {
+        const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
+        await seedFromTemplate(inserted.id, tplId);
+      } catch (seedErr) {
+        console.error("Erro ao criar seções iniciais:", seedErr);
       }
 
       const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
-      const templateName = templates?.find((t) => t.id === selectedTemplateId)?.name;
+      const templateName = selectedTemplateId && selectedTemplateId !== "none"
+        ? templates?.find((t) => t.id === selectedTemplateId)?.name
+        : undefined;
 
       toast.success("Solicitação criada!", {
         description: templateName
@@ -338,16 +339,25 @@ export default function NewBudgetRequest() {
           : estimatorName ? `Atribuída para ${estimatorName}` : "O orçamento entrará na fila de triagem.",
         action: {
           label: "Abrir orçamento",
-          onClick: () => navigate(`/admin/budget/${newId}`),
+          onClick: () => navigate(`/admin/budget/${inserted.id}`),
         },
         duration: 8000,
       });
 
-      if (selectedTemplateId) {
-        setTimeout(() => navigate(`/admin/budget/${newId}`), 800);
+      if (selectedTemplateId && selectedTemplateId !== "none") {
+        setTimeout(() => navigate(`/admin/budget/${inserted.id}`), 800);
       } else {
         setTimeout(() => navigate("/admin/solicitacoes"), 1000);
       }
+    } catch (err) {
+      console.error("New request submit error:", err);
+      toast.error(
+        err instanceof Error
+          ? `Erro ao criar solicitação: ${err.message}`
+          : "Erro inesperado ao criar solicitação."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
