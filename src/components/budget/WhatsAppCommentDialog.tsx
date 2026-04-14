@@ -107,4 +107,4 @@ export const WhatsAppCommentDialog = forwardRef<HTMLDivElement, WhatsAppCommentD
       )}
     </AnimatePresence>
   );
-}
+});
