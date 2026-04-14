@@ -34,6 +34,7 @@ interface VersionMeta {
   status: string;
   created_at: string | null;
   change_reason: string | null;
+  version_group_id: string | null;
 }
 
 type DiffStatus = "added" | "removed" | "changed" | "unchanged";
