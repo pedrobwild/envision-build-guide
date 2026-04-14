@@ -1,12 +1,9 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   Select,
@@ -16,13 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -30,60 +20,33 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Search,
-  Calendar,
-  User,
-  Building2,
   ArrowLeft,
   Loader2,
   Inbox,
   Clock,
   AlertTriangle,
-  MoreVertical,
-  FileText,
-  ExternalLink,
   CheckCircle2,
-  PauseCircle,
-  ArrowUpDown,
   Flame,
-  GitCompare,
   LayoutList,
   Kanban,
   Send,
   FileSignature,
-  UserCog,
-  Handshake,
-  RotateCcw,
+  Plus,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
-  PRIORITIES,
   STATUS_GROUPS,
   type InternalStatus,
-  type Priority,
 } from "@/lib/role-constants";
 import { ProductionFunnel } from "@/components/editor/ProductionFunnel";
 import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFilterChips";
-import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { isToday, isPast } from "date-fns";
 import { toast } from "sonner";
 import { EstimatorKanban } from "@/components/editor/EstimatorKanban";
 import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
-import { Plus } from "lucide-react";
-
-// Statuses relevant for the estimator's active queue
-const ESTIMATOR_ACTIVE_STATUSES: readonly string[] = STATUS_GROUPS.ESTIMATOR_DEFAULT_VISIBLE;
-
-type SortOption = "urgente" | "recente" | "prazo";
-
-function getEstimatorStage(status: string): "pending" | "in_progress" | "review" | "delivered" | "finished" {
-  if ((STATUS_GROUPS.PENDING as readonly string[]).includes(status)) return "pending";
-  if ((STATUS_GROUPS.ACTIVE_WORK as readonly string[]).includes(status)) return "in_progress";
-  if ((STATUS_GROUPS.REVIEW as readonly string[]).includes(status)) return "review";
-  if ([...STATUS_GROUPS.DELIVERED, ...STATUS_GROUPS.COMMERCIAL_ADVANCED].includes(status as any)) return "delivered";
-  return "finished";
-}
+import { EstimatorFilterBar, type SortOption } from "@/components/estimator/EstimatorFilterBar";
+import { EstimatorListView, type BudgetRow } from "@/components/estimator/EstimatorListView";
 
 const PENDING_STATUSES: readonly string[] = STATUS_GROUPS.PENDING;
 const IN_PROGRESS_STATUSES: readonly string[] = STATUS_GROUPS.ACTIVE_WORK;
@@ -91,27 +54,7 @@ const REVIEW_STATUSES: readonly string[] = STATUS_GROUPS.REVIEW;
 const DELIVERED_STATUSES: string[] = [...STATUS_GROUPS.DELIVERED, ...STATUS_GROUPS.COMMERCIAL_ADVANCED];
 const FINISHED_STATUSES: readonly string[] = STATUS_GROUPS.FINISHED;
 const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_STATUSES]);
-
-interface BudgetRow {
-  id: string;
-  client_name: string;
-  project_name: string;
-  property_type: string | null;
-  city: string | null;
-  bairro: string | null;
-  internal_status: InternalStatus;
-  priority: string;
-  due_at: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  commercial_owner_id: string | null;
-  estimator_owner_id: string | null;
-  briefing: string | null;
-  demand_context: string | null;
-  version_number: number | null;
-  version_group_id: string | null;
-  is_current_version: boolean | null;
-}
+const PENDING_STATUSES_SET = new Set(["requested", "novo", "triage", "assigned"]);
 
 interface ProfileRow {
   id: string;
@@ -154,6 +97,7 @@ export default function EstimatorDashboard() {
     budgetId: "",
     pendingStatus: "in_progress",
   });
+
   useEffect(() => {
     if (!user || profileLoading) return;
     loadData();
@@ -184,7 +128,6 @@ export default function EstimatorDashboard() {
     setLoading(false);
   }
 
-  // Get users by role for assignment
   const getUsersByRole = useCallback(
     (role: "orcamentista" | "comercial") => {
       const userIds = userRoles.filter((r) => r.role === role).map((r) => r.user_id);
@@ -237,32 +180,6 @@ export default function EstimatorDashboard() {
     return ids.map((id) => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
   }, [isAdmin, budgets, getProfileName]);
 
-  // Deadline helpers
-  const getDueInfo = (dueAt: string | null, internalStatus?: string) => {
-    if (!dueAt) return { label: null, variant: "default" as const };
-    const dueDate = new Date(dueAt);
-    const days = differenceInCalendarDays(dueDate, new Date());
-    const isDelivered = internalStatus ? HIDDEN_BY_DEFAULT_STATUSES.has(internalStatus) : false;
-
-    if (isPast(dueDate) && !isToday(dueDate)) {
-      if (isDelivered) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
-      return {
-        label: `${Math.abs(days)}d atrasado`,
-        variant: "overdue" as const,
-      };
-    }
-    if (isToday(dueDate))
-      return { label: "Vence hoje", variant: isDelivered ? "default" as const : "today" as const };
-    if (days <= 2)
-      return { label: `${days}d restante${days > 1 ? "s" : ""}`, variant: isDelivered ? "default" as const : "soon" as const };
-    return {
-      label: format(dueDate, "dd MMM", { locale: ptBR }),
-      variant: "default" as const,
-    };
-  };
-
-  // Summary counts aligned with the 5 funnel stages
-
   const counts = useMemo(() => {
     return {
       total: budgets.length,
@@ -282,7 +199,6 @@ export default function EstimatorDashboard() {
     };
   }, [budgets]);
 
-  // Filter + sort
   const filtered = useMemo(() => {
     const result = budgets.filter((b) => {
       const q = search.toLowerCase();
@@ -291,7 +207,6 @@ export default function EstimatorDashboard() {
         b.client_name.toLowerCase().includes(q) ||
         b.project_name.toLowerCase().includes(q) ||
         (b.bairro ?? "").toLowerCase().includes(q);
-      // When "all" is selected, hide delivered/finished by default
       const matchStatus = statusFilter === "all"
         ? !HIDDEN_BY_DEFAULT_STATUSES.has(b.internal_status)
         : statusFilter === "_pending"
@@ -304,10 +219,8 @@ export default function EstimatorDashboard() {
         ? FINISHED_STATUSES.includes(b.internal_status)
         : b.internal_status === statusFilter;
       const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
-      const matchCommercial =
-        commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
-      const matchEstimator =
-        estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter;
+      const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
+      const matchEstimator = estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter;
       return matchSearch && matchStatus && matchPriority && matchCommercial && matchEstimator;
     });
 
@@ -318,7 +231,6 @@ export default function EstimatorDashboard() {
         const pa = priorityOrder[a.priority] ?? 2;
         const pb = priorityOrder[b.priority] ?? 2;
         if (pa !== pb) return pa - pb;
-        // Then by due_at ascending (nulls last)
         if (a.due_at && b.due_at) return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
         if (a.due_at) return -1;
         if (b.due_at) return 1;
@@ -330,20 +242,13 @@ export default function EstimatorDashboard() {
         if (b.due_at) return 1;
         return 0;
       }
-      // recente
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
 
     return result;
   }, [budgets, search, statusFilter, priorityFilter, commercialFilter, estimatorFilter, sortBy]);
 
-  // Quick status change
-  // Check if we should show template selector before changing status
-  const PENDING_STATUSES_SET = new Set(["requested", "novo", "triage", "assigned"]);
-
   async function requestStatusChange(budgetId: string, newStatus: InternalStatus) {
-    // If moving to in_progress from a pending status, show template selector
-    // BUT skip if budget already has sections (e.g. duplicated budgets)
     if (newStatus === "in_progress") {
       const budget = budgets.find((b) => b.id === budgetId);
       if (budget && PENDING_STATUSES_SET.has(budget.internal_status)) {
@@ -383,12 +288,10 @@ export default function EstimatorDashboard() {
     toast.success(`Status atualizado para "${statusLabel}"`);
   }
 
-  const dueVariantStyles = {
-    overdue: "bg-destructive/10 text-destructive border-destructive/20",
-    today: "bg-warning/10 text-warning border-warning/20",
-    soon: "bg-warning/10 text-warning border-warning/20",
-    default: "text-muted-foreground",
-  };
+  const handleOpenAssignDialog = useCallback((budgetId: string, type: "estimator" | "commercial", currentValue: string | null) => {
+    setAssignValue(currentValue ?? "");
+    setAssignDialog({ open: true, budgetId, type, currentValue });
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -408,7 +311,6 @@ export default function EstimatorDashboard() {
               </p>
             </div>
           </div>
-          {/* View toggle + New button */}
           <div className="flex items-center gap-2">
             {isAdmin && (
               <Button size="sm" className="gap-1.5" onClick={() => setNewBudgetOpen(true)}>
@@ -441,7 +343,6 @@ export default function EstimatorDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
-        {/* Full-page loading state */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -451,450 +352,121 @@ export default function EstimatorDashboard() {
 
         {!loading && (
           <>
-        {/* Production Funnel */}
-        <ProductionFunnel
-          budgets={budgets}
-          onStageClick={(statuses) => {
-            // If a single status matches a filter option, use it; otherwise show all
-            if (statuses.length === 1) {
-              setStatusFilter(statuses[0]);
-            } else {
-              setStatusFilter("all");
-            }
-          }}
-        />
+            {/* Production Funnel */}
+            <ProductionFunnel
+              budgets={budgets}
+              onStageClick={(statuses) => {
+                if (statuses.length === 1) {
+                  setStatusFilter(statuses[0]);
+                } else {
+                  setStatusFilter("all");
+                }
+              }}
+            />
 
-        {/* Summary cards — desktop */}
-        <div className="hidden lg:grid grid-cols-7 gap-3">
-          <SummaryCard
-            label="Atrasadas"
-            count={counts.overdue}
-            icon={<AlertTriangle className="h-4 w-4" />}
-            accent="text-destructive"
-            onClick={() => setStatusFilter("all")}
-          />
-          <SummaryCard
-            label="Vence hoje"
-            count={counts.dueToday}
-            icon={<Flame className="h-4 w-4" />}
-            accent="text-warning"
-          />
-          <SummaryCard
-            label="Pendente"
-            count={counts.pending}
-            icon={<Inbox className="h-4 w-4" />}
-            accent="text-primary"
-            onClick={() => setStatusFilter("_pending")}
-          />
-          <SummaryCard
-            label="Em Elaboração"
-            count={counts.inProgress}
-            icon={<Clock className="h-4 w-4" />}
-            accent="text-warning"
-            onClick={() => setStatusFilter("_in_progress")}
-          />
-          <SummaryCard
-            label="Em Revisão"
-            count={counts.review}
-            icon={<CheckCircle2 className="h-4 w-4" />}
-            accent="text-warning"
-            onClick={() => setStatusFilter("ready_for_review")}
-          />
-          <SummaryCard
-            label="Entregues"
-            count={counts.delivered}
-            icon={<Send className="h-4 w-4" />}
-            accent="text-success"
-            onClick={() => setStatusFilter("_delivered")}
-          />
-          <SummaryCard
-            label="Encerrados"
-            count={counts.finished}
-            icon={<FileSignature className="h-4 w-4" />}
-            accent="text-muted-foreground"
-            onClick={() => setStatusFilter("_finished")}
-          />
-        </div>
-
-        {/* Mobile filter chips */}
-        <MobileFilterChips
-          chips={[
-            { id: "all", label: "Todos", count: counts.total },
-            { id: "overdue", label: "Atrasados", icon: AlertTriangle, count: counts.overdue, color: "destructive" },
-            { id: "urgente", label: "Urgentes", icon: Flame, count: budgets.filter(b => b.priority === "urgente").length },
-            { id: "today", label: "Hoje", icon: Clock, count: counts.dueToday },
-            { id: "_pending", label: "Pendente", icon: Inbox, count: counts.pending },
-            { id: "_in_progress", label: "Em Elaboração", count: counts.inProgress },
-            { id: "ready_for_review", label: "Revisão", count: counts.review },
-          ] as FilterChip[]}
-          activeChipId={
-            priorityFilter === "urgente" ? "urgente" :
-            statusFilter !== "all" ? statusFilter :
-            "all"
-          }
-          onChipChange={(id) => {
-            if (id === "all") {
-              setStatusFilter("all");
-              setPriorityFilter("all");
-            } else if (id === "overdue") {
-              setStatusFilter("all");
-              setPriorityFilter("all");
-              // We'll use status filter + due filter logic — for now just show all and let sort handle it
-              setSortBy("prazo");
-              setStatusFilter("all");
-            } else if (id === "urgente") {
-              setPriorityFilter("urgente");
-              setStatusFilter("all");
-            } else if (id === "today") {
-              setStatusFilter("all");
-              setPriorityFilter("all");
-              setSortBy("prazo");
-            } else {
-              setPriorityFilter("all");
-              setStatusFilter(id);
-            }
-          }}
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Buscar cliente, projeto..."
-        />
-
-        {/* Kanban View */}
-        {viewMode === "kanban" && !loading && (
-          <EstimatorKanban
-            budgets={budgets.filter(b => (commercialFilter === "all" || b.commercial_owner_id === commercialFilter) && (estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter))}
-            hideDelivered={statusFilter === "all"}
-            onStatusChange={async (budgetId, newStatus) => {
-              requestStatusChange(budgetId, newStatus);
-            }}
-            onCardClick={(id) => navigate(`/admin/budget/${id}`, { state: { from: "/admin/producao" } })}
-            getProfileName={getProfileName}
-          />
-        )}
-
-        {/* List View */}
-        {viewMode === "list" && (
-          <>
-            {/* Filters */}
-            <div className="hidden lg:flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por cliente, projeto, bairro..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Status" />
-                  {statusFilter !== "all" && (
-                    <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px] font-mono">
-                      {filtered.length}
-                    </Badge>
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="_delivered">📤 Entregues</SelectItem>
-                  <SelectItem value="_finished">📦 Encerrados</SelectItem>
-                  {Object.entries(INTERNAL_STATUSES).map(([key, { label }]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-full sm:w-[150px]">
-                  <SelectValue placeholder="Prioridade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {Object.entries(PRIORITIES).map(([key, { label }]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {isAdmin && commercialOptions.length > 0 && (
-                <Select value={commercialFilter} onValueChange={setCommercialFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <User className="h-3.5 w-3.5 mr-1.5" />
-                    <SelectValue placeholder="Comercial" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os comerciais</SelectItem>
-                    {commercialOptions.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {isAdmin && estimatorOptions.length > 0 && (
-                <Select value={estimatorFilter} onValueChange={setEstimatorFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <UserCog className="h-3.5 w-3.5 mr-1.5" />
-                    <SelectValue placeholder="Orçamentista" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os orçamentistas</SelectItem>
-                    {estimatorOptions.map((e) => (
-                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                <SelectTrigger className="w-full sm:w-[170px]">
-                  <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="urgente">Mais urgente</SelectItem>
-                  <SelectItem value="prazo">Prazo mais próximo</SelectItem>
-                  <SelectItem value="recente">Mais recente</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Summary cards — desktop */}
+            <div className="hidden lg:grid grid-cols-7 gap-3">
+              <SummaryCard label="Atrasadas" count={counts.overdue} icon={<AlertTriangle className="h-4 w-4" />} accent="text-destructive" onClick={() => setStatusFilter("all")} />
+              <SummaryCard label="Vence hoje" count={counts.dueToday} icon={<Flame className="h-4 w-4" />} accent="text-warning" />
+              <SummaryCard label="Pendente" count={counts.pending} icon={<Inbox className="h-4 w-4" />} accent="text-primary" onClick={() => setStatusFilter("_pending")} />
+              <SummaryCard label="Em Elaboração" count={counts.inProgress} icon={<Clock className="h-4 w-4" />} accent="text-warning" onClick={() => setStatusFilter("_in_progress")} />
+              <SummaryCard label="Em Revisão" count={counts.review} icon={<CheckCircle2 className="h-4 w-4" />} accent="text-warning" onClick={() => setStatusFilter("ready_for_review")} />
+              <SummaryCard label="Entregues" count={counts.delivered} icon={<Send className="h-4 w-4" />} accent="text-success" onClick={() => setStatusFilter("_delivered")} />
+              <SummaryCard label="Encerrados" count={counts.finished} icon={<FileSignature className="h-4 w-4" />} accent="text-muted-foreground" onClick={() => setStatusFilter("_finished")} />
             </div>
 
-            {/* Hidden budgets banner */}
-            {statusFilter === "all" && (counts.delivered + counts.finished) > 0 && (
-              <div className="flex items-center justify-between px-3 py-2 rounded-md bg-muted/50 text-sm font-body text-muted-foreground">
-                <span>
-                  {counts.delivered + counts.finished} orçamento{(counts.delivered + counts.finished) !== 1 ? "s" : ""} entregue{(counts.delivered + counts.finished) !== 1 ? "s" : ""}/encerrado{(counts.delivered + counts.finished) !== 1 ? "s" : ""} não {(counts.delivered + counts.finished) !== 1 ? "estão visíveis" : "está visível"} nesta visualização.
-                </span>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="text-xs h-auto p-0 gap-1 text-primary"
-                  onClick={() => setStatusFilter("_delivered")}
-                >
-                  Ver orçamentos entregues →
-                </Button>
-              </div>
+            {/* Mobile filter chips */}
+            <MobileFilterChips
+              chips={[
+                { id: "all", label: "Todos", count: counts.total },
+                { id: "overdue", label: "Atrasados", icon: AlertTriangle, count: counts.overdue, color: "destructive" },
+                { id: "urgente", label: "Urgentes", icon: Flame, count: budgets.filter(b => b.priority === "urgente").length },
+                { id: "today", label: "Hoje", icon: Clock, count: counts.dueToday },
+                { id: "_pending", label: "Pendente", icon: Inbox, count: counts.pending },
+                { id: "_in_progress", label: "Em Elaboração", count: counts.inProgress },
+                { id: "ready_for_review", label: "Revisão", count: counts.review },
+              ] as FilterChip[]}
+              activeChipId={
+                priorityFilter === "urgente" ? "urgente" :
+                statusFilter !== "all" ? statusFilter :
+                "all"
+              }
+              onChipChange={(id) => {
+                if (id === "all") {
+                  setStatusFilter("all");
+                  setPriorityFilter("all");
+                } else if (id === "overdue") {
+                  setStatusFilter("all");
+                  setPriorityFilter("all");
+                  setSortBy("prazo");
+                } else if (id === "urgente") {
+                  setPriorityFilter("urgente");
+                  setStatusFilter("all");
+                } else if (id === "today") {
+                  setStatusFilter("all");
+                  setPriorityFilter("all");
+                  setSortBy("prazo");
+                } else {
+                  setPriorityFilter("all");
+                  setStatusFilter(id);
+                }
+              }}
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Buscar cliente, projeto..."
+            />
+
+            {/* Kanban View */}
+            {viewMode === "kanban" && (
+              <EstimatorKanban
+                budgets={budgets.filter(b => (commercialFilter === "all" || b.commercial_owner_id === commercialFilter) && (estimatorFilter === "all" || b.estimator_owner_id === estimatorFilter))}
+                hideDelivered={statusFilter === "all"}
+                onStatusChange={async (budgetId, newStatus) => {
+                  requestStatusChange(budgetId, newStatus);
+                }}
+                onCardClick={(id) => navigate(`/admin/budget/${id}`, { state: { from: "/admin/producao" } })}
+                getProfileName={getProfileName}
+              />
             )}
 
-            {/* Empty state */}
-            {!loading && filtered.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <Inbox className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h2 className="text-lg font-semibold font-display text-foreground mb-1">
-                  {search || statusFilter !== "all" || priorityFilter !== "all"
-                    ? "Nenhum resultado"
-                    : "Nenhuma demanda atribuída"}
-                </h2>
-                <p className="text-sm text-muted-foreground font-body max-w-sm">
-                  {search || statusFilter !== "all" || priorityFilter !== "all"
-                    ? "Ajuste os filtros para encontrar o que procura."
-                    : "Quando um orçamento for atribuído a você, ele aparecerá aqui."}
-                </p>
-              </div>
+            {/* List View */}
+            {viewMode === "list" && (
+              <>
+                <EstimatorFilterBar
+                  search={search}
+                  onSearchChange={setSearch}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                  priorityFilter={priorityFilter}
+                  onPriorityFilterChange={setPriorityFilter}
+                  commercialFilter={commercialFilter}
+                  onCommercialFilterChange={setCommercialFilter}
+                  estimatorFilter={estimatorFilter}
+                  onEstimatorFilterChange={setEstimatorFilter}
+                  sortBy={sortBy}
+                  onSortByChange={setSortBy}
+                  commercialOptions={commercialOptions}
+                  estimatorOptions={estimatorOptions}
+                  isAdmin={isAdmin}
+                  filteredCount={filtered.length}
+                />
+
+                <EstimatorListView
+                  filtered={filtered}
+                  loading={loading}
+                  search={search}
+                  statusFilter={statusFilter}
+                  priorityFilter={priorityFilter}
+                  counts={{ delivered: counts.delivered, finished: counts.finished }}
+                  isAdmin={isAdmin}
+                  getProfileName={getProfileName}
+                  onRequestStatusChange={requestStatusChange}
+                  onSetStatusFilter={setStatusFilter}
+                  onOpenAssignDialog={handleOpenAssignDialog}
+                  onRefresh={loadData}
+                />
+              </>
             )}
-
-            {/* List */}
-            {!loading && filtered.length > 0 && (
-              <div className="space-y-2">
-                {filtered.map((b) => {
-                  const status =
-                    INTERNAL_STATUSES[b.internal_status as InternalStatus] ??
-                    INTERNAL_STATUSES.assigned;
-                  const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-                  const due = getDueInfo(b.due_at, b.internal_status);
-
-                  return (
-                    <Card
-                      key={b.id}
-                      className="p-4 hover:shadow-md transition-shadow border group"
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Main content */}
-                        <div
-                          className="flex-1 min-w-0 cursor-pointer"
-                          onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}
-                        >
-                          {/* Row 1: Project + badges */}
-                          <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                            <span className="font-semibold font-display text-foreground truncate">
-                              {b.project_name || "Sem nome"}
-                            </span>
-                            <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
-                              {status.icon} {status.label}
-                            </Badge>
-                            {b.priority !== "normal" && (
-                              <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>
-                                {prio.label}
-                              </Badge>
-                            )}
-                            {due.label && (
-                              <span
-                                className={`inline-flex items-center gap-1 text-xs font-medium font-body px-2 py-0.5 rounded-full border ${dueVariantStyles[due.variant]}`}
-                              >
-                                <Calendar className="h-3 w-3" />
-                                {due.label}
-                              </span>
-                            )}
-                            {(b.version_number ?? 1) > 1 && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                                V{b.version_number}
-                              </span>
-                            )}
-                          </div>
-                          {b.internal_status === "revision_requested" && (
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <Badge className="bg-warning/10 text-warning border-warning/20 border text-xs font-body gap-1 px-2 py-0.5">
-                                <RotateCcw className="h-3 w-3" />
-                                Revisão solicitada
-                              </Badge>
-                            </div>
-                          )}
-
-                          {/* Row 2: Meta */}
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
-                            <span className="flex items-center gap-1">
-                              <User className="h-3.5 w-3.5" />
-                              {b.client_name}
-                            </span>
-                            {(b.bairro || b.city) && (
-                              <span className="flex items-center gap-1">
-                                <Building2 className="h-3.5 w-3.5" />
-                                {[b.bairro, b.city].filter(Boolean).join(", ")}
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1" title="Comercial responsável">
-                              <Handshake className="h-3.5 w-3.5" />
-                              {getProfileName(b.commercial_owner_id)}
-                            </span>
-                            <span className="flex items-center gap-1" title="Orçamentista responsável">
-                              <UserCog className="h-3.5 w-3.5" />
-                              {getProfileName(b.estimator_owner_id)}
-                            </span>
-                            {b.created_at && (
-                              <span className="text-xs">
-                                Criado {format(new Date(b.created_at), "dd/MM/yy")}
-                              </span>
-                            )}
-                            {b.updated_at && (
-                              <span className="text-xs">
-                                Atualizado {format(new Date(b.updated_at), "dd/MM HH:mm")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Quick stage actions */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          {(() => {
-                            const stage = getEstimatorStage(b.internal_status);
-                            const nextActions: { label: string; targetStatus: InternalStatus; icon: React.ReactNode; variant: "default" | "outline" | "secondary" }[] = [];
-
-                            if (stage === "pending") {
-                              nextActions.push({ label: "Iniciar", targetStatus: "in_progress", icon: <Clock className="h-3 w-3" />, variant: "default" });
-                            } else if (stage === "in_progress") {
-                              nextActions.push({ label: "Revisão", targetStatus: "ready_for_review", icon: <CheckCircle2 className="h-3 w-3" />, variant: "default" });
-                            } else if (stage === "review") {
-                              nextActions.push({ label: "Entregar", targetStatus: "delivered_to_sales", icon: <Send className="h-3 w-3" />, variant: "default" });
-                            }
-
-                            return nextActions.map((a) => (
-                              <Button
-                                key={a.targetStatus}
-                                variant={a.variant}
-                                size="sm"
-                                className="h-7 text-xs gap-1 px-2.5"
-                                onClick={(e) => { e.stopPropagation(); requestStatusChange(b.id, a.targetStatus); }}
-                              >
-                                {a.icon}
-                                {a.label}
-                              </Button>
-                            ));
-                          })()}
-
-                          <BudgetActionsMenu
-                            budget={b}
-                            onRefresh={loadData}
-                            fromPath="/admin/producao"
-                            extraItems={
-                              <>
-                                {b.briefing && (
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      toast.info(b.briefing, {
-                                        duration: 10000,
-                                        description: `Briefing — ${b.project_name}`,
-                                      });
-                                    }}
-                                  >
-                                    <FileText className="h-4 w-4 mr-2" />
-                                    Ver briefing
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                {!PENDING_STATUSES.includes(b.internal_status) && (
-                                  <DropdownMenuItem onClick={() => requestStatusChange(b.id, "assigned")}>
-                                    <Inbox className="h-4 w-4 mr-2" />
-                                    Mover p/ Pendente
-                                  </DropdownMenuItem>
-                                )}
-                                {!IN_PROGRESS_STATUSES.includes(b.internal_status) && (
-                                  <DropdownMenuItem onClick={() => requestStatusChange(b.id, "in_progress")}>
-                                    <Clock className="h-4 w-4 mr-2" />
-                                    Mover p/ Em Elaboração
-                                  </DropdownMenuItem>
-                                )}
-                                {b.internal_status !== "ready_for_review" && (
-                                  <DropdownMenuItem onClick={() => requestStatusChange(b.id, "ready_for_review")}>
-                                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                                    Mover p/ Em Revisão
-                                  </DropdownMenuItem>
-                                )}
-                                {!DELIVERED_STATUSES.includes(b.internal_status) && (
-                                  <DropdownMenuItem onClick={() => requestStatusChange(b.id, "delivered_to_sales")}>
-                                    <Send className="h-4 w-4 mr-2" />
-                                    Mover p/ Entregue
-                                  </DropdownMenuItem>
-                                )}
-                                {isAdmin && (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => {
-                                      setAssignValue(b.estimator_owner_id ?? "");
-                                      setAssignDialog({ open: true, budgetId: b.id, type: "estimator", currentValue: b.estimator_owner_id });
-                                    }}>
-                                      <UserCog className="h-4 w-4 mr-2" />
-                                      Atribuir orçamentista
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => {
-                                      setAssignValue(b.commercial_owner_id ?? "");
-                                      setAssignDialog({ open: true, budgetId: b.id, type: "commercial", currentValue: b.commercial_owner_id });
-                                    }}>
-                                      <Handshake className="h-4 w-4 mr-2" />
-                                      Atribuir comercial
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                              </>
-                            }
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreVertical className="h-3.5 w-3.5" />
-                              </Button>
-                            }
-                          />
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
           </>
         )}
       </div>
