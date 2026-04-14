@@ -15,6 +15,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -24,7 +25,7 @@ import {
   Clock, MoreVertical, ExternalLink, CheckCircle2,
   ArrowUpDown, Copy, Send, RotateCcw, AlertTriangle,
   FileText, Eye, ThumbsUp, XCircle, Plus, GitCompare,
-  LayoutList, Columns3,
+  LayoutList, Columns3, UserPlus,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES, PRIORITIES,
@@ -160,7 +161,13 @@ export default function CommercialDashboard() {
       .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total")
       .order("created_at", { ascending: false });
     if (!isAdmin) {
-      budgetQuery = budgetQuery.eq("commercial_owner_id", user!.id);
+      const commercialRelevantStatuses = [
+        "ready_for_review", "delivered_to_sales", "sent_to_client",
+        "revision_requested", "minuta_solicitada"
+      ];
+      budgetQuery = budgetQuery.or(
+        `commercial_owner_id.eq.${user!.id},and(commercial_owner_id.is.null,internal_status.in.(${commercialRelevantStatuses.join(",")}))`
+      );
     }
     const [budgetsRes, profilesRes, syncRes] = await Promise.all([
       budgetQuery,
@@ -298,6 +305,22 @@ export default function CommercialDashboard() {
 
     setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, internal_status: newStatus, updated_at: new Date().toISOString() } : b));
     toast.success(`Status atualizado para "${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}"`);
+  }
+
+  async function claimBudget(budgetId: string) {
+    if (!user) return;
+    // Optimistic update
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, commercial_owner_id: user.id } : b));
+    const { error } = await supabase
+      .from("budgets")
+      .update({ commercial_owner_id: user.id, updated_at: new Date().toISOString() })
+      .eq("id", budgetId);
+    if (error) {
+      toast.error("Erro ao assumir orçamento.");
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, commercial_owner_id: null } : b));
+    } else {
+      toast.success("Orçamento assumido com sucesso!");
+    }
   }
 
   function handleContractUploadSuccess() {
@@ -569,6 +592,21 @@ export default function CommercialDashboard() {
                           <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
                             {status.icon} {status.label}
                           </Badge>
+                          {!b.commercial_owner_id && (
+                            <Popover>
+                              <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Badge variant="outline" className="text-xs font-body border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 cursor-pointer hover:bg-amber-100 transition-colors">
+                                  <UserPlus className="h-3 w-3 mr-1" />Sem responsável
+                                </Badge>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56 p-3" align="start" onClick={(e) => e.stopPropagation()}>
+                                <p className="text-xs text-muted-foreground font-body mb-2">Este orçamento não tem um comercial designado.</p>
+                                <Button size="sm" className="w-full text-xs gap-1.5" onClick={() => claimBudget(b.id)}>
+                                  <UserPlus className="h-3.5 w-3.5" />Assumir este orçamento
+                                </Button>
+                              </PopoverContent>
+                            </Popover>
+                          )}
                           {b.priority !== "normal" && (
                             <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>{prio.label}</Badge>
                           )}
