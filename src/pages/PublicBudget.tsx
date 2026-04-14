@@ -37,6 +37,8 @@ import { categorizeSections } from "@/lib/scope-categories";
 import { cn } from "@/lib/utils";
 import { SectionDivider } from "@/components/budget/SectionDivider";
 
+const DEMO_PORTFOLIO_IDS = (import.meta.env.VITE_DEMO_PORTFOLIO_IDS ?? "2aa034962039,f865e54c9a5f,7d9a7b268320").split(",").filter(Boolean);
+
 // ── Lazy-loaded heavy components (MapLibre, ReactPlayer, Lightbox, Embla) ──
 const NeighborhoodDensityMap = lazy(() => import("@/components/budget/NeighborhoodDensityMap").then(m => ({ default: m.NeighborhoodDensityMap })));
 const ProjectGallery = lazy(() => import("@/components/budget/ProjectGallery").then(m => ({ default: m.ProjectGallery })));
@@ -426,7 +428,7 @@ export default function PublicBudget() {
             </div>
 
             {/* ─── Escopo técnico detalhado — only items with photos, no values ─── */}
-            {!["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "") && (
+            {!DEMO_PORTFOLIO_IDS.includes(publicId || "") && (
               <div id="mobile-scope" className="scroll-mt-20 mt-4 sm:mt-6">
                 {sections.length > 0 && (() => {
                   // Filter ALL categories to only show items with images
@@ -538,7 +540,7 @@ export default function PublicBudget() {
                 categorizedGroups={categorizedGroups}
                 budgetId={budget.id}
                 editable={isAdmin}
-                allCategoriesOpenSheet={["2aa034962039", "f865e54c9a5f", "7d9a7b268320"].includes(publicId || "")}
+                allCategoriesOpenSheet={DEMO_PORTFOLIO_IDS.includes(publicId || "")}
                 forceExpandItems={exporting}
               />
               {budget.show_optional_items && (

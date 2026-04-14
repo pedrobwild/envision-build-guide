@@ -41,7 +41,9 @@ import {
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
 import { cn } from "@/lib/utils";
+import { LayoutTemplate } from "lucide-react";
 
 /* ── Notion-like property row ── */
 function PropertyRow({
@@ -135,6 +137,8 @@ export default function NewBudgetRequest() {
 
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const { data: templates } = useBudgetTemplates();
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
 
   const [clientName, setClientName] = useState("");
@@ -308,18 +312,36 @@ export default function NewBudgetRequest() {
       });
       setTimeout(() => navigate("/admin/comercial"), 800);
     } else {
-      const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
       const newId = inserted.id;
 
+      // Apply template if selected
+      if (selectedTemplateId) {
+        try {
+          await seedFromTemplate(newId, selectedTemplateId);
+        } catch {
+          toast.error("Template aplicado parcialmente — verifique as seções.");
+        }
+      }
+
+      const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
+      const templateName = templates?.find((t) => t.id === selectedTemplateId)?.name;
+
       toast.success("Solicitação criada!", {
-        description: estimatorName ? `Atribuída para ${estimatorName}` : "O orçamento entrará na fila de triagem.",
+        description: templateName
+          ? `Template "${templateName}" aplicado. ${estimatorName ? `Atribuída para ${estimatorName}` : ""}`
+          : estimatorName ? `Atribuída para ${estimatorName}` : "O orçamento entrará na fila de triagem.",
         action: {
           label: "Abrir orçamento",
           onClick: () => navigate(`/admin/budget/${newId}`),
         },
         duration: 8000,
       });
-      setTimeout(() => navigate("/admin/solicitacoes"), 1000);
+
+      if (selectedTemplateId) {
+        setTimeout(() => navigate(`/admin/budget/${newId}`), 800);
+      } else {
+        setTimeout(() => navigate("/admin/solicitacoes"), 1000);
+      }
     }
   };
 
@@ -612,6 +634,28 @@ export default function NewBudgetRequest() {
             />
           </PropertyRow>
         </div>
+
+        {/* ── Template inicial (only for new mode) ── */}
+        {mode !== "import" && templates && templates.length > 0 && (
+          <>
+            <SectionTitle icon={LayoutTemplate} title="Template Inicial" />
+            <div className="border-b border-border/30 pb-1 mb-1">
+              <PropertyRow icon={LayoutTemplate} label="Template" hint="Opcional — preenche automaticamente as seções e itens do orçamento">
+                <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                  <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+                    <SelectValue placeholder="Sem template (orçamento em branco)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sem template (em branco)</SelectItem>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </PropertyRow>
+            </div>
+          </>
+        )}
 
         {/* ── Responsáveis ── */}
         <SectionTitle icon={UserCheck} title="Responsáveis" />
