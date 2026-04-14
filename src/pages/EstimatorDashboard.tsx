@@ -501,18 +501,18 @@ export default function EstimatorDashboard() {
             onClick={() => setStatusFilter("ready_for_review")}
           />
           <SummaryCard
-            label="Entregue"
+            label="Entregues"
             count={counts.delivered}
             icon={<Send className="h-4 w-4" />}
             accent="text-success"
-            onClick={() => setStatusFilter("delivered_to_sales")}
+            onClick={() => setStatusFilter("_delivered")}
           />
           <SummaryCard
-            label="Finalizado"
+            label="Encerrados"
             count={counts.finished}
             icon={<FileSignature className="h-4 w-4" />}
-            accent="text-success"
-            onClick={() => setStatusFilter("sent_to_client")}
+            accent="text-muted-foreground"
+            onClick={() => setStatusFilter("_finished")}
           />
         </div>
 
@@ -589,9 +589,16 @@ export default function EstimatorDashboard() {
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Status" />
+                  {statusFilter !== "all" && (
+                    <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px] font-mono">
+                      {filtered.length}
+                    </Badge>
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="_delivered">📤 Entregues</SelectItem>
+                  <SelectItem value="_finished">📦 Encerrados</SelectItem>
                   {Object.entries(INTERNAL_STATUSES).map(([key, { label }]) => (
                     <SelectItem key={key} value={key}>{label}</SelectItem>
                   ))}
@@ -651,17 +658,17 @@ export default function EstimatorDashboard() {
 
             {/* Hidden budgets banner */}
             {statusFilter === "all" && (counts.delivered + counts.finished) > 0 && (
-              <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-border bg-muted/40 text-sm font-body text-muted-foreground">
+              <div className="flex items-center justify-between px-3 py-2 rounded-md bg-muted/50 text-sm font-body text-muted-foreground">
                 <span>
-                  {counts.delivered + counts.finished} orçamento{(counts.delivered + counts.finished) !== 1 ? "s" : ""} entregue{(counts.delivered + counts.finished) !== 1 ? "s" : ""}/finalizado{(counts.delivered + counts.finished) !== 1 ? "s" : ""} oculto{(counts.delivered + counts.finished) !== 1 ? "s" : ""}
+                  {counts.delivered + counts.finished} orçamento{(counts.delivered + counts.finished) !== 1 ? "s" : ""} entregue{(counts.delivered + counts.finished) !== 1 ? "s" : ""}/encerrado{(counts.delivered + counts.finished) !== 1 ? "s" : ""} não {(counts.delivered + counts.finished) !== 1 ? "estão visíveis" : "está visível"} nesta visualização.
                 </span>
                 <Button
-                  variant="ghost"
+                  variant="link"
                   size="sm"
-                  className="text-xs h-7 gap-1"
+                  className="text-xs h-auto p-0 gap-1 text-primary"
                   onClick={() => setStatusFilter("_delivered")}
                 >
-                  Ver entregues
+                  Ver orçamentos entregues →
                 </Button>
               </div>
             )}
