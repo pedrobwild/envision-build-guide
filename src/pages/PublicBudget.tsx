@@ -334,10 +334,10 @@ export default function PublicBudget() {
         {/* ═══ MOBILE HERO CARD — price + validity + CTA above the fold ═══ */}
 
       {/* PDF download banner for imported budgets */}
-      {(budget as any).budget_pdf_url && (
+      {budget.budget_pdf_url && (
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mt-3">
           <a
-            href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/budget-pdfs/${(budget as any).budget_pdf_url}`}
+            href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/budget-pdfs/${budget.budget_pdf_url}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-primary/5 border border-primary/15 hover:bg-primary/10 transition-colors group"
