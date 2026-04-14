@@ -12,9 +12,11 @@ type GalleryTab = "video3d" | "fotos3d" | "fotos" | "tour3d";
 
 type MediaItem = { src: string; alt: string; type?: "video" | "image" };
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+
 const defaultGallery: { video3d: MediaItem[]; fotos3d: MediaItem[]; fotos: MediaItem[] } = {
   video3d: [
-    { src: "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media/videos/projeto-3d-tour.mp4", alt: "Projeto 3D — Vídeo Tour", type: "video" },
+    { src: `${SUPABASE_URL}/storage/v1/object/public/media/videos/projeto-3d-tour.mp4`, alt: "Projeto 3D — Vídeo Tour", type: "video" },
   ],
   fotos3d: [
     { src: "/images/exemplo-projeto-3d-1.png", alt: "Projeto 3D — Planta humanizada" },

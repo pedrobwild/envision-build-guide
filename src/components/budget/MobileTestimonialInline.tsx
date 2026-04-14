@@ -3,8 +3,8 @@ import { Play, Star, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import depoimentoCover from "@/assets/depoimento-cover.jpg";
 
-const VIDEO_URL =
-  "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media/videos%2Fdepoimento-bwild.mov";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+const VIDEO_URL = `${SUPABASE_URL}/storage/v1/object/public/media/videos%2Fdepoimento-bwild.mov`;
 
 export function MobileTestimonialInline() {
   const [open, setOpen] = useState(false);
