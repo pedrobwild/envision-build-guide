@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ interface StickyEditorHeaderProps {
   onRetrySave?: () => void;
   onPublish?: () => void;
   publishing?: boolean;
+  onProjectNameChange?: (name: string) => void;
   primaryAction?: {
     label: string;
     onClick: () => void;
@@ -105,6 +106,7 @@ export function StickyEditorHeader({
   onRetrySave,
   onPublish,
   publishing,
+  onProjectNameChange,
   primaryAction,
 }: StickyEditorHeaderProps) {
   const navigate = useNavigate();
@@ -118,6 +120,31 @@ export function StickyEditorHeader({
 
   const projectName = budget.project_name || "Sem nome";
   const truncatedName = projectName.length > 30 ? projectName.slice(0, 30) + "…" : projectName;
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(projectName);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setNameValue(budget.project_name || "");
+  }, [budget.project_name]);
+
+  useEffect(() => {
+    if (editingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [editingName]);
+
+  const commitName = () => {
+    setEditingName(false);
+    const trimmed = nameValue.trim();
+    if (trimmed && trimmed !== budget.project_name && onProjectNameChange) {
+      onProjectNameChange(trimmed);
+    } else {
+      setNameValue(budget.project_name || "");
+    }
+  };
 
   const marginColor = totals.marginPercent >= 15
     ? "text-success"
@@ -137,9 +164,33 @@ export function StickyEditorHeader({
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-          <span className="text-foreground font-semibold font-display truncate text-sm tracking-tight min-w-0">
-            {truncatedName}
-          </span>
+          {editingName ? (
+            <input
+              ref={nameInputRef}
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              onBlur={commitName}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitName();
+                if (e.key === "Escape") {
+                  setNameValue(budget.project_name || "");
+                  setEditingName(false);
+                }
+              }}
+              className="text-foreground font-semibold font-display text-sm tracking-tight min-w-0 flex-1 bg-transparent border-none outline-none ring-1 ring-primary/30 rounded px-1.5 py-0.5"
+              placeholder="Nome do projeto"
+            />
+          ) : (
+            <span
+              onClick={() => onProjectNameChange && setEditingName(true)}
+              className={cn(
+                "text-foreground font-semibold font-display truncate text-sm tracking-tight min-w-0",
+                onProjectNameChange && "cursor-text hover:bg-muted/30 rounded px-1 -mx-1 transition-colors"
+              )}
+            >
+              {truncatedName}
+            </span>
+          )}
 
           <Badge className={cn("text-[10px] font-body border shrink-0 rounded-full px-2", getStatusBadgeClass(internalStatus))}>
             {statusInfo.icon} <span className="hidden sm:inline ml-1">{statusInfo.label}</span>
