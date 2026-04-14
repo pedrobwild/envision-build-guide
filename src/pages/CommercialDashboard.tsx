@@ -163,8 +163,9 @@ export default function CommercialDashboard() {
       .order("created_at", { ascending: false });
     if (!isAdmin) {
       const commercialRelevantStatuses = [
+        "novo", "requested",
         "ready_for_review", "delivered_to_sales", "sent_to_client",
-        "revision_requested", "minuta_solicitada"
+        "revision_requested", "minuta_solicitada", "contrato_fechado", "lost"
       ];
       budgetQuery = budgetQuery.or(
         `commercial_owner_id.eq.${user!.id},and(commercial_owner_id.is.null,internal_status.in.(${commercialRelevantStatuses.join(",")}))`
