@@ -3,10 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
-  Video, Image, Camera, Plus, Trash2, Upload, Loader2, GripVertical, ExternalLink,
+  Video, Camera, Plus, Trash2, Upload, Loader2, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +34,7 @@ type MediaCategory = "video3d" | "projeto3d" | "projetoExecutivo" | "fotos";
 
 const CATEGORIES: { key: MediaCategory; label: string; icon: React.ReactNode; isArray: boolean; accept: string }[] = [
   { key: "video3d", label: "Vídeo 3D", icon: <Video className="h-4 w-4" />, isArray: false, accept: "video/mp4,video/webm,video/quicktime" },
-  { key: "projeto3d", label: "Fotos 3D", icon: <Image className="h-4 w-4" />, isArray: true, accept: "image/*" },
+  { key: "projeto3d", label: "Fotos 3D", icon: <Camera className="h-4 w-4" />, isArray: true, accept: "image/*" },
   { key: "projetoExecutivo", label: "Projeto Executivo", icon: <Camera className="h-4 w-4" />, isArray: true, accept: "image/*" },
   { key: "fotos", label: "Fotos do Projeto", icon: <Camera className="h-4 w-4" />, isArray: true, accept: "image/*" },
 ];

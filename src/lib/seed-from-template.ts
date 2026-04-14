@@ -61,10 +61,13 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
 
   // Copy media_config from template to budget
   if (templateRow?.media_config) {
-    await supabase
+    const { error: mediaErr } = await supabase
       .from("budgets")
       .update({ media_config: templateRow.media_config })
       .eq("id", budgetId);
+    if (mediaErr) {
+      console.warn("Falha ao copiar media_config do template:", mediaErr.message);
+    }
   }
 
   const { data: templateSections, error: secErr } = await supabase
