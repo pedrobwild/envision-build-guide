@@ -44,7 +44,7 @@ export function OptionalSelectionsPanel() {
   const loadSelections = async () => {
     const { data: selections, error } = await supabase
       .from("budget_optional_selections")
-      .select("*")
+      .select("id, budget_id, section_id, client_name, client_email, confirmed, confirmed_at, created_at")
       .eq("confirmed", true)
       .order("created_at", { ascending: false });
 

@@ -121,7 +121,7 @@ export default function TemplateEditorPage() {
 
     const { data: tpl } = await supabase
       .from("budget_templates")
-      .select("*")
+      .select("id, name, description, is_active, created_at, updated_at")
       .eq("id", templateId)
       .single();
     if (!tpl) { navigate("/admin/templates"); return; }
@@ -129,7 +129,7 @@ export default function TemplateEditorPage() {
 
     const { data: secs } = await supabase
       .from("budget_template_sections")
-      .select("*")
+      .select("id, template_id, title, subtitle, order_index, is_optional, tags, included_bullets, excluded_bullets, notes")
       .eq("template_id", templateId)
       .order("order_index");
 
@@ -138,7 +138,7 @@ export default function TemplateEditorPage() {
 
     const { data: items } = await supabase
       .from("budget_template_items")
-      .select("*")
+      .select("id, template_section_id, title, description, order_index, qty, unit, internal_unit_price, internal_total, bdi_percentage, coverage_type, reference_url")
       .in("template_section_id", sectionIds.length ? sectionIds : ["__none__"])
       .order("order_index");
 

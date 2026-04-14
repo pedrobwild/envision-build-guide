@@ -67,7 +67,7 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
       // 1. Ensure profile exists (upsert)
       const { data: prof } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, full_name, is_active")
         .eq("id", user!.id)
         .maybeSingle();
 
