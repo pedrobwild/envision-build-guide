@@ -102,8 +102,8 @@ function calcGlobalBdi(sections: SectionData[]): { avgBdi: number; hasData: bool
 
 /* ── Table configuration for multi-table support ── */
 export interface TableConfig {
-  sectionTable: string;
-  itemTable: string;
+  sectionTable: "sections" | "budget_template_sections";
+  itemTable: "items" | "budget_template_items";
   sectionForeignKey: string;
   itemForeignKey: string;
   disableImages?: boolean;
