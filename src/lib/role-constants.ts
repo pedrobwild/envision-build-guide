@@ -15,8 +15,7 @@ export const INTERNAL_STATUSES = {
   triage: { label: 'Triagem', color: 'bg-purple-100 text-purple-800', icon: '🔍' },
   assigned: { label: 'Atribuído', color: 'bg-indigo-100 text-indigo-800', icon: '👤' },
   in_progress: { label: 'Em Produção', color: 'bg-yellow-100 text-yellow-800', icon: '🔨' },
-  waiting_info: { label: 'Aguardando Info', color: 'bg-amber-100 text-amber-800', icon: '⏳' },
-  blocked: { label: 'Bloqueado', color: 'bg-red-100 text-red-800', icon: '🚫' },
+  waiting_info: { label: 'Aguardando', color: 'bg-amber-100 text-amber-800', icon: '⏳' },
   ready_for_review: { label: 'Revisão', color: 'bg-orange-100 text-orange-800', icon: '📋' },
   delivered_to_sales: { label: 'Entregue ao Comercial', color: 'bg-teal-100 text-teal-800', icon: '📤' },
   sent_to_client: { label: 'Enviado ao Cliente', color: 'bg-emerald-100 text-emerald-800', icon: '✉️' },
@@ -40,8 +39,7 @@ export const STATUS_GROUPS = {
   // Aguardando trabalho começar
   PENDING: ["novo", "requested", "triage", "assigned"] as const,
 
-  // Em trabalho ativo pelo orçamentista
-  ACTIVE_WORK: ["in_progress", "waiting_info", "blocked", "revision_requested"] as const,
+  ACTIVE_WORK: ["in_progress", "waiting_info", "revision_requested"] as const,
 
   // Aguardando revisão interna
   REVIEW: ["ready_for_review"] as const,
@@ -56,10 +54,10 @@ export const STATUS_GROUPS = {
   FINISHED: ["lost", "archived"] as const,
 
   // Visíveis por padrão no painel do orçamentista (todos exceto delivered+finished)
-  ESTIMATOR_DEFAULT_VISIBLE: ["novo", "requested", "triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested", "ready_for_review"] as const,
+  ESTIMATOR_DEFAULT_VISIBLE: ["novo", "requested", "triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"] as const,
 
   // Considerados "ativos" para métricas de operações
-  OPERATIONS_ACTIVE: ["requested", "triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested", "ready_for_review"] as const,
+  OPERATIONS_ACTIVE: ["requested", "triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"] as const,
 } as const;
 
 export type StatusGroup = keyof typeof STATUS_GROUPS;

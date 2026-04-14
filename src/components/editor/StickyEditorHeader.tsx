@@ -51,7 +51,6 @@ function getStatusBadgeClass(status: InternalStatus): string {
       return "bg-accent text-accent-foreground border-border";
     case "contrato_fechado":
       return "bg-success/10 text-success border-success/20";
-    case "blocked":
     case "waiting_info":
       return "bg-destructive/10 text-destructive border-destructive/20";
     default:

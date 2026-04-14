@@ -23,7 +23,7 @@ const FUNNEL_STAGES: FunnelStage[] = [
     key: "in_progress",
     label: "Em elaboração",
     icon: Hammer,
-    statuses: ["in_progress", "waiting_info", "blocked", "revision_requested"],
+    statuses: ["in_progress", "waiting_info", "revision_requested"],
     color: "text-warning",
     bgColor: "bg-warning",
   },

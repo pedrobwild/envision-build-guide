@@ -44,7 +44,7 @@ import { ContractUploadModal } from "@/components/commercial/ContractUploadModal
 // Pipeline groups for the commercial view
 // Statuses in "solicitado" and "em_elaboracao" are read-only for commercial
 const LOCKED_STATUSES: readonly string[] = [
-  "requested", "triage", "assigned", "in_progress", "waiting_info", "blocked",
+  "requested", "triage", "assigned", "in_progress", "waiting_info",
 ];
 
 const PIPELINE_SECTIONS = {
@@ -56,7 +56,7 @@ const PIPELINE_SECTIONS = {
   },
   em_elaboracao: {
     label: "Em Elaboração",
-    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked"] as InternalStatus[],
+    statuses: ["triage", "assigned", "in_progress", "waiting_info"] as InternalStatus[],
     icon: Clock,
     accent: "text-warning",
   },

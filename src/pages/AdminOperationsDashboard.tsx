@@ -127,7 +127,6 @@ export default function AdminOperationsDashboard() {
       readyForReview: budgets.filter(b => b.internal_status === "ready_for_review").length,
       delivered: budgets.filter(b => b.internal_status === "delivered_to_sales").length,
       waitingInfo: budgets.filter(b => b.internal_status === "waiting_info").length,
-      blockedCount: budgets.filter(b => b.internal_status === "blocked").length,
       revisionCount: budgets.filter(b => b.internal_status === "revision_requested").length,
     };
   }, [budgets]);
@@ -323,21 +322,9 @@ export default function AdminOperationsDashboard() {
             ))}
           </div>
 
-          {/* Alert cards for blocked & revision */}
-          {(metrics.blockedCount > 0 || metrics.revisionCount > 0) && (
+          {/* Alert card for revision */}
+          {metrics.revisionCount > 0 && (
             <div className="flex gap-2 mt-3">
-              {metrics.blockedCount > 0 && (
-                <Card
-                  className="p-2.5 flex items-center gap-2 cursor-pointer hover:shadow-md transition-shadow border-destructive/30 bg-destructive/5"
-                  onClick={() => setStatusFilter("blocked")}
-                >
-                  <Lock className="h-4 w-4 text-destructive shrink-0" />
-                  <div>
-                    <p className="text-[10px] font-body text-destructive truncate">Bloqueados</p>
-                    <p className="text-xl font-bold font-display text-destructive">{metrics.blockedCount}</p>
-                  </div>
-                </Card>
-              )}
               {metrics.revisionCount > 0 && (
                 <Card
                   className="p-2.5 flex items-center gap-2 cursor-pointer hover:shadow-md transition-shadow border-amber-400/30 bg-amber-500/5"

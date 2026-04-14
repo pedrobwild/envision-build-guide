@@ -111,7 +111,7 @@ export default function BudgetInternalDetail() {
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
+  const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | null>(null);
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<{ status: string; target_id: string | null } | null>(null);
@@ -410,7 +410,7 @@ export default function BudgetInternalDetail() {
               value={budget.internal_status}
               onValueChange={(v) => {
                 const s = v as InternalStatus;
-                if (s === "waiting_info" || s === "blocked") {
+                if (s === "waiting_info") {
                   setBlockingTarget(s);
                 } else {
                   changeStatus(s);
@@ -433,24 +433,12 @@ export default function BudgetInternalDetail() {
       </header>
 
       {/* Pending action banner */}
-      {(budget.internal_status === "waiting_info" || budget.internal_status === "blocked") && (
-        <div className={`border-b px-4 sm:px-6 py-3 ${
-          budget.internal_status === "blocked"
-            ? "bg-destructive/5 border-destructive/20"
-            : "bg-warning/5 border-warning/20"
-        }`}>
+      {budget.internal_status === "waiting_info" && (
+        <div className="border-b px-4 sm:px-6 py-3 bg-warning/5 border-warning/20">
           <div className="max-w-6xl mx-auto flex items-center gap-3">
-            {budget.internal_status === "blocked" ? (
-              <AlertOctagon className="h-4 w-4 text-destructive shrink-0" />
-            ) : (
-              <PauseCircle className="h-4 w-4 text-warning shrink-0" />
-            )}
-            <p className={`text-sm font-body font-medium flex-1 ${
-              budget.internal_status === "blocked" ? "text-destructive" : "text-warning"
-            }`}>
-              {budget.internal_status === "blocked"
-                ? "Esta demanda está bloqueada. Verifique as notas internas para detalhes."
-                : "Aguardando informação. Verifique as notas internas para detalhes."}
+            <PauseCircle className="h-4 w-4 text-warning shrink-0" />
+            <p className="text-sm font-body font-medium flex-1 text-warning">
+              Aguardando informação. Verifique as notas internas para detalhes.
             </p>
             <Button
               variant="outline"

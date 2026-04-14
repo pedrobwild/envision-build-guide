@@ -14,22 +14,16 @@ import type { InternalStatus } from "@/lib/role-constants";
 
 const STATUS_META: Record<string, { title: string; desc: string; icon: React.ReactNode; placeholder: string }> = {
   waiting_info: {
-    title: "Aguardando Informação",
+    title: "Marcar como Aguardando",
     desc: "Informe o que está faltando para continuar a produção.",
     icon: <PauseCircle className="h-5 w-5 text-amber-600" />,
     placeholder: "Ex: Faltam medidas do banheiro da suíte…",
-  },
-  blocked: {
-    title: "Sinalizar Bloqueio",
-    desc: "Descreva o motivo do bloqueio para que o time possa agir.",
-    icon: <AlertOctagon className="h-5 w-5 text-destructive" />,
-    placeholder: "Ex: Planta não confere com o briefing…",
   },
 };
 
 interface BlockingDialogProps {
   open: boolean;
-  targetStatus: "waiting_info" | "blocked" | null;
+  targetStatus: "waiting_info" | null;
   onConfirm: (status: InternalStatus, note: string) => Promise<void>;
   onCancel: () => void;
 }
