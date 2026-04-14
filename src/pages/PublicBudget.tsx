@@ -162,15 +162,9 @@ export default function PublicBudget() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [roomModalOpen, setRoomModalOpen] = useState(false);
-  const [showPrices] = useState(true);
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [bottomBarHidden, setBottomBarHidden] = useState(false);
-
-  const handleTotalCardVisibility = useCallback((_visible: boolean) => {
-    // Bottom bar is always visible now
-  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
