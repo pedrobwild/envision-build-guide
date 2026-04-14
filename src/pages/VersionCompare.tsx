@@ -65,7 +65,7 @@ async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; secti
     .eq("budget_id", budgetId)
     .order("order_index");
 
-  if (secErr) console.error('Failed to load sections for version:', secErr.message);
+  if (secErr) toast.error(`Erro ao carregar seções: ${secErr.message}`);
 
   const mapped: CompareSection[] = (sections || []).map((s) => ({
     ...s,

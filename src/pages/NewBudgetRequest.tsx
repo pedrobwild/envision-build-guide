@@ -241,7 +241,7 @@ export default function NewBudgetRequest() {
         .upload(filePath, pdfFile, { contentType: "application/pdf" });
 
       if (uploadErr) {
-        console.error("PDF upload error:", uploadErr);
+        
         toast.error("Erro ao fazer upload do PDF.");
         setLoading(false);
         return;
@@ -282,7 +282,7 @@ export default function NewBudgetRequest() {
     } as Record<string, unknown>).select("id").single();
 
     if (error || !inserted) {
-      console.error("Budget insert error:", error?.message, error?.details, error?.hint, error);
+      
       toast.error(`Erro ao criar solicitação: ${error?.message || "resposta vazia"}`);
       setLoading(false);
       return;

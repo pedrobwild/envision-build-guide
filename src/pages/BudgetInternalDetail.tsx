@@ -152,8 +152,8 @@ export default function BudgetInternalDetail() {
       ]);
 
       if (cancelled) return;
-      if (budgetRes.error) console.error('Failed to load budget:', budgetRes.error.message);
-      if (eventsRes.error) console.error('Failed to load events:', eventsRes.error.message);
+      if (budgetRes.error) toast.error(`Erro ao carregar orçamento: ${budgetRes.error.message}`);
+      if (eventsRes.error) toast.error(`Erro ao carregar eventos: ${eventsRes.error.message}`);
 
       if (budgetRes.data) setBudget(budgetRes.data as BudgetDetail);
       if (eventsRes.data) setEvents(eventsRes.data as EventRow[]);

@@ -213,7 +213,7 @@ export default function PublicBudget() {
           if (data && !viewTracked.current) {
             viewTracked.current = true;
             supabase.rpc('increment_view_count', { p_public_id: publicId }).then(({ error }) => {
-              if (error) console.error('increment_view_count failed:', error.message);
+              if (error) { /* view count increment failed silently */ }
             });
             if ((data.view_count || 0) === 0) {
               supabase.functions.invoke('notify-budget-view', {
@@ -223,7 +223,7 @@ export default function PublicBudget() {
           }
         })
         .catch((err) => {
-          console.error('Failed to load public budget:', err);
+          
           setLoadError('Não foi possível carregar o orçamento. Tente novamente.');
           setLoading(false);
         });
@@ -238,7 +238,7 @@ export default function PublicBudget() {
       await exportBudgetPdf("budget-content", filename, budget!);
       toast.success("PDF gerado com sucesso.");
     } catch (err) {
-      console.error("PDF export error:", err);
+      
       toast.error("Não foi possível gerar o PDF. Tente novamente.");
     }
     setExporting(false);

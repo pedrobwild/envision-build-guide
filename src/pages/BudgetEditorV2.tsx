@@ -134,7 +134,7 @@ export default function BudgetEditorV2() {
         .order("order_index", { ascending: true });
 
       if (cancelled) return;
-      if (secsErr) console.error('Failed to load sections:', secsErr.message);
+      if (secsErr) toast.error(`Erro ao carregar seções: ${secsErr.message}`);
 
       const sorted = (secs || []).map(s => ({
         ...s,
@@ -214,11 +214,11 @@ export default function BudgetEditorV2() {
   const autoSaveBudgetField = useCallback((field: string, value: unknown) => {
     if (!budgetId) return;
     if (isPublishedVersion) {
-      console.warn(`[autoSave] Blocked: budget is published`);
+      return;
       return;
     }
     if (PROTECTED_FIELDS.current.has(field)) {
-      console.warn(`[autoSave] Blocked attempt to save protected field: ${field}`);
+      return;
       return;
     }
     lastSavePayload.current = { field, value };
@@ -282,7 +282,7 @@ export default function BudgetEditorV2() {
       });
       navigator.clipboard.writeText(publicUrl);
     } catch (err) {
-      console.error("Save error:", err);
+      
       toast.error("Erro ao salvar. Tente novamente.");
     }
 
