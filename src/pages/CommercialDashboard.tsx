@@ -307,7 +307,22 @@ export default function CommercialDashboard() {
     toast.success(`Status atualizado para "${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}"`);
   }
 
-  function handleContractUploadSuccess() {
+  async function claimBudget(budgetId: string) {
+    if (!user) return;
+    // Optimistic update
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, commercial_owner_id: user.id } : b));
+    const { error } = await supabase
+      .from("budgets")
+      .update({ commercial_owner_id: user.id, updated_at: new Date().toISOString() })
+      .eq("id", budgetId);
+    if (error) {
+      toast.error("Erro ao assumir orçamento.");
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, commercial_owner_id: null } : b));
+    } else {
+      toast.success("Orçamento assumido com sucesso!");
+    }
+  }
+
     if (!contractUploadBudget || !user) return;
     const budgetId = contractUploadBudget.id;
     const fromStatus = contractUploadBudget.internal_status;
