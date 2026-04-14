@@ -87,17 +87,21 @@ export function MobileItemEditor({
   const marginPercent = saleUnit > 0 ? (margin / saleUnit) * 100 : 0;
 
   const handleSave = useCallback(() => {
-    // Batch: collect all field changes, then fire them
-    const updates: Array<[string, string | number | null]> = [
-      ["title", title],
-      ["description", description || null],
-      ["qty", qty ? Number(qty) : null],
-      ["unit", unit || null],
-      ["internal_unit_price", unitCost ? Number(unitCost) : null],
-      ["bdi_percentage", bdi > 0 ? bdi : null],
-      ["reference_url", refUrl || null],
-    ];
-    for (const [field, value] of updates) {
+    // Build a merged patch of all changed fields
+    const patch: Record<string, string | number | null> = {
+      title,
+      description: description || null,
+      qty: qty ? Number(qty) : null,
+      unit: unit || null,
+      internal_unit_price: unitCost ? Number(unitCost) : null,
+      bdi_percentage: bdi,
+      reference_url: refUrl || null,
+    };
+
+    // Apply each field via onUpdate so the parent can persist individually
+    // We iterate in a microtask-safe way: the parent's updateItem uses
+    // functional state or the last write wins per field, so we fire them all.
+    for (const [field, value] of Object.entries(patch)) {
       onUpdate(sectionId, item.id, field, value);
     }
     onOpenChange(false);
