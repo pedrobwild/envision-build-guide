@@ -215,10 +215,8 @@ export default function BudgetEditorV2() {
     if (!budgetId) return;
     if (isPublishedVersion) {
       return;
-      return;
     }
     if (PROTECTED_FIELDS.current.has(field)) {
-      return;
       return;
     }
     lastSavePayload.current = { field, value };

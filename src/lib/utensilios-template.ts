@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+const STORAGE_BASE = `${SUPABASE_URL}/storage/v1/object/public/budget-assets`;
+
 /**
  * Template data for the "Utensílios para o Hóspede" section.
  * Cloned from budget b1c60fcdbab1 (section bede5e56-...).

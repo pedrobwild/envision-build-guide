@@ -2,7 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Smartphone, BarChart3, FileText, MessageSquare, Calendar, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 
-const PORTAL_VIDEO_URL = "https://pieenhgjulsrjlioozsy.supabase.co/storage/v1/object/public/media/portal-demo.mp4";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+const PORTAL_VIDEO_URL = `${SUPABASE_URL}/storage/v1/object/public/media/portal-demo.mp4`;
 
 const features = [
   { icon: FileText, text: "Projetos e documentos" },
