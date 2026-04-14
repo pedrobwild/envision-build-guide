@@ -15,6 +15,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -24,7 +25,7 @@ import {
   Clock, MoreVertical, ExternalLink, CheckCircle2,
   ArrowUpDown, Copy, Send, RotateCcw, AlertTriangle,
   FileText, Eye, ThumbsUp, XCircle, Plus, GitCompare,
-  LayoutList, Columns3,
+  LayoutList, Columns3, UserPlus,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES, PRIORITIES,
