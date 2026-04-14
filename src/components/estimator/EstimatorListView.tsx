@@ -43,7 +43,7 @@ function getEstimatorStage(status: string): "pending" | "in_progress" | "review"
   if ((STATUS_GROUPS.PENDING as readonly string[]).includes(status)) return "pending";
   if ((STATUS_GROUPS.ACTIVE_WORK as readonly string[]).includes(status)) return "in_progress";
   if ((STATUS_GROUPS.REVIEW as readonly string[]).includes(status)) return "review";
-  if ([...STATUS_GROUPS.DELIVERED, ...STATUS_GROUPS.COMMERCIAL_ADVANCED].includes(status as any)) return "delivered";
+  if (([...STATUS_GROUPS.DELIVERED, ...STATUS_GROUPS.COMMERCIAL_ADVANCED] as readonly string[]).includes(status)) return "delivered";
   return "finished";
 }
 

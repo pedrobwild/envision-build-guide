@@ -144,8 +144,9 @@ export function BudgetActionsMenu({
       if (!newBudget) { toast.error("Erro ao duplicar"); return; }
 
       // Clone sections and items
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- sections shape from nested select
-      for (const section of ((original as any).sections || []) as any[]) {
+      type NestedSection = { title: string; subtitle?: string | null; order_index: number; notes?: string | null; tags?: unknown; included_bullets?: unknown; excluded_bullets?: unknown; is_optional?: boolean; section_price?: number | null; cover_image_url?: string | null; items?: Array<{ title: string; description?: string | null; unit?: string | null; qty?: number | null; order_index: number; coverage_type?: string; reference_url?: string | null; internal_unit_price?: number | null; internal_total?: number | null; bdi_percentage?: number | null; notes?: string | null }> };
+      const nestedSections = ((original as Record<string, unknown>).sections ?? []) as NestedSection[];
+      for (const section of nestedSections) {
         const { data: newSection } = await supabase
           .from("sections")
           .insert({
