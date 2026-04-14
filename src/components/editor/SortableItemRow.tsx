@@ -231,9 +231,23 @@ export function SortableItemRow({
           </div>
         </div>
 
-        {/* [BDI chip] — mobile only */}
+        {/* [BDI badge] — mobile only, opens editor */}
         <div className="md:hidden flex-shrink-0 flex items-center">
-          <BdiChip bdi={item.bdi_percentage} onClick={() => setBdiDrawerOpen(true)} />
+          <button
+            onClick={(e) => { e.stopPropagation(); setMobileEditorOpen(true); }}
+            className={cn(
+              "inline-flex items-center h-6 px-1.5 rounded-md text-[10px] font-mono tabular-nums font-bold transition-all active:scale-95 shrink-0 border",
+              (Number(item.bdi_percentage) || 0) > 0
+                ? (Number(item.bdi_percentage) || 0) >= 30
+                  ? "bg-success/10 text-success border-success/20"
+                  : (Number(item.bdi_percentage) || 0) >= 15
+                  ? "bg-warning/10 text-warning border-warning/20"
+                  : "bg-destructive/10 text-destructive border-destructive/20"
+                : "bg-muted/50 text-muted-foreground/50 border-dashed border-border/40"
+            )}
+          >
+            {(Number(item.bdi_percentage) || 0) > 0 ? `${Number(item.bdi_percentage)}%` : "BDI"}
+          </button>
         </div>
 
         {/* [Total Venda] — 72px mobile, 100px desktop */}
