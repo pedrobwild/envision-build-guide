@@ -52,7 +52,21 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     return seedDefaultSections(budgetId);
   }
 
-  // Load template sections with their items
+  // Load template sections with their items + media_config
+  const { data: templateRow } = await supabase
+    .from("budget_templates")
+    .select("media_config")
+    .eq("id", templateId)
+    .single();
+
+  // Copy media_config from template to budget
+  if (templateRow?.media_config) {
+    await supabase
+      .from("budgets")
+      .update({ media_config: templateRow.media_config })
+      .eq("id", budgetId);
+  }
+
   const { data: templateSections, error: secErr } = await supabase
     .from("budget_template_sections")
     .select("id, title, subtitle, order_index, notes, tags, included_bullets, excluded_bullets, is_optional")

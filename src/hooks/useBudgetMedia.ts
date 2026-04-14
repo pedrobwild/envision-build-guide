@@ -31,12 +31,17 @@ function isVideo(url: string) {
   return /\.(mp4|webm|mov)$/i.test(url);
 }
 
-export function useBudgetMedia(publicId: string | undefined) {
+/**
+ * Fetches media for a budget. Priority:
+ * 1. media_config from DB (set by template or manual override)
+ * 2. Fallback to Storage folder convention ({publicId}/3d, /fotos, etc.)
+ */
+export function useBudgetMedia(publicId: string | undefined, budgetId?: string | undefined) {
   const [media, setMedia] = useState<DynamicBudgetMedia | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!publicId) {
+    if (!publicId && !budgetId) {
       setMedia(null);
       setLoading(false);
       return;
@@ -44,8 +49,47 @@ export function useBudgetMedia(publicId: string | undefined) {
 
     let cancelled = false;
 
-    async function fetch() {
+    async function fetchMedia() {
       setLoading(true);
+
+      // Try media_config from DB first
+      if (budgetId || publicId) {
+        try {
+          let query = supabase.from("budgets").select("media_config");
+          if (budgetId) {
+            query = query.eq("id", budgetId);
+          } else {
+            query = query.eq("public_id", publicId!);
+          }
+          const { data } = await query.maybeSingle();
+
+          if (!cancelled && data?.media_config) {
+            const mc = data.media_config as unknown as DynamicBudgetMedia;
+            const hasContent = mc.video3d || mc.projeto3d?.length || mc.projetoExecutivo?.length || mc.fotos?.length;
+            if (hasContent) {
+              setMedia({
+                video3d: mc.video3d,
+                projeto3d: mc.projeto3d ?? [],
+                projetoExecutivo: mc.projetoExecutivo ?? [],
+                fotos: mc.fotos ?? [],
+              });
+              setLoading(false);
+              return;
+            }
+          }
+        } catch {
+          // fall through to storage
+        }
+      }
+
+      if (cancelled) return;
+
+      // Fallback: Storage folder convention
+      if (!publicId) {
+        setMedia(null);
+        setLoading(false);
+        return;
+      }
 
       const [projeto3d, fotos, exec, videos] = await Promise.all([
         listPublicUrls(`${publicId}/3d`),
@@ -56,7 +100,6 @@ export function useBudgetMedia(publicId: string | undefined) {
 
       if (cancelled) return;
 
-      // Filter out videos from 3d folder (shouldn't happen but be safe)
       const images3d = projeto3d.filter(u => !isVideo(u));
       const video3d = videos.find(u => isVideo(u)) ?? projeto3d.find(u => isVideo(u));
 
@@ -69,9 +112,9 @@ export function useBudgetMedia(publicId: string | undefined) {
       setLoading(false);
     }
 
-    fetch();
+    fetchMedia();
     return () => { cancelled = true; };
-  }, [publicId]);
+  }, [publicId, budgetId]);
 
   return { media, loading };
 }
