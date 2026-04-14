@@ -160,7 +160,13 @@ export default function CommercialDashboard() {
       .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total")
       .order("created_at", { ascending: false });
     if (!isAdmin) {
-      budgetQuery = budgetQuery.eq("commercial_owner_id", user!.id);
+      const commercialRelevantStatuses = [
+        "ready_for_review", "delivered_to_sales", "sent_to_client",
+        "revision_requested", "minuta_solicitada"
+      ];
+      budgetQuery = budgetQuery.or(
+        `commercial_owner_id.eq.${user!.id},and(commercial_owner_id.is.null,internal_status.in.(${commercialRelevantStatuses.join(",")}))`
+      );
     }
     const [budgetsRes, profilesRes, syncRes] = await Promise.all([
       budgetQuery,
