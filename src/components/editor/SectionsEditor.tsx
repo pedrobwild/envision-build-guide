@@ -613,6 +613,15 @@ function SortableItemRow({
         onUpdate={onUpdate}
         onImagesChange={onImagesChange}
       />
+
+      {/* Mobile item editor */}
+      <MobileItemEditor
+        open={mobileEditorOpen}
+        onOpenChange={setMobileEditorOpen}
+        item={item}
+        sectionId={sectionId}
+        onUpdate={onUpdate}
+      />
     </div>
   );
 }
