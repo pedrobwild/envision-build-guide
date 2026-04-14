@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
@@ -213,11 +214,26 @@ export default function CommercialDashboard() {
   }, [isAdmin, budgets, getProfileName]);
 
   const filtered = useMemo(() => {
+    const now = new Date();
     const result = budgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
       const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
       if (!matchCommercial) return false;
+
+      // Due filter
+      if (dueFilter !== "all") {
+        const due = b.due_at ? new Date(b.due_at) : null;
+        if (dueFilter === "overdue") {
+          const isFinished = ["lost", "archived", "contrato_fechado"].includes(b.internal_status);
+          if (!due || due >= now || isFinished) return false;
+        }
+        if (dueFilter === "due_soon") {
+          const twoDays = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+          if (!due || due < now || due > twoDays) return false;
+        }
+      }
+
       if (statusFilter === "all") return matchSearch;
       const section = PIPELINE_SECTIONS[statusFilter as keyof typeof PIPELINE_SECTIONS];
       if (section) return matchSearch && (section.statuses as readonly string[]).includes(b.internal_status);
@@ -244,7 +260,7 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [budgets, search, statusFilter, sortBy, commercialFilter]);
+  }, [budgets, search, statusFilter, sortBy, commercialFilter, dueFilter]);
 
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
     // Intercept contrato_fechado → show contract upload modal
@@ -429,17 +445,24 @@ export default function CommercialDashboard() {
               </SelectContent>
             </Select>
             {/* Due filter */}
-            <Select value={dueFilter} onValueChange={v => setDueFilter(v as DueFilter)}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os prazos</SelectItem>
-                <SelectItem value="overdue">🔴 Vencidos / Hoje</SelectItem>
-                <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-1">
+              <Select value={dueFilter} onValueChange={v => setDueFilter(v as DueFilter)}>
+                <SelectTrigger className={cn("w-full sm:w-[180px]", dueFilter !== "all" && "border-primary ring-1 ring-primary/20")}>
+                  <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os prazos</SelectItem>
+                  <SelectItem value="overdue">🔴 Vencidos / Hoje</SelectItem>
+                  <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
+                </SelectContent>
+              </Select>
+              {dueFilter !== "all" && (
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setDueFilter("all")}>
+                  <span className="text-xs">✕</span>
+                </Button>
+              )}
+            </div>
             {/* Commercial owner filter (admin only) */}
             {isAdmin && commercialOptions.length > 0 && (
               <Select value={commercialFilter} onValueChange={setCommercialFilter}>
