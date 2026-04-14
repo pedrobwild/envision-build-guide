@@ -298,6 +298,10 @@ export default function EstimatorDashboard() {
         ? PENDING_STATUSES.includes(b.internal_status)
         : statusFilter === "_in_progress"
         ? IN_PROGRESS_STATUSES.includes(b.internal_status)
+        : statusFilter === "_delivered"
+        ? DELIVERED_STATUSES.includes(b.internal_status)
+        : statusFilter === "_finished"
+        ? FINISHED_STATUSES.includes(b.internal_status)
         : b.internal_status === statusFilter;
       const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
       const matchCommercial =
@@ -644,6 +648,23 @@ export default function EstimatorDashboard() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Hidden budgets banner */}
+            {statusFilter === "all" && (counts.delivered + counts.finished) > 0 && (
+              <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-border bg-muted/40 text-sm font-body text-muted-foreground">
+                <span>
+                  {counts.delivered + counts.finished} orçamento{(counts.delivered + counts.finished) !== 1 ? "s" : ""} entregue{(counts.delivered + counts.finished) !== 1 ? "s" : ""}/finalizado{(counts.delivered + counts.finished) !== 1 ? "s" : ""} oculto{(counts.delivered + counts.finished) !== 1 ? "s" : ""}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 gap-1"
+                  onClick={() => setStatusFilter("_delivered")}
+                >
+                  Ver entregues
+                </Button>
+              </div>
+            )}
 
             {/* Empty state */}
             {!loading && filtered.length === 0 && (
