@@ -252,7 +252,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
 
     if (count > 0) {
       toast.success(`${count} arquivo(s) enviado(s) com sucesso!`);
-      await loadFiles();
+      await loadFiles(true);
     }
     setUploading(false);
   };
@@ -264,7 +264,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       toast.error("Erro ao remover arquivo.");
     } else {
       toast.success("Arquivo removido.");
-      await loadFiles();
+      await loadFiles(true);
     }
   };
 
@@ -332,11 +332,11 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       }
 
       toast.success("Ordem atualizada!");
-      await loadFiles();
+      await loadFiles(true);
     } catch (err) {
       console.error("Reorder error:", err);
       toast.error("Erro ao reordenar. Tente novamente.");
-      await loadFiles();
+      await loadFiles(true);
     }
 
     setReordering(false);
