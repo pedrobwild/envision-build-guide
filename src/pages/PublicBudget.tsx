@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, lazy, Suspense, Fragment } from "
 import { Download } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { fetchPublicBudget, calculateBudgetTotal, calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
