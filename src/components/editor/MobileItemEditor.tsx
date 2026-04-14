@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { formatBRL } from "@/lib/formatBRL";
-import { calcItemSaleTotal, calcSaleUnitPrice } from "@/lib/budget-calc";
+import { calcSaleUnitPrice } from "@/lib/budget-calc";
 import { cn } from "@/lib/utils";
 import { Check, Percent, TrendingUp, DollarSign, Link as LinkIcon } from "lucide-react";
 import type { ItemData } from "./SortableItemRow";
@@ -57,8 +57,15 @@ export function MobileItemEditor({
   const [bdi, setBdi] = useState<number>(Number(item.bdi_percentage) || 0);
   const [refUrl, setRefUrl] = useState(item.reference_url || "");
 
-  // Sync local state when item changes
+  // Track the item id to only re-sync when a DIFFERENT item is opened
+  const lastItemId = useRef(item.id);
+
   useEffect(() => {
+    if (!open) return;
+    // Only re-sync state when opening for a different item
+    if (lastItemId.current !== item.id) {
+      lastItemId.current = item.id;
+    }
     setTitle(item.title);
     setDescription(item.description || "");
     setQty(item.qty != null ? String(item.qty) : "");
@@ -66,7 +73,9 @@ export function MobileItemEditor({
     setUnitCost(item.internal_unit_price != null ? String(item.internal_unit_price) : "");
     setBdi(Number(item.bdi_percentage) || 0);
     setRefUrl(item.reference_url || "");
-  }, [item]);
+    // Only sync when drawer opens (open changes to true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, item.id]);
 
   // Live calc values
   const costNum = parseFloat(unitCost) || 0;
@@ -75,17 +84,22 @@ export function MobileItemEditor({
   const margin = costNum * (bdi / 100);
   const totalCost = costNum * qtyNum;
   const totalSale = saleUnit * qtyNum;
-  const totalMargin = margin * qtyNum;
   const marginPercent = saleUnit > 0 ? (margin / saleUnit) * 100 : 0;
 
   const handleSave = useCallback(() => {
-    onUpdate(sectionId, item.id, "title", title);
-    onUpdate(sectionId, item.id, "description", description || null);
-    onUpdate(sectionId, item.id, "qty", qty ? Number(qty) : null);
-    onUpdate(sectionId, item.id, "unit", unit || null);
-    onUpdate(sectionId, item.id, "internal_unit_price", unitCost ? Number(unitCost) : null);
-    onUpdate(sectionId, item.id, "bdi_percentage", bdi > 0 ? bdi : null);
-    onUpdate(sectionId, item.id, "reference_url", refUrl || null);
+    // Batch: collect all field changes, then fire them
+    const updates: Array<[string, string | number | null]> = [
+      ["title", title],
+      ["description", description || null],
+      ["qty", qty ? Number(qty) : null],
+      ["unit", unit || null],
+      ["internal_unit_price", unitCost ? Number(unitCost) : null],
+      ["bdi_percentage", bdi > 0 ? bdi : null],
+      ["reference_url", refUrl || null],
+    ];
+    for (const [field, value] of updates) {
+      onUpdate(sectionId, item.id, field, value);
+    }
     onOpenChange(false);
   }, [sectionId, item.id, title, description, qty, unit, unitCost, bdi, refUrl, onUpdate, onOpenChange]);
 
