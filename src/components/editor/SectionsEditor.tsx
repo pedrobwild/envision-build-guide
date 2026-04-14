@@ -325,7 +325,13 @@ function SortableItemRow({
         {/* [▶ expand] — 20px mobile, 24px desktop */}
         <div className="w-5 sm:w-6 flex-shrink-0 flex items-center justify-center">
           <button
-            onClick={() => setRowExpanded(!rowExpanded)}
+            onClick={() => {
+              if (isMobile && compact && !rowExpanded) {
+                setMobileEditorOpen(true);
+              } else {
+                setRowExpanded(!rowExpanded);
+              }
+            }}
             className="p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground transition-colors"
           >
             <ChevronRight className={cn(
@@ -342,6 +348,7 @@ function SortableItemRow({
               <span
                 className="text-xs sm:text-sm font-body text-foreground truncate cursor-default"
                 title={item.title}
+                onClick={(e) => { if (isMobile) { e.stopPropagation(); setMobileEditorOpen(true); } }}
               >
                 {item.title}
               </span>
