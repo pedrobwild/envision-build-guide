@@ -659,6 +659,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   });
   const searchRef = useRef<HTMLInputElement>(null);
   const timers = useRef<Record<string, NodeJS.Timeout>>({});
+  const pendingUpdates = useRef<Record<string, Record<string, unknown>>>({});
   const [suppliers, setSuppliers] = useState<{ id: string; name: string; categoria: string | null }[]>([]);
 
   // Load suppliers once
@@ -722,11 +723,26 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   const debouncedSave = useCallback((logicalTable: string, id: string, updates: Record<string, unknown>) => {
     if (readOnly) return;
     const key = `${logicalTable}-${id}`;
+
+    pendingUpdates.current[key] = {
+      ...(pendingUpdates.current[key] ?? {}),
+      ...updates,
+    };
+
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
+
     timers.current[key] = setTimeout(async () => {
       const actualTable = logicalTable === "sections" ? cfg.sectionTable : cfg.itemTable;
-      await dbFrom(actualTable).update(updates).eq("id", id);
+      const mergedUpdates = pendingUpdates.current[key];
+
+      delete pendingUpdates.current[key];
+      delete timers.current[key];
+
+      if (mergedUpdates && Object.keys(mergedUpdates).length > 0) {
+        await dbFrom(actualTable).update(mergedUpdates).eq("id", id);
+      }
+
       setSavingIds(prev => {
         const next = new Set(prev);
         next.delete(id);
