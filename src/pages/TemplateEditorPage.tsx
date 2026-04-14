@@ -114,7 +114,7 @@ export default function TemplateEditorPage() {
     if (!tpl) { navigate("/admin/templates"); return; }
     setTemplate({
       ...tpl,
-      media_config: (tpl.media_config as MediaConfig | null) ?? { ...EMPTY_MEDIA_CONFIG },
+      media_config: (tpl.media_config as unknown as MediaConfig | null) ?? { ...EMPTY_MEDIA_CONFIG },
     });
 
     const { data: secs } = await supabase
