@@ -181,23 +181,32 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     setLoading(true);
     const result: Record<StorageTab, MediaFile[]> = { "3d": [], fotos: [], exec: [], video: [] };
 
-    for (const tab of Object.keys(folderMap) as StorageTab[]) {
-      const folder = folderMap[tab];
-      const { data } = await supabase.storage.from("media").list(folder, { limit: 100, sortBy: { column: "name", order: "asc" } });
-      if (data) {
-        result[tab] = data
-          .filter(f => f.name !== ".emptyFolderPlaceholder" && f.name !== ".lovkeep")
-          .map(f => {
-            const { data: urlData } = supabase.storage.from("media").getPublicUrl(`${folder}/${f.name}`);
-            return { name: f.name, url: urlData.publicUrl };
-          });
+    try {
+      for (const tab of Object.keys(folderMap) as StorageTab[]) {
+        const folder = folderMap[tab];
+        const { data, error } = await supabase.storage.from("media").list(folder, { limit: 100, sortBy: { column: "name", order: "asc" } });
+        if (error) {
+          console.error(`Error listing ${folder}:`, error.message);
+          continue;
+        }
+        if (data) {
+          result[tab] = data
+            .filter(f => f.name !== ".emptyFolderPlaceholder" && f.name !== ".lovkeep")
+            .map(f => {
+              const { data: urlData } = supabase.storage.from("media").getPublicUrl(`${folder}/${f.name}`);
+              return { name: f.name, url: urlData.publicUrl };
+            });
+        }
       }
-    }
-    setFiles(result);
-    setLoading(false);
+      setFiles(result);
 
-    if (syncToDb) {
-      syncMediaConfig(result);
+      if (syncToDb) {
+        syncMediaConfig(result);
+      }
+    } catch (err) {
+      console.error("loadFiles error:", err);
+    } finally {
+      setLoading(false);
     }
   }, [folderMap, syncMediaConfig]);
 
@@ -222,49 +231,59 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
 
     setUploading(true);
-    const folder = folderMap[activeTab as StorageTab];
-    const existingCount = files[activeTab as StorageTab].length;
-    let count = 0;
+    try {
+      const folder = folderMap[activeTab as StorageTab];
+      const existingCount = files[activeTab as StorageTab].length;
+      let count = 0;
 
-    for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i];
-      const safeName = sanitizeFileName(file.name);
-      // Add prefix based on current position
-      const prefixed = addPrefix(existingCount + i, safeName);
-      const path = `${folder}/${prefixed}`;
-      const { error } = await supabase.storage.from("media").upload(path, file, {
-        upsert: true,
-        contentType: file.type || "application/octet-stream",
-      });
-      if (error) {
-        console.error("Upload error:", error.message, error);
-        if (error.message?.includes("row-level security")) {
-          toast.error("Sem permissão para upload. Verifique se está logado.");
-        } else if (error.message?.includes("Payload too large")) {
-          toast.error(`Arquivo ${file.name} muito grande.`);
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        const safeName = sanitizeFileName(file.name);
+        const prefixed = addPrefix(existingCount + i, safeName);
+        const path = `${folder}/${prefixed}`;
+        const { error } = await supabase.storage.from("media").upload(path, file, {
+          upsert: true,
+          contentType: file.type || "application/octet-stream",
+        });
+        if (error) {
+          console.error("Upload error:", error.message, error);
+          if (error.message?.includes("row-level security")) {
+            toast.error("Sem permissão para upload. Verifique se está logado.");
+          } else if (error.message?.includes("Payload too large")) {
+            toast.error(`Arquivo ${file.name} muito grande.`);
+          } else {
+            toast.error(`Erro ao subir ${file.name}: ${error.message}`);
+          }
         } else {
-          toast.error(`Erro ao subir ${file.name}: ${error.message}`);
+          count++;
         }
-      } else {
-        count++;
       }
-    }
 
-    if (count > 0) {
-      toast.success(`${count} arquivo(s) enviado(s) com sucesso!`);
-      await loadFiles(true);
+      if (count > 0) {
+        toast.success(`${count} arquivo(s) enviado(s) com sucesso!`);
+        await loadFiles(true);
+      }
+    } catch (err) {
+      console.error("handleUpload error:", err);
+      toast.error("Erro inesperado no upload. Tente novamente.");
+    } finally {
+      setUploading(false);
     }
-    setUploading(false);
   };
 
   const handleDelete = async (tab: StorageTab, fileName: string) => {
     const path = `${folderMap[tab]}/${fileName}`;
-    const { error } = await supabase.storage.from("media").remove([path]);
-    if (error) {
+    try {
+      const { error } = await supabase.storage.from("media").remove([path]);
+      if (error) {
+        toast.error("Erro ao remover arquivo.");
+      } else {
+        toast.success("Arquivo removido.");
+        await loadFiles(true);
+      }
+    } catch (err) {
+      console.error("handleDelete error:", err);
       toast.error("Erro ao remover arquivo.");
-    } else {
-      toast.success("Arquivo removido.");
-      await loadFiles(true);
     }
   };
 
