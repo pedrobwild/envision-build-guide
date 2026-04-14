@@ -67,6 +67,7 @@ interface RoleRow {
 }
 
 export default function EstimatorDashboard() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, loading: profileLoading, isAdmin } = useUserProfile();
