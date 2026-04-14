@@ -369,6 +369,10 @@ export default function BudgetEditorV2() {
           onPublish={handleSaveAndPublish}
           publishing={saving}
           primaryAction={stickyPrimaryAction}
+          onProjectNameChange={(name) => {
+            setBudget({ ...budget, project_name: name });
+            autoSaveBudgetField("project_name", name);
+          }}
         />
 
         {/* ── Content below sticky header ── */}
