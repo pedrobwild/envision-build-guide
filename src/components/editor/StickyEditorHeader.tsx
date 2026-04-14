@@ -20,6 +20,7 @@ interface StickyEditorHeaderProps {
   onRetrySave?: () => void;
   onPublish?: () => void;
   publishing?: boolean;
+  onProjectNameChange?: (name: string) => void;
   primaryAction?: {
     label: string;
     onClick: () => void;
