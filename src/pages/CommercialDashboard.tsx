@@ -398,6 +398,7 @@ export default function CommercialDashboard() {
               { id: "all", label: "Todos", count: counts.total },
               { id: "entregue", label: "Entregues", icon: CheckCircle2, count: counts["entregue"] ?? 0 },
               { id: "em_elaboracao", label: "Em Elaboração", icon: Clock, count: counts["em_elaboracao"] ?? 0 },
+              { id: "revisao_solicitada", label: "Revisão Sol.", icon: RotateCcw, count: counts["revisao_solicitada"] ?? 0 },
               { id: "enviado", label: "Enviados", icon: Send, count: counts["enviado"] ?? 0 },
               { id: "solicitado", label: "Solicitados", icon: FileText, count: counts["solicitado"] ?? 0 },
               { id: "fechado", label: "Fechados", icon: ThumbsUp, count: counts["fechado"] ?? 0 },
