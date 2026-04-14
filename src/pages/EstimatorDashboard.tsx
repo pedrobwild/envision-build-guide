@@ -645,6 +645,23 @@ export default function EstimatorDashboard() {
               </Select>
             </div>
 
+            {/* Hidden budgets banner */}
+            {statusFilter === "all" && (metrics.delivered + metrics.finished) > 0 && (
+              <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-border bg-muted/40 text-sm font-body text-muted-foreground">
+                <span>
+                  {metrics.delivered + metrics.finished} orçamento{(metrics.delivered + metrics.finished) > 1 ? "s" : ""} entregue{(metrics.delivered + metrics.finished) > 1 ? "s" : ""}/finalizado{(metrics.delivered + metrics.finished) > 1 ? "s" : ""} oculto{(metrics.delivered + metrics.finished) > 1 ? "s" : ""} nesta visualização
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 gap-1"
+                  onClick={() => setStatusFilter("_delivered")}
+                >
+                  Ver entregues
+                </Button>
+              </div>
+            )}
+
             {/* Empty state */}
             {!loading && filtered.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-center">
