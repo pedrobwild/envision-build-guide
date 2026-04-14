@@ -213,9 +213,6 @@ export default function BudgetEditorV2() {
 
   const autoSaveBudgetField = useCallback((field: string, value: unknown) => {
     if (!budgetId) return;
-    if (isPublishedVersion) {
-      return;
-    }
     if (PROTECTED_FIELDS.current.has(field)) {
       return;
     }
@@ -514,7 +511,7 @@ export default function BudgetEditorV2() {
                     sections={sections}
                     onSectionsChange={setSections}
                     loading={sectionsLoading}
-                    readOnly={budget.status === "published" && budget.is_published_version === true}
+                    readOnly={false}
                   />
                 </div>
 
