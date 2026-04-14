@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight } from "lucide-react";
+import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
@@ -21,7 +21,7 @@ interface CompactKanbanCardProps {
   highPriority?: boolean;
   isSynced?: boolean;
   onClick: () => void;
-  onQuickAction?: (action: "open" | "whatsapp" | "advance") => void;
+  onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink") => void;
 }
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
@@ -63,7 +63,7 @@ function getInitials(name: string): string {
 }
 
 const SWIPE_THRESHOLD = -60;
-const ACTION_WIDTH = 140;
+const ACTION_WIDTH = 180;
 
 export function CompactKanbanCard({
   projectName,
@@ -115,6 +115,13 @@ export function CompactKanbanCard({
         >
           <ExternalLink className="h-3.5 w-3.5" />
           Abrir
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onQuickAction?.("copyLink"); setRevealed(false); }}
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-accent text-accent-foreground text-[10px] font-body font-medium"
+        >
+          <Copy className="h-3.5 w-3.5" />
+          Copiar Link
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onQuickAction?.("whatsapp"); setRevealed(false); }}

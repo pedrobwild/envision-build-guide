@@ -695,7 +695,7 @@ export default function CommercialDashboard() {
                           </>
                         }
                         trigger={
-                          <Button variant="ghost" size="icon" className="shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="shrink-0 opacity-100 lg:opacity-60 lg:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         }
