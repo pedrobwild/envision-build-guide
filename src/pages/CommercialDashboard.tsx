@@ -323,6 +323,7 @@ export default function CommercialDashboard() {
     }
   }
 
+  function handleContractUploadSuccess() {
     if (!contractUploadBudget || !user) return;
     const budgetId = contractUploadBudget.id;
     const fromStatus = contractUploadBudget.internal_status;
