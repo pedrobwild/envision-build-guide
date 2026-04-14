@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -127,9 +127,23 @@ function TemplateDialog({
   template?: Template | null;
 }) {
   const qc = useQueryClient();
-  const [name, setName] = useState(template?.name ?? "");
-  const [description, setDescription] = useState(template?.description ?? "");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Reset form state when dialog opens or template changes
+  const templateId = template?.id;
+  useState(() => {
+    setName(template?.name ?? "");
+    setDescription(template?.description ?? "");
+  });
+  // Sync state when template prop changes
+  const prevTemplateRef = useRef(templateId);
+  if (prevTemplateRef.current !== templateId) {
+    prevTemplateRef.current = templateId;
+    setName(template?.name ?? "");
+    setDescription(template?.description ?? "");
+  }
 
   const isEdit = !!template;
 
@@ -502,10 +516,21 @@ export default function BudgetTemplatesPage() {
   };
 
   const duplicateTemplate = async (template: Template) => {
-    // 1. Clone template
+    // 1. Load source template media_config
+    const { data: srcTpl } = await supabase
+      .from("budget_templates")
+      .select("media_config")
+      .eq("id", template.id)
+      .single();
+
+    // 2. Clone template with media_config
     const { data: newTpl, error: tplErr } = await supabase
       .from("budget_templates")
-      .insert({ name: `${template.name} (cópia)`, description: template.description })
+      .insert({
+        name: `${template.name} (cópia)`,
+        description: template.description,
+        ...(srcTpl?.media_config ? { media_config: srcTpl.media_config } : {}),
+      } as any)
       .select("id")
       .single();
     if (tplErr || !newTpl) { toast.error("Erro ao duplicar"); return; }
@@ -543,6 +568,9 @@ export default function BudgetTemplatesPage() {
           order_index: item.order_index,
           coverage_type: item.coverage_type,
           reference_url: item.reference_url,
+          internal_unit_price: item.internal_unit_price,
+          internal_total: item.internal_total,
+          bdi_percentage: item.bdi_percentage,
         });
       }
     }

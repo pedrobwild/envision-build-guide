@@ -150,10 +150,15 @@ export default function TemplateEditorPage() {
     if (!tpl) return;
     setAutoSaveStatus("saving");
     try {
-      await supabase
+      const { error } = await supabase
         .from("budget_templates")
         .update({ name: tpl.name, description: tpl.description, media_config: tpl.media_config as any })
         .eq("id", tpl.id);
+      if (error) {
+        console.error("Auto-save error:", error.message);
+        setAutoSaveStatus("error");
+        return;
+      }
       setAutoSaveStatus("saved");
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
       savedTimerRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
