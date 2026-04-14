@@ -28,7 +28,13 @@ export const INTERNAL_STATUSES = {
   archived: { label: 'Arquivado', color: 'bg-gray-100 text-gray-500', icon: '📦' },
 } as const;
 
+export const VALID_INTERNAL_STATUSES = Object.keys(INTERNAL_STATUSES) as InternalStatus[];
+
 export type InternalStatus = keyof typeof INTERNAL_STATUSES;
+
+export function isValidInternalStatus(status: string): status is InternalStatus {
+  return status in INTERNAL_STATUSES;
+}
 
 export const STATUS_GROUPS = {
   // Aguardando trabalho começar
