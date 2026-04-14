@@ -15,8 +15,10 @@ import {
 import { EmptyState } from "@/components/editor/EmptyState";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
 import { ItemDetailSheet } from "@/components/editor/ItemDetailSheet";
+import { MobileItemEditor } from "@/components/editor/MobileItemEditor";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import { ItemImageInline } from "@/components/editor/ItemImageInline";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Tooltip,
   TooltipContent,
@@ -268,6 +270,8 @@ function SortableItemRow({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
+  const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
+  const isMobile = useIsMobile();
   const {
     attributes,
     listeners,
@@ -321,7 +325,13 @@ function SortableItemRow({
         {/* [▶ expand] — 20px mobile, 24px desktop */}
         <div className="w-5 sm:w-6 flex-shrink-0 flex items-center justify-center">
           <button
-            onClick={() => setRowExpanded(!rowExpanded)}
+            onClick={() => {
+              if (isMobile && compact && !rowExpanded) {
+                setMobileEditorOpen(true);
+              } else {
+                setRowExpanded(!rowExpanded);
+              }
+            }}
             className="p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground transition-colors"
           >
             <ChevronRight className={cn(
@@ -338,6 +348,7 @@ function SortableItemRow({
               <span
                 className="text-xs sm:text-sm font-body text-foreground truncate cursor-default"
                 title={item.title}
+                onClick={(e) => { if (isMobile) { e.stopPropagation(); setMobileEditorOpen(true); } }}
               >
                 {item.title}
               </span>
@@ -413,6 +424,21 @@ function SortableItemRow({
           <div className="h-8 flex items-center justify-end px-2 text-sm font-mono tabular-nums text-muted-foreground bg-muted/30 rounded">
             {formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}
           </div>
+        </div>
+
+        {/* [BDI badge] — mobile only, opens editor */}
+        <div className="md:hidden flex-shrink-0 flex items-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); setMobileEditorOpen(true); }}
+            className={cn(
+              "inline-flex items-center h-6 px-1.5 rounded-md text-[10px] font-mono tabular-nums font-bold transition-all active:scale-95 shrink-0 border",
+              (Number(item.bdi_percentage) || 0) > 0
+                ? "bg-primary/10 text-primary border-primary/20"
+                : "bg-muted/50 text-muted-foreground border-border/40"
+            )}
+          >
+            {(Number(item.bdi_percentage) || 0) > 0 ? `${item.bdi_percentage}%` : "BDI"}
+          </button>
         </div>
 
         {/* [Total Venda] — 72px mobile, 100px desktop */}
@@ -601,6 +627,15 @@ function SortableItemRow({
         budgetId={budgetId}
         onUpdate={onUpdate}
         onImagesChange={onImagesChange}
+      />
+
+      {/* Mobile item editor */}
+      <MobileItemEditor
+        open={mobileEditorOpen}
+        onOpenChange={setMobileEditorOpen}
+        item={item}
+        sectionId={sectionId}
+        onUpdate={onUpdate}
       />
     </div>
   );
