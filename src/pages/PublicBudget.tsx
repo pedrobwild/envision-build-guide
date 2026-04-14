@@ -365,16 +365,6 @@ export default function PublicBudget() {
           <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
         </div>
 
-        {/* ═══ GALLERY — shown prominently when budget has media ═══ */}
-        {hasRealMedia && (
-          <div className="mt-3" data-pdf-section>
-            <AnimatedSection id="gallery-section-top" index={0.1}>
-              <Suspense fallback={<LazyFallback />}>
-                <ProjectGallery publicId={publicId} />
-              </Suspense>
-            </AnimatedSection>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 lg:gap-8 mt-3 lg:mt-0">
           {/* Content column */}
@@ -402,8 +392,6 @@ export default function PublicBudget() {
 
               {/* ─── Visual 3D + Portal logo após depoimento ─── */}
               <div id="mobile-trust" className="space-y-3 mt-3 scroll-mt-20">
-                {/* Gallery here only when NOT already shown at top */}
-                {!hasRealMedia && (
                 <div data-pdf-section>
                 <AnimatedSection id="gallery-section" index={0.55}>
                   <Suspense fallback={<LazyFallback />}>
@@ -411,7 +399,6 @@ export default function PublicBudget() {
                   </Suspense>
                 </AnimatedSection>
                 </div>
-                )}
 
                 {/* Map — with entrance animation */}
                 <div data-pdf-section>

@@ -176,6 +176,13 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
 
   const defaultTab = availableTabs.find(t => t.id === "fotos3d")?.id ?? availableTabs[0]?.id ?? "video3d";
   const [activeTab, setActiveTab] = useState<GalleryTab>(defaultTab);
+
+  // Sync activeTab when available tabs change (e.g. after async media load)
+  useEffect(() => {
+    if (availableTabs.length > 0 && !availableTabs.some(t => t.id === activeTab)) {
+      setActiveTab(defaultTab);
+    }
+  }, [availableTabs.length, defaultTab]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
