@@ -426,6 +426,21 @@ function SortableItemRow({
           </div>
         </div>
 
+        {/* [BDI badge] — mobile only, opens editor */}
+        <div className="md:hidden flex-shrink-0 flex items-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); setMobileEditorOpen(true); }}
+            className={cn(
+              "inline-flex items-center h-6 px-1.5 rounded-md text-[10px] font-mono tabular-nums font-bold transition-all active:scale-95 shrink-0 border",
+              (Number(item.bdi_percentage) || 0) > 0
+                ? "bg-primary/10 text-primary border-primary/20"
+                : "bg-muted/50 text-muted-foreground border-border/40"
+            )}
+          >
+            {(Number(item.bdi_percentage) || 0) > 0 ? `${item.bdi_percentage}%` : "BDI"}
+          </button>
+        </div>
+
         {/* [Total Venda] — 72px mobile, 100px desktop */}
         <div className="w-[72px] sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
           <div className="h-7 sm:h-8 flex items-center justify-end px-1 sm:px-2 text-[11px] sm:text-sm font-semibold font-mono tabular-nums text-foreground">
