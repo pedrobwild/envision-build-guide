@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/editor/EmptyState";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
 import { ItemDetailSheet } from "@/components/editor/ItemDetailSheet";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
+import { ItemImageInline } from "@/components/editor/ItemImageInline";
 import {
   Tooltip,
   TooltipContent,
