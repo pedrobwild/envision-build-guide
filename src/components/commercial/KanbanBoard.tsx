@@ -737,6 +737,14 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
+                              if (action === "copyLink") {
+                                if (b.public_id) {
+                                  navigator.clipboard.writeText(getPublicBudgetUrl(b.public_id));
+                                  toast.success("Link copiado!");
+                                } else {
+                                  toast.error("Orçamento sem link público");
+                                }
+                              }
                             }}
                           />
                         </div>
