@@ -162,7 +162,22 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     { id: "tour3d", label: "Tour 3D", icon: <Compass className="h-4 w-4" />, accept: "" },
   ];
 
-  const loadFiles = useCallback(async () => {
+  // Sync Storage state → budget.media_config so useBudgetMedia picks it up
+  const syncMediaConfig = useCallback(async (storageFiles: Record<StorageTab, MediaFile[]>) => {
+    const isVideo = (url: string) => /\.(mp4|webm|mov)$/i.test(url);
+    const mediaConfig = {
+      video3d: storageFiles.video.find(f => isVideo(f.url))?.url ?? storageFiles["3d"].find(f => isVideo(f.url))?.url,
+      projeto3d: storageFiles["3d"].filter(f => !isVideo(f.url)).map(f => f.url),
+      projetoExecutivo: storageFiles.exec.filter(f => !isVideo(f.url)).map(f => f.url),
+      fotos: storageFiles.fotos.filter(f => !isVideo(f.url)).map(f => f.url),
+    };
+    await supabase
+      .from("budgets")
+      .update({ media_config: mediaConfig as any })
+      .eq("id", budgetId);
+  }, [budgetId]);
+
+  const loadFiles = useCallback(async (syncToDb = false) => {
     setLoading(true);
     const result: Record<StorageTab, MediaFile[]> = { "3d": [], fotos: [], exec: [], video: [] };
 
@@ -180,7 +195,11 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
     setFiles(result);
     setLoading(false);
-  }, [folderMap]);
+
+    if (syncToDb) {
+      syncMediaConfig(result);
+    }
+  }, [folderMap, syncMediaConfig]);
 
   useEffect(() => { loadFiles(); }, [loadFiles]);
 
@@ -233,7 +252,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
 
     if (count > 0) {
       toast.success(`${count} arquivo(s) enviado(s) com sucesso!`);
-      await loadFiles();
+      await loadFiles(true);
     }
     setUploading(false);
   };
@@ -245,7 +264,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       toast.error("Erro ao remover arquivo.");
     } else {
       toast.success("Arquivo removido.");
-      await loadFiles();
+      await loadFiles(true);
     }
   };
 
@@ -313,11 +332,11 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       }
 
       toast.success("Ordem atualizada!");
-      await loadFiles();
+      await loadFiles(true);
     } catch (err) {
       console.error("Reorder error:", err);
       toast.error("Erro ao reordenar. Tente novamente.");
-      await loadFiles();
+      await loadFiles(true);
     }
 
     setReordering(false);
