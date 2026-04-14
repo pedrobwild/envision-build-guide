@@ -133,6 +133,7 @@ interface BudgetRow {
 interface ProfileRow { id: string; full_name: string; }
 
 export default function CommercialDashboard() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useUserProfile();
@@ -151,7 +152,7 @@ export default function CommercialDashboard() {
   const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (user && profile) loadData(); }, [user, profile]);
+  useEffect(() => { if (user && profile) loadData(); }, [user, profile, location.key]);
 
   async function loadData() {
     setLoading(true);
