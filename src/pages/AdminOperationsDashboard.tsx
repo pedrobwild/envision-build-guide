@@ -25,7 +25,7 @@ import {
   Flame, Send, Shield, Pencil,
 } from "lucide-react";
 import {
-  INTERNAL_STATUSES, PRIORITIES,
+  INTERNAL_STATUSES, PRIORITIES, STATUS_GROUPS,
   type InternalStatus, type Priority,
 } from "@/lib/role-constants";
 import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
@@ -50,9 +50,7 @@ interface BudgetRow {
 interface ProfileRow { id: string; full_name: string; }
 interface RoleRow { user_id: string; role: string; }
 
-const ACTIVE_STATUSES: InternalStatus[] = [
-  "requested", "triage", "assigned", "in_progress", "waiting_info", "ready_for_review",
-];
+const ACTIVE_STATUSES: readonly string[] = STATUS_GROUPS.OPERATIONS_ACTIVE;
 
 type SortOption = "urgente" | "recente" | "prazo";
 

@@ -39,9 +39,9 @@ interface PersonMetrics {
   finished: number; // done, published, contrato_fechado
 }
 
-const PENDING_STATUSES = ["requested", "novo", "triage", "assigned"];
-const IN_PROGRESS_STATUSES = ["in_progress", "review"];
-const FINISHED_STATUSES = ["done", "delivered", "published", "contrato_fechado", "closed_won"];
+const PENDING_STATUSES: readonly string[] = STATUS_GROUPS.PENDING;
+const IN_PROGRESS_STATUSES: readonly string[] = STATUS_GROUPS.ACTIVE_WORK;
+const FINISHED_STATUSES: string[] = [...STATUS_GROUPS.DELIVERED, ...STATUS_GROUPS.COMMERCIAL_ADVANCED];
 
 export function TeamMetricsPanel() {
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
