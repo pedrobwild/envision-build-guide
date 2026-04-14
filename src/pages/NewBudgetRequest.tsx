@@ -41,7 +41,9 @@ import {
 } from "lucide-react";
 import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
 import { cn } from "@/lib/utils";
+import { LayoutTemplate } from "lucide-react";
 
 /* ── Notion-like property row ── */
 function PropertyRow({
@@ -135,6 +137,8 @@ export default function NewBudgetRequest() {
 
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const { data: templates } = useBudgetTemplates();
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
 
   const [clientName, setClientName] = useState("");
