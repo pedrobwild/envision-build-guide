@@ -792,9 +792,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     return updated;
   }, [debouncedSave]);
 
+  // Keep a mutable ref to sections so rapid-fire updateItem calls (e.g. from MobileItemEditor batch save) accumulate correctly
+  const sectionsRef = useRef(sections);
+  sectionsRef.current = sections;
+
   const updateItem = (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => {
     if (readOnly) return;
-    let updated = sections.map(s => {
+    const currentSections = sectionsRef.current;
+    let updated = currentSections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.map(i =>
         i.id === itemId ? { ...i, [field]: value } : i
@@ -809,11 +814,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     });
 
     const priceFields = ["internal_total", "internal_unit_price", "bdi_percentage", "qty"];
-    const editedItem = sections.flatMap(s => s.items).find(i => i.id === itemId);
+    const editedItem = currentSections.flatMap(s => s.items).find(i => i.id === itemId);
     if (priceFields.includes(field) && editedItem?.title !== TAX_ITEM_TITLE) {
       updated = recalcTaxItem(updated);
     }
 
+    sectionsRef.current = updated;
     onSectionsChange(updated);
     debouncedSave("items", itemId, { [field]: value });
   };
