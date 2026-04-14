@@ -444,17 +444,24 @@ export default function CommercialDashboard() {
               </SelectContent>
             </Select>
             {/* Due filter */}
-            <Select value={dueFilter} onValueChange={v => setDueFilter(v as DueFilter)}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os prazos</SelectItem>
-                <SelectItem value="overdue">🔴 Vencidos / Hoje</SelectItem>
-                <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-1">
+              <Select value={dueFilter} onValueChange={v => setDueFilter(v as DueFilter)}>
+                <SelectTrigger className={cn("w-full sm:w-[180px]", dueFilter !== "all" && "border-primary ring-1 ring-primary/20")}>
+                  <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os prazos</SelectItem>
+                  <SelectItem value="overdue">🔴 Vencidos / Hoje</SelectItem>
+                  <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
+                </SelectContent>
+              </Select>
+              {dueFilter !== "all" && (
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setDueFilter("all")}>
+                  <span className="text-xs">✕</span>
+                </Button>
+              )}
+            </div>
             {/* Commercial owner filter (admin only) */}
             {isAdmin && commercialOptions.length > 0 && (
               <Select value={commercialFilter} onValueChange={setCommercialFilter}>
