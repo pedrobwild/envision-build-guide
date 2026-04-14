@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
