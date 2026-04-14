@@ -351,22 +351,15 @@ export function SortableItemRow({
           )}
 
           <div className="flex items-center gap-3 md:hidden pt-0.5">
-            <div className="space-y-0.5">
-              <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">BDI%</label>
-              <input
-                type="number"
-                value={item.bdi_percentage ?? ""}
-                onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
-                placeholder="0"
-                step="0.01"
-                className="w-20 h-7 px-2 rounded-md border border-border/40 bg-background text-xs font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all tabular-nums"
-              />
-            </div>
-            <div className="pt-4">
-              <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
-                Margem: {formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}
+            <button
+              onClick={() => setBdiDrawerOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-all active:scale-[0.98]"
+            >
+              <BdiChip bdi={item.bdi_percentage} onClick={() => setBdiDrawerOpen(true)} />
+              <span className="text-[10px] text-muted-foreground font-body">
+                Margem: <span className="font-mono tabular-nums font-semibold">{formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}</span>
               </span>
-            </div>
+            </button>
           </div>
 
           {/* Action buttons */}
