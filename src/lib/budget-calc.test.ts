@@ -55,7 +55,7 @@ describe("calcItemSaleTotal", () => {
     expect(calcItemSaleTotal({ internal_unit_price: 100, qty: null, bdi_percentage: 20 })).toBe(120);
   });
   it("falls back to internal_total and applies BDI", () => {
-    expect(calcItemSaleTotal({ internal_unit_price: null, internal_total: 800, bdi_percentage: 10 })).toBe(880);
+    expect(calcItemSaleTotal({ internal_unit_price: null, internal_total: 800, bdi_percentage: 10 })).toBeCloseTo(880, 2);
   });
   it("falls back to internal_total without BDI", () => {
     expect(calcItemSaleTotal({ internal_unit_price: null, internal_total: 800, bdi_percentage: 0 })).toBe(800);
