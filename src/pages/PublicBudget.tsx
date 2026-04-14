@@ -402,6 +402,8 @@ export default function PublicBudget() {
 
               {/* ─── Visual 3D + Portal logo após depoimento ─── */}
               <div id="mobile-trust" className="space-y-3 mt-3 scroll-mt-20">
+                {/* Gallery here only when NOT already shown at top */}
+                {!hasRealMedia && (
                 <div data-pdf-section>
                 <AnimatedSection id="gallery-section" index={0.55}>
                   <Suspense fallback={<LazyFallback />}>
@@ -409,6 +411,7 @@ export default function PublicBudget() {
                   </Suspense>
                 </AnimatedSection>
                 </div>
+                )}
 
                 {/* Map — with entrance animation */}
                 <div data-pdf-section>
