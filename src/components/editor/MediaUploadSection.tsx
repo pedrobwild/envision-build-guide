@@ -273,12 +273,17 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
 
   const handleDelete = async (tab: StorageTab, fileName: string) => {
     const path = `${folderMap[tab]}/${fileName}`;
-    const { error } = await supabase.storage.from("media").remove([path]);
-    if (error) {
+    try {
+      const { error } = await supabase.storage.from("media").remove([path]);
+      if (error) {
+        toast.error("Erro ao remover arquivo.");
+      } else {
+        toast.success("Arquivo removido.");
+        await loadFiles(true);
+      }
+    } catch (err) {
+      console.error("handleDelete error:", err);
       toast.error("Erro ao remover arquivo.");
-    } else {
-      toast.success("Arquivo removido.");
-      await loadFiles(true);
     }
   };
 
