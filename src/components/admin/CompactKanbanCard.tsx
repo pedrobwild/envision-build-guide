@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight } from "lucide-react";
+import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
@@ -21,7 +21,7 @@ interface CompactKanbanCardProps {
   highPriority?: boolean;
   isSynced?: boolean;
   onClick: () => void;
-  onQuickAction?: (action: "open" | "whatsapp" | "advance") => void;
+  onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink") => void;
 }
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
