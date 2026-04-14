@@ -12,6 +12,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { ItemImageInline } from "./ItemImageInline";
 import { ItemDetailSheet } from "./ItemDetailSheet";
+import { MobileBdiDrawer, BdiChip } from "./MobileBdiDrawer";
 
 export interface ItemData {
   id: string;
@@ -71,6 +72,7 @@ export function SortableItemRow({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
+  const [bdiDrawerOpen, setBdiDrawerOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -218,6 +220,11 @@ export function SortableItemRow({
           </div>
         </div>
 
+        {/* [BDI chip] — mobile only */}
+        <div className="md:hidden flex-shrink-0 flex items-center">
+          <BdiChip bdi={item.bdi_percentage} onClick={() => setBdiDrawerOpen(true)} />
+        </div>
+
         {/* [Total Venda] — 72px mobile, 100px desktop */}
         <div className="w-[72px] sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
           <div className="h-7 sm:h-8 flex items-center justify-end px-1 sm:px-2 text-[11px] sm:text-sm font-semibold font-mono tabular-nums text-foreground">
@@ -344,22 +351,15 @@ export function SortableItemRow({
           )}
 
           <div className="flex items-center gap-3 md:hidden pt-0.5">
-            <div className="space-y-0.5">
-              <label className="text-[10px] uppercase tracking-[0.06em] font-medium font-body text-muted-foreground/60">BDI%</label>
-              <input
-                type="number"
-                value={item.bdi_percentage ?? ""}
-                onChange={(e) => onUpdate(sectionId, item.id, "bdi_percentage", e.target.value ? Number(e.target.value) : null)}
-                placeholder="0"
-                step="0.01"
-                className="w-20 h-7 px-2 rounded-md border border-border/40 bg-background text-xs font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/40 transition-all tabular-nums"
-              />
-            </div>
-            <div className="pt-4">
-              <span className="text-[10px] text-muted-foreground font-mono tabular-nums">
-                Margem: {formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}
+            <button
+              onClick={() => setBdiDrawerOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-all active:scale-[0.98]"
+            >
+              <BdiChip bdi={item.bdi_percentage} onClick={() => setBdiDrawerOpen(true)} />
+              <span className="text-[10px] text-muted-foreground font-body">
+                Margem: <span className="font-mono tabular-nums font-semibold">{formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}</span>
               </span>
-            </div>
+            </button>
           </div>
 
           {/* Action buttons */}
@@ -404,6 +404,17 @@ export function SortableItemRow({
         budgetId={budgetId}
         onUpdate={onUpdate}
         onImagesChange={onImagesChange}
+      />
+
+      {/* Mobile BDI drawer */}
+      <MobileBdiDrawer
+        open={bdiDrawerOpen}
+        onOpenChange={setBdiDrawerOpen}
+        itemTitle={item.title}
+        bdiPercentage={item.bdi_percentage}
+        unitCost={item.internal_unit_price}
+        qty={item.qty}
+        onBdiChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
       />
     </div>
   );
