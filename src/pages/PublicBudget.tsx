@@ -421,7 +421,7 @@ export default function PublicBudget() {
               clientName={budget.client_name}
               publicId={publicId || "demo"}
               budgetId={budget.id}
-              onTotalCardVisibilityChange={handleTotalCardVisibility}
+              
             />
             </div>
 
@@ -572,7 +572,7 @@ export default function PublicBudget() {
           clientName={budget.client_name}
           publicId={publicId || "demo"}
           budgetId={budget.id}
-          hidden={bottomBarHidden}
+          hidden={false}
           activeSection={null}
         />
 
