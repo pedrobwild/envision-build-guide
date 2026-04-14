@@ -149,8 +149,11 @@ export function SortableItemRow({
           {compact && !rowExpanded ? (
             <>
               <span
-                className="text-xs sm:text-sm font-body text-foreground truncate cursor-default"
+                className={cn("text-xs sm:text-sm font-body text-foreground truncate", isMobile ? "cursor-pointer active:text-primary" : "cursor-default")}
                 title={item.title}
+                onClick={(e) => {
+                  if (isMobile) { e.stopPropagation(); setMobileEditorOpen(true); }
+                }}
               >
                 {item.title}
               </span>
