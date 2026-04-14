@@ -103,7 +103,7 @@ export default function EstimatorDashboard() {
     if (!user || profileLoading) return;
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, profileLoading]);
+  }, [user, profileLoading, location.key]);
 
   async function loadData() {
     setLoading(true);
