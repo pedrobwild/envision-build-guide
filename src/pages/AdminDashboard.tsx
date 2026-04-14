@@ -105,7 +105,7 @@ export default function AdminDashboard() {
         const { seedFromTemplate } = await import("@/lib/seed-from-template");
         await seedFromTemplate(data.id, "a01da86a-9184-4693-bd07-6798c2bf79b2");
       } catch (e) {
-        console.warn("[CreateBudget] Template seed failed:", e);
+        toast.error("Erro ao aplicar template padrão.");
       }
       navigate(`/admin/budget/${data.id}`);
     }

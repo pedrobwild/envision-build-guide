@@ -195,7 +195,6 @@ export default function SystemToolsPage() {
       setResult(res.data?.content ?? "Sem resultados.");
       setCitations(res.data?.citations ?? []);
     } catch (err: unknown) {
-      console.error(err);
       toast({
         title: "Erro na pesquisa",
         description: (err instanceof Error ? err.message : null) || "Não foi possível completar a pesquisa.",
@@ -219,7 +218,6 @@ export default function SystemToolsPage() {
       if (res.error) throw new Error(res.error.message || "Erro na análise");
       setUxResult(res.data?.content ?? "Sem resultados.");
     } catch (err: unknown) {
-      console.error(err);
       toast({
         title: "Erro na análise",
         description: (err instanceof Error ? err.message : null) || "Não foi possível gerar as sugestões.",
@@ -243,7 +241,7 @@ export default function SystemToolsPage() {
       if (res.error) throw new Error(res.error.message || "Erro na análise");
       setBenchResult(res.data?.content ?? "Sem resultados.");
     } catch (err: unknown) {
-      console.error(err);
+      
       toast({
         title: "Erro na análise",
         description: (err instanceof Error ? err.message : null) || "Não foi possível gerar as sugestões.",

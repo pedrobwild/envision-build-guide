@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,7 +48,7 @@ export default function FinancialHistory() {
         .eq("status", "contrato_fechado")
         .order("closed_at", { ascending: false });
       if (cancelled) return;
-      if (error) console.error('Failed to load closed budgets:', error.message);
+      if (error) toast.error(`Erro ao carregar contratos: ${error.message}`);
       setBudgets((data || []) as unknown as BudgetWithSections[]);
       setLoading(false);
     }

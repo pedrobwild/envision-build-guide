@@ -27,7 +27,7 @@ export default function BudgetEditor() {
       if (!budgetId) return;
       const { data: b, error: bErr } = await supabase.from('budgets').select('*').eq('id', budgetId).maybeSingle();
       if (cancelled) return;
-      if (bErr) { console.error('Failed to load budget:', bErr.message); return; }
+      if (bErr) { toast.error(`Erro ao carregar orçamento: ${bErr.message}`); return; }
       if (!b) { navigate('/admin'); return; }
       setBudget(b);
 

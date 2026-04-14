@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Plus, Minus, RefreshCw, Equal, Eye, EyeOff, TrendingUp, TrendingDown } from "lucide-react";
@@ -65,7 +66,7 @@ async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; secti
     .eq("budget_id", budgetId)
     .order("order_index");
 
-  if (secErr) console.error('Failed to load sections for version:', secErr.message);
+  if (secErr) toast.error(`Erro ao carregar seções: ${secErr.message}`);
 
   const mapped: CompareSection[] = (sections || []).map((s) => ({
     ...s,
