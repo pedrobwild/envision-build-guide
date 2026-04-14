@@ -663,43 +663,56 @@ export default function CommercialDashboard() {
                       </div>
 
                       {/* Quick actions */}
-                      <BudgetActionsMenu
-                        budget={b}
-                        onRefresh={loadData}
-                        fromPath="/admin/comercial"
-                        extraItems={
-                          <>
-                            <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
-                              <FileText className="h-4 w-4 mr-2" />Ver detalhes
-                            </DropdownMenuItem>
-                            {!isLocked && (
-                              <>
-                                <DropdownMenuSeparator />
-                                {b.internal_status === "delivered_to_sales" && (
-                                  <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
-                                    <Send className="h-4 w-4 mr-2" />Enviar ao cliente
-                                  </DropdownMenuItem>
-                                )}
-                                {b.internal_status !== "lost" && b.internal_status !== "sent_to_client" && (
-                                  <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
-                                    <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
-                                  </DropdownMenuItem>
-                                )}
-                                {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
-                                  <DropdownMenuItem onClick={() => setRevisionBudget(b)}>
-                                    <RotateCcw className="h-4 w-4 mr-2" />Solicitar revisão
-                                  </DropdownMenuItem>
-                                )}
-                              </>
-                            )}
-                          </>
-                        }
-                        trigger={
-                          <Button variant="ghost" size="icon" className="shrink-0 opacity-100 lg:opacity-60 lg:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                            <MoreVertical className="h-4 w-4" />
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        {b.public_id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 lg:hidden shrink-0"
+                            onClick={(e) => { e.stopPropagation(); copyPublicLink(b.public_id); }}
+                            title="Copiar link público"
+                          >
+                            <Copy className="h-4 w-4" />
                           </Button>
-                        }
-                      />
+                        )}
+                        <BudgetActionsMenu
+                          budget={b}
+                          onRefresh={loadData}
+                          fromPath="/admin/comercial"
+                          extraItems={
+                            <>
+                              <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
+                                <FileText className="h-4 w-4 mr-2" />Ver detalhes
+                              </DropdownMenuItem>
+                              {!isLocked && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  {b.internal_status === "delivered_to_sales" && (
+                                    <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
+                                      <Send className="h-4 w-4 mr-2" />Enviar ao cliente
+                                    </DropdownMenuItem>
+                                  )}
+                                  {b.internal_status !== "lost" && b.internal_status !== "sent_to_client" && (
+                                    <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
+                                      <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
+                                    </DropdownMenuItem>
+                                  )}
+                                  {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
+                                    <DropdownMenuItem onClick={() => setRevisionBudget(b)}>
+                                      <RotateCcw className="h-4 w-4 mr-2" />Solicitar revisão
+                                    </DropdownMenuItem>
+                                  )}
+                                </>
+                              )}
+                            </>
+                          }
+                          trigger={
+                            <Button variant="ghost" size="icon" className="shrink-0 opacity-100 lg:opacity-60 lg:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
+                      </div>
                     </div>
                   </Card>
                 );
