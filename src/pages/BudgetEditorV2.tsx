@@ -514,7 +514,7 @@ export default function BudgetEditorV2() {
                     sections={sections}
                     onSectionsChange={setSections}
                     loading={sectionsLoading}
-                    readOnly={budget.status === "published" && budget.is_published_version === true}
+                    readOnly={false}
                   />
                 </div>
 
