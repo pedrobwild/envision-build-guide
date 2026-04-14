@@ -377,10 +377,10 @@ export function SortableItemRow({
 
           <div className="flex items-center gap-3 md:hidden pt-0.5">
             <button
-              onClick={() => setBdiDrawerOpen(true)}
+              onClick={() => setMobileEditorOpen(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-all active:scale-[0.98]"
             >
-              <BdiChip bdi={item.bdi_percentage} onClick={() => setBdiDrawerOpen(true)} />
+              <span className="text-[10px] font-mono tabular-nums font-bold text-primary">BDI {Number(item.bdi_percentage) || 0}%</span>
               <span className="text-[10px] text-muted-foreground font-body">
                 Margem: <span className="font-mono tabular-nums font-semibold">{formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}</span>
               </span>
