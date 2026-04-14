@@ -213,9 +213,6 @@ export default function BudgetEditorV2() {
 
   const autoSaveBudgetField = useCallback((field: string, value: unknown) => {
     if (!budgetId) return;
-    if (isPublishedVersion) {
-      return;
-    }
     if (PROTECTED_FIELDS.current.has(field)) {
       return;
     }
