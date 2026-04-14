@@ -197,6 +197,14 @@ export function computeDashboardMetrics(
   const prev = getPreviousPeriod(range);
   const now = new Date();
 
+  // Dev warning for inconsistent status fields
+  if (process.env.NODE_ENV === 'development') {
+    const inconsistent = budgets.filter(b => b.internal_status === 'contrato_fechado' && b.status !== 'published');
+    if (inconsistent.length > 0) {
+      console.warn(`[Metrics] ${inconsistent.length} budgets with inconsistent status/internal_status`);
+    }
+  }
+
   // ─── Received ───
   const receivedCurrent = budgets.filter((b) => isInRange(b.created_at, range)).length;
   const receivedPrev = budgets.filter((b) => isInRange(b.created_at, prev)).length;
@@ -234,10 +242,10 @@ export function computeDashboardMetrics(
     .sort((a, b) => a.hoursLeft - b.hoursLeft);
 
   // ─── Lead Time ───
-  const DELIVERED_STATUSES = ["published", "contrato_fechado", "minuta_solicitada"];
+  const DELIVERED_STATUSES = ["sent_to_client", "minuta_solicitada", "contrato_fechado"];
   const deliveredInPeriod = budgets.filter((b) => {
     const deliveredDate = b.generated_at || b.closed_at;
-    return deliveredDate && isInRange(deliveredDate, range) && DELIVERED_STATUSES.includes(b.status);
+    return deliveredDate && isInRange(deliveredDate, range) && DELIVERED_STATUSES.includes(b.internal_status);
   });
   const calcLeadTimes = (list: BudgetWithSections[]) =>
     list
@@ -252,7 +260,7 @@ export function computeDashboardMetrics(
 
   const deliveredInPrev = budgets.filter((b) => {
     const deliveredDate = b.generated_at || b.closed_at;
-    return deliveredDate && isInRange(deliveredDate, prev) && DELIVERED_STATUSES.includes(b.status);
+    return deliveredDate && isInRange(deliveredDate, prev) && DELIVERED_STATUSES.includes(b.internal_status);
   });
   const prevLeadTimes = calcLeadTimes(deliveredInPrev);
   const prevAvgLT = prevLeadTimes.length > 0 ? prevLeadTimes.reduce((a, b) => a + b, 0) / prevLeadTimes.length : null;
@@ -260,10 +268,10 @@ export function computeDashboardMetrics(
   // ─── Conversion ───
   const publishedInPeriod = budgets.filter((b) => {
     const d = b.generated_at || b.updated_at;
-    return d && isInRange(d, range) && DELIVERED_STATUSES.includes(b.status);
+    return d && isInRange(d, range) && DELIVERED_STATUSES.includes(b.internal_status);
   });
   const closedInPeriod = budgets.filter((b) =>
-    b.status === "contrato_fechado" && isInRange(b.closed_at || b.updated_at, range)
+    b.internal_status === "contrato_fechado" && isInRange(b.closed_at || b.updated_at, range)
   );
   const conversion = publishedInPeriod.length > 0
     ? (closedInPeriod.length / publishedInPeriod.length) * 100
@@ -271,10 +279,10 @@ export function computeDashboardMetrics(
 
   const prevPublished = budgets.filter((b) => {
     const d = b.generated_at || b.updated_at;
-    return d && isInRange(d, prev) && DELIVERED_STATUSES.includes(b.status);
+    return d && isInRange(d, prev) && DELIVERED_STATUSES.includes(b.internal_status);
   });
   const prevClosed = budgets.filter((b) =>
-    b.status === "contrato_fechado" && isInRange(b.closed_at || b.updated_at, prev)
+    b.internal_status === "contrato_fechado" && isInRange(b.closed_at || b.updated_at, prev)
   );
   const prevConversion = prevPublished.length > 0
     ? (prevClosed.length / prevPublished.length) * 100
@@ -304,7 +312,7 @@ export function computeDashboardMetrics(
   // ─── Monthly Financials (last 6 months) ───
   const monthlyMap = new Map<string, { revenue: number; cost: number }>();
   budgets
-    .filter((b) => b.status === "contrato_fechado" && b.closed_at)
+    .filter((b) => b.internal_status === "contrato_fechado" && b.closed_at)
     .forEach((b) => {
       const d = new Date(b.closed_at!);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -580,7 +588,7 @@ export function computeDashboardMetrics(
 
   const comStages: ComStage[] = [
     { key: "sent", label: "Enviado", statuses: ["sent_to_client"] },
-    { key: "viewed", label: "Visualizado", filter: (b) => b.status === "published" && b.view_count > 0 },
+    { key: "viewed", label: "Visualizado", filter: (b) => b.internal_status === "sent_to_client" && b.view_count > 0 },
     { key: "negotiation", label: "Em negociação", statuses: ["minuta_solicitada", "revision_requested"] },
     { key: "closed", label: "Contrato fechado", statuses: ["contrato_fechado"] },
   ];
@@ -589,7 +597,7 @@ export function computeDashboardMetrics(
     if (s.filter) {
       return budgets.filter(s.filter).length;
     }
-    return budgets.filter((b) => s.statuses!.includes(b.internal_status) || s.statuses!.includes(b.status)).length;
+    return budgets.filter((b) => s.statuses!.includes(b.internal_status)).length;
   });
 
   const commercialFunnel: FunnelStage[] = comStages.map((s, i) => ({
@@ -686,12 +694,12 @@ export function computeDashboardMetrics(
 
   const sparkClosed = weeklyCount((b, wFrom, wTo) => {
     const d = b.closed_at || b.updated_at;
-    return d != null && b.status === "contrato_fechado" && new Date(d) >= wFrom && new Date(d) < wTo;
+    return d != null && b.internal_status === "contrato_fechado" && new Date(d) >= wFrom && new Date(d) < wTo;
   });
 
   const sparkDelivered = weeklyCount((b, wFrom, wTo) => {
     const d = b.generated_at || b.closed_at;
-    return d != null && DELIVERED_STATUSES.includes(b.status) && new Date(d) >= wFrom && new Date(d) < wTo;
+    return d != null && DELIVERED_STATUSES.includes(b.internal_status) && new Date(d) >= wFrom && new Date(d) < wTo;
   });
 
   const sparkBacklog = (() => {
