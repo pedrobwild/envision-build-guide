@@ -592,6 +592,21 @@ export default function CommercialDashboard() {
                           <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
                             {status.icon} {status.label}
                           </Badge>
+                          {!b.commercial_owner_id && (
+                            <Popover>
+                              <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Badge variant="outline" className="text-xs font-body border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 cursor-pointer hover:bg-amber-100 transition-colors">
+                                  <UserPlus className="h-3 w-3 mr-1" />Sem responsável
+                                </Badge>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56 p-3" align="start" onClick={(e) => e.stopPropagation()}>
+                                <p className="text-xs text-muted-foreground font-body mb-2">Este orçamento não tem um comercial designado.</p>
+                                <Button size="sm" className="w-full text-xs gap-1.5" onClick={() => claimBudget(b.id)}>
+                                  <UserPlus className="h-3.5 w-3.5" />Assumir este orçamento
+                                </Button>
+                              </PopoverContent>
+                            </Popover>
+                          )}
                           {b.priority !== "normal" && (
                             <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>{prio.label}</Badge>
                           )}
