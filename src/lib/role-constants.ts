@@ -30,6 +30,34 @@ export const INTERNAL_STATUSES = {
 
 export type InternalStatus = keyof typeof INTERNAL_STATUSES;
 
+export const STATUS_GROUPS = {
+  // Aguardando trabalho começar
+  PENDING: ["novo", "requested", "triage", "assigned"] as const,
+
+  // Em trabalho ativo pelo orçamentista
+  ACTIVE_WORK: ["in_progress", "waiting_info", "blocked", "revision_requested"] as const,
+
+  // Aguardando revisão interna
+  REVIEW: ["ready_for_review"] as const,
+
+  // Entregue internamente ou ao cliente
+  DELIVERED: ["delivered_to_sales", "sent_to_client"] as const,
+
+  // Em fase comercial avançada
+  COMMERCIAL_ADVANCED: ["minuta_solicitada", "contrato_fechado"] as const,
+
+  // Encerrados
+  FINISHED: ["lost", "archived"] as const,
+
+  // Visíveis por padrão no painel do orçamentista (todos exceto delivered+finished)
+  ESTIMATOR_DEFAULT_VISIBLE: ["novo", "requested", "triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested", "ready_for_review"] as const,
+
+  // Considerados "ativos" para métricas de operações
+  OPERATIONS_ACTIVE: ["requested", "triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested", "ready_for_review"] as const,
+} as const;
+
+export type StatusGroup = keyof typeof STATUS_GROUPS;
+
 export const PRIORITIES = {
   baixa: { label: 'Baixa', color: 'bg-gray-100 text-gray-700' },
   normal: { label: 'Normal', color: 'bg-blue-100 text-blue-700' },

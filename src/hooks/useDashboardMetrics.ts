@@ -1,4 +1,5 @@
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { STATUS_GROUPS } from "@/lib/role-constants";
 import type { BudgetWithSections, SectionWithItems, AdjustmentRow } from "@/types/budget-common";
 
 export interface DateRange {
@@ -123,10 +124,7 @@ export interface DashboardMetrics {
   stalledByStage: { stage: string; label: string; count: number; avgDays: number }[];
 }
 
-const ACTIVE_STATUSES = [
-  "requested", "novo", "triage", "assigned",
-  "in_progress", "waiting_info", "blocked", "ready_for_review",
-];
+const ACTIVE_STATUSES: readonly string[] = STATUS_GROUPS.OPERATIONS_ACTIVE;
 
 const STATUS_LABELS: Record<string, string> = {
   requested: "Solicitado",

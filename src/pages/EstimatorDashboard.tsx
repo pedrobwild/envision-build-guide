@@ -58,6 +58,7 @@ import {
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
+  STATUS_GROUPS,
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
@@ -72,29 +73,23 @@ import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDial
 import { Plus } from "lucide-react";
 
 // Statuses relevant for the estimator's active queue
-const ESTIMATOR_ACTIVE_STATUSES: InternalStatus[] = [
-  "assigned",
-  "in_progress",
-  "waiting_info",
-  "blocked",
-  "ready_for_review",
-];
+const ESTIMATOR_ACTIVE_STATUSES: readonly string[] = STATUS_GROUPS.ESTIMATOR_DEFAULT_VISIBLE;
 
 type SortOption = "urgente" | "recente" | "prazo";
 
 function getEstimatorStage(status: string): "pending" | "in_progress" | "review" | "delivered" | "finished" {
-  if (["requested", "novo", "triage", "assigned"].includes(status)) return "pending";
-  if (["in_progress", "waiting_info", "blocked", "revision_requested"].includes(status)) return "in_progress";
-  if (status === "ready_for_review") return "review";
-  if (["delivered_to_sales", "sent_to_client", "minuta_solicitada"].includes(status)) return "delivered";
+  if ((STATUS_GROUPS.PENDING as readonly string[]).includes(status)) return "pending";
+  if ((STATUS_GROUPS.ACTIVE_WORK as readonly string[]).includes(status)) return "in_progress";
+  if ((STATUS_GROUPS.REVIEW as readonly string[]).includes(status)) return "review";
+  if ([...STATUS_GROUPS.DELIVERED, ...STATUS_GROUPS.COMMERCIAL_ADVANCED].includes(status as any)) return "delivered";
   return "finished";
 }
 
-const PENDING_STATUSES: string[] = ["requested", "novo", "triage", "assigned"];
-const IN_PROGRESS_STATUSES: string[] = ["in_progress", "waiting_info", "blocked", "revision_requested"];
-const REVIEW_STATUSES: string[] = ["ready_for_review"];
-const DELIVERED_STATUSES: string[] = ["delivered_to_sales", "sent_to_client", "minuta_solicitada"];
-const FINISHED_STATUSES: string[] = ["lost", "archived", "contrato_fechado"];
+const PENDING_STATUSES: readonly string[] = STATUS_GROUPS.PENDING;
+const IN_PROGRESS_STATUSES: readonly string[] = STATUS_GROUPS.ACTIVE_WORK;
+const REVIEW_STATUSES: readonly string[] = STATUS_GROUPS.REVIEW;
+const DELIVERED_STATUSES: string[] = [...STATUS_GROUPS.DELIVERED, ...STATUS_GROUPS.COMMERCIAL_ADVANCED];
+const FINISHED_STATUSES: readonly string[] = STATUS_GROUPS.FINISHED;
 const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_STATUSES]);
 
 interface BudgetRow {
