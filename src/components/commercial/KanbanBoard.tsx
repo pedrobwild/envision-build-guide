@@ -61,7 +61,7 @@ const KANBAN_COLUMNS = [
     id: "em_elaboracao",
     label: "Em Elaboração",
     icon: Hammer,
-    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested"] as InternalStatus[],
+    statuses: ["triage", "assigned", "in_progress", "waiting_info", "revision_requested"] as InternalStatus[],
     accent: "border-t-warning",
     headerColor: "text-warning",
     bgColor: "bg-warning/5",
@@ -239,14 +239,6 @@ const EM_ELABORACAO_SUBSECTIONS = [
     icon: Clock,
     headerClass: "text-xs font-medium text-warning uppercase tracking-wide",
     cardBorderClass: "border-l-2 border-l-warning",
-  },
-  {
-    id: "bloqueado",
-    label: "Bloqueado",
-    statuses: ["blocked"],
-    icon: AlertTriangle,
-    headerClass: "text-xs font-medium text-destructive uppercase tracking-wide",
-    cardBorderClass: "border-l-2 border-l-destructive",
   },
   {
     id: "revisao_solicitada",

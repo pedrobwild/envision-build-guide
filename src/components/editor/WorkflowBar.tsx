@@ -81,7 +81,6 @@ function getStatusBadgeClass(status: InternalStatus): string {
       return "bg-accent text-accent-foreground border-border";
     case "contrato_fechado":
       return "bg-success/10 text-success border-success/20";
-    case "blocked":
     case "waiting_info":
       return "bg-destructive/10 text-destructive border-destructive/20";
     default:
@@ -124,7 +123,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const { user } = useAuth();
   const { profile, isAdmin, isComercial, isOrcamentista } = useUserProfile();
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
-  const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | "blocked" | null>(null);
+  const [blockingTarget, setBlockingTarget] = useState<"waiting_info" | null>(null);
   const [revisionModalOpen, setRevisionModalOpen] = useState(false);
   const [revisionInstructionsOpen, setRevisionInstructionsOpen] = useState(false);
   const [revisionInstructions, setRevisionInstructions] = useState<{ instructions: string; change_types: string[]; requested_by_name: string } | null>(null);
@@ -211,7 +210,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
 
   // Secondary actions
   const showSecondary = isAdmin || isComercial;
-  const isBlockedOrWaiting = internalStatus === "blocked" || internalStatus === "waiting_info";
+  const isWaiting = internalStatus === "waiting_info";
 
   function handlePrimaryClick() {
     if (!primaryTransition) return;
@@ -402,17 +401,12 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                {!isBlockedOrWaiting && (
-                  <>
-                    <DropdownMenuItem onClick={() => setBlockingTarget("blocked")}>
-                      🚫 Bloquear
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setBlockingTarget("waiting_info")}>
-                      ⏳ Aguardando Informação
-                    </DropdownMenuItem>
-                  </>
+                {!isWaiting && (
+                  <DropdownMenuItem onClick={() => setBlockingTarget("waiting_info")}>
+                    ⏳ Marcar como Aguardando
+                  </DropdownMenuItem>
                 )}
-                {isBlockedOrWaiting && (
+                {isWaiting && (
                   <DropdownMenuItem onClick={() => changeStatus("in_progress")}>
                     🔨 Reabrir
                   </DropdownMenuItem>

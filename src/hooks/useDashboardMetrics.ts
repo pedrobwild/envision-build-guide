@@ -132,7 +132,7 @@ const STATUS_LABELS: Record<string, string> = {
   triage: "Triagem",
   assigned: "Atribuído",
   in_progress: "Em elaboração",
-  waiting_info: "Aguardando info",
+  waiting_info: "Aguardando",
   blocked: "Bloqueado",
   ready_for_review: "Pronto p/ revisão",
   delivered_to_sales: "Entregue ao comercial",
@@ -627,7 +627,7 @@ export function computeDashboardMetrics(
   });
 
   // ─── Stalled by Stage ───
-  const stalledStages = ["waiting_info", "blocked", "ready_for_review"];
+  const stalledStages = ["waiting_info", "ready_for_review"];
   const stalledByStage = stalledStages.map((status) => {
     const items = backlogBudgets.filter((b) => b.internal_status === status);
     const avgDays = items.length > 0
