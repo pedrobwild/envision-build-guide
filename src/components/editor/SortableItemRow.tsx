@@ -12,7 +12,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { ItemImageInline } from "./ItemImageInline";
 import { ItemDetailSheet } from "./ItemDetailSheet";
-import { MobileBdiDrawer, BdiChip } from "./MobileBdiDrawer";
+import { MobileItemEditor } from "./MobileItemEditor";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface ItemData {
   id: string;
