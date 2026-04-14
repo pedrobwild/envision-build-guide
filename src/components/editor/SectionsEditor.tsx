@@ -128,6 +128,12 @@ export const TEMPLATE_TABLE_CONFIG: TableConfig = {
   disableTaxRecalc: true,
 };
 
+/** Single cast point for dynamic table access — avoids scattered `as any` */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function dbFrom(table: TableConfig["sectionTable"] | TableConfig["itemTable"]): any {
+  return supabase.from(table as never);
+}
+
 interface SectionsEditorProps {
   budgetId: string;
   sections: SectionData[];
