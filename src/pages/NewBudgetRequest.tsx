@@ -318,8 +318,14 @@ export default function NewBudgetRequest() {
       if (selectedTemplateId) {
         try {
           await seedFromTemplate(newId, selectedTemplateId);
-        } catch {
-          toast.error("Template aplicado parcialmente — verifique as seções.");
+        } catch (err) {
+          toast.error(
+            err instanceof Error
+              ? `Erro ao aplicar template: ${err.message}`
+              : "Não foi possível aplicar o template selecionado."
+          );
+          setLoading(false);
+          return; // Block navigation — let user decide
         }
       }
 

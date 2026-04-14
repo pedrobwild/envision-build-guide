@@ -33,6 +33,13 @@ describe("calcItemCostTotal", () => {
     expect(calcItemCostTotal({ internal_unit_price: null, internal_total: 500 })).toBe(500);
     expect(calcItemCostTotal({ internal_unit_price: 0, internal_total: 500 })).toBe(500);
   });
+  it("multiplies internal_total fallback by qty", () => {
+    expect(calcItemCostTotal({ internal_unit_price: null, internal_total: 200, qty: 3 })).toBe(600);
+    expect(calcItemCostTotal({ internal_unit_price: 0, internal_total: 100, qty: 5 })).toBe(500);
+  });
+  it("defaults qty to 1 in fallback when qty is null", () => {
+    expect(calcItemCostTotal({ internal_unit_price: null, internal_total: 300, qty: null })).toBe(300);
+  });
   it("returns 0 when both are null/zero", () => {
     expect(calcItemCostTotal({ internal_unit_price: null, internal_total: null })).toBe(0);
     expect(calcItemCostTotal({ internal_unit_price: 0, internal_total: 0 })).toBe(0);
@@ -47,8 +54,12 @@ describe("calcItemSaleTotal", () => {
   it("defaults qty to 1 when unit price exists", () => {
     expect(calcItemSaleTotal({ internal_unit_price: 100, qty: null, bdi_percentage: 20 })).toBe(120);
   });
-  it("falls back to internal_total when no unit price", () => {
-    expect(calcItemSaleTotal({ internal_unit_price: null, internal_total: 800, bdi_percentage: 10 })).toBe(800);
+  it("falls back to internal_total and applies BDI", () => {
+    expect(calcItemSaleTotal({ internal_unit_price: null, internal_total: 800, bdi_percentage: 10 })).toBeCloseTo(880, 2);
+  });
+  it("falls back to internal_total without BDI", () => {
+    expect(calcItemSaleTotal({ internal_unit_price: null, internal_total: 800, bdi_percentage: 0 })).toBe(800);
+    expect(calcItemSaleTotal({ internal_unit_price: null, internal_total: 800 })).toBe(800);
   });
   it("returns 0 for empty item", () => {
     expect(calcItemSaleTotal({})).toBe(0);

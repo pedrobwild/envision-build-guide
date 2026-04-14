@@ -34,6 +34,7 @@ interface VersionMeta {
   status: string;
   created_at: string | null;
   change_reason: string | null;
+  version_group_id: string | null;
 }
 
 type DiffStatus = "added" | "removed" | "changed" | "unchanged";
@@ -54,7 +55,7 @@ interface SectionDiff {
 async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; sections: CompareSection[] }> {
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
-    .select("id, version_number, versao, project_name, client_name, status, created_at, change_reason")
+    .select("id, version_number, versao, project_name, client_name, status, created_at, change_reason, version_group_id")
     .eq("id", budgetId)
     .single();
 
@@ -78,12 +79,13 @@ async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; secti
 
 function diffSections(left: CompareSection[], right: CompareSection[]): SectionDiff[] {
   const result: SectionDiff[] = [];
+  // Use order_index as primary key, title as fallback
+  const rightByIndex = new Map(right.map((s) => [s.order_index, s]));
   const rightByTitle = new Map(right.map((s) => [s.title.toLowerCase().trim(), s]));
   const matchedRight = new Set<string>();
 
   for (const ls of left) {
-    const key = ls.title.toLowerCase().trim();
-    const rs = rightByTitle.get(key);
+    const rs = rightByIndex.get(ls.order_index) ?? rightByTitle.get(ls.title.toLowerCase().trim());
     if (rs) {
       matchedRight.add(rs.id);
       const items = diffItems(ls.items, rs.items);
@@ -165,6 +167,13 @@ export default function VersionCompare() {
     setLoading(true);
     Promise.all([loadVersion(leftId), loadVersion(rightId)])
       .then(async ([l, r]) => {
+        // Validate versions belong to same group
+        const lGroup = (l.meta as VersionMeta & { version_group_id?: string | null }).version_group_id;
+        const rGroup = (r.meta as VersionMeta & { version_group_id?: string | null }).version_group_id;
+        if (lGroup && rGroup && lGroup !== rGroup) {
+          toast.error("Estas versões não pertencem ao mesmo orçamento.");
+          return;
+        }
         setLeftData(l);
         setRightData(r);
         setDiffs(diffSections(l.sections, r.sections));

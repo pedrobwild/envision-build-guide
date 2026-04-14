@@ -132,12 +132,17 @@ export async function matchAndCopyItemMedia(
 
   // 7. Batch insert images
   if (imageInserts.length > 0) {
-    await supabase.from("item_images").insert(imageInserts);
+    const { error: insertErr } = await supabase.from("item_images").insert(imageInserts);
+    if (insertErr) {
+      console.error("Falha ao inserir imagens de template:", insertErr.message);
+      return { matched: 0, skipped: imageInserts.length };
+    }
   }
 
   // 8. Update descriptions
   for (const upd of descriptionUpdates) {
-    await supabase.from("items").update({ description: upd.description }).eq("id", upd.id);
+    const { error: updErr } = await supabase.from("items").update({ description: upd.description }).eq("id", upd.id);
+    if (updErr) console.error(`Falha ao atualizar descrição do item ${upd.id}:`, updErr.message);
   }
 
   if (import.meta.env.DEV) console.log(`[ItemMediaMatcher] Matched ${matched} items, copied ${imageInserts.length} images`);
