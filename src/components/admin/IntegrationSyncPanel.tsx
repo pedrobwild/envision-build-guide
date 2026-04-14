@@ -83,7 +83,7 @@ export default function IntegrationSyncPanel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("integration_sync_log")
-        .select("*")
+        .select("id, source_system, target_system, entity_type, source_id, target_id, sync_status, error_message, attempts, created_at, synced_at, payload")
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;

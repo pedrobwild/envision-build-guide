@@ -75,7 +75,7 @@ function useTemplates() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("budget_templates")
-        .select("*")
+        .select("id, name, description, is_active, created_at, updated_at")
         .order("name");
       if (error) throw error;
       return (data ?? []) as unknown as Template[];
@@ -90,7 +90,7 @@ function useTemplateSections(templateId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("budget_template_sections")
-        .select("*")
+        .select("id, template_id, title, subtitle, order_index, is_optional, tags, included_bullets, excluded_bullets, notes")
         .eq("template_id", templateId!)
         .order("order_index");
       if (error) throw error;
@@ -106,7 +106,7 @@ function useTemplateItems(sectionId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("budget_template_items")
-        .select("*")
+        .select("id, template_section_id, title, description, order_index, qty, unit, internal_unit_price, internal_total, bdi_percentage, coverage_type, reference_url")
         .eq("template_section_id", sectionId!)
         .order("order_index");
       if (error) throw error;
@@ -514,7 +514,7 @@ export default function BudgetTemplatesPage() {
     // 2. Clone sections
     const { data: sections } = await supabase
       .from("budget_template_sections")
-      .select("*")
+      .select("id, template_id, title, subtitle, order_index, is_optional, tags, included_bullets, excluded_bullets, notes")
       .eq("template_id", template.id)
       .order("order_index");
 
@@ -529,7 +529,7 @@ export default function BudgetTemplatesPage() {
       // 3. Clone items
       const { data: items } = await supabase
         .from("budget_template_items")
-        .select("*")
+        .select("id, template_section_id, title, description, order_index, qty, unit, internal_unit_price, internal_total, bdi_percentage, coverage_type, reference_url")
         .eq("template_section_id", sec.id)
         .order("order_index");
 

@@ -80,7 +80,7 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
       setLoadingEvents(true);
       const { data } = await supabase
         .from("budget_events")
-        .select("*")
+        .select("id, budget_id, event_type, from_status, to_status, note, metadata, user_id, created_at")
         .eq("budget_id", budgetId)
         .order("created_at", { ascending: false })
         .limit(50);
