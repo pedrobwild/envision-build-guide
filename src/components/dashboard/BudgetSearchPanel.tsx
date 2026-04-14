@@ -21,7 +21,7 @@ interface BudgetSearchPanelProps {
 }
 
 const STATUS_QUICK_FILTERS = [
-  { key: "active", label: "Ativos", statuses: ["requested", "novo", "triage", "assigned", "in_progress", "waiting_info", "blocked", "ready_for_review"] },
+  { key: "active", label: "Ativos", statuses: ["requested", "novo", "triage", "assigned", "in_progress", "waiting_info", "ready_for_review"] },
   { key: "overdue", label: "Atrasados", filter: (b: BudgetWithSections) => b.due_at && new Date(b.due_at) < new Date() && !["contrato_fechado", "lost", "archived"].includes(b.internal_status) },
   { key: "published", label: "Publicados", filter: (b: BudgetWithSections) => b.status === "published" && b.public_id },
   { key: "waiting", label: "Aguardando info", statuses: ["waiting_info"] },

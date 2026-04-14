@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const STAGES = [
   { label: "Solicitado", statuses: ["requested", "triage", "assigned"] },
-  { label: "Em Produção", statuses: ["in_progress", "waiting_info", "blocked"] },
+  { label: "Em Produção", statuses: ["in_progress", "waiting_info"] },
   { label: "Revisão", statuses: ["ready_for_review", "delivered_to_sales"] },
   { label: "Enviado", statuses: ["sent_to_client", "minuta_solicitada", "revision_requested"] },
 ] as const;

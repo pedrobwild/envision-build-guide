@@ -55,7 +55,7 @@ const ESTIMATOR_COLUMNS = [
     id: "in_progress",
     label: "Em Elaboração",
     icon: Hammer,
-    statuses: ["in_progress", "waiting_info", "blocked"],
+    statuses: ["in_progress", "waiting_info"],
     accent: "border-t-warning",
     headerColor: "text-warning",
     bgColor: "bg-warning/5",
