@@ -193,7 +193,7 @@ export default function BudgetEditorV2() {
     const folders = ["3d", "fotos", "exec", "video"].map(f => `${publicId}/${f}`);
     Promise.all(
       folders.map(folder =>
-        supabase.storage.from("budget-assets").list(folder, { limit: 100 }).then(({ data }) =>
+        supabase.storage.from("media").list(folder, { limit: 100 }).then(({ data }) =>
           (data || []).filter(f => f.name !== ".emptyFolderPlaceholder" && f.name !== ".lovkeep").length
         )
       )
