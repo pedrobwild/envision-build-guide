@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { MobileSwipeableKanban } from "@/components/admin/MobileSwipeableKanban";
 import { CompactKanbanCard } from "@/components/admin/CompactKanbanCard";
 import {
@@ -314,6 +316,12 @@ function SubSectionGroup({
                 onClick={() => onCardClick(b.id)}
                 onQuickAction={(action) => {
                   if (action === "open") onCardClick(b.id);
+                  if (action === "copyLink" && b.public_id) {
+                    navigator.clipboard.writeText(getPublicBudgetUrl(b.public_id));
+                    toast.success("Link copiado!");
+                  } else if (action === "copyLink") {
+                    toast.error("Orçamento sem link público");
+                  }
                 }}
               />
             ) : (
