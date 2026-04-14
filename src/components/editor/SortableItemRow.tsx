@@ -12,7 +12,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { ItemImageInline } from "./ItemImageInline";
 import { ItemDetailSheet } from "./ItemDetailSheet";
-import { MobileBdiDrawer, BdiChip } from "./MobileBdiDrawer";
+import { MobileItemEditor } from "./MobileItemEditor";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface ItemData {
   id: string;
@@ -72,7 +73,8 @@ export function SortableItemRow({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
-  const [bdiDrawerOpen, setBdiDrawerOpen] = useState(false);
+  const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
+  const isMobile = useIsMobile();
   const {
     attributes,
     listeners,
@@ -126,7 +128,13 @@ export function SortableItemRow({
         {/* [▶ expand] — 20px mobile, 24px desktop */}
         <div className="w-5 sm:w-6 flex-shrink-0 flex items-center justify-center">
           <button
-            onClick={() => setRowExpanded(!rowExpanded)}
+            onClick={() => {
+              if (isMobile && compact && !rowExpanded) {
+                setMobileEditorOpen(true);
+              } else {
+                setRowExpanded(!rowExpanded);
+              }
+            }}
             className="p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground transition-colors"
           >
             <ChevronRight className={cn(
@@ -141,8 +149,11 @@ export function SortableItemRow({
           {compact && !rowExpanded ? (
             <>
               <span
-                className="text-xs sm:text-sm font-body text-foreground truncate cursor-default"
+                className={cn("text-xs sm:text-sm font-body text-foreground truncate", isMobile ? "cursor-pointer active:text-primary" : "cursor-default")}
                 title={item.title}
+                onClick={(e) => {
+                  if (isMobile) { e.stopPropagation(); setMobileEditorOpen(true); }
+                }}
               >
                 {item.title}
               </span>
@@ -220,9 +231,23 @@ export function SortableItemRow({
           </div>
         </div>
 
-        {/* [BDI chip] — mobile only */}
+        {/* [BDI badge] — mobile only, opens editor */}
         <div className="md:hidden flex-shrink-0 flex items-center">
-          <BdiChip bdi={item.bdi_percentage} onClick={() => setBdiDrawerOpen(true)} />
+          <button
+            onClick={(e) => { e.stopPropagation(); setMobileEditorOpen(true); }}
+            className={cn(
+              "inline-flex items-center h-6 px-1.5 rounded-md text-[10px] font-mono tabular-nums font-bold transition-all active:scale-95 shrink-0 border",
+              (Number(item.bdi_percentage) || 0) > 0
+                ? (Number(item.bdi_percentage) || 0) >= 30
+                  ? "bg-success/10 text-success border-success/20"
+                  : (Number(item.bdi_percentage) || 0) >= 15
+                  ? "bg-warning/10 text-warning border-warning/20"
+                  : "bg-destructive/10 text-destructive border-destructive/20"
+                : "bg-muted/50 text-muted-foreground/50 border-dashed border-border/40"
+            )}
+          >
+            {(Number(item.bdi_percentage) || 0) > 0 ? `${Number(item.bdi_percentage)}%` : "BDI"}
+          </button>
         </div>
 
         {/* [Total Venda] — 72px mobile, 100px desktop */}
@@ -352,10 +377,10 @@ export function SortableItemRow({
 
           <div className="flex items-center gap-3 md:hidden pt-0.5">
             <button
-              onClick={() => setBdiDrawerOpen(true)}
+              onClick={() => setMobileEditorOpen(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-all active:scale-[0.98]"
             >
-              <BdiChip bdi={item.bdi_percentage} onClick={() => setBdiDrawerOpen(true)} />
+              <span className="text-[10px] font-mono tabular-nums font-bold text-primary">BDI {Number(item.bdi_percentage) || 0}%</span>
               <span className="text-[10px] text-muted-foreground font-body">
                 Margem: <span className="font-mono tabular-nums font-semibold">{formatBRL(calcMargin(item.internal_unit_price, item.bdi_percentage))}</span>
               </span>
@@ -406,15 +431,13 @@ export function SortableItemRow({
         onImagesChange={onImagesChange}
       />
 
-      {/* Mobile BDI drawer */}
-      <MobileBdiDrawer
-        open={bdiDrawerOpen}
-        onOpenChange={setBdiDrawerOpen}
-        itemTitle={item.title}
-        bdiPercentage={item.bdi_percentage}
-        unitCost={item.internal_unit_price}
-        qty={item.qty}
-        onBdiChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
+      {/* Mobile item editor */}
+      <MobileItemEditor
+        open={mobileEditorOpen}
+        onOpenChange={setMobileEditorOpen}
+        item={item}
+        sectionId={sectionId}
+        onUpdate={onUpdate}
       />
     </div>
   );
