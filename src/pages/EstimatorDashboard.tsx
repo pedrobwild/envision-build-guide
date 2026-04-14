@@ -298,6 +298,10 @@ export default function EstimatorDashboard() {
         ? PENDING_STATUSES.includes(b.internal_status)
         : statusFilter === "_in_progress"
         ? IN_PROGRESS_STATUSES.includes(b.internal_status)
+        : statusFilter === "_delivered"
+        ? DELIVERED_STATUSES.includes(b.internal_status)
+        : statusFilter === "_finished"
+        ? FINISHED_STATUSES.includes(b.internal_status)
         : b.internal_status === statusFilter;
       const matchPriority = priorityFilter === "all" || b.priority === priorityFilter;
       const matchCommercial =
