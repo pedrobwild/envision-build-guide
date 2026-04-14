@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
@@ -13,13 +13,13 @@ interface WhatsAppCommentDialogProps {
 
 const DEFAULT_PHONE = "5511911906183";
 
-export function WhatsAppCommentDialog({
+export const WhatsAppCommentDialog = forwardRef<HTMLDivElement, WhatsAppCommentDialogProps>(function WhatsAppCommentDialog({
   open,
   onOpenChange,
   projectName,
   publicId,
   phone = DEFAULT_PHONE,
-}: WhatsAppCommentDialogProps) {
+}, _ref) {
   const [comment, setComment] = useState("");
 
   const buildWhatsAppUrl = () => {
