@@ -213,11 +213,33 @@ export default function CommercialDashboard() {
   }, [isAdmin, budgets, getProfileName]);
 
   const filtered = useMemo(() => {
+    const now = new Date();
     const result = budgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
       const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
       if (!matchCommercial) return false;
+
+      // Due filter
+      if (dueFilter !== "all") {
+        const due = b.due_at ? new Date(b.due_at) : null;
+        if (dueFilter === "overdue") {
+          const isFinished = ["lost", "archived", "contrato_fechado"].includes(b.internal_status);
+          if (!due || due >= now || isFinished) return false;
+        }
+        if (dueFilter === "due_soon") {
+          const twoDays = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+          if (!due || due < now || due > twoDays) return false;
+        }
+        if (dueFilter === "this_week") {
+          const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          if (!due || due < now || due > nextWeek) return false;
+        }
+        if (dueFilter === "no_due") {
+          if (due !== null) return false;
+        }
+      }
+
       if (statusFilter === "all") return matchSearch;
       const section = PIPELINE_SECTIONS[statusFilter as keyof typeof PIPELINE_SECTIONS];
       if (section) return matchSearch && (section.statuses as readonly string[]).includes(b.internal_status);
