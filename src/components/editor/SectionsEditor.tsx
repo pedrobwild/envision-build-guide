@@ -56,6 +56,23 @@ interface SectionData {
   items: ItemData[];
 }
 
+interface ItemData {
+  id: string;
+  title: string;
+  description?: string | null;
+  reference_url?: string | null;
+  qty?: number | null;
+  unit?: string | null;
+  internal_unit_price?: number | null;
+  internal_total?: number | null;
+  bdi_percentage?: number | null;
+  order_index?: number;
+  catalog_item_id?: string | null;
+  catalog_snapshot?: Record<string, unknown> | Json | null;
+  notes?: string | null;
+  images?: { id?: string; url: string; is_primary?: boolean | null }[];
+}
+
 /* ── BDI margin helper (local, not in budget-calc) ── */
 function calcMargin(cost: number | null | undefined, bdi: number | null | undefined): number {
   const c = Number(cost) || 0;
