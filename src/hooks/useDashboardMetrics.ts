@@ -133,7 +133,6 @@ const STATUS_LABELS: Record<string, string> = {
   assigned: "Atribuído",
   in_progress: "Em elaboração",
   waiting_info: "Aguardando",
-  blocked: "Bloqueado",
   ready_for_review: "Pronto p/ revisão",
   delivered_to_sales: "Entregue ao comercial",
   sent_to_client: "Enviado ao cliente",
@@ -557,7 +556,7 @@ export function computeDashboardMetrics(
     { key: "received", label: "Recebido", statuses: ["requested", "novo"] },
     { key: "triage", label: "Triagem", statuses: ["triage"] },
     { key: "assigned", label: "Atribuído", statuses: ["assigned"] },
-    { key: "in_progress", label: "Em elaboração", statuses: ["in_progress", "waiting_info", "blocked"] },
+    { key: "in_progress", label: "Em elaboração", statuses: ["in_progress", "waiting_info"] },
     { key: "review", label: "Revisão", statuses: ["ready_for_review"] },
     { key: "delivered", label: "Entregue", statuses: ["delivered_to_sales"] },
   ];
