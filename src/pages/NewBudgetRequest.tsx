@@ -312,18 +312,36 @@ export default function NewBudgetRequest() {
       });
       setTimeout(() => navigate("/admin/comercial"), 800);
     } else {
-      const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
       const newId = inserted.id;
 
+      // Apply template if selected
+      if (selectedTemplateId) {
+        try {
+          await seedFromTemplate(newId, selectedTemplateId);
+        } catch {
+          toast.error("Template aplicado parcialmente — verifique as seções.");
+        }
+      }
+
+      const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
+      const templateName = templates?.find((t) => t.id === selectedTemplateId)?.name;
+
       toast.success("Solicitação criada!", {
-        description: estimatorName ? `Atribuída para ${estimatorName}` : "O orçamento entrará na fila de triagem.",
+        description: templateName
+          ? `Template "${templateName}" aplicado. ${estimatorName ? `Atribuída para ${estimatorName}` : ""}`
+          : estimatorName ? `Atribuída para ${estimatorName}` : "O orçamento entrará na fila de triagem.",
         action: {
           label: "Abrir orçamento",
           onClick: () => navigate(`/admin/budget/${newId}`),
         },
         duration: 8000,
       });
-      setTimeout(() => navigate("/admin/solicitacoes"), 1000);
+
+      if (selectedTemplateId) {
+        setTimeout(() => navigate(`/admin/budget/${newId}`), 800);
+      } else {
+        setTimeout(() => navigate("/admin/solicitacoes"), 1000);
+      }
     }
   };
 
