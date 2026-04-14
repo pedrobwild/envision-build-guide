@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense, Fragment } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense, Fragment } from "react";
 import { Download } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -162,15 +162,9 @@ export default function PublicBudget() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [roomModalOpen, setRoomModalOpen] = useState(false);
-  const [showPrices] = useState(true);
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [bottomBarHidden, setBottomBarHidden] = useState(false);
-
-  const handleTotalCardVisibility = useCallback((_visible: boolean) => {
-    // Bottom bar is always visible now
-  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -427,7 +421,7 @@ export default function PublicBudget() {
               clientName={budget.client_name}
               publicId={publicId || "demo"}
               budgetId={budget.id}
-              onTotalCardVisibilityChange={handleTotalCardVisibility}
+              
             />
             </div>
 
@@ -578,7 +572,7 @@ export default function PublicBudget() {
           clientName={budget.client_name}
           publicId={publicId || "demo"}
           budgetId={budget.id}
-          hidden={bottomBarHidden}
+          hidden={false}
           activeSection={null}
         />
 
