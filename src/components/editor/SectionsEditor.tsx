@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { formatBRL } from "@/lib/formatBRL";
+import { calcSaleUnitPrice, calcItemSaleTotal, calcItemCostTotal, calcSectionCostTotal, calcSectionSaleTotal, calcGrandTotals } from "@/lib/budget-calc";
 import { toast } from "sonner";
 import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
@@ -211,49 +212,11 @@ interface ItemData {
   images?: { id?: string; url: string; is_primary?: boolean | null }[];
 }
 
-/* ── BDI helpers ── */
-function calcSaleUnitPrice(cost: number | null | undefined, bdi: number | null | undefined): number {
-  const c = Number(cost) || 0;
-  const b = Number(bdi) || 0;
-  return c * (1 + b / 100);
-}
-
+/* ── BDI margin helper (local, not in budget-calc) ── */
 function calcMargin(cost: number | null | undefined, bdi: number | null | undefined): number {
   const c = Number(cost) || 0;
   const b = Number(bdi) || 0;
   return c * (b / 100);
-}
-
-function calcItemSaleTotal(item: ItemData): number {
-  const qty = Number(item.qty) || 1;
-  const saleUnit = calcSaleUnitPrice(item.internal_unit_price, item.bdi_percentage);
-  return saleUnit * qty;
-}
-
-function calcItemCostTotal(item: ItemData): number {
-  const unitPrice = Number(item.internal_unit_price) || 0;
-  if (unitPrice > 0) return unitPrice * (Number(item.qty) || 1);
-  const total = Number(item.internal_total) || 0;
-  if (total > 0) return total;
-  return 0;
-}
-
-function calcSectionCostTotal(section: SectionData): number {
-  const qty = Number(section.qty) || 1;
-  if (section.items.length > 0) {
-    const sum = section.items.reduce((s, i) => s + calcItemCostTotal(i), 0);
-    if (sum > 0) return sum * qty;
-  }
-  return (Number(section.section_price) || 0) * qty;
-}
-
-function calcSectionSaleTotal(section: SectionData): number {
-  const qty = Number(section.qty) || 1;
-  if (section.items.length > 0) {
-    const sum = section.items.reduce((s, i) => s + calcItemSaleTotal(i), 0);
-    if (sum > 0) return sum * qty;
-  }
-  return (Number(section.section_price) || 0) * qty;
 }
 
 /* ── Global BDI calculation ── */
