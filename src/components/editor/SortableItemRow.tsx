@@ -73,7 +73,8 @@ export function SortableItemRow({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
-  const [bdiDrawerOpen, setBdiDrawerOpen] = useState(false);
+  const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
+  const isMobile = useIsMobile();
   const {
     attributes,
     listeners,
