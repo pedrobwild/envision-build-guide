@@ -691,8 +691,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     setSavingIds(prev => new Set(prev).add(id));
     timers.current[key] = setTimeout(async () => {
       const actualTable = logicalTable === "sections" ? cfg.sectionTable : cfg.itemTable;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from(actualTable as any) as any).update(updates).eq("id", id);
+      await dbFrom(actualTable).update(updates).eq("id", id);
       setSavingIds(prev => {
         const next = new Set(prev);
         next.delete(id);
@@ -787,8 +786,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   const addSection = async () => {
     if (readOnly) return;
     const order = sections.length;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase.from(cfg.sectionTable as any) as any)
+    const { data } = await dbFrom(cfg.sectionTable)
       .insert({ [cfg.sectionForeignKey]: budgetId, title: "Nova Seção", order_index: order })
       .select()
       .single();
@@ -805,8 +803,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     const source = sections.find(s => s.id === sectionId);
     if (!source) return;
     const order = sections.length;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: newSec } = await (supabase.from(cfg.sectionTable as any) as any)
+    const { data: newSec } = await dbFrom(cfg.sectionTable)
       .insert({
         [cfg.sectionForeignKey]: budgetId,
         title: `${source.title} (cópia)`,
@@ -820,8 +817,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     // Duplicate items
     const newItems: ItemData[] = [];
     for (const item of source.items) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: newItem } = await (supabase.from(cfg.itemTable as any) as any)
+      const { data: newItem } = await dbFrom(cfg.itemTable)
         .insert({
           [cfg.itemForeignKey]: newSec.id,
           title: item.title,
@@ -875,8 +871,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       insertPayload.catalog_snapshot = itemData?.catalog_snapshot || null;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase.from(cfg.itemTable as any) as any)
+    const { data } = await dbFrom(cfg.itemTable)
       .insert(insertPayload)
       .select()
       .single();
@@ -900,8 +895,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
         const newItems = [...s.items, newItem];
         const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
         if (newSaleTotal > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (supabase.from(cfg.sectionTable as any) as any).update({ section_price: newSaleTotal }).eq("id", sectionId);
+          dbFrom(cfg.sectionTable).update({ section_price: newSaleTotal }).eq("id", sectionId);
         }
         return { ...s, items: newItems, section_price: newSaleTotal > 0 ? newSaleTotal : s.section_price };
       });
@@ -914,14 +908,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
   const deleteItem = async (sectionId: string, itemId: string) => {
     if (readOnly) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from(cfg.itemTable as any) as any).delete().eq("id", itemId);
+    await dbFrom(cfg.itemTable).delete().eq("id", itemId);
     let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
       const newItems = s.items.filter(i => i.id !== itemId);
       const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase.from(cfg.sectionTable as any) as any).update({ section_price: newSaleTotal }).eq("id", sectionId);
+      dbFrom(cfg.sectionTable).update({ section_price: newSaleTotal }).eq("id", sectionId);
       return { ...s, items: newItems, section_price: newSaleTotal };
     });
     updated = recalcTaxItem(updated);
@@ -934,11 +926,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     const section = sections.find(s => s.id === sectionId);
     if (section && section.items.length > 0) {
       const itemIds = section.items.map(i => i.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from(cfg.itemTable as any) as any).delete().in("id", itemIds);
+      await dbFrom(cfg.itemTable).delete().in("id", itemIds);
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from(cfg.sectionTable as any) as any).delete().eq("id", sectionId);
+    await dbFrom(cfg.sectionTable).delete().eq("id", sectionId);
     onSectionsChange(sections.filter(s => s.id !== sectionId));
     toast.success("Seção removida");
   };
@@ -1020,8 +1010,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     try {
       await Promise.all(
         withNewOrder.map(s =>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (supabase.from(cfg.sectionTable as any) as any).update({ order_index: s.order_index }).eq("id", s.id)
+          dbFrom(cfg.sectionTable).update({ order_index: s.order_index }).eq("id", s.id)
         )
       );
       toast.success("Ordem das seções atualizada");
@@ -1054,8 +1043,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       if (targetSection) {
         await Promise.all(
           targetSection.items.map(item =>
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (supabase.from(cfg.itemTable as any) as any).update({ order_index: item.order_index }).eq("id", item.id)
+            dbFrom(cfg.itemTable).update({ order_index: item.order_index }).eq("id", item.id)
           )
         );
       }
