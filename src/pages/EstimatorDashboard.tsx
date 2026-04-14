@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -67,6 +67,7 @@ interface RoleRow {
 }
 
 export default function EstimatorDashboard() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, loading: profileLoading, isAdmin } = useUserProfile();
@@ -102,7 +103,7 @@ export default function EstimatorDashboard() {
     if (!user || profileLoading) return;
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, profileLoading]);
+  }, [user, profileLoading, location.key]);
 
   async function loadData() {
     setLoading(true);

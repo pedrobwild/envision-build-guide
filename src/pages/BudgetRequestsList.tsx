@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -66,6 +66,7 @@ interface BudgetRow {
 }
 
 export default function BudgetRequestsList() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin } = useUserProfile();
@@ -82,7 +83,7 @@ export default function BudgetRequestsList() {
   useEffect(() => {
     if (!user) return;
     loadBudgets();
-  }, [user]);
+  }, [user, location.key]);
 
   async function loadBudgets() {
     setLoading(true);
