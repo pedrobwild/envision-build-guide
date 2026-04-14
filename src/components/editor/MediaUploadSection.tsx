@@ -182,18 +182,25 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     const result: Record<StorageTab, MediaFile[]> = { "3d": [], fotos: [], exec: [], video: [] };
 
     try {
-      for (const tab of Object.keys(folderMap) as StorageTab[]) {
-        const folder = folderMap[tab];
-        const { data, error } = await supabase.storage.from("media").list(folder, { limit: 100, sortBy: { column: "name", order: "asc" } });
+      // Parallel listing of all folders
+      const tabs = Object.keys(folderMap) as StorageTab[];
+      const listings = await Promise.all(
+        tabs.map(tab =>
+          supabase.storage.from("media").list(folderMap[tab], { limit: 100, sortBy: { column: "name", order: "asc" } })
+            .then(({ data, error }) => ({ tab, data, error }))
+        )
+      );
+
+      for (const { tab, data, error } of listings) {
         if (error) {
-          console.error(`Error listing ${folder}:`, error.message);
+          console.error(`Error listing ${folderMap[tab]}:`, error.message);
           continue;
         }
         if (data) {
           result[tab] = data
             .filter(f => f.name !== ".emptyFolderPlaceholder" && f.name !== ".lovkeep")
             .map(f => {
-              const { data: urlData } = supabase.storage.from("media").getPublicUrl(`${folder}/${f.name}`);
+              const { data: urlData } = supabase.storage.from("media").getPublicUrl(`${folderMap[tab]}/${f.name}`);
               return { name: f.name, url: urlData.publicUrl };
             });
         }
@@ -234,28 +241,44 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     try {
       const folder = folderMap[activeTab as StorageTab];
       const existingCount = files[activeTab as StorageTab].length;
+
+      // Parallel uploads (batches of 3 to avoid overwhelming)
+      const fileArr = Array.from(fileList);
+      const BATCH_SIZE = 3;
       let count = 0;
 
-      for (let i = 0; i < fileList.length; i++) {
-        const file = fileList[i];
-        const safeName = sanitizeFileName(file.name);
-        const prefixed = addPrefix(existingCount + i, safeName);
-        const path = `${folder}/${prefixed}`;
-        const { error } = await supabase.storage.from("media").upload(path, file, {
-          upsert: true,
-          contentType: file.type || "application/octet-stream",
-        });
-        if (error) {
-          console.error("Upload error:", error.message, error);
-          if (error.message?.includes("row-level security")) {
-            toast.error("Sem permissão para upload. Verifique se está logado.");
-          } else if (error.message?.includes("Payload too large")) {
-            toast.error(`Arquivo ${file.name} muito grande.`);
+      for (let batch = 0; batch < fileArr.length; batch += BATCH_SIZE) {
+        const chunk = fileArr.slice(batch, batch + BATCH_SIZE);
+        const results = await Promise.allSettled(
+          chunk.map((file, idx) => {
+            const globalIdx = batch + idx;
+            const safeName = sanitizeFileName(file.name);
+            const prefixed = addPrefix(existingCount + globalIdx, safeName);
+            const path = `${folder}/${prefixed}`;
+            return supabase.storage.from("media").upload(path, file, {
+              upsert: true,
+              contentType: file.type || "application/octet-stream",
+            }).then(({ error }) => {
+              if (error) throw { fileName: file.name, message: error.message };
+              return true;
+            });
+          })
+        );
+
+        for (const r of results) {
+          if (r.status === "fulfilled") {
+            count++;
           } else {
-            toast.error(`Erro ao subir ${file.name}: ${error.message}`);
+            const err = r.reason as { fileName?: string; message?: string };
+            const msg = err?.message || "Erro desconhecido";
+            if (msg.includes("row-level security")) {
+              toast.error("Sem permissão para upload. Verifique se está logado.");
+            } else if (msg.includes("Payload too large")) {
+              toast.error(`Arquivo ${err?.fileName || ""} muito grande.`);
+            } else {
+              toast.error(`Erro ao subir ${err?.fileName || ""}: ${msg}`);
+            }
           }
-        } else {
-          count++;
         }
       }
 
