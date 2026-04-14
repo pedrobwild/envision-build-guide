@@ -8,14 +8,13 @@ import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
-  PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
+  Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, X,
+  PenLine, BookOpen, BookmarkPlus, Lock, Search, ChevronsUpDown, ChevronsDownUp,
   AlertTriangle, Paperclip, Rows3, Rows4, MoreVertical, Building2,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
-import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
-import { ItemDetailSheet } from "@/components/editor/ItemDetailSheet";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
+import { SortableItemRow, type ItemData } from "@/components/editor/SortableItemRow";
 import {
   Tooltip,
   TooltipContent,
@@ -44,20 +43,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
-
-/* ── BDI input (simple, no per-item warnings) ── */
-function BdiInput({ value, onChange }: { value: number | null | undefined; onChange: (v: number | null) => void }) {
-  return (
-    <input
-      type="number"
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
-      placeholder="0"
-      step="0.01"
-      className="w-full h-9 px-3 rounded border border-transparent bg-transparent text-sm font-mono text-muted-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-border hover:border-border transition-colors duration-100 tabular-nums text-right font-body"
-    />
-  );
-}
 
 
 /* ── Inline image management for editor items ── */
