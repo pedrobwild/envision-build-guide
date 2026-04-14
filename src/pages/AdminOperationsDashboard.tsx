@@ -36,7 +36,7 @@ interface BudgetRow {
   id: string;
   client_name: string;
   project_name: string;
-  internal_status: string;
+  internal_status: InternalStatus;
   priority: string;
   due_at: string | null;
   created_at: string | null;

@@ -99,7 +99,7 @@ interface BudgetRow {
   property_type: string | null;
   city: string | null;
   bairro: string | null;
-  internal_status: string;
+  internal_status: InternalStatus;
   priority: string;
   due_at: string | null;
   created_at: string | null;
