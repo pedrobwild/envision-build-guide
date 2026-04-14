@@ -159,14 +159,14 @@ export function SortableItemRow({
               </span>
               {hasDescription && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); setRowExpanded(true); }}
+                  onClick={(e) => { e.stopPropagation(); isMobile ? setMobileEditorOpen(true) : setRowExpanded(true); }}
                   className="ml-0.5 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
                   title="Tem descrição — clique para expandir"
                 >📝</button>
               )}
               {hasImages && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); setRowExpanded(true); }}
+                  onClick={(e) => { e.stopPropagation(); isMobile ? setMobileEditorOpen(true) : setRowExpanded(true); }}
                   className="ml-0.5 text-[10px] text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
                   title={`${imageCount} imagem(ns) — clique para expandir`}
                 >📷 {imageCount > 1 ? imageCount : ""}</button>
