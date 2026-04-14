@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { formatBRL } from "@/lib/formatBRL";
 import { calcItemSaleTotal, calcItemCostTotal } from "@/lib/budget-calc";
 import { ArrowLeft, LayoutTemplate, Loader2, Save, Check, X } from "lucide-react";
+import TemplateMediaManager, { type MediaConfig, EMPTY_MEDIA_CONFIG } from "@/components/editor/TemplateMediaManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionsEditor, TEMPLATE_TABLE_CONFIG } from "@/components/editor/SectionsEditor";
@@ -17,6 +18,7 @@ interface TemplateData {
   name: string;
   description: string | null;
   is_active: boolean;
+  media_config: MediaConfig;
 }
 
 interface SectionData {
@@ -106,11 +108,14 @@ export default function TemplateEditorPage() {
 
     const { data: tpl } = await supabase
       .from("budget_templates")
-      .select("id, name, description, is_active, created_at, updated_at")
+      .select("id, name, description, is_active, media_config, created_at, updated_at")
       .eq("id", templateId)
       .single();
     if (!tpl) { navigate("/admin/templates"); return; }
-    setTemplate(tpl);
+    setTemplate({
+      ...tpl,
+      media_config: (tpl.media_config as MediaConfig | null) ?? { ...EMPTY_MEDIA_CONFIG },
+    });
 
     const { data: secs } = await supabase
       .from("budget_template_sections")
@@ -147,7 +152,7 @@ export default function TemplateEditorPage() {
     try {
       await supabase
         .from("budget_templates")
-        .update({ name: tpl.name, description: tpl.description })
+        .update({ name: tpl.name, description: tpl.description, media_config: tpl.media_config as any })
         .eq("id", tpl.id);
       setAutoSaveStatus("saved");
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
@@ -332,6 +337,15 @@ export default function TemplateEditorPage() {
             onChange={(e) => setTemplate({ ...template, description: e.target.value || null })}
             className="w-full text-sm text-muted-foreground bg-transparent border-none outline-none focus:ring-0 font-body px-1"
             placeholder="Descrição do template (opcional)..."
+          />
+        </div>
+
+        {/* Media Manager */}
+        <div className="mb-4">
+          <TemplateMediaManager
+            templateId={templateId!}
+            mediaConfig={template.media_config}
+            onChange={(mc) => setTemplate({ ...template, media_config: mc })}
           />
         </div>
 
