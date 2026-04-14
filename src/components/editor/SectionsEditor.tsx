@@ -15,8 +15,10 @@ import {
 import { EmptyState } from "@/components/editor/EmptyState";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
 import { ItemDetailSheet } from "@/components/editor/ItemDetailSheet";
+import { MobileItemEditor } from "@/components/editor/MobileItemEditor";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import { ItemImageInline } from "@/components/editor/ItemImageInline";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Tooltip,
   TooltipContent,
@@ -268,6 +270,8 @@ function SortableItemRow({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
+  const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
+  const isMobile = useIsMobile();
   const {
     attributes,
     listeners,
