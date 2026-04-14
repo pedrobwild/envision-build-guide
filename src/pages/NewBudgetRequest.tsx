@@ -635,6 +635,28 @@ export default function NewBudgetRequest() {
           </PropertyRow>
         </div>
 
+        {/* ── Template inicial (only for new mode) ── */}
+        {mode !== "import" && templates && templates.length > 0 && (
+          <>
+            <SectionTitle icon={LayoutTemplate} title="Template Inicial" />
+            <div className="border-b border-border/30 pb-1 mb-1">
+              <PropertyRow icon={LayoutTemplate} label="Template" hint="Opcional — preenche automaticamente as seções e itens do orçamento">
+                <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                  <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+                    <SelectValue placeholder="Sem template (orçamento em branco)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sem template (em branco)</SelectItem>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </PropertyRow>
+            </div>
+          </>
+        )}
+
         {/* ── Responsáveis ── */}
         <SectionTitle icon={UserCheck} title="Responsáveis" />
         <div className="border-b border-border/30 pb-1 mb-1">
