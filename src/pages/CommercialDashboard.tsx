@@ -179,7 +179,46 @@ export default function CommercialDashboard() {
         .eq("entity_type", "project")
         .eq("sync_status", "success"),
     ]);
-    if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetRow[]);
+
+    if (budgetsRes.data) {
+      const rawBudgets = budgetsRes.data as BudgetRow[];
+      const unresolvedGroupIds = Array.from(
+        new Set(
+          rawBudgets
+            .filter((budget) => !budget.public_id && budget.version_group_id)
+            .map((budget) => budget.version_group_id)
+            .filter((groupId): groupId is string => Boolean(groupId))
+        )
+      );
+
+      let publishedPublicIds = new Map<string, string>();
+      if (unresolvedGroupIds.length > 0) {
+        const { data: publishedVersions } = await supabase
+          .from("budgets")
+          .select("version_group_id, public_id")
+          .in("version_group_id", unresolvedGroupIds)
+          .eq("is_published_version", true)
+          .not("public_id", "is", null);
+
+        publishedPublicIds = new Map(
+          (publishedVersions ?? []).flatMap((version) =>
+            version.version_group_id && version.public_id
+              ? [[version.version_group_id, version.public_id]]
+              : []
+          )
+        );
+      }
+
+      setBudgets(
+        rawBudgets.map((budget) => ({
+          ...budget,
+          public_id:
+            budget.public_id ??
+            (budget.version_group_id ? publishedPublicIds.get(budget.version_group_id) ?? null : null),
+        }))
+      );
+    }
+
     if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
     if (syncRes.data) setSyncedBudgetIds(new Set(syncRes.data.map(r => r.source_id)));
     setLoading(false);
