@@ -8,13 +8,14 @@ import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
-  Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, X,
-  PenLine, BookOpen, BookmarkPlus, Lock, Search, ChevronsUpDown, ChevronsDownUp,
+  Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
+  PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
   AlertTriangle, Paperclip, Rows3, Rows4, MoreVertical, Building2,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
+import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
+import { ItemDetailSheet } from "@/components/editor/ItemDetailSheet";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
-import { SortableItemRow, type ItemData } from "@/components/editor/SortableItemRow";
 import {
   Tooltip,
   TooltipContent,
