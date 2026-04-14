@@ -405,6 +405,17 @@ export function SortableItemRow({
         onUpdate={onUpdate}
         onImagesChange={onImagesChange}
       />
+
+      {/* Mobile BDI drawer */}
+      <MobileBdiDrawer
+        open={bdiDrawerOpen}
+        onOpenChange={setBdiDrawerOpen}
+        itemTitle={item.title}
+        bdiPercentage={item.bdi_percentage}
+        unitCost={item.internal_unit_price}
+        qty={item.qty}
+        onBdiChange={(v) => onUpdate(sectionId, item.id, "bdi_percentage", v)}
+      />
     </div>
   );
 }
