@@ -365,6 +365,17 @@ export default function PublicBudget() {
           <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
         </div>
 
+        {/* ═══ GALLERY — shown prominently when budget has media ═══ */}
+        {hasRealMedia && (
+          <div className="mt-3" data-pdf-section>
+            <AnimatedSection id="gallery-section-top" index={0.1}>
+              <Suspense fallback={<LazyFallback />}>
+                <ProjectGallery publicId={publicId} />
+              </Suspense>
+            </AnimatedSection>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 lg:gap-8 mt-3 lg:mt-0">
           {/* Content column */}
           <div className="min-w-0 space-y-3 sm:space-y-4">
