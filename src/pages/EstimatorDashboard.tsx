@@ -646,10 +646,10 @@ export default function EstimatorDashboard() {
             </div>
 
             {/* Hidden budgets banner */}
-            {statusFilter === "all" && (metrics.delivered + metrics.finished) > 0 && (
+            {statusFilter === "all" && (counts.delivered + counts.finished) > 0 && (
               <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-border bg-muted/40 text-sm font-body text-muted-foreground">
                 <span>
-                  {metrics.delivered + metrics.finished} orçamento{(metrics.delivered + metrics.finished) > 1 ? "s" : ""} entregue{(metrics.delivered + metrics.finished) > 1 ? "s" : ""}/finalizado{(metrics.delivered + metrics.finished) > 1 ? "s" : ""} oculto{(metrics.delivered + metrics.finished) > 1 ? "s" : ""} nesta visualização
+                  {counts.delivered + counts.finished} orçamento{(counts.delivered + counts.finished) !== 1 ? "s" : ""} entregue{(counts.delivered + counts.finished) !== 1 ? "s" : ""}/finalizado{(counts.delivered + counts.finished) !== 1 ? "s" : ""} oculto{(counts.delivered + counts.finished) !== 1 ? "s" : ""}
                 </span>
                 <Button
                   variant="ghost"
