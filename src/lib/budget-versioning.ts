@@ -16,11 +16,12 @@ export async function ensureVersionGroup(budgetId: string): Promise<string> {
   if (data.version_group_id) return data.version_group_id;
 
   // First version — use the budget's own id as group id
-  await supabase
+  const { error: updErr } = await supabase
     .from("budgets")
     .update({ version_group_id: budgetId, version_number: 1, is_current_version: true })
     .eq("id", budgetId);
 
+  if (updErr) throw new Error(`Falha ao inicializar grupo de versões: ${updErr.message}`);
   return budgetId;
 }
 
@@ -285,15 +286,8 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     .limit(1)
     .maybeSingle();
 
-  // Remove published flag AND clear public_id from all versions in group
-  await supabase
-    .from("budgets")
-    .update({ is_published_version: false, public_id: null, status: "superseded" })
-    .eq("version_group_id", groupId)
-    .eq("is_published_version", true);
-
-  // Mark this version as published with the public_id
-  const { data: published } = await supabase
+  // Step 1: Publish the new version FIRST (avoids window where no version is published)
+  const { data: published, error: pubErr } = await supabase
     .from("budgets")
     .update({
       is_published_version: true,
@@ -303,6 +297,16 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     .eq("id", budgetId)
     .select("version_number")
     .single();
+
+  if (pubErr) throw pubErr;
+
+  // Step 2: THEN supersede old versions (excluding the one just published)
+  await supabase
+    .from("budgets")
+    .update({ is_published_version: false, status: "superseded" })
+    .eq("version_group_id", groupId)
+    .eq("is_published_version", true)
+    .neq("id", budgetId);
 
   // Audit: superseded
   if (prevPublished && prevPublished.id !== budgetId) {

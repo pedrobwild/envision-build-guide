@@ -27,7 +27,11 @@ export function calcItemSaleTotal(item: CalcItem): number {
   }
   // Fallback: use internal_total as sale price when no unit price
   const total = Number(item.internal_total) || 0;
-  if (total > 0) return total;
+  if (total > 0) {
+    // Apply BDI to fallback total as well
+    const bdi = Number(item.bdi_percentage) || 0;
+    return total * (1 + bdi / 100);
+  }
   return 0;
 }
 
@@ -40,7 +44,7 @@ export function calcItemCostTotal(item: CalcItem): number {
   }
   // Fallback: use internal_total as lump-sum cost when no unit price
   const total = Number(item.internal_total) || 0;
-  if (total > 0) return total;
+  if (total > 0) return total * (Number(item.qty) || 1);
   return 0;
 }
 

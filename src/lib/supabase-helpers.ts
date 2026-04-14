@@ -217,9 +217,12 @@ export function calculateSectionSubtotal(section: SectionLike): number {
         if (unitPrice > 0) {
           return sum + unitPrice * (1 + bdi / 100) * itemQty;
         }
-        // Fallback to internal_total only when no unit price
+        // Fallback to internal_total — apply BDI and qty
         const cost = Number(item.internal_total) || 0;
-        if (cost > 0) return sum + cost;
+        if (cost > 0) {
+          const fallbackQty = Number(item.qty) || 1;
+          return sum + cost * (1 + bdi / 100) * fallbackQty;
+        }
         return sum;
       },
       0

@@ -41,10 +41,10 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
   const sectionIds = existingSections?.map(s => s.id) ?? [];
   if (sectionIds.length > 0) {
     const { error: itemsDelErr } = await supabase.from("items").delete().in("section_id", sectionIds);
-    if (itemsDelErr) console.error("Erro ao deletar itens:", itemsDelErr.message);
+    if (itemsDelErr) throw new Error(`Falha ao limpar itens existentes: ${itemsDelErr.message}`);
   }
   const { error: secDelErr } = await supabase.from("sections").delete().eq("budget_id", budgetId);
-  if (secDelErr) console.error("Erro ao deletar seções:", secDelErr.message);
+  if (secDelErr) throw new Error(`Falha ao limpar seções existentes: ${secDelErr.message}`);
 
   if (!templateId) {
     // Fallback to legacy default sections
@@ -60,7 +60,9 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     .order("order_index");
 
   if (secErr) throw secErr;
-  if (!templateSections || templateSections.length === 0) return;
+  if (!templateSections || templateSections.length === 0) {
+    throw new Error("Template não encontrado ou está vazio");
+  }
 
   for (const tSec of templateSections as TemplateSectionRow[]) {
     const sectionPayload = {

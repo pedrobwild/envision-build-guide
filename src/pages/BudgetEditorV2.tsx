@@ -252,9 +252,23 @@ export default function BudgetEditorV2() {
         if (errorToastId.current) { toast.dismiss(errorToastId.current); errorToastId.current = null; }
         setSaveStatus("saved");
         setLastSavedAt(new Date());
+        // Reset to idle after 3 seconds
+        setTimeout(() => {
+          setSaveStatus(prev => prev === "saved" ? "idle" : prev);
+        }, 3000);
       }
     }, 600);
   }, [budgetId]);
+
+  // C3: Cancel auto-save timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) {
+        clearTimeout(autoSaveTimer.current);
+        autoSaveTimer.current = null;
+      }
+    };
+  }, []);
 
   const retrySave = useCallback(() => {
     if (lastSavePayload.current) {
