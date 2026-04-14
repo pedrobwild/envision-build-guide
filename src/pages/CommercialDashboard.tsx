@@ -231,13 +231,6 @@ export default function CommercialDashboard() {
           const twoDays = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
           if (!due || due < now || due > twoDays) return false;
         }
-        if (dueFilter === "this_week") {
-          const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-          if (!due || due < now || due > nextWeek) return false;
-        }
-        if (dueFilter === "no_due") {
-          if (due !== null) return false;
-        }
       }
 
       if (statusFilter === "all") return matchSearch;
@@ -266,7 +259,7 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [budgets, search, statusFilter, sortBy, commercialFilter]);
+  }, [budgets, search, statusFilter, sortBy, commercialFilter, dueFilter]);
 
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
     // Intercept contrato_fechado → show contract upload modal
