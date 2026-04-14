@@ -34,7 +34,7 @@ interface Props {
   onAddItem: (item: AddItemResult) => void;
 }
 
-export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
+export const AddItemPopover = forwardRef<HTMLDivElement, Props>(function AddItemPopover({ sectionTitle, onAddItem }: Props, _ref) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([]);
@@ -238,4 +238,4 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
       </PopoverContent>
     </Popover>
   );
-}
+});
