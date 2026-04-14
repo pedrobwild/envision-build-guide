@@ -22,7 +22,7 @@ import {
   Search, ArrowLeft, Loader2, Inbox, Clock, AlertTriangle,
   MoreVertical, ExternalLink, CheckCircle2, ArrowUpDown,
   Users, Building2, User, Calendar, FileText, BarChart3,
-  Flame, Send, Shield, Pencil,
+  Flame, Send, Shield, Pencil, Lock, RotateCcw,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES, PRIORITIES, STATUS_GROUPS,
@@ -127,6 +127,8 @@ export default function AdminOperationsDashboard() {
       readyForReview: budgets.filter(b => b.internal_status === "ready_for_review").length,
       delivered: budgets.filter(b => b.internal_status === "delivered_to_sales").length,
       waitingInfo: budgets.filter(b => b.internal_status === "waiting_info").length,
+      blockedCount: budgets.filter(b => b.internal_status === "blocked").length,
+      revisionCount: budgets.filter(b => b.internal_status === "revision_requested").length,
     };
   }, [budgets]);
 
@@ -300,22 +302,56 @@ export default function AdminOperationsDashboard() {
           </h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 gap-2">
             {[
-              { label: "Total", count: metrics.total, accent: "text-foreground" },
-              { label: "Solicitados", count: metrics.requested, accent: "text-blue-600" },
-              { label: "Triagem", count: metrics.triage, accent: "text-purple-600" },
-              { label: "Atribuídos", count: metrics.assigned, accent: "text-indigo-600" },
-              { label: "Em Produção", count: metrics.inProgress, accent: "text-yellow-600" },
-              { label: "Aguard. Info", count: metrics.waitingInfo, accent: "text-amber-600" },
-              { label: "Atrasados", count: metrics.overdue, accent: "text-destructive" },
-              { label: "Revisão", count: metrics.readyForReview, accent: "text-orange-600" },
-              { label: "Entregues", count: metrics.delivered, accent: "text-emerald-600" },
+              { label: "Total", count: metrics.total, accent: "text-foreground", status: null },
+              { label: "Solicitados", count: metrics.requested, accent: "text-blue-600", status: "requested" },
+              { label: "Triagem", count: metrics.triage, accent: "text-purple-600", status: "triage" },
+              { label: "Atribuídos", count: metrics.assigned, accent: "text-indigo-600", status: "assigned" },
+              { label: "Em Produção", count: metrics.inProgress, accent: "text-yellow-600", status: "in_progress" },
+              { label: "Aguard. Info", count: metrics.waitingInfo, accent: "text-amber-600", status: "waiting_info" },
+              { label: "Atrasados", count: metrics.overdue, accent: "text-destructive", status: null },
+              { label: "Revisão", count: metrics.readyForReview, accent: "text-orange-600", status: "ready_for_review" },
+              { label: "Entregues", count: metrics.delivered, accent: "text-emerald-600", status: "delivered_to_sales" },
             ].map((m, i) => (
-              <Card key={i} className="p-2.5">
+              <Card
+                key={i}
+                className={`p-2.5 ${m.status ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
+                onClick={m.status ? () => setStatusFilter(m.status!) : undefined}
+              >
                 <p className={`text-[10px] font-body ${m.accent} truncate`}>{m.label}</p>
                 <p className={`text-xl font-bold font-display ${m.accent}`}>{m.count}</p>
               </Card>
             ))}
           </div>
+
+          {/* Alert cards for blocked & revision */}
+          {(metrics.blockedCount > 0 || metrics.revisionCount > 0) && (
+            <div className="flex gap-2 mt-3">
+              {metrics.blockedCount > 0 && (
+                <Card
+                  className="p-2.5 flex items-center gap-2 cursor-pointer hover:shadow-md transition-shadow border-destructive/30 bg-destructive/5"
+                  onClick={() => setStatusFilter("blocked")}
+                >
+                  <Lock className="h-4 w-4 text-destructive shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-body text-destructive truncate">Bloqueados</p>
+                    <p className="text-xl font-bold font-display text-destructive">{metrics.blockedCount}</p>
+                  </div>
+                </Card>
+              )}
+              {metrics.revisionCount > 0 && (
+                <Card
+                  className="p-2.5 flex items-center gap-2 cursor-pointer hover:shadow-md transition-shadow border-amber-400/30 bg-amber-500/5"
+                  onClick={() => setStatusFilter("revision_requested")}
+                >
+                  <RotateCcw className="h-4 w-4 text-amber-600 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-body text-amber-600 truncate">Em Revisão</p>
+                    <p className="text-xl font-bold font-display text-amber-600">{metrics.revisionCount}</p>
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Workload panels */}
