@@ -55,9 +55,15 @@ const PIPELINE_SECTIONS = {
   },
   em_elaboracao: {
     label: "Em Elaboração",
-    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked", "revision_requested"] as InternalStatus[],
+    statuses: ["triage", "assigned", "in_progress", "waiting_info", "blocked"] as InternalStatus[],
     icon: Clock,
     accent: "text-warning",
+  },
+  revisao_solicitada: {
+    label: "Revisão Solicitada",
+    statuses: ["revision_requested"] as InternalStatus[],
+    icon: RotateCcw,
+    accent: "text-orange-600",
   },
   entregue: {
     label: "Entregue",
@@ -368,7 +374,7 @@ export default function CommercialDashboard() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
           {/* Pipeline summary cards — desktop */}
-          <div className="hidden lg:grid grid-cols-7 gap-3">
+          <div className="hidden lg:grid grid-cols-8 gap-3">
             {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => {
               const Icon = sec.icon;
               return (
@@ -392,6 +398,7 @@ export default function CommercialDashboard() {
               { id: "all", label: "Todos", count: counts.total },
               { id: "entregue", label: "Entregues", icon: CheckCircle2, count: counts["entregue"] ?? 0 },
               { id: "em_elaboracao", label: "Em Elaboração", icon: Clock, count: counts["em_elaboracao"] ?? 0 },
+              { id: "revisao_solicitada", label: "Revisão Sol.", icon: RotateCcw, count: counts["revisao_solicitada"] ?? 0 },
               { id: "enviado", label: "Enviados", icon: Send, count: counts["enviado"] ?? 0 },
               { id: "solicitado", label: "Solicitados", icon: FileText, count: counts["solicitado"] ?? 0 },
               { id: "fechado", label: "Fechados", icon: ThumbsUp, count: counts["fechado"] ?? 0 },
