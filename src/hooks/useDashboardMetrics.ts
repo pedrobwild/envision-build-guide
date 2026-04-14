@@ -1,4 +1,5 @@
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { STATUS_GROUPS } from "@/lib/role-constants";
 import type { BudgetWithSections, SectionWithItems, AdjustmentRow } from "@/types/budget-common";
 
 export interface DateRange {

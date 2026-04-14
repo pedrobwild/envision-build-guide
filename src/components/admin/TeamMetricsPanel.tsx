@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { STATUS_GROUPS } from "@/lib/role-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

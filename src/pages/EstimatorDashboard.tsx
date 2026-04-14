@@ -58,6 +58,7 @@ import {
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
+  STATUS_GROUPS,
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
