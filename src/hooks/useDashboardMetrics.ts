@@ -124,6 +124,12 @@ export interface DashboardMetrics {
   stalledByStage: { stage: string; label: string; count: number; avgDays: number }[];
 }
 
+/**
+ * Operations start date — only budgets created on or after this date
+ * are counted in dashboard metrics. This acts as a "Day Zero" for KPIs.
+ */
+export const OPERATIONS_START_DATE = new Date("2026-04-15T00:00:00");
+
 const ACTIVE_STATUSES: readonly string[] = STATUS_GROUPS.OPERATIONS_ACTIVE;
 
 const STATUS_LABELS: Record<string, string> = {

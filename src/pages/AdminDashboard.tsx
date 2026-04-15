@@ -26,7 +26,7 @@ import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
 import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
-import { computeDashboardMetrics, type DateRange } from "@/hooks/useDashboardMetrics";
+import { computeDashboardMetrics, OPERATIONS_START_DATE, type DateRange } from "@/hooks/useDashboardMetrics";
 
 const SECTION_DELAY = 0.05;
 const anim = (delay: number) => ({
@@ -86,10 +86,17 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+  const filteredBudgets = useMemo(() => {
+    return budgets.filter((b) => {
+      if (!b.created_at) return false;
+      return new Date(b.created_at) >= OPERATIONS_START_DATE;
+    });
+  }, [budgets]);
+
   const metrics = useMemo(() => {
-    if (loading || budgets.length === 0) return null;
-    return computeDashboardMetrics(budgets, dateRange, profiles);
-  }, [budgets, dateRange, profiles, loading]);
+    if (loading || filteredBudgets.length === 0) return null;
+    return computeDashboardMetrics(filteredBudgets, dateRange, profiles);
+  }, [filteredBudgets, dateRange, profiles, loading]);
 
   // Budget creation
   const createBudget = async () => {
