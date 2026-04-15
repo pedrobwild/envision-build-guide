@@ -428,6 +428,33 @@ export default function EstimatorDashboard() {
               searchPlaceholder="Buscar cliente, projeto..."
             />
 
+            {viewMode === "list" && user && (
+              <NewRequestsSection
+                budgets={budgets}
+                userId={user.id}
+                onStartBudget={requestStatusChange}
+              />
+            )}
+
+            <EstimatorFilterBar
+              search={search}
+              onSearchChange={setSearch}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              priorityFilter={priorityFilter}
+              onPriorityFilterChange={setPriorityFilter}
+              commercialFilter={commercialFilter}
+              onCommercialFilterChange={setCommercialFilter}
+              estimatorFilter={estimatorFilter}
+              onEstimatorFilterChange={setEstimatorFilter}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              commercialOptions={commercialOptions}
+              estimatorOptions={estimatorOptions}
+              isAdmin={isAdmin}
+              filteredCount={filtered.length}
+            />
+
             {/* Kanban View */}
             {viewMode === "kanban" && (
               <EstimatorKanban
@@ -442,49 +469,20 @@ export default function EstimatorDashboard() {
 
             {/* List View */}
             {viewMode === "list" && (
-              <>
-                {user && (
-                  <NewRequestsSection
-                    budgets={budgets}
-                    userId={user.id}
-                    onStartBudget={requestStatusChange}
-                  />
-                )}
-
-                <EstimatorFilterBar
-                  search={search}
-                  onSearchChange={setSearch}
-                  statusFilter={statusFilter}
-                  onStatusFilterChange={setStatusFilter}
-                  priorityFilter={priorityFilter}
-                  onPriorityFilterChange={setPriorityFilter}
-                  commercialFilter={commercialFilter}
-                  onCommercialFilterChange={setCommercialFilter}
-                  estimatorFilter={estimatorFilter}
-                  onEstimatorFilterChange={setEstimatorFilter}
-                  sortBy={sortBy}
-                  onSortByChange={setSortBy}
-                  commercialOptions={commercialOptions}
-                  estimatorOptions={estimatorOptions}
-                  isAdmin={isAdmin}
-                  filteredCount={filtered.length}
-                />
-
-                <EstimatorListView
-                  filtered={filtered}
-                  loading={loading}
-                  search={search}
-                  statusFilter={statusFilter}
-                  priorityFilter={priorityFilter}
-                  counts={{ delivered: counts.delivered, finished: counts.finished }}
-                  isAdmin={isAdmin}
-                  getProfileName={getProfileName}
-                  onRequestStatusChange={requestStatusChange}
-                  onSetStatusFilter={setStatusFilter}
-                  onOpenAssignDialog={handleOpenAssignDialog}
-                  onRefresh={loadData}
-                />
-              </>
+              <EstimatorListView
+                filtered={filtered}
+                loading={loading}
+                search={search}
+                statusFilter={statusFilter}
+                priorityFilter={priorityFilter}
+                counts={{ delivered: counts.delivered, finished: counts.finished }}
+                isAdmin={isAdmin}
+                getProfileName={getProfileName}
+                onRequestStatusChange={requestStatusChange}
+                onSetStatusFilter={setStatusFilter}
+                onOpenAssignDialog={handleOpenAssignDialog}
+                onRefresh={loadData}
+              />
             )}
           </>
         )}
