@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
-  STATUS_GROUPS,
   type InternalStatus,
 } from "@/lib/role-constants";
 import { ProductionFunnel } from "@/components/editor/ProductionFunnel";
@@ -48,12 +47,13 @@ import { EstimatorListView, type BudgetRow } from "@/components/estimator/Estima
 import { NewRequestsSection } from "@/components/estimator/NewRequestsSection";
 import { NotificationBell } from "@/components/estimator/NotificationBell";
 
-const PENDING_STATUSES: readonly string[] = STATUS_GROUPS.PENDING;
-const IN_PROGRESS_STATUSES: readonly string[] = STATUS_GROUPS.ACTIVE_WORK;
-const REVIEW_STATUSES: readonly string[] = STATUS_GROUPS.REVIEW;
-const DELIVERED_STATUSES: string[] = [...STATUS_GROUPS.DELIVERED, ...STATUS_GROUPS.COMMERCIAL_ADVANCED];
-const FINISHED_STATUSES: readonly string[] = STATUS_GROUPS.FINISHED;
-const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_STATUSES]);
+const PENDING_STATUSES: string[] = ["requested", "novo"];
+const IN_PROGRESS_STATUSES: string[] = ["triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"];
+const DELIVERED_STATUSES: string[] = ["delivered_to_sales"];
+const SENT_STATUSES: string[] = ["sent_to_client"];
+const ADVANCED_STATUSES: string[] = ["minuta_solicitada", "contrato_fechado"];
+const FINISHED_STATUSES: string[] = ["lost", "archived"];
+const HIDDEN_BY_DEFAULT_STATUSES = new Set([...SENT_STATUSES, ...ADVANCED_STATUSES, ...FINISHED_STATUSES]);
 const PENDING_STATUSES_SET = new Set(["requested", "novo", "triage", "assigned"]);
 
 interface ProfileRow {
@@ -186,17 +186,17 @@ export default function EstimatorDashboard() {
       total: budgets.length,
       overdue: budgets.filter(
         (b) => b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) &&
-          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES, ...REVIEW_STATUSES].includes(b.internal_status)
+          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES].includes(b.internal_status)
       ).length,
       dueToday: budgets.filter(
         (b) => b.due_at && isToday(new Date(b.due_at)) &&
-          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES, ...REVIEW_STATUSES].includes(b.internal_status)
+          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES].includes(b.internal_status)
       ).length,
       pending: budgets.filter((b) => PENDING_STATUSES.includes(b.internal_status)).length,
       inProgress: budgets.filter((b) => IN_PROGRESS_STATUSES.includes(b.internal_status)).length,
-      review: budgets.filter((b) => REVIEW_STATUSES.includes(b.internal_status)).length,
       delivered: budgets.filter((b) => DELIVERED_STATUSES.includes(b.internal_status)).length,
-      finished: budgets.filter((b) => FINISHED_STATUSES.includes(b.internal_status)).length,
+      sent: budgets.filter((b) => SENT_STATUSES.includes(b.internal_status)).length,
+      finished: budgets.filter((b) => [...ADVANCED_STATUSES, ...FINISHED_STATUSES].includes(b.internal_status)).length,
     };
   }, [budgets]);
 
@@ -380,10 +380,10 @@ export default function EstimatorDashboard() {
                   {counts.dueToday} vence{counts.dueToday > 1 ? "m" : ""} hoje
                 </span>
               )}
-              <span className="flex items-center gap-1"><Inbox className="h-3 w-3" /> {counts.pending} pendente{counts.pending !== 1 ? "s" : ""}</span>
+              <span className="flex items-center gap-1"><Inbox className="h-3 w-3" /> {counts.pending} solicitado{counts.pending !== 1 ? "s" : ""}</span>
               <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {counts.inProgress} em elaboração</span>
-              <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {counts.review} em revisão</span>
-              <span className="flex items-center gap-1 ml-auto text-muted-foreground/60"><Send className="h-3 w-3" /> {counts.delivered} entregue{counts.delivered !== 1 ? "s" : ""}</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {counts.delivered} entregue{counts.delivered !== 1 ? "s" : ""}</span>
+              <span className="flex items-center gap-1 ml-auto text-muted-foreground/60"><Send className="h-3 w-3" /> {counts.sent} enviado{counts.sent !== 1 ? "s" : ""}</span>
             </div>
 
             {/* Mobile filter chips */}
@@ -393,9 +393,9 @@ export default function EstimatorDashboard() {
                 { id: "overdue", label: "Atrasados", icon: AlertTriangle, count: counts.overdue, color: "destructive" },
                 { id: "urgente", label: "Urgentes", icon: Flame, count: budgets.filter(b => b.priority === "urgente").length },
                 { id: "today", label: "Hoje", icon: Clock, count: counts.dueToday },
-                { id: "_pending", label: "Pendente", icon: Inbox, count: counts.pending },
+                { id: "_pending", label: "Solicitado", icon: Inbox, count: counts.pending },
                 { id: "_in_progress", label: "Em Elaboração", count: counts.inProgress },
-                { id: "ready_for_review", label: "Revisão", count: counts.review },
+                { id: "_delivered", label: "Entregue", count: counts.delivered },
               ] as FilterChip[]}
               activeChipId={
                 priorityFilter === "urgente" ? "urgente" :
