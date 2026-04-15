@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Inbox, Hammer, CheckCircle2, Send, FileSignature } from "lucide-react";
+import { FileText, Hammer, CheckCircle2, Send, ThumbsUp, XCircle } from "lucide-react";
 
 interface FunnelStage {
   key: string;
@@ -12,42 +12,58 @@ interface FunnelStage {
 
 const FUNNEL_STAGES: FunnelStage[] = [
   {
-    key: "pending",
-    label: "Pendente",
-    icon: Inbox,
-    statuses: ["requested", "novo", "triage", "assigned"],
+    key: "solicitado",
+    label: "Solicitado",
+    icon: FileText,
+    statuses: ["requested", "novo"],
     color: "text-primary",
     bgColor: "bg-primary",
   },
   {
-    key: "in_progress",
+    key: "em_elaboracao",
     label: "Em elaboração",
     icon: Hammer,
-    statuses: ["in_progress", "waiting_info", "revision_requested"],
+    statuses: ["triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"],
     color: "text-warning",
     bgColor: "bg-warning",
   },
   {
-    key: "review",
-    label: "Em revisão",
-    icon: CheckCircle2,
-    statuses: ["ready_for_review"],
-    color: "text-warning",
-    bgColor: "bg-warning",
-  },
-  {
-    key: "delivered",
+    key: "entregue",
     label: "Entregue",
-    icon: Send,
-    statuses: ["delivered_to_sales", "sent_to_client", "minuta_solicitada"],
+    icon: CheckCircle2,
+    statuses: ["delivered_to_sales"],
     color: "text-success",
     bgColor: "bg-success",
   },
   {
-    key: "closed",
-    label: "Finalizado",
-    icon: FileSignature,
-    statuses: ["lost", "archived", "contrato_fechado"],
+    key: "enviado",
+    label: "Enviado",
+    icon: Send,
+    statuses: ["sent_to_client"],
+    color: "text-success",
+    bgColor: "bg-success",
+  },
+  {
+    key: "minuta",
+    label: "Minuta",
+    icon: FileText,
+    statuses: ["minuta_solicitada"],
+    color: "text-violet-600",
+    bgColor: "bg-violet-500",
+  },
+  {
+    key: "fechado",
+    label: "Contrato Fechado",
+    icon: ThumbsUp,
+    statuses: ["contrato_fechado"],
+    color: "text-success",
+    bgColor: "bg-success",
+  },
+  {
+    key: "perdido",
+    label: "Perdido",
+    icon: XCircle,
+    statuses: ["lost", "archived"],
     color: "text-muted-foreground",
     bgColor: "bg-muted-foreground",
   },
