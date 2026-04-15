@@ -16,7 +16,6 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import {
   Inbox,
   Hammer,
-  CheckCircle2,
   Send,
   FileSignature,
   User,
