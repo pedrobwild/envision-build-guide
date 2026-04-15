@@ -203,17 +203,6 @@ export function EstimatorListView({
         budgets: inProgress,
       });
     }
-    if (review.length > 0) {
-      result.push({
-        key: "review",
-        label: "Em Revisão",
-        description: "Aguardando aprovação interna",
-        icon: <ClipboardCheck className="h-4 w-4" />,
-        accent: "text-warning",
-        borderAccent: "border-l-warning",
-        budgets: review,
-      });
-    }
     if (other.length > 0) {
       result.push({
         key: "other",
