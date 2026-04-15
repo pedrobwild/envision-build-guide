@@ -25,6 +25,9 @@ import {
   Flame,
   Hammer,
   ClipboardCheck,
+  ChevronRight,
+  Ruler,
+  MapPin,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
@@ -33,7 +36,7 @@ import {
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
-import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
+import { format, formatDistanceToNow, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
@@ -46,7 +49,6 @@ const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_S
 type WorkflowStage = "overdue" | "pending" | "in_progress" | "review" | "other";
 
 function getWorkflowStage(b: BudgetRow): WorkflowStage {
-  // Overdue takes precedence
   if (
     b.due_at &&
     isPast(new Date(b.due_at)) &&
@@ -126,8 +128,10 @@ interface EstimatorListViewProps {
 interface WorkflowGroup {
   key: WorkflowStage;
   label: string;
+  description: string;
   icon: React.ReactNode;
   accent: string;
+  borderAccent: string;
   budgets: BudgetRow[];
 }
 
@@ -147,7 +151,6 @@ export function EstimatorListView({
 }: EstimatorListViewProps) {
   const navigate = useNavigate();
 
-  // Group budgets by workflow stage when showing default view
   const isDefaultView = statusFilter === "all" && priorityFilter === "all" && !search;
 
   const groups = useMemo<WorkflowGroup[]>(() => {
@@ -172,18 +175,22 @@ export function EstimatorListView({
     if (overdue.length > 0) {
       result.push({
         key: "overdue",
-        label: "Atrasados — Ação Imediata",
+        label: "Atrasados",
+        description: "Prazo ultrapassado — ação imediata",
         icon: <AlertTriangle className="h-4 w-4" />,
         accent: "text-destructive",
+        borderAccent: "border-l-destructive",
         budgets: overdue,
       });
     }
     if (pending.length > 0) {
       result.push({
         key: "pending",
-        label: "Pendentes — Aguardando Início",
+        label: "Pendentes",
+        description: "Aguardando início de elaboração",
         icon: <Inbox className="h-4 w-4" />,
         accent: "text-primary",
+        borderAccent: "border-l-primary",
         budgets: pending,
       });
     }
@@ -191,17 +198,21 @@ export function EstimatorListView({
       result.push({
         key: "in_progress",
         label: "Em Elaboração",
+        description: "Trabalho em andamento",
         icon: <Hammer className="h-4 w-4" />,
         accent: "text-foreground",
+        borderAccent: "border-l-foreground/30",
         budgets: inProgress,
       });
     }
     if (review.length > 0) {
       result.push({
         key: "review",
-        label: "Aguardando Revisão",
+        label: "Em Revisão",
+        description: "Aguardando aprovação interna",
         icon: <ClipboardCheck className="h-4 w-4" />,
         accent: "text-warning",
+        borderAccent: "border-l-warning",
         budgets: review,
       });
     }
@@ -209,15 +220,17 @@ export function EstimatorListView({
       result.push({
         key: "other",
         label: "Outros",
+        description: "Demais orçamentos ativos",
         icon: <Clock className="h-4 w-4" />,
         accent: "text-muted-foreground",
+        borderAccent: "border-l-muted-foreground/30",
         budgets: other,
       });
     }
     return result;
   }, [filtered, isDefaultView]);
 
-  const renderBudgetCard = (b: BudgetRow) => {
+  const renderBudgetCard = (b: BudgetRow, compact = false) => {
     const status =
       INTERNAL_STATUSES[b.internal_status as InternalStatus] ??
       INTERNAL_STATUSES.assigned;
@@ -225,125 +238,127 @@ export function EstimatorListView({
     const due = getDueInfo(b.due_at, b.internal_status);
     const isUrgent = b.priority === "urgente";
     const isOverdue = due.variant === "overdue";
-
-    const cardBorder = isOverdue
-      ? "border-l-[3px] border-l-destructive"
-      : isUrgent
-      ? "border-l-[3px] border-l-destructive/60"
-      : b.priority === "alta"
-      ? "border-l-[3px] border-l-orange-400"
-      : "";
+    const timeAgo = b.created_at
+      ? formatDistanceToNow(new Date(b.created_at), { addSuffix: true, locale: ptBR })
+      : null;
 
     return (
       <Card
         key={b.id}
-        className={`p-4 hover:shadow-md transition-shadow border group ${cardBorder}`}
+        className="px-4 py-3 hover:shadow-md transition-all border group cursor-pointer"
+        onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}
       >
-        <div className="flex items-start gap-4">
-          {/* Main content */}
-          <div
-            className="flex-1 min-w-0 cursor-pointer"
-            onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}
-          >
-            {/* Row 1: Project + badges */}
-            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+        <div className="flex items-center gap-3">
+          {/* Left: main info */}
+          <div className="flex-1 min-w-0">
+            {/* Row 1: Code + Name + Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
               {b.sequential_code && (
-                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider shrink-0">
                   {b.sequential_code}
                 </span>
               )}
-              <span className="font-semibold font-display text-foreground truncate">
-                {b.project_name || "Sem nome"}
+              <span className="font-medium font-display text-sm text-foreground truncate">
+                {b.project_name || b.client_name}
               </span>
-              <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
-                {status.icon} {status.label}
-              </Badge>
-              {b.priority !== "normal" && (
-                <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>
-                  {isUrgent && <Flame className="h-3 w-3 mr-0.5" />}
-                  {prio.label}
+              {!compact && (
+                <Badge variant="secondary" className={`text-[10px] font-body px-1.5 py-0 h-[18px] ${status.color}`}>
+                  {status.icon} {status.label}
+                </Badge>
+              )}
+              {isUrgent && (
+                <Badge className="bg-destructive/10 text-destructive border-destructive/20 border text-[9px] px-1 py-0 h-4 gap-0.5">
+                  <Flame className="h-2.5 w-2.5" />
+                  Urgente
+                </Badge>
+              )}
+              {b.priority === "alta" && (
+                <Badge variant="outline" className={`text-[9px] px-1 py-0 h-4 ${prio.color}`}>
+                  Alta
                 </Badge>
               )}
               {due.label && (
-                <span
-                  className={`inline-flex items-center gap-1 text-xs font-medium font-body px-2 py-0.5 rounded-full border ${dueVariantStyles[due.variant]}`}
-                >
-                  <Calendar className="h-3 w-3" />
+                <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0 h-4 rounded-full border ${dueVariantStyles[due.variant]}`}>
+                  <Calendar className="h-2.5 w-2.5" />
                   {due.label}
                 </span>
               )}
+              {b.internal_status === "revision_requested" && (
+                <Badge className="bg-warning/10 text-warning border-warning/20 border text-[9px] px-1 py-0 h-4 gap-0.5">
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Revisão
+                </Badge>
+              )}
               {(b.version_number ?? 1) > 1 && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                <span className="text-[9px] font-mono text-muted-foreground px-1 py-0 h-4 rounded bg-muted border border-border inline-flex items-center">
                   V{b.version_number}
                 </span>
               )}
             </div>
 
-            {b.internal_status === "revision_requested" && (
-              <div className="flex items-center gap-1.5 mb-1">
-                <Badge className="bg-warning/10 text-warning border-warning/20 border text-xs font-body gap-1 px-2 py-0.5">
-                  <RotateCcw className="h-3 w-3" />
-                  Revisão solicitada
-                </Badge>
-              </div>
-            )}
-
-            {/* Row 2: Meta */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
-              <span className="flex items-center gap-1">
-                <User className="h-3.5 w-3.5" />
-                {b.client_name}
-              </span>
+            {/* Row 2: Meta — compact */}
+            <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground font-body flex-wrap">
+              {b.project_name && b.project_name !== b.client_name && (
+                <span className="flex items-center gap-1">
+                  <User className="h-3 w-3 shrink-0" />
+                  {b.client_name}
+                </span>
+              )}
               {(b.bairro || b.city) && (
                 <span className="flex items-center gap-1">
-                  <Building2 className="h-3.5 w-3.5" />
+                  <Building2 className="h-3 w-3 shrink-0" />
                   {[b.bairro, b.city].filter(Boolean).join(", ")}
                 </span>
               )}
-              <span className="flex items-center gap-1" title="Comercial responsável">
-                <Handshake className="h-3.5 w-3.5" />
+              {b.property_type && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  {b.property_type}
+                </span>
+              )}
+              {b.metragem && (
+                <span className="flex items-center gap-1">
+                  <Ruler className="h-3 w-3 shrink-0" />
+                  {b.metragem}
+                </span>
+              )}
+              <span className="flex items-center gap-1" title="Comercial">
+                <Handshake className="h-3 w-3 shrink-0" />
                 {getProfileName(b.commercial_owner_id)}
               </span>
-              <span className="flex items-center gap-1" title="Orçamentista responsável">
-                <UserCog className="h-3.5 w-3.5" />
-                {getProfileName(b.estimator_owner_id)}
-              </span>
-              {b.created_at && (
-                <span className="text-xs">
-                  Criado {format(new Date(b.created_at), "dd/MM/yy")}
+              {isAdmin && (
+                <span className="flex items-center gap-1" title="Orçamentista">
+                  <UserCog className="h-3 w-3 shrink-0" />
+                  {getProfileName(b.estimator_owner_id)}
                 </span>
               )}
-              {b.updated_at && (
-                <span className="text-xs">
-                  Atualizado {format(new Date(b.updated_at), "dd/MM HH:mm")}
-                </span>
-              )}
+              {timeAgo && <span>{timeAgo}</span>}
             </div>
           </div>
 
-          {/* Quick stage actions */}
-          <div className="flex items-center gap-1 shrink-0">
+          {/* Right: Actions */}
+          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
             {(() => {
-              const nextActions: { label: string; targetStatus: InternalStatus; icon: React.ReactNode; variant: "default" | "outline" | "secondary" }[] = [];
+              const nextActions: { label: string; targetStatus: InternalStatus; icon: React.ReactNode }[] = [];
 
               if (PENDING_STATUSES.includes(b.internal_status)) {
-                nextActions.push({ label: "Iniciar", targetStatus: "in_progress", icon: <Clock className="h-3 w-3" />, variant: "default" });
+                nextActions.push({ label: "Iniciar", targetStatus: "in_progress", icon: <Clock className="h-3 w-3" /> });
               } else if (IN_PROGRESS_STATUSES.includes(b.internal_status)) {
-                nextActions.push({ label: "Revisão", targetStatus: "ready_for_review", icon: <CheckCircle2 className="h-3 w-3" />, variant: "default" });
+                nextActions.push({ label: "Revisão", targetStatus: "ready_for_review", icon: <CheckCircle2 className="h-3 w-3" /> });
               } else if ((STATUS_GROUPS.REVIEW as readonly string[]).includes(b.internal_status)) {
-                nextActions.push({ label: "Entregar", targetStatus: "delivered_to_sales", icon: <Send className="h-3 w-3" />, variant: "default" });
+                nextActions.push({ label: "Entregar", targetStatus: "delivered_to_sales", icon: <Send className="h-3 w-3" /> });
               }
 
               return nextActions.map((a) => (
                 <Button
                   key={a.targetStatus}
-                  variant={a.variant}
+                  variant="default"
                   size="sm"
                   className="h-7 text-xs gap-1 px-2.5"
-                  onClick={(e) => { e.stopPropagation(); onRequestStatusChange(b.id, a.targetStatus); }}
+                  onClick={() => onRequestStatusChange(b.id, a.targetStatus)}
                 >
                   {a.icon}
-                  {a.label}
+                  <span className="hidden sm:inline">{a.label}</span>
                 </Button>
               ));
             })()}
@@ -411,13 +426,14 @@ export function EstimatorListView({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => e.stopPropagation()}
+                  className="h-7 w-7 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity"
                 >
                   <MoreVertical className="h-3.5 w-3.5" />
                 </Button>
               }
             />
+
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 hidden sm:block" />
           </div>
         </div>
       </Card>
@@ -428,17 +444,17 @@ export function EstimatorListView({
     <>
       {/* Hidden budgets banner */}
       {statusFilter === "all" && (counts.delivered + counts.finished) > 0 && (
-        <div className="flex items-center justify-between px-3 py-2 rounded-md bg-muted/50 text-sm font-body text-muted-foreground">
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-md bg-muted/40 text-xs font-body text-muted-foreground">
           <span>
-            {counts.delivered + counts.finished} orçamento{(counts.delivered + counts.finished) !== 1 ? "s" : ""} entregue{(counts.delivered + counts.finished) !== 1 ? "s" : ""}/encerrado{(counts.delivered + counts.finished) !== 1 ? "s" : ""} não {(counts.delivered + counts.finished) !== 1 ? "estão visíveis" : "está visível"} nesta visualização.
+            {counts.delivered + counts.finished} entregue{(counts.delivered + counts.finished) !== 1 ? "s" : ""}/encerrado{(counts.delivered + counts.finished) !== 1 ? "s" : ""} oculto{(counts.delivered + counts.finished) !== 1 ? "s" : ""}
           </span>
           <Button
             variant="link"
             size="sm"
-            className="text-xs h-auto p-0 gap-1 text-primary"
+            className="text-[11px] h-auto p-0 gap-1 text-primary"
             onClick={() => onSetStatusFilter("_delivered")}
           >
-            Ver orçamentos entregues →
+            Ver →
           </Button>
         </div>
       )}
@@ -446,10 +462,10 @@ export function EstimatorListView({
       {/* Empty state */}
       {!loading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Inbox className="h-8 w-8 text-muted-foreground" />
+          <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-3">
+            <Inbox className="h-7 w-7 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold font-display text-foreground mb-1">
+          <h2 className="text-base font-semibold font-display text-foreground mb-1">
             {search || statusFilter !== "all" || priorityFilter !== "all"
               ? "Nenhum resultado"
               : "Nenhuma demanda atribuída"}
@@ -466,28 +482,33 @@ export function EstimatorListView({
       {!loading && filtered.length > 0 && isDefaultView && (
         <div className="space-y-6">
           {groups.map((group) => (
-            <div key={group.key} className="space-y-2">
-              <div className="flex items-center gap-2 px-1">
-                <span className={group.accent}>{group.icon}</span>
+            <section key={group.key}>
+              {/* Group header */}
+              <div className={`flex items-center gap-2 mb-2 pl-1 border-l-2 ${group.borderAccent}`}>
+                <span className={`${group.accent} ml-2`}>{group.icon}</span>
                 <h3 className={`text-xs font-semibold font-display uppercase tracking-wider ${group.accent}`}>
                   {group.label}
                 </h3>
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-mono">
+                <Badge variant="outline" className="text-[9px] px-1 py-0 h-[14px] font-mono border-current">
                   {group.budgets.length}
                 </Badge>
+                <span className="text-[10px] text-muted-foreground font-body hidden sm:inline">
+                  {group.description}
+                </span>
               </div>
-              <div className="space-y-2">
-                {group.budgets.map(renderBudgetCard)}
+              {/* Cards */}
+              <div className="space-y-1.5">
+                {group.budgets.map((b) => renderBudgetCard(b, true))}
               </div>
-            </div>
+            </section>
           ))}
         </div>
       )}
 
       {/* Flat list (when filtering/searching) */}
       {!loading && filtered.length > 0 && !isDefaultView && (
-        <div className="space-y-2">
-          {filtered.map(renderBudgetCard)}
+        <div className="space-y-1.5">
+          {filtered.map((b) => renderBudgetCard(b))}
         </div>
       )}
     </>
