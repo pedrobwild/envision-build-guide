@@ -43,7 +43,7 @@ const DELIVERED_STATUSES: string[] = [...STATUS_GROUPS.DELIVERED, ...STATUS_GROU
 const FINISHED_STATUSES: readonly string[] = STATUS_GROUPS.FINISHED;
 const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_STATUSES]);
 
-type WorkflowStage = "overdue" | "in_progress" | "review" | "other";
+type WorkflowStage = "overdue" | "pending" | "in_progress" | "review" | "other";
 
 function getWorkflowStage(b: BudgetRow): WorkflowStage {
   // Overdue takes precedence
@@ -55,6 +55,7 @@ function getWorkflowStage(b: BudgetRow): WorkflowStage {
   ) {
     return "overdue";
   }
+  if ((STATUS_GROUPS.PENDING as readonly string[]).includes(b.internal_status)) return "pending";
   if ((STATUS_GROUPS.ACTIVE_WORK as readonly string[]).includes(b.internal_status)) return "in_progress";
   if ((STATUS_GROUPS.REVIEW as readonly string[]).includes(b.internal_status)) return "review";
   return "other";
@@ -153,6 +154,7 @@ export function EstimatorListView({
     if (!isDefaultView) return [];
 
     const overdue: BudgetRow[] = [];
+    const pending: BudgetRow[] = [];
     const inProgress: BudgetRow[] = [];
     const review: BudgetRow[] = [];
     const other: BudgetRow[] = [];
@@ -160,6 +162,7 @@ export function EstimatorListView({
     for (const b of filtered) {
       const stage = getWorkflowStage(b);
       if (stage === "overdue") overdue.push(b);
+      else if (stage === "pending") pending.push(b);
       else if (stage === "in_progress") inProgress.push(b);
       else if (stage === "review") review.push(b);
       else other.push(b);
@@ -175,12 +178,21 @@ export function EstimatorListView({
         budgets: overdue,
       });
     }
+    if (pending.length > 0) {
+      result.push({
+        key: "pending",
+        label: "Pendentes — Aguardando Início",
+        icon: <Inbox className="h-4 w-4" />,
+        accent: "text-primary",
+        budgets: pending,
+      });
+    }
     if (inProgress.length > 0) {
       result.push({
         key: "in_progress",
         label: "Em Elaboração",
         icon: <Hammer className="h-4 w-4" />,
-        accent: "text-primary",
+        accent: "text-foreground",
         budgets: inProgress,
       });
     }
@@ -196,8 +208,8 @@ export function EstimatorListView({
     if (other.length > 0) {
       result.push({
         key: "other",
-        label: "Pendentes",
-        icon: <Inbox className="h-4 w-4" />,
+        label: "Outros",
+        icon: <Clock className="h-4 w-4" />,
         accent: "text-muted-foreground",
         budgets: other,
       });
