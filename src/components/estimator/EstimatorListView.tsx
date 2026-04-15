@@ -154,6 +154,7 @@ export function EstimatorListView({
     if (!isDefaultView) return [];
 
     const overdue: BudgetRow[] = [];
+    const pending: BudgetRow[] = [];
     const inProgress: BudgetRow[] = [];
     const review: BudgetRow[] = [];
     const other: BudgetRow[] = [];
@@ -161,6 +162,7 @@ export function EstimatorListView({
     for (const b of filtered) {
       const stage = getWorkflowStage(b);
       if (stage === "overdue") overdue.push(b);
+      else if (stage === "pending") pending.push(b);
       else if (stage === "in_progress") inProgress.push(b);
       else if (stage === "review") review.push(b);
       else other.push(b);
@@ -176,12 +178,21 @@ export function EstimatorListView({
         budgets: overdue,
       });
     }
+    if (pending.length > 0) {
+      result.push({
+        key: "pending",
+        label: "Pendentes — Aguardando Início",
+        icon: <Inbox className="h-4 w-4" />,
+        accent: "text-primary",
+        budgets: pending,
+      });
+    }
     if (inProgress.length > 0) {
       result.push({
         key: "in_progress",
         label: "Em Elaboração",
         icon: <Hammer className="h-4 w-4" />,
-        accent: "text-primary",
+        accent: "text-foreground",
         budgets: inProgress,
       });
     }
@@ -197,8 +208,8 @@ export function EstimatorListView({
     if (other.length > 0) {
       result.push({
         key: "other",
-        label: "Pendentes",
-        icon: <Inbox className="h-4 w-4" />,
+        label: "Outros",
+        icon: <Clock className="h-4 w-4" />,
         accent: "text-muted-foreground",
         budgets: other,
       });
