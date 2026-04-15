@@ -436,6 +436,14 @@ export default function EstimatorDashboard() {
             {/* List View */}
             {viewMode === "list" && (
               <>
+                {user && (
+                  <NewRequestsSection
+                    budgets={budgets}
+                    userId={user.id}
+                    onStartBudget={requestStatusChange}
+                  />
+                )}
+
                 <EstimatorFilterBar
                   search={search}
                   onSearchChange={setSearch}
