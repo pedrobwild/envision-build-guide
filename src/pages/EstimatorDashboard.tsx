@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
-  STATUS_GROUPS,
   type InternalStatus,
 } from "@/lib/role-constants";
 import { ProductionFunnel } from "@/components/editor/ProductionFunnel";
