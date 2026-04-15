@@ -381,10 +381,10 @@ export default function EstimatorDashboard() {
                   {counts.dueToday} vence{counts.dueToday > 1 ? "m" : ""} hoje
                 </span>
               )}
-              <span className="flex items-center gap-1"><Inbox className="h-3 w-3" /> {counts.pending} pendente{counts.pending !== 1 ? "s" : ""}</span>
+              <span className="flex items-center gap-1"><Inbox className="h-3 w-3" /> {counts.pending} solicitado{counts.pending !== 1 ? "s" : ""}</span>
               <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {counts.inProgress} em elaboração</span>
-              <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {counts.review} em revisão</span>
-              <span className="flex items-center gap-1 ml-auto text-muted-foreground/60"><Send className="h-3 w-3" /> {counts.delivered} entregue{counts.delivered !== 1 ? "s" : ""}</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {counts.delivered} entregue{counts.delivered !== 1 ? "s" : ""}</span>
+              <span className="flex items-center gap-1 ml-auto text-muted-foreground/60"><Send className="h-3 w-3" /> {counts.sent} enviado{counts.sent !== 1 ? "s" : ""}</span>
             </div>
 
             {/* Mobile filter chips */}
@@ -394,9 +394,9 @@ export default function EstimatorDashboard() {
                 { id: "overdue", label: "Atrasados", icon: AlertTriangle, count: counts.overdue, color: "destructive" },
                 { id: "urgente", label: "Urgentes", icon: Flame, count: budgets.filter(b => b.priority === "urgente").length },
                 { id: "today", label: "Hoje", icon: Clock, count: counts.dueToday },
-                { id: "_pending", label: "Pendente", icon: Inbox, count: counts.pending },
+                { id: "_pending", label: "Solicitado", icon: Inbox, count: counts.pending },
                 { id: "_in_progress", label: "Em Elaboração", count: counts.inProgress },
-                { id: "ready_for_review", label: "Revisão", count: counts.review },
+                { id: "_delivered", label: "Entregue", count: counts.delivered },
               ] as FilterChip[]}
               activeChipId={
                 priorityFilter === "urgente" ? "urgente" :
