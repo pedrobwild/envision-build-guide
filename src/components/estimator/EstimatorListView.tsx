@@ -159,7 +159,6 @@ export function EstimatorListView({
     const overdue: BudgetRow[] = [];
     const pending: BudgetRow[] = [];
     const inProgress: BudgetRow[] = [];
-    const review: BudgetRow[] = [];
     const other: BudgetRow[] = [];
 
     for (const b of filtered) {
@@ -167,7 +166,6 @@ export function EstimatorListView({
       if (stage === "overdue") overdue.push(b);
       else if (stage === "pending") pending.push(b);
       else if (stage === "in_progress") inProgress.push(b);
-      else if (stage === "review") review.push(b);
       else other.push(b);
     }
 
