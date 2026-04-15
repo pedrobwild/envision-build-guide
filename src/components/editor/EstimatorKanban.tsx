@@ -338,7 +338,7 @@ function Column({
   const Icon = column.icon;
   const sorted = sortBudgets(budgets);
   const overdueCount = budgets.filter((b) => {
-    const d = getDueInfo(b.due_at);
+    const d = getDueInfo(b.due_at, b.internal_status);
     return d?.variant === "overdue" || d?.variant === "today";
   }).length;
 
@@ -591,7 +591,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
     visibleColumns.map((col) => {
       const items = columnBudgets(col);
       const overdueCount = items.filter((b) => {
-        const d = getDueInfo(b.due_at);
+        const d = getDueInfo(b.due_at, b.internal_status);
         return d?.variant === "overdue" || d?.variant === "today";
       }).length;
       return {

@@ -371,7 +371,7 @@ function KanbanColumn({
   const filteredBudgets = budgets.filter(b => matchesDueFilter(b, dueFilter));
   const sorted = sortBudgetsForColumn(filteredBudgets);
   const overdueCount = filteredBudgets.filter(b => {
-    const d = getDueInfo(b.due_at);
+    const d = getDueInfo(b.due_at, b.internal_status);
     return d?.variant === "overdue" || d?.variant === "today";
   }).length;
 
@@ -654,7 +654,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
     KANBAN_COLUMNS.map((col) => {
       const items = columnBudgets(col).filter(b => matchesDueFilter(b, dueFilter));
       const overdueCount = items.filter((b) => {
-        const d = getDueInfo(b.due_at);
+        const d = getDueInfo(b.due_at, b.internal_status);
         return d?.variant === "overdue" || d?.variant === "today";
       }).length;
       return {
