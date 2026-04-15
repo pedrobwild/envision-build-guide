@@ -545,30 +545,3 @@ export default function EstimatorDashboard() {
   );
 }
 
-/* Small summary card component */
-function SummaryCard({
-  label,
-  count,
-  icon,
-  accent,
-  onClick,
-}: {
-  label: string;
-  count: number;
-  icon: React.ReactNode;
-  accent: string;
-  onClick?: () => void;
-}) {
-  return (
-    <Card
-      className={`p-3 flex flex-col gap-1 ${onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
-      onClick={onClick}
-    >
-      <div className={`flex items-center gap-1.5 text-xs font-body ${accent}`}>
-        {icon}
-        {label}
-      </div>
-      <span className="text-2xl font-bold font-display text-foreground">{count}</span>
-    </Card>
-  );
-}
