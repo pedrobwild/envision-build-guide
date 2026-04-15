@@ -47,6 +47,8 @@ import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { EstimatorFilterBar, type SortOption } from "@/components/estimator/EstimatorFilterBar";
 import { EstimatorListView, type BudgetRow } from "@/components/estimator/EstimatorListView";
+import { NewRequestsSection } from "@/components/estimator/NewRequestsSection";
+import { NotificationBell } from "@/components/estimator/NotificationBell";
 
 const PENDING_STATUSES: readonly string[] = STATUS_GROUPS.PENDING;
 const IN_PROGRESS_STATUSES: readonly string[] = STATUS_GROUPS.ACTIVE_WORK;
@@ -313,6 +315,7 @@ export default function EstimatorDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {user && <NotificationBell userId={user.id} />}
             {isAdmin && (
               <Button size="sm" className="gap-1.5" onClick={() => setNewBudgetOpen(true)}>
                 <Plus className="h-4 w-4" />
