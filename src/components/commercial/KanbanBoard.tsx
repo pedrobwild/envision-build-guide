@@ -43,7 +43,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { INTERNAL_STATUSES, PRIORITIES, type InternalStatus, type Priority } from "@/lib/role-constants";
+import { INTERNAL_STATUSES, PRIORITIES, STATUS_GROUPS, type InternalStatus, type Priority } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
