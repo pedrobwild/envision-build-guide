@@ -368,15 +368,24 @@ export default function EstimatorDashboard() {
               }}
             />
 
-            {/* Summary cards — desktop */}
-            <div className="hidden lg:grid grid-cols-7 gap-3">
-              <SummaryCard label="Atrasadas" count={counts.overdue} icon={<AlertTriangle className="h-4 w-4" />} accent="text-destructive" onClick={() => setStatusFilter("all")} />
-              <SummaryCard label="Vence hoje" count={counts.dueToday} icon={<Flame className="h-4 w-4" />} accent="text-warning" />
-              <SummaryCard label="Pendente" count={counts.pending} icon={<Inbox className="h-4 w-4" />} accent="text-primary" onClick={() => setStatusFilter("_pending")} />
-              <SummaryCard label="Em Elaboração" count={counts.inProgress} icon={<Clock className="h-4 w-4" />} accent="text-warning" onClick={() => setStatusFilter("_in_progress")} />
-              <SummaryCard label="Em Revisão" count={counts.review} icon={<CheckCircle2 className="h-4 w-4" />} accent="text-warning" onClick={() => setStatusFilter("ready_for_review")} />
-              <SummaryCard label="Entregues" count={counts.delivered} icon={<Send className="h-4 w-4" />} accent="text-success" onClick={() => setStatusFilter("_delivered")} />
-              <SummaryCard label="Encerrados" count={counts.finished} icon={<FileSignature className="h-4 w-4" />} accent="text-muted-foreground" onClick={() => setStatusFilter("_finished")} />
+            {/* Compact summary strip — desktop */}
+            <div className="hidden lg:flex items-center gap-4 px-3 py-2 rounded-lg bg-muted/30 border border-border/50 text-xs font-body text-muted-foreground">
+              {counts.overdue > 0 && (
+                <button onClick={() => setStatusFilter("all")} className="flex items-center gap-1 text-destructive font-medium hover:underline">
+                  <AlertTriangle className="h-3 w-3" />
+                  {counts.overdue} atrasado{counts.overdue > 1 ? "s" : ""}
+                </button>
+              )}
+              {counts.dueToday > 0 && (
+                <span className="flex items-center gap-1 text-warning font-medium">
+                  <Flame className="h-3 w-3" />
+                  {counts.dueToday} vence{counts.dueToday > 1 ? "m" : ""} hoje
+                </span>
+              )}
+              <span className="flex items-center gap-1"><Inbox className="h-3 w-3" /> {counts.pending} pendente{counts.pending !== 1 ? "s" : ""}</span>
+              <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {counts.inProgress} em elaboração</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {counts.review} em revisão</span>
+              <span className="flex items-center gap-1 ml-auto text-muted-foreground/60"><Send className="h-3 w-3" /> {counts.delivered} entregue{counts.delivered !== 1 ? "s" : ""}</span>
             </div>
 
             {/* Mobile filter chips */}
