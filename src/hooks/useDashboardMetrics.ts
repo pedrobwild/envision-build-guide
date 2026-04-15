@@ -406,7 +406,7 @@ export function computeDashboardMetrics(
         : "Nenhum item vencido",
     },
     avgLeadTime: {
-      health: avgLT !== null && avgLT > 7 ? "critical" : avgLT !== null && avgLT > 2 ? "warning" : "healthy",
+      health: avgLT !== null && avgLT > 4 ? "critical" : avgLT !== null && avgLT > 2 ? "warning" : "healthy",
       microText: avgLT !== null
         ? `Baseado em ${leadTimes.length} entrega${leadTimes.length > 1 ? "s" : ""} no período`
         : "Sem entregas no período",
