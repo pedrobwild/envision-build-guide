@@ -46,7 +46,7 @@ const DELIVERED_STATUSES: string[] = [...STATUS_GROUPS.DELIVERED, ...STATUS_GROU
 const FINISHED_STATUSES: readonly string[] = STATUS_GROUPS.FINISHED;
 const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_STATUSES]);
 
-type WorkflowStage = "overdue" | "pending" | "in_progress" | "review" | "other";
+type WorkflowStage = "overdue" | "pending" | "in_progress" | "other";
 
 function getWorkflowStage(b: BudgetRow): WorkflowStage {
   if (
@@ -59,7 +59,7 @@ function getWorkflowStage(b: BudgetRow): WorkflowStage {
   }
   if ((STATUS_GROUPS.PENDING as readonly string[]).includes(b.internal_status)) return "pending";
   if ((STATUS_GROUPS.ACTIVE_WORK as readonly string[]).includes(b.internal_status)) return "in_progress";
-  if ((STATUS_GROUPS.REVIEW as readonly string[]).includes(b.internal_status)) return "review";
+  if ((STATUS_GROUPS.REVIEW as readonly string[]).includes(b.internal_status)) return "in_progress";
   return "other";
 }
 
@@ -159,7 +159,6 @@ export function EstimatorListView({
     const overdue: BudgetRow[] = [];
     const pending: BudgetRow[] = [];
     const inProgress: BudgetRow[] = [];
-    const review: BudgetRow[] = [];
     const other: BudgetRow[] = [];
 
     for (const b of filtered) {
@@ -167,7 +166,6 @@ export function EstimatorListView({
       if (stage === "overdue") overdue.push(b);
       else if (stage === "pending") pending.push(b);
       else if (stage === "in_progress") inProgress.push(b);
-      else if (stage === "review") review.push(b);
       else other.push(b);
     }
 
@@ -203,17 +201,6 @@ export function EstimatorListView({
         accent: "text-foreground",
         borderAccent: "border-l-foreground/30",
         budgets: inProgress,
-      });
-    }
-    if (review.length > 0) {
-      result.push({
-        key: "review",
-        label: "Em Revisão",
-        description: "Aguardando aprovação interna",
-        icon: <ClipboardCheck className="h-4 w-4" />,
-        accent: "text-warning",
-        borderAccent: "border-l-warning",
-        budgets: review,
       });
     }
     if (other.length > 0) {
