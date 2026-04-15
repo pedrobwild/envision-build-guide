@@ -480,7 +480,7 @@ function EstimatorCard({
   getProfileName: (id: string | null) => string;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-  const due = getDueInfo(b.due_at);
+  const due = getDueInfo(b.due_at, b.internal_status);
   const highPrio = isHighPriority(b.priority);
   const borderColor = due ? dueBorderStyles[due.variant] : "border-l-transparent";
 
