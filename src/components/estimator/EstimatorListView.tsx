@@ -55,6 +55,7 @@ function getWorkflowStage(b: BudgetRow): WorkflowStage {
   ) {
     return "overdue";
   }
+  if ((STATUS_GROUPS.PENDING as readonly string[]).includes(b.internal_status)) return "pending";
   if ((STATUS_GROUPS.ACTIVE_WORK as readonly string[]).includes(b.internal_status)) return "in_progress";
   if ((STATUS_GROUPS.REVIEW as readonly string[]).includes(b.internal_status)) return "review";
   return "other";
