@@ -227,7 +227,7 @@ function sortBudgetsForColumn(budgets: BudgetRow[]): BudgetRow[] {
 
 function matchesDueFilter(budget: BudgetRow, filter: DueFilter): boolean {
   if (filter === "all") return true;
-  const due = getDueInfo(budget.due_at);
+  const due = getDueInfo(budget.due_at, budget.internal_status);
   if (filter === "overdue") return due?.variant === "overdue" || due?.variant === "today";
   if (filter === "due_soon") return due?.variant === "overdue" || due?.variant === "today" || due?.variant === "soon";
   return true;
