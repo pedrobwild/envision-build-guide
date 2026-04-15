@@ -197,7 +197,7 @@ export default function CommercialDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("urgente");
+  const [sortBy, setSortBy] = useState<SortOption>("recente");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
