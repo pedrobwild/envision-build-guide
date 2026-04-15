@@ -43,7 +43,7 @@ const DELIVERED_STATUSES: string[] = [...STATUS_GROUPS.DELIVERED, ...STATUS_GROU
 const FINISHED_STATUSES: readonly string[] = STATUS_GROUPS.FINISHED;
 const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_STATUSES]);
 
-type WorkflowStage = "overdue" | "in_progress" | "review" | "other";
+type WorkflowStage = "overdue" | "pending" | "in_progress" | "review" | "other";
 
 function getWorkflowStage(b: BudgetRow): WorkflowStage {
   // Overdue takes precedence
