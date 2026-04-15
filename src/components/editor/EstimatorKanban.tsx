@@ -24,10 +24,23 @@ import {
   AlertTriangle,
   Pin,
   Lock,
+  Clock,
+  RotateCcw,
+  ThumbsUp,
+  XCircle,
+  FileText,
+  CheckCircle2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
@@ -37,13 +50,13 @@ import {
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-/* ── 5 columns matching the user's funnel ── */
+/* ── Columns — mirrors Commercial Kanban, with estimator lock rules ── */
 const ESTIMATOR_COLUMNS = [
   {
     id: "solicitado",
     label: "Solicitado",
-    icon: Inbox,
-    statuses: ["requested", "novo", "triage", "assigned"],
+    icon: FileText,
+    statuses: ["requested", "novo"] as string[],
     accent: "border-t-primary",
     headerColor: "text-primary",
     bgColor: "bg-primary/5",
@@ -54,7 +67,7 @@ const ESTIMATOR_COLUMNS = [
     id: "em_elaboracao",
     label: "Em Elaboração",
     icon: Hammer,
-    statuses: ["in_progress", "waiting_info", "revision_requested", "ready_for_review"],
+    statuses: ["triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"] as string[],
     accent: "border-t-warning",
     headerColor: "text-warning",
     bgColor: "bg-warning/5",
@@ -64,8 +77,8 @@ const ESTIMATOR_COLUMNS = [
   {
     id: "entregue",
     label: "Entregue",
-    icon: Send,
-    statuses: ["delivered_to_sales"],
+    icon: CheckCircle2,
+    statuses: ["delivered_to_sales"] as string[],
     accent: "border-t-success",
     headerColor: "text-success",
     bgColor: "bg-success/5",
@@ -76,7 +89,7 @@ const ESTIMATOR_COLUMNS = [
     id: "enviado",
     label: "Enviado ao Cliente",
     icon: Send,
-    statuses: ["sent_to_client"],
+    statuses: ["sent_to_client"] as string[],
     accent: "border-t-success",
     headerColor: "text-success",
     bgColor: "bg-success/5",
@@ -86,8 +99,8 @@ const ESTIMATOR_COLUMNS = [
   {
     id: "minuta",
     label: "Minuta Solicitada",
-    icon: FileSignature,
-    statuses: ["minuta_solicitada"],
+    icon: FileText,
+    statuses: ["minuta_solicitada"] as string[],
     accent: "border-t-violet-500",
     headerColor: "text-violet-600",
     bgColor: "bg-violet-50/50",
@@ -97,8 +110,8 @@ const ESTIMATOR_COLUMNS = [
   {
     id: "fechado",
     label: "Contrato Fechado",
-    icon: FileSignature,
-    statuses: ["contrato_fechado"],
+    icon: ThumbsUp,
+    statuses: ["contrato_fechado"] as string[],
     accent: "border-t-success",
     headerColor: "text-success",
     bgColor: "bg-success/5",
@@ -108,8 +121,8 @@ const ESTIMATOR_COLUMNS = [
   {
     id: "perdido",
     label: "Perdido",
-    icon: FileSignature,
-    statuses: ["lost", "archived"],
+    icon: XCircle,
+    statuses: ["lost", "archived"] as string[],
     accent: "border-t-muted-foreground",
     headerColor: "text-muted-foreground",
     bgColor: "bg-muted/30",
@@ -117,6 +130,35 @@ const ESTIMATOR_COLUMNS = [
     locked: true,
   },
 ];
+
+/* ── Sub-sections for Em Elaboração (mirrors commercial) ── */
+const EM_ELABORACAO_SUBSECTIONS = [
+  {
+    id: "em_producao",
+    label: "Em Produção",
+    statuses: ["triage", "assigned", "in_progress", "ready_for_review"],
+    icon: null as typeof Clock | null,
+    headerClass: "text-xs font-medium text-muted-foreground uppercase tracking-wide",
+    cardBorderClass: "",
+  },
+  {
+    id: "aguardando",
+    label: "Aguardando",
+    statuses: ["waiting_info"],
+    icon: Clock,
+    headerClass: "text-xs font-medium text-warning uppercase tracking-wide",
+    cardBorderClass: "border-l-2 border-l-warning",
+  },
+  {
+    id: "revisao_solicitada",
+    label: "Revisão Solicitada",
+    statuses: ["revision_requested"],
+    icon: RotateCcw,
+    headerClass: "text-xs font-medium text-warning uppercase tracking-wide",
+    cardBorderClass: "border-l-2 border-l-warning",
+    tooltip: "Orçamento retornou para o orçamentista para revisão",
+  },
+] as const;
 
 /* ── Types ── */
 interface BudgetRow {
@@ -203,6 +245,83 @@ function sortBudgets(budgets: BudgetRow[]): BudgetRow[] {
   });
 }
 
+/* ── Sub-section group (for Em Elaboração) ── */
+function SubSectionGroup({
+  subsection,
+  budgets,
+  locked,
+  onCardClick,
+  getProfileName,
+  compact = false,
+}: {
+  subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
+  budgets: BudgetRow[];
+  locked: boolean;
+  onCardClick: (id: string) => void;
+  getProfileName: (id: string | null) => string;
+  compact?: boolean;
+}) {
+  const Icon = subsection.icon;
+  const sorted = sortBudgets(budgets);
+
+  const header = (
+    <div className="flex items-center gap-1.5 px-1 mb-2 mt-3">
+      {Icon && <Icon className="h-3 w-3" />}
+      <span className={subsection.headerClass}>{subsection.label}</span>
+      <Badge variant="secondary" className="text-xs">{sorted.length}</Badge>
+    </div>
+  );
+
+  return (
+    <div>
+      {"tooltip" in subsection && subsection.tooltip ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>{header}</TooltipTrigger>
+            <TooltipContent side="top">
+              <p className="text-xs">{subsection.tooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        header
+      )}
+      <div className="space-y-2">
+        {sorted.map((b) => (
+          <div key={b.id} className={subsection.cardBorderClass ? `rounded-md ${subsection.cardBorderClass}` : ""}>
+            {compact ? (
+              <CompactKanbanCard
+                projectName={b.project_name}
+                clientName={b.client_name}
+                priority={b.priority}
+                internalStatus={b.internal_status}
+                dueAt={b.due_at}
+                bairro={b.bairro}
+                city={b.city}
+                versionNumber={b.version_number}
+                sequentialCode={b.sequential_code}
+                commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
+                estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                onClick={() => onCardClick(b.id)}
+                onQuickAction={(action) => {
+                  if (action === "open") onCardClick(b.id);
+                }}
+              />
+            ) : (
+              <DraggableCard
+                budget={b}
+                locked={locked}
+                onClick={() => onCardClick(b.id)}
+                getProfileName={getProfileName}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── Droppable Column ── */
 function Column({
   column,
@@ -223,6 +342,16 @@ function Column({
     return d?.variant === "overdue" || d?.variant === "today";
   }).length;
 
+  const isEmElaboracao = column.id === "em_elaboracao";
+
+  const subSectionData = useMemo(() => {
+    if (!isEmElaboracao) return [];
+    return EM_ELABORACAO_SUBSECTIONS.map(sub => ({
+      sub,
+      items: budgets.filter(b => (sub.statuses as readonly string[]).includes(b.internal_status)),
+    })).filter(({ items }) => items.length > 0);
+  }, [isEmElaboracao, budgets]);
+
   return (
     <div
       ref={setNodeRef}
@@ -233,7 +362,7 @@ function Column({
       <div className="px-3 py-2.5 flex items-center justify-between">
         <div className={`flex items-center gap-1.5 text-xs font-semibold font-body ${column.headerColor}`}>
           <Icon className="h-3.5 w-3.5" />
-          {column.label}
+          <span className="truncate">{column.label}</span>
           {column.locked && <Lock className="h-3 w-3 ml-0.5 opacity-50" />}
         </div>
         <div className="flex items-center gap-1.5">
@@ -250,36 +379,58 @@ function Column({
       </div>
 
       <ScrollArea className="flex-1 px-2 pb-2" style={{ maxHeight: "calc(100vh - 340px)" }}>
-        <div className="space-y-2">
-          {sorted.map((b, idx) => {
-            const prevHigh = idx > 0 && isHighPriority(sorted[idx - 1].priority);
-            const currHigh = isHighPriority(b.priority);
-            const showDivider = idx > 0 && prevHigh && !currHigh;
-
-            return (
-              <div key={b.id}>
-                {showDivider && (
-                  <div className="flex items-center gap-2 py-1 px-1">
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-body">Demais</span>
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-                )}
-                <DraggableCard
-                  budget={b}
+        {isEmElaboracao ? (
+          <div>
+            {subSectionData.length === 0 && (
+              <div className="py-8 text-center text-xs text-muted-foreground font-body">
+                Nenhum orçamento
+              </div>
+            )}
+            {subSectionData.map(({ sub, items }, idx) => (
+              <div key={sub.id}>
+                {idx > 0 && <Separator className="my-2" />}
+                <SubSectionGroup
+                  subsection={sub}
+                  budgets={items}
                   locked={column.locked}
-                  onClick={() => onCardClick(b.id)}
+                  onCardClick={onCardClick}
                   getProfileName={getProfileName}
                 />
               </div>
-            );
-          })}
-          {sorted.length === 0 && (
-            <div className="py-8 text-center text-xs text-muted-foreground font-body">
-              Nenhum orçamento
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {sorted.map((b, idx) => {
+              const prevHigh = idx > 0 && isHighPriority(sorted[idx - 1].priority);
+              const currHigh = isHighPriority(b.priority);
+              const showDivider = idx > 0 && prevHigh && !currHigh;
+
+              return (
+                <div key={b.id}>
+                  {showDivider && (
+                    <div className="flex items-center gap-2 py-1 px-1">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-body">Demais</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                  )}
+                  <DraggableCard
+                    budget={b}
+                    locked={column.locked}
+                    onClick={() => onCardClick(b.id)}
+                    getProfileName={getProfileName}
+                  />
+                </div>
+              );
+            })}
+            {sorted.length === 0 && (
+              <div className="py-8 text-center text-xs text-muted-foreground font-body">
+                Nenhum orçamento
+              </div>
+            )}
+          </div>
+        )}
       </ScrollArea>
     </div>
   );
@@ -367,7 +518,6 @@ function EstimatorCard({
         </div>
       )}
 
-      {/* Sub-status badge */}
       {statusMeta && (
         <div className="mb-1.5">
           <Badge variant="secondary" className={`text-[10px] font-body ${statusMeta.color}`}>
@@ -430,7 +580,6 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
       const targetCol = ESTIMATOR_COLUMNS.find((c) => c.id === over.id);
       if (!targetCol || targetCol.locked || !targetCol.targetStatus) return;
 
-      // Already in this column?
       const currentCol = ESTIMATOR_COLUMNS.find((c) => c.statuses.includes(budget.internal_status));
       if (currentCol?.id === targetCol.id) return;
 
@@ -471,7 +620,6 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
     [columnBudgets, visibleColumns]
   );
 
-  // Mobile: swipeable single-column view
   if (isMobile) {
     return (
       <MobileSwipeableKanban
@@ -482,6 +630,38 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
         {(colIndex) => {
           const col = visibleColumns[colIndex];
           const items = columnBudgets(col);
+          const isEmElaboracao = col.id === "em_elaboracao";
+
+          if (isEmElaboracao) {
+            const subData = EM_ELABORACAO_SUBSECTIONS.map(sub => ({
+              sub,
+              items: items.filter(b => (sub.statuses as readonly string[]).includes(b.internal_status)),
+            })).filter(({ items: i }) => i.length > 0);
+
+            return (
+              <div className={`rounded-xl border border-border border-t-4 ${col.accent} ${col.bgColor} min-h-[300px]`}>
+                <ScrollArea className="px-2 pb-2 pt-1" style={{ maxHeight: "calc(100vh - 280px)" }}>
+                  {subData.length === 0 && (
+                    <div className="py-8 text-center text-xs text-muted-foreground font-body">Nenhum orçamento</div>
+                  )}
+                  {subData.map(({ sub, items: subItems }, idx) => (
+                    <div key={sub.id}>
+                      {idx > 0 && <Separator className="my-2" />}
+                      <SubSectionGroup
+                        subsection={sub}
+                        budgets={subItems}
+                        locked={col.locked}
+                        onCardClick={onCardClick}
+                        getProfileName={getProfileName}
+                        compact
+                      />
+                    </div>
+                  ))}
+                </ScrollArea>
+              </div>
+            );
+          }
+
           const sorted = sortBudgets(items);
           return (
             <div className={`rounded-xl border border-border border-t-4 ${col.accent} ${col.bgColor} min-h-[300px]`}>
@@ -534,7 +714,6 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
     );
   }
 
-  // Desktop: horizontal scroll with drag & drop
   return (
     <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
