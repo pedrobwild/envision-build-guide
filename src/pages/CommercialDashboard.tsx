@@ -25,13 +25,14 @@ import {
   Clock, MoreVertical, ExternalLink, CheckCircle2,
   ArrowUpDown, Copy, Send, RotateCcw, AlertTriangle,
   FileText, Eye, ThumbsUp, XCircle, Plus, GitCompare,
-  LayoutList, Columns3, UserPlus,
+  LayoutList, Columns3, UserPlus, ChevronRight, Flame,
+  SlidersHorizontal, X, Hammer,
 } from "lucide-react";
 import {
   INTERNAL_STATUSES, PRIORITIES,
   type InternalStatus, type Priority,
 } from "@/lib/role-constants";
-import { format, differenceInCalendarDays, isToday, isPast } from "date-fns";
+import { format, differenceInCalendarDays, isToday, isPast, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
@@ -42,7 +43,6 @@ import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 import { ContractUploadModal } from "@/components/commercial/ContractUploadModal";
 
 // Pipeline groups for the commercial view
-// Statuses in "solicitado" and "em_elaboracao" are read-only for commercial
 const LOCKED_STATUSES: readonly string[] = [
   "requested", "triage", "assigned", "in_progress", "waiting_info",
 ];
@@ -106,6 +106,9 @@ const PIPELINE_SECTIONS = {
 
 type SortOption = "urgente" | "recente" | "prazo";
 
+// Workflow groups for commercial list view
+type CommercialWorkflowStage = "action_needed" | "overdue" | "em_elaboracao" | "revisao_solicitada" | "enviado" | "solicitado" | "advanced" | "closed";
+
 interface BudgetRow {
   id: string;
   client_name: string;
@@ -131,6 +134,57 @@ interface BudgetRow {
 }
 
 interface ProfileRow { id: string; full_name: string; }
+
+const DELIVERED_FINISHED = new Set(["delivered_to_sales", "sent_to_client", "minuta_solicitada", "lost", "archived", "contrato_fechado"]);
+
+function getDueInfo(dueAt: string | null, internalStatus?: string) {
+  if (!dueAt) return { label: null, variant: "default" as const };
+  const dueDate = new Date(dueAt);
+  const days = differenceInCalendarDays(dueDate, new Date());
+  const isDelivered = internalStatus ? DELIVERED_FINISHED.has(internalStatus) : false;
+  if (isPast(dueDate) && !isToday(dueDate)) {
+    if (isDelivered) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
+    return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" as const };
+  }
+  if (isToday(dueDate)) return { label: "Vence hoje", variant: isDelivered ? "default" as const : "today" as const };
+  if (days <= 2) return { label: `${days}d restante${days > 1 ? "s" : ""}`, variant: isDelivered ? "default" as const : "soon" as const };
+  return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
+}
+
+const dueVariantStyles = {
+  overdue: "bg-destructive/10 text-destructive border-destructive/20",
+  today: "bg-warning/10 text-warning border-warning/20",
+  soon: "bg-warning/10 text-warning border-warning/20",
+  default: "text-muted-foreground",
+};
+
+function getCommercialStage(b: BudgetRow): CommercialWorkflowStage {
+  // Action needed = delivered to sales (ready to send to client)
+  if (b.internal_status === "delivered_to_sales") return "action_needed";
+  // Overdue (non-finished)
+  if (b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) && !DELIVERED_FINISHED.has(b.internal_status)) return "overdue";
+  // Revision requested
+  if (b.internal_status === "revision_requested") return "revisao_solicitada";
+  // Being built
+  if (["requested", "novo"].includes(b.internal_status)) return "solicitado";
+  if (["triage", "assigned", "in_progress", "waiting_info", "ready_for_review"].includes(b.internal_status)) return "em_elaboracao";
+  // Sent to client
+  if (b.internal_status === "sent_to_client") return "enviado";
+  // Advanced commercial (minuta, contrato)
+  if (["minuta_solicitada", "contrato_fechado"].includes(b.internal_status)) return "advanced";
+  // Closed (lost, archived)
+  return "closed";
+}
+
+interface WorkflowGroup {
+  key: CommercialWorkflowStage;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  accent: string;
+  borderAccent: string;
+  budgets: BudgetRow[];
+}
 
 export default function CommercialDashboard() {
   const location = useLocation();
@@ -230,37 +284,24 @@ export default function CommercialDashboard() {
     [profiles],
   );
 
-  const DELIVERED_FINISHED = new Set(["delivered_to_sales", "sent_to_client", "minuta_solicitada", "lost", "archived", "contrato_fechado"]);
-  const getDueInfo = (dueAt: string | null, internalStatus?: string) => {
-    if (!dueAt) return { label: null, variant: "default" as const };
-    const dueDate = new Date(dueAt);
-    const days = differenceInCalendarDays(dueDate, new Date());
-    const isDelivered = internalStatus ? DELIVERED_FINISHED.has(internalStatus) : false;
-    if (isPast(dueDate) && !isToday(dueDate)) {
-      if (isDelivered) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
-      return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" as const };
-    }
-    if (isToday(dueDate)) return { label: "Vence hoje", variant: isDelivered ? "default" as const : "today" as const };
-    if (days <= 2) return { label: `${days}d restante${days > 1 ? "s" : ""}`, variant: isDelivered ? "default" as const : "soon" as const };
-    return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
-  };
-
-  // Counts per pipeline section
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const [key, sec] of Object.entries(PIPELINE_SECTIONS)) {
       c[key] = budgets.filter(b => (sec.statuses as readonly string[]).includes(b.internal_status)).length;
     }
     c.total = budgets.length;
-    c.needsAction = budgets.filter(b =>
-      (["delivered_to_sales"] as string[]).includes(b.internal_status)
+    c.needsAction = budgets.filter(b => b.internal_status === "delivered_to_sales").length;
+    c.overdue = budgets.filter(b =>
+      b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) && !DELIVERED_FINISHED.has(b.internal_status)
+    ).length;
+    c.dueToday = budgets.filter(b =>
+      b.due_at && isToday(new Date(b.due_at)) && !DELIVERED_FINISHED.has(b.internal_status)
     ).length;
     return c;
   }, [budgets]);
 
   const isAdmin = profile?.roles.includes("admin");
 
-  // Unique commercial owners for filter (admin only)
   const commercialOptions = useMemo(() => {
     if (!isAdmin) return [];
     const ids = [...new Set(budgets.map(b => b.commercial_owner_id).filter(Boolean))] as string[];
@@ -275,7 +316,6 @@ export default function CommercialDashboard() {
       const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
       if (!matchCommercial) return false;
 
-      // Due filter
       if (dueFilter !== "all") {
         const due = b.due_at ? new Date(b.due_at) : null;
         if (dueFilter === "overdue") {
@@ -316,14 +356,42 @@ export default function CommercialDashboard() {
     return result;
   }, [budgets, search, statusFilter, sortBy, commercialFilter, dueFilter]);
 
+  // Workflow groups for list view
+  const isDefaultView = statusFilter === "all" && !search && dueFilter === "all" && commercialFilter === "all";
+
+  const workflowGroups = useMemo<WorkflowGroup[]>(() => {
+    if (!isDefaultView) return [];
+
+    const buckets: Record<CommercialWorkflowStage, BudgetRow[]> = {
+      action_needed: [], overdue: [], revisao_solicitada: [], solicitado: [],
+      em_elaboracao: [], enviado: [], advanced: [], closed: [],
+    };
+
+    for (const b of filtered) {
+      const stage = getCommercialStage(b);
+      buckets[stage].push(b);
+    }
+
+    const defs: { key: CommercialWorkflowStage; label: string; description: string; icon: React.ReactNode; accent: string; borderAccent: string }[] = [
+      { key: "action_needed", label: "Prontos para Enviar", description: "Entregues — enviar ao cliente", icon: <CheckCircle2 className="h-4 w-4" />, accent: "text-success", borderAccent: "border-l-success" },
+      { key: "overdue", label: "Atrasados", description: "Prazo ultrapassado", icon: <AlertTriangle className="h-4 w-4" />, accent: "text-destructive", borderAccent: "border-l-destructive" },
+      { key: "revisao_solicitada", label: "Revisão Solicitada", description: "Retornou para orçamentista", icon: <RotateCcw className="h-4 w-4" />, accent: "text-warning", borderAccent: "border-l-warning" },
+      { key: "solicitado", label: "Solicitados", description: "Aguardando elaboração", icon: <FileText className="h-4 w-4" />, accent: "text-primary", borderAccent: "border-l-primary" },
+      { key: "em_elaboracao", label: "Em Elaboração", description: "Em produção pelo orçamentista", icon: <Hammer className="h-4 w-4" />, accent: "text-foreground", borderAccent: "border-l-foreground/30" },
+      { key: "enviado", label: "Enviados ao Cliente", description: "Aguardando retorno do cliente", icon: <Send className="h-4 w-4" />, accent: "text-success", borderAccent: "border-l-success/50" },
+      { key: "advanced", label: "Negociação Avançada", description: "Minuta ou contrato em andamento", icon: <ThumbsUp className="h-4 w-4" />, accent: "text-violet-600", borderAccent: "border-l-violet-500" },
+      { key: "closed", label: "Encerrados", description: "Perdidos ou arquivados", icon: <XCircle className="h-4 w-4" />, accent: "text-muted-foreground", borderAccent: "border-l-muted-foreground/30" },
+    ];
+
+    return defs
+      .filter(d => buckets[d.key].length > 0)
+      .map(d => ({ ...d, budgets: buckets[d.key] }));
+  }, [filtered, isDefaultView]);
+
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
-    // Intercept contrato_fechado → show contract upload modal
     if (newStatus === "contrato_fechado") {
       const target = budgets.find(b => b.id === budgetId);
-      if (target) {
-        setContractUploadBudget(target);
-        return;
-      }
+      if (target) { setContractUploadBudget(target); return; }
     }
 
     const current = budgets.find(b => b.id === budgetId);
@@ -333,7 +401,6 @@ export default function CommercialDashboard() {
       .eq("id", budgetId);
     if (error) { toast.error("Erro ao atualizar status."); return; }
 
-    // Log event
     if (user) {
       await supabase.from("budget_events").insert({
         budget_id: budgetId,
@@ -350,7 +417,6 @@ export default function CommercialDashboard() {
 
   async function claimBudget(budgetId: string) {
     if (!user) return;
-    // Optimistic update
     setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, commercial_owner_id: user.id } : b));
     const { error } = await supabase
       .from("budgets")
@@ -367,22 +433,11 @@ export default function CommercialDashboard() {
   function handleContractUploadSuccess() {
     if (!contractUploadBudget || !user) return;
     const budgetId = contractUploadBudget.id;
-    const fromStatus = contractUploadBudget.internal_status;
-
-    // Log event
     supabase.from("budget_events").insert({
-      budget_id: budgetId,
-      user_id: user.id,
-      event_type: "status_change",
-      from_status: fromStatus,
-      to_status: "contrato_fechado",
+      budget_id: budgetId, user_id: user.id, event_type: "status_change",
+      from_status: contractUploadBudget.internal_status, to_status: "contrato_fechado",
     });
-
-    setBudgets(prev => prev.map(b =>
-      b.id === budgetId
-        ? { ...b, internal_status: "contrato_fechado", updated_at: new Date().toISOString() }
-        : b
-    ));
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, internal_status: "contrato_fechado", updated_at: new Date().toISOString() } : b));
     setContractUploadBudget(null);
   }
 
@@ -393,23 +448,159 @@ export default function CommercialDashboard() {
   }
 
   function handleRevisionRequestSuccess() {
-    const currentRevisionBudget = revisionBudget;
-    if (!currentRevisionBudget) return;
-
-    const now = new Date().toISOString();
-    setBudgets(prev => prev.map(b =>
-      b.id === currentRevisionBudget.id
-        ? { ...b, internal_status: "revision_requested", updated_at: now }
-        : b
-    ));
+    if (!revisionBudget) return;
+    setBudgets(prev => prev.map(b => b.id === revisionBudget.id ? { ...b, internal_status: "revision_requested", updated_at: new Date().toISOString() } : b));
     setRevisionBudget(null);
   }
 
-  const dueVariantStyles = {
-    overdue: "bg-destructive/10 text-destructive border-destructive/20",
-    today: "bg-warning/10 text-warning border-warning/20",
-    soon: "bg-warning/10 text-warning border-warning/20",
-    default: "text-muted-foreground",
+  // Filter bar state
+  const hasActiveFilters = statusFilter !== "all" || search.length > 0 || dueFilter !== "all" || commercialFilter !== "all";
+  const activeFilterCount = [statusFilter !== "all", dueFilter !== "all", commercialFilter !== "all"].filter(Boolean).length;
+  const clearAllFilters = () => { setSearch(""); setStatusFilter("all"); setDueFilter("all"); setCommercialFilter("all"); };
+
+  const renderBudgetCard = (b: BudgetRow) => {
+    const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
+    const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
+    const due = getDueInfo(b.due_at, b.internal_status);
+    const isLocked = LOCKED_STATUSES.includes(b.internal_status);
+    const isEntregue = b.internal_status === "delivered_to_sales";
+    const timeAgo = b.created_at ? formatDistanceToNow(new Date(b.created_at), { addSuffix: true, locale: ptBR }) : null;
+
+    return (
+      <Card
+        key={b.id}
+        className={`px-4 py-3 hover:shadow-md transition-all border group cursor-pointer ${isEntregue ? "border-success/30" : ""}`}
+        onClick={() => navigate(`/admin/demanda/${b.id}`)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            {/* Row 1: Code + Name + Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {isEntregue && <span className="w-2 h-2 rounded-full bg-success shrink-0" />}
+              <span className="font-medium font-display text-sm text-foreground truncate">
+                {b.project_name || b.client_name}
+              </span>
+              <Badge variant="secondary" className={`text-[10px] font-body px-1.5 py-0 h-[18px] ${status.color}`}>
+                {status.icon} {status.label}
+              </Badge>
+              {!b.commercial_owner_id && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-body border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 cursor-pointer hover:bg-amber-100 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); claimBudget(b.id); }}
+                >
+                  <UserPlus className="h-3 w-3 mr-0.5" />Assumir
+                </Badge>
+              )}
+              {b.priority === "urgente" && (
+                <Badge className="bg-destructive/10 text-destructive border-destructive/20 border text-[9px] px-1 py-0 h-4 gap-0.5">
+                  <Flame className="h-2.5 w-2.5" />Urgente
+                </Badge>
+              )}
+              {b.priority === "alta" && (
+                <Badge variant="outline" className={`text-[9px] px-1 py-0 h-4 ${prio.color}`}>Alta</Badge>
+              )}
+              {due.label && (
+                <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0 h-4 rounded-full border ${dueVariantStyles[due.variant]}`}>
+                  <Calendar className="h-2.5 w-2.5" />{due.label}
+                </span>
+              )}
+              {(b.version_number ?? 1) > 1 && (
+                <span className="text-[9px] font-mono text-muted-foreground px-1 py-0 h-4 rounded bg-muted border border-border inline-flex items-center">V{b.version_number}</span>
+              )}
+              {b.budget_pdf_url && (
+                <a
+                  href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/budget-pdfs/${b.budget_pdf_url}`}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <FileText className="h-3 w-3" />PDF
+                </a>
+              )}
+              {b.manual_total && b.manual_total > 0 && (
+                <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success tabular-nums">
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(b.manual_total)}
+                </span>
+              )}
+            </div>
+
+            {/* Row 2: Meta */}
+            <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground font-body flex-wrap">
+              <span className="flex items-center gap-1"><User className="h-3 w-3 shrink-0" />{b.client_name}</span>
+              {(b.bairro || b.city) && (
+                <span className="flex items-center gap-1"><Building2 className="h-3 w-3 shrink-0" />{[b.bairro, b.city].filter(Boolean).join(", ")}</span>
+              )}
+              <span className="flex items-center gap-1" title="Orçamentista">
+                <FileText className="h-3 w-3 shrink-0" />{getProfileName(b.estimator_owner_id)}
+              </span>
+              {timeAgo && <span>{timeAgo}</span>}
+            </div>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+            {/* Quick action buttons */}
+            {b.internal_status === "delivered_to_sales" && (
+              <Button variant="default" size="sm" className="h-7 text-xs gap-1 px-2.5" onClick={() => changeStatus(b.id, "sent_to_client")}>
+                <Send className="h-3 w-3" /><span className="hidden sm:inline">Enviar</span>
+              </Button>
+            )}
+            {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => setRevisionBudget(b)}>
+                <RotateCcw className="h-3 w-3" /><span className="hidden sm:inline">Revisão</span>
+              </Button>
+            )}
+            {b.public_id && (
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => copyPublicLink(b.public_id)} title="Copiar link">
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <BudgetActionsMenu
+              budget={b}
+              onRefresh={loadData}
+              fromPath="/admin/comercial"
+              extraItems={
+                <>
+                  <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
+                    <FileText className="h-4 w-4 mr-2" />Ver detalhes
+                  </DropdownMenuItem>
+                  {!isLocked && (
+                    <>
+                      <DropdownMenuSeparator />
+                      {b.internal_status !== "lost" && b.internal_status !== "sent_to_client" && b.internal_status !== "delivered_to_sales" && (
+                        <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
+                          <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
+                        </DropdownMenuItem>
+                      )}
+                      {b.internal_status === "sent_to_client" && (
+                        <>
+                          <DropdownMenuItem onClick={() => changeStatus(b.id, "minuta_solicitada")}>
+                            <FileText className="h-4 w-4 mr-2" />Solicitar minuta
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => changeStatus(b.id, "contrato_fechado")}>
+                            <ThumbsUp className="h-4 w-4 mr-2" />Fechar contrato
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
+                            <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
+              }
+              trigger={
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity">
+                  <MoreVertical className="h-3.5 w-3.5" />
+                </Button>
+              }
+            />
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 hidden sm:block" />
+          </div>
+        </div>
+      </Card>
+    );
   };
 
   return (
@@ -429,43 +620,68 @@ export default function CommercialDashboard() {
                 </p>
               </div>
             </div>
-            <Button size="sm" onClick={() => navigate("/admin/solicitacoes/nova")}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              Nova Solicitação
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={() => navigate("/admin/solicitacoes/nova")}>
+                <Plus className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">Nova Solicitação</span>
+              </Button>
+              <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
+                <Button
+                  variant={viewMode === "list" ? "secondary" : "ghost"}
+                  size="sm" className="h-7 px-2.5 gap-1.5 text-xs"
+                  onClick={() => setViewMode("list")}
+                >
+                  <LayoutList className="h-3.5 w-3.5" />Lista
+                </Button>
+                <Button
+                  variant={viewMode === "kanban" ? "secondary" : "ghost"}
+                  size="sm" className="h-7 px-2.5 gap-1.5 text-xs"
+                  onClick={() => setViewMode("kanban")}
+                >
+                  <Columns3 className="h-3.5 w-3.5" />Kanban
+                </Button>
+              </div>
+            </div>
           </div>
         </header>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
-          {/* Pipeline summary cards — desktop */}
-          <div className="hidden lg:grid grid-cols-8 gap-3">
-            {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => {
-              const Icon = sec.icon;
-              return (
-                <SummaryCard
-                  key={key}
-                  label={sec.label}
-                  count={counts[key] ?? 0}
-                  icon={<Icon className="h-4 w-4" />}
-                  accent={sec.accent}
-                  active={statusFilter === key}
-                  onClick={() => setStatusFilter(statusFilter === key ? "all" : key)}
-                  alert={key === "entregue" && (counts[key] ?? 0) > 0}
-                />
-              );
-            })}
+          {/* Compact summary strip — desktop */}
+          <div className="hidden lg:flex items-center gap-4 px-3 py-2 rounded-lg bg-muted/30 border border-border/50 text-xs font-body text-muted-foreground">
+            {counts.needsAction > 0 && (
+              <button onClick={() => setStatusFilter("entregue")} className="flex items-center gap-1 text-success font-medium hover:underline">
+                <CheckCircle2 className="h-3 w-3" />
+                {counts.needsAction} para enviar
+              </button>
+            )}
+            {counts.overdue > 0 && (
+              <button onClick={() => setDueFilter("overdue")} className="flex items-center gap-1 text-destructive font-medium hover:underline">
+                <AlertTriangle className="h-3 w-3" />
+                {counts.overdue} atrasado{counts.overdue > 1 ? "s" : ""}
+              </button>
+            )}
+            {counts.dueToday > 0 && (
+              <span className="flex items-center gap-1 text-warning font-medium">
+                <Flame className="h-3 w-3" />
+                {counts.dueToday} vence{counts.dueToday > 1 ? "m" : ""} hoje
+              </span>
+            )}
+            <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {counts.solicitado ?? 0} solicitado{(counts.solicitado ?? 0) !== 1 ? "s" : ""}</span>
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {counts.em_elaboracao ?? 0} em elaboração</span>
+            <span className="flex items-center gap-1"><Send className="h-3 w-3" /> {counts.enviado ?? 0} enviado{(counts.enviado ?? 0) !== 1 ? "s" : ""}</span>
+            <span className="flex items-center gap-1 ml-auto text-muted-foreground/60"><ThumbsUp className="h-3 w-3" /> {counts.fechado ?? 0} fechado{(counts.fechado ?? 0) !== 1 ? "s" : ""}</span>
           </div>
 
           {/* Mobile filter chips */}
           <MobileFilterChips
             chips={[
               { id: "all", label: "Todos", count: counts.total },
-              { id: "entregue", label: "Entregues", icon: CheckCircle2, count: counts["entregue"] ?? 0 },
-              { id: "em_elaboracao", label: "Em Elaboração", icon: Clock, count: counts["em_elaboracao"] ?? 0 },
-              { id: "revisao_solicitada", label: "Revisão Sol.", icon: RotateCcw, count: counts["revisao_solicitada"] ?? 0 },
-              { id: "enviado", label: "Enviados", icon: Send, count: counts["enviado"] ?? 0 },
-              { id: "solicitado", label: "Solicitados", icon: FileText, count: counts["solicitado"] ?? 0 },
-              { id: "fechado", label: "Fechados", icon: ThumbsUp, count: counts["fechado"] ?? 0 },
+              { id: "entregue", label: "Para Enviar", icon: CheckCircle2, count: counts.entregue ?? 0 },
+              { id: "em_elaboracao", label: "Em Elaboração", icon: Clock, count: counts.em_elaboracao ?? 0 },
+              { id: "revisao_solicitada", label: "Revisão Sol.", icon: RotateCcw, count: counts.revisao_solicitada ?? 0 },
+              { id: "enviado", label: "Enviados", icon: Send, count: counts.enviado ?? 0 },
+              { id: "solicitado", label: "Solicitados", icon: FileText, count: counts.solicitado ?? 0 },
+              { id: "fechado", label: "Fechados", icon: ThumbsUp, count: counts.fechado ?? 0 },
             ] as FilterChip[]}
             activeChipId={statusFilter}
             onChipChange={(id) => setStatusFilter(id)}
@@ -474,52 +690,37 @@ export default function CommercialDashboard() {
             searchPlaceholder="Buscar cliente, projeto..."
           />
 
-          {/* Needs-action banner */}
-          {counts.needsAction > 0 && statusFilter === "all" && (
-            <div
-              className="flex items-center gap-3 px-4 py-3 rounded-lg border border-success/20 bg-success/5 cursor-pointer hover:shadow-sm transition-shadow"
-              onClick={() => setStatusFilter("entregue")}
-            >
-              <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
-              <span className="text-sm font-medium text-success">
-                {counts.needsAction} orçamento{counts.needsAction > 1 ? "s" : ""} entregue{counts.needsAction > 1 ? "s" : ""} — pronto{counts.needsAction > 1 ? "s" : ""} para enviar ao cliente
-              </span>
-            </div>
-          )}
+          {/* Compact filter bar — desktop */}
+          <div className="hidden lg:block space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input placeholder="Buscar cliente, projeto, bairro..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-sm" />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20">
+                    <X className="h-2.5 w-2.5 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
 
-          {/* Filters */}
-          <div className="hidden lg:flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar por cliente, projeto, bairro..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Pipeline" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => (
-                  <SelectItem key={key} value={key}>{sec.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={v => setSortBy(v as SortOption)}>
-              <SelectTrigger className="w-full sm:w-[170px]">
-                <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="urgente">Mais urgente</SelectItem>
-                <SelectItem value="prazo">Prazo mais próximo</SelectItem>
-                <SelectItem value="recente">Mais recente</SelectItem>
-              </SelectContent>
-            </Select>
-            {/* Due filter */}
-            <div className="flex items-center gap-1">
+              <div className="h-5 w-px bg-border" />
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className={`w-[160px] h-8 text-xs ${statusFilter !== "all" ? "border-primary/40 bg-primary/5" : ""}`}>
+                  <SlidersHorizontal className="h-3 w-3 mr-1 shrink-0" />
+                  <SelectValue placeholder="Pipeline" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {Object.entries(PIPELINE_SECTIONS).map(([key, sec]) => (
+                    <SelectItem key={key} value={key}>{sec.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={dueFilter} onValueChange={v => setDueFilter(v as DueFilter)}>
-                <SelectTrigger className={cn("w-full sm:w-[180px]", dueFilter !== "all" && "border-primary ring-1 ring-primary/20")}>
-                  <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+                <SelectTrigger className={`w-[150px] h-8 text-xs ${dueFilter !== "all" ? "border-primary/40 bg-primary/5" : ""}`}>
+                  <AlertTriangle className="h-3 w-3 mr-1 shrink-0" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -528,52 +729,62 @@ export default function CommercialDashboard() {
                   <SelectItem value="due_soon">🟡 Próximos (≤2d)</SelectItem>
                 </SelectContent>
               </Select>
-              {dueFilter !== "all" && (
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setDueFilter("all")}>
-                  <span className="text-xs">✕</span>
-                </Button>
+
+              {isAdmin && commercialOptions.length > 0 && (
+                <Select value={commercialFilter} onValueChange={setCommercialFilter}>
+                  <SelectTrigger className={`w-[150px] h-8 text-xs ${commercialFilter !== "all" ? "border-primary/40 bg-primary/5" : ""}`}>
+                    <User className="h-3 w-3 mr-1 shrink-0" />
+                    <SelectValue placeholder="Comercial" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Comercial</SelectItem>
+                    {commercialOptions.map(opt => (
+                      <SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            </div>
-            {/* Commercial owner filter (admin only) */}
-            {isAdmin && commercialOptions.length > 0 && (
-              <Select value={commercialFilter} onValueChange={setCommercialFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <User className="h-3.5 w-3.5 mr-1.5" />
-                  <SelectValue placeholder="Comercial" />
+
+              <div className="h-5 w-px bg-border" />
+
+              <Select value={sortBy} onValueChange={v => setSortBy(v as SortOption)}>
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                  <ArrowUpDown className="h-3 w-3 mr-1 shrink-0" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os comerciais</SelectItem>
-                  {commercialOptions.map(opt => (
-                    <SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>
-                  ))}
+                  <SelectItem value="urgente">Mais urgente</SelectItem>
+                  <SelectItem value="prazo">Prazo próximo</SelectItem>
+                  <SelectItem value="recente">Mais recente</SelectItem>
                 </SelectContent>
               </Select>
-            )}
-            {/* View toggle */}
-            <div className="flex border border-border rounded-lg overflow-hidden">
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="sm"
-                className="rounded-none px-2.5"
-                onClick={() => setViewMode("list")}
-              >
-                <LayoutList className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "kanban" ? "secondary" : "ghost"}
-                size="sm"
-                className="rounded-none px-2.5"
-                onClick={() => setViewMode("kanban")}
-              >
-                <Columns3 className="h-4 w-4" />
-              </Button>
             </div>
+
+            {/* Active filters summary */}
+            {hasActiveFilters && (
+              <div className="flex items-center gap-2 text-xs font-body text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono">{filtered.length}</Badge>
+                  resultado{filtered.length !== 1 ? "s" : ""}
+                </span>
+                {activeFilterCount > 0 && (
+                  <>
+                    <span>·</span>
+                    <span>{activeFilterCount} filtro{activeFilterCount > 1 ? "s" : ""} ativo{activeFilterCount > 1 ? "s" : ""}</span>
+                  </>
+                )}
+                <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[11px] text-primary hover:text-primary gap-0.5" onClick={clearAllFilters}>
+                  <X className="h-3 w-3" />Limpar
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Loading */}
           {loading && (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground font-body">Carregando orçamentos...</p>
             </div>
           )}
 
@@ -587,14 +798,11 @@ export default function CommercialDashboard() {
                 {search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum orçamento ainda"}
               </h2>
               <p className="text-sm text-muted-foreground font-body max-w-sm">
-                {search || statusFilter !== "all"
-                  ? "Ajuste os filtros para encontrar o que procura."
-                  : "Crie uma nova solicitação de orçamento para começar."}
+                {search || statusFilter !== "all" ? "Ajuste os filtros para encontrar o que procura." : "Crie uma nova solicitação de orçamento para começar."}
               </p>
               {!search && statusFilter === "all" && (
                 <Button className="mt-4" onClick={() => navigate("/admin/solicitacoes/nova")}>
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  Nova Solicitação
+                  <Plus className="h-4 w-4 mr-1.5" />Nova Solicitação
                 </Button>
               )}
             </div>
@@ -612,151 +820,29 @@ export default function CommercialDashboard() {
             />
           )}
 
-          {/* List */}
+          {/* List view with workflow groups */}
           {!loading && viewMode === "list" && filtered.length > 0 && (
-            <div className="space-y-2">
-              {filtered.map(b => {
-                const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
-                const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-                const due = getDueInfo(b.due_at, b.internal_status);
-                const isLocked = LOCKED_STATUSES.includes(b.internal_status);
-                const isEntregue = b.internal_status === "delivered_to_sales";
-
-                return (
-                  <Card key={b.id} className={`p-4 hover:shadow-md transition-shadow border group ${isEntregue ? "border-success/30" : ""}`}>
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/admin/demanda/${b.id}`)}>
-                        {/* Row 1 */}
-                        <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                          {isEntregue && <span className="w-2 h-2 rounded-full bg-success shrink-0" />}
-                          <span className="font-semibold font-display text-foreground truncate">{b.project_name || "Sem nome"}</span>
-                          <Badge variant="secondary" className={`text-xs font-body ${status.color}`}>
-                            {status.icon} {status.label}
-                          </Badge>
-                          {!b.commercial_owner_id && (
-                            <Popover>
-                              <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Badge variant="outline" className="text-xs font-body border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 cursor-pointer hover:bg-amber-100 transition-colors">
-                                  <UserPlus className="h-3 w-3 mr-1" />Sem responsável
-                                </Badge>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-56 p-3" align="start" onClick={(e) => e.stopPropagation()}>
-                                <p className="text-xs text-muted-foreground font-body mb-2">Este orçamento não tem um comercial designado.</p>
-                                <Button size="sm" className="w-full text-xs gap-1.5" onClick={() => claimBudget(b.id)}>
-                                  <UserPlus className="h-3.5 w-3.5" />Assumir este orçamento
-                                </Button>
-                              </PopoverContent>
-                            </Popover>
-                          )}
-                          {b.priority !== "normal" && (
-                            <Badge variant="outline" className={`text-xs font-body ${prio.color}`}>{prio.label}</Badge>
-                          )}
-                          {due.label && (
-                            <span className={`inline-flex items-center gap-1 text-xs font-medium font-body px-2 py-0.5 rounded-full border ${dueVariantStyles[due.variant]}`}>
-                              <Calendar className="h-3 w-3" />{due.label}
-                            </span>
-                          )}
-                          {(b.version_number ?? 1) > 1 && (
-                            <span className="inline-flex items-center gap-0.5 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                              V{b.version_number}
-                            </span>
-                          )}
-                          {b.budget_pdf_url && (
-                            <a
-                              href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/budget-pdfs/${b.budget_pdf_url}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                              title="Ver PDF original"
-                            >
-                              <FileText className="h-3 w-3" />PDF
-                            </a>
-                          )}
-                          {b.manual_total && b.manual_total > 0 && (
-                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success tabular-nums" title="Valor informado manualmente">
-                              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(b.manual_total)}
-                            </span>
-                          )}
-                          {b.is_published_version && (
-                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success">
-                              Publicada
-                            </span>
-                          )}
-                          {!b.is_published_version && b.status === "draft" && (b.version_number ?? 1) > 1 && (
-                            <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-warning/10 text-warning">
-                              Em elaboração
-                            </span>
-                          )}
-                        </div>
-                        {/* Row 2 */}
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground font-body flex-wrap">
-                          <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{b.client_name}</span>
-                          {(b.bairro || b.city) && (
-                            <span className="flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{[b.bairro, b.city].filter(Boolean).join(", ")}</span>
-                          )}
-                          <span className="flex items-center gap-1" title="Orçamentista">
-                            <FileText className="h-3.5 w-3.5" />{getProfileName(b.estimator_owner_id)}
-                          </span>
-                          {b.updated_at && <span className="text-xs">Atualizado {format(new Date(b.updated_at), "dd/MM HH:mm")}</span>}
-                        </div>
-                      </div>
-
-                      {/* Quick actions */}
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        {b.public_id && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 shrink-0"
-                            onClick={(e) => { e.stopPropagation(); copyPublicLink(b.public_id); }}
-                            title="Copiar link público"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <BudgetActionsMenu
-                          budget={b}
-                          onRefresh={loadData}
-                          fromPath="/admin/comercial"
-                          extraItems={
-                            <>
-                              <DropdownMenuItem onClick={() => navigate(`/admin/demanda/${b.id}`)}>
-                                <FileText className="h-4 w-4 mr-2" />Ver detalhes
-                              </DropdownMenuItem>
-                              {!isLocked && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  {b.internal_status === "delivered_to_sales" && (
-                                    <DropdownMenuItem onClick={() => changeStatus(b.id, "sent_to_client")}>
-                                      <Send className="h-4 w-4 mr-2" />Enviar ao cliente
-                                    </DropdownMenuItem>
-                                  )}
-                                  {b.internal_status !== "lost" && b.internal_status !== "sent_to_client" && (
-                                    <DropdownMenuItem onClick={() => changeStatus(b.id, "lost")}>
-                                      <XCircle className="h-4 w-4 mr-2" />Marcar como perdido
-                                    </DropdownMenuItem>
-                                  )}
-                                  {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
-                                    <DropdownMenuItem onClick={() => setRevisionBudget(b)}>
-                                      <RotateCcw className="h-4 w-4 mr-2" />Solicitar revisão
-                                    </DropdownMenuItem>
-                                  )}
-                                </>
-                              )}
-                            </>
-                          }
-                          trigger={
-                            <Button variant="ghost" size="icon" className="shrink-0 opacity-100 lg:opacity-60 lg:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          }
-                        />
-                      </div>
+            <div className="space-y-6">
+              {isDefaultView && workflowGroups.length > 0 ? (
+                workflowGroups.map((group) => (
+                  <div key={group.key} className="space-y-2">
+                    {/* Group header */}
+                    <div className={`flex items-center gap-2 border-l-2 ${group.borderAccent} pl-3 py-1`}>
+                      <span className={`${group.accent}`}>{group.icon}</span>
+                      <h3 className={`text-sm font-display font-semibold ${group.accent}`}>{group.label}</h3>
+                      <Badge variant="secondary" className="text-[10px] font-mono px-1.5 py-0 h-4">{group.budgets.length}</Badge>
+                      <span className="text-[11px] font-body text-muted-foreground ml-1">{group.description}</span>
                     </div>
-                  </Card>
-                );
-              })}
+                    <div className="space-y-1.5">
+                      {group.budgets.map(b => renderBudgetCard(b))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="space-y-1.5">
+                  {filtered.map(b => renderBudgetCard(b))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -764,15 +850,12 @@ export default function CommercialDashboard() {
 
       <RevisionRequestDialog
         open={!!revisionBudget}
-        onOpenChange={(open) => {
-          if (!open) setRevisionBudget(null);
-        }}
+        onOpenChange={(open) => { if (!open) setRevisionBudget(null); }}
         budgetId={revisionBudget?.id ?? ""}
         currentStatus={revisionBudget?.internal_status ?? "sent_to_client"}
         onSuccess={handleRevisionRequestSuccess}
       />
 
-      {/* Contract Upload Modal */}
       <ContractUploadModal
         open={!!contractUploadBudget}
         onOpenChange={(open) => { if (!open) setContractUploadBudget(null); }}
@@ -781,7 +864,6 @@ export default function CommercialDashboard() {
         onSuccess={handleContractUploadSuccess}
       />
 
-      {/* Confirmation dialog for "Enviar ao cliente" */}
       <AlertDialog open={!!confirmCloseBudgetId} onOpenChange={(open) => { if (!open) setConfirmCloseBudgetId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -799,23 +881,5 @@ export default function CommercialDashboard() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
-}
-
-function SummaryCard({ label, count, icon, accent, active, onClick, alert }: {
-  label: string; count: number; icon: React.ReactNode; accent: string;
-  active?: boolean; onClick?: () => void; alert?: boolean;
-}) {
-  return (
-    <Card
-      className={`p-3 flex flex-col gap-1 transition-shadow ${onClick ? "cursor-pointer hover:shadow-md" : ""} ${active ? "ring-2 ring-primary" : ""} ${alert ? "border-warning/30" : ""}`}
-      onClick={onClick}
-    >
-      <div className={`flex items-center gap-1.5 text-xs font-body ${accent}`}>
-        {icon}{label}
-        {alert && <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />}
-      </div>
-      <span className="text-2xl font-bold font-display text-foreground">{count}</span>
-    </Card>
   );
 }
