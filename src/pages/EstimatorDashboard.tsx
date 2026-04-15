@@ -209,7 +209,7 @@ export default function EstimatorDashboard() {
         b.project_name.toLowerCase().includes(q) ||
         (b.bairro ?? "").toLowerCase().includes(q);
       const matchStatus = statusFilter === "all"
-        ? !HIDDEN_BY_DEFAULT_STATUSES.has(b.internal_status)
+        ? (viewMode === "kanban" ? true : !HIDDEN_BY_DEFAULT_STATUSES.has(b.internal_status))
         : statusFilter === "_pending"
         ? PENDING_STATUSES.includes(b.internal_status)
         : statusFilter === "_in_progress"
