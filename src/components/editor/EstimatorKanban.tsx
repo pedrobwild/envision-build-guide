@@ -42,7 +42,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  INTERNAL_STATUSES,
   PRIORITIES,
   type InternalStatus,
   type Priority,
@@ -183,7 +182,6 @@ interface BudgetRow {
 
 interface EstimatorKanbanProps {
   budgets: BudgetRow[];
-  hideDelivered?: boolean;
   onStatusChange: (budgetId: string, newStatus: InternalStatus) => Promise<void>;
   onCardClick: (budgetId: string) => void;
   getProfileName: (id: string | null) => string;
@@ -192,22 +190,15 @@ interface EstimatorKanbanProps {
 /* ── Helpers ── */
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
 
-const DELIVERED_OR_FINISHED = new Set([
-  "delivered_to_sales", "sent_to_client", "minuta_solicitada",
-  "lost", "archived", "contrato_fechado",
-]);
-
-function getDueInfo(dueAt: string | null, internalStatus?: string): { label: string; variant: DueVariant } | null {
+function getDueInfo(dueAt: string | null): { label: string; variant: DueVariant } | null {
   if (!dueAt) return null;
   const dueDate = new Date(dueAt);
   const days = differenceInCalendarDays(dueDate, new Date());
-  const isDelivered = internalStatus ? DELIVERED_OR_FINISHED.has(internalStatus) : false;
   if (isPast(dueDate) && !isToday(dueDate)) {
-    if (isDelivered) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" };
     return { label: `${Math.abs(days)}d atrasado`, variant: "overdue" };
   }
-  if (isToday(dueDate)) return { label: "Vence hoje", variant: isDelivered ? "default" : "today" };
-  if (days <= 2) return { label: `${days}d`, variant: isDelivered ? "default" : "soon" };
+  if (isToday(dueDate)) return { label: "Vence hoje", variant: "today" };
+  if (days <= 2) return { label: `${days}d`, variant: "soon" };
   if (days <= 7) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "ok" };
   return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" };
 }
@@ -338,7 +329,7 @@ function Column({
   const Icon = column.icon;
   const sorted = sortBudgets(budgets);
   const overdueCount = budgets.filter((b) => {
-    const d = getDueInfo(b.due_at, b.internal_status);
+    const d = getDueInfo(b.due_at);
     return d?.variant === "overdue" || d?.variant === "today";
   }).length;
 
@@ -378,7 +369,7 @@ function Column({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 px-2 pb-2" style={{ maxHeight: "calc(100vh - 340px)" }}>
+      <ScrollArea className="flex-1 px-2 pb-2" style={{ maxHeight: "calc(100vh - 320px)" }}>
         {isEmElaboracao ? (
           <div>
             {subSectionData.length === 0 && (
@@ -480,8 +471,7 @@ function EstimatorCard({
   getProfileName: (id: string | null) => string;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-  const statusMeta = INTERNAL_STATUSES[b.internal_status as InternalStatus];
-  const due = getDueInfo(b.due_at, b.internal_status);
+  const due = getDueInfo(b.due_at);
   const highPrio = isHighPriority(b.priority);
   const borderColor = due ? dueBorderStyles[due.variant] : "border-l-transparent";
 
@@ -518,14 +508,6 @@ function EstimatorCard({
         </div>
       )}
 
-      {statusMeta && (
-        <div className="mb-1.5">
-          <Badge variant="secondary" className={`text-[10px] font-body ${statusMeta.color}`}>
-            {statusMeta.icon} {statusMeta.label}
-          </Badge>
-        </div>
-      )}
-
       {(b.commercial_owner_id || b.estimator_owner_id) && (
         <div className="flex items-center gap-1 flex-wrap text-[10px] text-muted-foreground font-body mb-1.5">
           {b.commercial_owner_id && (
@@ -559,7 +541,7 @@ function EstimatorCard({
 }
 
 /* ── Main Kanban Board ── */
-export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
+export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
@@ -594,17 +576,13 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
     [budgets]
   );
 
-  const HIDDEN_COLUMN_IDS = new Set(["entregue", "enviado", "minuta", "fechado", "perdido"]);
-  const visibleColumns = useMemo(
-    () => hideDelivered ? ESTIMATOR_COLUMNS.filter(c => !HIDDEN_COLUMN_IDS.has(c.id)) : ESTIMATOR_COLUMNS,
-    [hideDelivered]
-  );
+  const visibleColumns = ESTIMATOR_COLUMNS;
 
   const mobileColumns = useMemo(() =>
     visibleColumns.map((col) => {
       const items = columnBudgets(col);
       const overdueCount = items.filter((b) => {
-        const d = getDueInfo(b.due_at, b.internal_status);
+        const d = getDueInfo(b.due_at);
         return d?.variant === "overdue" || d?.variant === "today";
       }).length;
       return {
