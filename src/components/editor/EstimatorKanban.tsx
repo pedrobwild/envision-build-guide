@@ -446,7 +446,7 @@ export function EstimatorKanban({ budgets, hideDelivered, onStatusChange, onCard
     [budgets]
   );
 
-  const HIDDEN_COLUMN_IDS = new Set(["delivered", "closed"]);
+  const HIDDEN_COLUMN_IDS = new Set(["entregue", "enviado", "minuta", "fechado", "perdido"]);
   const visibleColumns = useMemo(
     () => hideDelivered ? ESTIMATOR_COLUMNS.filter(c => !HIDDEN_COLUMN_IDS.has(c.id)) : ESTIMATOR_COLUMNS,
     [hideDelivered]
