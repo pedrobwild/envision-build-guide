@@ -168,7 +168,7 @@ function getColumnForBudget(internalStatus: string) {
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
 
-const POST_DELIVERY_STATUSES = new Set([
+const POST_DELIVERY_STATUSES: Set<string> = new Set([
   ...STATUS_GROUPS.DELIVERED,
   ...STATUS_GROUPS.COMMERCIAL_ADVANCED,
   ...STATUS_GROUPS.FINISHED,
