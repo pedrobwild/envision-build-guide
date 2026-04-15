@@ -229,7 +229,7 @@ const EM_ELABORACAO_SUBSECTIONS = [
   {
     id: "em_producao",
     label: "Em Produção",
-    statuses: ["triage", "assigned", "in_progress"],
+    statuses: ["triage", "assigned", "in_progress", "ready_for_review"],
     icon: null,
     headerClass: "text-xs font-medium text-muted-foreground uppercase tracking-wide",
     cardBorderClass: "",
