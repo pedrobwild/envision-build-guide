@@ -406,11 +406,11 @@ export function computeDashboardMetrics(
         : "Nenhum item vencido",
     },
     avgLeadTime: {
-      health: avgLT !== null && avgLT > 14 ? "critical" : avgLT !== null && avgLT > 7 ? "warning" : "healthy",
+      health: avgLT !== null && avgLT > 7 ? "critical" : avgLT !== null && avgLT > 2 ? "warning" : "healthy",
       microText: avgLT !== null
         ? `Baseado em ${leadTimes.length} entrega${leadTimes.length > 1 ? "s" : ""} no período`
         : "Sem entregas no período",
-      target: "≤ 7 dias",
+      target: "≤ 2 dias",
     },
     conversionRate: {
       health: conversion !== null && conversion < 15 ? "critical" : conversion !== null && conversion < 30 ? "warning" : "healthy",
