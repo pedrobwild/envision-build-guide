@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   PRIORITIES,
+  STATUS_GROUPS,
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
