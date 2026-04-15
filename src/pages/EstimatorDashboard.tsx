@@ -80,7 +80,7 @@ export default function EstimatorDashboard() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
   const [estimatorFilter, setEstimatorFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("urgente");
+  const [sortBy, setSortBy] = useState<SortOption>("recente");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
 
   // Assignment dialog state
