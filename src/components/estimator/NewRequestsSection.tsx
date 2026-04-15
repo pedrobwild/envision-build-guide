@@ -90,16 +90,16 @@ export function NewRequestsSection({ budgets, userId, onStartBudget }: NewReques
                     </div>
                     <p className="text-sm font-medium text-foreground truncate">{b.client_name}</p>
                     <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                      {b.property_type && (
+                    {b.property_type && (
                         <span className="flex items-center gap-0.5">
                           <MapPin className="h-3 w-3" />
                           {b.property_type}
                         </span>
                       )}
-                      {(b as Record<string, unknown>).metragem && (
+                      {b.metragem && (
                         <span className="flex items-center gap-0.5">
                           <Ruler className="h-3 w-3" />
-                          {String((b as Record<string, unknown>).metragem)}
+                          {b.metragem}
                         </span>
                       )}
                     </div>

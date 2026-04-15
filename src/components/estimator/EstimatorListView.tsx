@@ -90,6 +90,8 @@ export interface BudgetRow {
   version_number: number | null;
   version_group_id: string | null;
   is_current_version: boolean | null;
+  sequential_code: string | null;
+  metragem?: string | null;
 }
 
 interface EstimatorListViewProps {
