@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { STATUS_GROUPS } from "@/lib/role-constants";
+import { OPERATIONS_START_DATE } from "@/hooks/useDashboardMetrics";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,7 @@ export function TeamMetricsPanel() {
     return budgets.filter((b) => {
       if (!b.created_at) return true;
       const d = new Date(b.created_at);
+      if (d < OPERATIONS_START_DATE) return false;
       if (dateFrom && d < dateFrom) return false;
       if (dateTo) {
         const endOfDay = new Date(dateTo);
