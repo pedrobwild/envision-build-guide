@@ -29,7 +29,6 @@ import {
   LayoutList,
   Kanban,
   Send,
-  FileSignature,
   Plus,
 } from "lucide-react";
 import {
