@@ -47,6 +47,8 @@ import { NewBudgetModal } from "@/components/editor/NewBudgetModal";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { EstimatorFilterBar, type SortOption } from "@/components/estimator/EstimatorFilterBar";
 import { EstimatorListView, type BudgetRow } from "@/components/estimator/EstimatorListView";
+import { NewRequestsSection } from "@/components/estimator/NewRequestsSection";
+import { NotificationBell } from "@/components/estimator/NotificationBell";
 
 const PENDING_STATUSES: readonly string[] = STATUS_GROUPS.PENDING;
 const IN_PROGRESS_STATUSES: readonly string[] = STATUS_GROUPS.ACTIVE_WORK;
@@ -111,7 +113,7 @@ export default function EstimatorDashboard() {
     let budgetQuery = supabase
       .from("budgets")
       .select(
-        "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context, version_number, version_group_id, is_current_version, sequential_code"
+        "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context, version_number, version_group_id, is_current_version, sequential_code, metragem"
       )
       .order("created_at", { ascending: false });
     if (!adminCheck) {
@@ -313,6 +315,7 @@ export default function EstimatorDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {user && <NotificationBell userId={user.id} />}
             {isAdmin && (
               <Button size="sm" className="gap-1.5" onClick={() => setNewBudgetOpen(true)}>
                 <Plus className="h-4 w-4" />
@@ -433,6 +436,14 @@ export default function EstimatorDashboard() {
             {/* List View */}
             {viewMode === "list" && (
               <>
+                {user && (
+                  <NewRequestsSection
+                    budgets={budgets}
+                    userId={user.id}
+                    onStartBudget={requestStatusChange}
+                  />
+                )}
+
                 <EstimatorFilterBar
                   search={search}
                   onSearchChange={setSearch}
