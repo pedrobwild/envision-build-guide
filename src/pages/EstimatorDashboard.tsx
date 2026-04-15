@@ -247,7 +247,7 @@ export default function EstimatorDashboard() {
     });
 
     return result;
-  }, [budgets, search, statusFilter, priorityFilter, commercialFilter, estimatorFilter, sortBy]);
+  }, [budgets, search, statusFilter, priorityFilter, commercialFilter, estimatorFilter, sortBy, viewMode]);
 
   async function requestStatusChange(budgetId: string, newStatus: InternalStatus) {
     if (newStatus === "in_progress") {
