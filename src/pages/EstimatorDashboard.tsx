@@ -187,17 +187,17 @@ export default function EstimatorDashboard() {
       total: budgets.length,
       overdue: budgets.filter(
         (b) => b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) &&
-          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES, ...REVIEW_STATUSES].includes(b.internal_status)
+          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES].includes(b.internal_status)
       ).length,
       dueToday: budgets.filter(
         (b) => b.due_at && isToday(new Date(b.due_at)) &&
-          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES, ...REVIEW_STATUSES].includes(b.internal_status)
+          [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES].includes(b.internal_status)
       ).length,
       pending: budgets.filter((b) => PENDING_STATUSES.includes(b.internal_status)).length,
       inProgress: budgets.filter((b) => IN_PROGRESS_STATUSES.includes(b.internal_status)).length,
-      review: budgets.filter((b) => REVIEW_STATUSES.includes(b.internal_status)).length,
       delivered: budgets.filter((b) => DELIVERED_STATUSES.includes(b.internal_status)).length,
-      finished: budgets.filter((b) => FINISHED_STATUSES.includes(b.internal_status)).length,
+      sent: budgets.filter((b) => SENT_STATUSES.includes(b.internal_status)).length,
+      finished: budgets.filter((b) => [...ADVANCED_STATUSES, ...FINISHED_STATUSES].includes(b.internal_status)).length,
     };
   }, [budgets]);
 
