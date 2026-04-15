@@ -48,12 +48,13 @@ import { EstimatorListView, type BudgetRow } from "@/components/estimator/Estima
 import { NewRequestsSection } from "@/components/estimator/NewRequestsSection";
 import { NotificationBell } from "@/components/estimator/NotificationBell";
 
-const PENDING_STATUSES: readonly string[] = STATUS_GROUPS.PENDING;
-const IN_PROGRESS_STATUSES: readonly string[] = STATUS_GROUPS.ACTIVE_WORK;
-const REVIEW_STATUSES: readonly string[] = STATUS_GROUPS.REVIEW;
-const DELIVERED_STATUSES: string[] = [...STATUS_GROUPS.DELIVERED, ...STATUS_GROUPS.COMMERCIAL_ADVANCED];
-const FINISHED_STATUSES: readonly string[] = STATUS_GROUPS.FINISHED;
-const HIDDEN_BY_DEFAULT_STATUSES = new Set([...DELIVERED_STATUSES, ...FINISHED_STATUSES]);
+const PENDING_STATUSES: string[] = ["requested", "novo"];
+const IN_PROGRESS_STATUSES: string[] = ["triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"];
+const DELIVERED_STATUSES: string[] = ["delivered_to_sales"];
+const SENT_STATUSES: string[] = ["sent_to_client"];
+const ADVANCED_STATUSES: string[] = ["minuta_solicitada", "contrato_fechado"];
+const FINISHED_STATUSES: string[] = ["lost", "archived"];
+const HIDDEN_BY_DEFAULT_STATUSES = new Set([...SENT_STATUSES, ...ADVANCED_STATUSES, ...FINISHED_STATUSES]);
 const PENDING_STATUSES_SET = new Set(["requested", "novo", "triage", "assigned"]);
 
 interface ProfileRow {
