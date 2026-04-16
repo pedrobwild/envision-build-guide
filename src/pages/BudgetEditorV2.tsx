@@ -216,6 +216,13 @@ export default function BudgetEditorV2() {
     if (PROTECTED_FIELDS.current.has(field)) {
       return;
     }
+    // Bloquear auto-save em versões publicadas — usuário deve criar nova versão (rascunho) explicitamente
+    if (isPublishedVersion) {
+      toast.warning("Esta é a versão publicada. Crie uma nova versão (rascunho) para editar.", {
+        description: "Use o botão 'Criar Nova Versão' no aviso acima.",
+      });
+      return;
+    }
     lastSavePayload.current = { field, value };
     setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -255,7 +262,7 @@ export default function BudgetEditorV2() {
         }, 3000);
       }
     }, 600);
-  }, [budgetId]);
+  }, [budgetId, isPublishedVersion]);
 
   // C3: Cancel auto-save timer on unmount
   useEffect(() => {
@@ -379,13 +386,13 @@ export default function BudgetEditorV2() {
 
           {/* ── Versioning context banners (priority: A > B > C) ── */}
           {/* Only show published-version warning if the budget was actually sent to the client */}
-          {budget.is_published_version && ["sent_to_client", "minuta_solicitada", "contrato_fechado"].includes(budget.internal_status ?? "") ? (
-            /* Scenario A — Editing published version */
+          {budget.is_published_version ? (
+            /* Scenario A — Editing published version (read-only) */
             <Alert className="mt-4 border-warning/30 bg-warning/5">
               <AlertTriangle className="h-4 w-4 text-warning" />
               <AlertDescription className="flex items-center justify-between gap-4">
                 <span className="text-sm font-body text-foreground">
-                  ⚠️ Esta é a versão publicada. O cliente pode ver suas edições em tempo real. Recomendamos criar uma nova versão para editar com segurança.
+                  ⚠️ Esta é a versão publicada (somente leitura). O cliente pode visualizá-la a qualquer momento. Crie uma nova versão (rascunho) para fazer alterações com segurança.
                 </span>
                 <Button
                   variant="outline"
@@ -511,7 +518,7 @@ export default function BudgetEditorV2() {
                     sections={sections}
                     onSectionsChange={setSections}
                     loading={sectionsLoading}
-                    readOnly={false}
+                    readOnly={isPublishedVersion}
                   />
                 </div>
 
