@@ -262,7 +262,7 @@ export default function BudgetEditorV2() {
         }, 3000);
       }
     }, 600);
-  }, [budgetId]);
+  }, [budgetId, isPublishedVersion]);
 
   // C3: Cancel auto-save timer on unmount
   useEffect(() => {
