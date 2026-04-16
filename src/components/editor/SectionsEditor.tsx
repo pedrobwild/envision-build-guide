@@ -928,10 +928,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       insertPayload.catalog_snapshot = itemData?.catalog_snapshot || null;
     }
 
-    const { data } = await dbFrom(cfg.itemTable)
+    const { data, error: insertError } = await dbFrom(cfg.itemTable)
       .insert(insertPayload)
       .select()
       .single();
+    if (insertError) {
+      toast.error(`Erro ao adicionar item: ${insertError.message}`);
+      return;
+    }
     if (data) {
       let itemImages: { id?: string; url: string; is_primary: boolean | null }[] = [];
       if (!cfg.disableImages) {
