@@ -102,10 +102,17 @@ export async function duplicateBudgetAsVersion(
     .eq("version_group_id", groupId);
 
   // 3. Create new budget (copy metadata)
+  // Strip auto-generated / unique / version-specific fields so the new row
+  // doesn't collide on UNIQUE constraints (public_id, sequential_code) and
+  // gets a fresh lifecycle.
   const {
     id, created_at, updated_at, public_id, public_token_hash,
     view_count, last_viewed_at, approved_at, approved_by_name,
-    generated_at, is_published_version,
+    generated_at, is_published_version, sequential_code,
+    closed_at, contract_file_url, budget_pdf_url,
+    version_group_id: _vgid, version_number: _vnum,
+    is_current_version: _icv, parent_budget_id: _pbid,
+    change_reason: _cr, status: _st, created_by: _cb,
     ...meta
   } = source;
 
