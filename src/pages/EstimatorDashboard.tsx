@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
+  canTransitionStatus,
   type InternalStatus,
 } from "@/lib/role-constants";
 import { ProductionFunnel } from "@/components/editor/ProductionFunnel";
@@ -267,13 +268,25 @@ export default function EstimatorDashboard() {
   }
 
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
+    const current = budgets.find((b) => b.id === budgetId);
+    if (!current) return;
+
+    if (!canTransitionStatus(current.internal_status, newStatus)) {
+      const fromLabel = INTERNAL_STATUSES[current.internal_status]?.label ?? current.internal_status;
+      const toLabel = INTERNAL_STATUSES[newStatus]?.label ?? newStatus;
+      toast.error(`Transição inválida: "${fromLabel}" → "${toLabel}"`, {
+        description: "Para entregar, o orçamento precisa estar em revisão antes.",
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from("budgets")
       .update({ internal_status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", budgetId);
 
     if (error) {
-      toast.error("Erro ao atualizar status.");
+      toast.error("Erro ao atualizar status.", { description: error.message });
       return;
     }
 
