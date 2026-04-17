@@ -250,35 +250,46 @@ export default function EstimatorDashboard() {
     return result;
   }, [budgets, search, statusFilter, priorityFilter, commercialFilter, estimatorFilter, sortBy, viewMode]);
 
+  const [confirmStatus, setConfirmStatus] = useState<{
+    open: boolean;
+    budgetId: string;
+    projectName: string;
+    fromLabel: string;
+    toLabel: string;
+    toStatus: InternalStatus;
+  } | null>(null);
+
   async function requestStatusChange(budgetId: string, newStatus: InternalStatus) {
-    if (newStatus === "in_progress") {
-      const budget = budgets.find((b) => b.id === budgetId);
-      if (budget && PENDING_STATUSES_SET.has(budget.internal_status)) {
-        const { count } = await supabase
-          .from("sections")
-          .select("id", { count: "exact", head: true })
-          .eq("budget_id", budgetId);
-        if ((count ?? 0) === 0) {
-          setTemplateDialog({ open: true, budgetId, pendingStatus: newStatus });
-          return;
-        }
+    const budget = budgets.find((b) => b.id === budgetId);
+    if (!budget) return;
+
+    if (newStatus === "in_progress" && PENDING_STATUSES_SET.has(budget.internal_status)) {
+      const { count } = await supabase
+        .from("sections")
+        .select("id", { count: "exact", head: true })
+        .eq("budget_id", budgetId);
+      if ((count ?? 0) === 0) {
+        setTemplateDialog({ open: true, budgetId, pendingStatus: newStatus });
+        return;
       }
     }
-    changeStatus(budgetId, newStatus);
+
+    // Always confirm before applying status change
+    const fromLabel = INTERNAL_STATUSES[budget.internal_status as InternalStatus]?.label ?? budget.internal_status;
+    const toLabel = INTERNAL_STATUSES[newStatus]?.label ?? newStatus;
+    setConfirmStatus({
+      open: true,
+      budgetId,
+      projectName: budget.project_name,
+      fromLabel,
+      toLabel,
+      toStatus: newStatus,
+    });
   }
 
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
     const current = budgets.find((b) => b.id === budgetId);
     if (!current) return;
-
-    if (!canTransitionStatus(current.internal_status, newStatus)) {
-      const fromLabel = INTERNAL_STATUSES[current.internal_status]?.label ?? current.internal_status;
-      const toLabel = INTERNAL_STATUSES[newStatus]?.label ?? newStatus;
-      toast.error(`Transição inválida: "${fromLabel}" → "${toLabel}"`, {
-        description: "Para entregar, o orçamento precisa estar em revisão antes.",
-      });
-      return;
-    }
 
     const { error } = await supabase
       .from("budgets")
