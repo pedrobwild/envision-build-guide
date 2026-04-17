@@ -388,7 +388,7 @@ export function EstimatorListView({
                       Mover p/ Em Revisão
                     </DropdownMenuItem>
                   )}
-                  {!DELIVERED_STATUSES.includes(b.internal_status) && (
+                  {(STATUS_GROUPS.REVIEW as readonly string[]).includes(b.internal_status) && (
                     <DropdownMenuItem onClick={() => onRequestStatusChange(b.id, "delivered_to_sales")}>
                       <Send className="h-4 w-4 mr-2" />
                       Mover p/ Entregue

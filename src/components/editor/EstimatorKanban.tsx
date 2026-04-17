@@ -44,9 +44,12 @@ import {
 import {
   PRIORITIES,
   STATUS_GROUPS,
+  INTERNAL_STATUSES,
+  canTransitionStatus,
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
+import { toast } from "sonner";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -573,6 +576,15 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
 
       const currentCol = ESTIMATOR_COLUMNS.find((c) => c.statuses.includes(budget.internal_status));
       if (currentCol?.id === targetCol.id) return;
+
+      if (!canTransitionStatus(budget.internal_status, targetCol.targetStatus)) {
+        const fromLabel = INTERNAL_STATUSES[budget.internal_status as InternalStatus]?.label ?? budget.internal_status;
+        const toLabel = INTERNAL_STATUSES[targetCol.targetStatus]?.label ?? targetCol.targetStatus;
+        toast.error(`Transição inválida: "${fromLabel}" → "${toLabel}"`, {
+          description: "Para entregar, mova primeiro o card para Em Revisão.",
+        });
+        return;
+      }
 
       await onStatusChange(budget.id, targetCol.targetStatus);
     },
