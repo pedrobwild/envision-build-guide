@@ -616,13 +616,9 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         console.warn("[Import] Media matching failed (non-critical):", matchErr);
       }
 
-      // Append Utensílios template as last section
-      try {
-        const { appendUtensiliosTemplate } = await import("@/lib/utensilios-template");
-        await appendUtensiliosTemplate(budget.id, sectionIdx);
-      } catch (e) {
-        console.warn("[Import] Utensílios template failed (non-critical):", e);
-      }
+      // NOTE: Utensílios template is NOT auto-appended on import.
+      // Importing must preserve the document's exact total. The template can be
+      // added manually from the editor when the project requires it.
 
       // If importing into an existing budget group, assign to that group
       if (targetBudgetGroupId) {
