@@ -570,6 +570,36 @@ export default function EstimatorDashboard() {
           setTemplateDialog({ open: false, budgetId: "", pendingStatus: "in_progress" });
         }}
       />
+
+      <AlertDialog
+        open={!!confirmStatus?.open}
+        onOpenChange={(open) => { if (!open) setConfirmStatus(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Confirmar mudança de etapa?</AlertDialogTitle>
+            <AlertDialogDescription className="font-body">
+              Você está movendo <strong>{confirmStatus?.projectName}</strong> de{" "}
+              <strong>{confirmStatus?.fromLabel}</strong> para{" "}
+              <strong>{confirmStatus?.toLabel}</strong>. Tem certeza que deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmStatus) {
+                  const { budgetId, toStatus } = confirmStatus;
+                  setConfirmStatus(null);
+                  changeStatus(budgetId, toStatus);
+                }
+              }}
+            >
+              Sim, mover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
