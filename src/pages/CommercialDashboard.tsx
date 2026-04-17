@@ -29,7 +29,7 @@ import {
   SlidersHorizontal, X, Hammer,
 } from "lucide-react";
 import {
-  INTERNAL_STATUSES, PRIORITIES,
+  INTERNAL_STATUSES, PRIORITIES, canTransitionStatus,
   type InternalStatus, type Priority,
 } from "@/lib/role-constants";
 import { format, differenceInCalendarDays, isToday, isPast, formatDistanceToNow } from "date-fns";
@@ -389,17 +389,32 @@ export default function CommercialDashboard() {
   }, [filtered, isDefaultView]);
 
   async function changeStatus(budgetId: string, newStatus: InternalStatus) {
+    const current = budgets.find(b => b.id === budgetId);
+    if (!current) return;
+
+    // Validate transition client-side (mirrors DB trigger)
+    if (!canTransitionStatus(current.internal_status, newStatus)) {
+      const fromLabel = INTERNAL_STATUSES[current.internal_status as InternalStatus]?.label ?? current.internal_status;
+      const toLabel = INTERNAL_STATUSES[newStatus]?.label ?? newStatus;
+      toast.error(`Transição inválida: "${fromLabel}" → "${toLabel}"`, {
+        description: "Esse fluxo não é permitido. Mova o card para uma etapa válida.",
+      });
+      return;
+    }
+
     if (newStatus === "contrato_fechado") {
       const target = budgets.find(b => b.id === budgetId);
       if (target) { setContractUploadBudget(target); return; }
     }
 
-    const current = budgets.find(b => b.id === budgetId);
     const { error } = await supabase
       .from("budgets")
       .update({ internal_status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", budgetId);
-    if (error) { toast.error("Erro ao atualizar status."); return; }
+    if (error) {
+      toast.error("Erro ao atualizar status", { description: error.message });
+      return;
+    }
 
     if (user) {
       await supabase.from("budget_events").insert({
