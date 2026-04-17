@@ -19,6 +19,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ArrowLeft,
   Loader2,
   Inbox,
@@ -33,7 +43,6 @@ import {
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
-  canTransitionStatus,
   type InternalStatus,
 } from "@/lib/role-constants";
 import { ProductionFunnel } from "@/components/editor/ProductionFunnel";
