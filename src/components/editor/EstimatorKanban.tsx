@@ -564,6 +564,13 @@ function EstimatorCard({
 export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
+  const [pendingMove, setPendingMove] = useState<{
+    budgetId: string;
+    projectName: string;
+    fromLabel: string;
+    toLabel: string;
+    toStatus: InternalStatus;
+  } | null>(null);
   const isMobile = useIsMobile();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const activeBudget = activeId ? budgets.find((b) => b.id === activeId) : null;
@@ -571,7 +578,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
   const handleDragStart = useCallback((e: DragStartEvent) => setActiveId(e.active.id as string), []);
 
   const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
+    (event: DragEndEvent) => {
       setActiveId(null);
       const { active, over } = event;
       if (!over) return;
@@ -580,24 +587,31 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
       if (!budget) return;
 
       const targetCol = ESTIMATOR_COLUMNS.find((c) => c.id === over.id);
-      if (!targetCol || targetCol.locked || !targetCol.targetStatus) return;
+      if (!targetCol || !targetCol.targetStatus) return;
 
       const currentCol = ESTIMATOR_COLUMNS.find((c) => c.statuses.includes(budget.internal_status));
       if (currentCol?.id === targetCol.id) return;
 
-      if (!canTransitionStatus(budget.internal_status, targetCol.targetStatus)) {
-        const fromLabel = INTERNAL_STATUSES[budget.internal_status as InternalStatus]?.label ?? budget.internal_status;
-        const toLabel = INTERNAL_STATUSES[targetCol.targetStatus]?.label ?? targetCol.targetStatus;
-        toast.error(`Transição inválida: "${fromLabel}" → "${toLabel}"`, {
-          description: "Para entregar, mova primeiro o card para Em Revisão.",
-        });
-        return;
-      }
+      const fromLabel = INTERNAL_STATUSES[budget.internal_status as InternalStatus]?.label ?? budget.internal_status;
+      const toLabel = INTERNAL_STATUSES[targetCol.targetStatus]?.label ?? targetCol.targetStatus;
 
-      await onStatusChange(budget.id, targetCol.targetStatus);
+      setPendingMove({
+        budgetId: budget.id,
+        projectName: budget.project_name,
+        fromLabel,
+        toLabel,
+        toStatus: targetCol.targetStatus,
+      });
     },
-    [budgets, onStatusChange]
+    [budgets]
   );
+
+  const confirmMove = useCallback(async () => {
+    if (!pendingMove) return;
+    const move = pendingMove;
+    setPendingMove(null);
+    await onStatusChange(move.budgetId, move.toStatus);
+  }, [pendingMove, onStatusChange]);
 
   const columnBudgets = useCallback(
     (col: (typeof ESTIMATOR_COLUMNS)[number]) =>
