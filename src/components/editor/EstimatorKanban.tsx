@@ -42,14 +42,22 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   PRIORITIES,
   STATUS_GROUPS,
   INTERNAL_STATUSES,
-  canTransitionStatus,
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
-import { toast } from "sonner";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
