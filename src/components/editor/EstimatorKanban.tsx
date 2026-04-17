@@ -758,26 +758,29 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-        {visibleColumns.map((col) => (
-          <Column
-            key={col.id}
-            column={col}
-            budgets={columnBudgets(col)}
-            onCardClick={onCardClick}
-            getProfileName={getProfileName}
-          />
-        ))}
-      </div>
+    <>
+      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+          {visibleColumns.map((col) => (
+            <Column
+              key={col.id}
+              column={col}
+              budgets={columnBudgets(col)}
+              onCardClick={onCardClick}
+              getProfileName={getProfileName}
+            />
+          ))}
+        </div>
 
-      <DragOverlay>
-        {activeBudget && (
-          <div className="w-[220px]">
-            <EstimatorCard budget={activeBudget} isDragging locked={false} onClick={() => {}} getProfileName={getProfileName} />
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay>
+          {activeBudget && (
+            <div className="w-[220px]">
+              <EstimatorCard budget={activeBudget} isDragging locked={false} onClick={() => {}} getProfileName={getProfileName} />
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+      {confirmDialog}
+    </>
   );
 }
