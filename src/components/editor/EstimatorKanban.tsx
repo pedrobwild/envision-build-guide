@@ -96,8 +96,8 @@ const ESTIMATOR_COLUMNS = [
     accent: "border-t-success",
     headerColor: "text-success",
     bgColor: "bg-success/5",
-    targetStatus: null,
-    locked: true,
+    targetStatus: "sent_to_client" as InternalStatus,
+    locked: false,
   },
   {
     id: "minuta",
@@ -107,8 +107,8 @@ const ESTIMATOR_COLUMNS = [
     accent: "border-t-violet-500",
     headerColor: "text-violet-600",
     bgColor: "bg-violet-50/50",
-    targetStatus: null,
-    locked: true,
+    targetStatus: "minuta_solicitada" as InternalStatus,
+    locked: false,
   },
   {
     id: "fechado",
@@ -118,8 +118,8 @@ const ESTIMATOR_COLUMNS = [
     accent: "border-t-success",
     headerColor: "text-success",
     bgColor: "bg-success/5",
-    targetStatus: null,
-    locked: true,
+    targetStatus: "contrato_fechado" as InternalStatus,
+    locked: false,
   },
   {
     id: "perdido",
@@ -129,8 +129,8 @@ const ESTIMATOR_COLUMNS = [
     accent: "border-t-muted-foreground",
     headerColor: "text-muted-foreground",
     bgColor: "bg-muted/30",
-    targetStatus: null,
-    locked: true,
+    targetStatus: "lost" as InternalStatus,
+    locked: false,
   },
 ];
 
