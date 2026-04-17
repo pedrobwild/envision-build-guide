@@ -29,7 +29,7 @@ import {
   SlidersHorizontal, X, Hammer,
 } from "lucide-react";
 import {
-  INTERNAL_STATUSES, PRIORITIES,
+  INTERNAL_STATUSES, PRIORITIES, canTransitionStatus,
   type InternalStatus, type Priority,
 } from "@/lib/role-constants";
 import { format, differenceInCalendarDays, isToday, isPast, formatDistanceToNow } from "date-fns";
