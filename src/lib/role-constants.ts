@@ -62,6 +62,30 @@ export const STATUS_GROUPS = {
 
 export type StatusGroup = keyof typeof STATUS_GROUPS;
 
+/**
+ * Allowed internal_status transitions — must mirror the DB trigger
+ * `validate_internal_status_transition`. Keep in sync to avoid runtime errors.
+ */
+export const STATUS_TRANSITIONS: Partial<Record<InternalStatus, InternalStatus[]>> = {
+  novo: ['requested', 'triage', 'assigned', 'in_progress', 'delivered_to_sales'],
+  requested: ['triage', 'assigned', 'in_progress'],
+  triage: ['assigned', 'in_progress'],
+  assigned: ['in_progress'],
+  in_progress: ['ready_for_review', 'waiting_info'],
+  ready_for_review: ['delivered_to_sales', 'in_progress'],
+  delivered_to_sales: ['sent_to_client', 'revision_requested'],
+  sent_to_client: ['revision_requested', 'minuta_solicitada', 'lost', 'contrato_fechado'],
+  revision_requested: ['in_progress'],
+  waiting_info: ['in_progress'],
+  minuta_solicitada: ['contrato_fechado', 'revision_requested'],
+};
+
+export function canTransitionStatus(from: string, to: InternalStatus): boolean {
+  if (from === to) return true;
+  const allowed = STATUS_TRANSITIONS[from as InternalStatus];
+  return !!allowed?.includes(to);
+}
+
 export const PRIORITIES = {
   baixa: { label: 'Baixa', color: 'bg-gray-100 text-gray-700' },
   normal: { label: 'Normal', color: 'bg-blue-100 text-blue-700' },
