@@ -80,10 +80,13 @@ export const STATUS_TRANSITIONS: Partial<Record<InternalStatus, InternalStatus[]
   minuta_solicitada: ['contrato_fechado', 'revision_requested'],
 };
 
-export function canTransitionStatus(from: string, to: InternalStatus): boolean {
-  if (from === to) return true;
-  const allowed = STATUS_TRANSITIONS[from as InternalStatus];
-  return !!allowed?.includes(to);
+/**
+ * Status flow is now fully flexible — any transition is allowed.
+ * Confirmation/UX is handled at the application layer (see Kanban dialogs).
+ * Kept as a function for compatibility with existing call sites.
+ */
+export function canTransitionStatus(_from: string, _to: InternalStatus): boolean {
+  return true;
 }
 
 export const PRIORITIES = {

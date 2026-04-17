@@ -42,14 +42,22 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   PRIORITIES,
   STATUS_GROUPS,
   INTERNAL_STATUSES,
-  canTransitionStatus,
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
-import { toast } from "sonner";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -96,8 +104,8 @@ const ESTIMATOR_COLUMNS = [
     accent: "border-t-success",
     headerColor: "text-success",
     bgColor: "bg-success/5",
-    targetStatus: null,
-    locked: true,
+    targetStatus: "sent_to_client" as InternalStatus,
+    locked: false,
   },
   {
     id: "minuta",
@@ -107,8 +115,8 @@ const ESTIMATOR_COLUMNS = [
     accent: "border-t-violet-500",
     headerColor: "text-violet-600",
     bgColor: "bg-violet-50/50",
-    targetStatus: null,
-    locked: true,
+    targetStatus: "minuta_solicitada" as InternalStatus,
+    locked: false,
   },
   {
     id: "fechado",
@@ -118,8 +126,8 @@ const ESTIMATOR_COLUMNS = [
     accent: "border-t-success",
     headerColor: "text-success",
     bgColor: "bg-success/5",
-    targetStatus: null,
-    locked: true,
+    targetStatus: "contrato_fechado" as InternalStatus,
+    locked: false,
   },
   {
     id: "perdido",
@@ -129,8 +137,8 @@ const ESTIMATOR_COLUMNS = [
     accent: "border-t-muted-foreground",
     headerColor: "text-muted-foreground",
     bgColor: "bg-muted/30",
-    targetStatus: null,
-    locked: true,
+    targetStatus: "lost" as InternalStatus,
+    locked: false,
   },
 ];
 
@@ -556,6 +564,13 @@ function EstimatorCard({
 export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
+  const [pendingMove, setPendingMove] = useState<{
+    budgetId: string;
+    projectName: string;
+    fromLabel: string;
+    toLabel: string;
+    toStatus: InternalStatus;
+  } | null>(null);
   const isMobile = useIsMobile();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const activeBudget = activeId ? budgets.find((b) => b.id === activeId) : null;
@@ -563,7 +578,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
   const handleDragStart = useCallback((e: DragStartEvent) => setActiveId(e.active.id as string), []);
 
   const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
+    (event: DragEndEvent) => {
       setActiveId(null);
       const { active, over } = event;
       if (!over) return;
@@ -572,24 +587,31 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
       if (!budget) return;
 
       const targetCol = ESTIMATOR_COLUMNS.find((c) => c.id === over.id);
-      if (!targetCol || targetCol.locked || !targetCol.targetStatus) return;
+      if (!targetCol || !targetCol.targetStatus) return;
 
       const currentCol = ESTIMATOR_COLUMNS.find((c) => c.statuses.includes(budget.internal_status));
       if (currentCol?.id === targetCol.id) return;
 
-      if (!canTransitionStatus(budget.internal_status, targetCol.targetStatus)) {
-        const fromLabel = INTERNAL_STATUSES[budget.internal_status as InternalStatus]?.label ?? budget.internal_status;
-        const toLabel = INTERNAL_STATUSES[targetCol.targetStatus]?.label ?? targetCol.targetStatus;
-        toast.error(`Transição inválida: "${fromLabel}" → "${toLabel}"`, {
-          description: "Para entregar, mova primeiro o card para Em Revisão.",
-        });
-        return;
-      }
+      const fromLabel = INTERNAL_STATUSES[budget.internal_status as InternalStatus]?.label ?? budget.internal_status;
+      const toLabel = INTERNAL_STATUSES[targetCol.targetStatus]?.label ?? targetCol.targetStatus;
 
-      await onStatusChange(budget.id, targetCol.targetStatus);
+      setPendingMove({
+        budgetId: budget.id,
+        projectName: budget.project_name,
+        fromLabel,
+        toLabel,
+        toStatus: targetCol.targetStatus,
+      });
     },
-    [budgets, onStatusChange]
+    [budgets]
   );
+
+  const confirmMove = useCallback(async () => {
+    if (!pendingMove) return;
+    const move = pendingMove;
+    setPendingMove(null);
+    await onStatusChange(move.budgetId, move.toStatus);
+  }, [pendingMove, onStatusChange]);
 
   const columnBudgets = useCallback(
     (col: (typeof ESTIMATOR_COLUMNS)[number]) =>
@@ -619,121 +641,146 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
     [columnBudgets, visibleColumns]
   );
 
+  const confirmDialog = (
+    <AlertDialog open={!!pendingMove} onOpenChange={(open) => { if (!open) setPendingMove(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="font-display">Confirmar mudança de etapa?</AlertDialogTitle>
+          <AlertDialogDescription className="font-body">
+            Você está movendo <strong>{pendingMove?.projectName}</strong> de{" "}
+            <strong>{pendingMove?.fromLabel}</strong> para{" "}
+            <strong>{pendingMove?.toLabel}</strong>. Tem certeza que deseja continuar?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmMove}>Sim, mover</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   if (isMobile) {
     return (
-      <MobileSwipeableKanban
-        columns={mobileColumns}
-        activeIndex={mobileColIndex}
-        onChangeIndex={setMobileColIndex}
-      >
-        {(colIndex) => {
-          const col = visibleColumns[colIndex];
-          const items = columnBudgets(col);
-          const isEmElaboracao = col.id === "em_elaboracao";
+      <>
+        <MobileSwipeableKanban
+          columns={mobileColumns}
+          activeIndex={mobileColIndex}
+          onChangeIndex={setMobileColIndex}
+        >
+          {(colIndex) => {
+            const col = visibleColumns[colIndex];
+            const items = columnBudgets(col);
+            const isEmElaboracao = col.id === "em_elaboracao";
 
-          if (isEmElaboracao) {
-            const subData = EM_ELABORACAO_SUBSECTIONS.map(sub => ({
-              sub,
-              items: items.filter(b => (sub.statuses as readonly string[]).includes(b.internal_status)),
-            })).filter(({ items: i }) => i.length > 0);
+            if (isEmElaboracao) {
+              const subData = EM_ELABORACAO_SUBSECTIONS.map(sub => ({
+                sub,
+                items: items.filter(b => (sub.statuses as readonly string[]).includes(b.internal_status)),
+              })).filter(({ items: i }) => i.length > 0);
 
+              return (
+                <div className={`rounded-xl border border-border border-t-4 ${col.accent} ${col.bgColor} min-h-[300px]`}>
+                  <ScrollArea className="px-2 pb-2 pt-1" style={{ maxHeight: "calc(100vh - 280px)" }}>
+                    {subData.length === 0 && (
+                      <div className="py-8 text-center text-xs text-muted-foreground font-body">Nenhum orçamento</div>
+                    )}
+                    {subData.map(({ sub, items: subItems }, idx) => (
+                      <div key={sub.id}>
+                        {idx > 0 && <Separator className="my-2" />}
+                        <SubSectionGroup
+                          subsection={sub}
+                          budgets={subItems}
+                          locked={col.locked}
+                          onCardClick={onCardClick}
+                          getProfileName={getProfileName}
+                          compact
+                        />
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </div>
+              );
+            }
+
+            const sorted = sortBudgets(items);
             return (
               <div className={`rounded-xl border border-border border-t-4 ${col.accent} ${col.bgColor} min-h-[300px]`}>
                 <ScrollArea className="px-2 pb-2 pt-1" style={{ maxHeight: "calc(100vh - 280px)" }}>
-                  {subData.length === 0 && (
-                    <div className="py-8 text-center text-xs text-muted-foreground font-body">Nenhum orçamento</div>
-                  )}
-                  {subData.map(({ sub, items: subItems }, idx) => (
-                    <div key={sub.id}>
-                      {idx > 0 && <Separator className="my-2" />}
-                      <SubSectionGroup
-                        subsection={sub}
-                        budgets={subItems}
-                        locked={col.locked}
-                        onCardClick={onCardClick}
-                        getProfileName={getProfileName}
-                        compact
-                      />
-                    </div>
-                  ))}
+                  <div className="space-y-2">
+                    {sorted.map((b, idx) => {
+                      const prevHigh = idx > 0 && isHighPriority(sorted[idx - 1].priority);
+                      const currHigh = isHighPriority(b.priority);
+                      const showDivider = idx > 0 && prevHigh && !currHigh;
+                      return (
+                        <div key={b.id}>
+                          {showDivider && (
+                            <div className="flex items-center gap-2 py-1 px-1">
+                              <div className="flex-1 h-px bg-border" />
+                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-body">Demais</span>
+                              <div className="flex-1 h-px bg-border" />
+                            </div>
+                          )}
+                          <CompactKanbanCard
+                            projectName={b.project_name}
+                            clientName={b.client_name}
+                            priority={b.priority}
+                            internalStatus={b.internal_status}
+                            dueAt={b.due_at}
+                            bairro={b.bairro}
+                            city={b.city}
+                            versionNumber={b.version_number}
+                            sequentialCode={b.sequential_code}
+                            commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
+                            estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                            onClick={() => onCardClick(b.id)}
+                            onQuickAction={(action) => {
+                              if (action === "open") onCardClick(b.id);
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                    {sorted.length === 0 && (
+                      <div className="py-8 text-center text-xs text-muted-foreground font-body">
+                        Nenhum orçamento
+                      </div>
+                    )}
+                  </div>
                 </ScrollArea>
               </div>
             );
-          }
-
-          const sorted = sortBudgets(items);
-          return (
-            <div className={`rounded-xl border border-border border-t-4 ${col.accent} ${col.bgColor} min-h-[300px]`}>
-              <ScrollArea className="px-2 pb-2 pt-1" style={{ maxHeight: "calc(100vh - 280px)" }}>
-                <div className="space-y-2">
-                  {sorted.map((b, idx) => {
-                    const prevHigh = idx > 0 && isHighPriority(sorted[idx - 1].priority);
-                    const currHigh = isHighPriority(b.priority);
-                    const showDivider = idx > 0 && prevHigh && !currHigh;
-                    return (
-                      <div key={b.id}>
-                        {showDivider && (
-                          <div className="flex items-center gap-2 py-1 px-1">
-                            <div className="flex-1 h-px bg-border" />
-                            <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-body">Demais</span>
-                            <div className="flex-1 h-px bg-border" />
-                          </div>
-                        )}
-                        <CompactKanbanCard
-                          projectName={b.project_name}
-                          clientName={b.client_name}
-                          priority={b.priority}
-                          internalStatus={b.internal_status}
-                          dueAt={b.due_at}
-                          bairro={b.bairro}
-                          city={b.city}
-                          versionNumber={b.version_number}
-                          sequentialCode={b.sequential_code}
-                          commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
-                          estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
-                          onClick={() => onCardClick(b.id)}
-                          onQuickAction={(action) => {
-                            if (action === "open") onCardClick(b.id);
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-                  {sorted.length === 0 && (
-                    <div className="py-8 text-center text-xs text-muted-foreground font-body">
-                      Nenhum orçamento
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          );
-        }}
-      </MobileSwipeableKanban>
+          }}
+        </MobileSwipeableKanban>
+        {confirmDialog}
+      </>
     );
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-        {visibleColumns.map((col) => (
-          <Column
-            key={col.id}
-            column={col}
-            budgets={columnBudgets(col)}
-            onCardClick={onCardClick}
-            getProfileName={getProfileName}
-          />
-        ))}
-      </div>
+    <>
+      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+          {visibleColumns.map((col) => (
+            <Column
+              key={col.id}
+              column={col}
+              budgets={columnBudgets(col)}
+              onCardClick={onCardClick}
+              getProfileName={getProfileName}
+            />
+          ))}
+        </div>
 
-      <DragOverlay>
-        {activeBudget && (
-          <div className="w-[220px]">
-            <EstimatorCard budget={activeBudget} isDragging locked={false} onClick={() => {}} getProfileName={getProfileName} />
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay>
+          {activeBudget && (
+            <div className="w-[220px]">
+              <EstimatorCard budget={activeBudget} isDragging locked={false} onClick={() => {}} getProfileName={getProfileName} />
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+      {confirmDialog}
+    </>
   );
 }
