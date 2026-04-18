@@ -149,6 +149,11 @@ export interface DashboardMetrics {
   agingBuckets: AgingBucket[];
   slaRiskItems: SlaRiskItem[];
   stalledByStage: { stage: string; label: string; count: number; avgDays: number }[];
+  // ─── Enhanced efficiency KPIs ───
+  throughput: ThroughputMetric;
+  stageEfficiency: StageEfficiency[];
+  healthScore: HealthScore;
+  slaForecast: SlaForecast;
 }
 
 /**
