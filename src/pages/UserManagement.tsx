@@ -41,6 +41,7 @@ import {
   UserX,
   UserCheck,
   Mail,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ROLES, type AppRole } from "@/lib/role-constants";
