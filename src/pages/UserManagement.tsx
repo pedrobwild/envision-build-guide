@@ -499,6 +499,42 @@ export default function UserManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Set Password Dialog */}
+      <Dialog open={!!pwdUser} onOpenChange={(o) => { if (!o) { setPwdUser(null); setNewPassword(""); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-primary" />
+              Definir senha
+            </DialogTitle>
+            <DialogDescription className="font-body text-sm">
+              {pwdUser?.full_name || pwdUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium font-body text-foreground">Nova senha</label>
+            <Input
+              type="text"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+              autoComplete="new-password"
+            />
+            <p className="text-xs text-muted-foreground font-body">
+              A senha será definida imediatamente. Compartilhe com o usuário por canal seguro.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setPwdUser(null); setNewPassword(""); }} disabled={savingPassword}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSetPassword} disabled={savingPassword || newPassword.length < 6}>
+              {savingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : "Definir senha"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
