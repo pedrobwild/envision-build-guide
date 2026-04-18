@@ -311,14 +311,19 @@ export type Database = {
           created_at: string
           duration_seconds: number | null
           external_id: string | null
+          full_report: Json | null
           id: string
+          next_steps: Json
+          objections: Json
           participants: Json
           provider: string
+          questions: Json
           started_at: string | null
           summary: string | null
           title: string | null
           transcript: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           action_items?: Json
@@ -327,14 +332,19 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           external_id?: string | null
+          full_report?: Json | null
           id?: string
+          next_steps?: Json
+          objections?: Json
           participants?: Json
           provider?: string
+          questions?: Json
           started_at?: string | null
           summary?: string | null
           title?: string | null
           transcript?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           action_items?: Json
@@ -343,14 +353,19 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           external_id?: string | null
+          full_report?: Json | null
           id?: string
+          next_steps?: Json
+          objections?: Json
           participants?: Json
           provider?: string
+          questions?: Json
           started_at?: string | null
           summary?: string | null
           title?: string | null
           transcript?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -1267,6 +1282,39 @@ export type Database = {
           team_load_distribution?: Json
           throughput_trend_pct?: number | null
           weekly_throughput?: number | null
+        }
+        Relationships: []
+      }
+      elephan_sync_state: {
+        Row: {
+          error_message: string | null
+          id: string
+          last_run_at: string
+          last_synced_at: string | null
+          meetings_matched: number
+          meetings_pulled: number
+          meetings_unmatched: number
+          raw_sample: Json | null
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          last_run_at?: string
+          last_synced_at?: string | null
+          meetings_matched?: number
+          meetings_pulled?: number
+          meetings_unmatched?: number
+          raw_sample?: Json | null
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          last_run_at?: string
+          last_synced_at?: string | null
+          meetings_matched?: number
+          meetings_pulled?: number
+          meetings_unmatched?: number
+          raw_sample?: Json | null
         }
         Relationships: []
       }
