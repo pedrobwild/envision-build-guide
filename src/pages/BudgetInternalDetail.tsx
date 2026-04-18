@@ -731,7 +731,7 @@ export default function BudgetInternalDetail() {
             description={budget.briefing || budget.demand_context || "Sem briefing cadastrado ainda."}
             meta={links.length > 0 ? `${links.length} ${links.length === 1 ? "link" : "links"}` : undefined}
             active={activeModule === "briefing"}
-            onClick={() => setActiveModule(activeModule === "briefing" ? null : "briefing")}
+            onClick={() => setActiveModule("briefing")}
           />
           <ModuleCard
             icon={ClipboardList}
@@ -739,30 +739,50 @@ export default function BudgetInternalDetail() {
             description={`${sectionsCount} seções · ${itemsCount} itens · ${formatBRL(totalDisplay)}`}
             badge={budget.public_id ? { label: "publicado", tone: "info" } : { label: "rascunho", tone: "neutral" }}
             active={activeModule === "budget"}
-            onClick={() => setActiveModule(activeModule === "budget" ? null : "budget")}
+            onClick={() => setActiveModule("budget")}
           />
           <ModuleCard
             icon={Activity}
             title="Atividades"
-            description={`${events.length} eventos · ${comments.length} notas internas`}
-            meta={events.length > 0 ? `Última ${format(new Date(events[events.length - 1].created_at), "dd/MM HH:mm")}` : undefined}
+            description={
+              hub.data?.pendingActivitiesCount
+                ? `${hub.data.pendingActivitiesCount} pendente${hub.data.pendingActivitiesCount === 1 ? "" : "s"} · ${events.length} eventos`
+                : `${events.length} eventos · ${comments.length} notas internas`
+            }
+            meta={
+              hub.data?.nextActivityDate
+                ? `Próxima ${format(new Date(hub.data.nextActivityDate), "dd/MM HH:mm")}`
+                : events.length > 0
+                ? `Última ${format(new Date(events[events.length - 1].created_at), "dd/MM HH:mm")}`
+                : undefined
+            }
             badgeRight={comments.length > 0 ? { label: `${comments.length}`, tone: "neutral" } : undefined}
             active={activeModule === "activities"}
-            onClick={() => setActiveModule(activeModule === "activities" ? null : "activities")}
+            onClick={() => setActiveModule("activities")}
           />
           <ModuleCard
             icon={Video}
             title="Reuniões"
-            description="Integração com gravações e transcrições."
+            description={
+              hub.data?.meetingsCount
+                ? `${hub.data.meetingsCount} reunião${hub.data.meetingsCount === 1 ? "" : "ões"} registrada${hub.data.meetingsCount === 1 ? "" : "s"}`
+                : "Gravações e transcrições (Elephan.ia)."
+            }
             badgeRight={{ label: "Em breve", tone: "info" }}
-            disabled
+            active={activeModule === "meetings"}
+            onClick={() => setActiveModule("meetings")}
           />
           <ModuleCard
             icon={MessageCircle}
             title="Conversas"
-            description="WhatsApp e canais de atendimento."
+            description={
+              hub.data?.conversationsCount
+                ? `${hub.data.conversationsCount} conversa${hub.data.conversationsCount === 1 ? "" : "s"}${hub.data.lastConversationAt ? ` · última ${format(new Date(hub.data.lastConversationAt), "dd/MM HH:mm")}` : ""}`
+                : "WhatsApp e canais de atendimento (Digisac)."
+            }
             badgeRight={{ label: "Em breve", tone: "info" }}
-            disabled
+            active={activeModule === "conversations"}
+            onClick={() => setActiveModule("conversations")}
           />
           <ModuleCard
             icon={ImageIcon}
@@ -776,23 +796,32 @@ export default function BudgetInternalDetail() {
             description={budget.client_name}
             meta={budget.client_phone ?? undefined}
             active={activeModule === "client"}
-            onClick={() => setActiveModule(activeModule === "client" ? null : "client")}
+            onClick={() => setActiveModule("client")}
           />
           <ModuleCard
             icon={History}
             title="Versões & PDFs"
             description="Histórico de versões publicadas e em ajuste."
             active={activeModule === "versions"}
-            onClick={() => setActiveModule(activeModule === "versions" ? null : "versions")}
+            onClick={() => setActiveModule("versions")}
           />
           <ModuleCard
             icon={XCircle}
-            title="Marcar como perdida"
-            description="Registrar motivo estruturado · concorrente, preço, escopo…"
+            title={budget.internal_status === "lost" ? "Negócio perdido" : "Marcar como perdida"}
+            description={
+              hub.data?.lostReason
+                ? `${hub.data.lostReason.reason_category}${hub.data.lostReason.competitor_name ? ` · ${hub.data.lostReason.competitor_name}` : ""}`
+                : "Registrar motivo estruturado · concorrente, preço, escopo…"
+            }
             destructive
-            disabled={budget.internal_status === "lost"}
             badgeRight={budget.internal_status === "lost" ? { label: "perdida", tone: "destructive" } : undefined}
-            onClick={() => setLostDialogOpen(true)}
+            onClick={() => {
+              if (budget.internal_status === "lost") {
+                setActiveModule("lost");
+              } else {
+                setLostDialogOpen(true);
+              }
+            }}
           />
         </section>
 
