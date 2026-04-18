@@ -44,6 +44,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   CLIENT_STATUSES,
+  getEffectiveClientStatus,
   useClients,
   useDeleteClient,
   type ClientFilters,
@@ -98,6 +99,9 @@ export default function ClientsList() {
   const summary = useMemo(() => {
     const total = clients.length;
     const active = clients.filter((c) => c.status === "cliente").length;
+    const mql = clients.filter(
+      (c) => getEffectiveClientStatus(c, c.stats) === "mql",
+    ).length;
     const pipelineValue = clients.reduce(
       (acc, c) => acc + (c.stats?.pipeline_value ?? 0),
       0,
@@ -106,7 +110,7 @@ export default function ClientsList() {
       (acc, c) => acc + (c.stats?.total_won_value ?? 0),
       0,
     );
-    return { total, active, pipelineValue, wonValue };
+    return { total, active, mql, pipelineValue, wonValue };
   }, [clients]);
 
   function openCreate() {
@@ -258,7 +262,7 @@ export default function ClientsList() {
               </TableRow>
             ) : (
               clients.map((c) => {
-                const s = (c.status as ClientStatus) ?? "lead";
+                const s = getEffectiveClientStatus(c, c.stats);
                 const sCfg = CLIENT_STATUSES[s] ?? CLIENT_STATUSES.lead;
                 const owner = c.commercial_owner_id
                   ? ownersMap.get(c.commercial_owner_id) ?? "—"
