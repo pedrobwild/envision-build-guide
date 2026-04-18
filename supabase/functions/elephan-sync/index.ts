@@ -122,9 +122,9 @@ Deno.serve(async (req) => {
     ? new Date(stateRow.last_synced_at as string)
     : new Date(Date.now() - 1000 * 60 * 60 * 24 * 30); // 30 days back on first run
 
-  // Build URL — try a sensible REST default. Adjust here once we know the real shape.
+  // Endpoint do Elephan: GET /v1/transcribes lista transcrições
   const baseUrl = ELEPHAN_API_BASE_URL.replace(/\/$/, "");
-  const url = `${baseUrl}/meetings?since=${encodeURIComponent(since.toISOString())}&limit=100`;
+  const url = `${baseUrl}/transcribes`;
 
   console.log(`[elephan-sync] Fetching ${url}`);
 
