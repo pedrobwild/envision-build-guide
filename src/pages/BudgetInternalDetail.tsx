@@ -765,10 +765,10 @@ export default function BudgetInternalDetail() {
             title="Reuniões"
             description={
               hub.data?.meetingsCount
-                ? `${hub.data.meetingsCount} reunião${hub.data.meetingsCount === 1 ? "" : "ões"} registrada${hub.data.meetingsCount === 1 ? "" : "s"}`
-                : "Gravações e transcrições (Elephan.ia)."
+                ? `${hub.data.meetingsCount} reunião${hub.data.meetingsCount === 1 ? "" : "ões"} gravada${hub.data.meetingsCount === 1 ? "" : "s"} pela IA`
+                : "Gravações, vídeos e análise IA (Elephan.ia)."
             }
-            badgeRight={{ label: "Em breve", tone: "info" }}
+            badgeRight={{ label: "Elephan.ia", tone: "success" }}
             active={activeModule === "meetings"}
             onClick={() => setActiveModule("meetings")}
           />
@@ -909,18 +909,7 @@ export default function BudgetInternalDetail() {
                     </div>
                   )}
 
-                  {activeModule === "meetings" && (
-                    <EmptyIntegration
-                      icon={Video}
-                      title="Reuniões via Elephan.ia"
-                      description="Quando integrarmos o Elephan.ia, todas as reuniões com gravação, transcrição e action items aparecerão aqui automaticamente, vinculadas a esta demanda."
-                      bullets={[
-                        "Transcrição automática completa",
-                        "Action items extraídos por IA",
-                        "Replay de áudio sincronizado",
-                      ]}
-                    />
-                  )}
+                  {activeModule === "meetings" && id && <MeetingsPanel budgetId={id} />}
 
                   {activeModule === "conversations" && (
                     <EmptyIntegration
