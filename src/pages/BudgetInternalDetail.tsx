@@ -825,190 +825,222 @@ export default function BudgetInternalDetail() {
           />
         </section>
 
-        {/* DRILL-DOWN PANEL */}
-        {activeModule && (
-          <section className="mt-8 rounded-2xl border bg-card overflow-hidden">
-            <div className="p-5 flex items-center justify-between border-b border-border">
-              <div>
-                <h3 className="text-base font-display font-semibold text-foreground">
-                  {moduleTitles[activeModule]}
-                </h3>
-                <p className="text-xs text-muted-foreground font-body mt-0.5">
-                  {moduleSubtitles[activeModule]}
-                </p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setActiveModule(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+        {/* DRILL-DOWN DRAWER */}
+        <Sheet open={!!activeModule} onOpenChange={(o) => !o && setActiveModule(null)}>
+          <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0">
+            {activeModule && (
+              <>
+                <SheetHeader className="p-6 border-b border-border bg-card sticky top-0 z-10">
+                  <SheetTitle className="text-base font-display font-semibold text-foreground">
+                    {moduleTitles[activeModule]}
+                  </SheetTitle>
+                  <SheetDescription className="text-xs text-muted-foreground font-body">
+                    {moduleSubtitles[activeModule]}
+                  </SheetDescription>
+                </SheetHeader>
 
-            <div className="p-5">
-              {activeModule === "briefing" && (
-                <BriefingPanel
-                  briefing={budget.briefing}
-                  demandContext={budget.demand_context}
-                  internalNotes={budget.internal_notes}
-                  links={links as string[]}
-                />
-              )}
+                <div className="p-6">
+                  {activeModule === "briefing" && (
+                    <BriefingPanel
+                      briefing={budget.briefing}
+                      demandContext={budget.demand_context}
+                      internalNotes={budget.internal_notes}
+                      links={links as string[]}
+                    />
+                  )}
 
-              {activeModule === "budget" && <BudgetBreakdownPanel budgetId={budget.id} />}
+                  {activeModule === "budget" && <BudgetBreakdownPanel budgetId={budget.id} />}
 
-              {activeModule === "activities" && (
-                <div className="space-y-6">
-                  <BudgetEventsTimeline events={events} getProfileName={getProfileName} />
-                  <Separator />
-                  <div>
-                    <h4 className="text-sm font-display font-semibold mb-3 flex items-center gap-2">
-                      💬 Notas Internas ({comments.length})
-                    </h4>
-                    <div className="space-y-3 mb-4">
-                      {comments.length === 0 && (
-                        <p className="text-sm text-muted-foreground font-body text-center py-4">
-                          Nenhuma nota interna ainda. Adicione a primeira abaixo.
-                        </p>
-                      )}
-                      {comments.map((c) => (
-                        <div key={c.id} className="flex gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <User className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-sm font-medium font-body text-foreground">
-                                {getProfileName(c.user_id)}
-                              </span>
-                              <span className="text-xs text-muted-foreground font-body">
-                                {format(new Date(c.created_at), "dd/MM HH:mm")}
-                              </span>
+                  {activeModule === "activities" && (
+                    <div className="space-y-6">
+                      <BudgetEventsTimeline events={events} getProfileName={getProfileName} />
+                      <Separator />
+                      <div>
+                        <h4 className="text-sm font-display font-semibold mb-3 flex items-center gap-2">
+                          💬 Notas Internas ({comments.length})
+                        </h4>
+                        <div className="space-y-3 mb-4">
+                          {comments.length === 0 && (
+                            <p className="text-sm text-muted-foreground font-body text-center py-4">
+                              Nenhuma nota interna ainda. Adicione a primeira abaixo.
+                            </p>
+                          )}
+                          {comments.map((c) => (
+                            <div key={c.id} className="flex gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <User className="h-4 w-4 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <span className="text-sm font-medium font-body text-foreground">
+                                    {getProfileName(c.user_id)}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground font-body">
+                                    {format(new Date(c.created_at), "dd/MM HH:mm")}
+                                  </span>
+                                </div>
+                                <p className="text-sm font-body text-foreground whitespace-pre-wrap">{c.body}</p>
+                              </div>
                             </div>
-                            <p className="text-sm font-body text-foreground whitespace-pre-wrap">{c.body}</p>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+
+                        <CommentQuickTemplates value={newComment} onChange={setNewComment} textareaRef={commentTextareaRef} />
+                        <div className="flex gap-2 mt-2">
+                          <Textarea
+                            ref={commentTextareaRef}
+                            placeholder="Escreva uma nota interna... (digite / para templates)"
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            rows={2}
+                            className="flex-1 text-sm"
+                            maxLength={2000}
+                          />
+                          <Button
+                            size="icon"
+                            disabled={!newComment.trim() || submitting}
+                            onClick={addComment}
+                            className="shrink-0 self-end"
+                          >
+                            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
+                  )}
 
-                    <CommentQuickTemplates value={newComment} onChange={setNewComment} textareaRef={commentTextareaRef} />
-                    <div className="flex gap-2 mt-2">
-                      <Textarea
-                        ref={commentTextareaRef}
-                        placeholder="Escreva uma nota interna... (digite / para templates)"
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        rows={2}
-                        className="flex-1 text-sm"
-                        maxLength={2000}
-                      />
-                      <Button
-                        size="icon"
-                        disabled={!newComment.trim() || submitting}
-                        onClick={addComment}
-                        className="shrink-0 self-end"
-                      >
-                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  {activeModule === "meetings" && (
+                    <EmptyIntegration
+                      icon={Video}
+                      title="Reuniões via Elephan.ia"
+                      description="Quando integrarmos o Elephan.ia, todas as reuniões com gravação, transcrição e action items aparecerão aqui automaticamente, vinculadas a esta demanda."
+                      bullets={[
+                        "Transcrição automática completa",
+                        "Action items extraídos por IA",
+                        "Replay de áudio sincronizado",
+                      ]}
+                    />
+                  )}
 
-              {activeModule === "client" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
-                      Cliente & Imóvel
-                    </h4>
-                    <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Nome" value={budget.client_name} />
-                    {budget.client_phone && (
-                      <InfoRow icon={<MessageCircle className="h-3.5 w-3.5" />} label="Telefone" value={budget.client_phone} />
-                    )}
-                    {budget.property_type && (
-                      <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Tipo" value={budget.property_type} />
-                    )}
-                    {locationParts && (
-                      <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Local" value={locationParts} />
-                    )}
-                    {budget.condominio && (
-                      <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Condomínio" value={budget.condominio} />
-                    )}
-                    {budget.unit && (
-                      <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Unidade" value={budget.unit} />
-                    )}
-                    {budget.metragem && (
-                      <InfoRow icon={<Ruler className="h-3.5 w-3.5" />} label="Metragem" value={budget.metragem} />
-                    )}
-                  </div>
+                  {activeModule === "conversations" && (
+                    <EmptyIntegration
+                      icon={MessageCircle}
+                      title="Conversas via Digisac"
+                      description="Quando integrarmos o Digisac, todas as conversas de WhatsApp com este lead serão centralizadas aqui, com histórico completo e respostas em tempo real."
+                      bullets={[
+                        "Histórico unificado de WhatsApp",
+                        "Notificações em tempo real",
+                        "Respostas direto da plataforma",
+                      ]}
+                    />
+                  )}
 
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
-                      Equipe & Datas
-                    </h4>
-                    <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Comercial" value={getProfileName(budget.commercial_owner_id)} />
-                    <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Orçamentista" value={getProfileName(budget.estimator_owner_id)} />
-                    <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Criado por" value={getProfileName(budget.created_by)} />
-                    {budget.created_at && (
-                      <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Criado" value={format(new Date(budget.created_at), "dd/MM/yyyy HH:mm")} />
-                    )}
-                    {budget.updated_at && (
-                      <InfoRow icon={<Clock className="h-3.5 w-3.5" />} label="Atualizado" value={format(new Date(budget.updated_at), "dd/MM/yyyy HH:mm")} />
-                    )}
-                    {budget.due_at && (
-                      <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo" value={format(new Date(budget.due_at), "dd/MM/yyyy")} />
-                    )}
-                  </div>
-
-                  <div className="md:col-span-2 flex flex-wrap gap-2 pt-2">
-                    {budget.public_id && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => window.open(`/o/${budget.public_id}`, "_blank")}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        Ver proposta pública
-                      </Button>
-                    )}
-                    {budget.internal_status === "contrato_fechado" && (
-                      <Button
-                        variant={syncStatus?.status === "success" ? "outline" : "default"}
-                        size="sm"
-                        className="gap-2"
-                        onClick={handleManualSync}
-                        disabled={syncing}
-                      >
-                        {syncing ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : syncStatus?.status === "success" ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                        ) : syncStatus?.status === "failed" ? (
-                          <RefreshCw className="h-3.5 w-3.5 text-destructive" />
-                        ) : (
-                          <ArrowRightLeft className="h-3.5 w-3.5" />
+                  {activeModule === "client" && (
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
+                          Cliente & Imóvel
+                        </h4>
+                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Nome" value={budget.client_name} />
+                        {budget.client_phone && (
+                          <InfoRow icon={<MessageCircle className="h-3.5 w-3.5" />} label="Telefone" value={budget.client_phone} />
                         )}
-                        {syncing
-                          ? "Sincronizando..."
-                          : syncStatus?.status === "success"
-                          ? "Sincronizado com Portal"
-                          : syncStatus?.status === "failed"
-                          ? "Re-sincronizar"
-                          : "Enviar para Portal"}
-                      </Button>
-                    )}
-                  </div>
+                        {budget.property_type && (
+                          <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Tipo" value={budget.property_type} />
+                        )}
+                        {locationParts && (
+                          <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Local" value={locationParts} />
+                        )}
+                        {budget.condominio && (
+                          <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Condomínio" value={budget.condominio} />
+                        )}
+                        {budget.unit && (
+                          <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Unidade" value={budget.unit} />
+                        )}
+                        {budget.metragem && (
+                          <InfoRow icon={<Ruler className="h-3.5 w-3.5" />} label="Metragem" value={budget.metragem} />
+                        )}
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
+                          Equipe & Datas
+                        </h4>
+                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Comercial" value={getProfileName(budget.commercial_owner_id)} />
+                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Orçamentista" value={getProfileName(budget.estimator_owner_id)} />
+                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Criado por" value={getProfileName(budget.created_by)} />
+                        {budget.created_at && (
+                          <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Criado" value={format(new Date(budget.created_at), "dd/MM/yyyy HH:mm")} />
+                        )}
+                        {budget.updated_at && (
+                          <InfoRow icon={<Clock className="h-3.5 w-3.5" />} label="Atualizado" value={format(new Date(budget.updated_at), "dd/MM/yyyy HH:mm")} />
+                        )}
+                        {budget.due_at && (
+                          <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo" value={format(new Date(budget.due_at), "dd/MM/yyyy")} />
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {budget.public_id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => window.open(`/o/${budget.public_id}`, "_blank")}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            Ver proposta pública
+                          </Button>
+                        )}
+                        {budget.internal_status === "contrato_fechado" && (
+                          <Button
+                            variant={syncStatus?.status === "success" ? "outline" : "default"}
+                            size="sm"
+                            className="gap-2"
+                            onClick={handleManualSync}
+                            disabled={syncing}
+                          >
+                            {syncing ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : syncStatus?.status === "success" ? (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                            ) : syncStatus?.status === "failed" ? (
+                              <RefreshCw className="h-3.5 w-3.5 text-destructive" />
+                            ) : (
+                              <ArrowRightLeft className="h-3.5 w-3.5" />
+                            )}
+                            {syncing
+                              ? "Sincronizando..."
+                              : syncStatus?.status === "success"
+                              ? "Sincronizado com Portal"
+                              : syncStatus?.status === "failed"
+                              ? "Re-sincronizar"
+                              : "Enviar para Portal"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeModule === "versions" && <VersionHistoryPanel budgetId={budget.id} />}
+
+                  {activeModule === "lost" && (
+                    <LostPanel
+                      lostReason={hub.data?.lostReason ?? null}
+                      onReopen={() => changeStatus("in_progress" as InternalStatus, "Reaberta após análise.")}
+                      onEdit={() => {
+                        setActiveModule(null);
+                        setLostDialogOpen(true);
+                      }}
+                    />
+                  )}
                 </div>
-              )}
-
-              {activeModule === "versions" && <VersionHistoryPanel budgetId={budget.id} />}
-
-              {activeModule === "lost" && (
-                <p className="text-sm text-muted-foreground font-body">
-                  Use o botão "Marcar como perdida" no card para abrir o formulário estruturado.
-                </p>
-              )}
-            </div>
-          </section>
-        )}
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
 
         {/* Footer meta */}
         <div className="mt-8 flex items-center justify-between text-[11px] text-muted-foreground/70 font-body flex-wrap gap-2">
