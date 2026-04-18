@@ -25,6 +25,11 @@ export const CLIENT_SOURCES: Record<string, string> = {
   arquiteto: "Arquiteto parceiro",
   corretor: "Corretor",
   site: "Site",
+  meta_ads: "Meta Ads (Facebook/Instagram)",
+  facebook_ads: "Facebook Ads",
+  instagram_ads: "Instagram Ads",
+  google_ads: "Google Ads",
+  hubspot: "HubSpot",
   outro: "Outro",
 };
 
