@@ -93,6 +93,10 @@ interface BudgetDetail {
   sequential_code?: string | null;
   manual_total: number | null;
   estimated_weeks: number | null;
+  pipeline_stage: string | null;
+  win_probability: number | null;
+  expected_close_at: string | null;
+  lead_source: string | null;
 }
 
 interface EventRow {
