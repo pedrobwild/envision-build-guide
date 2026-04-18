@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.reprocess-failed-leads]
 verify_jwt = false
+
+[functions.elephan-webhook]
+verify_jwt = false
