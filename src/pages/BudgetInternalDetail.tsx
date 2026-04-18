@@ -1006,6 +1006,12 @@ export default function BudgetInternalDetail() {
         onConfirm={handleBlockingConfirm}
         onCancel={() => setBlockingTarget(null)}
       />
+
+      <LostReasonDialog
+        open={lostDialogOpen}
+        onOpenChange={setLostDialogOpen}
+        onConfirm={handleMarkLost}
+      />
     </div>
   );
 }
