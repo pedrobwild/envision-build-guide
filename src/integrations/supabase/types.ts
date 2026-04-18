@@ -1717,6 +1717,7 @@ export type Database = {
           avg_ticket: number | null
           client_id: string | null
           last_budget_at: string | null
+          latest_internal_status: string | null
           pipeline_value: number | null
           total_budgets: number | null
           total_won_value: number | null
