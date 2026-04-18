@@ -25,6 +25,7 @@ import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBloc
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { IntelligentAlertsPanel } from "@/components/dashboard/IntelligentAlertsPanel";
 import { InsightsHistoryPanel } from "@/components/dashboard/InsightsHistoryPanel";
+import { MetricsTrendChart } from "@/components/dashboard/MetricsTrendChart";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
 import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
