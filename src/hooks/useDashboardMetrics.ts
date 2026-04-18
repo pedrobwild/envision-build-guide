@@ -198,6 +198,12 @@ export function computeDashboardMetrics(
   budgets: BudgetWithSections[],
   range: DateRange,
   profiles: Record<string, string>,
+  /**
+   * Map of budget_id → ISO timestamp of the earliest status change to a delivered status
+   * (sent_to_client, minuta_solicitada, contrato_fechado), sourced from `budget_events`.
+   * When provided, lead time uses this exact moment instead of falling back to `updated_at`.
+   */
+  deliveryTimestamps: Record<string, string> = {},
 ): DashboardMetrics {
   const prev = getPreviousPeriod(range);
   const now = new Date();
