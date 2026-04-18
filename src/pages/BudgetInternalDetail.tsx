@@ -434,14 +434,45 @@ export default function BudgetInternalDetail() {
     toast.success("Comentário adicionado.");
   }
 
-  async function handleMarkLost() {
-    if (!lostReason.trim()) {
-      toast.error("Informe o motivo da perda.");
+  async function handleMarkLost(payload: LostReasonPayload) {
+    if (!budget || !user) return;
+
+    const { error: lostErr } = await supabase
+      .from("budget_lost_reasons")
+      .upsert(
+        {
+          budget_id: budget.id,
+          reason_category: payload.reason_category,
+          reason_detail: payload.reason_detail || null,
+          competitor_name: payload.competitor_name ?? null,
+          competitor_value: payload.competitor_value ?? null,
+          created_by: user.id,
+          lost_at: new Date().toISOString(),
+        },
+        { onConflict: "budget_id" }
+      );
+
+    if (lostErr) {
+      toast.error(`Erro ao registrar motivo: ${lostErr.message}`);
       return;
     }
-    await changeStatus("lost", lostReason.trim());
-    setLostReason("");
-    setActiveModule(null);
+
+    const categoryLabels: Record<string, string> = {
+      preco: "Preço",
+      escopo: "Escopo",
+      concorrente: "Concorrente",
+      timing: "Timing",
+      sem_retorno: "Sem retorno",
+      desistencia: "Desistência",
+      outro: "Outro",
+    };
+    const noteParts = [`Motivo: ${categoryLabels[payload.reason_category]}`];
+    if (payload.competitor_name) noteParts.push(`Concorrente: ${payload.competitor_name}`);
+    if (payload.competitor_value) noteParts.push(`Valor concorrência: ${formatBRL(payload.competitor_value)}`);
+    if (payload.reason_detail) noteParts.push(payload.reason_detail);
+
+    await changeStatus("lost", noteParts.join(" · "));
+    toast.success("Negócio marcado como perdido.");
   }
 
   const pipeline = useMemo(
