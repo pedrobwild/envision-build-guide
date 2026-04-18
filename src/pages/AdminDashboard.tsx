@@ -237,6 +237,11 @@ export default function AdminDashboard() {
         <InsightsHistoryPanel refreshKey={aiInsights.data?.generatedAt ? new Date(aiInsights.data.generatedAt).getTime() : 0} />
       </motion.div>
 
+      {/* ───── METRICS TREND CHART ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <MetricsTrendChart />
+      </motion.div>
+
       {/* ───── KPI CARDS — ROW 1 ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground/60 font-body mb-3">
