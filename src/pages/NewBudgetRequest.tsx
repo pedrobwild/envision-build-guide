@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { upsertClientByContact } from "@/hooks/useClients";
 import { supabase } from "@/integrations/supabase/client";
 import { seedFromTemplate } from "@/lib/seed-from-template";
 import { useAuth } from "@/hooks/useAuth";
@@ -131,6 +132,7 @@ function SectionTitle({ icon: Icon, title }: { icon: React.ComponentType<{ class
 
 export default function NewBudgetRequest() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"new" | "import">("new");
@@ -141,9 +143,13 @@ export default function NewBudgetRequest() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
 
-  const [clientName, setClientName] = useState("");
-  const [clientEmail, setClientEmail] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
+  // Pré-preenche a partir de ?client_id=&name=&email=&phone= (vindo do CRM)
+  const prefillClientId = searchParams.get("client_id");
+  const [linkedClientId, setLinkedClientId] = useState<string | null>(prefillClientId);
+
+  const [clientName, setClientName] = useState(searchParams.get("name") ?? "");
+  const [clientEmail, setClientEmail] = useState(searchParams.get("email") ?? "");
+  const [clientPhone, setClientPhone] = useState(searchParams.get("phone") ?? "");
   const [condominio, setCondominio] = useState("");
   const [bairro, setBairro] = useState("");
   const [metargemRaw, setMetragemRaw] = useState("");
@@ -262,9 +268,35 @@ export default function NewBudgetRequest() {
       const manualTotal = isImport ? parseManualTotal() : null;
       const publicId = isImport ? crypto.randomUUID().replace(/-/g, "").slice(0, 12) : null;
 
+      // Resolve / cria o cliente vinculado (se ainda não veio do CRM)
+      let resolvedClientId = linkedClientId;
+      if (!resolvedClientId) {
+        try {
+          const c = await upsertClientByContact({
+            name: clientName.trim(),
+            email: clientEmail.trim() || null,
+            phone: clientPhone.trim() || null,
+            createdBy: user.id,
+            extra: {
+              city: city.trim() || null,
+              bairro: bairro.trim() || null,
+              condominio_default: condominio.trim() || null,
+              property_type_default: propertyType || null,
+              location_type_default: locationType || null,
+              commercial_owner_id: commercialOwnerId || user.id,
+            },
+          });
+          resolvedClientId = c.id;
+          setLinkedClientId(c.id);
+        } catch (clientErr) {
+          console.error("[NewBudgetRequest] upsertClient falhou (seguindo sem vincular):", clientErr);
+        }
+      }
+
       const { data: inserted, error } = await supabase
         .from("budgets")
         .insert({
+          client_id: resolvedClientId,
           client_name: clientName.trim(),
           project_name: projectName || clientName.trim(),
           lead_email: clientEmail.trim() || null,
