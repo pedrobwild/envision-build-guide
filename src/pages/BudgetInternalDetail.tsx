@@ -518,8 +518,8 @@ export default function BudgetInternalDetail() {
     .filter(Boolean)
     .join(" · ");
 
-  // Probabilidade derivada (heurística simples baseada em estágio)
-  const probability = Math.min(95, Math.max(10, pipeline.index * 18 + (pipeline.isLost ? 0 : 10)));
+  // Probabilidade vinda do banco (com fallback heurístico)
+  const probability = budget.win_probability ?? Math.min(95, Math.max(10, pipeline.index * 18 + (pipeline.isLost ? 0 : 10)));
 
   return (
     <div className="min-h-screen bg-background">
