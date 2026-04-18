@@ -960,6 +960,51 @@ export type Database = {
           },
         ]
       }
+      operations_insights_history: {
+        Row: {
+          created_at: string
+          executive_summary: string
+          generated_at: string
+          generated_by: string | null
+          health_diagnosis: string
+          health_score: number | null
+          id: string
+          insights: Json
+          kpis_snapshot: Json
+          period_days: number
+          period_from: string
+          period_to: string
+        }
+        Insert: {
+          created_at?: string
+          executive_summary: string
+          generated_at?: string
+          generated_by?: string | null
+          health_diagnosis: string
+          health_score?: number | null
+          id?: string
+          insights?: Json
+          kpis_snapshot?: Json
+          period_days: number
+          period_from: string
+          period_to: string
+        }
+        Update: {
+          created_at?: string
+          executive_summary?: string
+          generated_at?: string
+          generated_by?: string | null
+          health_diagnosis?: string
+          health_score?: number | null
+          id?: string
+          insights?: Json
+          kpis_snapshot?: Json
+          period_days?: number
+          period_from?: string
+          period_to?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
