@@ -241,6 +241,7 @@ export default function CommercialDashboard() {
       .order("created_at", { ascending: false });
     if (!isAdmin) {
       const commercialRelevantStatuses = [
+        "mql", "qualificacao", "lead", "validacao_briefing",
         "novo", "requested",
         "ready_for_review", "delivered_to_sales", "sent_to_client",
         "revision_requested", "minuta_solicitada", "contrato_fechado", "lost"
