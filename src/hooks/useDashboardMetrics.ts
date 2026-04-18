@@ -773,6 +773,79 @@ export function computeDashboardMetrics(
     return ACTIVE_STATUSES.includes(b.internal_status) && b.due_at != null && new Date(b.due_at) < wTo && new Date(b.due_at) >= wFrom;
   });
 
+  // ─── Throughput (deliveries per week) ───
+  const periodWeeks = Math.max(1, (range.to.getTime() - range.from.getTime()) / weekMs);
+  const throughputPerWeek = deliveredInPeriod.length / periodWeeks;
+  const prevThroughput = deliveredInPrev.length / periodWeeks;
+  const throughputTrend: "up" | "down" | "stable" =
+    throughputPerWeek > prevThroughput * 1.05 ? "up"
+    : throughputPerWeek < prevThroughput * 0.95 ? "down"
+    : "stable";
+  const throughput: ThroughputMetric = {
+    perWeek: deliveredInPeriod.length > 0 ? Math.round(throughputPerWeek * 10) / 10 : null,
+    trend: deliveredInPrev.length > 0 ? throughputTrend : null,
+    weeklyHistory: sparkDelivered,
+  };
+
+  // ─── Stage efficiency (avg days items spend in each active stage) ───
+  const STAGE_THRESHOLDS: Record<string, { fast: number; normal: number; slow: number }> = {
+    novo: { fast: 1, normal: 2, slow: 4 },
+    triage: { fast: 1, normal: 2, slow: 4 },
+    assigned: { fast: 1, normal: 3, slow: 5 },
+    in_progress: { fast: 2, normal: 5, slow: 8 },
+    waiting_info: { fast: 2, normal: 5, slow: 10 },
+    ready_for_review: { fast: 1, normal: 2, slow: 4 },
+    delivered_to_sales: { fast: 1, normal: 3, slow: 7 },
+  };
+  const stageEfficiency: StageEfficiency[] = Object.keys(STAGE_THRESHOLDS).map((stage) => {
+    const items = backlogBudgets.filter((b) => b.internal_status === stage);
+    const avgDays = items.length > 0
+      ? items.reduce((sum, b) => sum + daysSince(b.updated_at), 0) / items.length
+      : 0;
+    const t = STAGE_THRESHOLDS[stage];
+    const efficiency: StageEfficiency["efficiency"] =
+      avgDays >= t.slow ? "stalled"
+      : avgDays >= t.normal ? "slow"
+      : avgDays >= t.fast ? "normal"
+      : "fast";
+    return { stage, label: STATUS_LABELS[stage] || stage, avgDaysInStage: Math.round(avgDays * 10) / 10, count: items.length, efficiency };
+  }).filter((s) => s.count > 0);
+
+  // ─── SLA forecast (predict breaches in next 7 days) ───
+  const next7d = backlogBudgets.filter((b) => {
+    if (!b.due_at) return false;
+    const h = hoursUntil(b.due_at);
+    return h > 0 && h <= 168;
+  });
+  const breachRate = backlogBudgets.length > 0 ? overdueList.length / backlogBudgets.length : 0;
+  const slaForecast: SlaForecast = {
+    predictedBreaches7d: Math.round(next7d.length * Math.max(breachRate, 0.1)),
+    riskBudgets: next7d.length,
+    confidence: backlogBudgets.length >= 10 ? "high" : backlogBudgets.length >= 4 ? "medium" : "low",
+  };
+
+  // ─── Composite health score (0–100) ───
+  // Weights: SLA 30%, lead time 20%, conversion 20%, margin 15%, backlog pressure 15%
+  const slaScore = sla;
+  const leadScore = avgLT === null ? 70 : Math.max(0, 100 - (avgLT - 1) * 25);
+  const convScore = conversion === null ? 60 : Math.min(100, conversion * 2.5);
+  const marginScore = margin === null ? 60 : Math.min(100, Math.max(0, margin * 3));
+  const backlogScore = Math.max(0, 100 - backlogCount * 5);
+  const healthValue = Math.round(
+    slaScore * 0.30 + leadScore * 0.20 + convScore * 0.20 + marginScore * 0.15 + backlogScore * 0.15
+  );
+  const healthScore: HealthScore = {
+    value: healthValue,
+    status: healthValue >= 85 ? "excellent" : healthValue >= 70 ? "healthy" : healthValue >= 50 ? "warning" : "critical",
+    factors: [
+      { label: "SLA", weight: 30, contribution: Math.round(slaScore * 0.30) },
+      { label: "Lead time", weight: 20, contribution: Math.round(leadScore * 0.20) },
+      { label: "Conversão", weight: 20, contribution: Math.round(convScore * 0.20) },
+      { label: "Margem", weight: 15, contribution: Math.round(marginScore * 0.15) },
+      { label: "Backlog", weight: 15, contribution: Math.round(backlogScore * 0.15) },
+    ],
+  };
+
   return {
     received: { ...makeKpi(receivedCurrent, receivedPrev), sparkline: sparkReceived },
     backlog: { ...makeKpi(backlogCount, prevBacklogSnapshot > 0 ? prevBacklogSnapshot : null), sparkline: sparkBacklog },
@@ -797,5 +870,9 @@ export function computeDashboardMetrics(
     agingBuckets,
     slaRiskItems,
     stalledByStage,
+    throughput,
+    stageEfficiency,
+    healthScore,
+    slaForecast,
   };
 }
