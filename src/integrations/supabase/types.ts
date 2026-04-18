@@ -1071,6 +1071,57 @@ export type Database = {
           },
         ]
       }
+      operations_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          message: string
+          metadata: Json
+          metric_name: string | null
+          metric_value: number | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          snapshot_date: string | null
+          threshold_value: number | null
+          title: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          metric_name?: string | null
+          metric_value?: number | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          snapshot_date?: string | null
+          threshold_value?: number | null
+          title: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          metric_name?: string | null
+          metric_value?: number | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          snapshot_date?: string | null
+          threshold_value?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
       operations_insights_history: {
         Row: {
           created_at: string
@@ -1340,11 +1391,27 @@ export type Database = {
           sample_size: number
         }[]
       }
+      calc_time_in_stage: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          avg_days: number
+          median_days: number
+          p90_days: number
+          sample_size: number
+          stage: string
+        }[]
+      }
       can_access_budget: {
         Args: { _budget_id: string; _user_id: string }
         Returns: boolean
       }
+      check_and_create_alerts: { Args: never; Returns: number }
       cleanup_old_snapshots: { Args: never; Returns: number }
+      compare_snapshots: {
+        Args: { p_date_a: string; p_date_b: string }
+        Returns: Json
+      }
+      get_dashboard_summary: { Args: never; Returns: Json }
       get_public_budget: { Args: { p_public_id: string }; Returns: Json }
       has_role: {
         Args: {
