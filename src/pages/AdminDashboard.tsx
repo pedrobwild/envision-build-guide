@@ -121,9 +121,11 @@ export default function AdminDashboard() {
 
   const metrics = useMemo(() => {
     if (loading) return null;
-    // Always compute metrics, even with zero budgets — shows legit zeros instead of empty dashes.
     return computeDashboardMetrics(filteredBudgets, dateRange, profiles, deliveryTimestamps);
   }, [filteredBudgets, dateRange, profiles, deliveryTimestamps, loading]);
+
+  // AI-generated operational insights (replaces static AlertsPanel)
+  const aiInsights = useOperationsInsights(metrics, dateRange, !loading && !!metrics);
 
   // Budget creation
   const createBudget = async () => {
