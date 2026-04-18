@@ -301,6 +301,7 @@ export function computeDashboardMetrics(
     const deliveredDate = getDeliveredAt(b);
     return deliveredDate && isInRange(deliveredDate, range) && DELIVERED_STATUSES.includes(b.internal_status);
   });
+  // Ceiling em dias: 0-24h => 1 dia, 25-48h => 2 dias, e assim por diante.
   const calcLeadTimes = (list: BudgetWithSections[]) =>
     list
       .map((b) => {
@@ -308,7 +309,9 @@ export function computeDashboardMetrics(
         if (!b.created_at || !deliveredDate) return 0;
         const start = new Date(b.created_at).getTime();
         const end = new Date(deliveredDate).getTime();
-        return (end - start) / (1000 * 60 * 60 * 24);
+        const hours = (end - start) / (1000 * 60 * 60);
+        if (hours <= 0) return 0;
+        return Math.ceil(hours / 24);
       })
       .filter((lt) => lt > 0 && lt < 365);
   const leadTimes = calcLeadTimes(deliveredInPeriod);
