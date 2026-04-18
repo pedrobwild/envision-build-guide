@@ -62,7 +62,7 @@ export function useUpsertRoutingRule() {
       };
       const { data, error } = await supabase
         .from("lead_routing_rules")
-        .upsert(payload)
+        .upsert(payload, { onConflict: "id" })
         .select()
         .single();
       if (error) throw error;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Plus,
   Pencil,
@@ -255,13 +255,11 @@ function RuleDialog({
 }) {
   const [form, setForm] = useState(initial);
 
-  // Reset state when dialog opens with a new rule
-  const [openKey, setOpenKey] = useState(0);
-  if (open && openKey === 0) {
-    setForm(initial);
-    setOpenKey(1);
-  }
-  if (!open && openKey === 1) setOpenKey(0);
+  // Reset form whenever dialog opens (with the latest initial)
+  useEffect(() => {
+    if (open) setForm(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
