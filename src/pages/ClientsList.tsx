@@ -97,7 +97,7 @@ export default function ClientsList() {
 
   const summary = useMemo(() => {
     const total = clients.length;
-    const active = clients.filter((c) => c.status === "active" || c.status === "won").length;
+    const active = clients.filter((c) => c.status === "cliente").length;
     const pipelineValue = clients.reduce(
       (acc, c) => acc + (c.stats?.pipeline_value ?? 0),
       0,

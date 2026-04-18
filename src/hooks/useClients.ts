@@ -8,17 +8,14 @@ export type ClientInsert = Database["public"]["Tables"]["clients"]["Insert"];
 export type ClientUpdate = Database["public"]["Tables"]["clients"]["Update"];
 export type ClientStats = Database["public"]["Views"]["client_stats"]["Row"];
 
-export type ClientStatus = "lead" | "active" | "inactive" | "lost" | "won";
+export type ClientStatus = "lead" | "cliente";
 
 export const CLIENT_STATUSES: Record<
   ClientStatus,
   { label: string; color: string }
 > = {
   lead: { label: "Lead", color: "bg-blue-100 text-blue-800" },
-  active: { label: "Ativo", color: "bg-emerald-100 text-emerald-800" },
-  won: { label: "Fechado", color: "bg-green-100 text-green-800" },
-  inactive: { label: "Inativo", color: "bg-gray-100 text-gray-700" },
-  lost: { label: "Perdido", color: "bg-red-100 text-red-700" },
+  cliente: { label: "Cliente", color: "bg-emerald-100 text-emerald-800" },
 };
 
 export const CLIENT_SOURCES: Record<string, string> = {
