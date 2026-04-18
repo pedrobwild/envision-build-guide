@@ -61,8 +61,6 @@ const DASHBOARD_ITEM: NavItem = {
 const COMERCIAL_ITEMS: NavItem[] = [
   { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
   { title: "Clientes", url: "/admin/crm", icon: Users, roles: ["admin", "comercial"] },
-  { title: "Leads (Integrações)", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial"] },
-  { title: "Regras de Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
   { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"], actionUrl: "/admin/solicitacoes/nova", actionLabel: "Nova solicitação" },
 ];
 
@@ -84,6 +82,8 @@ const ANALISE_ITEMS: NavItem[] = [
 ];
 
 const FERRAMENTAS_ITEMS: NavItem[] = [
+  { title: "Leads (Integrações)", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial"] },
+  { title: "Regras de Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
   { title: "Avaliação QA", url: "/qa", icon: Shield, roles: ["admin"] },
   { title: "Sistema", url: "/admin/sistema", icon: Wrench, roles: ["admin"] },
 ];
