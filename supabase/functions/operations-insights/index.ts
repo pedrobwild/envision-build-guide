@@ -3,7 +3,10 @@
 // (prioritized alerts, root-cause hypotheses, recommendations, health score).
 //
 // Uses Lovable AI Gateway with GPT-5 (reasoning enabled) and structured tool calling.
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 interface MetricsSnapshot {
   period: { from: string; to: string; days: number };
