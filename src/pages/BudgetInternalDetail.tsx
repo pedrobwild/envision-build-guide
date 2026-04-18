@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +10,9 @@ import { CommentQuickTemplates } from "@/components/editor/CommentQuickTemplates
 import { Separator } from "@/components/ui/separator";
 import { ModuleCard } from "@/components/demanda/ModuleCard";
 import { PipelineProgress, type PipelineStage } from "@/components/demanda/PipelineProgress";
+import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
+import { useBudgetHub } from "@/hooks/useBudgetHub";
+import { formatDistanceToNow } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -90,6 +93,10 @@ interface BudgetDetail {
   sequential_code?: string | null;
   manual_total: number | null;
   estimated_weeks: number | null;
+  pipeline_stage: string | null;
+  win_probability: number | null;
+  expected_close_at: string | null;
+  lead_source: string | null;
 }
 
 interface EventRow {
@@ -170,6 +177,7 @@ export default function BudgetInternalDetail() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [budget, setBudget] = useState<BudgetDetail | null>(null);
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -185,8 +193,25 @@ export default function BudgetInternalDetail() {
   const [budgetTotal, setBudgetTotal] = useState<number | null>(null);
   const [itemsCount, setItemsCount] = useState<number>(0);
   const [sectionsCount, setSectionsCount] = useState<number>(0);
-  const [activeModule, setActiveModule] = useState<ModuleKey | null>(null);
-  const [lostReason, setLostReason] = useState("");
+  const [activeModule, setActiveModule] = useState<ModuleKey | null>(
+    (searchParams.get("module") as ModuleKey) ?? null
+  );
+  const [lostDialogOpen, setLostDialogOpen] = useState(false);
+  const hub = useBudgetHub(budgetId);
+
+  // Sync activeModule with URL ?module=
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (activeModule) {
+      next.set("module", activeModule);
+    } else {
+      next.delete("module");
+    }
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeModule]);
 
   const getProfileName = useCallback(
     (id: string | null) => {
@@ -206,7 +231,7 @@ export default function BudgetInternalDetail() {
         supabase
           .from("budgets")
           .select(
-            "id, project_name, client_name, client_phone, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks"
+            "id, project_name, client_name, client_phone, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source"
           )
           .eq("id", budgetId)
           .single(),
@@ -409,14 +434,45 @@ export default function BudgetInternalDetail() {
     toast.success("Comentário adicionado.");
   }
 
-  async function handleMarkLost() {
-    if (!lostReason.trim()) {
-      toast.error("Informe o motivo da perda.");
+  async function handleMarkLost(payload: LostReasonPayload) {
+    if (!budget || !user) return;
+
+    const { error: lostErr } = await supabase
+      .from("budget_lost_reasons")
+      .upsert(
+        {
+          budget_id: budget.id,
+          reason_category: payload.reason_category,
+          reason_detail: payload.reason_detail || null,
+          competitor_name: payload.competitor_name ?? null,
+          competitor_value: payload.competitor_value ?? null,
+          created_by: user.id,
+          lost_at: new Date().toISOString(),
+        },
+        { onConflict: "budget_id" }
+      );
+
+    if (lostErr) {
+      toast.error(`Erro ao registrar motivo: ${lostErr.message}`);
       return;
     }
-    await changeStatus("lost", lostReason.trim());
-    setLostReason("");
-    setActiveModule(null);
+
+    const categoryLabels: Record<string, string> = {
+      preco: "Preço",
+      escopo: "Escopo",
+      concorrente: "Concorrente",
+      timing: "Timing",
+      sem_retorno: "Sem retorno",
+      desistencia: "Desistência",
+      outro: "Outro",
+    };
+    const noteParts = [`Motivo: ${categoryLabels[payload.reason_category]}`];
+    if (payload.competitor_name) noteParts.push(`Concorrente: ${payload.competitor_name}`);
+    if (payload.competitor_value) noteParts.push(`Valor concorrência: ${formatBRL(payload.competitor_value)}`);
+    if (payload.reason_detail) noteParts.push(payload.reason_detail);
+
+    await changeStatus("lost", noteParts.join(" · "));
+    toast.success("Negócio marcado como perdido.");
   }
 
   const pipeline = useMemo(
@@ -462,8 +518,8 @@ export default function BudgetInternalDetail() {
     .filter(Boolean)
     .join(" · ");
 
-  // Probabilidade derivada (heurística simples baseada em estágio)
-  const probability = Math.min(95, Math.max(10, pipeline.index * 18 + (pipeline.isLost ? 0 : 10)));
+  // Probabilidade vinda do banco (com fallback heurístico)
+  const probability = budget.win_probability ?? Math.min(95, Math.max(10, pipeline.index * 18 + (pipeline.isLost ? 0 : 10)));
 
   return (
     <div className="min-h-screen bg-background">
@@ -735,8 +791,7 @@ export default function BudgetInternalDetail() {
             destructive
             disabled={budget.internal_status === "lost"}
             badgeRight={budget.internal_status === "lost" ? { label: "perdida", tone: "destructive" } : undefined}
-            active={activeModule === "lost"}
-            onClick={() => setActiveModule(activeModule === "lost" ? null : "lost")}
+            onClick={() => setLostDialogOpen(true)}
           />
         </section>
 
@@ -917,28 +972,9 @@ export default function BudgetInternalDetail() {
               {activeModule === "versions" && <VersionHistoryPanel budgetId={budget.id} />}
 
               {activeModule === "lost" && (
-                <div className="max-w-xl">
-                  <p className="text-sm text-muted-foreground font-body mb-3">
-                    Registre o motivo da perda. Esta nota será adicionada ao histórico e o status mudará para
-                    <strong className="text-destructive"> Perdido</strong>.
-                  </p>
-                  <Textarea
-                    placeholder="Ex: Cliente optou por concorrente com prazo menor; preço acima do orçado; mudança de escopo..."
-                    value={lostReason}
-                    onChange={(e) => setLostReason(e.target.value)}
-                    rows={4}
-                    maxLength={2000}
-                  />
-                  <div className="flex gap-2 mt-3 justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => setActiveModule(null)}>
-                      Cancelar
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={handleMarkLost} disabled={!lostReason.trim()}>
-                      <XCircle className="h-3.5 w-3.5 mr-1.5" />
-                      Marcar como perdida
-                    </Button>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground font-body">
+                  Use o botão "Marcar como perdida" no card para abrir o formulário estruturado.
+                </p>
               )}
             </div>
           </section>
@@ -969,6 +1005,12 @@ export default function BudgetInternalDetail() {
         targetStatus={blockingTarget}
         onConfirm={handleBlockingConfirm}
         onCancel={() => setBlockingTarget(null)}
+      />
+
+      <LostReasonDialog
+        open={lostDialogOpen}
+        onOpenChange={setLostDialogOpen}
+        onConfirm={handleMarkLost}
       />
     </div>
   );
