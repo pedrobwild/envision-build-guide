@@ -150,11 +150,13 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(CLIENT_STATUSES).map(([key, { label }]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
+                  {Object.entries(CLIENT_STATUSES)
+                    .filter(([key]) => key !== "mql")
+                    .map(([key, { label }]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </Field>

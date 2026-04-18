@@ -36,6 +36,7 @@ import { ptBR } from "date-fns/locale";
 import {
   CLIENT_SOURCES,
   CLIENT_STATUSES,
+  getEffectiveClientStatus,
   useClient,
   useClientBudgets,
   useClientStats,
@@ -100,7 +101,7 @@ export default function ClientDetail() {
     );
   }
 
-  const sCfg = CLIENT_STATUSES[(client.status as ClientStatus) ?? "lead"];
+  const sCfg = CLIENT_STATUSES[getEffectiveClientStatus(client, stats ?? null)];
 
   return (
     <div className="p-6 max-w-[1200px] mx-auto space-y-6">

@@ -8,15 +8,36 @@ export type ClientInsert = Database["public"]["Tables"]["clients"]["Insert"];
 export type ClientUpdate = Database["public"]["Tables"]["clients"]["Update"];
 export type ClientStats = Database["public"]["Views"]["client_stats"]["Row"];
 
-export type ClientStatus = "lead" | "cliente";
+export type ClientStatus = "lead" | "cliente" | "mql";
 
 export const CLIENT_STATUSES: Record<
   ClientStatus,
   { label: string; color: string }
 > = {
+  mql: { label: "MQL", color: "bg-slate-100 text-slate-700" },
   lead: { label: "Lead", color: "bg-blue-100 text-blue-800" },
   cliente: { label: "Cliente", color: "bg-emerald-100 text-emerald-800" },
 };
+
+/**
+ * Status efetivo exibido no módulo de clientes.
+ * - `cliente` se houver contrato fechado (status persistido pelo trigger DB)
+ * - `mql` se o orçamento mais recente do cliente está em etapa inicial do funil
+ *   (mql ou qualificacao)
+ * - `lead` caso contrário
+ */
+const MQL_STAGE_STATUSES = new Set(["mql", "qualificacao"]);
+
+export function getEffectiveClientStatus(
+  client: Pick<Client, "status">,
+  stats: Pick<ClientStats, "latest_internal_status"> | null | undefined,
+): ClientStatus {
+  const persisted = (client.status as ClientStatus) ?? "lead";
+  if (persisted === "cliente") return "cliente";
+  const latest = stats?.latest_internal_status;
+  if (latest && MQL_STAGE_STATUSES.has(latest)) return "mql";
+  return persisted;
+}
 
 export const CLIENT_SOURCES: Record<string, string> = {
   indicacao: "Indicação",
@@ -62,8 +83,17 @@ export function useClients(filters: ClientFilters = {}) {
           `name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,document.ilike.%${s}%`,
         );
       }
-      if (filters.status && filters.status.length > 0) {
-        query = query.in("status", filters.status);
+      // Filtros de status: 'cliente' e 'lead' batem com o DB; 'mql' é derivado e
+      // aplicado client-side abaixo (pois depende do orçamento mais recente).
+      const dbStatusFilter = filters.status?.filter((s) => s === "cliente" || s === "lead");
+      const wantsMql = filters.status?.includes("mql") ?? false;
+      const wantsLead = filters.status?.includes("lead") ?? false;
+
+      if (dbStatusFilter && dbStatusFilter.length > 0 && !wantsMql) {
+        query = query.in("status", dbStatusFilter);
+      } else if (wantsMql && !wantsLead && !filters.status?.includes("cliente")) {
+        // Apenas MQL: precisamos de clientes em status 'lead' no DB para depois filtrar derivado.
+        query = query.eq("status", "lead");
       }
       if (filters.ownerId) {
         query = query.eq("commercial_owner_id", filters.ownerId);
@@ -96,10 +126,17 @@ export function useClients(filters: ClientFilters = {}) {
         if (s.client_id) statsMap.set(s.client_id, s as ClientStats);
       }
 
-      return list.map((c) => ({
+      const enriched: ClientRowWithStats[] = list.map((c) => ({
         ...c,
         stats: statsMap.get(c.id) ?? null,
       }));
+
+      // Aplica filtro derivado de MQL/Lead quando solicitado
+      if (filters.status && filters.status.length > 0) {
+        const wanted = new Set(filters.status);
+        return enriched.filter((c) => wanted.has(getEffectiveClientStatus(c, c.stats)));
+      }
+      return enriched;
     },
     staleTime: 1000 * 30,
   });
