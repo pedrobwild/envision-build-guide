@@ -12,6 +12,7 @@ import { ModuleCard } from "@/components/demanda/ModuleCard";
 import { PipelineProgress, type PipelineStage } from "@/components/demanda/PipelineProgress";
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { useBudgetHub } from "@/hooks/useBudgetHub";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { formatDistanceToNow } from "date-fns";
 import {
   Select,
@@ -730,7 +731,7 @@ export default function BudgetInternalDetail() {
             description={budget.briefing || budget.demand_context || "Sem briefing cadastrado ainda."}
             meta={links.length > 0 ? `${links.length} ${links.length === 1 ? "link" : "links"}` : undefined}
             active={activeModule === "briefing"}
-            onClick={() => setActiveModule(activeModule === "briefing" ? null : "briefing")}
+            onClick={() => setActiveModule("briefing")}
           />
           <ModuleCard
             icon={ClipboardList}
@@ -738,30 +739,50 @@ export default function BudgetInternalDetail() {
             description={`${sectionsCount} seções · ${itemsCount} itens · ${formatBRL(totalDisplay)}`}
             badge={budget.public_id ? { label: "publicado", tone: "info" } : { label: "rascunho", tone: "neutral" }}
             active={activeModule === "budget"}
-            onClick={() => setActiveModule(activeModule === "budget" ? null : "budget")}
+            onClick={() => setActiveModule("budget")}
           />
           <ModuleCard
             icon={Activity}
             title="Atividades"
-            description={`${events.length} eventos · ${comments.length} notas internas`}
-            meta={events.length > 0 ? `Última ${format(new Date(events[events.length - 1].created_at), "dd/MM HH:mm")}` : undefined}
+            description={
+              hub.data?.pendingActivitiesCount
+                ? `${hub.data.pendingActivitiesCount} pendente${hub.data.pendingActivitiesCount === 1 ? "" : "s"} · ${events.length} eventos`
+                : `${events.length} eventos · ${comments.length} notas internas`
+            }
+            meta={
+              hub.data?.nextActivityDate
+                ? `Próxima ${format(new Date(hub.data.nextActivityDate), "dd/MM HH:mm")}`
+                : events.length > 0
+                ? `Última ${format(new Date(events[events.length - 1].created_at), "dd/MM HH:mm")}`
+                : undefined
+            }
             badgeRight={comments.length > 0 ? { label: `${comments.length}`, tone: "neutral" } : undefined}
             active={activeModule === "activities"}
-            onClick={() => setActiveModule(activeModule === "activities" ? null : "activities")}
+            onClick={() => setActiveModule("activities")}
           />
           <ModuleCard
             icon={Video}
             title="Reuniões"
-            description="Integração com gravações e transcrições."
+            description={
+              hub.data?.meetingsCount
+                ? `${hub.data.meetingsCount} reunião${hub.data.meetingsCount === 1 ? "" : "ões"} registrada${hub.data.meetingsCount === 1 ? "" : "s"}`
+                : "Gravações e transcrições (Elephan.ia)."
+            }
             badgeRight={{ label: "Em breve", tone: "info" }}
-            disabled
+            active={activeModule === "meetings"}
+            onClick={() => setActiveModule("meetings")}
           />
           <ModuleCard
             icon={MessageCircle}
             title="Conversas"
-            description="WhatsApp e canais de atendimento."
+            description={
+              hub.data?.conversationsCount
+                ? `${hub.data.conversationsCount} conversa${hub.data.conversationsCount === 1 ? "" : "s"}${hub.data.lastConversationAt ? ` · última ${format(new Date(hub.data.lastConversationAt), "dd/MM HH:mm")}` : ""}`
+                : "WhatsApp e canais de atendimento (Digisac)."
+            }
             badgeRight={{ label: "Em breve", tone: "info" }}
-            disabled
+            active={activeModule === "conversations"}
+            onClick={() => setActiveModule("conversations")}
           />
           <ModuleCard
             icon={ImageIcon}
@@ -775,210 +796,251 @@ export default function BudgetInternalDetail() {
             description={budget.client_name}
             meta={budget.client_phone ?? undefined}
             active={activeModule === "client"}
-            onClick={() => setActiveModule(activeModule === "client" ? null : "client")}
+            onClick={() => setActiveModule("client")}
           />
           <ModuleCard
             icon={History}
             title="Versões & PDFs"
             description="Histórico de versões publicadas e em ajuste."
             active={activeModule === "versions"}
-            onClick={() => setActiveModule(activeModule === "versions" ? null : "versions")}
+            onClick={() => setActiveModule("versions")}
           />
           <ModuleCard
             icon={XCircle}
-            title="Marcar como perdida"
-            description="Registrar motivo estruturado · concorrente, preço, escopo…"
+            title={budget.internal_status === "lost" ? "Negócio perdido" : "Marcar como perdida"}
+            description={
+              hub.data?.lostReason
+                ? `${hub.data.lostReason.reason_category}${hub.data.lostReason.competitor_name ? ` · ${hub.data.lostReason.competitor_name}` : ""}`
+                : "Registrar motivo estruturado · concorrente, preço, escopo…"
+            }
             destructive
-            disabled={budget.internal_status === "lost"}
             badgeRight={budget.internal_status === "lost" ? { label: "perdida", tone: "destructive" } : undefined}
-            onClick={() => setLostDialogOpen(true)}
+            onClick={() => {
+              if (budget.internal_status === "lost") {
+                setActiveModule("lost");
+              } else {
+                setLostDialogOpen(true);
+              }
+            }}
           />
         </section>
 
-        {/* DRILL-DOWN PANEL */}
-        {activeModule && (
-          <section className="mt-8 rounded-2xl border bg-card overflow-hidden">
-            <div className="p-5 flex items-center justify-between border-b border-border">
-              <div>
-                <h3 className="text-base font-display font-semibold text-foreground">
-                  {moduleTitles[activeModule]}
-                </h3>
-                <p className="text-xs text-muted-foreground font-body mt-0.5">
-                  {moduleSubtitles[activeModule]}
-                </p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setActiveModule(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+        {/* DRILL-DOWN DRAWER */}
+        <Sheet open={!!activeModule} onOpenChange={(o) => !o && setActiveModule(null)}>
+          <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0">
+            {activeModule && (
+              <>
+                <SheetHeader className="p-6 border-b border-border bg-card sticky top-0 z-10">
+                  <SheetTitle className="text-base font-display font-semibold text-foreground">
+                    {moduleTitles[activeModule]}
+                  </SheetTitle>
+                  <SheetDescription className="text-xs text-muted-foreground font-body">
+                    {moduleSubtitles[activeModule]}
+                  </SheetDescription>
+                </SheetHeader>
 
-            <div className="p-5">
-              {activeModule === "briefing" && (
-                <BriefingPanel
-                  briefing={budget.briefing}
-                  demandContext={budget.demand_context}
-                  internalNotes={budget.internal_notes}
-                  links={links as string[]}
-                />
-              )}
+                <div className="p-6">
+                  {activeModule === "briefing" && (
+                    <BriefingPanel
+                      briefing={budget.briefing}
+                      demandContext={budget.demand_context}
+                      internalNotes={budget.internal_notes}
+                      links={links as string[]}
+                    />
+                  )}
 
-              {activeModule === "budget" && <BudgetBreakdownPanel budgetId={budget.id} />}
+                  {activeModule === "budget" && <BudgetBreakdownPanel budgetId={budget.id} />}
 
-              {activeModule === "activities" && (
-                <div className="space-y-6">
-                  <BudgetEventsTimeline events={events} getProfileName={getProfileName} />
-                  <Separator />
-                  <div>
-                    <h4 className="text-sm font-display font-semibold mb-3 flex items-center gap-2">
-                      💬 Notas Internas ({comments.length})
-                    </h4>
-                    <div className="space-y-3 mb-4">
-                      {comments.length === 0 && (
-                        <p className="text-sm text-muted-foreground font-body text-center py-4">
-                          Nenhuma nota interna ainda. Adicione a primeira abaixo.
-                        </p>
-                      )}
-                      {comments.map((c) => (
-                        <div key={c.id} className="flex gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <User className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-sm font-medium font-body text-foreground">
-                                {getProfileName(c.user_id)}
-                              </span>
-                              <span className="text-xs text-muted-foreground font-body">
-                                {format(new Date(c.created_at), "dd/MM HH:mm")}
-                              </span>
+                  {activeModule === "activities" && (
+                    <div className="space-y-6">
+                      <BudgetEventsTimeline events={events} getProfileName={getProfileName} />
+                      <Separator />
+                      <div>
+                        <h4 className="text-sm font-display font-semibold mb-3 flex items-center gap-2">
+                          💬 Notas Internas ({comments.length})
+                        </h4>
+                        <div className="space-y-3 mb-4">
+                          {comments.length === 0 && (
+                            <p className="text-sm text-muted-foreground font-body text-center py-4">
+                              Nenhuma nota interna ainda. Adicione a primeira abaixo.
+                            </p>
+                          )}
+                          {comments.map((c) => (
+                            <div key={c.id} className="flex gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <User className="h-4 w-4 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <span className="text-sm font-medium font-body text-foreground">
+                                    {getProfileName(c.user_id)}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground font-body">
+                                    {format(new Date(c.created_at), "dd/MM HH:mm")}
+                                  </span>
+                                </div>
+                                <p className="text-sm font-body text-foreground whitespace-pre-wrap">{c.body}</p>
+                              </div>
                             </div>
-                            <p className="text-sm font-body text-foreground whitespace-pre-wrap">{c.body}</p>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+
+                        <CommentQuickTemplates value={newComment} onChange={setNewComment} textareaRef={commentTextareaRef} />
+                        <div className="flex gap-2 mt-2">
+                          <Textarea
+                            ref={commentTextareaRef}
+                            placeholder="Escreva uma nota interna... (digite / para templates)"
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            rows={2}
+                            className="flex-1 text-sm"
+                            maxLength={2000}
+                          />
+                          <Button
+                            size="icon"
+                            disabled={!newComment.trim() || submitting}
+                            onClick={addComment}
+                            className="shrink-0 self-end"
+                          >
+                            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
+                  )}
 
-                    <CommentQuickTemplates value={newComment} onChange={setNewComment} textareaRef={commentTextareaRef} />
-                    <div className="flex gap-2 mt-2">
-                      <Textarea
-                        ref={commentTextareaRef}
-                        placeholder="Escreva uma nota interna... (digite / para templates)"
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        rows={2}
-                        className="flex-1 text-sm"
-                        maxLength={2000}
-                      />
-                      <Button
-                        size="icon"
-                        disabled={!newComment.trim() || submitting}
-                        onClick={addComment}
-                        className="shrink-0 self-end"
-                      >
-                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  {activeModule === "meetings" && (
+                    <EmptyIntegration
+                      icon={Video}
+                      title="Reuniões via Elephan.ia"
+                      description="Quando integrarmos o Elephan.ia, todas as reuniões com gravação, transcrição e action items aparecerão aqui automaticamente, vinculadas a esta demanda."
+                      bullets={[
+                        "Transcrição automática completa",
+                        "Action items extraídos por IA",
+                        "Replay de áudio sincronizado",
+                      ]}
+                    />
+                  )}
 
-              {activeModule === "client" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
-                      Cliente & Imóvel
-                    </h4>
-                    <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Nome" value={budget.client_name} />
-                    {budget.client_phone && (
-                      <InfoRow icon={<MessageCircle className="h-3.5 w-3.5" />} label="Telefone" value={budget.client_phone} />
-                    )}
-                    {budget.property_type && (
-                      <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Tipo" value={budget.property_type} />
-                    )}
-                    {locationParts && (
-                      <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Local" value={locationParts} />
-                    )}
-                    {budget.condominio && (
-                      <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Condomínio" value={budget.condominio} />
-                    )}
-                    {budget.unit && (
-                      <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Unidade" value={budget.unit} />
-                    )}
-                    {budget.metragem && (
-                      <InfoRow icon={<Ruler className="h-3.5 w-3.5" />} label="Metragem" value={budget.metragem} />
-                    )}
-                  </div>
+                  {activeModule === "conversations" && (
+                    <EmptyIntegration
+                      icon={MessageCircle}
+                      title="Conversas via Digisac"
+                      description="Quando integrarmos o Digisac, todas as conversas de WhatsApp com este lead serão centralizadas aqui, com histórico completo e respostas em tempo real."
+                      bullets={[
+                        "Histórico unificado de WhatsApp",
+                        "Notificações em tempo real",
+                        "Respostas direto da plataforma",
+                      ]}
+                    />
+                  )}
 
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
-                      Equipe & Datas
-                    </h4>
-                    <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Comercial" value={getProfileName(budget.commercial_owner_id)} />
-                    <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Orçamentista" value={getProfileName(budget.estimator_owner_id)} />
-                    <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Criado por" value={getProfileName(budget.created_by)} />
-                    {budget.created_at && (
-                      <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Criado" value={format(new Date(budget.created_at), "dd/MM/yyyy HH:mm")} />
-                    )}
-                    {budget.updated_at && (
-                      <InfoRow icon={<Clock className="h-3.5 w-3.5" />} label="Atualizado" value={format(new Date(budget.updated_at), "dd/MM/yyyy HH:mm")} />
-                    )}
-                    {budget.due_at && (
-                      <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo" value={format(new Date(budget.due_at), "dd/MM/yyyy")} />
-                    )}
-                  </div>
-
-                  <div className="md:col-span-2 flex flex-wrap gap-2 pt-2">
-                    {budget.public_id && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => window.open(`/o/${budget.public_id}`, "_blank")}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        Ver proposta pública
-                      </Button>
-                    )}
-                    {budget.internal_status === "contrato_fechado" && (
-                      <Button
-                        variant={syncStatus?.status === "success" ? "outline" : "default"}
-                        size="sm"
-                        className="gap-2"
-                        onClick={handleManualSync}
-                        disabled={syncing}
-                      >
-                        {syncing ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : syncStatus?.status === "success" ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                        ) : syncStatus?.status === "failed" ? (
-                          <RefreshCw className="h-3.5 w-3.5 text-destructive" />
-                        ) : (
-                          <ArrowRightLeft className="h-3.5 w-3.5" />
+                  {activeModule === "client" && (
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
+                          Cliente & Imóvel
+                        </h4>
+                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Nome" value={budget.client_name} />
+                        {budget.client_phone && (
+                          <InfoRow icon={<MessageCircle className="h-3.5 w-3.5" />} label="Telefone" value={budget.client_phone} />
                         )}
-                        {syncing
-                          ? "Sincronizando..."
-                          : syncStatus?.status === "success"
-                          ? "Sincronizado com Portal"
-                          : syncStatus?.status === "failed"
-                          ? "Re-sincronizar"
-                          : "Enviar para Portal"}
-                      </Button>
-                    )}
-                  </div>
+                        {budget.property_type && (
+                          <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Tipo" value={budget.property_type} />
+                        )}
+                        {locationParts && (
+                          <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Local" value={locationParts} />
+                        )}
+                        {budget.condominio && (
+                          <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Condomínio" value={budget.condominio} />
+                        )}
+                        {budget.unit && (
+                          <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Unidade" value={budget.unit} />
+                        )}
+                        {budget.metragem && (
+                          <InfoRow icon={<Ruler className="h-3.5 w-3.5" />} label="Metragem" value={budget.metragem} />
+                        )}
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
+                          Equipe & Datas
+                        </h4>
+                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Comercial" value={getProfileName(budget.commercial_owner_id)} />
+                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Orçamentista" value={getProfileName(budget.estimator_owner_id)} />
+                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Criado por" value={getProfileName(budget.created_by)} />
+                        {budget.created_at && (
+                          <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Criado" value={format(new Date(budget.created_at), "dd/MM/yyyy HH:mm")} />
+                        )}
+                        {budget.updated_at && (
+                          <InfoRow icon={<Clock className="h-3.5 w-3.5" />} label="Atualizado" value={format(new Date(budget.updated_at), "dd/MM/yyyy HH:mm")} />
+                        )}
+                        {budget.due_at && (
+                          <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo" value={format(new Date(budget.due_at), "dd/MM/yyyy")} />
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {budget.public_id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => window.open(`/o/${budget.public_id}`, "_blank")}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            Ver proposta pública
+                          </Button>
+                        )}
+                        {budget.internal_status === "contrato_fechado" && (
+                          <Button
+                            variant={syncStatus?.status === "success" ? "outline" : "default"}
+                            size="sm"
+                            className="gap-2"
+                            onClick={handleManualSync}
+                            disabled={syncing}
+                          >
+                            {syncing ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : syncStatus?.status === "success" ? (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                            ) : syncStatus?.status === "failed" ? (
+                              <RefreshCw className="h-3.5 w-3.5 text-destructive" />
+                            ) : (
+                              <ArrowRightLeft className="h-3.5 w-3.5" />
+                            )}
+                            {syncing
+                              ? "Sincronizando..."
+                              : syncStatus?.status === "success"
+                              ? "Sincronizado com Portal"
+                              : syncStatus?.status === "failed"
+                              ? "Re-sincronizar"
+                              : "Enviar para Portal"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeModule === "versions" && <VersionHistoryPanel budgetId={budget.id} />}
+
+                  {activeModule === "lost" && (
+                    <LostPanel
+                      lostReason={hub.data?.lostReason ?? null}
+                      onReopen={() => changeStatus("in_progress" as InternalStatus, "Reaberta após análise.")}
+                      onEdit={() => {
+                        setActiveModule(null);
+                        setLostDialogOpen(true);
+                      }}
+                    />
+                  )}
                 </div>
-              )}
-
-              {activeModule === "versions" && <VersionHistoryPanel budgetId={budget.id} />}
-
-              {activeModule === "lost" && (
-                <p className="text-sm text-muted-foreground font-body">
-                  Use o botão "Marcar como perdida" no card para abrir o formulário estruturado.
-                </p>
-              )}
-            </div>
-          </section>
-        )}
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
 
         {/* Footer meta */}
         <div className="mt-8 flex items-center justify-between text-[11px] text-muted-foreground/70 font-body flex-wrap gap-2">
@@ -1205,6 +1267,141 @@ function InfoRow({
       <div className="min-w-0">
         <span className="text-xs text-muted-foreground font-body">{label}</span>
         <p className="text-sm text-foreground font-body truncate">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function EmptyIntegration({
+  icon: Icon,
+  title,
+  description,
+  bullets,
+}: {
+  icon: typeof Video;
+  title: string;
+  description: string;
+  bullets: string[];
+}) {
+  return (
+    <div className="py-8">
+      <div className="flex flex-col items-center text-center mb-6">
+        <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
+          <Icon className="h-5 w-5" />
+        </div>
+        <h4 className="text-base font-display font-semibold text-foreground mb-1">{title}</h4>
+        <p className="text-sm text-muted-foreground font-body max-w-sm leading-relaxed">{description}</p>
+        <span className="mt-3 text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border bg-primary/5 text-primary border-primary/20">
+          Integração em breve
+        </span>
+      </div>
+
+      <div className="rounded-lg border border-border bg-muted/20 p-4">
+        <h5 className="text-[11px] font-display font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          O que virá
+        </h5>
+        <ul className="space-y-1.5">
+          {bullets.map((b, i) => (
+            <li key={i} className="text-sm font-body text-foreground flex items-start gap-2">
+              <span className="text-primary mt-0.5">•</span>
+              <span>{b}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function LostPanel({
+  lostReason,
+  onReopen,
+  onEdit,
+}: {
+  lostReason: {
+    reason_category: string;
+    reason_detail: string | null;
+    competitor_name: string | null;
+    competitor_value: number | null;
+    lost_at: string;
+  } | null;
+  onReopen: () => void;
+  onEdit: () => void;
+}) {
+  if (!lostReason) {
+    return (
+      <div className="py-10 flex flex-col items-center text-center">
+        <XCircle className="h-8 w-8 text-muted-foreground mb-3" />
+        <p className="text-sm text-muted-foreground font-body max-w-sm">
+          Esta demanda foi marcada como perdida, mas não há motivo estruturado registrado.
+        </p>
+        <Button size="sm" variant="outline" className="mt-4" onClick={onEdit}>
+          Registrar motivo
+        </Button>
+      </div>
+    );
+  }
+
+  const categoryLabels: Record<string, string> = {
+    preco: "Preço",
+    escopo: "Escopo",
+    concorrente: "Concorrente",
+    timing: "Timing",
+    sem_retorno: "Sem retorno",
+    desistencia: "Desistência",
+    outro: "Outro",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <XCircle className="h-4 w-4 text-destructive" />
+          <span className="text-xs font-display font-semibold uppercase tracking-wider text-destructive">
+            Negócio perdido
+          </span>
+          <span className="text-[11px] text-muted-foreground font-body ml-auto">
+            {format(new Date(lostReason.lost_at), "dd/MM/yyyy HH:mm")}
+          </span>
+        </div>
+        <div className="space-y-2.5">
+          <InfoRow
+            icon={<AlertTriangle className="h-3.5 w-3.5" />}
+            label="Categoria"
+            value={categoryLabels[lostReason.reason_category] ?? lostReason.reason_category}
+          />
+          {lostReason.competitor_name && (
+            <InfoRow
+              icon={<Building2 className="h-3.5 w-3.5" />}
+              label="Concorrente"
+              value={lostReason.competitor_name}
+            />
+          )}
+          {lostReason.competitor_value !== null && lostReason.competitor_value !== undefined && (
+            <InfoRow
+              icon={<ClipboardList className="h-3.5 w-3.5" />}
+              label="Valor da concorrência"
+              value={formatBRL(lostReason.competitor_value)}
+            />
+          )}
+          {lostReason.reason_detail && (
+            <div className="pt-2 border-t border-destructive/10">
+              <span className="text-xs text-muted-foreground font-body block mb-1">Detalhamento</span>
+              <p className="text-sm text-foreground font-body whitespace-pre-wrap leading-relaxed">
+                {lostReason.reason_detail}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" onClick={onEdit}>
+          Editar motivo
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onReopen}>
+          Reabrir negócio
+        </Button>
       </div>
     </div>
   );
