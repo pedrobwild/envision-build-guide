@@ -70,20 +70,28 @@ export default function AdminDashboard() {
   }, [user]);
 
   const loadData = async () => {
-    const [budgetsRes, profilesRes] = await Promise.all([
-      supabase
-        .from("budgets")
-        .select("*, sections(id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)")
-        .order("created_at", { ascending: false }),
-      supabase.from("profiles").select("id, full_name"),
-    ]);
-    setBudgets(budgetsRes.data || []);
-    const profileMap: Record<string, string> = {};
-    (profilesRes.data || []).forEach((p: { id: string; full_name: string | null }) => {
-      profileMap[p.id] = p.full_name || "";
-    });
-    setProfiles(profileMap);
-    setLoading(false);
+    try {
+      const [budgetsRes, profilesRes] = await Promise.all([
+        supabase
+          .from("budgets")
+          .select("*, sections(id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)")
+          .order("created_at", { ascending: false }),
+        supabase.from("profiles").select("id, full_name"),
+      ]);
+      if (budgetsRes.error) {
+        toast.error("Erro ao carregar orçamentos: " + budgetsRes.error.message);
+      }
+      setBudgets(budgetsRes.data || []);
+      const profileMap: Record<string, string> = {};
+      (profilesRes.data || []).forEach((p: { id: string; full_name: string | null }) => {
+        profileMap[p.id] = p.full_name || "";
+      });
+      setProfiles(profileMap);
+    } catch (err) {
+      toast.error("Erro ao carregar dados do painel.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredBudgets = useMemo(() => {
@@ -94,7 +102,8 @@ export default function AdminDashboard() {
   }, [budgets]);
 
   const metrics = useMemo(() => {
-    if (loading || filteredBudgets.length === 0) return null;
+    if (loading) return null;
+    // Always compute metrics, even with zero budgets — shows legit zeros instead of empty dashes.
     return computeDashboardMetrics(filteredBudgets, dateRange, profiles);
   }, [filteredBudgets, dateRange, profiles, loading]);
 
