@@ -226,7 +226,6 @@ export default function ClientsList() {
               <TableHead>Tags</TableHead>
               <TableHead className="text-right">Orçamentos</TableHead>
               <TableHead className="text-right">Pipeline</TableHead>
-              <TableHead className="text-right">Fechado</TableHead>
               <TableHead>Responsável</TableHead>
               <TableHead>Última atividade</TableHead>
               <TableHead className="w-8" />
@@ -317,9 +316,6 @@ export default function ClientsList() {
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {formatBRL(c.stats?.pipeline_value)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-emerald-700 dark:text-emerald-400 font-medium">
-                      {formatBRL(c.stats?.total_won_value)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{owner}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
