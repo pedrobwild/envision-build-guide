@@ -89,6 +89,33 @@ export interface SlaRiskItem {
   status: string;
 }
 
+export interface StageEfficiency {
+  stage: string;
+  label: string;
+  avgDaysInStage: number;
+  count: number;
+  efficiency: "fast" | "normal" | "slow" | "stalled";
+}
+
+export interface ThroughputMetric {
+  perWeek: number | null;
+  trend: "up" | "down" | "stable" | null;
+  weeklyHistory: number[];
+}
+
+export interface SlaForecast {
+  predictedBreaches7d: number;
+  riskBudgets: number;
+  confidence: "high" | "medium" | "low";
+}
+
+export interface HealthScore {
+  /** 0–100 composite score */
+  value: number;
+  status: "excellent" | "healthy" | "warning" | "critical";
+  factors: { label: string; weight: number; contribution: number }[];
+}
+
 export interface DashboardMetrics {
   received: KpiData;
   backlog: KpiData;
