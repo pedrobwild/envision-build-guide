@@ -356,6 +356,15 @@ export default function UserManagement() {
                                 <Shield className="h-3.5 w-3.5 mr-2" />
                                 Editar perfis
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setPwdUser(u);
+                                  setNewPassword("");
+                                }}
+                              >
+                                <KeyRound className="h-3.5 w-3.5 mr-2" />
+                                Definir senha
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleToggleActive(u)}>
                                 {u.is_active ? (
