@@ -17,6 +17,7 @@ import {
   LayoutTemplate,
   Inbox,
   Route as RouteIcon,
+  BarChart3,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, Link } from "react-router-dom";
