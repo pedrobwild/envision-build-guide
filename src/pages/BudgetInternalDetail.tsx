@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +10,9 @@ import { CommentQuickTemplates } from "@/components/editor/CommentQuickTemplates
 import { Separator } from "@/components/ui/separator";
 import { ModuleCard } from "@/components/demanda/ModuleCard";
 import { PipelineProgress, type PipelineStage } from "@/components/demanda/PipelineProgress";
+import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
+import { useBudgetHub } from "@/hooks/useBudgetHub";
+import { formatDistanceToNow } from "date-fns";
 import {
   Select,
   SelectContent,
