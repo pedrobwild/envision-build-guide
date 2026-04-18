@@ -53,6 +53,7 @@ export default function AdminDashboard() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
+  const [deliveryTimestamps, setDeliveryTimestamps] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
   const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
@@ -71,12 +72,18 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      const [budgetsRes, profilesRes] = await Promise.all([
+      const [budgetsRes, profilesRes, eventsRes] = await Promise.all([
         supabase
           .from("budgets")
           .select("*, sections(id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)")
           .order("created_at", { ascending: false }),
         supabase.from("profiles").select("id, full_name"),
+        supabase
+          .from("budget_events")
+          .select("budget_id, to_status, created_at")
+          .eq("event_type", "status_change")
+          .in("to_status", ["sent_to_client", "minuta_solicitada", "contrato_fechado"])
+          .order("created_at", { ascending: true }),
       ]);
       if (budgetsRes.error) {
         toast.error("Erro ao carregar orçamentos: " + budgetsRes.error.message);
@@ -87,6 +94,15 @@ export default function AdminDashboard() {
         profileMap[p.id] = p.full_name || "";
       });
       setProfiles(profileMap);
+
+      // Build map of budget_id → earliest delivery timestamp (first transition to a delivered status)
+      const deliveryMap: Record<string, string> = {};
+      (eventsRes.data || []).forEach((ev: { budget_id: string; created_at: string }) => {
+        if (!deliveryMap[ev.budget_id]) {
+          deliveryMap[ev.budget_id] = ev.created_at;
+        }
+      });
+      setDeliveryTimestamps(deliveryMap);
     } catch (err) {
       toast.error("Erro ao carregar dados do painel.");
     } finally {
@@ -104,8 +120,8 @@ export default function AdminDashboard() {
   const metrics = useMemo(() => {
     if (loading) return null;
     // Always compute metrics, even with zero budgets — shows legit zeros instead of empty dashes.
-    return computeDashboardMetrics(filteredBudgets, dateRange, profiles);
-  }, [filteredBudgets, dateRange, profiles, loading]);
+    return computeDashboardMetrics(filteredBudgets, dateRange, profiles, deliveryTimestamps);
+  }, [filteredBudgets, dateRange, profiles, deliveryTimestamps, loading]);
 
   // Budget creation
   const createBudget = async () => {
