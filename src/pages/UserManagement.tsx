@@ -75,6 +75,11 @@ export default function UserManagement() {
   const [editRoles, setEditRoles] = useState<AppRole[]>([]);
   const [savingRoles, setSavingRoles] = useState(false);
 
+  // Password reset dialog
+  const [pwdUser, setPwdUser] = useState<ManagedUser | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+
   const callAdminAPI = useCallback(
     async (body: Record<string, unknown>) => {
       const { data, error } = await supabase.functions.invoke("admin-users", {
