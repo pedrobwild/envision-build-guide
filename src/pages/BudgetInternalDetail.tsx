@@ -791,8 +791,7 @@ export default function BudgetInternalDetail() {
             destructive
             disabled={budget.internal_status === "lost"}
             badgeRight={budget.internal_status === "lost" ? { label: "perdida", tone: "destructive" } : undefined}
-            active={activeModule === "lost"}
-            onClick={() => setActiveModule(activeModule === "lost" ? null : "lost")}
+            onClick={() => setLostDialogOpen(true)}
           />
         </section>
 
