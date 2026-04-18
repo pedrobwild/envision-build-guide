@@ -28,9 +28,9 @@ import {
 import { CLIENT_SOURCES } from "@/hooks/useClients";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  processed: { label: "Processado", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
-  pending: { label: "Pendente", color: "bg-amber-100 text-amber-700 border-amber-200", icon: Clock },
-  failed: { label: "Falhou", color: "bg-rose-100 text-rose-700 border-rose-200", icon: AlertCircle },
+  processed: { label: "Processado", color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20", icon: CheckCircle2 },
+  pending: { label: "Pendente", color: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20", icon: Clock },
+  failed: { label: "Falhou", color: "bg-destructive/10 text-destructive border-destructive/20", icon: AlertCircle },
 };
 
 function formatDateTime(iso: string | null): string {
@@ -91,19 +91,19 @@ export default function LeadSourcesPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Processados</CardDescription>
-            <CardTitle className="text-3xl text-emerald-600">{metrics?.byStatus.processed ?? 0}</CardTitle>
+            <CardTitle className="text-3xl text-emerald-600 dark:text-emerald-400">{metrics?.byStatus.processed ?? 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Pendentes</CardDescription>
-            <CardTitle className="text-3xl text-amber-600">{metrics?.byStatus.pending ?? 0}</CardTitle>
+            <CardTitle className="text-3xl text-amber-600 dark:text-amber-400">{metrics?.byStatus.pending ?? 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Falharam</CardDescription>
-            <CardTitle className="text-3xl text-rose-600">{metrics?.byStatus.failed ?? 0}</CardTitle>
+            <CardTitle className="text-3xl text-destructive">{metrics?.byStatus.failed ?? 0}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -294,9 +294,9 @@ export default function LeadSourcesPage() {
                   <div><span className="text-muted-foreground">Formulário:</span> {selectedLead.form_id ?? "—"}</div>
                 </div>
                 {selectedLead.processing_error && (
-                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm">
-                    <strong className="text-rose-700">Erro:</strong>
-                    <p className="text-rose-600 mt-1">{selectedLead.processing_error}</p>
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm">
+                    <strong className="text-destructive">Erro:</strong>
+                    <p className="text-destructive/90 mt-1">{selectedLead.processing_error}</p>
                   </div>
                 )}
                 <div>
