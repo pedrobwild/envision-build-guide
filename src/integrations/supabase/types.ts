@@ -800,6 +800,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          phone_normalized: string | null
           property_type_default: string | null
           referrer_name: string | null
           source: string | null
@@ -840,6 +841,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           property_type_default?: string | null
           referrer_name?: string | null
           source?: string | null
@@ -880,6 +882,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           property_type_default?: string | null
           referrer_name?: string | null
           source?: string | null
@@ -1182,6 +1185,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lead_routing_rules: {
+        Row: {
+          assigned_owner_id: string | null
+          assignment_strategy: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          match_campaign_id: string | null
+          match_campaign_name_ilike: string | null
+          match_city_ilike: string | null
+          match_form_id: string | null
+          match_source: string | null
+          name: string
+          priority: number
+          round_robin_cursor: number
+          round_robin_pool: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_owner_id?: string | null
+          assignment_strategy?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          match_campaign_id?: string | null
+          match_campaign_name_ilike?: string | null
+          match_city_ilike?: string | null
+          match_form_id?: string | null
+          match_source?: string | null
+          name: string
+          priority?: number
+          round_robin_cursor?: number
+          round_robin_pool?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_owner_id?: string | null
+          assignment_strategy?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          match_campaign_id?: string | null
+          match_campaign_name_ilike?: string | null
+          match_city_ilike?: string | null
+          match_form_id?: string | null
+          match_source?: string | null
+          name?: string
+          priority?: number
+          round_robin_cursor?: number
+          round_robin_pool?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       lead_sources: {
         Row: {
@@ -1666,6 +1726,7 @@ export type Database = {
       }
     }
     Functions: {
+      archive_old_lead_payloads: { Args: never; Returns: number }
       calc_lead_time_from_events: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -1706,6 +1767,47 @@ export type Database = {
       increment_view_count: {
         Args: { p_public_id: string }
         Returns: undefined
+      }
+      list_failed_lead_sources: {
+        Args: { p_limit?: number }
+        Returns: {
+          ad_id: string | null
+          ad_name: string | null
+          adset_id: string | null
+          adset_name: string | null
+          budget_id: string | null
+          campaign_id: string | null
+          campaign_name: string | null
+          client_id: string | null
+          created_at: string
+          external_id: string | null
+          form_id: string | null
+          form_name: string | null
+          id: string
+          processed_at: string | null
+          processing_error: string | null
+          processing_status: string
+          raw_payload: Json
+          received_at: string
+          source: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "lead_sources"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      normalize_phone: { Args: { p_phone: string }; Returns: string }
+      resolve_lead_owner: {
+        Args: {
+          p_campaign_id?: string
+          p_campaign_name?: string
+          p_city?: string
+          p_form_id?: string
+          p_source: string
+        }
+        Returns: string
       }
       set_primary_supplier_price: {
         Args: { p_catalog_item_id: string; p_price_id: string }
