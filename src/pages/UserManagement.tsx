@@ -161,6 +161,24 @@ export default function UserManagement() {
     }
   }
 
+  async function handleSetPassword() {
+    if (!pwdUser || newPassword.length < 6) return;
+    setSavingPassword(true);
+    try {
+      await callAdminAPI({
+        action: "set_password",
+        user_id: pwdUser.id,
+        password: newPassword,
+      });
+      toast.success(`Senha de ${pwdUser.full_name || pwdUser.email} redefinida.`);
+      setPwdUser(null);
+      setNewPassword("");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    }
+    setSavingPassword(false);
+  }
+
   function toggleEditRole(role: AppRole) {
     setEditRoles((prev) =>
       prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
