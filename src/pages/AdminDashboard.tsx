@@ -94,7 +94,8 @@ export default function AdminDashboard() {
   }, [budgets]);
 
   const metrics = useMemo(() => {
-    if (loading || filteredBudgets.length === 0) return null;
+    if (loading) return null;
+    // Always compute metrics, even with zero budgets — shows legit zeros instead of empty dashes.
     return computeDashboardMetrics(filteredBudgets, dateRange, profiles);
   }, [filteredBudgets, dateRange, profiles, loading]);
 
