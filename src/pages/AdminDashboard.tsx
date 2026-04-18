@@ -53,6 +53,7 @@ export default function AdminDashboard() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
+  const [deliveryTimestamps, setDeliveryTimestamps] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
   const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
