@@ -98,22 +98,25 @@ export function BudgetActionsMenu({
 
   const duplicateAsNew = async () => {
     try {
-      // Get the budget data
+      // 1. Load original budget
       const { data: original } = await supabase
         .from("budgets")
-        .select("*, sections(*, items(*))")
+        .select("*")
         .eq("id", budget.id)
         .single();
       if (!original) { toast.error("Orçamento não encontrado"); return; }
 
-      const publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-      const { data: newBudget } = await supabase
+      const newPublicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+      const oldPublicId = original.public_id;
+
+      // 2. Create new budget (preserve media_config — refs are still valid since they're public URLs)
+      const { data: newBudget, error: insertErr } = await supabase
         .from("budgets")
         .insert({
           project_name: `${original.project_name} (cópia)`,
           client_name: original.client_name,
           created_by: original.created_by,
-          public_id: publicId,
+          public_id: newPublicId,
           condominio: original.condominio,
           bairro: original.bairro,
           metragem: original.metragem,
@@ -133,6 +136,8 @@ export function BudgetActionsMenu({
           show_progress_bars: original.show_progress_bars,
           show_optional_items: original.show_optional_items,
           header_config: original.header_config,
+          floor_plan_url: original.floor_plan_url,
+          media_config: original.media_config,
           commercial_owner_id: original.commercial_owner_id,
           estimator_owner_id: original.estimator_owner_id,
           internal_status: "delivered_to_sales",
@@ -141,50 +146,108 @@ export function BudgetActionsMenu({
         .select("id")
         .single();
 
-      if (!newBudget) { toast.error("Erro ao duplicar"); return; }
+      if (insertErr || !newBudget) { toast.error("Erro ao duplicar"); return; }
 
-      // Clone sections and items — original comes from nested select (sections(*, items(*)))
-      const nestedOriginal = original as typeof original & { sections?: Array<(typeof original) & { items?: Array<Record<string, unknown>> }> };
-      for (const section of nestedOriginal.sections ?? []) {
-        const { data: newSection } = await supabase
-          .from("sections")
-          .insert({
-            budget_id: newBudget.id,
-            title: section.title,
-            subtitle: section.subtitle,
-            order_index: section.order_index,
-            notes: section.notes,
-            tags: section.tags,
-            included_bullets: section.included_bullets,
-            excluded_bullets: section.excluded_bullets,
-            is_optional: section.is_optional,
-            section_price: section.section_price,
-            cover_image_url: section.cover_image_url,
-          })
-          .select("id")
-          .single();
+      // 3. Clone sections + items + item_images (batch, with ID maps)
+      const { data: sections } = await supabase
+        .from("sections")
+        .select("*")
+        .eq("budget_id", budget.id)
+        .order("order_index");
 
-        if (!newSection) continue;
+      if (sections && sections.length > 0) {
+        const sectionInserts = sections.map(({ id: _id, created_at: _ca, budget_id: _bid, ...rest }) => ({
+          ...rest,
+          budget_id: newBudget.id,
+        }));
+        const { data: newSections } = await supabase.from("sections").insert(sectionInserts).select();
 
-        for (const item of section.items || []) {
-          await supabase.from("items").insert({
-            section_id: newSection.id,
-            title: item.title,
-            description: item.description,
-            unit: item.unit,
-            qty: item.qty,
-            order_index: item.order_index,
-            coverage_type: item.coverage_type,
-            reference_url: item.reference_url,
-            internal_unit_price: item.internal_unit_price,
-            internal_total: item.internal_total,
-            bdi_percentage: item.bdi_percentage,
-            notes: item.notes,
-          });
+        if (newSections && newSections.length > 0) {
+          const sectionIdMap = new Map<string, string>();
+          sections.forEach((s, i) => { if (newSections[i]) sectionIdMap.set(s.id, newSections[i].id); });
+
+          const oldSectionIds = sections.map(s => s.id);
+          const { data: allItems } = await supabase
+            .from("items")
+            .select("*")
+            .in("section_id", oldSectionIds)
+            .order("order_index");
+
+          if (allItems && allItems.length > 0) {
+            const itemInserts = allItems.map(({ id: _id, created_at: _ca, section_id, ...rest }) => ({
+              ...rest,
+              section_id: sectionIdMap.get(section_id) || section_id,
+            }));
+            const { data: newItems } = await supabase.from("items").insert(itemInserts).select();
+
+            if (newItems && newItems.length > 0) {
+              const itemIdMap = new Map<string, string>();
+              allItems.forEach((it, i) => { if (newItems[i]) itemIdMap.set(it.id, newItems[i].id); });
+
+              const oldItemIds = allItems.map(it => it.id);
+              const { data: allImages } = await supabase
+                .from("item_images")
+                .select("*")
+                .in("item_id", oldItemIds);
+
+              if (allImages && allImages.length > 0) {
+                const imageInserts = allImages.map(({ id: _id, created_at: _ca, item_id, ...rest }) => ({
+                  ...rest,
+                  item_id: itemIdMap.get(item_id) || item_id,
+                }));
+                await supabase.from("item_images").insert(imageInserts);
+              }
+            }
+          }
         }
       }
 
-      toast.success("Orçamento duplicado!");
+      // 4. Clone adjustments
+      const { data: adjustments } = await supabase
+        .from("adjustments")
+        .select("*")
+        .eq("budget_id", budget.id);
+      if (adjustments && adjustments.length > 0) {
+        await supabase.from("adjustments").insert(
+          adjustments.map(({ id: _id, created_at: _ca, budget_id: _bid, ...rest }) => ({
+            ...rest,
+            budget_id: newBudget.id,
+          }))
+        );
+      }
+
+      // 5. Clone budget_tours (3D tours)
+      const { data: tours } = await supabase
+        .from("budget_tours")
+        .select("*")
+        .eq("budget_id", budget.id);
+      if (tours && tours.length > 0) {
+        await supabase.from("budget_tours").insert(
+          tours.map(({ id: _id, created_at: _ca, budget_id: _bid, ...rest }) => ({
+            ...rest,
+            budget_id: newBudget.id,
+          }))
+        );
+      }
+
+      // 6. Clone Storage media folders ({oldPublicId}/{3d,fotos,exec,video} -> {newPublicId}/...)
+      if (oldPublicId) {
+        const folders = ["3d", "fotos", "exec", "video"];
+        await Promise.all(folders.map(async (folder) => {
+          const { data: files } = await supabase.storage
+            .from("media")
+            .list(`${oldPublicId}/${folder}`, { limit: 1000 });
+          if (!files || files.length === 0) return;
+          await Promise.all(files
+            .filter(f => f.name !== ".emptyFolderPlaceholder" && f.name !== ".lovkeep")
+            .map(f => supabase.storage
+              .from("media")
+              .copy(`${oldPublicId}/${folder}/${f.name}`, `${newPublicId}/${folder}/${f.name}`)
+            ));
+        }));
+      }
+
+      toast.success("Orçamento duplicado com mídias!");
       navigate(`/admin/budget/${newBudget.id}`);
     } catch {
       toast.error("Erro ao duplicar orçamento");
