@@ -336,11 +336,17 @@ export type Database = {
       }
       budgets: {
         Row: {
+          ad_id: string | null
+          ad_name: string | null
+          adset_id: string | null
+          adset_name: string | null
           approved_at: string | null
           approved_by_name: string | null
           bairro: string | null
           briefing: string | null
           budget_pdf_url: string | null
+          campaign_id: string | null
+          campaign_name: string | null
           change_reason: string | null
           city: string | null
           client_id: string | null
@@ -360,7 +366,10 @@ export type Database = {
           email_comercial: string | null
           estimated_weeks: number | null
           estimator_owner_id: string | null
+          external_lead_id: string | null
+          external_source: string | null
           floor_plan_url: string | null
+          form_id: string | null
           generated_at: string | null
           header_config: Json | null
           hubspot_deal_url: string | null
@@ -394,6 +403,11 @@ export type Database = {
           status: string
           unit: string | null
           updated_at: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
           validity_days: number | null
           versao: string | null
           version_group_id: string | null
@@ -401,11 +415,17 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
           approved_at?: string | null
           approved_by_name?: string | null
           bairro?: string | null
           briefing?: string | null
           budget_pdf_url?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
           change_reason?: string | null
           city?: string | null
           client_id?: string | null
@@ -425,7 +445,10 @@ export type Database = {
           email_comercial?: string | null
           estimated_weeks?: number | null
           estimator_owner_id?: string | null
+          external_lead_id?: string | null
+          external_source?: string | null
           floor_plan_url?: string | null
+          form_id?: string | null
           generated_at?: string | null
           header_config?: Json | null
           hubspot_deal_url?: string | null
@@ -459,6 +482,11 @@ export type Database = {
           status?: string
           unit?: string | null
           updated_at?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           validity_days?: number | null
           versao?: string | null
           version_group_id?: string | null
@@ -466,11 +494,17 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
           approved_at?: string | null
           approved_by_name?: string | null
           bairro?: string | null
           briefing?: string | null
           budget_pdf_url?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
           change_reason?: string | null
           city?: string | null
           client_id?: string | null
@@ -490,7 +524,10 @@ export type Database = {
           email_comercial?: string | null
           estimated_weeks?: number | null
           estimator_owner_id?: string | null
+          external_lead_id?: string | null
+          external_source?: string | null
           floor_plan_url?: string | null
+          form_id?: string | null
           generated_at?: string | null
           header_config?: Json | null
           hubspot_deal_url?: string | null
@@ -524,6 +561,11 @@ export type Database = {
           status?: string
           unit?: string | null
           updated_at?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           validity_days?: number | null
           versao?: string | null
           version_group_id?: string | null
@@ -731,7 +773,13 @@ export type Database = {
       }
       clients: {
         Row: {
+          ad_id: string | null
+          ad_name: string | null
+          adset_id: string | null
+          adset_name: string | null
           bairro: string | null
+          campaign_id: string | null
+          campaign_name: string | null
           city: string | null
           commercial_owner_id: string | null
           condominio_default: string | null
@@ -740,6 +788,11 @@ export type Database = {
           document: string | null
           document_type: string | null
           email: string | null
+          external_lead_id: string | null
+          external_lead_payload: Json | null
+          external_source: string | null
+          form_id: string | null
+          form_name: string | null
           hubspot_contact_url: string | null
           id: string
           is_active: boolean
@@ -753,9 +806,20 @@ export type Database = {
           status: string
           tags: string[]
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
           bairro?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
           city?: string | null
           commercial_owner_id?: string | null
           condominio_default?: string | null
@@ -764,6 +828,11 @@ export type Database = {
           document?: string | null
           document_type?: string | null
           email?: string | null
+          external_lead_id?: string | null
+          external_lead_payload?: Json | null
+          external_source?: string | null
+          form_id?: string | null
+          form_name?: string | null
           hubspot_contact_url?: string | null
           id?: string
           is_active?: boolean
@@ -777,9 +846,20 @@ export type Database = {
           status?: string
           tags?: string[]
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
           bairro?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
           city?: string | null
           commercial_owner_id?: string | null
           condominio_default?: string | null
@@ -788,6 +868,11 @@ export type Database = {
           document?: string | null
           document_type?: string | null
           email?: string | null
+          external_lead_id?: string | null
+          external_lead_payload?: Json | null
+          external_source?: string | null
+          form_id?: string | null
+          form_name?: string | null
           hubspot_contact_url?: string | null
           id?: string
           is_active?: boolean
@@ -801,6 +886,11 @@ export type Database = {
           status?: string
           tags?: string[]
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: []
       }
@@ -1089,6 +1179,94 @@ export type Database = {
             columns: ["section_id"]
             isOneToOne: false
             referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_sources: {
+        Row: {
+          ad_id: string | null
+          ad_name: string | null
+          adset_id: string | null
+          adset_name: string | null
+          budget_id: string | null
+          campaign_id: string | null
+          campaign_name: string | null
+          client_id: string | null
+          created_at: string
+          external_id: string | null
+          form_id: string | null
+          form_name: string | null
+          id: string
+          processed_at: string | null
+          processing_error: string | null
+          processing_status: string
+          raw_payload: Json
+          received_at: string
+          source: string
+        }
+        Insert: {
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
+          budget_id?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          client_id?: string | null
+          created_at?: string
+          external_id?: string | null
+          form_id?: string | null
+          form_name?: string | null
+          id?: string
+          processed_at?: string | null
+          processing_error?: string | null
+          processing_status?: string
+          raw_payload?: Json
+          received_at?: string
+          source: string
+        }
+        Update: {
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
+          budget_id?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          client_id?: string | null
+          created_at?: string
+          external_id?: string | null
+          form_id?: string | null
+          form_name?: string | null
+          id?: string
+          processed_at?: string | null
+          processing_error?: string | null
+          processing_status?: string
+          raw_payload?: Json
+          received_at?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_sources_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_sources_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_stats"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "lead_sources_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
