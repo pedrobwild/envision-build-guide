@@ -10,6 +10,10 @@ export const ROLES: Record<AppRole, { label: string; description: string }> = {
 };
 
 export const INTERNAL_STATUSES = {
+  mql: { label: 'MQL', color: 'bg-slate-100 text-slate-700', icon: '🎯' },
+  qualificacao: { label: 'Qualificação', color: 'bg-cyan-100 text-cyan-800', icon: '🔎' },
+  lead: { label: 'Lead', color: 'bg-sky-100 text-sky-800', icon: '👤' },
+  validacao_briefing: { label: 'Validação de Briefing', color: 'bg-indigo-100 text-indigo-800', icon: '📝' },
   novo: { label: 'Novo', color: 'bg-blue-100 text-blue-800', icon: '🆕' },
   requested: { label: 'Solicitado', color: 'bg-blue-100 text-blue-800', icon: '📩' },
   triage: { label: 'Triagem', color: 'bg-purple-100 text-purple-800', icon: '🔍' },
