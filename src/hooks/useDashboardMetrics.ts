@@ -253,13 +253,17 @@ export function computeDashboardMetrics(
     .sort((a, b) => a.hoursLeft - b.hoursLeft);
 
   // ─── Lead Time ───
-  // Delivery moment is approximated by `updated_at` (last status change for delivered budgets),
-  // since `generated_at` is set at creation time and doesn't reflect when the budget was actually sent.
-  // `closed_at` is preferred for closed contracts.
+  // Delivery moment priority:
+  //   1. Exact event from `budget_events` (status_change → delivered status) — most accurate
+  //   2. `closed_at` for closed contracts
+  //   3. `updated_at` as fallback (last modification)
+  // We avoid `generated_at` because it's set on creation, not on actual delivery.
   const DELIVERED_STATUSES = ["sent_to_client", "minuta_solicitada", "contrato_fechado"];
   const getDeliveredAt = (b: BudgetWithSections): string | null => {
+    const fromEvent = deliveryTimestamps[b.id];
+    if (fromEvent) return fromEvent;
     if (b.internal_status === "contrato_fechado" && b.closed_at) return b.closed_at;
-    return b.updated_at || b.generated_at || b.closed_at || null;
+    return b.updated_at || b.closed_at || null;
   };
   const deliveredInPeriod = budgets.filter((b) => {
     const deliveredDate = getDeliveredAt(b);
