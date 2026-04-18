@@ -8,15 +8,36 @@ export type ClientInsert = Database["public"]["Tables"]["clients"]["Insert"];
 export type ClientUpdate = Database["public"]["Tables"]["clients"]["Update"];
 export type ClientStats = Database["public"]["Views"]["client_stats"]["Row"];
 
-export type ClientStatus = "lead" | "cliente";
+export type ClientStatus = "lead" | "cliente" | "mql";
 
 export const CLIENT_STATUSES: Record<
   ClientStatus,
   { label: string; color: string }
 > = {
+  mql: { label: "MQL", color: "bg-slate-100 text-slate-700" },
   lead: { label: "Lead", color: "bg-blue-100 text-blue-800" },
   cliente: { label: "Cliente", color: "bg-emerald-100 text-emerald-800" },
 };
+
+/**
+ * Status efetivo exibido no módulo de clientes.
+ * - `cliente` se houver contrato fechado (status persistido pelo trigger DB)
+ * - `mql` se o orçamento mais recente do cliente está em etapa inicial do funil
+ *   (mql ou qualificacao)
+ * - `lead` caso contrário
+ */
+const MQL_STAGE_STATUSES = new Set(["mql", "qualificacao"]);
+
+export function getEffectiveClientStatus(
+  client: Pick<Client, "status">,
+  stats: Pick<ClientStats, "latest_internal_status"> | null | undefined,
+): ClientStatus {
+  const persisted = (client.status as ClientStatus) ?? "lead";
+  if (persisted === "cliente") return "cliente";
+  const latest = stats?.latest_internal_status;
+  if (latest && MQL_STAGE_STATUSES.has(latest)) return "mql";
+  return persisted;
+}
 
 export const CLIENT_SOURCES: Record<string, string> = {
   indicacao: "Indicação",
