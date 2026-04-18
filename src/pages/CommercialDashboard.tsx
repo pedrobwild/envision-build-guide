@@ -48,6 +48,30 @@ const LOCKED_STATUSES: readonly string[] = [
 ];
 
 const PIPELINE_SECTIONS = {
+  mql: {
+    label: "MQL",
+    statuses: ["mql"] as InternalStatus[],
+    icon: User,
+    accent: "text-slate-600",
+  },
+  qualificacao: {
+    label: "Qualificação",
+    statuses: ["qualificacao"] as InternalStatus[],
+    icon: Eye,
+    accent: "text-cyan-700",
+  },
+  lead: {
+    label: "Lead",
+    statuses: ["lead"] as InternalStatus[],
+    icon: User,
+    accent: "text-sky-700",
+  },
+  validacao_briefing: {
+    label: "Validação de Briefing",
+    statuses: ["validacao_briefing"] as InternalStatus[],
+    icon: FileText,
+    accent: "text-indigo-700",
+  },
   solicitado: {
     label: "Solicitado",
     statuses: ["requested", "novo"] as InternalStatus[],
