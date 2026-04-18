@@ -268,9 +268,35 @@ export default function NewBudgetRequest() {
       const manualTotal = isImport ? parseManualTotal() : null;
       const publicId = isImport ? crypto.randomUUID().replace(/-/g, "").slice(0, 12) : null;
 
+      // Resolve / cria o cliente vinculado (se ainda não veio do CRM)
+      let resolvedClientId = linkedClientId;
+      if (!resolvedClientId) {
+        try {
+          const c = await upsertClientByContact({
+            name: clientName.trim(),
+            email: clientEmail.trim() || null,
+            phone: clientPhone.trim() || null,
+            createdBy: user.id,
+            extra: {
+              city: city.trim() || null,
+              bairro: bairro.trim() || null,
+              condominio_default: condominio.trim() || null,
+              property_type_default: propertyType || null,
+              location_type_default: locationType || null,
+              commercial_owner_id: commercialOwnerId || user.id,
+            },
+          });
+          resolvedClientId = c.id;
+          setLinkedClientId(c.id);
+        } catch (clientErr) {
+          console.error("[NewBudgetRequest] upsertClient falhou (seguindo sem vincular):", clientErr);
+        }
+      }
+
       const { data: inserted, error } = await supabase
         .from("budgets")
         .insert({
+          client_id: resolvedClientId,
           client_name: clientName.trim(),
           project_name: projectName || clientName.trim(),
           lead_email: clientEmail.trim() || null,
