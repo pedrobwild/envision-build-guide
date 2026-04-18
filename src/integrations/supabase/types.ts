@@ -49,6 +49,62 @@ export type Database = {
           },
         ]
       }
+      budget_activities: {
+        Row: {
+          budget_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          metadata: Json
+          outcome: string | null
+          owner_id: string | null
+          scheduled_for: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          budget_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          outcome?: string | null
+          owner_id?: string | null
+          scheduled_for?: string | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          outcome?: string | null
+          owner_id?: string | null
+          scheduled_for?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_activities_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_comments: {
         Row: {
           body: string
@@ -75,6 +131,100 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      budget_conversation_messages: {
+        Row: {
+          attachments: Json
+          author_name: string | null
+          body: string | null
+          conversation_id: string
+          created_at: string
+          direction: string | null
+          external_id: string | null
+          id: string
+          sent_at: string | null
+        }
+        Insert: {
+          attachments?: Json
+          author_name?: string | null
+          body?: string | null
+          conversation_id: string
+          created_at?: string
+          direction?: string | null
+          external_id?: string | null
+          id?: string
+          sent_at?: string | null
+        }
+        Update: {
+          attachments?: Json
+          author_name?: string | null
+          body?: string | null
+          conversation_id?: string
+          created_at?: string
+          direction?: string | null
+          external_id?: string | null
+          id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "budget_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_conversations: {
+        Row: {
+          budget_id: string
+          channel: string | null
+          contact_identifier: string | null
+          contact_name: string | null
+          created_at: string
+          external_id: string | null
+          id: string
+          last_message_at: string | null
+          provider: string
+          unread_count: number
+          updated_at: string
+        }
+        Insert: {
+          budget_id: string
+          channel?: string | null
+          contact_identifier?: string | null
+          contact_name?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          provider?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string
+          channel?: string | null
+          contact_identifier?: string | null
+          contact_name?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          provider?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_conversations_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       budget_events: {
         Row: {
@@ -111,6 +261,106 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      budget_lost_reasons: {
+        Row: {
+          budget_id: string
+          competitor_name: string | null
+          competitor_value: number | null
+          created_by: string | null
+          id: string
+          lost_at: string
+          reason_category: string
+          reason_detail: string | null
+        }
+        Insert: {
+          budget_id: string
+          competitor_name?: string | null
+          competitor_value?: number | null
+          created_by?: string | null
+          id?: string
+          lost_at?: string
+          reason_category: string
+          reason_detail?: string | null
+        }
+        Update: {
+          budget_id?: string
+          competitor_name?: string | null
+          competitor_value?: number | null
+          created_by?: string | null
+          id?: string
+          lost_at?: string
+          reason_category?: string
+          reason_detail?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_lost_reasons_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: true
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_meetings: {
+        Row: {
+          action_items: Json
+          audio_url: string | null
+          budget_id: string
+          created_at: string
+          duration_seconds: number | null
+          external_id: string | null
+          id: string
+          participants: Json
+          provider: string
+          started_at: string | null
+          summary: string | null
+          title: string | null
+          transcript: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_items?: Json
+          audio_url?: string | null
+          budget_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          external_id?: string | null
+          id?: string
+          participants?: Json
+          provider?: string
+          started_at?: string | null
+          summary?: string | null
+          title?: string | null
+          transcript?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_items?: Json
+          audio_url?: string | null
+          budget_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          external_id?: string | null
+          id?: string
+          participants?: Json
+          provider?: string
+          started_at?: string | null
+          summary?: string | null
+          title?: string | null
+          transcript?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_meetings_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       budget_optional_selections: {
         Row: {
@@ -366,6 +616,7 @@ export type Database = {
           email_comercial: string | null
           estimated_weeks: number | null
           estimator_owner_id: string | null
+          expected_close_at: string | null
           external_lead_id: string | null
           external_source: string | null
           floor_plan_url: string | null
@@ -382,12 +633,14 @@ export type Database = {
           last_viewed_at: string | null
           lead_email: string | null
           lead_name: string | null
+          lead_source: string | null
           location_type: string | null
           manual_total: number | null
           media_config: Json | null
           metragem: string | null
           notes: string | null
           parent_budget_id: string | null
+          pipeline_stage: string | null
           prazo_dias_uteis: number | null
           priority: string
           project_name: string
@@ -413,6 +666,7 @@ export type Database = {
           version_group_id: string | null
           version_number: number | null
           view_count: number
+          win_probability: number | null
         }
         Insert: {
           ad_id?: string | null
@@ -445,6 +699,7 @@ export type Database = {
           email_comercial?: string | null
           estimated_weeks?: number | null
           estimator_owner_id?: string | null
+          expected_close_at?: string | null
           external_lead_id?: string | null
           external_source?: string | null
           floor_plan_url?: string | null
@@ -461,12 +716,14 @@ export type Database = {
           last_viewed_at?: string | null
           lead_email?: string | null
           lead_name?: string | null
+          lead_source?: string | null
           location_type?: string | null
           manual_total?: number | null
           media_config?: Json | null
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
+          pipeline_stage?: string | null
           prazo_dias_uteis?: number | null
           priority?: string
           project_name?: string
@@ -492,6 +749,7 @@ export type Database = {
           version_group_id?: string | null
           version_number?: number | null
           view_count?: number
+          win_probability?: number | null
         }
         Update: {
           ad_id?: string | null
@@ -524,6 +782,7 @@ export type Database = {
           email_comercial?: string | null
           estimated_weeks?: number | null
           estimator_owner_id?: string | null
+          expected_close_at?: string | null
           external_lead_id?: string | null
           external_source?: string | null
           floor_plan_url?: string | null
@@ -540,12 +799,14 @@ export type Database = {
           last_viewed_at?: string | null
           lead_email?: string | null
           lead_name?: string | null
+          lead_source?: string | null
           location_type?: string | null
           manual_total?: number | null
           media_config?: Json | null
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
+          pipeline_stage?: string | null
           prazo_dias_uteis?: number | null
           priority?: string
           project_name?: string
@@ -571,6 +832,7 @@ export type Database = {
           version_group_id?: string | null
           version_number?: number | null
           view_count?: number
+          win_probability?: number | null
         }
         Relationships: [
           {
@@ -1755,6 +2017,11 @@ export type Database = {
       compare_snapshots: {
         Args: { p_date_a: string; p_date_b: string }
         Returns: Json
+      }
+      default_win_probability: { Args: { _stage: string }; Returns: number }
+      derive_pipeline_stage: {
+        Args: { _internal_status: string }
+        Returns: string
       }
       get_dashboard_summary: { Args: never; Returns: Json }
       get_public_budget: { Args: { p_public_id: string }; Returns: Json }
