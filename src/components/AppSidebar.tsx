@@ -16,6 +16,7 @@ import {
   ImagePlus,
   LayoutTemplate,
   Inbox,
+  Route as RouteIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, Link } from "react-router-dom";
@@ -60,6 +61,7 @@ const COMERCIAL_ITEMS: NavItem[] = [
   { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
   { title: "Clientes", url: "/admin/crm", icon: Users, roles: ["admin", "comercial"] },
   { title: "Leads (Integrações)", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial"] },
+  { title: "Regras de Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
   { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"], actionUrl: "/admin/solicitacoes/nova", actionLabel: "Nova solicitação" },
 ];
 
