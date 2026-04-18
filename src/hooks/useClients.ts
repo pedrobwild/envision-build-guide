@@ -83,8 +83,17 @@ export function useClients(filters: ClientFilters = {}) {
           `name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,document.ilike.%${s}%`,
         );
       }
-      if (filters.status && filters.status.length > 0) {
-        query = query.in("status", filters.status);
+      // Filtros de status: 'cliente' e 'lead' batem com o DB; 'mql' é derivado e
+      // aplicado client-side abaixo (pois depende do orçamento mais recente).
+      const dbStatusFilter = filters.status?.filter((s) => s === "cliente" || s === "lead");
+      const wantsMql = filters.status?.includes("mql") ?? false;
+      const wantsLead = filters.status?.includes("lead") ?? false;
+
+      if (dbStatusFilter && dbStatusFilter.length > 0 && !wantsMql) {
+        query = query.in("status", dbStatusFilter);
+      } else if (wantsMql && !wantsLead && !filters.status?.includes("cliente")) {
+        // Apenas MQL: precisamos de clientes em status 'lead' no DB para depois filtrar derivado.
+        query = query.eq("status", "lead");
       }
       if (filters.ownerId) {
         query = query.eq("commercial_owner_id", filters.ownerId);
@@ -117,10 +126,17 @@ export function useClients(filters: ClientFilters = {}) {
         if (s.client_id) statsMap.set(s.client_id, s as ClientStats);
       }
 
-      return list.map((c) => ({
+      const enriched: ClientRowWithStats[] = list.map((c) => ({
         ...c,
         stats: statsMap.get(c.id) ?? null,
       }));
+
+      // Aplica filtro derivado de MQL/Lead quando solicitado
+      if (filters.status && filters.status.length > 0) {
+        const wanted = new Set(filters.status);
+        return enriched.filter((c) => wanted.has(getEffectiveClientStatus(c, c.stats)));
+      }
+      return enriched;
     },
     staleTime: 1000 * 30,
   });
