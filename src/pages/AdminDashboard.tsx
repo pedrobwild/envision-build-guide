@@ -24,11 +24,6 @@ import { RevenueChart } from "@/components/dashboard/FinancialCharts";
 import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBlock";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { IntelligentAlertsPanel } from "@/components/dashboard/IntelligentAlertsPanel";
-import { InsightsHistoryPanel } from "@/components/dashboard/InsightsHistoryPanel";
-import { MetricsTrendChart } from "@/components/dashboard/MetricsTrendChart";
-import { OperationsAlertsPanel } from "@/components/dashboard/OperationsAlertsPanel";
-import { TimeInStageChart } from "@/components/dashboard/TimeInStageChart";
-import { SnapshotComparisonPanel } from "@/components/dashboard/SnapshotComparisonPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
 import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
@@ -224,7 +219,7 @@ export default function AdminDashboard() {
         />
       </motion.div>
 
-      {/* ───── INTELLIGENT ANALYSIS ───── */}
+      {/* ───── INTELLIGENT ANALYSIS (resumo) ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <IntelligentAlertsPanel
           insights={aiInsights.data}
@@ -233,27 +228,6 @@ export default function AdminDashboard() {
           error={aiInsights.error}
           onRefresh={aiInsights.refetch}
         />
-      </motion.div>
-
-      {/* ───── INSIGHTS HISTORY ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <InsightsHistoryPanel refreshKey={aiInsights.data?.generatedAt ? new Date(aiInsights.data.generatedAt).getTime() : 0} />
-      </motion.div>
-
-      {/* ───── PROACTIVE ALERTS ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <OperationsAlertsPanel />
-      </motion.div>
-
-      {/* ───── METRICS TREND CHART ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <MetricsTrendChart />
-      </motion.div>
-
-      {/* ───── TIME IN STAGE + SNAPSHOT COMPARISON ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)} className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <TimeInStageChart />
-        <SnapshotComparisonPanel />
       </motion.div>
 
 
