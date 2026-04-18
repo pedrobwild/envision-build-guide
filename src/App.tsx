@@ -99,6 +99,8 @@ const App = () => (
                   <Route path="/admin/biblioteca-fotos" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><PhotoLibraryUpload /></RoleGuard></AdminPage>} />
                   <Route path="/admin/templates" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><BudgetTemplatesPage /></RoleGuard></AdminPage>} />
                   <Route path="/admin/templates/:templateId/editar" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><TemplateEditorPage /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/crm" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><ClientsList /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/crm/:clientId" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><ClientDetail /></RoleGuard></AdminPage>} />
                   <Route path="/o/:publicId" element={<PublicBudget />} />
                   <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
                   <Route path="/qa" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><QAEvaluator /></RoleGuard></AdminPage>} />
