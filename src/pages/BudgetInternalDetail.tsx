@@ -701,75 +701,7 @@ export default function BudgetInternalDetail() {
             </Card>
 
             {/* Timeline */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-display flex items-center gap-2">
-                  📋 Histórico ({events.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {events.length === 0 && (
-                  <p className="text-xs text-muted-foreground font-body text-center py-4">
-                    Nenhum evento registrado.
-                  </p>
-                )}
-                <div className="space-y-0">
-                  {events.map((ev, i) => {
-                    const isLast = i === events.length - 1;
-                    const statusTo = ev.to_status
-                      ? INTERNAL_STATUSES[ev.to_status as InternalStatus]
-                      : null;
-
-                    return (
-                      <div key={ev.id} className="flex gap-3">
-                        {/* Timeline line */}
-                        <div className="flex flex-col items-center">
-                          <div
-                            className={`h-2.5 w-2.5 rounded-full mt-1.5 shrink-0 ${
-                              ev.event_type === "comment"
-                                ? "bg-primary/60"
-                                : "bg-primary"
-                            }`}
-                          />
-                          {!isLast && (
-                            <div className="w-px flex-1 bg-border min-h-[24px]" />
-                          )}
-                        </div>
-                        <div className="pb-4 min-w-0">
-                          <p className="text-xs font-body text-foreground leading-snug">
-                            {ev.event_type === "status_change" && statusTo ? (
-                              <>
-                                <span className="font-medium">{getProfileName(ev.user_id)}</span>
-                                {" alterou status para "}
-                                <span className="font-medium">{statusTo.label}</span>
-                              </>
-                            ) : ev.event_type === "comment" ? (
-                              <>
-                                <span className="font-medium">{getProfileName(ev.user_id)}</span>
-                                {" comentou"}
-                              </>
-                            ) : (
-                              <>
-                                <span className="font-medium">{getProfileName(ev.user_id)}</span>
-                                {" — "}{ev.event_type}
-                              </>
-                            )}
-                          </p>
-                          {ev.note && ev.event_type === "comment" && (
-                            <p className="text-xs text-muted-foreground font-body mt-0.5 truncate">
-                              "{ev.note}"
-                            </p>
-                          )}
-                          <p className="text-[11px] text-muted-foreground font-body mt-0.5">
-                            {format(new Date(ev.created_at), "dd/MM HH:mm")}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            <BudgetEventsTimeline events={events} getProfileName={getProfileName} />
 
             {/* Version History */}
             <VersionHistoryPanel budgetId={budget.id} />
