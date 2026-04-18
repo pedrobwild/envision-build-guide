@@ -132,6 +132,7 @@ function SectionTitle({ icon: Icon, title }: { icon: React.ComponentType<{ class
 
 export default function NewBudgetRequest() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"new" | "import">("new");
@@ -142,9 +143,13 @@ export default function NewBudgetRequest() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
 
-  const [clientName, setClientName] = useState("");
-  const [clientEmail, setClientEmail] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
+  // Pré-preenche a partir de ?client_id=&name=&email=&phone= (vindo do CRM)
+  const prefillClientId = searchParams.get("client_id");
+  const [linkedClientId, setLinkedClientId] = useState<string | null>(prefillClientId);
+
+  const [clientName, setClientName] = useState(searchParams.get("name") ?? "");
+  const [clientEmail, setClientEmail] = useState(searchParams.get("email") ?? "");
+  const [clientPhone, setClientPhone] = useState(searchParams.get("phone") ?? "");
   const [condominio, setCondominio] = useState("");
   const [bairro, setBairro] = useState("");
   const [metargemRaw, setMetragemRaw] = useState("");
