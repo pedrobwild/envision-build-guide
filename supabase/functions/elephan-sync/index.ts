@@ -1,6 +1,6 @@
-// Pulls meetings from Elephan.ia API and upserts them into budget_meetings.
-// Matches each meeting to a budget by client_phone or lead_email.
-// Designed to be called manually (button) or by pg_cron hourly.
+// Refetch a single meeting by transcribe_id from Elephan.ia.
+// Used by the "Sincronizar agora" button to refresh existing meetings
+// or to manually link a transcribe_id to the current budget.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -10,78 +10,40 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface ElephanParticipant {
+interface Participant {
   email?: string;
   phone?: string;
   name?: string;
   role?: string;
 }
 
-interface ElephanMeeting {
-  id: string;
-  title?: string;
-  started_at?: string;
-  duration_seconds?: number;
-  participants?: ElephanParticipant[];
-  transcript?: string;
-  summary?: string;
-  video_url?: string;
-  audio_url?: string;
-  action_items?: unknown[];
-  questions?: unknown[];
-  objections?: unknown[];
-  next_steps?: unknown[];
-  report?: Record<string, unknown>;
+function pickArray(obj: Record<string, unknown>, keys: string[]): unknown[] {
+  for (const k of keys) {
+    const v = obj[k];
+    if (Array.isArray(v)) return v;
+  }
+  return [];
 }
 
-function normalizePhone(phone: string | null | undefined): string | null {
-  if (!phone) return null;
-  let digits = phone.replace(/[^0-9]/g, "");
-  if (digits.length === 0) return null;
-  if (digits.length >= 12 && digits.startsWith("55")) digits = digits.slice(2);
-  return digits;
+function pickString(obj: Record<string, unknown>, keys: string[]): string | null {
+  for (const k of keys) {
+    const v = obj[k];
+    if (typeof v === "string" && v.length > 0) return v;
+  }
+  return null;
 }
 
-async function findBudgetIdForMeeting(
-  supabase: ReturnType<typeof createClient>,
-  participants: ElephanParticipant[]
-): Promise<string | null> {
-  const phones = participants
-    .map((p) => normalizePhone(p.phone))
-    .filter((p): p is string => !!p);
-  const emails = participants
-    .map((p) => p.email?.trim().toLowerCase())
-    .filter((e): e is string => !!e);
-
-  // Try phone match first (most reliable for BR)
-  for (const phone of phones) {
-    const { data } = await supabase
-      .from("budgets")
-      .select("id, client_phone, lead_email")
-      .or(`client_phone.eq.${phone},client_phone.eq.55${phone}`)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (data && data.length > 0) return data[0].id as string;
+function pickNumber(obj: Record<string, unknown>, keys: string[]): number | null {
+  for (const k of keys) {
+    const v = obj[k];
+    if (typeof v === "number") return v;
+    if (typeof v === "string" && !Number.isNaN(Number(v))) return Number(v);
   }
-
-  // Fallback to email match
-  for (const email of emails) {
-    const { data } = await supabase
-      .from("budgets")
-      .select("id")
-      .eq("lead_email", email)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (data && data.length > 0) return data[0].id as string;
-  }
-
   return null;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const ELEPHAN_API_KEY = Deno.env.get("ELEPHAN_API_KEY");
   const ELEPHAN_API_BASE_URL = Deno.env.get("ELEPHAN_API_BASE_URL");
@@ -89,178 +51,125 @@ Deno.serve(async (req) => {
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   if (!ELEPHAN_API_KEY || !ELEPHAN_API_BASE_URL) {
-    return new Response(
-      JSON.stringify({ error: "Missing ELEPHAN_API_KEY or ELEPHAN_API_BASE_URL" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Missing Elephan secrets" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  let body: { budget_id?: string; transcribe_id?: string; refresh_all?: boolean } = {};
+  try {
+    body = await req.json();
+  } catch {
+    /* allow empty */
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const baseUrl = ELEPHAN_API_BASE_URL.replace(/\/$/, "");
 
-  // Optional budget_id in body — when present we only match meetings to this budget
-  let scopedBudgetId: string | null = null;
-  try {
-    if (req.method === "POST") {
-      const body = await req.json().catch(() => ({}));
-      if (body?.budget_id && typeof body.budget_id === "string") {
-        scopedBudgetId = body.budget_id;
-      }
+  // Build list of transcribe IDs to fetch
+  const idsToFetch: string[] = [];
+
+  if (body.transcribe_id) {
+    idsToFetch.push(body.transcribe_id);
+  } else if (body.budget_id) {
+    // Refresh all meetings already linked to this budget
+    const { data } = await supabase
+      .from("budget_meetings")
+      .select("external_id")
+      .eq("budget_id", body.budget_id)
+      .eq("provider", "elephan_ia")
+      .not("external_id", "is", null);
+    for (const r of data ?? []) {
+      if (r.external_id) idsToFetch.push(r.external_id as string);
     }
-  } catch {
-    // ignore
+  } else if (body.refresh_all) {
+    const { data } = await supabase
+      .from("budget_meetings")
+      .select("external_id")
+      .eq("provider", "elephan_ia")
+      .not("external_id", "is", null)
+      .limit(50);
+    for (const r of data ?? []) {
+      if (r.external_id) idsToFetch.push(r.external_id as string);
+    }
   }
 
-  // Read last synced timestamp to limit window
-  const { data: stateRow } = await supabase
-    .from("elephan_sync_state")
-    .select("last_synced_at")
-    .order("last_run_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const since = stateRow?.last_synced_at
-    ? new Date(stateRow.last_synced_at as string)
-    : new Date(Date.now() - 1000 * 60 * 60 * 24 * 30); // 30 days back on first run
-
-  // Endpoint do Elephan: GET /v1/transcribes lista transcrições
-  const baseUrl = ELEPHAN_API_BASE_URL.replace(/\/$/, "");
-  const url = `${baseUrl}/transcribes`;
-
-  console.log(`[elephan-sync] Fetching ${url}`);
-
-  let meetings: ElephanMeeting[] = [];
-  let rawSample: unknown = null;
-  let errorMessage: string | null = null;
-
-  try {
-    const resp = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${ELEPHAN_API_KEY}`,
-        Accept: "application/json",
-      },
-    });
-
-    const text = await resp.text();
-    console.log(`[elephan-sync] Status: ${resp.status}, body preview:`, text.slice(0, 500));
-
-    if (!resp.ok) {
-      errorMessage = `HTTP ${resp.status}: ${text.slice(0, 1000)}`;
-      throw new Error(errorMessage);
-    }
-
-    const json = JSON.parse(text);
-    rawSample = Array.isArray(json) ? json[0] : json?.data?.[0] ?? json?.meetings?.[0] ?? json;
-
-    // Try common shapes: array root, {data: []}, {meetings: []}, {results: []}
-    if (Array.isArray(json)) meetings = json;
-    else if (Array.isArray(json?.data)) meetings = json.data;
-    else if (Array.isArray(json?.meetings)) meetings = json.meetings;
-    else if (Array.isArray(json?.results)) meetings = json.results;
-    else {
-      console.warn("[elephan-sync] Unknown response shape, full body:", text.slice(0, 2000));
-    }
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error("[elephan-sync] Fetch failed:", msg);
-    errorMessage = errorMessage ?? msg;
-
-    await supabase.from("elephan_sync_state").insert({
-      last_run_at: new Date().toISOString(),
-      meetings_pulled: 0,
-      meetings_matched: 0,
-      meetings_unmatched: 0,
-      error_message: errorMessage,
-      raw_sample: null,
-    });
-
+  if (idsToFetch.length === 0) {
     return new Response(
       JSON.stringify({
-        success: false,
-        error: errorMessage,
+        success: true,
+        pulled: 0,
+        matched: 0,
+        unmatched: 0,
         hint:
-          "Confira ELEPHAN_API_BASE_URL e ELEPHAN_API_KEY. O esperado é GET {BASE}/meetings?since=ISO retornando JSON array (ou {data:[]}, {meetings:[]}, {results:[]}).",
+          "Nenhuma reunião vinculada a este orçamento ainda. Reuniões chegam automaticamente via webhook do Elephan.ia quando ficam prontas.",
       }),
-      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
   let matched = 0;
-  let unmatched = 0;
-  const upsertErrors: string[] = [];
+  let pulled = 0;
+  const errors: string[] = [];
 
-  for (const m of meetings) {
-    if (!m?.id) continue;
-    const participants = Array.isArray(m.participants) ? m.participants : [];
+  for (const id of idsToFetch) {
+    try {
+      const r = await fetch(`${baseUrl}/transcribes/${id}`, {
+        headers: {
+          Authorization: `Bearer ${ELEPHAN_API_KEY}`,
+          Accept: "application/json",
+        },
+      });
+      const text = await r.text();
+      if (!r.ok) {
+        errors.push(`${id}: HTTP ${r.status}`);
+        continue;
+      }
+      pulled++;
+      const detail = JSON.parse(text);
+      const t = (detail.data ?? detail) as Record<string, unknown>;
+      const participants = (Array.isArray(t.participants)
+        ? t.participants
+        : []) as Participant[];
 
-    let budgetId = scopedBudgetId;
-    if (!budgetId) {
-      budgetId = await findBudgetIdForMeeting(supabase, participants);
-    }
-    if (!budgetId) {
-      unmatched++;
-      continue;
-    }
+      const row = {
+        title: pickString(t, ["title", "name", "subject"]),
+        started_at:
+          pickString(t, ["started_at", "start_time", "created_at", "date"]) ?? null,
+        duration_seconds: pickNumber(t, ["duration_seconds", "duration", "length"]),
+        participants: participants as unknown,
+        transcript: pickString(t, ["transcript", "transcription", "text"]),
+        summary: pickString(t, ["summary", "executive_summary", "overview"]),
+        video_url: pickString(t, ["video_url", "video", "recording_url"]),
+        audio_url: pickString(t, ["audio_url", "audio"]),
+        action_items: pickArray(t, ["action_items", "actions", "tasks"]) as unknown,
+        questions: pickArray(t, ["questions", "doubts", "client_questions"]) as unknown,
+        objections: pickArray(t, ["objections", "concerns"]) as unknown,
+        next_steps: pickArray(t, ["next_steps", "follow_up", "next_actions"]) as unknown,
+        full_report: t,
+        updated_at: new Date().toISOString(),
+      };
 
-    const row = {
-      budget_id: budgetId,
-      provider: "elephan_ia",
-      external_id: String(m.id),
-      title: m.title ?? null,
-      started_at: m.started_at ?? null,
-      duration_seconds: m.duration_seconds ?? null,
-      participants: participants as unknown,
-      transcript: m.transcript ?? null,
-      summary: m.summary ?? null,
-      video_url: m.video_url ?? null,
-      audio_url: m.audio_url ?? null,
-      action_items: (m.action_items ?? []) as unknown,
-      questions: (m.questions ?? []) as unknown,
-      objections: (m.objections ?? []) as unknown,
-      next_steps: (m.next_steps ?? []) as unknown,
-      full_report: m.report ?? null,
-      updated_at: new Date().toISOString(),
-    };
-
-    // Upsert by (provider, external_id) — manual since we lack a unique constraint
-    const { data: existing } = await supabase
-      .from("budget_meetings")
-      .select("id")
-      .eq("provider", "elephan_ia")
-      .eq("external_id", String(m.id))
-      .maybeSingle();
-
-    if (existing?.id) {
       const { error } = await supabase
         .from("budget_meetings")
         .update(row)
-        .eq("id", existing.id);
-      if (error) upsertErrors.push(`update ${m.id}: ${error.message}`);
+        .eq("provider", "elephan_ia")
+        .eq("external_id", id);
+      if (error) errors.push(`${id} update: ${error.message}`);
       else matched++;
-    } else {
-      const { error } = await supabase.from("budget_meetings").insert(row);
-      if (error) upsertErrors.push(`insert ${m.id}: ${error.message}`);
-      else matched++;
+    } catch (e) {
+      errors.push(`${id}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
-
-  await supabase.from("elephan_sync_state").insert({
-    last_synced_at: new Date().toISOString(),
-    last_run_at: new Date().toISOString(),
-    meetings_pulled: meetings.length,
-    meetings_matched: matched,
-    meetings_unmatched: unmatched,
-    error_message: upsertErrors.length > 0 ? upsertErrors.join(" | ").slice(0, 2000) : null,
-    raw_sample: rawSample as never,
-  });
 
   return new Response(
     JSON.stringify({
       success: true,
-      pulled: meetings.length,
+      pulled,
       matched,
-      unmatched,
-      errors: upsertErrors,
-      raw_sample: rawSample,
+      unmatched: pulled - matched,
+      errors,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
