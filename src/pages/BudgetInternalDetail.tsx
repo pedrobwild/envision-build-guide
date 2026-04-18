@@ -1271,3 +1271,138 @@ function InfoRow({
     </div>
   );
 }
+
+function EmptyIntegration({
+  icon: Icon,
+  title,
+  description,
+  bullets,
+}: {
+  icon: typeof Video;
+  title: string;
+  description: string;
+  bullets: string[];
+}) {
+  return (
+    <div className="py-8">
+      <div className="flex flex-col items-center text-center mb-6">
+        <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
+          <Icon className="h-5 w-5" />
+        </div>
+        <h4 className="text-base font-display font-semibold text-foreground mb-1">{title}</h4>
+        <p className="text-sm text-muted-foreground font-body max-w-sm leading-relaxed">{description}</p>
+        <span className="mt-3 text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border bg-primary/5 text-primary border-primary/20">
+          Integração em breve
+        </span>
+      </div>
+
+      <div className="rounded-lg border border-border bg-muted/20 p-4">
+        <h5 className="text-[11px] font-display font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          O que virá
+        </h5>
+        <ul className="space-y-1.5">
+          {bullets.map((b, i) => (
+            <li key={i} className="text-sm font-body text-foreground flex items-start gap-2">
+              <span className="text-primary mt-0.5">•</span>
+              <span>{b}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function LostPanel({
+  lostReason,
+  onReopen,
+  onEdit,
+}: {
+  lostReason: {
+    reason_category: string;
+    reason_detail: string | null;
+    competitor_name: string | null;
+    competitor_value: number | null;
+    lost_at: string;
+  } | null;
+  onReopen: () => void;
+  onEdit: () => void;
+}) {
+  if (!lostReason) {
+    return (
+      <div className="py-10 flex flex-col items-center text-center">
+        <XCircle className="h-8 w-8 text-muted-foreground mb-3" />
+        <p className="text-sm text-muted-foreground font-body max-w-sm">
+          Esta demanda foi marcada como perdida, mas não há motivo estruturado registrado.
+        </p>
+        <Button size="sm" variant="outline" className="mt-4" onClick={onEdit}>
+          Registrar motivo
+        </Button>
+      </div>
+    );
+  }
+
+  const categoryLabels: Record<string, string> = {
+    preco: "Preço",
+    escopo: "Escopo",
+    concorrente: "Concorrente",
+    timing: "Timing",
+    sem_retorno: "Sem retorno",
+    desistencia: "Desistência",
+    outro: "Outro",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <XCircle className="h-4 w-4 text-destructive" />
+          <span className="text-xs font-display font-semibold uppercase tracking-wider text-destructive">
+            Negócio perdido
+          </span>
+          <span className="text-[11px] text-muted-foreground font-body ml-auto">
+            {format(new Date(lostReason.lost_at), "dd/MM/yyyy HH:mm")}
+          </span>
+        </div>
+        <div className="space-y-2.5">
+          <InfoRow
+            icon={<AlertTriangle className="h-3.5 w-3.5" />}
+            label="Categoria"
+            value={categoryLabels[lostReason.reason_category] ?? lostReason.reason_category}
+          />
+          {lostReason.competitor_name && (
+            <InfoRow
+              icon={<Building2 className="h-3.5 w-3.5" />}
+              label="Concorrente"
+              value={lostReason.competitor_name}
+            />
+          )}
+          {lostReason.competitor_value !== null && lostReason.competitor_value !== undefined && (
+            <InfoRow
+              icon={<ClipboardList className="h-3.5 w-3.5" />}
+              label="Valor da concorrência"
+              value={formatBRL(lostReason.competitor_value)}
+            />
+          )}
+          {lostReason.reason_detail && (
+            <div className="pt-2 border-t border-destructive/10">
+              <span className="text-xs text-muted-foreground font-body block mb-1">Detalhamento</span>
+              <p className="text-sm text-foreground font-body whitespace-pre-wrap leading-relaxed">
+                {lostReason.reason_detail}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" onClick={onEdit}>
+          Editar motivo
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onReopen}>
+          Reabrir negócio
+        </Button>
+      </div>
+    </div>
+  );
+}
