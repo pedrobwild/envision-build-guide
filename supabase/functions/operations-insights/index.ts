@@ -109,6 +109,7 @@ Deno.serve(async (req: Request) => {
 
     const body = await req.json();
     const snapshot = body.snapshot as MetricsSnapshot | undefined;
+    const persist = body.persist !== false; // default true
     if (!snapshot) {
       return new Response(JSON.stringify({ error: "Missing snapshot" }), {
         status: 400,
@@ -200,7 +201,64 @@ Analise e emita insights via emit_insights.`;
     }
 
     const insights = JSON.parse(toolCall.function.arguments);
-    return new Response(JSON.stringify({ ...insights, generatedAt: new Date().toISOString() }), {
+    const generatedAt = new Date().toISOString();
+
+    // Persist to history (best-effort, non-blocking failure)
+    if (persist) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL");
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        const authHeader = req.headers.get("Authorization") ?? "";
+        let userId: string | null = null;
+
+        if (supabaseUrl && serviceKey && authHeader.startsWith("Bearer ")) {
+          const token = authHeader.slice(7);
+          const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+            headers: { Authorization: `Bearer ${token}`, apikey: serviceKey },
+          });
+          if (userRes.ok) {
+            const u = await userRes.json();
+            userId = u?.id ?? null;
+          } else {
+            await userRes.text();
+          }
+        }
+
+        if (supabaseUrl && serviceKey && userId) {
+          const insertRes = await fetch(`${supabaseUrl}/rest/v1/operations_insights_history`, {
+            method: "POST",
+            headers: {
+              apikey: serviceKey,
+              Authorization: `Bearer ${serviceKey}`,
+              "Content-Type": "application/json",
+              Prefer: "return=minimal",
+            },
+            body: JSON.stringify({
+              generated_by: userId,
+              generated_at: generatedAt,
+              period_from: snapshot.period.from,
+              period_to: snapshot.period.to,
+              period_days: snapshot.period.days,
+              health_diagnosis: insights.healthDiagnosis,
+              health_score: snapshot.kpis.healthScore ?? null,
+              executive_summary: insights.executiveSummary,
+              insights: insights.insights ?? [],
+              kpis_snapshot: snapshot.kpis,
+            }),
+          });
+          if (!insertRes.ok) {
+            const t = await insertRes.text();
+            console.error("History insert failed:", insertRes.status, t);
+          } else {
+            await insertRes.text();
+          }
+        }
+      } catch (persistErr) {
+        console.error("Persist error (non-fatal):", persistErr);
+      }
+    }
+
+    return new Response(JSON.stringify({ ...insights, generatedAt }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
