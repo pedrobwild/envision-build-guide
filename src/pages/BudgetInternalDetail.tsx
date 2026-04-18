@@ -12,6 +12,7 @@ import { ModuleCard } from "@/components/demanda/ModuleCard";
 import { PipelineProgress, type PipelineStage } from "@/components/demanda/PipelineProgress";
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { useBudgetHub } from "@/hooks/useBudgetHub";
+import { MeetingsPanel } from "@/components/demanda/MeetingsPanel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -909,7 +910,7 @@ export default function BudgetInternalDetail() {
                     </div>
                   )}
 
-                  {activeModule === "meetings" && id && <MeetingsPanel budgetId={id} />}
+                  {activeModule === "meetings" && budgetId && <MeetingsPanel budgetId={budgetId} />}
 
                   {activeModule === "conversations" && (
                     <EmptyIntegration
