@@ -41,6 +41,7 @@ import {
   UserX,
   UserCheck,
   Mail,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ROLES, type AppRole } from "@/lib/role-constants";
@@ -73,6 +74,11 @@ export default function UserManagement() {
   const [editUser, setEditUser] = useState<ManagedUser | null>(null);
   const [editRoles, setEditRoles] = useState<AppRole[]>([]);
   const [savingRoles, setSavingRoles] = useState(false);
+
+  // Password reset dialog
+  const [pwdUser, setPwdUser] = useState<ManagedUser | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
 
   const callAdminAPI = useCallback(
     async (body: Record<string, unknown>) => {
@@ -153,6 +159,24 @@ export default function UserManagement() {
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : String(err));
     }
+  }
+
+  async function handleSetPassword() {
+    if (!pwdUser || newPassword.length < 6) return;
+    setSavingPassword(true);
+    try {
+      await callAdminAPI({
+        action: "set_password",
+        user_id: pwdUser.id,
+        password: newPassword,
+      });
+      toast.success(`Senha de ${pwdUser.full_name || pwdUser.email} redefinida.`);
+      setPwdUser(null);
+      setNewPassword("");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    }
+    setSavingPassword(false);
   }
 
   function toggleEditRole(role: AppRole) {
@@ -332,6 +356,15 @@ export default function UserManagement() {
                                 <Shield className="h-3.5 w-3.5 mr-2" />
                                 Editar perfis
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setPwdUser(u);
+                                  setNewPassword("");
+                                }}
+                              >
+                                <KeyRound className="h-3.5 w-3.5 mr-2" />
+                                Definir senha
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleToggleActive(u)}>
                                 {u.is_active ? (
@@ -462,6 +495,42 @@ export default function UserManagement() {
             </Button>
             <Button onClick={handleSaveRoles} disabled={savingRoles}>
               {savingRoles ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Set Password Dialog */}
+      <Dialog open={!!pwdUser} onOpenChange={(o) => { if (!o) { setPwdUser(null); setNewPassword(""); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-primary" />
+              Definir senha
+            </DialogTitle>
+            <DialogDescription className="font-body text-sm">
+              {pwdUser?.full_name || pwdUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium font-body text-foreground">Nova senha</label>
+            <Input
+              type="text"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+              autoComplete="new-password"
+            />
+            <p className="text-xs text-muted-foreground font-body">
+              A senha será definida imediatamente. Compartilhe com o usuário por canal seguro.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setPwdUser(null); setNewPassword(""); }} disabled={savingPassword}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSetPassword} disabled={savingPassword || newPassword.length < 6}>
+              {savingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : "Definir senha"}
             </Button>
           </DialogFooter>
         </DialogContent>
