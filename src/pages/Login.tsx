@@ -8,7 +8,7 @@ import {
   Loader2, Mail, Lock, Eye, EyeOff,
   AlertCircle, ShieldCheck, HelpCircle, ArrowLeft,
 } from "lucide-react";
-import authBg from "@/assets/auth-bg.png";
+import authBg from "@/assets/bg-auth-v2.png";
 import bwildLogo from "@/assets/logo-bwild-white.png";
 import { z } from "zod";
 
