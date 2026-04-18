@@ -75,11 +75,18 @@ export default function TemplateMediaManager({ templateId, mediaConfig, onChange
         urls.push(url);
       }
 
-      const updated = { ...mediaConfig };
+      const updated: MediaConfig = {
+        ...EMPTY_MEDIA_CONFIG,
+        ...mediaConfig,
+        projeto3d: Array.isArray(mediaConfig?.projeto3d) ? [...mediaConfig.projeto3d] : [],
+        projetoExecutivo: Array.isArray(mediaConfig?.projetoExecutivo) ? [...mediaConfig.projetoExecutivo] : [],
+        fotos: Array.isArray(mediaConfig?.fotos) ? [...mediaConfig.fotos] : [],
+      };
       if (category === "video3d") {
         updated.video3d = urls[0];
       } else {
-        updated[category] = [...(updated[category] as string[]), ...urls];
+        const current = Array.isArray(updated[category]) ? (updated[category] as string[]) : [];
+        updated[category] = [...current, ...urls];
       }
       onChange(updated);
       toast.success(`${urls.length} arquivo(s) enviado(s)`);
