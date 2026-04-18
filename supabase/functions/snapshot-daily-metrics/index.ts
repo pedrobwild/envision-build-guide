@@ -240,7 +240,19 @@ async function generateSnapshot(snapshotDate: string) {
     console.error("Cleanup failed:", err);
   }
 
-  return { snapshot: payload, cleaned: deleted };
+  // 13. Disparar alertas proativos baseados no snapshot recém-criado
+  let alertsCreated = 0;
+  try {
+    const alertResp = await sb(`/rest/v1/rpc/check_and_create_alerts`, {
+      method: "POST",
+      body: "{}",
+    }) as number;
+    alertsCreated = alertResp ?? 0;
+  } catch (err) {
+    console.error("Alerts check failed:", err);
+  }
+
+  return { snapshot: payload, cleaned: deleted, alerts_created: alertsCreated };
 }
 
 Deno.serve(async (req: Request) => {

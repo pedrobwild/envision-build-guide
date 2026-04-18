@@ -26,6 +26,9 @@ import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { IntelligentAlertsPanel } from "@/components/dashboard/IntelligentAlertsPanel";
 import { InsightsHistoryPanel } from "@/components/dashboard/InsightsHistoryPanel";
 import { MetricsTrendChart } from "@/components/dashboard/MetricsTrendChart";
+import { OperationsAlertsPanel } from "@/components/dashboard/OperationsAlertsPanel";
+import { TimeInStageChart } from "@/components/dashboard/TimeInStageChart";
+import { SnapshotComparisonPanel } from "@/components/dashboard/SnapshotComparisonPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
 import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
@@ -237,10 +240,22 @@ export default function AdminDashboard() {
         <InsightsHistoryPanel refreshKey={aiInsights.data?.generatedAt ? new Date(aiInsights.data.generatedAt).getTime() : 0} />
       </motion.div>
 
+      {/* ───── PROACTIVE ALERTS ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <OperationsAlertsPanel />
+      </motion.div>
+
       {/* ───── METRICS TREND CHART ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <MetricsTrendChart />
       </motion.div>
+
+      {/* ───── TIME IN STAGE + SNAPSHOT COMPARISON ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)} className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <TimeInStageChart />
+        <SnapshotComparisonPanel />
+      </motion.div>
+
 
       {/* ───── KPI CARDS — ROW 1 ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
