@@ -23,10 +23,12 @@ import { BacklogByStatusChart } from "@/components/dashboard/OperationalCharts";
 import { RevenueChart } from "@/components/dashboard/FinancialCharts";
 import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBlock";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
+import { IntelligentAlertsPanel } from "@/components/dashboard/IntelligentAlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
 import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
 import { computeDashboardMetrics, OPERATIONS_START_DATE, type DateRange } from "@/hooks/useDashboardMetrics";
+import { useOperationsInsights } from "@/hooks/useOperationsInsights";
 
 const SECTION_DELAY = 0.05;
 const anim = (delay: number) => ({
@@ -215,15 +217,16 @@ export default function AdminDashboard() {
         />
       </motion.div>
 
-      {/* ───── ALERTS CENTER (only if alerts exist) ───── */}
-      {(loading || (metrics?.alerts && metrics.alerts.length > 0)) && (
-        <motion.div {...anim(step++ * SECTION_DELAY)}>
-          <AlertsPanel
-            alerts={metrics?.alerts ?? []}
-            loading={loading}
-          />
-        </motion.div>
-      )}
+      {/* ───── INTELLIGENT ANALYSIS ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <IntelligentAlertsPanel
+          insights={aiInsights.data}
+          healthScore={metrics?.healthScore ?? null}
+          loading={aiInsights.loading || loading}
+          error={aiInsights.error}
+          onRefresh={aiInsights.refetch}
+        />
+      </motion.div>
 
       {/* ───── KPI CARDS — ROW 1 ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
