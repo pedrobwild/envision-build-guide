@@ -21,7 +21,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { ingestLead, type NormalizedLead } from "../_shared/lead-ingest.ts";
+import { ingestLead, persistRawLead, type NormalizedLead } from "../_shared/lead-ingest.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -239,7 +239,6 @@ Deno.serve(async (req) => {
       // Se não temos token de página, ainda registramos o payload bruto
       if (!pageAccessToken || !leadFull) {
         try {
-          const { persistRawLead } = await import("../_shared/lead-ingest.ts");
           await persistRawLead(supabase, normalized);
           results.push({ leadgen_id: leadgenId, status: "captured_pending_enrichment" });
         } catch (err) {
