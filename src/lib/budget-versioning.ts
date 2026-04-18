@@ -251,6 +251,48 @@ export async function duplicateBudgetAsVersion(
     );
   }
 
+  // 7. Copy budget_tours (3D tours)
+  const { data: tours } = await supabase
+    .from("budget_tours")
+    .select("*")
+    .eq("budget_id", sourceBudgetId);
+
+  if (tours && tours.length > 0) {
+    await supabase.from("budget_tours").insert(
+      tours.map(({ id, created_at, budget_id, ...tourData }) => ({
+        ...tourData,
+        budget_id: newBudget.id,
+      }))
+    );
+  }
+
+  // 8. Copy Storage media files (3d, fotos, exec, video) from old public_id → new public_id
+  const oldPublicId = source.public_id as string | null;
+  const newPublicId = newBudget.public_id as string | null;
+  if (oldPublicId && newPublicId && oldPublicId !== newPublicId) {
+    const folders = ["3d", "fotos", "exec", "video"];
+    await Promise.all(
+      folders.map(async (folder) => {
+        const { data: files } = await supabase.storage
+          .from("media")
+          .list(`${oldPublicId}/${folder}`, { limit: 1000 });
+        if (!files || files.length === 0) return;
+        await Promise.all(
+          files
+            .filter((f) => f.name && !f.name.startsWith("."))
+            .map((f) =>
+              supabase.storage
+                .from("media")
+                .copy(
+                  `${oldPublicId}/${folder}/${f.name}`,
+                  `${newPublicId}/${folder}/${f.name}`
+                )
+            )
+        );
+      })
+    );
+  }
+
   return newBudget.id;
 }
 
