@@ -166,7 +166,6 @@ Analise e emita insights via emit_insights.`;
         ],
         tools: [TOOL_SCHEMA],
         tool_choice: { type: "function", function: { name: "emit_insights" } },
-        reasoning: { effort: "medium" },
       }),
     });
 
