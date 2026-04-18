@@ -32,7 +32,7 @@ const NEIGHBORHOOD_DATA: Neighborhood[] = [
   { id: "liberdade", name: "Liberdade", count: 2, avgSqm: 26.0, lat: -23.5599, lng: -46.6378 },
   { id: "jardim-paulista", name: "Jardim Paulista", count: 4, avgSqm: 31.0, lat: -23.5701, lng: -46.6659 },
   { id: "vila-mariana", name: "Vila Mariana", count: 2, avgSqm: 25.5, lat: -23.5887, lng: -46.6388 },
-  { id: "vila-olimpia", name: "Vila Olímpia", count: 2, avgSqm: 26.5, lat: -23.5956, lng: -46.6858 },
+  { id: "vila-olimpia", name: "Vila Olímpia", count: 12, avgSqm: 26.5, lat: -23.5956, lng: -46.6858 },
   { id: "consolacao", name: "Consolação", count: 5, avgSqm: 24.5, lat: -23.5518, lng: -46.6569 },
   { id: "paraiso", name: "Paraíso", count: 2, avgSqm: 24.0, lat: -23.5726, lng: -46.6421 },
   { id: "itaim", name: "Itaim Bibi", count: 5, avgSqm: 33.0, lat: -23.5858, lng: -46.6784 },
@@ -43,7 +43,7 @@ const NEIGHBORHOOD_DATA: Neighborhood[] = [
   { id: "vila-guilhermina", name: "Vila Guilhermina", count: 1, avgSqm: null, lat: -23.5274, lng: -46.5580 },
 ];
 
-const TOTAL_PROJECTS = 124;
+const TOTAL_PROJECTS = 136;
 const TOTAL_NEIGHBORHOODS = 26;
 
 const TOP_5 = [
