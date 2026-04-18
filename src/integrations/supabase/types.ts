@@ -711,6 +711,117 @@ export type Database = {
           },
         ]
       }
+      daily_metrics_snapshot: {
+        Row: {
+          active_commercial: number
+          active_estimators: number
+          aging_buckets: Json
+          avg_lead_time_days: number | null
+          avg_ticket_brl: number | null
+          avg_time_in_analysis_days: number | null
+          avg_time_in_review_days: number | null
+          avg_time_to_publish_days: number | null
+          backlog_count: number
+          closed_count: number
+          commercial_funnel: Json
+          conversion_rate_pct: number | null
+          created_at: string
+          delivered_to_sales_count: number
+          generated_at: string
+          gross_margin_pct: number | null
+          health_diagnosis: string | null
+          health_score: number | null
+          id: string
+          in_analysis_count: number
+          median_lead_time_days: number | null
+          operational_funnel: Json
+          overdue_count: number
+          portfolio_value_brl: number
+          published_count: number
+          received_count: number
+          revenue_brl: number
+          sla_at_risk_count: number
+          sla_breach_48h_count: number
+          sla_on_time_pct: number | null
+          snapshot_date: string
+          team_load_distribution: Json
+          throughput_trend_pct: number | null
+          weekly_throughput: number | null
+        }
+        Insert: {
+          active_commercial?: number
+          active_estimators?: number
+          aging_buckets?: Json
+          avg_lead_time_days?: number | null
+          avg_ticket_brl?: number | null
+          avg_time_in_analysis_days?: number | null
+          avg_time_in_review_days?: number | null
+          avg_time_to_publish_days?: number | null
+          backlog_count?: number
+          closed_count?: number
+          commercial_funnel?: Json
+          conversion_rate_pct?: number | null
+          created_at?: string
+          delivered_to_sales_count?: number
+          generated_at?: string
+          gross_margin_pct?: number | null
+          health_diagnosis?: string | null
+          health_score?: number | null
+          id?: string
+          in_analysis_count?: number
+          median_lead_time_days?: number | null
+          operational_funnel?: Json
+          overdue_count?: number
+          portfolio_value_brl?: number
+          published_count?: number
+          received_count?: number
+          revenue_brl?: number
+          sla_at_risk_count?: number
+          sla_breach_48h_count?: number
+          sla_on_time_pct?: number | null
+          snapshot_date: string
+          team_load_distribution?: Json
+          throughput_trend_pct?: number | null
+          weekly_throughput?: number | null
+        }
+        Update: {
+          active_commercial?: number
+          active_estimators?: number
+          aging_buckets?: Json
+          avg_lead_time_days?: number | null
+          avg_ticket_brl?: number | null
+          avg_time_in_analysis_days?: number | null
+          avg_time_in_review_days?: number | null
+          avg_time_to_publish_days?: number | null
+          backlog_count?: number
+          closed_count?: number
+          commercial_funnel?: Json
+          conversion_rate_pct?: number | null
+          created_at?: string
+          delivered_to_sales_count?: number
+          generated_at?: string
+          gross_margin_pct?: number | null
+          health_diagnosis?: string | null
+          health_score?: number | null
+          id?: string
+          in_analysis_count?: number
+          median_lead_time_days?: number | null
+          operational_funnel?: Json
+          overdue_count?: number
+          portfolio_value_brl?: number
+          published_count?: number
+          received_count?: number
+          revenue_brl?: number
+          sla_at_risk_count?: number
+          sla_breach_48h_count?: number
+          sla_on_time_pct?: number | null
+          snapshot_date?: string
+          team_load_distribution?: Json
+          throughput_trend_pct?: number | null
+          weekly_throughput?: number | null
+        }
+        Relationships: []
+      }
       integration_sync_log: {
         Row: {
           attempts: number | null
@@ -1221,10 +1332,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calc_lead_time_from_events: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          avg_days: number
+          median_days: number
+          sample_size: number
+        }[]
+      }
       can_access_budget: {
         Args: { _budget_id: string; _user_id: string }
         Returns: boolean
       }
+      cleanup_old_snapshots: { Args: never; Returns: number }
       get_public_budget: { Args: { p_public_id: string }; Returns: Json }
       has_role: {
         Args: {

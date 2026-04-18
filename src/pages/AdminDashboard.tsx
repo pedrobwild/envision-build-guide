@@ -25,6 +25,7 @@ import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBloc
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { IntelligentAlertsPanel } from "@/components/dashboard/IntelligentAlertsPanel";
 import { InsightsHistoryPanel } from "@/components/dashboard/InsightsHistoryPanel";
+import { MetricsTrendChart } from "@/components/dashboard/MetricsTrendChart";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
 import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
@@ -234,6 +235,11 @@ export default function AdminDashboard() {
       {/* ───── INSIGHTS HISTORY ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <InsightsHistoryPanel refreshKey={aiInsights.data?.generatedAt ? new Date(aiInsights.data.generatedAt).getTime() : 0} />
+      </motion.div>
+
+      {/* ───── METRICS TREND CHART ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <MetricsTrendChart />
       </motion.div>
 
       {/* ───── KPI CARDS — ROW 1 ───── */}
