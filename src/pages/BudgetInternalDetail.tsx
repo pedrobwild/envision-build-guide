@@ -177,6 +177,7 @@ export default function BudgetInternalDetail() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [budget, setBudget] = useState<BudgetDetail | null>(null);
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -192,8 +193,25 @@ export default function BudgetInternalDetail() {
   const [budgetTotal, setBudgetTotal] = useState<number | null>(null);
   const [itemsCount, setItemsCount] = useState<number>(0);
   const [sectionsCount, setSectionsCount] = useState<number>(0);
-  const [activeModule, setActiveModule] = useState<ModuleKey | null>(null);
-  const [lostReason, setLostReason] = useState("");
+  const [activeModule, setActiveModule] = useState<ModuleKey | null>(
+    (searchParams.get("module") as ModuleKey) ?? null
+  );
+  const [lostDialogOpen, setLostDialogOpen] = useState(false);
+  const hub = useBudgetHub(budgetId);
+
+  // Sync activeModule with URL ?module=
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (activeModule) {
+      next.set("module", activeModule);
+    } else {
+      next.delete("module");
+    }
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeModule]);
 
   const getProfileName = useCallback(
     (id: string | null) => {
