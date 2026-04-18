@@ -40,6 +40,7 @@ const ClientsList = lazy(() => import("./pages/ClientsList"));
 const ClientDetail = lazy(() => import("./pages/ClientDetail"));
 const LeadSourcesPage = lazy(() => import("./pages/LeadSourcesPage"));
 const LeadRoutingRulesPage = lazy(() => import("./pages/LeadRoutingRulesPage"));
+const AnalisesPage = lazy(() => import("./pages/AnalisesPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
