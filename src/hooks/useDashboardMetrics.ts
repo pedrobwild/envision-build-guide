@@ -247,16 +247,25 @@ export function computeDashboardMetrics(
     .sort((a, b) => a.hoursLeft - b.hoursLeft);
 
   // ─── Lead Time ───
+  // Delivery moment is approximated by `updated_at` (last status change for delivered budgets),
+  // since `generated_at` is set at creation time and doesn't reflect when the budget was actually sent.
+  // `closed_at` is preferred for closed contracts.
   const DELIVERED_STATUSES = ["sent_to_client", "minuta_solicitada", "contrato_fechado"];
+  const getDeliveredAt = (b: BudgetWithSections): string | null => {
+    if (b.internal_status === "contrato_fechado" && b.closed_at) return b.closed_at;
+    return b.updated_at || b.generated_at || b.closed_at || null;
+  };
   const deliveredInPeriod = budgets.filter((b) => {
-    const deliveredDate = b.generated_at || b.closed_at;
+    const deliveredDate = getDeliveredAt(b);
     return deliveredDate && isInRange(deliveredDate, range) && DELIVERED_STATUSES.includes(b.internal_status);
   });
   const calcLeadTimes = (list: BudgetWithSections[]) =>
     list
       .map((b) => {
-        const start = new Date(b.created_at!).getTime();
-        const end = new Date((b.generated_at || b.closed_at)!).getTime();
+        const deliveredDate = getDeliveredAt(b);
+        if (!b.created_at || !deliveredDate) return 0;
+        const start = new Date(b.created_at).getTime();
+        const end = new Date(deliveredDate).getTime();
         return (end - start) / (1000 * 60 * 60 * 24);
       })
       .filter((lt) => lt > 0 && lt < 365);
@@ -264,7 +273,7 @@ export function computeDashboardMetrics(
   const avgLT = leadTimes.length > 0 ? leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length : null;
 
   const deliveredInPrev = budgets.filter((b) => {
-    const deliveredDate = b.generated_at || b.closed_at;
+    const deliveredDate = getDeliveredAt(b);
     return deliveredDate && isInRange(deliveredDate, prev) && DELIVERED_STATUSES.includes(b.internal_status);
   });
   const prevLeadTimes = calcLeadTimes(deliveredInPrev);
