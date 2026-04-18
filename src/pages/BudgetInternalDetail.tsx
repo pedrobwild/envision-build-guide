@@ -972,28 +972,9 @@ export default function BudgetInternalDetail() {
               {activeModule === "versions" && <VersionHistoryPanel budgetId={budget.id} />}
 
               {activeModule === "lost" && (
-                <div className="max-w-xl">
-                  <p className="text-sm text-muted-foreground font-body mb-3">
-                    Registre o motivo da perda. Esta nota será adicionada ao histórico e o status mudará para
-                    <strong className="text-destructive"> Perdido</strong>.
-                  </p>
-                  <Textarea
-                    placeholder="Ex: Cliente optou por concorrente com prazo menor; preço acima do orçado; mudança de escopo..."
-                    value={lostReason}
-                    onChange={(e) => setLostReason(e.target.value)}
-                    rows={4}
-                    maxLength={2000}
-                  />
-                  <div className="flex gap-2 mt-3 justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => setActiveModule(null)}>
-                      Cancelar
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={handleMarkLost} disabled={!lostReason.trim()}>
-                      <XCircle className="h-3.5 w-3.5 mr-1.5" />
-                      Marcar como perdida
-                    </Button>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground font-body">
+                  Use o botão "Marcar como perdida" no card para abrir o formulário estruturado.
+                </p>
               )}
             </div>
           </section>
