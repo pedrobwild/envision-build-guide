@@ -39,6 +39,7 @@ const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
 const ClientsList = lazy(() => import("./pages/ClientsList"));
 const ClientDetail = lazy(() => import("./pages/ClientDetail"));
 const LeadSourcesPage = lazy(() => import("./pages/LeadSourcesPage"));
+const LeadRoutingRulesPage = lazy(() => import("./pages/LeadRoutingRulesPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -103,6 +104,7 @@ const App = () => (
                   <Route path="/admin/crm" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><ClientsList /></RoleGuard></AdminPage>} />
                   <Route path="/admin/crm/:clientId" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><ClientDetail /></RoleGuard></AdminPage>} />
                   <Route path="/admin/leads" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><LeadSourcesPage /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/leads/regras" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><LeadRoutingRulesPage /></RoleGuard></AdminPage>} />
                   <Route path="/o/:publicId" element={<PublicBudget />} />
                   <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
                   <Route path="/qa" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><QAEvaluator /></RoleGuard></AdminPage>} />
