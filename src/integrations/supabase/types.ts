@@ -343,6 +343,7 @@ export type Database = {
           budget_pdf_url: string | null
           change_reason: string | null
           city: string | null
+          client_id: string | null
           client_name: string
           client_phone: string | null
           closed_at: string | null
@@ -407,6 +408,7 @@ export type Database = {
           budget_pdf_url?: string | null
           change_reason?: string | null
           city?: string | null
+          client_id?: string | null
           client_name?: string
           client_phone?: string | null
           closed_at?: string | null
@@ -471,6 +473,7 @@ export type Database = {
           budget_pdf_url?: string | null
           change_reason?: string | null
           city?: string | null
+          client_id?: string | null
           client_name?: string
           client_phone?: string | null
           closed_at?: string | null
@@ -527,7 +530,22 @@ export type Database = {
           version_number?: number | null
           view_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budgets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_stats"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "budgets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       catalog_categories: {
         Row: {
@@ -710,6 +728,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      clients: {
+        Row: {
+          bairro: string | null
+          city: string | null
+          commercial_owner_id: string | null
+          condominio_default: string | null
+          created_at: string
+          created_by: string | null
+          document: string | null
+          document_type: string | null
+          email: string | null
+          hubspot_contact_url: string | null
+          id: string
+          is_active: boolean
+          location_type_default: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          property_type_default: string | null
+          referrer_name: string | null
+          source: string | null
+          status: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          city?: string | null
+          commercial_owner_id?: string | null
+          condominio_default?: string | null
+          created_at?: string
+          created_by?: string | null
+          document?: string | null
+          document_type?: string | null
+          email?: string | null
+          hubspot_contact_url?: string | null
+          id?: string
+          is_active?: boolean
+          location_type_default?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          property_type_default?: string | null
+          referrer_name?: string | null
+          source?: string | null
+          status?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          city?: string | null
+          commercial_owner_id?: string | null
+          condominio_default?: string | null
+          created_at?: string
+          created_by?: string | null
+          document?: string | null
+          document_type?: string | null
+          email?: string | null
+          hubspot_contact_url?: string | null
+          id?: string
+          is_active?: boolean
+          location_type_default?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          property_type_default?: string | null
+          referrer_name?: string | null
+          source?: string | null
+          status?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
       }
       daily_metrics_snapshot: {
         Row: {
@@ -1380,7 +1473,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      client_stats: {
+        Row: {
+          active_budgets: number | null
+          avg_ticket: number | null
+          client_id: string | null
+          last_budget_at: string | null
+          pipeline_value: number | null
+          total_budgets: number | null
+          total_won_value: number | null
+          won_budgets: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calc_lead_time_from_events: {

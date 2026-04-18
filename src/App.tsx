@@ -36,6 +36,8 @@ const SystemToolsPage = lazy(() => import("./pages/SystemToolsPage"));
 const PhotoLibraryUpload = lazy(() => import("./pages/PhotoLibraryUpload"));
 const BudgetTemplatesPage = lazy(() => import("./pages/BudgetTemplatesPage"));
 const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
+const ClientsList = lazy(() => import("./pages/ClientsList"));
+const ClientDetail = lazy(() => import("./pages/ClientDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
