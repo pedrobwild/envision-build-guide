@@ -90,6 +90,7 @@ export default function ClientsList() {
 
   const { data: clients = [], isLoading } = useClients(filters);
   const deleteClient = useDeleteClient();
+  const upsertClient = useUpsertClient();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRowWithStats | null>(null);
@@ -98,6 +99,36 @@ export default function ClientsList() {
     () => new Map(comerciais.map((m) => [m.id, m.full_name])),
     [comerciais],
   );
+
+  const ownerOptions: InlineEditOption[] = useMemo(
+    () => [
+      { value: "__unassigned__", label: "— Sem responsável" },
+      ...comerciais.map((m) => ({ value: m.id, label: m.full_name })),
+    ],
+    [comerciais],
+  );
+
+  async function handleOwnerChange(
+    client: ClientRowWithStats,
+    nextOwnerId: string | number | null,
+  ) {
+    const previous = client.commercial_owner_id ?? null;
+    const next =
+      nextOwnerId === "__unassigned__" || nextOwnerId == null || nextOwnerId === ""
+        ? null
+        : String(nextOwnerId);
+    if (next === previous) return;
+    await upsertClient.mutateAsync({ id: client.id, commercial_owner_id: next });
+    showUndoToast({
+      message: "Responsável atualizado",
+      description: next
+        ? `Atribuído a ${ownersMap.get(next) ?? "comercial"}`
+        : "Removido o responsável",
+      onUndo: async () => {
+        await upsertClient.mutateAsync({ id: client.id, commercial_owner_id: previous });
+      },
+    });
+  }
 
   const summary = useMemo(() => {
     const total = clients.length;
