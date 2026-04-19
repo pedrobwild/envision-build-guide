@@ -242,6 +242,8 @@ export default function CommercialDashboard() {
       .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total")
       .order("created_at", { ascending: false });
     if (!isAdmin) {
+      // Inclui 'lead' (status default de novos negócios criados pelo trigger)
+      // para garantir visibilidade no pipeline comercial mesmo sem owner.
       const commercialRelevantStatuses = [
         "mql", "qualificacao", "lead", "validacao_briefing",
         "novo", "requested",
@@ -909,6 +911,16 @@ export default function CommercialDashboard() {
       <ClientForm
         open={newDealOpen}
         onOpenChange={setNewDealOpen}
+        initial={
+          newDealOpen
+            ? ({
+                // Pré-atribui o comercial atual (não-admins) para que o card
+                // criado já apareça com dono no pipeline e nas listagens.
+                commercial_owner_id: !isAdmin && user?.id ? user.id : null,
+                status: "lead",
+              } as Partial<import("@/hooks/useClients").Client>)
+            : null
+        }
         onSaved={() => {
           setNewDealOpen(false);
           toast.success("Negócio criado!", {
