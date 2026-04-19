@@ -222,6 +222,77 @@ export default function ClientsList() {
       </Card>
 
       <Card className="overflow-hidden">
+        {/* Mobile: card list */}
+        <div className="md:hidden divide-y divide-border">
+          {isLoading ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">Carregando clientes…</div>
+          ) : clients.length === 0 ? (
+            <div className="p-8 flex flex-col items-center gap-3 text-muted-foreground">
+              <Users className="h-8 w-8 opacity-40" />
+              <p className="text-sm font-body text-center">
+                Nenhum cliente encontrado
+                {search || status !== "all" || ownerId !== "all"
+                  ? " com esses filtros."
+                  : " ainda. Crie o primeiro."}
+              </p>
+              <Button variant="outline" size="sm" onClick={openCreate} className="gap-1.5 h-9">
+                <Plus className="h-3.5 w-3.5" />
+                Novo cliente
+              </Button>
+            </div>
+          ) : (
+            clients.map((c) => {
+              const s = getEffectiveClientStatus(c, c.stats);
+              const sCfg = CLIENT_STATUSES[s] ?? CLIENT_STATUSES.lead;
+              const owner = c.commercial_owner_id
+                ? ownersMap.get(c.commercial_owner_id) ?? "—"
+                : "—";
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  className="w-full text-left p-4 active:bg-muted/40 transition-colors"
+                  onClick={() => navigate(`/admin/crm/${c.id}`)}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
+                      </p>
+                    </div>
+                    <Badge className={cn("font-normal text-[10px] shrink-0", sCfg.color)}>
+                      {sCfg.label}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {c.phone && (
+                        <span className="flex items-center gap-1 truncate">
+                          <Phone className="h-3 w-3 shrink-0" /> {c.phone}
+                        </span>
+                      )}
+                      {!c.phone && c.email && (
+                        <span className="flex items-center gap-1 truncate">
+                          <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{c.email}</span>
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="tabular-nums">{c.stats?.total_budgets ?? 0} orç.</span>
+                      <span className="tabular-nums font-medium text-foreground">
+                        {formatBRL(c.stats?.pipeline_value)}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -367,6 +438,7 @@ export default function ClientsList() {
             )}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       <ClientForm
