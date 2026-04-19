@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,8 +41,6 @@ import {
   XCircle,
   Users as UsersIcon,
   Loader2,
-  Upload,
-  Trash2,
   X,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -89,14 +87,7 @@ const BR_STATES = [
   "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
 ];
 
-const PROPERTY_TYPES = [
-  { value: "apartamento", label: "Apartamento" },
-  { value: "casa", label: "Casa" },
-  { value: "cobertura", label: "Cobertura" },
-  { value: "studio", label: "Studio / Kitnet" },
-  { value: "comercial", label: "Espaço Comercial" },
-  { value: "outro", label: "Outro" },
-];
+// (PROPERTY_TYPES movido para ClientPropertiesManager — agora gerenciado por imóvel)
 
 type Draft = {
   name: string;
