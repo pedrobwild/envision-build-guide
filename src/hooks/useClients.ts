@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { sanitizePostgrestPattern } from "@/lib/postgrest-escape";
 
 export type Client = Database["public"]["Tables"]["clients"]["Row"];
 export type ClientInsert = Database["public"]["Tables"]["clients"]["Insert"];
@@ -78,10 +79,12 @@ export function useClients(filters: ClientFilters = {}) {
         .order("updated_at", { ascending: false });
 
       if (filters.search && filters.search.trim().length > 0) {
-        const s = filters.search.trim();
-        query = query.or(
-          `name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,document.ilike.%${s}%`,
-        );
+        const s = sanitizePostgrestPattern(filters.search);
+        if (s.length > 0) {
+          query = query.or(
+            `name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,document.ilike.%${s}%`,
+          );
+        }
       }
       // Filtros de status: 'cliente' e 'lead' batem com o DB; 'mql' é derivado e
       // aplicado client-side abaixo (pois depende do orçamento mais recente).
@@ -334,7 +337,7 @@ export function useDeleteClient() {
 
 /** Utilitário: busca rápida para autocompletes (retorna até 10). */
 export async function searchClients(query: string): Promise<Client[]> {
-  const q = query.trim();
+  const q = sanitizePostgrestPattern(query);
   if (q.length < 2) return [];
   const { data, error } = await supabase
     .from("clients")
@@ -343,7 +346,7 @@ export async function searchClients(query: string): Promise<Client[]> {
     .or(`name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`)
     .limit(10);
   if (error) {
-    console.error("[searchClients]", error);
+    if (import.meta.env.DEV) console.error("[searchClients]", error);
     return [];
   }
   return (data ?? []) as Client[];
