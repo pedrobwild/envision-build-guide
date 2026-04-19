@@ -1095,6 +1095,7 @@ export type Database = {
           property_zip_code: string | null
           referrer_name: string | null
           rg: string | null
+          sequential_code: string | null
           source: string | null
           state: string | null
           status: string
@@ -1153,6 +1154,7 @@ export type Database = {
           property_zip_code?: string | null
           referrer_name?: string | null
           rg?: string | null
+          sequential_code?: string | null
           source?: string | null
           state?: string | null
           status?: string
@@ -1211,6 +1213,7 @@ export type Database = {
           property_zip_code?: string | null
           referrer_name?: string | null
           rg?: string | null
+          sequential_code?: string | null
           source?: string | null
           state?: string | null
           status?: string

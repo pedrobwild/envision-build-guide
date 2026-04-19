@@ -186,7 +186,7 @@ export default function ClientsList() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome, e-mail, telefone ou documento..."
+              placeholder="Buscar por código, nome, e-mail, telefone ou documento..."
               className="pl-8 h-10 sm:h-9"
             />
           </div>
@@ -256,7 +256,14 @@ export default function ClientsList() {
                 >
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                      <div className="flex items-center gap-2">
+                        {c.sequential_code && (
+                          <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
+                            {c.sequential_code}
+                          </span>
+                        )}
+                        <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                      </div>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
                         {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
                       </p>
@@ -296,6 +303,7 @@ export default function ClientsList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[90px]">Código</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Contato</TableHead>
               <TableHead>Cidade / Bairro</TableHead>
@@ -311,13 +319,13 @@ export default function ClientsList() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-10 text-sm text-muted-foreground">
+                <TableCell colSpan={11} className="text-center py-10 text-sm text-muted-foreground">
                   Carregando clientes…
                 </TableCell>
               </TableRow>
             ) : clients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-16">
+                <TableCell colSpan={11} className="text-center py-16">
                   <div className="flex flex-col items-center gap-3 text-muted-foreground">
                     <Users className="h-8 w-8 opacity-40" />
                     <p className="text-sm font-body">
@@ -346,6 +354,9 @@ export default function ClientsList() {
                     className="cursor-pointer hover:bg-muted/30"
                     onClick={() => navigate(`/admin/crm/${c.id}`)}
                   >
+                    <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
+                      {c.sequential_code ?? "—"}
+                    </TableCell>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>
                       <div className="text-xs text-muted-foreground space-y-0.5">
