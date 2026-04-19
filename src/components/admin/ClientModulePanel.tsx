@@ -358,3 +358,15 @@ function SnapshotFallback({ budget }: { budget: BudgetClientSnapshot }) {
     </div>
   );
 }
+
+function joinAddress(address: string | null | undefined, complement: string | null | undefined): string | null {
+  const parts = [address?.trim(), complement?.trim()].filter((p): p is string => !!p && p.length > 0);
+  return parts.length > 0 ? parts.join(" — ") : null;
+}
+
+function joinCityState(city: string | null | undefined, state: string | null | undefined): string | null {
+  const c = city?.trim();
+  const s = state?.trim();
+  if (c && s) return `${c} / ${s}`;
+  return c || s || null;
+}
