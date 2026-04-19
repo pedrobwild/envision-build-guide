@@ -28,6 +28,11 @@ import {
   Loader2,
   FileText,
   Users as UsersIcon,
+  Briefcase,
+  Heart,
+  Globe,
+  Home,
+  Image as ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -187,7 +192,10 @@ export function ClientModulePanel({ budget, onLinked, extraSection }: Props) {
 
       {/* Contato */}
       <Section title="Contato">
-        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Nome" value={client.name} />
+        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Nome completo" value={client.name} />
+        <InfoRow icon={<Globe className="h-3.5 w-3.5" />} label="Nacionalidade" value={client.nationality} />
+        <InfoRow icon={<Heart className="h-3.5 w-3.5" />} label="Estado civil" value={client.marital_status} />
+        <InfoRow icon={<Briefcase className="h-3.5 w-3.5" />} label="Profissão" value={client.profession} />
         <InfoRow icon={<Mail className="h-3.5 w-3.5" />} label="E-mail" value={client.email} />
         <InfoRow icon={<Phone className="h-3.5 w-3.5" />} label="Telefone" value={client.phone} />
         <InfoRow
@@ -195,18 +203,41 @@ export function ClientModulePanel({ budget, onLinked, extraSection }: Props) {
           label={client.document_type === "cnpj" ? "CNPJ" : "CPF / CNPJ"}
           value={client.document}
         />
+        <InfoRow icon={<FileText className="h-3.5 w-3.5" />} label="RG" value={client.rg} />
       </Section>
+
+      {(client.address || client.bairro || client.city || client.zip_code) && (
+        <>
+          <Separator />
+          <Section title="Endereço residencial">
+            <InfoRow icon={<Home className="h-3.5 w-3.5" />} label="Endereço" value={joinAddress(client.address, client.address_complement)} />
+            <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Bairro" value={client.bairro} />
+            <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Cidade / UF" value={joinCityState(client.city, client.state)} />
+            <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="CEP" value={client.zip_code} />
+          </Section>
+        </>
+      )}
 
       <Separator />
 
       {/* Imóvel */}
       <Section title="Imóvel">
-        <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Cidade" value={client.city ?? budget.city} />
-        <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Bairro" value={client.bairro ?? budget.bairro} />
+        <InfoRow
+          icon={<Home className="h-3.5 w-3.5" />}
+          label="Endereço do imóvel"
+          value={joinAddress(client.property_address, client.property_address_complement)}
+        />
+        <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Bairro" value={client.property_bairro ?? budget.bairro} />
+        <InfoRow
+          icon={<MapPin className="h-3.5 w-3.5" />}
+          label="Cidade / UF"
+          value={joinCityState(client.property_city ?? client.city ?? budget.city, client.property_state)}
+        />
+        <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="CEP" value={client.property_zip_code} />
         <InfoRow
           icon={<Building2 className="h-3.5 w-3.5" />}
-          label="Condomínio"
-          value={client.condominio_default ?? budget.condominio}
+          label="Empreendimento"
+          value={client.property_empreendimento ?? client.condominio_default ?? budget.condominio}
         />
         <InfoRow
           icon={<Building2 className="h-3.5 w-3.5" />}
@@ -216,8 +247,22 @@ export function ClientModulePanel({ budget, onLinked, extraSection }: Props) {
         {budget.unit && (
           <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Unidade" value={budget.unit} />
         )}
-        {budget.metragem && (
-          <InfoRow icon={<Ruler className="h-3.5 w-3.5" />} label="Metragem" value={budget.metragem} />
+        <InfoRow
+          icon={<Ruler className="h-3.5 w-3.5" />}
+          label="Metragem"
+          value={client.property_metragem ?? budget.metragem}
+        />
+        {client.property_floor_plan_url && (
+          <a
+            href={client.property_floor_plan_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs text-primary hover:underline mt-1"
+          >
+            <ImageIcon className="h-3.5 w-3.5" />
+            Visualizar planta do imóvel
+            <ExternalLink className="h-3 w-3" />
+          </a>
         )}
       </Section>
 
