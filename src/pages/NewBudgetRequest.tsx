@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { upsertClientByContact } from "@/hooks/useClients";
 import { supabase } from "@/integrations/supabase/client";
@@ -134,6 +134,15 @@ export default function NewBudgetRequest() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const navTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const scheduleNav = useCallback((path: string, delay: number) => {
+    const t = setTimeout(() => navigate(path), delay);
+    navTimers.current.push(t);
+  }, [navigate]);
+  useEffect(() => () => {
+    navTimers.current.forEach(t => clearTimeout(t));
+    navTimers.current = [];
+  }, []);
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"new" | "import">("new");
 
@@ -349,7 +358,7 @@ export default function NewBudgetRequest() {
           description: "O orçamento aparece na coluna \"Entregue\" do pipeline comercial.",
           duration: 6000,
         });
-        setTimeout(() => navigate("/admin/comercial"), 800);
+        scheduleNav("/admin/comercial", 800);
         return;
       }
 
@@ -377,9 +386,9 @@ export default function NewBudgetRequest() {
       });
 
       if (selectedTemplateId && selectedTemplateId !== "none") {
-        setTimeout(() => navigate(`/admin/budget/${inserted.id}`), 800);
+        scheduleNav(`/admin/budget/${inserted.id}`, 800);
       } else {
-        setTimeout(() => navigate("/admin/solicitacoes"), 1000);
+        scheduleNav("/admin/solicitacoes", 1000);
       }
     } catch (err) {
       console.error("New request submit error:", err);

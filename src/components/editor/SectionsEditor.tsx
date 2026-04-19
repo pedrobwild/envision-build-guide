@@ -658,8 +658,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     try { return localStorage.getItem(densityKey) !== "expanded"; } catch { return true; }
   });
   const searchRef = useRef<HTMLInputElement>(null);
-  const timers = useRef<Record<string, NodeJS.Timeout>>({});
+  const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const pendingUpdates = useRef<Record<string, Record<string, unknown>>>({});
+
+  // Clear all pending debounce timers on unmount to avoid orphan saves & memory leaks
+  useEffect(() => {
+    return () => {
+      Object.values(timers.current).forEach(t => clearTimeout(t));
+      timers.current = {};
+      pendingUpdates.current = {};
+    };
+  }, []);
   const [suppliers, setSuppliers] = useState<{ id: string; name: string; categoria: string | null }[]>([]);
 
   // Load suppliers once
