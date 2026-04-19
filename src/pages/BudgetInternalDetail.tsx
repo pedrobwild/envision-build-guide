@@ -140,41 +140,49 @@ type ModuleKey =
   | "lost";
 
 const PIPELINE_STAGES: PipelineStage[] = [
+  { key: "mql", label: "MQL" },
+  { key: "qualificacao", label: "Qualificação" },
   { key: "lead", label: "Lead" },
-  { key: "briefing", label: "Briefing" },
-  { key: "visita", label: "Visita" },
-  { key: "proposta", label: "Proposta" },
-  { key: "negociacao", label: "Negociação" },
-  { key: "fechado", label: "Fechado" },
+  { key: "validacao_briefing", label: "Validação de Briefing" },
+  { key: "solicitado", label: "Solicitado" },
+  { key: "em_elaboracao", label: "Em Elaboração" },
+  { key: "entregue", label: "Entregue" },
+  { key: "enviado", label: "Enviado ao Cliente" },
+  { key: "minuta", label: "Minuta Solicitada" },
+  { key: "fechado", label: "Contrato Fechado" },
 ];
 
 function statusToPipelineIndex(status: string): { index: number; isLost: boolean } {
   switch (status) {
     case "mql":
+      return { index: 0, isLost: false };
     case "qualificacao":
+      return { index: 1, isLost: false };
     case "lead":
+      return { index: 2, isLost: false };
+    case "validacao_briefing":
+      return { index: 3, isLost: false };
     case "novo":
     case "requested":
-      return { index: 0, isLost: false };
-    case "validacao_briefing":
+      return { index: 4, isLost: false };
     case "triage":
     case "assigned":
-      return { index: 1, isLost: false };
     case "in_progress":
     case "waiting_info":
     case "ready_for_review":
     case "revision_requested":
-      return { index: 2, isLost: false };
-    case "delivered_to_sales":
-    case "sent_to_client":
-      return { index: 3, isLost: false };
-    case "minuta_solicitada":
-      return { index: 4, isLost: false };
-    case "contrato_fechado":
       return { index: 5, isLost: false };
+    case "delivered_to_sales":
+      return { index: 6, isLost: false };
+    case "sent_to_client":
+      return { index: 7, isLost: false };
+    case "minuta_solicitada":
+      return { index: 8, isLost: false };
+    case "contrato_fechado":
+      return { index: 9, isLost: false };
     case "lost":
     case "archived":
-      return { index: 5, isLost: true };
+      return { index: 9, isLost: true };
     default:
       return { index: 0, isLost: false };
   }
