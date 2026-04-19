@@ -334,7 +334,6 @@ export default function CommercialDashboard() {
   }, [isAdmin, budgets, getProfileName]);
 
   const filtered = useMemo(() => {
-    const now = new Date();
     const result = budgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
@@ -342,15 +341,13 @@ export default function CommercialDashboard() {
       if (!matchCommercial) return false;
 
       if (dueFilter !== "all") {
-        const due = b.due_at ? new Date(b.due_at) : null;
-        if (dueFilter === "overdue") {
-          const isFinished = ["lost", "archived", "contrato_fechado"].includes(b.internal_status);
-          if (!due || due >= now || isFinished) return false;
-        }
-        if (dueFilter === "due_soon") {
-          const twoDays = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-          if (!due || due < now || due > twoDays) return false;
-        }
+        // Use variant-based semantics from getDueInfo so the filter bucket
+        // matches the variant shown on each card and the Kanban column filter.
+        // "overdue" = "Vencidos / Hoje" (variants "overdue" + "today").
+        // "due_soon" = "Próximos (≤2d)" (variant "soon" only).
+        const v = getDueInfo(b.due_at, b.internal_status).variant;
+        if (dueFilter === "overdue" && v !== "overdue" && v !== "today") return false;
+        if (dueFilter === "due_soon" && v !== "soon") return false;
       }
 
       if (statusFilter === "all") return matchSearch;
@@ -851,11 +848,14 @@ export default function CommercialDashboard() {
           {/* Kanban view */}
           {!loading && viewMode === "kanban" && budgets.length > 0 && (
             <KanbanBoard
-              budgets={commercialFilter === "all" ? budgets : budgets.filter(b => b.commercial_owner_id === commercialFilter)}
+              // Use the same `filtered` array the list view uses so search,
+              // statusFilter, commercialFilter and dueFilter all apply in the
+              // Kanban too. The board's internal dueFilter would otherwise
+              // operate on a different set of rows than the top-of-page cards.
+              budgets={filtered}
               onStatusChange={changeStatus}
               onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
               getProfileName={getProfileName}
-              dueFilter={dueFilter}
               syncedBudgetIds={syncedBudgetIds}
             />
           )}

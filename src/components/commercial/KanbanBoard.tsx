@@ -272,8 +272,11 @@ function sortBudgetsForColumn(budgets: BudgetRow[]): BudgetRow[] {
 function matchesDueFilter(budget: BudgetRow, filter: DueFilter): boolean {
   if (filter === "all") return true;
   const due = getDueInfo(budget.due_at, budget.internal_status);
+  // "overdue" matches the UI label "Vencidos / Hoje": past-due items and items due today.
   if (filter === "overdue") return due?.variant === "overdue" || due?.variant === "today";
-  if (filter === "due_soon") return due?.variant === "overdue" || due?.variant === "today" || due?.variant === "soon";
+  // "due_soon" matches the UI label "Próximos (≤2d)": items due in the next 1–2 days,
+  // NOT including items already overdue or due today (those are in the "overdue" bucket).
+  if (filter === "due_soon") return due?.variant === "soon";
   return true;
 }
 
