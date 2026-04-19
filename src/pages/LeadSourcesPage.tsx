@@ -62,11 +62,11 @@ export default function LeadSourcesPage() {
   const failedCount = metrics?.byStatus.failed ?? 0;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-bold font-display tracking-tight">Leads de Integrações</h1>
-          <p className="text-muted-foreground font-body mt-1">
+    <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-3xl font-bold font-display tracking-tight">Leads de Integrações</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
             Captação automática via Meta Ads, Google Ads, formulários do site e outras integrações.
           </p>
         </div>
@@ -74,6 +74,7 @@ export default function LeadSourcesPage() {
           onClick={() => reprocess.mutate()}
           disabled={reprocess.isPending || failedCount === 0}
           variant={failedCount > 0 ? "default" : "outline"}
+          className="w-full sm:w-auto h-10 sm:h-9"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${reprocess.isPending ? "animate-spin" : ""}`} />
           Reprocessar falhas {failedCount > 0 && `(${failedCount})`}
@@ -81,29 +82,29 @@ export default function LeadSourcesPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Recebidos (30d)</CardDescription>
-            <CardTitle className="text-3xl">{metrics?.total ?? 0}</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardDescription className="text-[11px] sm:text-sm">Recebidos (30d)</CardDescription>
+            <CardTitle className="text-xl sm:text-3xl">{metrics?.total ?? 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Processados</CardDescription>
-            <CardTitle className="text-3xl text-emerald-600 dark:text-emerald-400">{metrics?.byStatus.processed ?? 0}</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardDescription className="text-[11px] sm:text-sm">Processados</CardDescription>
+            <CardTitle className="text-xl sm:text-3xl text-emerald-600 dark:text-emerald-400">{metrics?.byStatus.processed ?? 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Pendentes</CardDescription>
-            <CardTitle className="text-3xl text-amber-600 dark:text-amber-400">{metrics?.byStatus.pending ?? 0}</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardDescription className="text-[11px] sm:text-sm">Pendentes</CardDescription>
+            <CardTitle className="text-xl sm:text-3xl text-amber-600 dark:text-amber-400">{metrics?.byStatus.pending ?? 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Falharam</CardDescription>
-            <CardTitle className="text-3xl text-destructive">{metrics?.byStatus.failed ?? 0}</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardDescription className="text-[11px] sm:text-sm">Falharam</CardDescription>
+            <CardTitle className="text-xl sm:text-3xl text-destructive">{metrics?.byStatus.failed ?? 0}</CardTitle>
           </CardHeader>
         </Card>
       </div>
