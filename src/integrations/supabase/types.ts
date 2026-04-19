@@ -659,6 +659,7 @@ export type Database = {
           prazo_dias_uteis: number | null
           priority: string
           project_name: string
+          property_id: string | null
           property_type: string | null
           public_id: string | null
           public_token_hash: string | null
@@ -742,6 +743,7 @@ export type Database = {
           prazo_dias_uteis?: number | null
           priority?: string
           project_name?: string
+          property_id?: string | null
           property_type?: string | null
           public_id?: string | null
           public_token_hash?: string | null
@@ -825,6 +827,7 @@ export type Database = {
           prazo_dias_uteis?: number | null
           priority?: string
           project_name?: string
+          property_id?: string | null
           property_type?: string | null
           public_id?: string | null
           public_token_hash?: string | null
@@ -862,6 +865,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "client_properties"
             referencedColumns: ["id"]
           },
         ]
@@ -1044,6 +1054,87 @@ export type Database = {
             columns: ["default_supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_properties: {
+        Row: {
+          address: string | null
+          address_complement: string | null
+          bairro: string | null
+          city: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          empreendimento: string | null
+          floor_plan_url: string | null
+          id: string
+          is_primary: boolean
+          label: string | null
+          location_type: string | null
+          metragem: string | null
+          notes: string | null
+          property_type: string | null
+          state: string | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          address_complement?: string | null
+          bairro?: string | null
+          city?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          empreendimento?: string | null
+          floor_plan_url?: string | null
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          location_type?: string | null
+          metragem?: string | null
+          notes?: string | null
+          property_type?: string | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          address_complement?: string | null
+          bairro?: string | null
+          city?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          empreendimento?: string | null
+          floor_plan_url?: string | null
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          location_type?: string | null
+          metragem?: string | null
+          notes?: string | null
+          property_type?: string | null
+          state?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_properties_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_stats"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "client_properties_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
