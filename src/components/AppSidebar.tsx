@@ -95,11 +95,11 @@ function renderNavItem(item: NavItem, collapsed: boolean) {
         <NavLink
           to={item.url}
           end={item.end}
-          className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-body text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-          activeClassName="bg-sidebar-primary/15 text-sidebar-primary-foreground font-medium shadow-premium-sm"
+          className="group/nav relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-body text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent/70 transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-[2px] before:rounded-r-full before:bg-sidebar-primary before:transition-all before:duration-200 hover:before:h-4"
+          activeClassName="!text-sidebar-foreground font-medium bg-gradient-to-r from-sidebar-primary/15 via-sidebar-primary/8 to-transparent shadow-premium-sm before:!h-5 [&_svg]:!text-sidebar-primary"
         >
-          <item.icon className="h-4 w-4 shrink-0" />
-          {!collapsed && <span className="flex-1 tracking-tight">{item.title}</span>}
+          <item.icon className="h-4 w-4 shrink-0 text-sidebar-foreground/50 group-hover/nav:text-sidebar-foreground/80 transition-colors" />
+          {!collapsed && <span className="flex-1 tracking-tight truncate">{item.title}</span>}
           {!collapsed && item.actionUrl && (
             <TooltipProvider delayDuration={300}>
               <Tooltip>
@@ -107,7 +107,7 @@ function renderNavItem(item: NavItem, collapsed: boolean) {
                   <Link
                     to={item.actionUrl}
                     onClick={(e) => e.stopPropagation()}
-                    className="opacity-0 group-hover/action:opacity-100 transition-all duration-200 h-6 w-6 flex items-center justify-center rounded-md hover:bg-sidebar-accent"
+                    className="opacity-0 group-hover/action:opacity-100 transition-all duration-200 h-6 w-6 flex items-center justify-center rounded-md bg-sidebar-primary/10 text-sidebar-primary hover:bg-sidebar-primary/20 ring-1 ring-sidebar-primary/20"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </Link>
@@ -161,40 +161,47 @@ export function AppSidebar() {
   const renderGroup = (label: string, items: NavItem[]) => {
     if (items.length === 0) return null;
     return (
-      <>
-        <Separator className="mx-2 opacity-20" />
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-sidebar-foreground/40 font-body font-semibold px-2.5 mb-1">
-              {label}
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => renderNavItem(item, collapsed))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </>
+      <SidebarGroup className="px-1">
+        {!collapsed ? (
+          <SidebarGroupLabel className="text-[9.5px] uppercase tracking-[0.14em] text-sidebar-foreground/35 font-body font-semibold px-2.5 mb-0.5 mt-2">
+            {label}
+          </SidebarGroupLabel>
+        ) : (
+          <div className="mx-3 my-2 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
+        )}
+        <SidebarGroupContent>
+          <SidebarMenu className="gap-0.5">
+            {items.map((item) => renderNavItem(item, collapsed))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
     );
   };
 
+  const initials = (profile?.full_name || "U")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || "")
+    .join("");
+
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4">
-        <img
-          src={logoDark}
-          alt="Bwild"
-          className={collapsed ? "h-5 mx-auto object-contain" : "h-7 object-contain"}
-        />
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/60">
+      <SidebarHeader className={collapsed ? "p-3" : "p-4"}>
+        <div className="flex items-center justify-center">
+          <img
+            src={logoDark}
+            alt="Bwild"
+            className={collapsed ? "h-5 object-contain" : "h-7 object-contain"}
+          />
+        </div>
       </SidebarHeader>
 
-      <Separator className="opacity-20" />
+      <div className="mx-3 h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
-      <SidebarContent className="py-2">
-        <SidebarGroup>
+      <SidebarContent className="py-2 px-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-sidebar-border [&::-webkit-scrollbar-thumb]:rounded-full">
+        <SidebarGroup className="px-1">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {renderNavItem(DASHBOARD_ITEM, collapsed)}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -207,31 +214,50 @@ export function AppSidebar() {
         {renderGroup("Ferramentas", ferramentasItems)}
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-3 border-t border-sidebar-border/60">
         {collapsed && isBudgetEditor && (
           <Button
             variant="ghost"
             size="icon"
-            className="w-full h-8 mb-1"
+            className="w-full h-8 mb-1 text-sidebar-foreground/60 hover:text-sidebar-foreground"
             onClick={toggleSidebar}
           >
             <PanelLeftOpen className="h-4 w-4" />
           </Button>
         )}
-        {!collapsed && profile && (
-          <div className="px-2.5 py-2 mb-1 rounded-lg bg-sidebar-accent/50">
-            <p className="text-xs font-semibold font-body text-sidebar-foreground truncate tracking-tight">
-              {profile.full_name || "Usuário"}
-            </p>
-            <p className="text-[11px] text-sidebar-foreground/50 font-body truncate">
-              {userRoles.join(", ") || "sem perfil"}
-            </p>
+        {!collapsed && profile ? (
+          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-lg bg-gradient-to-br from-sidebar-accent/60 to-sidebar-accent/20 ring-1 ring-sidebar-border/50">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-sidebar-primary/30 to-sidebar-primary/10 ring-1 ring-sidebar-primary/30 flex items-center justify-center text-[11px] font-display font-bold text-sidebar-primary-foreground shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold font-body text-sidebar-foreground truncate tracking-tight leading-tight">
+                {profile.full_name || "Usuário"}
+              </p>
+              <p className="text-[10px] text-sidebar-foreground/45 font-body truncate uppercase tracking-wider mt-0.5">
+                {userRoles.join(", ") || "sem perfil"}
+              </p>
+            </div>
           </div>
-        )}
+        ) : collapsed && profile ? (
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="h-8 w-8 mx-auto mb-1 rounded-full bg-gradient-to-br from-sidebar-primary/30 to-sidebar-primary/10 ring-1 ring-sidebar-primary/30 flex items-center justify-center text-[11px] font-display font-bold text-sidebar-primary-foreground">
+                  {initials}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p className="font-medium">{profile.full_name || "Usuário"}</p>
+                <p className="text-[10px] opacity-70">{userRoles.join(", ")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : null}
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start gap-2 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent text-xs rounded-lg"
+          className="w-full justify-start gap-2 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/70 text-xs rounded-lg transition-colors"
           onClick={handleSignOut}
         >
           <LogOut className="h-3.5 w-3.5" />
