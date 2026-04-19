@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/formatBRL";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
@@ -34,6 +34,9 @@ export function OptionalItemsSimulator({
   const [showForm, setShowForm] = useState(false);
   const [formName, setFormName] = useState(clientName || "");
   const [formEmail, setFormEmail] = useState("");
+  // Atomic guard against double-submit (B11): React state update is async,
+  // so two clicks within the same tick can both pass the `if (confirming)` check.
+  const submittingRef = useRef(false);
 
   if (optionalSections.length === 0) return null;
 
@@ -53,6 +56,7 @@ export function OptionalItemsSimulator({
   const simulatedTotal = baseTotal + selectedTotal;
 
   const handleConfirm = async () => {
+    if (submittingRef.current) return;
     if (selectedIds.size === 0) {
       toast.error("Selecione ao menos um item opcional");
       return;
@@ -61,6 +65,7 @@ export function OptionalItemsSimulator({
       toast.error("Informe seu nome");
       return;
     }
+    submittingRef.current = true;
     setConfirming(true);
     try {
       const inserts = Array.from(selectedIds).map((sectionId) => ({
@@ -97,8 +102,9 @@ export function OptionalItemsSimulator({
       setShowForm(false);
       toast.success("Seleção confirmada! Entraremos em contato.");
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       toast.error("Erro ao confirmar seleção. Tente novamente.");
+      submittingRef.current = false;
     }
     setConfirming(false);
   };
