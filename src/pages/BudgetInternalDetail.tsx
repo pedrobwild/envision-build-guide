@@ -208,6 +208,7 @@ export default function BudgetInternalDetail() {
   const [budgetTotal, setBudgetTotal] = useState<number | null>(null);
   const [itemsCount, setItemsCount] = useState<number>(0);
   const [sectionsCount, setSectionsCount] = useState<number>(0);
+  const [clientCode, setClientCode] = useState<string | null>(null);
   const [activeModule, setActiveModule] = useState<ModuleKey | null>(
     (searchParams.get("module") as ModuleKey) ?? null
   );
