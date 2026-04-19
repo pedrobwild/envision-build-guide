@@ -224,40 +224,40 @@ export default function UserManagement() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold font-display text-foreground flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-semibold font-display text-foreground flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary shrink-0" />
               Gestão de Usuários
             </h1>
-            <p className="text-sm text-muted-foreground font-body mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
               {users.length} usuários · {activeCount} ativos
               {withoutRole > 0 && (
                 <span className="text-amber-600 ml-2">· {withoutRole} sem perfil</span>
               )}
             </p>
           </div>
-          <Button size="sm" className="gap-1.5" onClick={() => setInviteOpen(true)}>
+          <Button size="sm" className="gap-1.5 w-full sm:w-auto h-10 sm:h-9" onClick={() => setInviteOpen(true)}>
             <UserPlus className="h-4 w-4" />
             Convidar Usuário
           </Button>
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <div className="relative flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome ou email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-sm"
+              className="pl-9 h-10 sm:h-9 text-sm"
             />
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-40 h-9 text-sm">
+            <SelectTrigger className="w-full sm:w-40 h-10 sm:h-9 text-sm">
               <SelectValue placeholder="Perfil" />
             </SelectTrigger>
             <SelectContent>
