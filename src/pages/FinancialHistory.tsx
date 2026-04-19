@@ -299,18 +299,54 @@ export default function FinancialHistory() {
               </div>
             )}
 
-            {/* Table */}
+            {/* Table / Cards */}
             <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="px-4 sm:px-6 py-4 border-b border-border flex items-center justify-between">
+              <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-border flex items-center justify-between gap-2">
                 <h2 className="font-display font-bold text-foreground text-sm sm:text-base">Histórico por Mês</h2>
                 <button
                   onClick={exportCSV}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm font-body text-foreground hover:bg-muted transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs sm:text-sm font-body text-foreground hover:bg-muted transition-colors h-9 shrink-0"
                 >
-                  <Download className="h-3.5 w-3.5" /> Exportar CSV
+                  <Download className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Exportar</span> CSV
                 </button>
               </div>
-              <div className="overflow-x-auto">
+
+              {/* Mobile: card list */}
+              <div className="md:hidden divide-y divide-border">
+                {allMonthlyData.map(m => (
+                  <div key={m.key} className="p-4 space-y-2">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="font-medium text-foreground font-body">{m.label}</p>
+                      <span className={`text-xs font-medium tabular-nums ${m.profit >= 0 ? 'text-success' : 'text-destructive'}`}>
+                        {m.margin}% margem
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Contratos</span>
+                        <span className="text-foreground tabular-nums">{m.contracts}</span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Faturamento</span>
+                        <span className="text-foreground font-medium tabular-nums truncate">{formatBRL(m.revenue)}</span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Custo</span>
+                        <span className="text-muted-foreground tabular-nums truncate">{formatBRL(m.cost)}</span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground">Lucro</span>
+                        <span className={`tabular-nums font-medium truncate ${m.profit >= 0 ? 'text-success' : 'text-destructive'}`}>
+                          {formatBRL(m.profit)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm font-body">
                   <thead>
                     <tr className="bg-muted/30 border-b border-border">
