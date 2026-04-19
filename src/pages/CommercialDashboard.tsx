@@ -599,9 +599,30 @@ export default function CommercialDashboard() {
                   <FileText className="h-3 w-3" />PDF
                 </a>
               )}
-              {b.manual_total && b.manual_total > 0 && (
-                <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success tabular-nums">
-                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(b.manual_total)}
+              {b.manual_total && b.manual_total > 0 ? (
+                <span
+                  className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success tabular-nums"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <InlineEdit
+                    type="currency"
+                    value={b.manual_total}
+                    onSave={(v) => updateBudgetField(b.id, "manual_total", v, "Valor")}
+                    ariaLabel="Editar valor"
+                  />
+                </span>
+              ) : (
+                <span
+                  className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground tabular-nums"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <InlineEdit
+                    type="currency"
+                    value={null}
+                    placeholder="+ Valor"
+                    onSave={(v) => updateBudgetField(b.id, "manual_total", v, "Valor")}
+                    ariaLabel="Adicionar valor"
+                  />
                 </span>
               )}
             </div>
