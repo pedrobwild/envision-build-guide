@@ -322,6 +322,22 @@ async function syncSingleProject(
 }
 
 /**
+ * Parses metragem string ("25m²", "120 m2", "85.5") to numeric value.
+ * Returns null if no valid number can be extracted.
+ */
+function parseMetragem(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  const str = String(value).trim();
+  if (!str) return null;
+  // Extract first numeric token (handles "25m²", "120 m2", "1.250,50 m²", etc.)
+  const match = str.replace(/\./g, "").replace(",", ".").match(/-?\d+(\.\d+)?/);
+  if (!match) return null;
+  const num = parseFloat(match[0]);
+  return Number.isFinite(num) ? num : null;
+}
+
+/**
  * Maps an Envision budget → Portal BWild project payload.
  */
 function mapBudgetToProject(budget: any, totalValue: number) {
@@ -338,7 +354,7 @@ function mapBudgetToProject(budget: any, totalValue: number) {
     city: budget.city,
     unit: budget.unit,
     property_type: budget.property_type ?? "Apartamento",
-    total_area: budget.metragem,
+    total_area: parseMetragem(budget.metragem),
     estimated_duration_weeks: budget.estimated_weeks,
     budget_value: totalValue,
     budget_code: budget.sequential_code,
