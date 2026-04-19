@@ -175,8 +175,26 @@ export default function ClientDetail() {
   const { data: client, isLoading } = useClient(clientId);
   const { data: stats } = useClientStats(clientId);
   const { data: budgets = [] } = useClientBudgets(clientId);
+  const { data: properties = [] } = useClientProperties(clientId);
   const { members: comerciais } = useTeamMembers("comercial");
   const upsert = useUpsertClient();
+
+  // Mapa: property_id -> property (para enriquecer aba de orçamentos)
+  const propertyMap = useMemo(() => {
+    const m = new Map<string, typeof properties[number]>();
+    for (const p of properties) m.set(p.id, p);
+    return m;
+  }, [properties]);
+
+  // Contagem de orçamentos por imóvel (para card de imóveis)
+  const budgetCountByProperty = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const b of budgets) {
+      const pid = (b as { property_id?: string | null }).property_id;
+      if (pid) counts[pid] = (counts[pid] ?? 0) + 1;
+    }
+    return counts;
+  }, [budgets]);
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
