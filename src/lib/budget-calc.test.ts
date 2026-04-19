@@ -33,11 +33,13 @@ describe("calcItemCostTotal", () => {
     expect(calcItemCostTotal({ internal_unit_price: null, internal_total: 500 })).toBe(500);
     expect(calcItemCostTotal({ internal_unit_price: 0, internal_total: 500 })).toBe(500);
   });
-  it("multiplies internal_total fallback by qty", () => {
-    expect(calcItemCostTotal({ internal_unit_price: null, internal_total: 200, qty: 3 })).toBe(600);
-    expect(calcItemCostTotal({ internal_unit_price: 0, internal_total: 100, qty: 5 })).toBe(500);
+  it("treats internal_total as lump-sum (parity with calcItemSaleTotal — does NOT multiply by qty)", () => {
+    // Parity: calcItemSaleTotal also returns total*(1+bdi/100) without qty in fallback.
+    // Multiplying cost by qty here would inflate cost vs. sale and break BDI/margin.
+    expect(calcItemCostTotal({ internal_unit_price: null, internal_total: 200, qty: 3 })).toBe(200);
+    expect(calcItemCostTotal({ internal_unit_price: 0, internal_total: 100, qty: 5 })).toBe(100);
   });
-  it("defaults qty to 1 in fallback when qty is null", () => {
+  it("uses internal_total directly even when qty is null", () => {
     expect(calcItemCostTotal({ internal_unit_price: null, internal_total: 300, qty: null })).toBe(300);
   });
   it("returns 0 when both are null/zero", () => {
