@@ -213,15 +213,15 @@ export default function ClientDetail() {
               </h3>
               <dl className="space-y-2.5 text-sm">
                 <InfoRow icon={User} label="Nome completo" value={client.name} />
-                <InfoRow icon={User} label="Nacionalidade" value={(client as Record<string, unknown>).nationality as string} />
-                <InfoRow icon={User} label="Estado civil" value={(client as Record<string, unknown>).marital_status as string} />
-                <InfoRow icon={User} label="Profissão" value={(client as Record<string, unknown>).profession as string} />
+                <InfoRow icon={User} label="Nacionalidade" value={client.nationality} />
+                <InfoRow icon={User} label="Estado civil" value={client.marital_status} />
+                <InfoRow icon={User} label="Profissão" value={client.profession} />
                 <InfoRow
                   icon={FileText}
                   label={client.document_type === "cnpj" ? "CNPJ" : "CPF / CNPJ"}
                   value={client.document}
                 />
-                <InfoRow icon={FileText} label="RG" value={(client as Record<string, unknown>).rg as string} />
+                <InfoRow icon={FileText} label="RG" value={client.rg} />
                 <InfoRow icon={Mail} label="E-mail" value={client.email} />
                 <InfoRow icon={Phone} label="Telefone" value={client.phone} />
               </dl>
@@ -232,12 +232,12 @@ export default function ClientDetail() {
                 Endereço residencial
               </h3>
               <dl className="space-y-2.5 text-sm">
-                <InfoRow icon={MapPin} label="Endereço" value={(client as Record<string, unknown>).address as string} />
-                <InfoRow icon={MapPin} label="Complemento" value={(client as Record<string, unknown>).address_complement as string} />
+                <InfoRow icon={MapPin} label="Endereço" value={client.address} />
+                <InfoRow icon={MapPin} label="Complemento" value={client.address_complement} />
                 <InfoRow icon={MapPin} label="Bairro" value={client.bairro} />
                 <InfoRow icon={MapPin} label="Cidade" value={client.city} />
-                <InfoRow icon={MapPin} label="Estado" value={(client as Record<string, unknown>).state as string} />
-                <InfoRow icon={MapPin} label="CEP" value={(client as Record<string, unknown>).zip_code as string} />
+                <InfoRow icon={MapPin} label="Estado" value={client.state} />
+                <InfoRow icon={MapPin} label="CEP" value={client.zip_code} />
               </dl>
             </Card>
 
@@ -246,22 +246,22 @@ export default function ClientDetail() {
                 Dados do imóvel
               </h3>
               <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
-                <InfoRow icon={MapPin} label="Endereço do imóvel" value={(client as Record<string, unknown>).property_address as string} />
-                <InfoRow icon={MapPin} label="Complemento" value={(client as Record<string, unknown>).property_address_complement as string} />
-                <InfoRow icon={MapPin} label="Bairro" value={(client as Record<string, unknown>).property_bairro as string} />
-                <InfoRow icon={MapPin} label="Cidade" value={(client as Record<string, unknown>).property_city as string} />
-                <InfoRow icon={MapPin} label="Estado" value={(client as Record<string, unknown>).property_state as string} />
-                <InfoRow icon={MapPin} label="CEP" value={(client as Record<string, unknown>).property_zip_code as string} />
-                <InfoRow icon={Building2} label="Metragem" value={(client as Record<string, unknown>).property_metragem as string} />
-                <InfoRow icon={Building2} label="Empreendimento" value={((client as Record<string, unknown>).property_empreendimento as string) || client.condominio_default} />
+                <InfoRow icon={MapPin} label="Endereço do imóvel" value={client.property_address} />
+                <InfoRow icon={MapPin} label="Complemento" value={client.property_address_complement} />
+                <InfoRow icon={MapPin} label="Bairro" value={client.property_bairro} />
+                <InfoRow icon={MapPin} label="Cidade" value={client.property_city} />
+                <InfoRow icon={MapPin} label="Estado" value={client.property_state} />
+                <InfoRow icon={MapPin} label="CEP" value={client.property_zip_code} />
+                <InfoRow icon={Building2} label="Metragem" value={client.property_metragem} />
+                <InfoRow icon={Building2} label="Empreendimento" value={client.property_empreendimento || client.condominio_default} />
                 <InfoRow icon={Building2} label="Tipo de imóvel" value={client.property_type_default} />
                 <InfoRow icon={Building2} label="Tipo de locação" value={client.location_type_default} />
               </div>
-              {((client as Record<string, unknown>).property_floor_plan_url as string) && (
+              {client.property_floor_plan_url && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-2">Planta do imóvel</p>
                   <a
-                    href={(client as Record<string, unknown>).property_floor_plan_url as string}
+                    href={client.property_floor_plan_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
