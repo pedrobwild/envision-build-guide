@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { upsertClientByContact } from "@/hooks/useClients";
+import { useClientProperties, summarizeProperty } from "@/hooks/useClientProperties";
 import { supabase } from "@/integrations/supabase/client";
 import { seedFromTemplate } from "@/lib/seed-from-template";
 import { useAuth } from "@/hooks/useAuth";
@@ -155,6 +156,8 @@ export default function NewBudgetRequest() {
   // Pré-preenche a partir de ?client_id=&name=&email=&phone= (vindo do CRM)
   const prefillClientId = searchParams.get("client_id");
   const [linkedClientId, setLinkedClientId] = useState<string | null>(prefillClientId);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>("__new__");
+  const { data: clientProperties = [] } = useClientProperties(linkedClientId ?? undefined);
 
   const [clientName, setClientName] = useState(searchParams.get("name") ?? "");
   const [clientEmail, setClientEmail] = useState(searchParams.get("email") ?? "");
@@ -174,6 +177,19 @@ export default function NewBudgetRequest() {
   const [commercialOwnerId, setCommercialOwnerId] = useState("");
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
   const [hubspotDealUrl, setHubspotDealUrl] = useState("");
+
+  // Quando um imóvel existente é selecionado, auto-preenche os campos
+  useEffect(() => {
+    if (selectedPropertyId === "__new__" || !selectedPropertyId) return;
+    const p = clientProperties.find((cp) => cp.id === selectedPropertyId);
+    if (!p) return;
+    setCondominio(p.empreendimento ?? "");
+    setBairro(p.bairro ?? "");
+    setCity(p.city ?? "");
+    setMetragemRaw((p.metragem ?? "").replace(/m²?$/i, "").trim());
+    setPropertyType(p.property_type ?? "");
+    setLocationType(p.location_type ?? "");
+  }, [selectedPropertyId, clientProperties]);
 
   // Import mode fields
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -302,10 +318,49 @@ export default function NewBudgetRequest() {
         }
       }
 
+      // Resolve property_id: usa o existente OU cria um novo se há dados de imóvel
+      let resolvedPropertyId: string | null = null;
+      if (resolvedClientId) {
+        if (selectedPropertyId !== "__new__" && selectedPropertyId) {
+          resolvedPropertyId = selectedPropertyId;
+        } else {
+          // Cria novo imóvel se houver pelo menos um dado relevante
+          const hasPropertyData = condominio.trim() || bairro.trim() || metargemRaw.trim() || propertyType || city.trim();
+          if (hasPropertyData) {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const { data: newProp, error: propErr } = await (supabase as any)
+                .from("client_properties")
+                .insert({
+                  client_id: resolvedClientId,
+                  empreendimento: condominio.trim() || null,
+                  bairro: bairro.trim() || null,
+                  city: city.trim() || null,
+                  metragem: metragemFormatted,
+                  property_type: propertyType || null,
+                  location_type: locationType || null,
+                  created_by: user.id,
+                  is_primary: clientProperties.length === 0,
+                })
+                .select("id")
+                .single();
+              if (propErr) {
+                console.error("[NewBudgetRequest] criar property falhou:", propErr);
+              } else if (newProp?.id) {
+                resolvedPropertyId = newProp.id;
+              }
+            } catch (e) {
+              console.error("[NewBudgetRequest] property insert exception:", e);
+            }
+          }
+        }
+      }
+
       const { data: inserted, error } = await supabase
         .from("budgets")
         .insert({
           client_id: resolvedClientId,
+          property_id: resolvedPropertyId,
           client_name: clientName.trim(),
           project_name: projectName || clientName.trim(),
           lead_email: clientEmail.trim() || null,
