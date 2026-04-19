@@ -150,22 +150,22 @@ export default function CatalogPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Catálogo Mestre</h1>
-          <p className="text-sm text-muted-foreground">Base de produtos e serviços para orçamentos</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Catálogo Mestre</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Base de produtos e serviços para orçamentos</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => { setEditingCategory(null); setCategoryDialogOpen(true); }}>
-            <FolderOpen className="h-4 w-4 mr-1" /> Categoria
+        <div className="grid grid-cols-3 sm:flex gap-2">
+          <Button variant="outline" size="sm" className="h-10 sm:h-9" onClick={() => { setEditingCategory(null); setCategoryDialogOpen(true); }}>
+            <FolderOpen className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Categoria</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => { setEditingSupplier(null); setSupplierDialogOpen(true); }}>
-            <Building2 className="h-4 w-4 mr-1" /> Fornecedor
+          <Button variant="outline" size="sm" className="h-10 sm:h-9" onClick={() => { setEditingSupplier(null); setSupplierDialogOpen(true); }}>
+            <Building2 className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Fornecedor</span>
           </Button>
-          <Button size="sm" onClick={() => { setEditingItem(null); setItemDialogOpen(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> Novo Item
+          <Button size="sm" className="h-10 sm:h-9" onClick={() => { setEditingItem(null); setItemDialogOpen(true); }}>
+            <Plus className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Novo Item</span><span className="sm:hidden">Item</span>
           </Button>
         </div>
       </div>
