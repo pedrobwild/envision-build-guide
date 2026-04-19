@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { sanitizePostgrestPattern } from "@/lib/postgrest-escape";
 
 export interface LeadSourceRow {
   id: string;
@@ -45,8 +46,7 @@ export function useLeadSources(filters: LeadSourceFilters = {}) {
       if (filters.source) query = query.eq("source", filters.source);
       if (filters.status) query = query.eq("processing_status", filters.status);
       if (filters.search) {
-        // Sanitiza para evitar quebrar a sintaxe `or` do PostgREST (vírgulas, parênteses, aspas)
-        const s = filters.search.trim().replace(/[,()'"\\]/g, " ");
+        const s = sanitizePostgrestPattern(filters.search);
         if (s.length > 0) {
           query = query.or(
             `external_id.ilike.%${s}%,campaign_name.ilike.%${s}%,form_id.ilike.%${s}%`,
