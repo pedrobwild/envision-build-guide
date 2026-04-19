@@ -224,40 +224,40 @@ export default function UserManagement() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold font-display text-foreground flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-semibold font-display text-foreground flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary shrink-0" />
               Gestão de Usuários
             </h1>
-            <p className="text-sm text-muted-foreground font-body mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
               {users.length} usuários · {activeCount} ativos
               {withoutRole > 0 && (
                 <span className="text-amber-600 ml-2">· {withoutRole} sem perfil</span>
               )}
             </p>
           </div>
-          <Button size="sm" className="gap-1.5" onClick={() => setInviteOpen(true)}>
+          <Button size="sm" className="gap-1.5 w-full sm:w-auto h-10 sm:h-9" onClick={() => setInviteOpen(true)}>
             <UserPlus className="h-4 w-4" />
             Convidar Usuário
           </Button>
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <div className="relative flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome ou email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-sm"
+              className="pl-9 h-10 sm:h-9 text-sm"
             />
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-40 h-9 text-sm">
+            <SelectTrigger className="w-full sm:w-40 h-10 sm:h-9 text-sm">
               <SelectValue placeholder="Perfil" />
             </SelectTrigger>
             <SelectContent>
@@ -289,7 +289,85 @@ export default function UserManagement() {
         ) : (
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              {/* Mobile: card list */}
+              <div className="md:hidden divide-y divide-border">
+                {filtered.map((u) => (
+                  <div key={u.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground font-body truncate">
+                          {u.full_name || "—"}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-body truncate mt-0.5">
+                          {u.email}
+                        </p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditUser(u);
+                              setEditRoles([...u.roles]);
+                            }}
+                          >
+                            <Shield className="h-3.5 w-3.5 mr-2" />
+                            Editar perfis
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setPwdUser(u);
+                              setNewPassword("");
+                            }}
+                          >
+                            <KeyRound className="h-3.5 w-3.5 mr-2" />
+                            Definir senha
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleToggleActive(u)}>
+                            {u.is_active ? (
+                              <><UserX className="h-3.5 w-3.5 mr-2" />Desativar</>
+                            ) : (
+                              <><UserCheck className="h-3.5 w-3.5 mr-2" />Reativar</>
+                            )}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {u.is_active ? (
+                        <Badge variant="outline" className="text-[11px] bg-green-50 text-green-700 border-green-200">
+                          Ativo
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[11px] bg-muted text-muted-foreground">
+                          Inativo
+                        </Badge>
+                      )}
+                      {u.roles.length === 0 ? (
+                        <span className="text-xs text-muted-foreground italic font-body">Sem perfil</span>
+                      ) : (
+                        u.roles.map((role) => (
+                          <Badge
+                            key={role}
+                            variant="outline"
+                            className={`text-[11px] gap-1 ${roleBadgeColor(role)}`}
+                          >
+                            {roleIcon(role)} {ROLES[role].label}
+                          </Badge>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/30">

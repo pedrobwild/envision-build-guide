@@ -62,11 +62,11 @@ export default function LeadSourcesPage() {
   const failedCount = metrics?.byStatus.failed ?? 0;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-bold font-display tracking-tight">Leads de Integrações</h1>
-          <p className="text-muted-foreground font-body mt-1">
+    <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-3xl font-bold font-display tracking-tight">Leads de Integrações</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
             Captação automática via Meta Ads, Google Ads, formulários do site e outras integrações.
           </p>
         </div>
@@ -74,6 +74,7 @@ export default function LeadSourcesPage() {
           onClick={() => reprocess.mutate()}
           disabled={reprocess.isPending || failedCount === 0}
           variant={failedCount > 0 ? "default" : "outline"}
+          className="w-full sm:w-auto h-10 sm:h-9"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${reprocess.isPending ? "animate-spin" : ""}`} />
           Reprocessar falhas {failedCount > 0 && `(${failedCount})`}
@@ -81,29 +82,29 @@ export default function LeadSourcesPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Recebidos (30d)</CardDescription>
-            <CardTitle className="text-3xl">{metrics?.total ?? 0}</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardDescription className="text-[11px] sm:text-sm">Recebidos (30d)</CardDescription>
+            <CardTitle className="text-xl sm:text-3xl">{metrics?.total ?? 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Processados</CardDescription>
-            <CardTitle className="text-3xl text-emerald-600 dark:text-emerald-400">{metrics?.byStatus.processed ?? 0}</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardDescription className="text-[11px] sm:text-sm">Processados</CardDescription>
+            <CardTitle className="text-xl sm:text-3xl text-emerald-600 dark:text-emerald-400">{metrics?.byStatus.processed ?? 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Pendentes</CardDescription>
-            <CardTitle className="text-3xl text-amber-600 dark:text-amber-400">{metrics?.byStatus.pending ?? 0}</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardDescription className="text-[11px] sm:text-sm">Pendentes</CardDescription>
+            <CardTitle className="text-xl sm:text-3xl text-amber-600 dark:text-amber-400">{metrics?.byStatus.pending ?? 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Falharam</CardDescription>
-            <CardTitle className="text-3xl text-destructive">{metrics?.byStatus.failed ?? 0}</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardDescription className="text-[11px] sm:text-sm">Falharam</CardDescription>
+            <CardTitle className="text-xl sm:text-3xl text-destructive">{metrics?.byStatus.failed ?? 0}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -117,39 +118,41 @@ export default function LeadSourcesPage() {
 
         <TabsContent value="leads" className="space-y-4">
           {/* Filtros */}
-          <div className="flex gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[240px]">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3">
+            <div className="relative flex-1 sm:min-w-[240px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por ID, campanha, formulário..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="pl-9 h-10 sm:h-9"
               />
             </div>
-            <Select value={statusFilter || "all"} onValueChange={(v) => setStatusFilter(v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="processed">Processados</SelectItem>
-                <SelectItem value="pending">Pendentes</SelectItem>
-                <SelectItem value="failed">Falharam</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sourceFilter || "all"} onValueChange={(v) => setSourceFilter(v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Fonte" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as fontes</SelectItem>
-                {Object.entries(CLIENT_SOURCES).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 sm:flex gap-2">
+              <Select value={statusFilter || "all"} onValueChange={(v) => setStatusFilter(v === "all" ? "" : v)}>
+                <SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-9">
+                  <Filter className="h-4 w-4 mr-2 shrink-0" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="processed">Processados</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
+                  <SelectItem value="failed">Falharam</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sourceFilter || "all"} onValueChange={(v) => setSourceFilter(v === "all" ? "" : v)}>
+                <SelectTrigger className="w-full sm:w-[200px] h-10 sm:h-9">
+                  <SelectValue placeholder="Fonte" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as fontes</SelectItem>
+                  {Object.entries(CLIENT_SOURCES).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <Card>
@@ -165,61 +168,113 @@ export default function LeadSourcesPage() {
                   </p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Recebido</TableHead>
-                      <TableHead>Fonte</TableHead>
-                      <TableHead>Campanha</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead className="w-[80px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  {/* Mobile: card list */}
+                  <div className="md:hidden divide-y divide-border">
                     {leads.map((lead) => {
                       const cfg = STATUS_CONFIG[lead.processing_status] ?? STATUS_CONFIG.pending;
                       const Icon = cfg.icon;
                       return (
-                        <TableRow key={lead.id} className="cursor-pointer" onClick={() => setSelectedLead(lead)}>
-                          <TableCell className="text-sm font-mono text-muted-foreground">
-                            {formatDateTime(lead.received_at)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{CLIENT_SOURCES[lead.source] ?? lead.source}</Badge>
-                          </TableCell>
-                          <TableCell className="max-w-[280px] truncate">
-                            {lead.campaign_name || lead.campaign_id || (
-                              <span className="text-muted-foreground/60">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={`${cfg.color} border gap-1`} variant="outline">
+                        <button
+                          type="button"
+                          key={lead.id}
+                          onClick={() => setSelectedLead(lead)}
+                          className="w-full text-left p-4 active:bg-muted/40 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-mono text-muted-foreground mb-1">
+                                {formatDateTime(lead.received_at)}
+                              </p>
+                              <p className="font-medium text-sm text-foreground truncate">
+                                {lead.campaign_name || lead.campaign_id || "Sem campanha"}
+                              </p>
+                            </div>
+                            <Badge className={`${cfg.color} border gap-1 text-[10px] shrink-0`} variant="outline">
                               <Icon className="h-3 w-3" />
                               {cfg.label}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <Badge variant="outline" className="text-[10px]">
+                              {CLIENT_SOURCES[lead.source] ?? lead.source}
+                            </Badge>
                             {lead.client_id ? (
                               <Link
                                 to={`/admin/crm/${lead.client_id}`}
-                                className="text-primary hover:underline text-sm flex items-center gap-1"
+                                className="text-primary hover:underline flex items-center gap-1"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 Ver cliente <ExternalLink className="h-3 w-3" />
                               </Link>
                             ) : (
-                              <span className="text-muted-foreground/60 text-sm">—</span>
+                              <span className="text-muted-foreground/60">Sem cliente</span>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm">Detalhes</Button>
-                          </TableCell>
-                        </TableRow>
+                          </div>
+                        </button>
                       );
                     })}
-                  </TableBody>
-                </Table>
+                  </div>
+
+                  {/* Desktop: table */}
+                  <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Recebido</TableHead>
+                        <TableHead>Fonte</TableHead>
+                        <TableHead>Campanha</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead className="w-[80px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {leads.map((lead) => {
+                        const cfg = STATUS_CONFIG[lead.processing_status] ?? STATUS_CONFIG.pending;
+                        const Icon = cfg.icon;
+                        return (
+                          <TableRow key={lead.id} className="cursor-pointer" onClick={() => setSelectedLead(lead)}>
+                            <TableCell className="text-sm font-mono text-muted-foreground">
+                              {formatDateTime(lead.received_at)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{CLIENT_SOURCES[lead.source] ?? lead.source}</Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[280px] truncate">
+                              {lead.campaign_name || lead.campaign_id || (
+                                <span className="text-muted-foreground/60">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={`${cfg.color} border gap-1`} variant="outline">
+                                <Icon className="h-3 w-3" />
+                                {cfg.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {lead.client_id ? (
+                                <Link
+                                  to={`/admin/crm/${lead.client_id}`}
+                                  className="text-primary hover:underline text-sm flex items-center gap-1"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Ver cliente <ExternalLink className="h-3 w-3" />
+                                </Link>
+                              ) : (
+                                <span className="text-muted-foreground/60 text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="sm">Detalhes</Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -275,7 +330,7 @@ export default function LeadSourcesPage() {
 
       {/* Drawer de detalhes */}
       <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Detalhes do Lead</DialogTitle>
             <DialogDescription>
@@ -283,12 +338,12 @@ export default function LeadSourcesPage() {
             </DialogDescription>
           </DialogHeader>
           {selectedLead && (
-            <ScrollArea className="max-h-[60vh] pr-4">
+            <ScrollArea className="max-h-[70vh] sm:max-h-[60vh] pr-2 sm:pr-4 -mx-2 px-2">
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">Fonte:</span> <strong>{CLIENT_SOURCES[selectedLead.source] ?? selectedLead.source}</strong></div>
-                  <div><span className="text-muted-foreground">External ID:</span> <code className="text-xs">{selectedLead.external_id ?? "—"}</code></div>
-                  <div><span className="text-muted-foreground">Campanha:</span> {selectedLead.campaign_name ?? "—"}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
+                  <div className="break-words"><span className="text-muted-foreground">Fonte:</span> <strong>{CLIENT_SOURCES[selectedLead.source] ?? selectedLead.source}</strong></div>
+                  <div className="break-all"><span className="text-muted-foreground">External ID:</span> <code className="text-xs">{selectedLead.external_id ?? "—"}</code></div>
+                  <div className="break-words"><span className="text-muted-foreground">Campanha:</span> {selectedLead.campaign_name ?? "—"}</div>
                   <div><span className="text-muted-foreground">Conjunto:</span> {selectedLead.adset_name ?? "—"}</div>
                   <div><span className="text-muted-foreground">Anúncio:</span> {selectedLead.ad_name ?? "—"}</div>
                   <div><span className="text-muted-foreground">Formulário:</span> {selectedLead.form_id ?? "—"}</div>

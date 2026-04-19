@@ -104,20 +104,20 @@ export default function ClientDetail() {
   const sCfg = CLIENT_STATUSES[getEffectiveClientStatus(client, stats ?? null)];
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate("/admin/crm")} className="gap-1.5">
+    <div className="p-3 sm:p-6 max-w-[1200px] mx-auto space-y-4 sm:space-y-6">
+      <Button variant="ghost" size="sm" onClick={() => navigate("/admin/crm")} className="gap-1.5 h-9">
         <ArrowLeft className="h-3.5 w-3.5" />
         Voltar para clientes
       </Button>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <User className="h-7 w-7 text-primary" />
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:justify-between gap-3 sm:gap-4">
+        <div className="flex items-start gap-3 sm:gap-4 min-w-0 w-full sm:w-auto">
+          <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+            <User className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
           </div>
-          <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-display font-bold tracking-tight">{client.name}</h1>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <h1 className="text-lg sm:text-2xl font-display font-bold tracking-tight break-words">{client.name}</h1>
               <Badge className={cn("font-normal", sCfg.color)}>{sCfg.label}</Badge>
             </div>
             <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground font-body">

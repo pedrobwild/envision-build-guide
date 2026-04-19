@@ -129,14 +129,14 @@ export default function PhotoLibraryUpload() {
   const pendingCount = files.filter((f) => f.status === "pending" || f.status === "error").length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">
+        <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">
           Biblioteca de Fotos — Upload em Lote
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
           Arraste ou selecione imagens. O nome do arquivo (sem extensão) será usado como nome do item.
-          <br />
+          <br className="hidden sm:inline" />
           Fotos existentes em orçamentos anteriores não serão alteradas — apenas novos itens usarão essas fotos.
         </p>
       </div>

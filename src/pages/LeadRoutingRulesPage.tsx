@@ -82,18 +82,18 @@ export default function LeadRoutingRulesPage() {
     : { ...EMPTY_RULE, priority: (rules.at(-1)?.priority ?? 100) + 10 };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-bold font-display tracking-tight flex items-center gap-2">
-            <Route className="h-7 w-7" /> Regras de Roteamento
+    <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-3xl font-bold font-display tracking-tight flex items-center gap-2">
+            <Route className="h-5 w-5 sm:h-7 sm:w-7 shrink-0" /> Regras de Roteamento
           </h1>
-          <p className="text-muted-foreground font-body mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
             Defina quem recebe cada lead com base em fonte, campanha, formulário ou cidade.
             Regras são avaliadas em ordem de prioridade (menor primeiro).
           </p>
         </div>
-        <Button onClick={() => setCreating(true)}>
+        <Button onClick={() => setCreating(true)} className="w-full sm:w-auto h-10 sm:h-9">
           <Plus className="h-4 w-4 mr-2" /> Nova regra
         </Button>
       </div>

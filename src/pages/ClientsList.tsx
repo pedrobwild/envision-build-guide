@@ -123,19 +123,19 @@ export default function ClientsList() {
   }
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold tracking-tight flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
+    <div className="p-3 sm:p-6 max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-display font-bold tracking-tight flex items-center gap-2">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
             Clientes
           </h1>
-          <p className="text-sm text-muted-foreground font-body mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
             Carteira de clientes do Bwild. Cada cliente concentra todos os orçamentos e o histórico
             comercial.
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-1.5">
+        <Button onClick={openCreate} className="gap-1.5 w-full sm:w-auto h-10 sm:h-9">
           <Plus className="h-4 w-4" />
           Novo cliente
         </Button>
@@ -180,46 +180,119 @@ export default function ClientsList() {
       </div>
 
       <Card className="p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[240px]">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+          <div className="relative flex-1 sm:min-w-[240px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome, e-mail, telefone ou documento..."
-              className="pl-8 h-9"
+              className="pl-8 h-10 sm:h-9"
             />
           </div>
-          <Select value={status} onValueChange={(v) => setStatus(v as ClientStatus | "all")}>
-            <SelectTrigger className="h-9 w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos status</SelectItem>
-              {STATUS_OPTIONS.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={ownerId} onValueChange={setOwnerId}>
-            <SelectTrigger className="h-9 w-[200px]">
-              <SelectValue placeholder="Todos os comerciais" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os comerciais</SelectItem>
-              {comerciais.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 sm:flex gap-2">
+            <Select value={status} onValueChange={(v) => setStatus(v as ClientStatus | "all")}>
+              <SelectTrigger className="h-10 sm:h-9 w-full sm:w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos status</SelectItem>
+                {STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={ownerId} onValueChange={setOwnerId}>
+              <SelectTrigger className="h-10 sm:h-9 w-full sm:w-[200px]">
+                <SelectValue placeholder="Todos os comerciais" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os comerciais</SelectItem>
+                {comerciais.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </Card>
 
       <Card className="overflow-hidden">
+        {/* Mobile: card list */}
+        <div className="md:hidden divide-y divide-border">
+          {isLoading ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">Carregando clientes…</div>
+          ) : clients.length === 0 ? (
+            <div className="p-8 flex flex-col items-center gap-3 text-muted-foreground">
+              <Users className="h-8 w-8 opacity-40" />
+              <p className="text-sm font-body text-center">
+                Nenhum cliente encontrado
+                {search || status !== "all" || ownerId !== "all"
+                  ? " com esses filtros."
+                  : " ainda. Crie o primeiro."}
+              </p>
+              <Button variant="outline" size="sm" onClick={openCreate} className="gap-1.5 h-9">
+                <Plus className="h-3.5 w-3.5" />
+                Novo cliente
+              </Button>
+            </div>
+          ) : (
+            clients.map((c) => {
+              const s = getEffectiveClientStatus(c, c.stats);
+              const sCfg = CLIENT_STATUSES[s] ?? CLIENT_STATUSES.lead;
+              const owner = c.commercial_owner_id
+                ? ownersMap.get(c.commercial_owner_id) ?? "—"
+                : "—";
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  className="w-full text-left p-4 active:bg-muted/40 transition-colors"
+                  onClick={() => navigate(`/admin/crm/${c.id}`)}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
+                      </p>
+                    </div>
+                    <Badge className={cn("font-normal text-[10px] shrink-0", sCfg.color)}>
+                      {sCfg.label}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {c.phone && (
+                        <span className="flex items-center gap-1 truncate">
+                          <Phone className="h-3 w-3 shrink-0" /> {c.phone}
+                        </span>
+                      )}
+                      {!c.phone && c.email && (
+                        <span className="flex items-center gap-1 truncate">
+                          <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{c.email}</span>
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="tabular-nums">{c.stats?.total_budgets ?? 0} orç.</span>
+                      <span className="tabular-nums font-medium text-foreground">
+                        {formatBRL(c.stats?.pipeline_value)}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -365,6 +438,7 @@ export default function ClientsList() {
             )}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       <ClientForm
