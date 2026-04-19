@@ -211,8 +211,18 @@ ${code.slice(0, 8000)}`;
     setLoading(false);
   };
 
-  const renderMarkdown = (text) => {
-    return text
+  // SECURITY: escape HTML before applying markdown regex.
+  // The text comes from an external LLM API and must NOT be trusted.
+  const escapeHtml = (raw: string) =>
+    raw
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  const renderMarkdown = (text: string) => {
+    return escapeHtml(text)
       .replace(/^### (.+)$/gm, '<h3 style="font-weight:700;font-size:14px;margin:16px 0 6px;color:#1e3a5f">$1</h3>')
       .replace(/^## (.+)$/gm, '<h2 style="font-weight:700;font-size:16px;margin:20px 0 8px;color:#1e3a5f">$1</h2>')
       .replace(/^# (.+)$/gm, '<h1 style="font-weight:800;font-size:18px;margin:20px 0 8px;color:#1e3a5f">$1</h1>')
