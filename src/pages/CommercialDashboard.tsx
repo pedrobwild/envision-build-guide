@@ -41,6 +41,7 @@ import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 import { ContractUploadModal } from "@/components/commercial/ContractUploadModal";
+import { ClientForm } from "@/components/crm/ClientForm";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -228,6 +229,7 @@ export default function CommercialDashboard() {
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
   const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
+  const [newDealOpen, setNewDealOpen] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile, location.key]);
@@ -658,9 +660,9 @@ export default function CommercialDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => navigate("/admin/solicitacoes/nova")}>
+              <Button size="sm" onClick={() => setNewDealOpen(true)}>
                 <Plus className="h-4 w-4 mr-1.5" />
-                <span className="hidden sm:inline">Nova Solicitação</span>
+                <span className="hidden sm:inline">Criar Negócio</span>
               </Button>
               <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
                 <Button
@@ -838,8 +840,8 @@ export default function CommercialDashboard() {
                 {search || statusFilter !== "all" ? "Ajuste os filtros para encontrar o que procura." : "Crie uma nova solicitação de orçamento para começar."}
               </p>
               {!search && statusFilter === "all" && (
-                <Button className="mt-4" onClick={() => navigate("/admin/solicitacoes/nova")}>
-                  <Plus className="h-4 w-4 mr-1.5" />Nova Solicitação
+                <Button className="mt-4" onClick={() => setNewDealOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1.5" />Criar Negócio
                 </Button>
               )}
             </div>
