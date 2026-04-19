@@ -51,7 +51,9 @@ import {
   Video,
   Activity,
   Plus,
+  Copy,
 } from "lucide-react";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
@@ -832,12 +834,44 @@ export default function BudgetInternalDetail() {
             {activeModule && (
               <>
                 <SheetHeader className="p-6 border-b border-border bg-card sticky top-0 z-10">
-                  <SheetTitle className="text-base font-display font-semibold text-foreground">
-                    {moduleTitles[activeModule]}
-                  </SheetTitle>
-                  <SheetDescription className="text-xs text-muted-foreground font-body">
-                    {moduleSubtitles[activeModule]}
-                  </SheetDescription>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <SheetTitle className="text-base font-display font-semibold text-foreground">
+                        {moduleTitles[activeModule]}
+                      </SheetTitle>
+                      <SheetDescription className="text-xs text-muted-foreground font-body">
+                        {moduleSubtitles[activeModule]}
+                      </SheetDescription>
+                    </div>
+                    {activeModule === "budget" && budget.public_id && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 gap-1.5 text-xs"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
+                              toast.success("Link copiado");
+                            } catch {
+                              toast.error("Não foi possível copiar");
+                            }
+                          }}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Copiar link</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-8 gap-1.5 text-xs"
+                          onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank")}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Visualizar</span>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </SheetHeader>
 
                 <div className="p-6">
