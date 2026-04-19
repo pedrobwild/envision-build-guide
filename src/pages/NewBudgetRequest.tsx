@@ -156,6 +156,8 @@ export default function NewBudgetRequest() {
   // Pré-preenche a partir de ?client_id=&name=&email=&phone= (vindo do CRM)
   const prefillClientId = searchParams.get("client_id");
   const [linkedClientId, setLinkedClientId] = useState<string | null>(prefillClientId);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>("__new__");
+  const { data: clientProperties = [] } = useClientProperties(linkedClientId ?? undefined);
 
   const [clientName, setClientName] = useState(searchParams.get("name") ?? "");
   const [clientEmail, setClientEmail] = useState(searchParams.get("email") ?? "");
@@ -175,6 +177,19 @@ export default function NewBudgetRequest() {
   const [commercialOwnerId, setCommercialOwnerId] = useState("");
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
   const [hubspotDealUrl, setHubspotDealUrl] = useState("");
+
+  // Quando um imóvel existente é selecionado, auto-preenche os campos
+  useEffect(() => {
+    if (selectedPropertyId === "__new__" || !selectedPropertyId) return;
+    const p = clientProperties.find((cp) => cp.id === selectedPropertyId);
+    if (!p) return;
+    setCondominio(p.empreendimento ?? "");
+    setBairro(p.bairro ?? "");
+    setCity(p.city ?? "");
+    setMetragemRaw((p.metragem ?? "").replace(/m²?$/i, "").trim());
+    setPropertyType(p.property_type ?? "");
+    setLocationType(p.location_type ?? "");
+  }, [selectedPropertyId, clientProperties]);
 
   // Import mode fields
   const [pdfFile, setPdfFile] = useState<File | null>(null);
