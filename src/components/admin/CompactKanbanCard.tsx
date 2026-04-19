@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,19 +39,19 @@ function getDueInfo(dueAt: string | null): { label: string; variant: DueVariant 
 }
 
 const dueVariantStyles: Record<DueVariant, string> = {
-  overdue: "bg-destructive/10 text-destructive",
-  today: "bg-warning/10 text-warning",
-  soon: "bg-warning/10 text-warning",
-  ok: "bg-success/10 text-success",
-  default: "text-muted-foreground bg-muted/50",
+  overdue: "bg-destructive/10 text-destructive ring-1 ring-destructive/20",
+  today: "bg-warning/10 text-warning ring-1 ring-warning/25",
+  soon: "bg-warning/10 text-warning ring-1 ring-warning/20",
+  ok: "bg-success/10 text-success ring-1 ring-success/20",
+  default: "bg-muted/60 text-muted-foreground ring-1 ring-border/60",
 };
 
-const dueBorderStyles: Record<DueVariant, string> = {
-  overdue: "border-l-destructive",
-  today: "border-l-warning",
-  soon: "border-l-warning",
-  ok: "border-l-success",
-  default: "border-l-transparent",
+const dueAccentStyles: Record<DueVariant, string> = {
+  overdue: "before:bg-destructive",
+  today: "before:bg-warning",
+  soon: "before:bg-warning/80",
+  ok: "before:bg-success",
+  default: "before:bg-transparent",
 };
 
 function getInitials(name: string): string {
@@ -85,28 +85,25 @@ export function CompactKanbanCard({
   const statusMeta = INTERNAL_STATUSES[internalStatus as InternalStatus];
   const due = getDueInfo(dueAt);
   const highPrio = priority === "urgente" || priority === "alta";
-  const borderColor = due ? dueBorderStyles[due.variant] : "border-l-transparent";
+  const accent = due ? dueAccentStyles[due.variant] : "before:bg-transparent";
 
   const x = useMotionValue(0);
   const [revealed, setRevealed] = useState(false);
   const actionsOpacity = useTransform(x, [-ACTION_WIDTH, -40, 0], [1, 0.5, 0]);
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.x < SWIPE_THRESHOLD) {
-      setRevealed(true);
-    } else {
-      setRevealed(false);
-    }
+    if (info.offset.x < SWIPE_THRESHOLD) setRevealed(true);
+    else setRevealed(false);
   };
 
   const initials = getInitials(clientName);
   const location = [bairro, city].filter(Boolean).join(", ");
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
+    <div className="relative overflow-hidden rounded-xl">
       {/* Action buttons behind the card */}
       <motion.div
-        className="absolute inset-y-0 right-0 flex items-stretch"
+        className="absolute inset-y-0 right-0 flex items-stretch rounded-xl overflow-hidden"
         style={{ opacity: actionsOpacity, width: ACTION_WIDTH }}
       >
         <button
@@ -121,25 +118,25 @@ export function CompactKanbanCard({
           className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-accent text-accent-foreground text-[10px] font-body font-medium"
         >
           <Copy className="h-3.5 w-3.5" />
-          Copiar Link
+          Link
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onQuickAction?.("whatsapp"); setRevealed(false); }}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-success text-white text-[10px] font-body font-medium"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-success text-success-foreground text-[10px] font-body font-medium"
         >
           <MessageCircle className="h-3.5 w-3.5" />
           WhatsApp
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onQuickAction?.("advance"); setRevealed(false); }}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-warning text-white text-[10px] font-body font-medium rounded-r-lg"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 bg-warning text-warning-foreground text-[10px] font-body font-medium"
         >
           <ArrowRight className="h-3.5 w-3.5" />
           Avançar
         </button>
       </motion.div>
 
-      {/* Swipeable card */}
+      {/* Swipeable premium card */}
       <motion.div
         drag="x"
         dragConstraints={{ left: -ACTION_WIDTH, right: 0 }}
@@ -148,55 +145,73 @@ export function CompactKanbanCard({
         animate={{ x: revealed ? -ACTION_WIDTH : 0 }}
         transition={{ type: "spring", stiffness: 400, damping: 35 }}
         style={{ x }}
+        whileHover={{ y: -1 }}
         onClick={() => { if (!revealed) onClick(); else setRevealed(false); }}
         className={cn(
-          "relative flex items-center gap-2.5 p-2.5 bg-card border border-l-[3px] rounded-lg transition-shadow",
-          borderColor,
-          highPrio && "ring-1 ring-warning/30",
-          "active:bg-muted/30"
+          // Base premium surface
+          "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer",
+          "bg-gradient-to-br from-card to-card/95",
+          "border border-border/70",
+          "shadow-premium-sm hover:shadow-premium hover:border-border",
+          "transition-[box-shadow,border-color,transform] duration-200",
+          // Left accent rail (priority/due)
+          "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full",
+          accent,
+          highPrio && "ring-1 ring-warning/25",
+          "active:scale-[0.99]"
         )}
       >
         {/* Avatar */}
-        <div className={cn(
-          "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-display font-bold",
-          highPrio
-            ? "bg-warning/15 text-warning"
-            : "bg-primary/10 text-primary"
-        )}>
-          {highPrio && <Pin className="h-3 w-3 fill-warning absolute -top-0.5 -right-0.5" />}
-          {initials}
+        <div className="relative shrink-0">
+          <div className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-display font-bold tracking-tight",
+            "ring-1 ring-inset",
+            highPrio
+              ? "bg-gradient-to-br from-warning/20 to-warning/5 text-warning ring-warning/30"
+              : "bg-gradient-to-br from-primary/15 to-primary/5 text-primary ring-primary/20"
+          )}>
+            {initials || "?"}
+          </div>
+          {highPrio && (
+            <Pin className="absolute -top-0.5 -right-0.5 h-3 w-3 fill-warning text-warning drop-shadow-sm" />
+          )}
         </div>
 
         {/* Info — 2 lines */}
         <div className="flex-1 min-w-0">
-          {/* Line 1: project name + priority */}
+          {/* Line 1: code + project name + priority */}
           <div className="flex items-center gap-1.5">
             {sequentialCode && (
-              <span className="text-[9px] font-mono text-muted-foreground/70 shrink-0">{sequentialCode}</span>
+              <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 shrink-0">
+                {sequentialCode}
+              </span>
             )}
-            <span className="font-display font-semibold text-xs text-foreground truncate flex-1 leading-tight">
+            <span className="font-display font-semibold text-[13px] text-foreground truncate flex-1 leading-tight tracking-tight">
               {projectName || "Sem nome"}
             </span>
             {priority !== "normal" && (
-              <span className={cn("text-[9px] font-body font-bold px-1 py-px rounded flex-shrink-0", prio.color)}>
+              <span className={cn(
+                "text-[9px] font-body font-bold uppercase tracking-wide px-1.5 py-px rounded-md flex-shrink-0",
+                prio.color
+              )}>
                 {prio.label}
               </span>
             )}
           </div>
 
           {/* Line 2: client · location · owner */}
-          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground font-body leading-tight">
-            <span className="truncate">{clientName}</span>
+          <div className="flex items-center gap-1.5 mt-1 text-[10.5px] text-muted-foreground font-body leading-tight">
+            <span className="truncate font-medium text-foreground/70">{clientName}</span>
             {location && (
               <>
-                <span className="opacity-40">·</span>
+                <span className="opacity-30">•</span>
                 <span className="truncate">{location}</span>
               </>
             )}
             {(commercialName || estimatorName) && (
               <>
-                <span className="opacity-40">·</span>
-                <span className="truncate">{commercialName || estimatorName}</span>
+                <span className="opacity-30">•</span>
+                <span className="truncate italic">{commercialName || estimatorName}</span>
               </>
             )}
           </div>
@@ -205,26 +220,37 @@ export function CompactKanbanCard({
         {/* Right: badges stacked */}
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           {due && (
-            <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-medium font-body px-1.5 py-0.5 rounded-full", dueVariantStyles[due.variant])}>
+            <span className={cn(
+              "inline-flex items-center gap-1 text-[9.5px] font-semibold font-body px-1.5 py-0.5 rounded-md",
+              dueVariantStyles[due.variant]
+            )}>
               <Calendar className="h-2.5 w-2.5" />
               {due.label}
             </span>
           )}
           {statusMeta && (
-            <span className={cn("text-[9px] font-body px-1.5 py-0.5 rounded-full bg-muted/60", statusMeta.color)}>
+            <span className={cn(
+              "text-[9.5px] font-medium font-body px-1.5 py-0.5 rounded-md bg-muted/70 ring-1 ring-border/50",
+              statusMeta.color
+            )}>
               {statusMeta.icon} {statusMeta.label}
             </span>
           )}
-          {(versionNumber ?? 1) > 1 && (
-            <span className="text-[9px] font-body px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-              V{versionNumber}
-            </span>
-          )}
-          {isSynced && (
-            <span className="inline-flex items-center gap-0.5 text-[9px] font-medium font-body px-1.5 py-0.5 rounded-full bg-success/10 text-success" title="Sincronizado com Portal BWild">
-              ✓ Portal
-            </span>
-          )}
+          <div className="flex items-center gap-1">
+            {(versionNumber ?? 1) > 1 && (
+              <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground ring-1 ring-border/40">
+                V{versionNumber}
+              </span>
+            )}
+            {isSynced && (
+              <span
+                className="inline-flex items-center text-[9px] font-bold font-body px-1.5 py-0.5 rounded-md bg-success/10 text-success ring-1 ring-success/20"
+                title="Sincronizado com Portal BWild"
+              >
+                ✓
+              </span>
+            )}
+          </div>
         </div>
       </motion.div>
     </div>
