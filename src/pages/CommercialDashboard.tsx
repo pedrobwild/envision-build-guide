@@ -42,6 +42,8 @@ import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 import { ContractUploadModal } from "@/components/commercial/ContractUploadModal";
 import { ClientForm } from "@/components/crm/ClientForm";
+import { InlineEdit } from "@/components/ui/inline-edit";
+import { showUndoToast } from "@/lib/inline-edit-undo";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
