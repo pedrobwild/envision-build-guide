@@ -58,6 +58,8 @@ import { cn } from "@/lib/utils";
 import { InlineEdit, type InlineEditOption } from "@/components/ui/inline-edit";
 import { showUndoToast } from "@/lib/inline-edit-undo";
 import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
+import { BulkActionsBar } from "@/components/crm/BulkActionsBar";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = Object.entries(
   CLIENT_STATUSES,
@@ -95,6 +97,32 @@ export default function ClientsList() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRowWithStats | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const visibleIds = useMemo(() => clients.map((c) => c.id), [clients]);
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const allVisibleSelected =
+    visibleIds.length > 0 && visibleIds.every((id) => selectedSet.has(id));
+  const someVisibleSelected =
+    !allVisibleSelected && visibleIds.some((id) => selectedSet.has(id));
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      if (checked) return prev.includes(id) ? prev : [...prev, id];
+      return prev.filter((x) => x !== id);
+    });
+  }
+  function toggleAllVisible(checked: boolean) {
+    setSelectedIds((prev) => {
+      if (checked) {
+        const merged = new Set(prev);
+        for (const id of visibleIds) merged.add(id);
+        return Array.from(merged);
+      }
+      const visibleSet = new Set(visibleIds);
+      return prev.filter((id) => !visibleSet.has(id));
+    });
+  }
 
   const ownersMap = useMemo(
     () => new Map(comerciais.map((m) => [m.id, m.full_name])),
@@ -267,6 +295,13 @@ export default function ClientsList() {
         </div>
       </Card>
 
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        totalSelectableCount={visibleIds.length}
+        onClear={() => setSelectedIds([])}
+        comerciais={comerciais}
+      />
+
       <Card className="overflow-hidden">
         {/* Mobile: card list */}
         <div className="md:hidden divide-y divide-border">
@@ -293,52 +328,67 @@ export default function ClientsList() {
               const owner = c.commercial_owner_id
                 ? ownersMap.get(c.commercial_owner_id) ?? "—"
                 : "—";
+              const isSelected = selectedSet.has(c.id);
               return (
-                <button
-                  type="button"
+                <div
                   key={c.id}
-                  className="w-full text-left p-4 active:bg-muted/40 transition-colors"
-                  onClick={() => navigate(`/admin/crm/${c.id}`)}
+                  className={cn(
+                    "w-full p-4 transition-colors flex items-start gap-2",
+                    isSelected ? "bg-primary/5" : "active:bg-muted/40",
+                  )}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        {c.sequential_code && (
-                          <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
-                            {c.sequential_code}
+                  <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(v) => toggleOne(c.id, !!v)}
+                      aria-label={`Selecionar ${c.name}`}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="flex-1 text-left min-w-0"
+                    onClick={() => navigate(`/admin/crm/${c.id}`)}
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          {c.sequential_code && (
+                            <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
+                              {c.sequential_code}
+                            </span>
+                          )}
+                          <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
+                        </p>
+                      </div>
+                      <Badge className={cn("font-normal text-[10px] shrink-0", sCfg.color)}>
+                        {sCfg.label}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {c.phone && (
+                          <span className="flex items-center gap-1 truncate">
+                            <Phone className="h-3 w-3 shrink-0" /> {c.phone}
                           </span>
                         )}
-                        <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                        {!c.phone && c.email && (
+                          <span className="flex items-center gap-1 truncate">
+                            <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{c.email}</span>
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
-                      </p>
-                    </div>
-                    <Badge className={cn("font-normal text-[10px] shrink-0", sCfg.color)}>
-                      {sCfg.label}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {c.phone && (
-                        <span className="flex items-center gap-1 truncate">
-                          <Phone className="h-3 w-3 shrink-0" /> {c.phone}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="tabular-nums">{c.stats?.total_budgets ?? 0} orç.</span>
+                        <span className="tabular-nums font-medium text-foreground">
+                          {formatBRL(c.stats?.pipeline_value)}
                         </span>
-                      )}
-                      {!c.phone && c.email && (
-                        <span className="flex items-center gap-1 truncate">
-                          <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{c.email}</span>
-                        </span>
-                      )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="tabular-nums">{c.stats?.total_budgets ?? 0} orç.</span>
-                      <span className="tabular-nums font-medium text-foreground">
-                        {formatBRL(c.stats?.pipeline_value)}
-                      </span>
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                </div>
               );
             })
           )}
@@ -349,6 +399,19 @@ export default function ClientsList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={
+                    allVisibleSelected
+                      ? true
+                      : someVisibleSelected
+                      ? "indeterminate"
+                      : false
+                  }
+                  onCheckedChange={(v) => toggleAllVisible(!!v)}
+                  aria-label="Selecionar todos visíveis"
+                />
+              </TableHead>
               <TableHead className="w-[90px]">Código</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Contato</TableHead>
@@ -365,13 +428,13 @@ export default function ClientsList() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-10 text-sm text-muted-foreground">
+                <TableCell colSpan={12} className="text-center py-10 text-sm text-muted-foreground">
                   Carregando clientes…
                 </TableCell>
               </TableRow>
             ) : clients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-16">
+                <TableCell colSpan={12} className="text-center py-16">
                   <div className="flex flex-col items-center gap-3 text-muted-foreground">
                     <Users className="h-8 w-8 opacity-40" />
                     <p className="text-sm font-body">
@@ -397,9 +460,17 @@ export default function ClientsList() {
                 return (
                   <TableRow
                     key={c.id}
-                    className="cursor-pointer hover:bg-muted/30"
+                    data-state={selectedSet.has(c.id) ? "selected" : undefined}
+                    className="cursor-pointer hover:bg-muted/30 data-[state=selected]:bg-primary/5"
                     onClick={() => navigate(`/admin/crm/${c.id}`)}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedSet.has(c.id)}
+                        onCheckedChange={(v) => toggleOne(c.id, !!v)}
+                        aria-label={`Selecionar ${c.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
                       {c.sequential_code ?? "—"}
                     </TableCell>
