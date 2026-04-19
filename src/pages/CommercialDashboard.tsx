@@ -473,7 +473,43 @@ export default function CommercialDashboard() {
     }
   }
 
-  function handleContractUploadSuccess() {
+  async function updateBudgetField(
+    budgetId: string,
+    field: "manual_total" | "due_at",
+    next: string | number | null,
+    label: string,
+  ) {
+    const current = budgets.find(b => b.id === budgetId);
+    if (!current) return;
+    const previous = current[field] ?? null;
+    if (previous === next) return;
+
+    // Optimistic
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, [field]: next } : b));
+
+    const { error } = await supabase
+      .from("budgets")
+      .update({ [field]: next, updated_at: new Date().toISOString() })
+      .eq("id", budgetId);
+
+    if (error) {
+      // Revert
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, [field]: previous } : b));
+      toast.error(`Erro ao atualizar ${label}`, { description: error.message });
+      return;
+    }
+
+    showUndoToast({
+      message: `${label} atualizado`,
+      onUndo: async () => {
+        setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, [field]: previous } : b));
+        await supabase
+          .from("budgets")
+          .update({ [field]: previous, updated_at: new Date().toISOString() })
+          .eq("id", budgetId);
+      },
+    });
+  }
     if (!contractUploadBudget || !user) return;
     const budgetId = contractUploadBudget.id;
     supabase.from("budget_events").insert({
