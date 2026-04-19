@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
 export type SavedViewEntity = "budgets" | "clients";
@@ -65,8 +66,8 @@ export function useCreateSavedView() {
           user_id,
           entity: input.entity,
           name: input.name,
-          filters: input.filters,
-          sort: input.sort ?? {},
+          filters: input.filters as unknown as Json,
+          sort: (input.sort ?? {}) as unknown as Json,
           is_shared: input.is_shared ?? false,
           is_default: input.is_default ?? false,
         })
@@ -109,9 +110,12 @@ export function useUpdateSavedView() {
             .neq("id", input.id);
         }
       }
+      const patch = { ...input.patch } as Record<string, unknown>;
+      if (input.patch.filters) patch.filters = input.patch.filters as unknown as Json;
+      if (input.patch.sort) patch.sort = input.patch.sort as unknown as Json;
       const { data, error } = await supabase
         .from("user_saved_views")
-        .update(input.patch)
+        .update(patch)
         .eq("id", input.id)
         .select()
         .single();

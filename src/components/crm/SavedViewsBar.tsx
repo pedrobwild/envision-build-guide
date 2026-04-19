@@ -170,7 +170,7 @@ export function SavedViewsBar<TFilters extends Record<string, unknown>>({
             </span>
             {hasChanges && activeView && (
               <span
-                className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"
+                className="h-1.5 w-1.5 rounded-full bg-warning shrink-0"
                 aria-label="Alterações não salvas"
               />
             )}
