@@ -168,61 +168,113 @@ export default function LeadSourcesPage() {
                   </p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Recebido</TableHead>
-                      <TableHead>Fonte</TableHead>
-                      <TableHead>Campanha</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead className="w-[80px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  {/* Mobile: card list */}
+                  <div className="md:hidden divide-y divide-border">
                     {leads.map((lead) => {
                       const cfg = STATUS_CONFIG[lead.processing_status] ?? STATUS_CONFIG.pending;
                       const Icon = cfg.icon;
                       return (
-                        <TableRow key={lead.id} className="cursor-pointer" onClick={() => setSelectedLead(lead)}>
-                          <TableCell className="text-sm font-mono text-muted-foreground">
-                            {formatDateTime(lead.received_at)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{CLIENT_SOURCES[lead.source] ?? lead.source}</Badge>
-                          </TableCell>
-                          <TableCell className="max-w-[280px] truncate">
-                            {lead.campaign_name || lead.campaign_id || (
-                              <span className="text-muted-foreground/60">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={`${cfg.color} border gap-1`} variant="outline">
+                        <button
+                          type="button"
+                          key={lead.id}
+                          onClick={() => setSelectedLead(lead)}
+                          className="w-full text-left p-4 active:bg-muted/40 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-mono text-muted-foreground mb-1">
+                                {formatDateTime(lead.received_at)}
+                              </p>
+                              <p className="font-medium text-sm text-foreground truncate">
+                                {lead.campaign_name || lead.campaign_id || "Sem campanha"}
+                              </p>
+                            </div>
+                            <Badge className={`${cfg.color} border gap-1 text-[10px] shrink-0`} variant="outline">
                               <Icon className="h-3 w-3" />
                               {cfg.label}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <Badge variant="outline" className="text-[10px]">
+                              {CLIENT_SOURCES[lead.source] ?? lead.source}
+                            </Badge>
                             {lead.client_id ? (
                               <Link
                                 to={`/admin/crm/${lead.client_id}`}
-                                className="text-primary hover:underline text-sm flex items-center gap-1"
+                                className="text-primary hover:underline flex items-center gap-1"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 Ver cliente <ExternalLink className="h-3 w-3" />
                               </Link>
                             ) : (
-                              <span className="text-muted-foreground/60 text-sm">—</span>
+                              <span className="text-muted-foreground/60">Sem cliente</span>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm">Detalhes</Button>
-                          </TableCell>
-                        </TableRow>
+                          </div>
+                        </button>
                       );
                     })}
-                  </TableBody>
-                </Table>
+                  </div>
+
+                  {/* Desktop: table */}
+                  <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Recebido</TableHead>
+                        <TableHead>Fonte</TableHead>
+                        <TableHead>Campanha</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead className="w-[80px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {leads.map((lead) => {
+                        const cfg = STATUS_CONFIG[lead.processing_status] ?? STATUS_CONFIG.pending;
+                        const Icon = cfg.icon;
+                        return (
+                          <TableRow key={lead.id} className="cursor-pointer" onClick={() => setSelectedLead(lead)}>
+                            <TableCell className="text-sm font-mono text-muted-foreground">
+                              {formatDateTime(lead.received_at)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{CLIENT_SOURCES[lead.source] ?? lead.source}</Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[280px] truncate">
+                              {lead.campaign_name || lead.campaign_id || (
+                                <span className="text-muted-foreground/60">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={`${cfg.color} border gap-1`} variant="outline">
+                                <Icon className="h-3 w-3" />
+                                {cfg.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {lead.client_id ? (
+                                <Link
+                                  to={`/admin/crm/${lead.client_id}`}
+                                  className="text-primary hover:underline text-sm flex items-center gap-1"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Ver cliente <ExternalLink className="h-3 w-3" />
+                                </Link>
+                              ) : (
+                                <span className="text-muted-foreground/60 text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="sm">Detalhes</Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
