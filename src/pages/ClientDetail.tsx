@@ -940,6 +940,10 @@ export default function ClientDetail() {
           </div>
         </TabsContent>
 
+        <TabsContent value="properties" className="mt-4">
+          <ClientPropertiesManager clientId={client.id} budgetCountByProperty={budgetCountByProperty} />
+        </TabsContent>
+
         <TabsContent value="budgets" className="mt-4">
           <Card className="overflow-hidden">
             <Table>
@@ -947,9 +951,8 @@ export default function ClientDetail() {
                 <TableRow>
                   <TableHead className="w-[110px]">Código</TableHead>
                   <TableHead>Projeto</TableHead>
+                  <TableHead>Imóvel</TableHead>
                   <TableHead>Status interno</TableHead>
-                  <TableHead>Localização</TableHead>
-                  <TableHead>Metragem</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Criado</TableHead>
                   <TableHead className="w-8" />
@@ -958,7 +961,7 @@ export default function ClientDetail() {
               <TableBody>
                 {budgets.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-10 text-sm text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-10 text-sm text-muted-foreground">
                       Este cliente ainda não tem orçamentos.
                     </TableCell>
                   </TableRow>
@@ -968,6 +971,11 @@ export default function ClientDetail() {
                       INTERNAL_STATUSES[
                         b.internal_status as keyof typeof INTERNAL_STATUSES
                       ];
+                    const propId = (b as { property_id?: string | null }).property_id;
+                    const prop = propId ? propertyMap.get(propId) : null;
+                    const propLabel = prop
+                      ? summarizeProperty(prop)
+                      : [b.condominio, b.bairro, b.metragem].filter(Boolean).join(" · ");
                     return (
                       <TableRow key={b.id}>
                         <TableCell>
@@ -981,6 +989,23 @@ export default function ClientDetail() {
                         </TableCell>
                         <TableCell className="font-medium">{b.project_name || "—"}</TableCell>
                         <TableCell>
+                          {propLabel ? (
+                            <div className="flex items-center gap-1.5">
+                              <Building2 className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+                              <span className="text-xs text-foreground/80 truncate max-w-[200px]" title={propLabel}>
+                                {propLabel}
+                              </span>
+                              {!prop && propId === undefined && (
+                                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 font-normal text-muted-foreground/60">
+                                  legado
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {st ? (
                             <Badge variant="outline" className={cn("font-normal", st.color)}>
                               {st.icon} {st.label}
@@ -990,12 +1015,6 @@ export default function ClientDetail() {
                               {b.internal_status}
                             </span>
                           )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {[b.city, b.bairro, b.condominio].filter(Boolean).join(" · ") || "—"}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {b.metragem ?? "—"}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {formatBRL(b.manual_total)}
