@@ -738,7 +738,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
                   {completionItems.filter(i => i.done).length}/{completionItems.length}
                 </span>
               </div>
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {completionItems.map((item) => (
                   <div
                     key={item.label}
