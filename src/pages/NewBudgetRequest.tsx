@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { upsertClientByContact } from "@/hooks/useClients";
+import { useClientProperties, summarizeProperty } from "@/hooks/useClientProperties";
 import { supabase } from "@/integrations/supabase/client";
 import { seedFromTemplate } from "@/lib/seed-from-template";
 import { useAuth } from "@/hooks/useAuth";
