@@ -30,7 +30,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import type { AppRole } from "@/lib/role-constants";
-import { escapePostgrestLike } from "@/lib/postgrest-escape";
+import { sanitizePostgrestPattern } from "@/lib/postgrest-escape";
 
 interface ActionItem {
   id: string;
@@ -111,8 +111,13 @@ export function CommandPalette() {
 
     let cancelled = false;
     const timer = setTimeout(async () => {
-      const escaped = escapePostgrestLike(trimmed);
-      const pattern = `%${escaped}%`;
+      const safe = sanitizePostgrestPattern(trimmed);
+      if (!safe) {
+        setBudgets([]);
+        setClients([]);
+        return;
+      }
+      const pattern = `%${safe}%`;
 
       const [budgetsRes, clientsRes] = await Promise.all([
         supabase
