@@ -97,6 +97,32 @@ export default function ClientsList() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRowWithStats | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const visibleIds = useMemo(() => clients.map((c) => c.id), [clients]);
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const allVisibleSelected =
+    visibleIds.length > 0 && visibleIds.every((id) => selectedSet.has(id));
+  const someVisibleSelected =
+    !allVisibleSelected && visibleIds.some((id) => selectedSet.has(id));
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      if (checked) return prev.includes(id) ? prev : [...prev, id];
+      return prev.filter((x) => x !== id);
+    });
+  }
+  function toggleAllVisible(checked: boolean) {
+    setSelectedIds((prev) => {
+      if (checked) {
+        const merged = new Set(prev);
+        for (const id of visibleIds) merged.add(id);
+        return Array.from(merged);
+      }
+      const visibleSet = new Set(visibleIds);
+      return prev.filter((id) => !visibleSet.has(id));
+    });
+  }
 
   const ownersMap = useMemo(
     () => new Map(comerciais.map((m) => [m.id, m.full_name])),
