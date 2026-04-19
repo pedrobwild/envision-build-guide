@@ -439,7 +439,16 @@ export default function ClientsList() {
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {formatBRL(c.stats?.pipeline_value)}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{owner}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                      <InlineEdit
+                        type="select"
+                        value={c.commercial_owner_id ?? "__unassigned__"}
+                        options={ownerOptions}
+                        onSave={(v) => handleOwnerChange(c, v)}
+                        display={owner}
+                        ariaLabel="Editar responsável"
+                      />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {c.stats?.last_budget_at
                         ? format(new Date(c.stats.last_budget_at), "dd MMM yy", { locale: ptBR })
