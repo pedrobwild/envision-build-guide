@@ -477,6 +477,7 @@ export default function ClientDetail() {
       <Tabs defaultValue="overview" className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Visão geral</TabsTrigger>
+          <TabsTrigger value="properties">Imóveis ({properties.length})</TabsTrigger>
           <TabsTrigger value="budgets">Orçamentos ({budgets.length})</TabsTrigger>
           <TabsTrigger value="notes">Notas</TabsTrigger>
         </TabsList>
