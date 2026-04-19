@@ -58,6 +58,8 @@ import { cn } from "@/lib/utils";
 import { InlineEdit, type InlineEditOption } from "@/components/ui/inline-edit";
 import { showUndoToast } from "@/lib/inline-edit-undo";
 import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
+import { BulkActionsBar } from "@/components/crm/BulkActionsBar";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = Object.entries(
   CLIENT_STATUSES,
