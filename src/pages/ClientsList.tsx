@@ -186,7 +186,7 @@ export default function ClientsList() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome, e-mail, telefone ou documento..."
+              placeholder="Buscar por código, nome, e-mail, telefone ou documento..."
               className="pl-8 h-10 sm:h-9"
             />
           </div>
@@ -256,7 +256,14 @@ export default function ClientsList() {
                 >
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                      <div className="flex items-center gap-2">
+                        {c.sequential_code && (
+                          <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
+                            {c.sequential_code}
+                          </span>
+                        )}
+                        <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                      </div>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
                         {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
                       </p>
@@ -296,6 +303,7 @@ export default function ClientsList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[90px]">Código</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Contato</TableHead>
               <TableHead>Cidade / Bairro</TableHead>

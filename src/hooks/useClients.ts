@@ -82,7 +82,7 @@ export function useClients(filters: ClientFilters = {}) {
         const s = sanitizePostgrestPattern(filters.search);
         if (s.length > 0) {
           query = query.or(
-            `name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,document.ilike.%${s}%`,
+            `name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,document.ilike.%${s}%,sequential_code.ilike.%${s}%`,
           );
         }
       }
