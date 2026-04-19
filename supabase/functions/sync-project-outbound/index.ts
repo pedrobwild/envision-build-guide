@@ -219,6 +219,25 @@ async function syncSingleProject(
   const projectPayload = mapBudgetToProject(budget, totalValue);
   const budgetBreakdown = buildBudgetBreakdown(sections ?? [], items, adjustments ?? [], totalValue);
 
+  // --- Fetch the rich client record (CRM data) ---
+  let clientData: any = null;
+  if (budget.client_id) {
+    const { data: c } = await localDb
+      .from("clients")
+      .select(`
+        id, name, email, phone, document, rg,
+        nationality, marital_status, profession,
+        address, address_complement, state, zip_code,
+        property_address, property_address_complement,
+        property_bairro, property_city, property_state, property_zip_code,
+        property_metragem, property_empreendimento, property_floor_plan_url,
+        city, bairro
+      `)
+      .eq("id", budget.client_id)
+      .maybeSingle();
+    clientData = c;
+  }
+
   // --- Detailed logging for debugging ---
   console.log(`[sync-project-outbound] Budget ${budgetId} → preparing payload`);
   console.log(`[sync-project-outbound] Project: ${JSON.stringify({
@@ -233,6 +252,7 @@ async function syncSingleProject(
     total_sale: budgetBreakdown.total_sale,
     avg_bdi: budgetBreakdown.avg_bdi,
     has_contract: !!projectPayload.contract_file_url,
+    has_client_block: !!clientData,
   })}`);
 
   // --- Call Portal BWild's sync-project-inbound ---
@@ -240,6 +260,32 @@ async function syncSingleProject(
   const outboundBody = {
     project: projectPayload,
     budget: budgetBreakdown,
+    client: clientData ? {
+      name: clientData.name,
+      email: clientData.email,
+      phone: clientData.phone,
+      cpf: clientData.document,
+      rg: clientData.rg,
+      nationality: clientData.nationality,
+      marital_status: clientData.marital_status,
+      profession: clientData.profession,
+      // Residencial
+      address: clientData.address,
+      address_complement: clientData.address_complement,
+      city: clientData.city,
+      state: clientData.state,
+      zip_code: clientData.zip_code,
+      // Imóvel
+      property_address: clientData.property_address,
+      property_address_complement: clientData.property_address_complement,
+      property_bairro: clientData.property_bairro,
+      property_city: clientData.property_city,
+      property_state: clientData.property_state,
+      property_zip_code: clientData.property_zip_code,
+      property_metragem: clientData.property_metragem,
+      property_empreendimento: clientData.property_empreendimento,
+      property_floor_plan_url: clientData.property_floor_plan_url,
+    } : null,
     source_id: budgetId,
   };
 
