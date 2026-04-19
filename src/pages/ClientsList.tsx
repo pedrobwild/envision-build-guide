@@ -47,6 +47,7 @@ import {
   getEffectiveClientStatus,
   useClients,
   useDeleteClient,
+  useUpsertClient,
   type ClientFilters,
   type ClientRowWithStats,
   type ClientStatus,
@@ -54,6 +55,8 @@ import {
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { ClientForm } from "@/components/crm/ClientForm";
 import { cn } from "@/lib/utils";
+import { InlineEdit, type InlineEditOption } from "@/components/ui/inline-edit";
+import { showUndoToast } from "@/lib/inline-edit-undo";
 
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = Object.entries(
   CLIENT_STATUSES,
