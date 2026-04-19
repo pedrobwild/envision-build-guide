@@ -134,6 +134,15 @@ export default function NewBudgetRequest() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const navTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const scheduleNav = useCallback((path: string, delay: number) => {
+    const t = setTimeout(() => navigate(path), delay);
+    navTimers.current.push(t);
+  }, [navigate]);
+  useEffect(() => () => {
+    navTimers.current.forEach(t => clearTimeout(t));
+    navTimers.current = [];
+  }, []);
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"new" | "import">("new");
 
