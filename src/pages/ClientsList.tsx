@@ -47,6 +47,7 @@ import {
   getEffectiveClientStatus,
   useClients,
   useDeleteClient,
+  useUpsertClient,
   type ClientFilters,
   type ClientRowWithStats,
   type ClientStatus,
@@ -54,6 +55,8 @@ import {
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { ClientForm } from "@/components/crm/ClientForm";
 import { cn } from "@/lib/utils";
+import { InlineEdit, type InlineEditOption } from "@/components/ui/inline-edit";
+import { showUndoToast } from "@/lib/inline-edit-undo";
 
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = Object.entries(
   CLIENT_STATUSES,
@@ -87,6 +90,7 @@ export default function ClientsList() {
 
   const { data: clients = [], isLoading } = useClients(filters);
   const deleteClient = useDeleteClient();
+  const upsertClient = useUpsertClient();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRowWithStats | null>(null);
@@ -95,6 +99,36 @@ export default function ClientsList() {
     () => new Map(comerciais.map((m) => [m.id, m.full_name])),
     [comerciais],
   );
+
+  const ownerOptions: InlineEditOption[] = useMemo(
+    () => [
+      { value: "__unassigned__", label: "— Sem responsável" },
+      ...comerciais.map((m) => ({ value: m.id, label: m.full_name })),
+    ],
+    [comerciais],
+  );
+
+  async function handleOwnerChange(
+    client: ClientRowWithStats,
+    nextOwnerId: string | number | null,
+  ) {
+    const previous = client.commercial_owner_id ?? null;
+    const next =
+      nextOwnerId === "__unassigned__" || nextOwnerId == null || nextOwnerId === ""
+        ? null
+        : String(nextOwnerId);
+    if (next === previous) return;
+    await upsertClient.mutateAsync({ id: client.id, commercial_owner_id: next });
+    showUndoToast({
+      message: "Responsável atualizado",
+      description: next
+        ? `Atribuído a ${ownersMap.get(next) ?? "comercial"}`
+        : "Removido o responsável",
+      onUndo: async () => {
+        await upsertClient.mutateAsync({ id: client.id, commercial_owner_id: previous });
+      },
+    });
+  }
 
   const summary = useMemo(() => {
     const total = clients.length;
@@ -405,7 +439,16 @@ export default function ClientsList() {
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {formatBRL(c.stats?.pipeline_value)}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{owner}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                      <InlineEdit
+                        type="select"
+                        value={c.commercial_owner_id ?? "__unassigned__"}
+                        options={ownerOptions}
+                        onSave={(v) => handleOwnerChange(c, v)}
+                        display={owner}
+                        ariaLabel="Editar responsável"
+                      />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {c.stats?.last_budget_at
                         ? format(new Date(c.stats.last_budget_at), "dd MMM yy", { locale: ptBR })

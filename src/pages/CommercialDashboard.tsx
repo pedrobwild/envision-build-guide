@@ -42,6 +42,8 @@ import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 import { ContractUploadModal } from "@/components/commercial/ContractUploadModal";
 import { ClientForm } from "@/components/crm/ClientForm";
+import { InlineEdit } from "@/components/ui/inline-edit";
+import { showUndoToast } from "@/lib/inline-edit-undo";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -471,6 +473,44 @@ export default function CommercialDashboard() {
     }
   }
 
+  async function updateBudgetField(
+    budgetId: string,
+    field: "manual_total" | "due_at",
+    next: string | number | null,
+    label: string,
+  ) {
+    const current = budgets.find(b => b.id === budgetId);
+    if (!current) return;
+    const previous = current[field] ?? null;
+    if (previous === next) return;
+
+    // Optimistic
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, [field]: next } : b));
+
+    const { error } = await supabase
+      .from("budgets")
+      .update({ [field]: next, updated_at: new Date().toISOString() })
+      .eq("id", budgetId);
+
+    if (error) {
+      // Revert
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, [field]: previous } : b));
+      toast.error(`Erro ao atualizar ${label}`, { description: error.message });
+      return;
+    }
+
+    showUndoToast({
+      message: `${label} atualizado`,
+      onUndo: async () => {
+        setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, [field]: previous } : b));
+        await supabase
+          .from("budgets")
+          .update({ [field]: previous, updated_at: new Date().toISOString() })
+          .eq("id", budgetId);
+      },
+    });
+  }
+
   function handleContractUploadSuccess() {
     if (!contractUploadBudget || !user) return;
     const budgetId = contractUploadBudget.id;
@@ -559,9 +599,30 @@ export default function CommercialDashboard() {
                   <FileText className="h-3 w-3" />PDF
                 </a>
               )}
-              {b.manual_total && b.manual_total > 0 && (
-                <span className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success tabular-nums">
-                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(b.manual_total)}
+              {b.manual_total && b.manual_total > 0 ? (
+                <span
+                  className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success tabular-nums"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <InlineEdit
+                    type="currency"
+                    value={b.manual_total}
+                    onSave={(v) => updateBudgetField(b.id, "manual_total", v, "Valor")}
+                    ariaLabel="Editar valor"
+                  />
+                </span>
+              ) : (
+                <span
+                  className="inline-flex items-center text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground tabular-nums"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <InlineEdit
+                    type="currency"
+                    value={null}
+                    placeholder="+ Valor"
+                    onSave={(v) => updateBudgetField(b.id, "manual_total", v, "Valor")}
+                    ariaLabel="Adicionar valor"
+                  />
                 </span>
               )}
             </div>
