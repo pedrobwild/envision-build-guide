@@ -428,13 +428,13 @@ export default function ClientsList() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-10 text-sm text-muted-foreground">
+                <TableCell colSpan={12} className="text-center py-10 text-sm text-muted-foreground">
                   Carregando clientes…
                 </TableCell>
               </TableRow>
             ) : clients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-16">
+                <TableCell colSpan={12} className="text-center py-16">
                   <div className="flex flex-col items-center gap-3 text-muted-foreground">
                     <Users className="h-8 w-8 opacity-40" />
                     <p className="text-sm font-body">
@@ -460,9 +460,17 @@ export default function ClientsList() {
                 return (
                   <TableRow
                     key={c.id}
-                    className="cursor-pointer hover:bg-muted/30"
+                    data-state={selectedSet.has(c.id) ? "selected" : undefined}
+                    className="cursor-pointer hover:bg-muted/30 data-[state=selected]:bg-primary/5"
                     onClick={() => navigate(`/admin/crm/${c.id}`)}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedSet.has(c.id)}
+                        onCheckedChange={(v) => toggleOne(c.id, !!v)}
+                        aria-label={`Selecionar ${c.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
                       {c.sequential_code ?? "—"}
                     </TableCell>
