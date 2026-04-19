@@ -57,6 +57,7 @@ import { ClientForm } from "@/components/crm/ClientForm";
 import { cn } from "@/lib/utils";
 import { InlineEdit, type InlineEditOption } from "@/components/ui/inline-edit";
 import { showUndoToast } from "@/lib/inline-edit-undo";
+import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
 
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = Object.entries(
   CLIENT_STATUSES,
@@ -251,6 +252,17 @@ export default function ClientsList() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="sm:ml-auto">
+            <SavedViewsBar
+              entity="clients"
+              currentFilters={{ search, status, ownerId }}
+              onApply={(f) => {
+                if (typeof f.search === "string") setSearch(f.search);
+                if (typeof f.status === "string") setStatus(f.status as ClientStatus | "all");
+                if (typeof f.ownerId === "string") setOwnerId(f.ownerId);
+              }}
+            />
           </div>
         </div>
       </Card>

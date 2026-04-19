@@ -44,6 +44,7 @@ import { ContractUploadModal } from "@/components/commercial/ContractUploadModal
 import { ClientForm } from "@/components/crm/ClientForm";
 import { InlineEdit } from "@/components/ui/inline-edit";
 import { showUndoToast } from "@/lib/inline-edit-undo";
+import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -860,6 +861,20 @@ export default function CommercialDashboard() {
                   <SelectItem value="recente">Mais recente</SelectItem>
                 </SelectContent>
               </Select>
+
+              <div className="h-5 w-px bg-border" />
+
+              <SavedViewsBar
+                entity="budgets"
+                currentFilters={{ search, statusFilter, dueFilter, commercialFilter, sortBy }}
+                onApply={(f) => {
+                  if (typeof f.search === "string") setSearch(f.search);
+                  if (typeof f.statusFilter === "string") setStatusFilter(f.statusFilter);
+                  if (typeof f.dueFilter === "string") setDueFilter(f.dueFilter as DueFilter);
+                  if (typeof f.commercialFilter === "string") setCommercialFilter(f.commercialFilter);
+                  if (typeof f.sortBy === "string") setSortBy(f.sortBy as SortOption);
+                }}
+              />
             </div>
 
             {/* Active filters summary */}
