@@ -240,8 +240,8 @@ export function computeDashboardMetrics(
   const prev = getPreviousPeriod(range);
   const now = new Date();
 
-  // Dev warning for inconsistent status fields
-  if (process.env.NODE_ENV === 'development') {
+  // Dev warning for inconsistent status fields (Vite-safe — `process` is undefined in browser)
+  if (import.meta.env.DEV) {
     const inconsistent = budgets.filter(b => b.internal_status === 'contrato_fechado' && b.status !== 'published');
     if (inconsistent.length > 0) {
       console.warn(`[Metrics] ${inconsistent.length} budgets with inconsistent status/internal_status`);

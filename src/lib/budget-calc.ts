@@ -42,10 +42,11 @@ export function calcItemCostTotal(item: CalcItem): number {
     const qty = Number(item.qty) || 1;
     return unitPrice * qty;
   }
-  // Fallback: use internal_total as lump-sum cost when no unit price
+  // Fallback: internal_total is treated as a LUMP-SUM (already includes qty),
+  // mirroring calcItemSaleTotal which also does NOT multiply the fallback by qty.
+  // This keeps cost ↔ sale parity so BDI/margin calculations remain consistent.
   const total = Number(item.internal_total) || 0;
-  if (total > 0) return total * (Number(item.qty) || 1);
-  return 0;
+  return total > 0 ? total : 0;
 }
 
 export function calcSectionCostTotal(section: CalcSection): number {
