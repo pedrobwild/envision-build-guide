@@ -318,10 +318,49 @@ export default function NewBudgetRequest() {
         }
       }
 
+      // Resolve property_id: usa o existente OU cria um novo se há dados de imóvel
+      let resolvedPropertyId: string | null = null;
+      if (resolvedClientId) {
+        if (selectedPropertyId !== "__new__" && selectedPropertyId) {
+          resolvedPropertyId = selectedPropertyId;
+        } else {
+          // Cria novo imóvel se houver pelo menos um dado relevante
+          const hasPropertyData = condominio.trim() || bairro.trim() || metargemRaw.trim() || propertyType || city.trim();
+          if (hasPropertyData) {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const { data: newProp, error: propErr } = await (supabase as any)
+                .from("client_properties")
+                .insert({
+                  client_id: resolvedClientId,
+                  empreendimento: condominio.trim() || null,
+                  bairro: bairro.trim() || null,
+                  city: city.trim() || null,
+                  metragem: metragemFormatted,
+                  property_type: propertyType || null,
+                  location_type: locationType || null,
+                  created_by: user.id,
+                  is_primary: clientProperties.length === 0,
+                })
+                .select("id")
+                .single();
+              if (propErr) {
+                console.error("[NewBudgetRequest] criar property falhou:", propErr);
+              } else if (newProp?.id) {
+                resolvedPropertyId = newProp.id;
+              }
+            } catch (e) {
+              console.error("[NewBudgetRequest] property insert exception:", e);
+            }
+          }
+        }
+      }
+
       const { data: inserted, error } = await supabase
         .from("budgets")
         .insert({
           client_id: resolvedClientId,
+          property_id: resolvedPropertyId,
           client_name: clientName.trim(),
           project_name: projectName || clientName.trim(),
           lead_email: clientEmail.trim() || null,
