@@ -61,7 +61,8 @@ export const STATUS_GROUPS = {
   ESTIMATOR_DEFAULT_VISIBLE: ["novo", "requested", "triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"] as const,
 
   // Considerados "ativos" para métricas de operações
-  OPERATIONS_ACTIVE: ["requested", "triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"] as const,
+  // 'novo' é incluído porque é o status default de novos orçamentos (DB default)
+  OPERATIONS_ACTIVE: ["novo", "requested", "triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"] as const,
 } as const;
 
 export type StatusGroup = keyof typeof STATUS_GROUPS;
