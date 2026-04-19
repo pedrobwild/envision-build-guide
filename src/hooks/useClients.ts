@@ -191,7 +191,7 @@ export function useClientBudgets(clientId: string | undefined) {
       const { data, error } = await supabase
         .from("budgets")
         .select(
-          "id, project_name, status, internal_status, manual_total, internal_cost, created_at, updated_at, due_at, priority, commercial_owner_id, estimator_owner_id, condominio, bairro, city, metragem, public_id",
+          "id, sequential_code, project_name, status, internal_status, manual_total, internal_cost, created_at, updated_at, due_at, priority, commercial_owner_id, estimator_owner_id, condominio, bairro, city, metragem, public_id",
         )
         .eq("client_id", clientId)
         .order("created_at", { ascending: false });
