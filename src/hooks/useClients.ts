@@ -224,8 +224,9 @@ export async function upsertClientByContact(input: {
       .select("*")
       .ilike("email", email)
       .eq("is_active", true)
-      .maybeSingle();
-    existing = (data as Client | null) ?? null;
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    existing = ((data?.[0] as Client | undefined) ?? null);
   }
   if (!existing && phone) {
     const { data } = await supabase
@@ -233,8 +234,9 @@ export async function upsertClientByContact(input: {
       .select("*")
       .eq("phone", phone)
       .eq("is_active", true)
-      .maybeSingle();
-    existing = (data as Client | null) ?? null;
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    existing = ((data?.[0] as Client | undefined) ?? null);
   }
 
   if (existing) {
