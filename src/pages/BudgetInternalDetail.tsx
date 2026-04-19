@@ -66,13 +66,16 @@ import { toast } from "sonner";
 import { BlockingDialog } from "@/components/editor/BlockingDialog";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
+import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
 import { formatBRL } from "@/lib/formatBRL";
 
 interface BudgetDetail {
   id: string;
   project_name: string;
+  client_id: string | null;
   client_name: string;
   client_phone: string | null;
+  lead_email: string | null;
   property_type: string | null;
   city: string | null;
   bairro: string | null;
@@ -235,7 +238,7 @@ export default function BudgetInternalDetail() {
         supabase
           .from("budgets")
           .select(
-            "id, project_name, client_name, client_phone, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source"
+            "id, project_name, client_id, client_name, client_phone, lead_email, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source"
           )
           .eq("id", budgetId)
           .single(),
@@ -960,92 +963,60 @@ export default function BudgetInternalDetail() {
                   )}
 
                   {activeModule === "client" && (
-                    <div className="grid grid-cols-1 gap-6">
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
-                          Cliente & Imóvel
-                        </h4>
-                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Nome" value={budget.client_name} />
-                        {budget.client_phone && (
-                          <InfoRow icon={<MessageCircle className="h-3.5 w-3.5" />} label="Telefone" value={budget.client_phone} />
-                        )}
-                        {budget.property_type && (
-                          <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Tipo" value={budget.property_type} />
-                        )}
-                        {locationParts && (
-                          <InfoRow icon={<MapPin className="h-3.5 w-3.5" />} label="Local" value={locationParts} />
-                        )}
-                        {budget.condominio && (
-                          <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Condomínio" value={budget.condominio} />
-                        )}
-                        {budget.unit && (
-                          <InfoRow icon={<Building2 className="h-3.5 w-3.5" />} label="Unidade" value={budget.unit} />
-                        )}
-                        {budget.metragem && (
-                          <InfoRow icon={<Ruler className="h-3.5 w-3.5" />} label="Metragem" value={budget.metragem} />
-                        )}
-                      </div>
-
-                      <Separator />
-
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
-                          Equipe & Datas
-                        </h4>
-                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Comercial" value={getProfileName(budget.commercial_owner_id)} />
-                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Orçamentista" value={getProfileName(budget.estimator_owner_id)} />
-                        <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Criado por" value={getProfileName(budget.created_by)} />
-                        {budget.created_at && (
-                          <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Criado" value={format(new Date(budget.created_at), "dd/MM/yyyy HH:mm")} />
-                        )}
-                        {budget.updated_at && (
-                          <InfoRow icon={<Clock className="h-3.5 w-3.5" />} label="Atualizado" value={format(new Date(budget.updated_at), "dd/MM/yyyy HH:mm")} />
-                        )}
-                        {budget.due_at && (
-                          <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo" value={format(new Date(budget.due_at), "dd/MM/yyyy")} />
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {budget.public_id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                            onClick={() => window.open(`/o/${budget.public_id}`, "_blank")}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                            Ver proposta pública
-                          </Button>
-                        )}
-                        {budget.internal_status === "contrato_fechado" && (
-                          <Button
-                            variant={syncStatus?.status === "success" ? "outline" : "default"}
-                            size="sm"
-                            className="gap-2"
-                            onClick={handleManualSync}
-                            disabled={syncing}
-                          >
-                            {syncing ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : syncStatus?.status === "success" ? (
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                            ) : syncStatus?.status === "failed" ? (
-                              <RefreshCw className="h-3.5 w-3.5 text-destructive" />
-                            ) : (
-                              <ArrowRightLeft className="h-3.5 w-3.5" />
+                    <ClientModulePanel
+                      budget={budget}
+                      onLinked={(clientId) => setBudget((b) => (b ? { ...b, client_id: clientId } : b))}
+                      extraSection={
+                        <div className="space-y-4">
+                          <div className="space-y-3">
+                            <h4 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
+                              Equipe & Datas
+                            </h4>
+                            <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Comercial" value={getProfileName(budget.commercial_owner_id)} />
+                            <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Orçamentista" value={getProfileName(budget.estimator_owner_id)} />
+                            <InfoRow icon={<User className="h-3.5 w-3.5" />} label="Criado por" value={getProfileName(budget.created_by)} />
+                            {budget.created_at && (
+                              <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Criado" value={format(new Date(budget.created_at), "dd/MM/yyyy HH:mm")} />
                             )}
-                            {syncing
-                              ? "Sincronizando..."
-                              : syncStatus?.status === "success"
-                              ? "Sincronizado com Portal"
-                              : syncStatus?.status === "failed"
-                              ? "Re-sincronizar"
-                              : "Enviar para Portal"}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
+                            {budget.updated_at && (
+                              <InfoRow icon={<Clock className="h-3.5 w-3.5" />} label="Atualizado" value={format(new Date(budget.updated_at), "dd/MM/yyyy HH:mm")} />
+                            )}
+                            {budget.due_at && (
+                              <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Prazo" value={format(new Date(budget.due_at), "dd/MM/yyyy")} />
+                            )}
+                          </div>
+
+                          {budget.internal_status === "contrato_fechado" && (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              <Button
+                                variant={syncStatus?.status === "success" ? "outline" : "default"}
+                                size="sm"
+                                className="gap-2"
+                                onClick={handleManualSync}
+                                disabled={syncing}
+                              >
+                                {syncing ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : syncStatus?.status === "success" ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                ) : syncStatus?.status === "failed" ? (
+                                  <RefreshCw className="h-3.5 w-3.5 text-destructive" />
+                                ) : (
+                                  <ArrowRightLeft className="h-3.5 w-3.5" />
+                                )}
+                                {syncing
+                                  ? "Sincronizando..."
+                                  : syncStatus?.status === "success"
+                                  ? "Sincronizado com Portal"
+                                  : syncStatus?.status === "failed"
+                                  ? "Re-sincronizar"
+                                  : "Enviar para Portal"}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      }
+                    />
                   )}
 
                   {activeModule === "versions" && <VersionHistoryPanel budgetId={budget.id} />}
