@@ -268,7 +268,23 @@ export default function BudgetInternalDetail() {
       if (budgetRes.error) toast.error(`Erro ao carregar orçamento: ${budgetRes.error.message}`);
       if (eventsRes.error) toast.error(`Erro ao carregar eventos: ${eventsRes.error.message}`);
 
-      if (budgetRes.data) setBudget(budgetRes.data as BudgetDetail);
+      if (budgetRes.data) {
+        setBudget(budgetRes.data as BudgetDetail);
+        // Busca o código sequencial do cliente vinculado (CLI-XXXX) para vínculo visual com o orçamento (ORC-XXXX)
+        const clientId = (budgetRes.data as BudgetDetail).client_id;
+        if (clientId) {
+          supabase
+            .from("clients")
+            .select("sequential_code")
+            .eq("id", clientId)
+            .maybeSingle()
+            .then(({ data }) => {
+              if (!cancelled) setClientCode(data?.sequential_code ?? null);
+            });
+        } else {
+          setClientCode(null);
+        }
+      }
       if (eventsRes.data) setEvents(eventsRes.data as EventRow[]);
       if (commentsRes.data) setComments(commentsRes.data as CommentRow[]);
       if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
