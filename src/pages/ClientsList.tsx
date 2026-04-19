@@ -295,6 +295,13 @@ export default function ClientsList() {
         </div>
       </Card>
 
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        totalSelectableCount={visibleIds.length}
+        onClear={() => setSelectedIds([])}
+        comerciais={comerciais}
+      />
+
       <Card className="overflow-hidden">
         {/* Mobile: card list */}
         <div className="md:hidden divide-y divide-border">
@@ -321,52 +328,67 @@ export default function ClientsList() {
               const owner = c.commercial_owner_id
                 ? ownersMap.get(c.commercial_owner_id) ?? "—"
                 : "—";
+              const isSelected = selectedSet.has(c.id);
               return (
-                <button
-                  type="button"
+                <div
                   key={c.id}
-                  className="w-full text-left p-4 active:bg-muted/40 transition-colors"
-                  onClick={() => navigate(`/admin/crm/${c.id}`)}
+                  className={cn(
+                    "w-full p-4 transition-colors flex items-start gap-2",
+                    isSelected ? "bg-primary/5" : "active:bg-muted/40",
+                  )}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        {c.sequential_code && (
-                          <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
-                            {c.sequential_code}
+                  <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(v) => toggleOne(c.id, !!v)}
+                      aria-label={`Selecionar ${c.name}`}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="flex-1 text-left min-w-0"
+                    onClick={() => navigate(`/admin/crm/${c.id}`)}
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          {c.sequential_code && (
+                            <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
+                              {c.sequential_code}
+                            </span>
+                          )}
+                          <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
+                        </p>
+                      </div>
+                      <Badge className={cn("font-normal text-[10px] shrink-0", sCfg.color)}>
+                        {sCfg.label}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {c.phone && (
+                          <span className="flex items-center gap-1 truncate">
+                            <Phone className="h-3 w-3 shrink-0" /> {c.phone}
                           </span>
                         )}
-                        <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                        {!c.phone && c.email && (
+                          <span className="flex items-center gap-1 truncate">
+                            <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{c.email}</span>
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
-                      </p>
-                    </div>
-                    <Badge className={cn("font-normal text-[10px] shrink-0", sCfg.color)}>
-                      {sCfg.label}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {c.phone && (
-                        <span className="flex items-center gap-1 truncate">
-                          <Phone className="h-3 w-3 shrink-0" /> {c.phone}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="tabular-nums">{c.stats?.total_budgets ?? 0} orç.</span>
+                        <span className="tabular-nums font-medium text-foreground">
+                          {formatBRL(c.stats?.pipeline_value)}
                         </span>
-                      )}
-                      {!c.phone && c.email && (
-                        <span className="flex items-center gap-1 truncate">
-                          <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{c.email}</span>
-                        </span>
-                      )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="tabular-nums">{c.stats?.total_budgets ?? 0} orç.</span>
-                      <span className="tabular-nums font-medium text-foreground">
-                        {formatBRL(c.stats?.pipeline_value)}
-                      </span>
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                </div>
               );
             })
           )}
@@ -377,6 +399,19 @@ export default function ClientsList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8">
+                <Checkbox
+                  checked={
+                    allVisibleSelected
+                      ? true
+                      : someVisibleSelected
+                      ? "indeterminate"
+                      : false
+                  }
+                  onCheckedChange={(v) => toggleAllVisible(!!v)}
+                  aria-label="Selecionar todos visíveis"
+                />
+              </TableHead>
               <TableHead className="w-[90px]">Código</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Contato</TableHead>
