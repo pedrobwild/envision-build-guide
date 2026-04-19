@@ -330,7 +330,7 @@ export default function LeadSourcesPage() {
 
       {/* Drawer de detalhes */}
       <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Detalhes do Lead</DialogTitle>
             <DialogDescription>
@@ -338,12 +338,12 @@ export default function LeadSourcesPage() {
             </DialogDescription>
           </DialogHeader>
           {selectedLead && (
-            <ScrollArea className="max-h-[60vh] pr-4">
+            <ScrollArea className="max-h-[70vh] sm:max-h-[60vh] pr-2 sm:pr-4 -mx-2 px-2">
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">Fonte:</span> <strong>{CLIENT_SOURCES[selectedLead.source] ?? selectedLead.source}</strong></div>
-                  <div><span className="text-muted-foreground">External ID:</span> <code className="text-xs">{selectedLead.external_id ?? "—"}</code></div>
-                  <div><span className="text-muted-foreground">Campanha:</span> {selectedLead.campaign_name ?? "—"}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
+                  <div className="break-words"><span className="text-muted-foreground">Fonte:</span> <strong>{CLIENT_SOURCES[selectedLead.source] ?? selectedLead.source}</strong></div>
+                  <div className="break-all"><span className="text-muted-foreground">External ID:</span> <code className="text-xs">{selectedLead.external_id ?? "—"}</code></div>
+                  <div className="break-words"><span className="text-muted-foreground">Campanha:</span> {selectedLead.campaign_name ?? "—"}</div>
                   <div><span className="text-muted-foreground">Conjunto:</span> {selectedLead.adset_name ?? "—"}</div>
                   <div><span className="text-muted-foreground">Anúncio:</span> {selectedLead.ad_name ?? "—"}</div>
                   <div><span className="text-muted-foreground">Formulário:</span> {selectedLead.form_id ?? "—"}</div>
