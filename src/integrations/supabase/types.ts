@@ -2164,6 +2164,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_saved_views: {
+        Row: {
+          created_at: string
+          entity: string
+          filters: Json
+          id: string
+          is_default: boolean
+          is_shared: boolean
+          name: string
+          sort: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity: string
+          filters?: Json
+          id?: string
+          is_default?: boolean
+          is_shared?: boolean
+          name: string
+          sort?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity?: string
+          filters?: Json
+          id?: string
+          is_default?: boolean
+          is_shared?: boolean
+          name?: string
+          sort?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       client_stats: {
