@@ -906,6 +906,18 @@ export default function CommercialDashboard() {
         onSuccess={handleContractUploadSuccess}
       />
 
+      <ClientForm
+        open={newDealOpen}
+        onOpenChange={setNewDealOpen}
+        onSaved={() => {
+          setNewDealOpen(false);
+          toast.success("Negócio criado!", {
+            description: "O cliente foi cadastrado e um card foi criado na etapa Lead.",
+          });
+          loadData();
+        }}
+      />
+
       <AlertDialog open={!!confirmCloseBudgetId} onOpenChange={(open) => { if (!open) setConfirmCloseBudgetId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
