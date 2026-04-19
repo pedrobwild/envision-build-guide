@@ -510,6 +510,8 @@ export default function CommercialDashboard() {
       },
     });
   }
+
+  function handleContractUploadSuccess() {
     if (!contractUploadBudget || !user) return;
     const budgetId = contractUploadBudget.id;
     supabase.from("budget_events").insert({
