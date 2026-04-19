@@ -199,8 +199,6 @@ export default function ClientDetail() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [tagInput, setTagInput] = useState("");
-  const [uploadingPlan, setUploadingPlan] = useState(false);
-  const planInputRef = useRef<HTMLInputElement>(null);
 
   // Inicializa draft quando entra em modo edição (ou cliente recarrega)
   useEffect(() => {
