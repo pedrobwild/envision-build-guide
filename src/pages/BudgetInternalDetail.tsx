@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -208,6 +208,7 @@ export default function BudgetInternalDetail() {
   const [budgetTotal, setBudgetTotal] = useState<number | null>(null);
   const [itemsCount, setItemsCount] = useState<number>(0);
   const [sectionsCount, setSectionsCount] = useState<number>(0);
+  const [clientCode, setClientCode] = useState<string | null>(null);
   const [activeModule, setActiveModule] = useState<ModuleKey | null>(
     (searchParams.get("module") as ModuleKey) ?? null
   );
@@ -267,7 +268,23 @@ export default function BudgetInternalDetail() {
       if (budgetRes.error) toast.error(`Erro ao carregar orçamento: ${budgetRes.error.message}`);
       if (eventsRes.error) toast.error(`Erro ao carregar eventos: ${eventsRes.error.message}`);
 
-      if (budgetRes.data) setBudget(budgetRes.data as BudgetDetail);
+      if (budgetRes.data) {
+        setBudget(budgetRes.data as BudgetDetail);
+        // Busca o código sequencial do cliente vinculado (CLI-XXXX) para vínculo visual com o orçamento (ORC-XXXX)
+        const clientId = (budgetRes.data as BudgetDetail).client_id;
+        if (clientId) {
+          supabase
+            .from("clients")
+            .select("sequential_code")
+            .eq("id", clientId)
+            .maybeSingle()
+            .then(({ data }) => {
+              if (!cancelled) setClientCode(data?.sequential_code ?? null);
+            });
+        } else {
+          setClientCode(null);
+        }
+      }
       if (eventsRes.data) setEvents(eventsRes.data as EventRow[]);
       if (commentsRes.data) setComments(commentsRes.data as CommentRow[]);
       if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
@@ -609,7 +626,18 @@ export default function BudgetInternalDetail() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {budget.sequential_code && (
-                  <span className="text-[11px] font-mono text-muted-foreground/70">{budget.sequential_code}</span>
+                  <span className="font-mono text-[11px] tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                    {budget.sequential_code}
+                  </span>
+                )}
+                {clientCode && budget.client_id && (
+                  <Link
+                    to={`/admin/crm/${budget.client_id}`}
+                    className="font-mono text-[11px] tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded hover:bg-muted/70 hover:text-foreground transition-colors"
+                    title="Abrir cliente vinculado"
+                  >
+                    {clientCode}
+                  </Link>
                 )}
                 <Badge variant="secondary" className="text-[10px] font-body uppercase tracking-wide">
                   {status.label}

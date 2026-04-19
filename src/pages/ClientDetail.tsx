@@ -924,6 +924,7 @@ export default function ClientDetail() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[110px]">Código</TableHead>
                   <TableHead>Projeto</TableHead>
                   <TableHead>Status interno</TableHead>
                   <TableHead>Localização</TableHead>
@@ -936,7 +937,7 @@ export default function ClientDetail() {
               <TableBody>
                 {budgets.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10 text-sm text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-10 text-sm text-muted-foreground">
                       Este cliente ainda não tem orçamentos.
                     </TableCell>
                   </TableRow>
@@ -948,6 +949,15 @@ export default function ClientDetail() {
                       ];
                     return (
                       <TableRow key={b.id}>
+                        <TableCell>
+                          {b.sequential_code ? (
+                            <span className="font-mono text-[11px] tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                              {b.sequential_code}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="font-medium">{b.project_name || "—"}</TableCell>
                         <TableCell>
                           {st ? (
