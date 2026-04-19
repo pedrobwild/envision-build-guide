@@ -42,8 +42,12 @@ async function fetchBudgetHub(budgetId: string): Promise<BudgetHubCounts> {
   ]);
 
   const activities = activitiesRes.data ?? [];
-  const pending = activities.filter((a) => !a.completed_at && a.scheduled_for && new Date(a.scheduled_for) >= new Date());
-  const next = pending[0]?.scheduled_for ?? null;
+  // Pendentes = não-completadas COM scheduled_for (inclui atrasadas — críticas para o usuário ver).
+  // "Próxima atividade" usa a primeira FUTURA; se nenhuma, cai para a mais antiga atrasada.
+  const now = Date.now();
+  const pending = activities.filter((a) => !a.completed_at && a.scheduled_for);
+  const future = pending.filter((a) => new Date(a.scheduled_for!).getTime() >= now);
+  const next = future[0]?.scheduled_for ?? pending[0]?.scheduled_for ?? null;
 
   return {
     activitiesCount: activitiesRes.count ?? activities.length,
