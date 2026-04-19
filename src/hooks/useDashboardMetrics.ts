@@ -612,6 +612,8 @@ export function computeDashboardMetrics(
   alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
   // ─── Operational Funnel ───
+  // Conta orçamentos criados no período do filtro (consistente com os demais KPIs).
+  // Status são MUTUAMENTE EXCLUSIVOS — cada budget está em exatamente um estado atual.
   const opStages = [
     { key: "received", label: "Recebido", statuses: ["requested", "novo"] },
     { key: "triage", label: "Triagem", statuses: ["triage"] },
@@ -621,12 +623,30 @@ export function computeDashboardMetrics(
     { key: "delivered", label: "Entregue", statuses: ["delivered_to_sales"] },
   ];
 
+  // Universo do funil: budgets criados no período (todos status, inclusive já avançados).
+  // Isso permite ver "deste lote, quantos chegaram em cada etapa" sem viés temporal.
+  const inPeriodBudgets = budgets.filter((b) => isInRange(b.created_at, range));
+
+  // Ordem oficial de avanço — usada para contar "atingiu ou passou" por etapa.
+  const OP_FLOW: string[] = [
+    "requested", "novo",        // received
+    "triage",                    // triage
+    "assigned",                  // assigned
+    "in_progress", "waiting_info", "revision_requested", // in_progress
+    "ready_for_review",          // review
+    "delivered_to_sales",        // delivered
+    "sent_to_client", "minuta_solicitada", "contrato_fechado", // post-funnel
+  ];
+  const stageMinIndex = (statuses: string[]) =>
+    Math.min(...statuses.map((s) => OP_FLOW.indexOf(s)).filter((i) => i >= 0));
+
   const opCounts = opStages.map((s) => {
-    const count = budgets.filter((b) =>
-      s.statuses.includes(b.internal_status) &&
-      (isInRange(b.created_at, range) || ACTIVE_STATUSES.includes(b.internal_status))
-    ).length;
-    return count;
+    const minIdx = stageMinIndex(s.statuses);
+    // Conta quem está NESTA etapa OU avançou para uma posterior
+    return inPeriodBudgets.filter((b) => {
+      const idx = OP_FLOW.indexOf(b.internal_status);
+      return idx >= minIdx;
+    }).length;
   });
 
   const operationalFunnel: FunnelStage[] = opStages.map((s, i) => ({
@@ -638,25 +658,41 @@ export function computeDashboardMetrics(
   }));
 
   // ─── Commercial Funnel ───
+  // Mesmo princípio: contagem cumulativa "atingiu ou passou desta etapa".
+  // Universo: budgets que já chegaram ao comercial (sent_to_client ou além).
+  const COM_FLOW: string[] = [
+    "sent_to_client",
+    "minuta_solicitada",
+    "contrato_fechado",
+  ];
+  const reachedCommercial = inPeriodBudgets.filter((b) =>
+    COM_FLOW.includes(b.internal_status)
+  );
+
   interface ComStage {
     key: string;
     label: string;
-    statuses?: string[];
-    filter?: (b: BudgetWithSections) => boolean;
+    minStatus: string; // status mínimo na sequência COM_FLOW
+    countOverride?: () => number;
   }
 
   const comStages: ComStage[] = [
-    { key: "sent", label: "Enviado", statuses: ["sent_to_client"] },
-    { key: "viewed", label: "Visualizado", filter: (b) => b.internal_status === "sent_to_client" && b.view_count > 0 },
-    { key: "negotiation", label: "Em negociação", statuses: ["minuta_solicitada", "revision_requested"] },
-    { key: "closed", label: "Contrato fechado", statuses: ["contrato_fechado"] },
+    { key: "sent", label: "Enviado", minStatus: "sent_to_client" },
+    {
+      key: "viewed",
+      label: "Visualizado",
+      minStatus: "sent_to_client",
+      // Visualizado = qualquer um que tenha view_count > 0 entre os que chegaram ao comercial
+      countOverride: () => reachedCommercial.filter((b) => (b.view_count ?? 0) > 0).length,
+    },
+    { key: "negotiation", label: "Minuta solicitada", minStatus: "minuta_solicitada" },
+    { key: "closed", label: "Contrato fechado", minStatus: "contrato_fechado" },
   ];
 
   const comCounts = comStages.map((s) => {
-    if (s.filter) {
-      return budgets.filter(s.filter).length;
-    }
-    return budgets.filter((b) => s.statuses!.includes(b.internal_status)).length;
+    if (s.countOverride) return s.countOverride();
+    const minIdx = COM_FLOW.indexOf(s.minStatus);
+    return reachedCommercial.filter((b) => COM_FLOW.indexOf(b.internal_status) >= minIdx).length;
   });
 
   const commercialFunnel: FunnelStage[] = comStages.map((s, i) => ({
