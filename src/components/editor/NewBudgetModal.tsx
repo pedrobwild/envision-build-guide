@@ -392,7 +392,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[95vh] sm:max-h-[90vh] p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/40 relative">
           <DialogTitle className="text-base font-display font-bold flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
