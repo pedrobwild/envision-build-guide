@@ -1,10 +1,20 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -30,6 +40,10 @@ import {
   CheckCircle2,
   XCircle,
   Users as UsersIcon,
+  Loader2,
+  Upload,
+  Trash2,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,11 +54,14 @@ import {
   useClient,
   useClientBudgets,
   useClientStats,
+  useUpsertClient,
+  type Client,
   type ClientStatus,
 } from "@/hooks/useClients";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
-import { INTERNAL_STATUSES } from "@/lib/role-constants";
-import { ClientForm } from "@/components/crm/ClientForm";
+import { INTERNAL_STATUSES, LOCATION_TYPES } from "@/lib/role-constants";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 function formatBRL(value: number | null | undefined) {
@@ -56,6 +73,99 @@ function formatBRL(value: number | null | undefined) {
   });
 }
 
+const MARITAL_STATUSES = [
+  "Solteiro(a)",
+  "Casado(a)",
+  "União estável",
+  "Divorciado(a)",
+  "Viúvo(a)",
+  "Separado(a)",
+];
+
+const BR_STATES = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
+  "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+];
+
+const PROPERTY_TYPES = [
+  { value: "apartamento", label: "Apartamento" },
+  { value: "casa", label: "Casa" },
+  { value: "cobertura", label: "Cobertura" },
+  { value: "studio", label: "Studio / Kitnet" },
+  { value: "comercial", label: "Espaço Comercial" },
+  { value: "outro", label: "Outro" },
+];
+
+type Draft = {
+  name: string;
+  nationality: string;
+  marital_status: string;
+  profession: string;
+  document: string;
+  document_type: string;
+  rg: string;
+  email: string;
+  phone: string;
+  address: string;
+  address_complement: string;
+  bairro: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  property_address: string;
+  property_address_complement: string;
+  property_bairro: string;
+  property_city: string;
+  property_state: string;
+  property_zip_code: string;
+  property_metragem: string;
+  property_empreendimento: string;
+  property_type_default: string;
+  location_type_default: string;
+  property_floor_plan_url: string;
+  source: string;
+  referrer_name: string;
+  commercial_owner_id: string;
+  notes: string;
+  tags: string[];
+};
+
+function buildDraft(client: Client): Draft {
+  return {
+    name: client.name ?? "",
+    nationality: client.nationality ?? "",
+    marital_status: client.marital_status ?? "",
+    profession: client.profession ?? "",
+    document: client.document ?? "",
+    document_type: client.document_type ?? "",
+    rg: client.rg ?? "",
+    email: client.email ?? "",
+    phone: client.phone ?? "",
+    address: client.address ?? "",
+    address_complement: client.address_complement ?? "",
+    bairro: client.bairro ?? "",
+    city: client.city ?? "",
+    state: client.state ?? "",
+    zip_code: client.zip_code ?? "",
+    property_address: client.property_address ?? "",
+    property_address_complement: client.property_address_complement ?? "",
+    property_bairro: client.property_bairro ?? "",
+    property_city: client.property_city ?? "",
+    property_state: client.property_state ?? "",
+    property_zip_code: client.property_zip_code ?? "",
+    property_metragem: client.property_metragem ?? "",
+    property_empreendimento: client.property_empreendimento ?? client.condominio_default ?? "",
+    property_type_default: client.property_type_default ?? "",
+    location_type_default: client.location_type_default ?? "",
+    property_floor_plan_url: client.property_floor_plan_url ?? "",
+    source: client.source ?? "",
+    referrer_name: client.referrer_name ?? "",
+    commercial_owner_id: client.commercial_owner_id ?? "",
+    notes: client.notes ?? "",
+    tags: client.tags ?? [],
+  };
+}
+
 export default function ClientDetail() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
@@ -64,8 +174,24 @@ export default function ClientDetail() {
   const { data: stats } = useClientStats(clientId);
   const { data: budgets = [] } = useClientBudgets(clientId);
   const { members: comerciais } = useTeamMembers("comercial");
+  const upsert = useUpsertClient();
 
-  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [tagInput, setTagInput] = useState("");
+  const [uploadingPlan, setUploadingPlan] = useState(false);
+  const planInputRef = useRef<HTMLInputElement>(null);
+
+  // Inicializa draft quando entra em modo edição (ou cliente recarrega)
+  useEffect(() => {
+    if (editing && client && !draft) {
+      setDraft(buildDraft(client));
+    }
+    if (!editing) {
+      setDraft(null);
+      setTagInput("");
+    }
+  }, [editing, client, draft]);
 
   const ownerName = useMemo(() => {
     if (!client?.commercial_owner_id) return null;
@@ -78,6 +204,104 @@ export default function ClientDetail() {
     if (total === 0) return 0;
     return Math.round((won / total) * 100);
   }, [stats]);
+
+  function patch<K extends keyof Draft>(key: K, value: Draft[K]) {
+    setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
+  }
+
+  function addTag() {
+    const v = tagInput.trim();
+    if (!v || !draft) return;
+    if (!draft.tags.includes(v)) {
+      patch("tags", [...draft.tags, v]);
+    }
+    setTagInput("");
+  }
+
+  function removeTag(t: string) {
+    if (!draft) return;
+    patch("tags", draft.tags.filter((x) => x !== t));
+  }
+
+  async function handleUploadPlan(file: File) {
+    if (!file || !client) return;
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx. 20MB).");
+      return;
+    }
+    const allowed = ["image/", "application/pdf"];
+    if (!allowed.some((p) => file.type.startsWith(p))) {
+      toast.error("Use uma imagem ou PDF.");
+      return;
+    }
+    setUploadingPlan(true);
+    try {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `${client.id}/floor-plan-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("client-assets")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("client-assets").getPublicUrl(path);
+      patch("property_floor_plan_url", data.publicUrl);
+      toast.success("Planta anexada.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro no upload";
+      toast.error(`Falha ao anexar: ${msg}`);
+    } finally {
+      setUploadingPlan(false);
+      if (planInputRef.current) planInputRef.current.value = "";
+    }
+  }
+
+  async function handleSave() {
+    if (!draft || !client) return;
+    if (!draft.name.trim()) {
+      toast.error("O nome do cliente é obrigatório.");
+      return;
+    }
+    const payload = {
+      id: client.id,
+      name: draft.name.trim(),
+      nationality: draft.nationality.trim() || null,
+      marital_status: draft.marital_status || null,
+      profession: draft.profession.trim() || null,
+      document: draft.document.trim() || null,
+      document_type: draft.document_type || null,
+      rg: draft.rg.trim() || null,
+      email: draft.email.trim() || null,
+      phone: draft.phone.trim() || null,
+      address: draft.address.trim() || null,
+      address_complement: draft.address_complement.trim() || null,
+      bairro: draft.bairro.trim() || null,
+      city: draft.city.trim() || null,
+      state: draft.state || null,
+      zip_code: draft.zip_code.trim() || null,
+      property_address: draft.property_address.trim() || null,
+      property_address_complement: draft.property_address_complement.trim() || null,
+      property_bairro: draft.property_bairro.trim() || null,
+      property_city: draft.property_city.trim() || null,
+      property_state: draft.property_state || null,
+      property_zip_code: draft.property_zip_code.trim() || null,
+      property_metragem: draft.property_metragem.trim() || null,
+      property_empreendimento: draft.property_empreendimento.trim() || null,
+      condominio_default: draft.property_empreendimento.trim() || null,
+      property_type_default: draft.property_type_default || null,
+      location_type_default: draft.location_type_default || null,
+      property_floor_plan_url: draft.property_floor_plan_url || null,
+      source: draft.source || null,
+      referrer_name: draft.referrer_name.trim() || null,
+      commercial_owner_id: draft.commercial_owner_id || null,
+      notes: draft.notes.trim() || null,
+      tags: draft.tags,
+    };
+    try {
+      await upsert.mutateAsync(payload as Parameters<typeof upsert.mutateAsync>[0]);
+      setEditing(false);
+    } catch {
+      /* hook já mostra toast */
+    }
+  }
 
   if (isLoading) {
     return (
@@ -102,6 +326,9 @@ export default function ClientDetail() {
   }
 
   const sCfg = CLIENT_STATUSES[getEffectiveClientStatus(client, stats ?? null)];
+  const isPdf = (draft?.property_floor_plan_url || client.property_floor_plan_url || "")
+    .toLowerCase()
+    .includes(".pdf");
 
   return (
     <div className="p-3 sm:p-6 max-w-[1200px] mx-auto space-y-4 sm:space-y-6">
@@ -119,6 +346,11 @@ export default function ClientDetail() {
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <h1 className="text-lg sm:text-2xl font-display font-bold tracking-tight break-words">{client.name}</h1>
               <Badge className={cn("font-normal", sCfg.color)}>{sCfg.label}</Badge>
+              {editing && (
+                <Badge variant="outline" className="font-normal border-primary/40 text-primary">
+                  Editando
+                </Badge>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground font-body">
               {client.email && (
@@ -143,24 +375,43 @@ export default function ClientDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
-            <Pencil className="h-3.5 w-3.5" /> Editar
-          </Button>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={() => {
-              const params = new URLSearchParams({
-                client_id: client.id,
-                name: client.name,
-                ...(client.email ? { email: client.email } : {}),
-                ...(client.phone ? { phone: client.phone } : {}),
-              });
-              navigate(`/admin/solicitacoes/nova?${params.toString()}`);
-            }}
-          >
-            <Plus className="h-3.5 w-3.5" /> Novo orçamento
-          </Button>
+          {editing ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditing(false)}
+                disabled={upsert.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={handleSave} disabled={upsert.isPending} className="gap-1.5">
+                {upsert.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Salvar alterações
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="gap-1.5">
+                <Pencil className="h-3.5 w-3.5" /> Editar
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    client_id: client.id,
+                    name: client.name,
+                    ...(client.email ? { email: client.email } : {}),
+                    ...(client.phone ? { phone: client.phone } : {}),
+                  });
+                  navigate(`/admin/solicitacoes/nova?${params.toString()}`);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" /> Novo orçamento
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -207,59 +458,309 @@ export default function ClientDetail() {
 
         <TabsContent value="overview" className="mt-4">
           <div className="grid md:grid-cols-2 gap-4">
+            {/* === DADOS DO CLIENTE === */}
             <Card className="p-5">
               <h3 className="text-xs font-display font-bold uppercase tracking-wider text-muted-foreground mb-3">
                 Dados do cliente
               </h3>
-              <dl className="space-y-2.5 text-sm">
-                <InfoRow icon={User} label="Nome completo" value={client.name} />
-                <InfoRow icon={User} label="Nacionalidade" value={client.nationality} />
-                <InfoRow icon={User} label="Estado civil" value={client.marital_status} />
-                <InfoRow icon={User} label="Profissão" value={client.profession} />
-                <InfoRow
-                  icon={FileText}
-                  label={client.document_type === "cnpj" ? "CNPJ" : "CPF / CNPJ"}
-                  value={client.document}
-                />
-                <InfoRow icon={FileText} label="RG" value={client.rg} />
-                <InfoRow icon={Mail} label="E-mail" value={client.email} />
-                <InfoRow icon={Phone} label="Telefone" value={client.phone} />
-              </dl>
+              {editing && draft ? (
+                <div className="space-y-3">
+                  <EditField label="Nome completo" required>
+                    <Input value={draft.name} onChange={(e) => patch("name", e.target.value)} maxLength={255} />
+                  </EditField>
+                  <EditField label="Nacionalidade">
+                    <Input value={draft.nationality} onChange={(e) => patch("nationality", e.target.value)} maxLength={100} />
+                  </EditField>
+                  <EditField label="Estado civil">
+                    <Select
+                      value={draft.marital_status || "none"}
+                      onValueChange={(v) => patch("marital_status", v === "none" ? "" : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">—</SelectItem>
+                        {MARITAL_STATUSES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </EditField>
+                  <EditField label="Profissão">
+                    <Input value={draft.profession} onChange={(e) => patch("profession", e.target.value)} maxLength={120} />
+                  </EditField>
+                  <div className="grid grid-cols-2 gap-3">
+                    <EditField label="CPF / CNPJ">
+                      <Input value={draft.document} onChange={(e) => patch("document", e.target.value)} maxLength={20} />
+                    </EditField>
+                    <EditField label="Tipo de documento">
+                      <Select
+                        value={draft.document_type || "none"}
+                        onValueChange={(v) => patch("document_type", v === "none" ? "" : v)}
+                      >
+                        <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">—</SelectItem>
+                          <SelectItem value="cpf">CPF</SelectItem>
+                          <SelectItem value="cnpj">CNPJ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </EditField>
+                  </div>
+                  <EditField label="RG">
+                    <Input value={draft.rg} onChange={(e) => patch("rg", e.target.value)} maxLength={30} />
+                  </EditField>
+                  <EditField label="E-mail">
+                    <Input type="email" value={draft.email} onChange={(e) => patch("email", e.target.value)} maxLength={255} />
+                  </EditField>
+                  <EditField label="Telefone">
+                    <Input value={draft.phone} onChange={(e) => patch("phone", e.target.value)} maxLength={20} />
+                  </EditField>
+                </div>
+              ) : (
+                <dl className="space-y-2.5 text-sm">
+                  <InfoRow icon={User} label="Nome completo" value={client.name} />
+                  <InfoRow icon={User} label="Nacionalidade" value={client.nationality} />
+                  <InfoRow icon={User} label="Estado civil" value={client.marital_status} />
+                  <InfoRow icon={User} label="Profissão" value={client.profession} />
+                  <InfoRow
+                    icon={FileText}
+                    label={client.document_type === "cnpj" ? "CNPJ" : "CPF / CNPJ"}
+                    value={client.document}
+                  />
+                  <InfoRow icon={FileText} label="RG" value={client.rg} />
+                  <InfoRow icon={Mail} label="E-mail" value={client.email} />
+                  <InfoRow icon={Phone} label="Telefone" value={client.phone} />
+                </dl>
+              )}
             </Card>
 
+            {/* === ENDEREÇO RESIDENCIAL === */}
             <Card className="p-5">
               <h3 className="text-xs font-display font-bold uppercase tracking-wider text-muted-foreground mb-3">
                 Endereço residencial
               </h3>
-              <dl className="space-y-2.5 text-sm">
-                <InfoRow icon={MapPin} label="Endereço" value={client.address} />
-                <InfoRow icon={MapPin} label="Complemento" value={client.address_complement} />
-                <InfoRow icon={MapPin} label="Bairro" value={client.bairro} />
-                <InfoRow icon={MapPin} label="Cidade" value={client.city} />
-                <InfoRow icon={MapPin} label="Estado" value={client.state} />
-                <InfoRow icon={MapPin} label="CEP" value={client.zip_code} />
-              </dl>
+              {editing && draft ? (
+                <div className="space-y-3">
+                  <EditField label="Endereço">
+                    <Input value={draft.address} onChange={(e) => patch("address", e.target.value)} placeholder="Rua, número" />
+                  </EditField>
+                  <EditField label="Complemento">
+                    <Input value={draft.address_complement} onChange={(e) => patch("address_complement", e.target.value)} placeholder="Apto, bloco..." />
+                  </EditField>
+                  <div className="grid grid-cols-2 gap-3">
+                    <EditField label="Bairro">
+                      <Input value={draft.bairro} onChange={(e) => patch("bairro", e.target.value)} />
+                    </EditField>
+                    <EditField label="Cidade">
+                      <Input value={draft.city} onChange={(e) => patch("city", e.target.value)} />
+                    </EditField>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <EditField label="Estado">
+                      <Select value={draft.state || "none"} onValueChange={(v) => patch("state", v === "none" ? "" : v)}>
+                        <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">—</SelectItem>
+                          {BR_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </EditField>
+                    <EditField label="CEP">
+                      <Input value={draft.zip_code} onChange={(e) => patch("zip_code", e.target.value)} maxLength={10} />
+                    </EditField>
+                  </div>
+                </div>
+              ) : (
+                <dl className="space-y-2.5 text-sm">
+                  <InfoRow icon={MapPin} label="Endereço" value={client.address} />
+                  <InfoRow icon={MapPin} label="Complemento" value={client.address_complement} />
+                  <InfoRow icon={MapPin} label="Bairro" value={client.bairro} />
+                  <InfoRow icon={MapPin} label="Cidade" value={client.city} />
+                  <InfoRow icon={MapPin} label="Estado" value={client.state} />
+                  <InfoRow icon={MapPin} label="CEP" value={client.zip_code} />
+                </dl>
+              )}
             </Card>
 
+            {/* === DADOS DO IMÓVEL === */}
             <Card className="p-5 md:col-span-2">
               <h3 className="text-xs font-display font-bold uppercase tracking-wider text-muted-foreground mb-3">
                 Dados do imóvel
               </h3>
-              <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
-                <InfoRow icon={MapPin} label="Endereço do imóvel" value={client.property_address} />
-                <InfoRow icon={MapPin} label="Complemento" value={client.property_address_complement} />
-                <InfoRow icon={MapPin} label="Bairro" value={client.property_bairro} />
-                <InfoRow icon={MapPin} label="Cidade" value={client.property_city} />
-                <InfoRow icon={MapPin} label="Estado" value={client.property_state} />
-                <InfoRow icon={MapPin} label="CEP" value={client.property_zip_code} />
-                <InfoRow icon={Building2} label="Metragem" value={client.property_metragem} />
-                <InfoRow icon={Building2} label="Empreendimento" value={client.property_empreendimento || client.condominio_default} />
-                <InfoRow icon={Building2} label="Tipo de imóvel" value={client.property_type_default} />
-                <InfoRow icon={Building2} label="Tipo de locação" value={client.location_type_default} />
-              </div>
+              {editing && draft ? (
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                  <div className="md:col-span-4">
+                    <EditField label="Endereço do imóvel">
+                      <Input value={draft.property_address} onChange={(e) => patch("property_address", e.target.value)} />
+                    </EditField>
+                  </div>
+                  <div className="md:col-span-2">
+                    <EditField label="Complemento">
+                      <Input value={draft.property_address_complement} onChange={(e) => patch("property_address_complement", e.target.value)} />
+                    </EditField>
+                  </div>
+                  <div className="md:col-span-2">
+                    <EditField label="Bairro">
+                      <Input value={draft.property_bairro} onChange={(e) => patch("property_bairro", e.target.value)} />
+                    </EditField>
+                  </div>
+                  <div className="md:col-span-2">
+                    <EditField label="Cidade">
+                      <Input value={draft.property_city} onChange={(e) => patch("property_city", e.target.value)} />
+                    </EditField>
+                  </div>
+                  <div className="md:col-span-1">
+                    <EditField label="Estado">
+                      <Select value={draft.property_state || "none"} onValueChange={(v) => patch("property_state", v === "none" ? "" : v)}>
+                        <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">—</SelectItem>
+                          {BR_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </EditField>
+                  </div>
+                  <div className="md:col-span-1">
+                    <EditField label="CEP">
+                      <Input value={draft.property_zip_code} onChange={(e) => patch("property_zip_code", e.target.value)} maxLength={10} />
+                    </EditField>
+                  </div>
+                  <div className="md:col-span-2">
+                    <EditField label="Metragem">
+                      <Input value={draft.property_metragem} onChange={(e) => patch("property_metragem", e.target.value)} placeholder="120m²" />
+                    </EditField>
+                  </div>
+                  <div className="md:col-span-2">
+                    <EditField label="Empreendimento">
+                      <Input value={draft.property_empreendimento} onChange={(e) => patch("property_empreendimento", e.target.value)} />
+                    </EditField>
+                  </div>
+                  <div className="md:col-span-2">
+                    <EditField label="Tipo de imóvel">
+                      <Select
+                        value={draft.property_type_default || "none"}
+                        onValueChange={(v) => patch("property_type_default", v === "none" ? "" : v)}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">—</SelectItem>
+                          {PROPERTY_TYPES.map((t) => (
+                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </EditField>
+                  </div>
+                  <div className="md:col-span-3">
+                    <EditField label="Tipo de locação">
+                      <Select
+                        value={draft.location_type_default || "none"}
+                        onValueChange={(v) => patch("location_type_default", v === "none" ? "" : v)}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">—</SelectItem>
+                          {LOCATION_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </EditField>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
+                  <InfoRow icon={MapPin} label="Endereço do imóvel" value={client.property_address} />
+                  <InfoRow icon={MapPin} label="Complemento" value={client.property_address_complement} />
+                  <InfoRow icon={MapPin} label="Bairro" value={client.property_bairro} />
+                  <InfoRow icon={MapPin} label="Cidade" value={client.property_city} />
+                  <InfoRow icon={MapPin} label="Estado" value={client.property_state} />
+                  <InfoRow icon={MapPin} label="CEP" value={client.property_zip_code} />
+                  <InfoRow icon={Building2} label="Metragem" value={client.property_metragem} />
+                  <InfoRow icon={Building2} label="Empreendimento" value={client.property_empreendimento || client.condominio_default} />
+                  <InfoRow icon={Building2} label="Tipo de imóvel" value={client.property_type_default} />
+                  <InfoRow icon={Building2} label="Tipo de locação" value={client.location_type_default} />
+                </div>
+              )}
+
+              {/* Planta do imóvel */}
               <div className="mt-4 pt-4 border-t border-border">
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-2">Planta do imóvel</p>
-                {client.property_floor_plan_url ? (
+                {editing && draft ? (
+                  <>
+                    <input
+                      ref={planInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUploadPlan(f);
+                      }}
+                    />
+                    {draft.property_floor_plan_url ? (
+                      <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                        {isPdf ? (
+                          <FileText className="h-8 w-8 text-primary shrink-0" />
+                        ) : (
+                          <img
+                            src={draft.property_floor_plan_url}
+                            alt="Planta do imóvel"
+                            className="h-12 w-12 rounded object-cover shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <a
+                            href={draft.property_floor_plan_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-body text-primary hover:underline truncate block"
+                          >
+                            Visualizar planta
+                          </a>
+                          <p className="text-[11px] text-muted-foreground">{isPdf ? "PDF" : "Imagem"} anexada</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => planInputRef.current?.click()}
+                          disabled={uploadingPlan}
+                        >
+                          {uploadingPlan ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Trocar"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={() => patch("property_floor_plan_url", "")}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full gap-2 border-dashed h-20"
+                        onClick={() => planInputRef.current?.click()}
+                        disabled={uploadingPlan}
+                      >
+                        {uploadingPlan ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            <span className="flex flex-col items-start text-left">
+                              <span className="text-sm">Anexar planta do imóvel</span>
+                              <span className="text-[11px] text-muted-foreground font-normal">Imagem ou PDF · até 20MB</span>
+                            </span>
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </>
+                ) : client.property_floor_plan_url ? (
                   <div className="flex items-center gap-3 flex-wrap">
                     <a
                       href={client.property_floor_plan_url}
@@ -271,14 +772,14 @@ export default function ClientDetail() {
                       Visualizar planta anexada
                       <ExternalLink className="h-3 w-3" />
                     </a>
-                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setEditOpen(true)}>
+                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setEditing(true)}>
                       <Pencil className="h-3 w-3" /> Substituir
                     </Button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-sm text-muted-foreground italic">Nenhuma planta anexada.</span>
-                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setEditOpen(true)}>
+                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setEditing(true)}>
                       <Plus className="h-3 w-3" /> Anexar planta (PDF/imagem)
                     </Button>
                   </div>
@@ -286,55 +787,115 @@ export default function ClientDetail() {
               </div>
             </Card>
 
+            {/* === RELACIONAMENTO === */}
             <Card className="p-5">
               <h3 className="text-xs font-display font-bold uppercase tracking-wider text-muted-foreground mb-3">
                 Relacionamento
               </h3>
-              <dl className="space-y-2.5 text-sm">
-                <InfoRow
-                  icon={UsersIcon}
-                  label="Responsável comercial"
-                  value={ownerName}
-                />
-                <InfoRow
-                  icon={Tag}
-                  label="Fonte do lead"
-                  value={client.source ? CLIENT_SOURCES[client.source] ?? client.source : null}
-                />
-                <InfoRow
-                  icon={User}
-                  label="Indicado por"
-                  value={client.referrer_name}
-                />
-                <InfoRow
-                  icon={FileText}
-                  label="HubSpot"
-                  value={
-                    client.hubspot_contact_url ? (
-                      <a
-                        href={client.hubspot_contact_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline inline-flex items-center gap-1"
-                      >
-                        Abrir contato <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ) : null
-                  }
-                />
-              </dl>
+              {editing && draft ? (
+                <div className="space-y-3">
+                  <EditField label="Responsável comercial">
+                    <Select
+                      value={draft.commercial_owner_id || "none"}
+                      onValueChange={(v) => patch("commercial_owner_id", v === "none" ? "" : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">—</SelectItem>
+                        {comerciais.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </EditField>
+                  <EditField label="Fonte do lead">
+                    <Select value={draft.source || "none"} onValueChange={(v) => patch("source", v === "none" ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">—</SelectItem>
+                        {Object.entries(CLIENT_SOURCES).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </EditField>
+                  <EditField label="Indicado por">
+                    <Input value={draft.referrer_name} onChange={(e) => patch("referrer_name", e.target.value)} />
+                  </EditField>
+                </div>
+              ) : (
+                <dl className="space-y-2.5 text-sm">
+                  <InfoRow icon={UsersIcon} label="Responsável comercial" value={ownerName} />
+                  <InfoRow
+                    icon={Tag}
+                    label="Fonte do lead"
+                    value={client.source ? CLIENT_SOURCES[client.source] ?? client.source : null}
+                  />
+                  <InfoRow icon={User} label="Indicado por" value={client.referrer_name} />
+                  <InfoRow
+                    icon={FileText}
+                    label="HubSpot"
+                    value={
+                      client.hubspot_contact_url ? (
+                        <a
+                          href={client.hubspot_contact_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline inline-flex items-center gap-1"
+                        >
+                          Abrir contato <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : null
+                    }
+                  />
+                </dl>
+              )}
             </Card>
 
+            {/* === TAGS === */}
             <Card className="p-5">
               <h3 className="text-xs font-display font-bold uppercase tracking-wider text-muted-foreground mb-3">
                 Tags
               </h3>
-              {client.tags.length > 0 ? (
+              {editing && draft ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      placeholder="Ex: VIP, Arquiteto, Reforma"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addTag();
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="outline" size="sm" onClick={addTag}>
+                      Adicionar
+                    </Button>
+                  </div>
+                  {draft.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {draft.tags.map((t) => (
+                        <Badge key={t} variant="secondary" className="gap-1 pr-1">
+                          {t}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(t)}
+                            className="ml-0.5 rounded-sm hover:bg-muted p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : client.tags.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {client.tags.map((t) => (
-                    <Badge key={t} variant="secondary">
-                      {t}
-                    </Badge>
+                    <Badge key={t} variant="secondary">{t}</Badge>
                   ))}
                 </div>
               ) : (
@@ -429,7 +990,15 @@ export default function ClientDetail() {
             <h3 className="text-xs font-display font-bold uppercase tracking-wider text-muted-foreground mb-3">
               Observações
             </h3>
-            {client.notes ? (
+            {editing && draft ? (
+              <Textarea
+                value={draft.notes}
+                onChange={(e) => patch("notes", e.target.value)}
+                placeholder="Preferências, restrições, histórico de contato..."
+                rows={6}
+                maxLength={4000}
+              />
+            ) : client.notes ? (
               <p className="text-sm whitespace-pre-wrap font-body leading-relaxed">{client.notes}</p>
             ) : (
               <p className="text-sm text-muted-foreground italic">
@@ -441,7 +1010,26 @@ export default function ClientDetail() {
         </TabsContent>
       </Tabs>
 
-      <ClientForm open={editOpen} onOpenChange={setEditOpen} initial={client} />
+      {/* Sticky save bar quando estiver editando (mobile) */}
+      {editing && (
+        <div className="sticky bottom-3 z-20 sm:hidden">
+          <div className="flex items-center gap-2 p-2 rounded-xl bg-background/95 backdrop-blur border border-border shadow-lg">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => setEditing(false)}
+              disabled={upsert.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button size="sm" className="flex-1 gap-1.5" onClick={handleSave} disabled={upsert.isPending}>
+              {upsert.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Salvar
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -464,6 +1052,26 @@ function InfoRow({
           {value ? value : <span className="text-muted-foreground/60">—</span>}
         </dd>
       </div>
+    </div>
+  );
+}
+
+function EditField({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[11px] text-muted-foreground uppercase tracking-wide font-body">
+        {label}
+        {required && <span className="text-destructive ml-0.5">*</span>}
+      </Label>
+      {children}
     </div>
   );
 }
