@@ -123,19 +123,19 @@ export default function ClientsList() {
   }
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold tracking-tight flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
+    <div className="p-3 sm:p-6 max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-display font-bold tracking-tight flex items-center gap-2">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
             Clientes
           </h1>
-          <p className="text-sm text-muted-foreground font-body mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground font-body mt-1">
             Carteira de clientes do Bwild. Cada cliente concentra todos os orçamentos e o histórico
             comercial.
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-1.5">
+        <Button onClick={openCreate} className="gap-1.5 w-full sm:w-auto h-10 sm:h-9">
           <Plus className="h-4 w-4" />
           Novo cliente
         </Button>
