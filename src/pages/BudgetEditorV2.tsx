@@ -577,13 +577,13 @@ export default function BudgetEditorV2() {
                     }}
                     onBlur={() => setEditingTitle(false)}
                     onKeyDown={(e) => e.key === "Enter" && setEditingTitle(false)}
-                    className="w-full text-3xl font-display font-bold text-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/40 leading-tight"
+                    className="w-full text-xl sm:text-2xl lg:text-3xl font-display font-bold text-foreground bg-transparent border-none outline-none placeholder:text-muted-foreground/40 leading-tight"
                     placeholder="Nome do projeto"
                   />
                 ) : (
                   <h1
                     onClick={() => setEditingTitle(true)}
-                    className="text-3xl font-display font-bold text-foreground leading-tight cursor-text hover:bg-muted/30 rounded-md px-1 -mx-1 py-0.5 transition-colors"
+                    className="text-xl sm:text-2xl lg:text-3xl font-display font-bold text-foreground leading-tight cursor-text hover:bg-muted/30 rounded-md px-1 -mx-1 py-0.5 transition-colors"
                   >
                     {budget.project_name || <span className="text-muted-foreground/40">Nome do projeto</span>}
                   </h1>
