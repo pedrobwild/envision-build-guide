@@ -180,42 +180,44 @@ export default function ClientsList() {
       </div>
 
       <Card className="p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[240px]">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+          <div className="relative flex-1 sm:min-w-[240px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome, e-mail, telefone ou documento..."
-              className="pl-8 h-9"
+              className="pl-8 h-10 sm:h-9"
             />
           </div>
-          <Select value={status} onValueChange={(v) => setStatus(v as ClientStatus | "all")}>
-            <SelectTrigger className="h-9 w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos status</SelectItem>
-              {STATUS_OPTIONS.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={ownerId} onValueChange={setOwnerId}>
-            <SelectTrigger className="h-9 w-[200px]">
-              <SelectValue placeholder="Todos os comerciais" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os comerciais</SelectItem>
-              {comerciais.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 sm:flex gap-2">
+            <Select value={status} onValueChange={(v) => setStatus(v as ClientStatus | "all")}>
+              <SelectTrigger className="h-10 sm:h-9 w-full sm:w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos status</SelectItem>
+                {STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={ownerId} onValueChange={setOwnerId}>
+              <SelectTrigger className="h-10 sm:h-9 w-full sm:w-[200px]">
+                <SelectValue placeholder="Todos os comerciais" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os comerciais</SelectItem>
+                {comerciais.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </Card>
 
