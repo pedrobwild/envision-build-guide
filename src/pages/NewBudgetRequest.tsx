@@ -669,6 +669,33 @@ export default function NewBudgetRequest() {
         {/* ── Imóvel ── */}
         <SectionTitle icon={Building2} title="Imóvel" />
         <div className="border-b border-border/30 pb-1 mb-1">
+          {/* Seletor de imóvel quando o cliente já tem imóveis cadastrados */}
+          {linkedClientId && clientProperties.length > 0 && (
+            <PropertyRow
+              icon={Home}
+              label="Imóvel"
+              hint={
+                selectedPropertyId === "__new__"
+                  ? "Os campos abaixo serão salvos como um novo imóvel."
+                  : "Os campos abaixo refletem o imóvel selecionado e podem ser ajustados."
+              }
+            >
+              <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
+                <SelectTrigger className="border-transparent hover:border-border shadow-none h-auto py-2 px-2.5 text-sm font-body bg-transparent focus:ring-1 focus:ring-primary/20">
+                  <SelectValue placeholder="Selecione um imóvel" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientProperties.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.is_primary ? "★ " : ""}
+                      {summarizeProperty(p)}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="__new__">+ Cadastrar novo imóvel</SelectItem>
+                </SelectContent>
+              </Select>
+            </PropertyRow>
+          )}
           <PropertyRow icon={Building2} label="Condomínio">
             <NotionInput value={condominio} onChange={setCondominio} placeholder="Ed. Aurora" maxLength={255} />
           </PropertyRow>

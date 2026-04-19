@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,8 +41,6 @@ import {
   XCircle,
   Users as UsersIcon,
   Loader2,
-  Upload,
-  Trash2,
   X,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -89,14 +87,7 @@ const BR_STATES = [
   "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
 ];
 
-const PROPERTY_TYPES = [
-  { value: "apartamento", label: "Apartamento" },
-  { value: "casa", label: "Casa" },
-  { value: "cobertura", label: "Cobertura" },
-  { value: "studio", label: "Studio / Kitnet" },
-  { value: "comercial", label: "Espaço Comercial" },
-  { value: "outro", label: "Outro" },
-];
+// (PROPERTY_TYPES movido para ClientPropertiesManager — agora gerenciado por imóvel)
 
 type Draft = {
   name: string;
@@ -199,8 +190,6 @@ export default function ClientDetail() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [tagInput, setTagInput] = useState("");
-  const [uploadingPlan, setUploadingPlan] = useState(false);
-  const planInputRef = useRef<HTMLInputElement>(null);
 
   // Inicializa draft quando entra em modo edição (ou cliente recarrega)
   useEffect(() => {
@@ -243,36 +232,7 @@ export default function ClientDetail() {
     patch("tags", draft.tags.filter((x) => x !== t));
   }
 
-  async function handleUploadPlan(file: File) {
-    if (!file || !client) return;
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error("Arquivo muito grande (máx. 20MB).");
-      return;
-    }
-    const allowed = ["image/", "application/pdf"];
-    if (!allowed.some((p) => file.type.startsWith(p))) {
-      toast.error("Use uma imagem ou PDF.");
-      return;
-    }
-    setUploadingPlan(true);
-    try {
-      const ext = file.name.split(".").pop() || "bin";
-      const path = `${client.id}/floor-plan-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("client-assets")
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (error) throw error;
-      const { data } = supabase.storage.from("client-assets").getPublicUrl(path);
-      patch("property_floor_plan_url", data.publicUrl);
-      toast.success("Planta anexada.");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro no upload";
-      toast.error(`Falha ao anexar: ${msg}`);
-    } finally {
-      setUploadingPlan(false);
-      if (planInputRef.current) planInputRef.current.value = "";
-    }
-  }
+  // (handleUploadPlan removido — gestão de planta agora vive em ClientPropertiesManager por imóvel)
 
   async function handleSave() {
     if (!draft || !client) return;
@@ -346,9 +306,6 @@ export default function ClientDetail() {
   }
 
   const sCfg = CLIENT_STATUSES[getEffectiveClientStatus(client, stats ?? null)];
-  const isPdf = (draft?.property_floor_plan_url || client.property_floor_plan_url || "")
-    .toLowerCase()
-    .includes(".pdf");
 
   return (
     <div className="p-3 sm:p-6 max-w-[1200px] mx-auto space-y-4 sm:space-y-6">
@@ -606,212 +563,7 @@ export default function ClientDetail() {
               )}
             </Card>
 
-            {/* === DADOS DO IMÓVEL === */}
-            <Card className="p-5 md:col-span-2">
-              <h3 className="text-xs font-display font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                Dados do imóvel
-              </h3>
-              {editing && draft ? (
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                  <div className="md:col-span-4">
-                    <EditField label="Endereço do imóvel">
-                      <Input value={draft.property_address} onChange={(e) => patch("property_address", e.target.value)} />
-                    </EditField>
-                  </div>
-                  <div className="md:col-span-2">
-                    <EditField label="Complemento">
-                      <Input value={draft.property_address_complement} onChange={(e) => patch("property_address_complement", e.target.value)} />
-                    </EditField>
-                  </div>
-                  <div className="md:col-span-2">
-                    <EditField label="Bairro">
-                      <Input value={draft.property_bairro} onChange={(e) => patch("property_bairro", e.target.value)} />
-                    </EditField>
-                  </div>
-                  <div className="md:col-span-2">
-                    <EditField label="Cidade">
-                      <Input value={draft.property_city} onChange={(e) => patch("property_city", e.target.value)} />
-                    </EditField>
-                  </div>
-                  <div className="md:col-span-1">
-                    <EditField label="Estado">
-                      <Select value={draft.property_state || "none"} onValueChange={(v) => patch("property_state", v === "none" ? "" : v)}>
-                        <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">—</SelectItem>
-                          {BR_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </EditField>
-                  </div>
-                  <div className="md:col-span-1">
-                    <EditField label="CEP">
-                      <Input value={draft.property_zip_code} onChange={(e) => patch("property_zip_code", e.target.value)} maxLength={10} />
-                    </EditField>
-                  </div>
-                  <div className="md:col-span-2">
-                    <EditField label="Metragem">
-                      <Input value={draft.property_metragem} onChange={(e) => patch("property_metragem", e.target.value)} placeholder="120m²" />
-                    </EditField>
-                  </div>
-                  <div className="md:col-span-2">
-                    <EditField label="Empreendimento">
-                      <Input value={draft.property_empreendimento} onChange={(e) => patch("property_empreendimento", e.target.value)} />
-                    </EditField>
-                  </div>
-                  <div className="md:col-span-2">
-                    <EditField label="Tipo de imóvel">
-                      <Select
-                        value={draft.property_type_default || "none"}
-                        onValueChange={(v) => patch("property_type_default", v === "none" ? "" : v)}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">—</SelectItem>
-                          {PROPERTY_TYPES.map((t) => (
-                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </EditField>
-                  </div>
-                  <div className="md:col-span-3">
-                    <EditField label="Tipo de locação">
-                      <Select
-                        value={draft.location_type_default || "none"}
-                        onValueChange={(v) => patch("location_type_default", v === "none" ? "" : v)}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">—</SelectItem>
-                          {LOCATION_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </EditField>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
-                  <InfoRow icon={MapPin} label="Endereço do imóvel" value={client.property_address} />
-                  <InfoRow icon={MapPin} label="Complemento" value={client.property_address_complement} />
-                  <InfoRow icon={MapPin} label="Bairro" value={client.property_bairro} />
-                  <InfoRow icon={MapPin} label="Cidade" value={client.property_city} />
-                  <InfoRow icon={MapPin} label="Estado" value={client.property_state} />
-                  <InfoRow icon={MapPin} label="CEP" value={client.property_zip_code} />
-                  <InfoRow icon={Building2} label="Metragem" value={client.property_metragem} />
-                  <InfoRow icon={Building2} label="Empreendimento" value={client.property_empreendimento || client.condominio_default} />
-                  <InfoRow icon={Building2} label="Tipo de imóvel" value={client.property_type_default} />
-                  <InfoRow icon={Building2} label="Tipo de locação" value={client.location_type_default} />
-                </div>
-              )}
-
-              {/* Planta do imóvel */}
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-2">Planta do imóvel</p>
-                {editing && draft ? (
-                  <>
-                    <input
-                      ref={planInputRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handleUploadPlan(f);
-                      }}
-                    />
-                    {draft.property_floor_plan_url ? (
-                      <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
-                        {isPdf ? (
-                          <FileText className="h-8 w-8 text-primary shrink-0" />
-                        ) : (
-                          <img
-                            src={draft.property_floor_plan_url}
-                            alt="Planta do imóvel"
-                            className="h-12 w-12 rounded object-cover shrink-0"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <a
-                            href={draft.property_floor_plan_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm font-body text-primary hover:underline truncate block"
-                          >
-                            Visualizar planta
-                          </a>
-                          <p className="text-[11px] text-muted-foreground">{isPdf ? "PDF" : "Imagem"} anexada</p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => planInputRef.current?.click()}
-                          disabled={uploadingPlan}
-                        >
-                          {uploadingPlan ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Trocar"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => patch("property_floor_plan_url", "")}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full gap-2 border-dashed h-20"
-                        onClick={() => planInputRef.current?.click()}
-                        disabled={uploadingPlan}
-                      >
-                        {uploadingPlan ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Enviando...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4" />
-                            <span className="flex flex-col items-start text-left">
-                              <span className="text-sm">Anexar planta do imóvel</span>
-                              <span className="text-[11px] text-muted-foreground font-normal">Imagem ou PDF · até 20MB</span>
-                            </span>
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </>
-                ) : client.property_floor_plan_url ? (
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <a
-                      href={client.property_floor_plan_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Visualizar planta anexada
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setEditing(true)}>
-                      <Pencil className="h-3 w-3" /> Substituir
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-sm text-muted-foreground italic">Nenhuma planta anexada.</span>
-                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setEditing(true)}>
-                      <Plus className="h-3 w-3" /> Anexar planta (PDF/imagem)
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
+            {/* Imóveis movidos para a aba "Imóveis" — gerenciados em ClientPropertiesManager */}
 
             {/* === RELACIONAMENTO === */}
             <Card className="p-5">
