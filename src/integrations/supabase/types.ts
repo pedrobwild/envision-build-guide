@@ -1052,6 +1052,8 @@ export type Database = {
         Row: {
           ad_id: string | null
           ad_name: string | null
+          address: string | null
+          address_complement: string | null
           adset_id: string | null
           adset_name: string | null
           bairro: string | null
@@ -1074,13 +1076,27 @@ export type Database = {
           id: string
           is_active: boolean
           location_type_default: string | null
+          marital_status: string | null
           name: string
+          nationality: string | null
           notes: string | null
           phone: string | null
           phone_normalized: string | null
+          profession: string | null
+          property_address: string | null
+          property_address_complement: string | null
+          property_bairro: string | null
+          property_city: string | null
+          property_empreendimento: string | null
+          property_floor_plan_url: string | null
+          property_metragem: string | null
+          property_state: string | null
           property_type_default: string | null
+          property_zip_code: string | null
           referrer_name: string | null
+          rg: string | null
           source: string | null
+          state: string | null
           status: string
           tags: string[]
           updated_at: string
@@ -1089,10 +1105,13 @@ export type Database = {
           utm_medium: string | null
           utm_source: string | null
           utm_term: string | null
+          zip_code: string | null
         }
         Insert: {
           ad_id?: string | null
           ad_name?: string | null
+          address?: string | null
+          address_complement?: string | null
           adset_id?: string | null
           adset_name?: string | null
           bairro?: string | null
@@ -1115,13 +1134,27 @@ export type Database = {
           id?: string
           is_active?: boolean
           location_type_default?: string | null
+          marital_status?: string | null
           name: string
+          nationality?: string | null
           notes?: string | null
           phone?: string | null
           phone_normalized?: string | null
+          profession?: string | null
+          property_address?: string | null
+          property_address_complement?: string | null
+          property_bairro?: string | null
+          property_city?: string | null
+          property_empreendimento?: string | null
+          property_floor_plan_url?: string | null
+          property_metragem?: string | null
+          property_state?: string | null
           property_type_default?: string | null
+          property_zip_code?: string | null
           referrer_name?: string | null
+          rg?: string | null
           source?: string | null
+          state?: string | null
           status?: string
           tags?: string[]
           updated_at?: string
@@ -1130,10 +1163,13 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           utm_term?: string | null
+          zip_code?: string | null
         }
         Update: {
           ad_id?: string | null
           ad_name?: string | null
+          address?: string | null
+          address_complement?: string | null
           adset_id?: string | null
           adset_name?: string | null
           bairro?: string | null
@@ -1156,13 +1192,27 @@ export type Database = {
           id?: string
           is_active?: boolean
           location_type_default?: string | null
+          marital_status?: string | null
           name?: string
+          nationality?: string | null
           notes?: string | null
           phone?: string | null
           phone_normalized?: string | null
+          profession?: string | null
+          property_address?: string | null
+          property_address_complement?: string | null
+          property_bairro?: string | null
+          property_city?: string | null
+          property_empreendimento?: string | null
+          property_floor_plan_url?: string | null
+          property_metragem?: string | null
+          property_state?: string | null
           property_type_default?: string | null
+          property_zip_code?: string | null
           referrer_name?: string | null
+          rg?: string | null
           source?: string | null
+          state?: string | null
           status?: string
           tags?: string[]
           updated_at?: string
@@ -1171,6 +1221,7 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           utm_term?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
