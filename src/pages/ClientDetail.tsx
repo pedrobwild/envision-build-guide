@@ -257,21 +257,33 @@ export default function ClientDetail() {
                 <InfoRow icon={Building2} label="Tipo de imóvel" value={client.property_type_default} />
                 <InfoRow icon={Building2} label="Tipo de locação" value={client.location_type_default} />
               </div>
-              {client.property_floor_plan_url && (
-                <div className="mt-4 pt-4 border-t border-border">
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-2">Planta do imóvel</p>
-                  <a
-                    href={client.property_floor_plan_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Visualizar planta anexada
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-2">Planta do imóvel</p>
+                {client.property_floor_plan_url ? (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <a
+                      href={client.property_floor_plan_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Visualizar planta anexada
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setEditOpen(true)}>
+                      <Pencil className="h-3 w-3" /> Substituir
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-sm text-muted-foreground italic">Nenhuma planta anexada.</span>
+                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setEditOpen(true)}>
+                      <Plus className="h-3 w-3" /> Anexar planta (PDF/imagem)
+                    </Button>
+                  </div>
+                )}
+              </div>
             </Card>
 
             <Card className="p-5">
