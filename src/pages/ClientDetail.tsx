@@ -241,36 +241,7 @@ export default function ClientDetail() {
     patch("tags", draft.tags.filter((x) => x !== t));
   }
 
-  async function handleUploadPlan(file: File) {
-    if (!file || !client) return;
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error("Arquivo muito grande (máx. 20MB).");
-      return;
-    }
-    const allowed = ["image/", "application/pdf"];
-    if (!allowed.some((p) => file.type.startsWith(p))) {
-      toast.error("Use uma imagem ou PDF.");
-      return;
-    }
-    setUploadingPlan(true);
-    try {
-      const ext = file.name.split(".").pop() || "bin";
-      const path = `${client.id}/floor-plan-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("client-assets")
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (error) throw error;
-      const { data } = supabase.storage.from("client-assets").getPublicUrl(path);
-      patch("property_floor_plan_url", data.publicUrl);
-      toast.success("Planta anexada.");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro no upload";
-      toast.error(`Falha ao anexar: ${msg}`);
-    } finally {
-      setUploadingPlan(false);
-      if (planInputRef.current) planInputRef.current.value = "";
-    }
-  }
+  // (handleUploadPlan removido — gestão de planta agora vive em ClientPropertiesManager por imóvel)
 
   async function handleSave() {
     if (!draft || !client) return;
