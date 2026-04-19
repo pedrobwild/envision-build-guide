@@ -118,39 +118,41 @@ export default function LeadSourcesPage() {
 
         <TabsContent value="leads" className="space-y-4">
           {/* Filtros */}
-          <div className="flex gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[240px]">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3">
+            <div className="relative flex-1 sm:min-w-[240px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por ID, campanha, formulário..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="pl-9 h-10 sm:h-9"
               />
             </div>
-            <Select value={statusFilter || "all"} onValueChange={(v) => setStatusFilter(v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="processed">Processados</SelectItem>
-                <SelectItem value="pending">Pendentes</SelectItem>
-                <SelectItem value="failed">Falharam</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sourceFilter || "all"} onValueChange={(v) => setSourceFilter(v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Fonte" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as fontes</SelectItem>
-                {Object.entries(CLIENT_SOURCES).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 sm:flex gap-2">
+              <Select value={statusFilter || "all"} onValueChange={(v) => setStatusFilter(v === "all" ? "" : v)}>
+                <SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-9">
+                  <Filter className="h-4 w-4 mr-2 shrink-0" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="processed">Processados</SelectItem>
+                  <SelectItem value="pending">Pendentes</SelectItem>
+                  <SelectItem value="failed">Falharam</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sourceFilter || "all"} onValueChange={(v) => setSourceFilter(v === "all" ? "" : v)}>
+                <SelectTrigger className="w-full sm:w-[200px] h-10 sm:h-9">
+                  <SelectValue placeholder="Fonte" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as fontes</SelectItem>
+                  {Object.entries(CLIENT_SOURCES).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <Card>
