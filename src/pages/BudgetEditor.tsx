@@ -279,7 +279,10 @@ export default function BudgetEditor() {
               </div>
               <div>
                 <label className="block text-xs text-muted-foreground mb-1 font-body">Validade (dias)</label>
-                <input type="number" value={budget.validity_days || 30} onChange={(e) => setBudget({ ...budget, validity_days: parseInt(e.target.value) })}
+                <input type="number" value={budget.validity_days || 30} onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    setBudget({ ...budget, validity_days: Number.isFinite(v) ? v : 30 });
+                  }}
                   className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
               <div className="flex items-end gap-4">
@@ -446,7 +449,10 @@ export default function BudgetEditor() {
                 <input value={adj.label} onChange={(e) => setAdjustments(adjustments.map(a => a.id === adj.id ? { ...a, label: e.target.value } : a))}
                   className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body focus:outline-none focus:ring-2 focus:ring-primary/30"
                   placeholder="Descrição" />
-                <select value={adj.sign} onChange={(e) => setAdjustments(adjustments.map(a => a.id === adj.id ? { ...a, sign: parseInt(e.target.value) } : a))}
+                <select value={adj.sign} onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    setAdjustments(adjustments.map(a => a.id === adj.id ? { ...a, sign: Number.isFinite(v) ? v : 1 } : a));
+                  }}
                   className="px-2 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-body">
                   <option value={1}>+</option>
                   <option value={-1}>−</option>
