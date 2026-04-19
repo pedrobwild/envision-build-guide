@@ -101,7 +101,8 @@ const KANBAN_COLUMNS = [
     accent: "border-t-primary",
     headerColor: "text-primary",
     bgColor: "bg-primary/5",
-    locked: true,
+    targetStatus: "requested" as InternalStatus,
+    locked: false,
   },
   {
     id: "em_elaboracao",
