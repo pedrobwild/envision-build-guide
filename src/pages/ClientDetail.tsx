@@ -344,6 +344,11 @@ export default function ClientDetail() {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              {client.sequential_code && (
+                <span className="font-mono text-xs tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                  {client.sequential_code}
+                </span>
+              )}
               <h1 className="text-lg sm:text-2xl font-display font-bold tracking-tight break-words">{client.name}</h1>
               <Badge className={cn("font-normal", sCfg.color)}>{sCfg.label}</Badge>
               {editing && (
