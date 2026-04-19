@@ -315,9 +315,6 @@ export default function ClientDetail() {
   }
 
   const sCfg = CLIENT_STATUSES[getEffectiveClientStatus(client, stats ?? null)];
-  const isPdf = (draft?.property_floor_plan_url || client.property_floor_plan_url || "")
-    .toLowerCase()
-    .includes(".pdf");
 
   return (
     <div className="p-3 sm:p-6 max-w-[1200px] mx-auto space-y-4 sm:space-y-6">
