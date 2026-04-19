@@ -173,14 +173,32 @@ export default function PublicBudget() {
     !!budgetMedia.video3d || budgetMedia.projeto3d.length > 0 || budgetMedia.projetoExecutivo.length > 0 || budgetMedia.fotos.length > 0
   );
 
+  // SECURITY (B13): previously this flag was set to "any logged-in user", which
+  // exposed admin-only edit controls (editable={isAdmin}) to commercial users
+  // and even authenticated leads. Now it checks the real `admin` role.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setIsAdmin(!!data.session?.user);
-    });
+    let active = true;
+    async function check(userId: string | undefined) {
+      if (!userId) {
+        if (active) setIsAdmin(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (active) setIsAdmin(!!data);
+    }
+    supabase.auth.getSession().then(({ data }) => check(data.session?.user?.id));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAdmin(!!session?.user);
+      check(session?.user?.id);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const allSectionIds = useMemo(() => {
