@@ -583,6 +583,9 @@ function DraggableCard({
   getProfileName,
   isSynced,
   daysInStage,
+  temperature,
+  nextAction,
+  onNextAction,
 }: {
   budget: BudgetRow;
   locked: boolean;
@@ -590,6 +593,9 @@ function DraggableCard({
   getProfileName: (id: string | null) => string;
   isSynced?: boolean;
   daysInStage?: number | null;
+  temperature?: DealTemperatureResult | null;
+  nextAction?: NextActionSuggestion | null;
+  onNextAction?: (suggestion: NextActionSuggestion) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: budget.id,
@@ -603,7 +609,18 @@ function DraggableCard({
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} isSynced={isSynced} daysInStage={daysInStage} />
+      <KanbanCard
+        budget={budget}
+        isDragging={isDragging}
+        locked={locked}
+        onClick={onClick}
+        getProfileName={getProfileName}
+        isSynced={isSynced}
+        daysInStage={daysInStage}
+        temperature={temperature}
+        nextAction={nextAction}
+        onNextAction={onNextAction}
+      />
     </div>
   );
 }
@@ -616,6 +633,9 @@ function KanbanCard({
   getProfileName,
   isSynced,
   daysInStage,
+  temperature,
+  nextAction,
+  onNextAction,
 }: {
   budget: BudgetRow;
   isDragging?: boolean;
@@ -624,6 +644,9 @@ function KanbanCard({
   getProfileName: (id: string | null) => string;
   isSynced?: boolean;
   daysInStage?: number | null;
+  temperature?: DealTemperatureResult | null;
+  nextAction?: NextActionSuggestion | null;
+  onNextAction?: (suggestion: NextActionSuggestion) => void;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at, b.internal_status);
