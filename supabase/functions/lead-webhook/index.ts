@@ -81,8 +81,9 @@ Deno.serve(async (req) => {
     );
   }
 
-  const providedKey = req.headers.get("x-integration-key");
-  if (providedKey !== INTEGRATION_KEY) {
+  const providedKey = req.headers.get("x-integration-key")?.trim();
+  const expectedKey = INTEGRATION_KEY.trim();
+  if (!providedKey || providedKey !== expectedKey) {
     return new Response(
       JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },

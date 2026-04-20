@@ -18,7 +18,7 @@ const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const BudgetEditorV2 = lazy(() => import("./pages/BudgetEditorV2"));
-const BudgetEditor = lazy(() => import("./pages/BudgetEditor"));
+
 const PublicBudget = lazy(() => import("./pages/PublicBudget"));
 const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage"));
 const QAEvaluator = lazy(() => import("./pages/QAEvaluator"));
@@ -88,7 +88,7 @@ const App = () => (
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
                   <Route path="/admin/budget/:budgetId" element={<AdminPage><BudgetEditorV2 /></AdminPage>} />
-                  <Route path="/admin/budget/:budgetId/legacy" element={<AdminPage><BudgetEditor /></AdminPage>} />
+                  <Route path="/admin/budget/:budgetId/legacy" element={<Navigate to="/admin/budget/:budgetId" replace />} />
                   <Route path="/admin/financeiro" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><FinancialHistory /></RoleGuard></AdminPage>} />
                   <Route path="/admin/solicitacoes" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><BudgetRequestsList /></RoleGuard></AdminPage>} />
                   <Route path="/admin/solicitacoes/nova" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><NewBudgetRequest /></RoleGuard></AdminPage>} />
