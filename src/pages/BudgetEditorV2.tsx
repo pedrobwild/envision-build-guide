@@ -219,13 +219,7 @@ export default function BudgetEditorV2() {
     if (PROTECTED_FIELDS.current.has(field)) {
       return;
     }
-    // Bloquear auto-save em versões publicadas — usuário deve criar nova versão (rascunho) explicitamente
-    if (isPublishedVersion) {
-      toast.warning("Esta é a versão publicada. Crie uma nova versão (rascunho) para editar.", {
-        description: "Use o botão 'Criar Nova Versão' no aviso acima.",
-      });
-      return;
-    }
+    // Edição liberada inclusive em versões publicadas — ajustes rápidos persistem via auto-save.
     lastSavePayload.current = { field, value };
     setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -521,7 +515,7 @@ export default function BudgetEditorV2() {
                     sections={sections}
                     onSectionsChange={setSections}
                     loading={sectionsLoading}
-                    readOnly={isPublishedVersion}
+                    readOnly={false}
                   />
                 </div>
 
