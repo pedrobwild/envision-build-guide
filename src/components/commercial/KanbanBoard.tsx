@@ -277,11 +277,17 @@ function isHighPriority(priority: string): boolean {
 function sortBudgetsForColumn(budgets: BudgetRow[]): BudgetRow[] {
   const priorityOrder: Record<string, number> = { urgente: 0, alta: 1, normal: 2, baixa: 3 };
   return [...budgets].sort((a, b) => {
+    // Urgência sempre primeiro (urgente/alta no topo)
     const pa = priorityOrder[a.priority] ?? 2;
     const pb = priorityOrder[b.priority] ?? 2;
     const aHigh = pa <= 1 ? 0 : 1;
     const bHigh = pb <= 1 ? 0 : 1;
     if (aHigh !== bHigh) return aHigh - bHigh;
+    // Critério principal: mais recente no topo (created_at desc)
+    const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+    if (ta !== tb) return tb - ta;
+    // Desempate: prazo mais próximo
     if (a.due_at && b.due_at) return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
     if (a.due_at) return -1;
     if (b.due_at) return 1;
