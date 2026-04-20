@@ -21,7 +21,7 @@ import { RevenueChart } from "@/components/dashboard/FinancialCharts";
 import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBlock";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
-import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
+
 import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
 import { computeDashboardMetrics, OPERATIONS_START_DATE, type DateRange } from "@/hooks/useDashboardMetrics";
 
