@@ -1,0 +1,1 @@
+UPDATE public.profiles SET full_name = 'Pedro' WHERE id = 'd9ed2bd8-da00-43e0-9a45-1f6badabc09f';
