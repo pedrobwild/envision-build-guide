@@ -48,6 +48,7 @@ import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
 import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
 import { useBudgetPipelineMeta } from "@/hooks/useBudgetPipelineMeta";
 import { useBudgetActivityMeta } from "@/hooks/useBudgetActivityMeta";
+import { useLeadScores } from "@/hooks/useLeadScores";
 import { PipelineSwitcher } from "@/components/admin/PipelineSwitcher";
 import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, type NextActionSuggestion } from "@/lib/deal-temperature";
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
