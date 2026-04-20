@@ -54,9 +54,7 @@ import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, 
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
-import { LostIntelligencePanel } from "@/components/admin/LostIntelligencePanel";
 import { ForecastPanel } from "@/components/admin/ForecastPanel";
-import { CadencePanel } from "@/components/admin/CadencePanel";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -253,7 +251,6 @@ export default function CommercialDashboard() {
   const [nextActionBudgetId, setNextActionBudgetId] = useState<string | null>(null);
   const [nextActionPreset, setNextActionPreset] = useState<{ type: string; title: string } | null>(null);
   const [historyBudget, setHistoryBudget] = useState<BudgetRow | null>(null);
-  const [showLostPanel, setShowLostPanel] = useState(false);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
@@ -298,39 +295,6 @@ export default function CommercialDashboard() {
     }
     return map;
   }, [budgets, activityMetaMap, pipelineMetaMap]);
-
-  // Linhas para o painel de cadências: somente negócios com sugestão pendente
-  // e que estão dentro do escopo dos filtros visíveis.
-  const cadenceRows = useMemo(() => {
-    const rows: Array<{
-      id: string;
-      client_name: string;
-      project_name: string;
-      sequential_code?: string | null;
-      internal_status: string;
-      client_phone?: string | null;
-      suggestion: NextActionSuggestion;
-      daysSinceLastActivity: number | null;
-      daysInStage: number | null;
-    }> = [];
-    for (const b of budgets) {
-      const sugg = nextActionMap.get(b.id);
-      if (!sugg) continue;
-      const meta = activityMetaMap?.get(b.id);
-      const stageMeta = pipelineMetaMap?.get(b.id);
-      rows.push({
-        id: b.id,
-        client_name: b.client_name,
-        project_name: b.project_name,
-        internal_status: b.internal_status,
-        client_phone: b.client_phone,
-        suggestion: sugg,
-        daysSinceLastActivity: meta?.days_since_last_activity ?? null,
-        daysInStage: stageMeta?.days_in_stage ?? null,
-      });
-    }
-    return rows;
-  }, [budgets, nextActionMap, activityMetaMap, pipelineMetaMap]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile, location.key]);
@@ -1102,29 +1066,6 @@ export default function CommercialDashboard() {
               counts={pipelineCounts}
               loading={pipelinesLoading}
             />
-          )}
-
-          {/* Toggle Inteligência de Perda */}
-          {!loading && (
-            <div className="flex items-center justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-destructive"
-                onClick={() => setShowLostPanel((v) => !v)}
-              >
-                <XCircle className="h-3.5 w-3.5" />
-                {showLostPanel ? "Ocultar" : "Ver"} Inteligência de Perda
-              </Button>
-            </div>
-          )}
-          {showLostPanel && !loading && (
-            <LostIntelligencePanel getProfileName={getProfileName} />
-          )}
-
-          {/* Cadências automáticas — sugestões de próxima ação */}
-          {!loading && cadenceRows.length > 0 && (
-            <CadencePanel rows={cadenceRows} />
           )}
 
           {/* Forecast & Previsibilidade */}
