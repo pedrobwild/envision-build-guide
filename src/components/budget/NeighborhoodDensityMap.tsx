@@ -170,6 +170,26 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   useEffect(() => {
     if (!mapContainer.current) return;
 
+    // Pre-check WebGL support — MapLibre requires WebGL and fails silently otherwise
+    const supportsWebGL = (() => {
+      try {
+        if (typeof maplibregl.supported === "function" && !maplibregl.supported({ failIfMajorPerformanceCaveat: false })) {
+          return false;
+        }
+        const canvas = document.createElement("canvas");
+        const gl = canvas.getContext("webgl2") || canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+        return !!gl;
+      } catch {
+        return false;
+      }
+    })();
+
+    if (!supportsWebGL) {
+      setMapLoaded(false);
+      setMapFailed(true);
+      return;
+    }
+
     let map: maplibregl.Map | null = null;
     let disposed = false;
     let styleIndex = 0;
