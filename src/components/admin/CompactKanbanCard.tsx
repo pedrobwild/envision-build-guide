@@ -9,6 +9,8 @@ import { RotBadge } from "@/components/admin/RotBadge";
 import { DealTemperatureBadge } from "@/components/admin/DealTemperatureBadge";
 import { NextActionChip } from "@/components/admin/NextActionChip";
 import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-temperature";
+import type { LeadScoreResult } from "@/lib/lead-score";
+import { LeadScoreBadge } from "@/components/admin/LeadScoreBadge";
 
 interface CompactKanbanCardProps {
   projectName: string;
@@ -30,6 +32,8 @@ interface CompactKanbanCardProps {
   temperature?: DealTemperatureResult | null;
   /** Sugestão de próxima ação. */
   nextAction?: NextActionSuggestion | null;
+  /** Score de qualidade do lead/cliente (Onda 5A). */
+  leadScore?: LeadScoreResult | null;
   onClick: () => void;
   onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink" | "nextAction") => void;
   /** Callback opcional para abrir o histórico/comunicação do negócio. */
@@ -93,6 +97,7 @@ export function CompactKanbanCard({
   daysInStage,
   temperature,
   nextAction,
+  leadScore,
   onClick,
   onQuickAction,
   onOpenHistory,
@@ -253,6 +258,7 @@ export function CompactKanbanCard({
             </span>
           )}
           <div className="flex items-center gap-1 flex-wrap justify-end">
+            {leadScore && <LeadScoreBadge score={leadScore} />}
             {temperature && <DealTemperatureBadge result={temperature} compact />}
             {typeof daysInStage === "number" && (
               <RotBadge daysInStage={daysInStage} />
