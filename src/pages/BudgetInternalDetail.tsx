@@ -66,6 +66,7 @@ import { toast } from "sonner";
 import { BlockingDialog } from "@/components/editor/BlockingDialog";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
+import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
 import { formatBRL } from "@/lib/formatBRL";
 
@@ -129,6 +130,7 @@ interface ProfileRow {
 }
 
 type ModuleKey =
+  | "unified"
   | "briefing"
   | "budget"
   | "activities"
@@ -1111,6 +1113,7 @@ export default function BudgetInternalDetail() {
 }
 
 const moduleTitles: Record<ModuleKey, string> = {
+  unified: "Tudo em um só lugar",
   briefing: "Briefing & Contexto",
   budget: "Estrutura do Orçamento",
   activities: "Atividades & Notas",
@@ -1123,6 +1126,7 @@ const moduleTitles: Record<ModuleKey, string> = {
 };
 
 const moduleSubtitles: Record<ModuleKey, string> = {
+  unified: "Linha do tempo única com status, notas, tarefas, reuniões e mensagens.",
   briefing: "Contexto da demanda, observações internas e links de referência.",
   budget: "Seções, itens e composição financeira completa.",
   activities: "Histórico cronológico e notas internas da equipe.",
