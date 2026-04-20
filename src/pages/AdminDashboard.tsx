@@ -21,7 +21,7 @@ import { RevenueChart } from "@/components/dashboard/FinancialCharts";
 import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBlock";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
-import { BacklogAgingPanel } from "@/components/dashboard/BacklogAgingPanel";
+
 import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
 import { computeDashboardMetrics, OPERATIONS_START_DATE, type DateRange } from "@/hooks/useDashboardMetrics";
 
@@ -240,19 +240,6 @@ export default function AdminDashboard() {
         <DualFunnel
           operationalFunnel={metrics?.operationalFunnel ?? []}
           commercialFunnel={metrics?.commercialFunnel ?? []}
-          loading={loading}
-        />
-      </motion.div>
-
-      {/* ───── AGING & SLA RISK ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
-          Aging do backlog e risco de SLA
-        </h2>
-        <BacklogAgingPanel
-          agingBuckets={metrics?.agingBuckets ?? []}
-          slaRiskItems={metrics?.slaRiskItems ?? []}
-          stalledByStage={metrics?.stalledByStage ?? []}
           loading={loading}
         />
       </motion.div>
