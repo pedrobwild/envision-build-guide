@@ -26,6 +26,12 @@ interface CompactKanbanCardProps {
   estimatorName?: string;
   highPriority?: boolean;
   isSynced?: boolean;
+  /** Data de criação do negócio. */
+  createdAt?: string | null;
+  /** Data de última atualização. */
+  updatedAt?: string | null;
+  /** Modo do card: 'commercial' mostra criação + atualização; 'estimator' mostra solicitação + prazo. */
+  mode?: "commercial" | "estimator";
   /** Dias parado na etapa atual — exibe RotBadge se >= warnThreshold. */
   daysInStage?: number | null;
   /** Resultado do score de temperatura. */
