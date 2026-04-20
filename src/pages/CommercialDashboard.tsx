@@ -45,6 +45,9 @@ import { ClientForm } from "@/components/crm/ClientForm";
 import { InlineEdit } from "@/components/ui/inline-edit";
 import { showUndoToast } from "@/lib/inline-edit-undo";
 import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
+import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
+import { useBudgetPipelineMeta } from "@/hooks/useBudgetPipelineMeta";
+import { PipelineSwitcher } from "@/components/admin/PipelineSwitcher";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -159,6 +162,7 @@ interface BudgetRow {
   is_published_version: boolean | null;
   budget_pdf_url: string | null;
   manual_total: number | null;
+  pipeline_id: string | null;
 }
 
 interface ProfileRow { id: string; full_name: string; }
