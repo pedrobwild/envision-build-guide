@@ -40,7 +40,7 @@ export async function getVersionHistory(budgetId: string) {
   if (error) throw error;
 
   // Enrich with creator names
-  const creatorIds = [...new Set((data || []).map((v) => v.created_by).filter(Boolean))];
+  const creatorIds = [...new Set((data || []).map((v) => v.created_by).filter((id): id is string => Boolean(id)))];
   let profileMap: Record<string, string> = {};
   if (creatorIds.length > 0) {
     const { data: profiles } = await supabase

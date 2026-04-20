@@ -93,16 +93,16 @@ export function ItemDetailSheet({ open, onOpenChange, item, sectionId, budgetId,
   const removeImage = async (imgId: string) => {
     await supabase.from("item_images").delete().eq("id", imgId);
     const updated = images.filter(i => i.id !== imgId);
-    if (updated.length > 0 && !updated.some(i => i.is_primary)) {
+    if (updated.length > 0 && !updated.some(i => i.is_primary) && updated[0].id) {
       updated[0] = { ...updated[0], is_primary: true };
-      await supabase.from("item_images").update({ is_primary: true }).eq("id", updated[0].id);
+      await supabase.from("item_images").update({ is_primary: true }).eq("id", updated[0].id!);
     }
     onImagesChange(sectionId, item.id, updated);
   };
 
   const setPrimary = async (imgId: string) => {
     for (const img of images) {
-      if (img.is_primary) await supabase.from("item_images").update({ is_primary: false }).eq("id", img.id);
+      if (img.is_primary && img.id) await supabase.from("item_images").update({ is_primary: false }).eq("id", img.id);
     }
     await supabase.from("item_images").update({ is_primary: true }).eq("id", imgId);
     const updated = images.map(i => ({ ...i, is_primary: i.id === imgId }));
@@ -238,10 +238,10 @@ export function ItemDetailSheet({ open, onOpenChange, item, sectionId, budgetId,
                 >
                   <img src={img.url} alt="" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <button onClick={() => setPrimary(img.id)} className="p-1.5 rounded-full bg-background/80 hover:bg-background" title="Principal">
+                    <button onClick={() => img.id && setPrimary(img.id)} className="p-1.5 rounded-full bg-background/80 hover:bg-background" title="Principal">
                       <Star className={cn("h-3.5 w-3.5", img.is_primary ? "text-yellow-400 fill-yellow-400" : "text-foreground")} />
                     </button>
-                    <button onClick={() => removeImage(img.id)} className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white" title="Remover">
+                    <button onClick={() => img.id && removeImage(img.id)} className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white" title="Remover">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>

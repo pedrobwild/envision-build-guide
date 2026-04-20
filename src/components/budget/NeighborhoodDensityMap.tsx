@@ -259,7 +259,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
         const marker = new maplibregl.Marker({ element: wrapper, anchor: "center" })
           .setLngLat([n.lng, n.lat])
-          .addTo(map);
+          .addTo(map!);
 
         markersRef.current.set(n.id, { marker, el });
       });

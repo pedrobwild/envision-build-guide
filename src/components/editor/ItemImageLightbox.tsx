@@ -49,7 +49,7 @@ export function ItemImageLightbox({ images, initialIndex, open, onOpenChange, on
       setConfirmDelete(true);
       return;
     }
-    onRemove(img.id);
+    if (img.id) onRemove(img.id);
     if (images.length <= 1) {
       onOpenChange(false);
     } else {

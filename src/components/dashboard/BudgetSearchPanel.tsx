@@ -73,8 +73,8 @@ export function BudgetSearchPanel({ budgets, profiles, onRefresh }: BudgetSearch
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((b) => {
-        const ownerName = (profiles[b.estimator_owner_id] || "").toLowerCase();
-        const commercialName = (profiles[b.commercial_owner_id] || "").toLowerCase();
+        const ownerName = (b.estimator_owner_id ? profiles[b.estimator_owner_id] || "" : "").toLowerCase();
+        const commercialName = (b.commercial_owner_id ? profiles[b.commercial_owner_id] || "" : "").toLowerCase();
         return (
           (b.client_name || "").toLowerCase().includes(q) ||
           (b.project_name || "").toLowerCase().includes(q) ||
@@ -235,7 +235,7 @@ function BudgetSearchRow({
           </div>
           <p className="text-[11px] font-body text-muted-foreground truncate">
             {b.client_name}
-            {profiles[b.estimator_owner_id] && ` · ${profiles[b.estimator_owner_id]}`}
+            {b.estimator_owner_id && profiles[b.estimator_owner_id] && ` · ${profiles[b.estimator_owner_id]}`}
           </p>
         </div>
 

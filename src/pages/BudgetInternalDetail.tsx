@@ -239,6 +239,7 @@ export default function BudgetInternalDetail() {
 
   useEffect(() => {
     if (!budgetId || !user) return;
+    const id = budgetId;
     let cancelled = false;
 
     async function loadAllData() {
