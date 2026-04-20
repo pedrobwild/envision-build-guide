@@ -717,9 +717,9 @@ export default function CommercialDashboard() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div>
-                <h1 className="text-lg font-semibold font-display text-foreground">Meus Orçamentos</h1>
+                <h1 className="text-lg font-semibold font-display text-foreground">Meus Negócios</h1>
                 <p className="text-sm text-muted-foreground font-body">
-                  {profile?.full_name || "Comercial"} · {counts.total} orçamento{counts.total !== 1 ? "s" : ""}
+                  {profile?.full_name || "Comercial"} · {counts.total} negócio{counts.total !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>

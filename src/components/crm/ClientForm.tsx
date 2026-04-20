@@ -35,6 +35,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDuplicateClientCheck } from "@/hooks/useDuplicateClientCheck";
+import { DuplicateClientAlert } from "@/components/crm/DuplicateClientAlert";
 
 interface ClientFormProps {
   open: boolean;
