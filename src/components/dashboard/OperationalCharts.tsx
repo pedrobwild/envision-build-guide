@@ -1,5 +1,5 @@
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BacklogStatus } from "@/hooks/useDashboardMetrics";
@@ -59,19 +59,20 @@ export function BacklogByStatusChart({ data, loading }: BacklogChartProps) {
               formatter={(value: number) => [`${value} orçamentos`, ""]}
               labelFormatter={() => ""}
             />
-            <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={24}>
-              <LabelList
-                dataKey="count"
-                position="right"
-                style={{
-                  fontSize: 11,
-                  fontFamily: "var(--font-mono, monospace)",
-                  fontWeight: 600,
-                  fill: "hsl(var(--foreground))",
-                }}
-                offset={6}
-              />
-              {data.map((entry, i) => (
+            <Bar
+              dataKey="count"
+              radius={[0, 4, 4, 0]}
+              maxBarSize={24}
+              label={{
+                position: "right",
+                fontSize: 11,
+                fontFamily: "var(--font-mono, monospace)",
+                fontWeight: 600,
+                fill: "hsl(var(--foreground))",
+                offset: 6,
+              }}
+            >
+              {data.map((entry) => (
                 <Cell
                   key={entry.status}
                   fill={entry.status === "in_progress" ? BAR_COLOR : BAR_COLOR_MUTED}
