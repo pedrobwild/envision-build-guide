@@ -391,13 +391,14 @@ function SubSectionGroup({
                   priority={b.priority}
                   internalStatus={b.internal_status}
                   dueAt={b.due_at}
-                  bairro={b.bairro}
-                  city={b.city}
                   versionNumber={b.version_number}
                   sequentialCode={b.sequential_code}
                   commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                   estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                   isSynced={syncedBudgetIds.has(b.id)}
+                  createdAt={b.created_at}
+                  updatedAt={b.updated_at}
+                  mode="commercial"
                   daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                   temperature={temp}
                   nextAction={next}
@@ -691,17 +692,26 @@ function KanbanCard({
         )}
       </div>
 
-      <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1">
-        <User className="h-3 w-3 shrink-0" />
-        <span className="truncate">{b.client_name}</span>
+      <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-body mb-1.5 flex-wrap">
+        {b.created_at && (
+          <span className="inline-flex items-center gap-1" title="Data de criação">
+            <Calendar className="h-3 w-3 shrink-0" />
+            <span className="opacity-70">Criado</span>
+            <span className="font-medium text-foreground/80">
+              {format(new Date(b.created_at), "dd MMM", { locale: ptBR })}
+            </span>
+          </span>
+        )}
+        {b.updated_at && (
+          <span className="inline-flex items-center gap-1" title="Última atualização">
+            <span className="opacity-30">•</span>
+            <span className="opacity-70">Atualizado</span>
+            <span className="font-medium text-foreground/80">
+              {format(new Date(b.updated_at), "dd MMM", { locale: ptBR })}
+            </span>
+          </span>
+        )}
       </div>
-
-      {(b.bairro || b.city) && (
-        <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1">
-          <Building2 className="h-3 w-3 shrink-0" />
-          <span className="truncate">{[b.bairro, b.city].filter(Boolean).join(", ")}</span>
-        </div>
-      )}
 
       {(b.commercial_owner_id || b.estimator_owner_id) && (
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-body mb-1.5 flex-wrap">
@@ -890,13 +900,14 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             priority={b.priority}
                             internalStatus={b.internal_status}
                             dueAt={b.due_at}
-                            bairro={b.bairro}
-                            city={b.city}
                             versionNumber={b.version_number}
                             sequentialCode={b.sequential_code}
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             isSynced={syncedBudgetIds.has(b.id)}
+                            createdAt={b.created_at}
+                            updatedAt={b.updated_at}
+                            mode="commercial"
                             daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                             temperature={temp}
                             nextAction={next}

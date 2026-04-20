@@ -26,6 +26,12 @@ interface CompactKanbanCardProps {
   estimatorName?: string;
   highPriority?: boolean;
   isSynced?: boolean;
+  /** Data de criação do negócio. */
+  createdAt?: string | null;
+  /** Data de última atualização. */
+  updatedAt?: string | null;
+  /** Modo do card: 'commercial' mostra criação + atualização; 'estimator' mostra solicitação + prazo. */
+  mode?: "commercial" | "estimator";
   /** Dias parado na etapa atual — exibe RotBadge se >= warnThreshold. */
   daysInStage?: number | null;
   /** Resultado do score de temperatura. */
@@ -87,13 +93,16 @@ export function CompactKanbanCard({
   priority,
   internalStatus,
   dueAt,
-  bairro,
-  city,
+  bairro: _bairro,
+  city: _city,
   versionNumber,
   sequentialCode,
   commercialName,
   estimatorName,
   isSynced,
+  createdAt,
+  updatedAt,
+  mode = "commercial",
   daysInStage,
   temperature,
   nextAction,
@@ -118,7 +127,11 @@ export function CompactKanbanCard({
   };
 
   const initials = getInitials(clientName);
-  const location = [bairro, city].filter(Boolean).join(", ");
+  // Datas exibidas no card (substituem cliente/bairro)
+  const fmtDate = (iso?: string | null) => (iso ? format(new Date(iso), "dd MMM", { locale: ptBR }) : null);
+  const createdLabel = fmtDate(createdAt);
+  const updatedLabel = fmtDate(updatedAt);
+  const dueLabelShort = fmtDate(dueAt);
 
   return (
     <div className="relative overflow-hidden rounded-xl">
@@ -220,13 +233,30 @@ export function CompactKanbanCard({
             )}
           </div>
 
-          {/* Line 2: client · location · owner */}
+          {/* Line 2: datas (criação + atualização ou prazo) · responsável */}
           <div className="flex items-center gap-1.5 mt-1 text-[10.5px] text-muted-foreground font-body leading-tight">
-            <span className="truncate font-medium text-foreground/70">{clientName}</span>
-            {location && (
+            {createdLabel && (
+              <span className="truncate" title="Data de criação">
+                <span className="opacity-60">Criado:</span>{" "}
+                <span className="font-medium text-foreground/70">{createdLabel}</span>
+              </span>
+            )}
+            {mode === "commercial" && updatedLabel && (
               <>
                 <span className="opacity-30">•</span>
-                <span className="truncate">{location}</span>
+                <span className="truncate" title="Última atualização">
+                  <span className="opacity-60">Atualizado:</span>{" "}
+                  <span className="font-medium text-foreground/70">{updatedLabel}</span>
+                </span>
+              </>
+            )}
+            {mode === "estimator" && dueLabelShort && (
+              <>
+                <span className="opacity-30">•</span>
+                <span className="truncate" title="Prazo de entrega">
+                  <span className="opacity-60">Prazo:</span>{" "}
+                  <span className="font-medium text-foreground/70">{dueLabelShort}</span>
+                </span>
               </>
             )}
             {(commercialName || estimatorName) && (
