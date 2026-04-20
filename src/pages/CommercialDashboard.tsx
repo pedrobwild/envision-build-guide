@@ -173,6 +173,7 @@ interface BudgetRow {
   manual_total: number | null;
   pipeline_id: string | null;
   client_phone: string | null;
+  client_id: string | null;
 }
 
 interface ProfileRow { id: string; full_name: string; }
