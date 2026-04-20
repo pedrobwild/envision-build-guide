@@ -52,11 +52,7 @@ export default function AdminDashboard() {
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [deliveryTimestamps, setDeliveryTimestamps] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [importOpen, setImportOpen] = useState(false);
-  const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
-  const [newMenuOpen, setNewMenuOpen] = useState(false);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [templateBudgetId, setTemplateBudgetId] = useState<string | null>(null);
+  const [clientFormOpen, setClientFormOpen] = useState(false);
 
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
