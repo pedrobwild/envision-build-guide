@@ -26,32 +26,61 @@ function normalizePhone(phone: string | null | undefined): string | null {
   return digits;
 }
 
+// Timeout wrapper para fetch externo (evita travar a function quando o
+// upstream do Elephan demora demais).
+async function fetchWithTimeout(
+  input: string,
+  init: RequestInit = {},
+  timeoutMs = 15000,
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function findBudgetIdForMeeting(
   supabase: ReturnType<typeof createClient>,
   participants: Participant[]
 ): Promise<string | null> {
-  const phones = participants
-    .map((p) => normalizePhone(p?.phone))
-    .filter((p): p is string => !!p);
-  const emails = participants
-    .map((p) => p?.email?.trim().toLowerCase())
-    .filter((e): e is string => !!e);
+  const phones = [
+    ...new Set(
+      participants
+        .map((p) => normalizePhone(p?.phone))
+        .filter((p): p is string => !!p),
+    ),
+  ];
+  const emails = [
+    ...new Set(
+      participants
+        .map((p) => p?.email?.trim().toLowerCase())
+        .filter((e): e is string => !!e),
+    ),
+  ];
 
-  for (const phone of phones) {
+  // 1) Busca todos os phones em UMA query (substitui N+1)
+  if (phones.length > 0) {
+    const orFilter = phones
+      .flatMap((p) => [`client_phone.eq.${p}`, `client_phone.eq.55${p}`])
+      .join(",");
     const { data } = await supabase
       .from("budgets")
-      .select("id")
-      .or(`client_phone.eq.${phone},client_phone.eq.55${phone}`)
+      .select("id,created_at")
+      .or(orFilter)
       .order("created_at", { ascending: false })
       .limit(1);
     if (data && data.length > 0) return data[0].id as string;
   }
 
-  for (const email of emails) {
+  // 2) Busca todos os emails em UMA query
+  if (emails.length > 0) {
     const { data } = await supabase
       .from("budgets")
-      .select("id")
-      .eq("lead_email", email)
+      .select("id,created_at")
+      .in("lead_email", emails)
       .order("created_at", { ascending: false })
       .limit(1);
     if (data && data.length > 0) return data[0].id as string;
