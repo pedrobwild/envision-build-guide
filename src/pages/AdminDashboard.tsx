@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { formatBRL } from "@/lib/formatBRL";
+
 import { Plus } from "lucide-react";
 import { ClientForm } from "@/components/crm/ClientForm";
 import { toast } from "sonner";
@@ -15,9 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
-import { KpiCard, KpiCardCompact } from "@/components/dashboard/KpiCard";
-import { BacklogByStatusChart } from "@/components/dashboard/OperationalCharts";
-import { RevenueChart } from "@/components/dashboard/FinancialCharts";
+import { KpiCard } from "@/components/dashboard/KpiCard";
 import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBlock";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
