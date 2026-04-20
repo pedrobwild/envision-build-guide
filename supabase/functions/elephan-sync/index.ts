@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
 
   for (const id of idsToFetch) {
     try {
-      const r = await fetch(`${baseUrl}/transcribes/${id}`, {
+      const r = await fetchWithTimeout(`${baseUrl}/transcribes/${id}`, {
         headers: {
           Authorization: `Bearer ${ELEPHAN_API_KEY}`,
           Accept: "application/json",
