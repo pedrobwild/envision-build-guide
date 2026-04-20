@@ -951,18 +951,26 @@ export default function CommercialDashboard() {
             </div>
           )}
 
+          {/* Pipeline switcher (Inbound / Indicação / Re-engajamento) */}
+          {(pipelinesLoading || pipelines.length > 0) && (
+            <PipelineSwitcher
+              pipelines={pipelines}
+              activeSlug={pipelineFilter}
+              onChange={setPipelineFilter}
+              counts={pipelineCounts}
+              loading={pipelinesLoading}
+            />
+          )}
+
           {/* Kanban view */}
           {!loading && viewMode === "kanban" && budgets.length > 0 && (
             <KanbanBoard
-              // Use the same `filtered` array the list view uses so search,
-              // statusFilter, commercialFilter and dueFilter all apply in the
-              // Kanban too. The board's internal dueFilter would otherwise
-              // operate on a different set of rows than the top-of-page cards.
               budgets={filtered}
               onStatusChange={changeStatus}
               onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
               getProfileName={getProfileName}
               syncedBudgetIds={syncedBudgetIds}
+              pipelineMeta={pipelineMetaMap}
             />
           )}
 
