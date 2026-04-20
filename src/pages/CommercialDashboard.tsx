@@ -503,6 +503,12 @@ export default function CommercialDashboard() {
       if (target) { setContractUploadBudget(target); return; }
     }
 
+    // Forçar registro de motivo ao marcar como perdido
+    if (newStatus === "lost" && current.internal_status !== "lost") {
+      setPendingLostBudgetId(budgetId);
+      return;
+    }
+
     const { error } = await supabase
       .from("budgets")
       .update({ internal_status: newStatus, updated_at: new Date().toISOString() })
@@ -525,6 +531,53 @@ export default function CommercialDashboard() {
     setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, internal_status: newStatus, updated_at: new Date().toISOString() } : b));
     toast.success(`Status atualizado para "${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}"`);
   }
+
+  async function confirmLostReason(payload: LostReasonPayload) {
+    if (!pendingLostBudgetId || !user) return;
+    const budgetId = pendingLostBudgetId;
+    const current = budgets.find(b => b.id === budgetId);
+    // 1) salva motivo (upsert por budget_id)
+    const { error: lostErr } = await supabase
+      .from("budget_lost_reasons")
+      .upsert({
+        budget_id: budgetId,
+        reason_category: payload.reason_category,
+        reason_detail: payload.reason_detail || null,
+        competitor_name: payload.competitor_name ?? null,
+        competitor_value: payload.competitor_value ?? null,
+        created_by: user.id,
+      }, { onConflict: "budget_id" });
+    if (lostErr) {
+      toast.error("Erro ao registrar motivo", { description: lostErr.message });
+      return;
+    }
+    // 2) move o card para Perdido
+    const { error } = await supabase
+      .from("budgets")
+      .update({ internal_status: "lost", updated_at: new Date().toISOString() })
+      .eq("id", budgetId);
+    if (error) {
+      toast.error("Erro ao atualizar status", { description: error.message });
+      return;
+    }
+    await supabase.from("budget_events").insert({
+      budget_id: budgetId,
+      user_id: user.id,
+      event_type: "status_change",
+      from_status: current?.internal_status ?? null,
+      to_status: "lost",
+      note: `Motivo: ${payload.reason_category}`,
+    });
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, internal_status: "lost", updated_at: new Date().toISOString() } : b));
+    setPendingLostBudgetId(null);
+    toast.success("Negócio marcado como perdido");
+  }
+
+  function handleNextActionClick(budgetId: string, sugg: NextActionSuggestion) {
+    setNextActionPreset({ type: sugg.type, title: sugg.label });
+    setNextActionBudgetId(budgetId);
+  }
+
 
   async function claimBudget(budgetId: string) {
     if (!user) return;
