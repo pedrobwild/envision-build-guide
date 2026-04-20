@@ -367,12 +367,29 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     window.addEventListener("resize", safeResize, { passive: true });
     window.addEventListener("orientationchange", safeResize, { passive: true });
 
+    // IntersectionObserver: when map enters viewport, force a resize.
+    // Critical for Suspense/lazy-loaded maps that mount in hidden/zero-width containers.
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            safeResize();
+            // Re-render markers if they were lost during a hidden mount
+            if (markersRef.current.size === 0 && map) renderMarkers();
+          }
+        });
+      },
+      { threshold: 0.01 }
+    );
+    intersectionObserver.observe(mapContainer.current);
+
     mapRef.current = map;
 
     return () => {
       disposed = true;
       clearStyleLoadTimeout();
       resizeObserver.disconnect();
+      intersectionObserver.disconnect();
       window.removeEventListener("resize", safeResize);
       window.removeEventListener("orientationchange", safeResize);
       clearMarkers();
