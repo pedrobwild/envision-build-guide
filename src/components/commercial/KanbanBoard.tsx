@@ -199,6 +199,7 @@ interface BudgetRow {
   is_current_version: boolean | null;
   is_published_version: boolean | null;
   client_phone?: string | null;
+  client_id?: string | null;
 }
 
 export type DueFilter = "all" | "overdue" | "due_soon";
@@ -344,7 +345,13 @@ function SubSectionGroup({
   leadScoreMap,
   onNextAction,
   onOpenHistory,
-}: SubsectionProps & {
+}: {
+  subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
+  budgets: BudgetRow[];
+  locked: boolean;
+  onCardClick: (id: string) => void;
+  getProfileName: (id: string | null) => string;
+  compact?: boolean;
   syncedBudgetIds?: Set<string>;
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
   temperatureMap?: Map<string, DealTemperatureResult>;
