@@ -47,7 +47,11 @@ import { showUndoToast } from "@/lib/inline-edit-undo";
 import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
 import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
 import { useBudgetPipelineMeta } from "@/hooks/useBudgetPipelineMeta";
+import { useBudgetActivityMeta } from "@/hooks/useBudgetActivityMeta";
 import { PipelineSwitcher } from "@/components/admin/PipelineSwitcher";
+import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, type NextActionSuggestion } from "@/lib/deal-temperature";
+import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
+import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -238,10 +242,14 @@ export default function CommercialDashboard() {
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
   const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
   const [newDealOpen, setNewDealOpen] = useState(false);
+  const [pendingLostBudgetId, setPendingLostBudgetId] = useState<string | null>(null);
+  const [nextActionBudgetId, setNextActionBudgetId] = useState<string | null>(null);
+  const [nextActionPreset, setNextActionPreset] = useState<{ type: string; title: string } | null>(null);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
   const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
+  const { data: activityMetaMap } = useBudgetActivityMeta(budgetIds);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile, location.key]);

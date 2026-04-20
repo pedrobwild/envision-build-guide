@@ -47,7 +47,10 @@ import { INTERNAL_STATUSES, PRIORITIES, STATUS_GROUPS, type InternalStatus, type
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RotBadge } from "@/components/admin/RotBadge";
+import { DealTemperatureBadge } from "@/components/admin/DealTemperatureBadge";
+import { NextActionChip } from "@/components/admin/NextActionChip";
 import type { BudgetPipelineMetaRow } from "@/hooks/useBudgetPipelineMeta";
+import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-temperature";
 
 // Commercial Kanban column definitions
 const KANBAN_COLUMNS = [
@@ -207,6 +210,12 @@ interface KanbanBoardProps {
   syncedBudgetIds?: Set<string>;
   /** Mapa budgetId → meta de pipeline (dias parados, etc.). */
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
+  /** Mapa budgetId → score de temperatura. */
+  temperatureMap?: Map<string, DealTemperatureResult>;
+  /** Mapa budgetId → próxima ação sugerida. */
+  nextActionMap?: Map<string, NextActionSuggestion | null>;
+  /** Callback quando o usuário clica no chip de próxima ação. */
+  onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
 }
 
 function getColumnForBudget(internalStatus: string) {
@@ -324,6 +333,9 @@ function SubSectionGroup({
   compact = false,
   syncedBudgetIds = new Set(),
   pipelineMeta,
+  temperatureMap,
+  nextActionMap,
+  onNextAction,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -333,6 +345,9 @@ function SubSectionGroup({
   compact?: boolean;
   syncedBudgetIds?: Set<string>;
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
+  temperatureMap?: Map<string, DealTemperatureResult>;
+  nextActionMap?: Map<string, NextActionSuggestion | null>;
+  onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
@@ -360,46 +375,56 @@ function SubSectionGroup({
         header
       )}
       <div className="space-y-2">
-        {sorted.map((b) => (
-          <div key={b.id} className={subsection.cardBorderClass ? `rounded-md ${subsection.cardBorderClass}` : ""}>
-            {compact ? (
-              <CompactKanbanCard
-                projectName={b.project_name}
-                clientName={b.client_name}
-                priority={b.priority}
-                internalStatus={b.internal_status}
-                dueAt={b.due_at}
-                bairro={b.bairro}
-                city={b.city}
-                versionNumber={b.version_number}
-                sequentialCode={b.sequential_code}
-                commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
-                estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
-                isSynced={syncedBudgetIds.has(b.id)}
-                daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
-                onClick={() => onCardClick(b.id)}
-                onQuickAction={(action) => {
-                  if (action === "open") onCardClick(b.id);
-                  if (action === "copyLink" && b.public_id) {
-                    navigator.clipboard.writeText(getPublicBudgetUrl(b.public_id));
-                    toast.success("Link copiado!");
-                  } else if (action === "copyLink") {
-                    toast.error("Orçamento sem link público");
-                  }
-                }}
-              />
-            ) : (
-              <DraggableCard
-                budget={b}
-                locked={locked}
-                onClick={() => onCardClick(b.id)}
-                getProfileName={getProfileName}
-                isSynced={syncedBudgetIds.has(b.id)}
-                daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
-              />
-            )}
-          </div>
-        ))}
+        {sorted.map((b) => {
+          const temp = temperatureMap?.get(b.id) ?? null;
+          const next = nextActionMap?.get(b.id) ?? null;
+          return (
+            <div key={b.id} className={subsection.cardBorderClass ? `rounded-md ${subsection.cardBorderClass}` : ""}>
+              {compact ? (
+                <CompactKanbanCard
+                  projectName={b.project_name}
+                  clientName={b.client_name}
+                  priority={b.priority}
+                  internalStatus={b.internal_status}
+                  dueAt={b.due_at}
+                  bairro={b.bairro}
+                  city={b.city}
+                  versionNumber={b.version_number}
+                  sequentialCode={b.sequential_code}
+                  commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
+                  estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                  isSynced={syncedBudgetIds.has(b.id)}
+                  daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
+                  temperature={temp}
+                  nextAction={next}
+                  onClick={() => onCardClick(b.id)}
+                  onQuickAction={(action) => {
+                    if (action === "open") onCardClick(b.id);
+                    if (action === "nextAction" && next) onNextAction?.(b.id, next);
+                    if (action === "copyLink" && b.public_id) {
+                      navigator.clipboard.writeText(getPublicBudgetUrl(b.public_id));
+                      toast.success("Link copiado!");
+                    } else if (action === "copyLink") {
+                      toast.error("Orçamento sem link público");
+                    }
+                  }}
+                />
+              ) : (
+                <DraggableCard
+                  budget={b}
+                  locked={locked}
+                  onClick={() => onCardClick(b.id)}
+                  getProfileName={getProfileName}
+                  isSynced={syncedBudgetIds.has(b.id)}
+                  daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
+                  temperature={temp}
+                  nextAction={next}
+                  onNextAction={(s) => onNextAction?.(b.id, s)}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -414,6 +439,9 @@ function KanbanColumn({
   dueFilter,
   syncedBudgetIds = new Set(),
   pipelineMeta,
+  temperatureMap,
+  nextActionMap,
+  onNextAction,
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
@@ -422,6 +450,9 @@ function KanbanColumn({
   dueFilter: DueFilter;
   syncedBudgetIds?: Set<string>;
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
+  temperatureMap?: Map<string, DealTemperatureResult>;
+  nextActionMap?: Map<string, NextActionSuggestion | null>;
+  onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
@@ -492,6 +523,9 @@ function KanbanColumn({
                   getProfileName={getProfileName}
                   syncedBudgetIds={syncedBudgetIds}
                   pipelineMeta={pipelineMeta}
+                  temperatureMap={temperatureMap}
+                  nextActionMap={nextActionMap}
+                  onNextAction={onNextAction}
                 />
               </div>
             ))}
@@ -503,6 +537,8 @@ function KanbanColumn({
               const prevHighPrio = idx > 0 && isHighPriority(sorted[idx - 1].priority);
               const currHighPrio = isHighPriority(b.priority);
               const showDivider = idx > 0 && prevHighPrio && !currHighPrio;
+              const temp = temperatureMap?.get(b.id) ?? null;
+              const next = nextActionMap?.get(b.id) ?? null;
 
               return (
                 <div key={b.id}>
@@ -520,6 +556,9 @@ function KanbanColumn({
                     getProfileName={getProfileName}
                     isSynced={syncedBudgetIds.has(b.id)}
                     daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
+                    temperature={temp}
+                    nextAction={next}
+                    onNextAction={(s) => onNextAction?.(b.id, s)}
                   />
                 </div>
               );
@@ -544,6 +583,9 @@ function DraggableCard({
   getProfileName,
   isSynced,
   daysInStage,
+  temperature,
+  nextAction,
+  onNextAction,
 }: {
   budget: BudgetRow;
   locked: boolean;
@@ -551,6 +593,9 @@ function DraggableCard({
   getProfileName: (id: string | null) => string;
   isSynced?: boolean;
   daysInStage?: number | null;
+  temperature?: DealTemperatureResult | null;
+  nextAction?: NextActionSuggestion | null;
+  onNextAction?: (suggestion: NextActionSuggestion) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: budget.id,
@@ -564,7 +609,18 @@ function DraggableCard({
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} isSynced={isSynced} daysInStage={daysInStage} />
+      <KanbanCard
+        budget={budget}
+        isDragging={isDragging}
+        locked={locked}
+        onClick={onClick}
+        getProfileName={getProfileName}
+        isSynced={isSynced}
+        daysInStage={daysInStage}
+        temperature={temperature}
+        nextAction={nextAction}
+        onNextAction={onNextAction}
+      />
     </div>
   );
 }
@@ -577,6 +633,9 @@ function KanbanCard({
   getProfileName,
   isSynced,
   daysInStage,
+  temperature,
+  nextAction,
+  onNextAction,
 }: {
   budget: BudgetRow;
   isDragging?: boolean;
@@ -585,6 +644,9 @@ function KanbanCard({
   getProfileName: (id: string | null) => string;
   isSynced?: boolean;
   daysInStage?: number | null;
+  temperature?: DealTemperatureResult | null;
+  nextAction?: NextActionSuggestion | null;
+  onNextAction?: (suggestion: NextActionSuggestion) => void;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at, b.internal_status);
@@ -664,13 +726,19 @@ function KanbanCard({
             ✓ Portal
           </span>
         )}
+        {temperature && <DealTemperatureBadge result={temperature} compact />}
       </div>
+      {nextAction && (
+        <div className="mt-2">
+          <NextActionChip suggestion={nextAction} compact onClick={() => onNextAction?.(nextAction)} />
+        </div>
+      )}
     </Card>
   );
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, onNextAction }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
@@ -778,6 +846,9 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             compact
                             syncedBudgetIds={syncedBudgetIds}
                             pipelineMeta={pipelineMeta}
+                            temperatureMap={temperatureMap}
+                            nextActionMap={nextActionMap}
+                            onNextAction={onNextAction}
                           />
                         </div>
                       ));
@@ -789,6 +860,8 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                       const prevHigh = idx > 0 && isHighPriority(sorted[idx - 1].priority);
                       const currHigh = isHighPriority(b.priority);
                       const showDivider = idx > 0 && prevHigh && !currHigh;
+                      const temp = temperatureMap?.get(b.id) ?? null;
+                      const next = nextActionMap?.get(b.id) ?? null;
                       return (
                         <div key={b.id}>
                           {showDivider && (
@@ -812,9 +885,12 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             isSynced={syncedBudgetIds.has(b.id)}
                             daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
+                            temperature={temp}
+                            nextAction={next}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
+                              if (action === "nextAction" && next) onNextAction?.(b.id, next);
                               if (action === "copyLink") {
                                 if (b.public_id) {
                                   navigator.clipboard.writeText(getPublicBudgetUrl(b.public_id));
@@ -855,6 +931,9 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             dueFilter={dueFilter}
             syncedBudgetIds={syncedBudgetIds}
             pipelineMeta={pipelineMeta}
+            temperatureMap={temperatureMap}
+            nextActionMap={nextActionMap}
+            onNextAction={onNextAction}
           />
         ))}
       </div>
