@@ -258,6 +258,12 @@ export default function CommercialDashboard() {
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
   const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
   const { data: activityMetaMap } = useBudgetActivityMeta(budgetIds);
+  // Onda 5A: scores de lead por cliente (agregado e cacheado)
+  const clientIds = useMemo(
+    () => budgets.map((b) => b.client_id).filter((v): v is string => !!v),
+    [budgets],
+  );
+  const { data: leadScoreMap } = useLeadScores(clientIds);
 
   // Score de temperatura + sugestão de próxima ação para cada card
   const temperatureMap = useMemo(() => {
