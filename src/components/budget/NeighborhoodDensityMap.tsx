@@ -173,9 +173,6 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     // Pre-check WebGL support — MapLibre requires WebGL and fails silently otherwise
     const supportsWebGL = (() => {
       try {
-        if (typeof maplibregl.supported === "function" && !maplibregl.supported({ failIfMajorPerformanceCaveat: false })) {
-          return false;
-        }
         const canvas = document.createElement("canvas");
         const gl = canvas.getContext("webgl2") || canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
         return !!gl;
