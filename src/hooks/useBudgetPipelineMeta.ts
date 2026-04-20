@@ -23,7 +23,6 @@ export function useBudgetPipelineMeta(budgetIds: string[]) {
     enabled: ids.length > 0,
     queryFn: async (): Promise<Map<string, BudgetPipelineMetaRow>> => {
       const { data, error } = await supabase
-        // @ts-expect-error - view criada via migration; types regenerados em seguida
         .from("budget_pipeline_view")
         .select("id, pipeline_id, pipeline_slug, pipeline_name, stage_entered_at, days_in_stage")
         .in("id", ids);

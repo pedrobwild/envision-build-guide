@@ -21,7 +21,6 @@ export function useDealPipelines() {
     queryKey: ["deal_pipelines"],
     queryFn: async (): Promise<DealPipeline[]> => {
       const { data, error } = await supabase
-        // @ts-expect-error - tabela criada via migration; types regenerados em seguida
         .from("deal_pipelines")
         .select("id, slug, name, description, color, order_index, is_active, is_default")
         .eq("is_active", true)
@@ -37,7 +36,6 @@ export function useDealPipelines() {
 export async function setBudgetPipeline(budgetId: string, pipelineId: string | null): Promise<void> {
   const { error } = await supabase
     .from("budgets")
-    // @ts-expect-error - coluna criada via migration; types regenerados em seguida
     .update({ pipeline_id: pipelineId, updated_at: new Date().toISOString() })
     .eq("id", budgetId);
   if (error) throw error;
