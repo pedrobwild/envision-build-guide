@@ -94,8 +94,8 @@ function calcHealthScore(kpis: {
 
 async function generateSnapshot(snapshotDate: string) {
   const now = new Date();
-  const dayStart = new Date(`${snapshotDate}T00:00:00Z`);
-  const dayEnd = new Date(`${snapshotDate}T23:59:59Z`);
+  // Bounds em UTC para o dia BRT (America/Sao_Paulo, UTC-3 sem DST)
+  const { start: dayStart, end: dayEnd } = brtDayBoundsUtc(snapshotDate);
   const weekAgo = new Date(now.getTime() - 7 * 86400 * 1000);
   const twoWeeksAgo = new Date(now.getTime() - 14 * 86400 * 1000);
 
@@ -115,8 +115,12 @@ async function generateSnapshot(snapshotDate: string) {
   }
   const totalOf = (b: BudgetRow) => b.manual_total ?? sectionsByBudget.get(b.id) ?? 0;
 
-  // 2. Volume métricas
-  const receivedToday = budgets.filter((b) => b.created_at >= dayStart.toISOString() && b.created_at <= dayEnd.toISOString()).length;
+  // 2. Volume métricas (recebidos no dia BRT, não UTC)
+  const dayStartIso = dayStart.toISOString();
+  const dayEndIso = dayEnd.toISOString();
+  const receivedToday = budgets.filter(
+    (b) => b.created_at >= dayStartIso && b.created_at <= dayEndIso,
+  ).length;
   const active = budgets.filter((b) => ACTIVE_STATUSES.includes(b.internal_status));
   const closed = budgets.filter((b) => CLOSED_STATUSES.includes(b.internal_status));
   const overdue = active.filter((b) => b.due_at && new Date(b.due_at) < now).length;
