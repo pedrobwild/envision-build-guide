@@ -52,6 +52,8 @@ import { PipelineSwitcher } from "@/components/admin/PipelineSwitcher";
 import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, type NextActionSuggestion } from "@/lib/deal-temperature";
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
+import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
+import { LostIntelligencePanel } from "@/components/admin/LostIntelligencePanel";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -246,6 +248,8 @@ export default function CommercialDashboard() {
   const [pendingLostBudgetId, setPendingLostBudgetId] = useState<string | null>(null);
   const [nextActionBudgetId, setNextActionBudgetId] = useState<string | null>(null);
   const [nextActionPreset, setNextActionPreset] = useState<{ type: string; title: string } | null>(null);
+  const [historyBudget, setHistoryBudget] = useState<BudgetRow | null>(null);
+  const [showLostPanel, setShowLostPanel] = useState(false);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
@@ -1057,6 +1061,24 @@ export default function CommercialDashboard() {
             />
           )}
 
+          {/* Toggle Inteligência de Perda */}
+          {!loading && (
+            <div className="flex items-center justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-destructive"
+                onClick={() => setShowLostPanel((v) => !v)}
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                {showLostPanel ? "Ocultar" : "Ver"} Inteligência de Perda
+              </Button>
+            </div>
+          )}
+          {showLostPanel && !loading && (
+            <LostIntelligencePanel getProfileName={getProfileName} />
+          )}
+
           {/* Kanban view */}
           {!loading && viewMode === "kanban" && budgets.length > 0 && (
             <KanbanBoard
@@ -1069,6 +1091,7 @@ export default function CommercialDashboard() {
               temperatureMap={temperatureMap}
               nextActionMap={nextActionMap}
               onNextAction={handleNextActionClick}
+              onOpenHistory={(b) => setHistoryBudget(b as unknown as BudgetRow)}
             />
           )}
 
@@ -1172,6 +1195,20 @@ export default function CommercialDashboard() {
         budgetId={nextActionBudgetId ?? undefined}
         presetType={nextActionPreset?.type}
         presetTitle={nextActionPreset?.title}
+      />
+
+      <BudgetCommunicationDrawer
+        open={!!historyBudget}
+        onOpenChange={(open) => { if (!open) setHistoryBudget(null); }}
+        budgetId={historyBudget?.id ?? null}
+        budget={historyBudget ? {
+          id: historyBudget.id,
+          client_name: historyBudget.client_name,
+          project_name: historyBudget.project_name,
+          client_phone: historyBudget.client_phone,
+          public_id: historyBudget.public_id,
+        } : null}
+        getProfileName={getProfileName}
       />
     </>
   );
