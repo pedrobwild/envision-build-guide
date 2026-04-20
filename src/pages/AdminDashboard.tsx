@@ -6,11 +6,8 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { formatBRL } from "@/lib/formatBRL";
-import {
-  Plus, FileText, Upload, FileSpreadsheet, LayoutTemplate, Loader2,
-} from "lucide-react";
-import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
-import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
+import { Plus } from "lucide-react";
+import { ClientForm } from "@/components/crm/ClientForm";
 import { toast } from "sonner";
 import { subDays } from "date-fns";
 
@@ -55,11 +52,7 @@ export default function AdminDashboard() {
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [deliveryTimestamps, setDeliveryTimestamps] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [importOpen, setImportOpen] = useState(false);
-  const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
-  const [newMenuOpen, setNewMenuOpen] = useState(false);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [templateBudgetId, setTemplateBudgetId] = useState<string | null>(null);
+  const [clientFormOpen, setClientFormOpen] = useState(false);
 
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
@@ -122,40 +115,6 @@ export default function AdminDashboard() {
     return computeDashboardMetrics(filteredBudgets, dateRange, profiles, deliveryTimestamps);
   }, [filteredBudgets, dateRange, profiles, deliveryTimestamps, loading]);
 
-  // Budget creation
-  const createBudget = async () => {
-    if (!user) return;
-    const publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-    const { data } = await supabase
-      .from("budgets")
-      .insert({ project_name: "Novo Projeto", client_name: "Cliente", created_by: user.id, public_id: publicId })
-      .select()
-      .single();
-    if (data) {
-      try {
-        const { seedFromTemplate } = await import("@/lib/seed-from-template");
-        await seedFromTemplate(data.id, "a01da86a-9184-4693-bd07-6798c2bf79b2");
-      } catch (e) {
-        toast.error("Erro ao aplicar template padrão.");
-      }
-      navigate(`/admin/budget/${data.id}`);
-    }
-  };
-
-  const createBudgetForTemplate = async () => {
-    if (!user) return;
-    const publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-    const { data } = await supabase
-      .from("budgets")
-      .insert({ project_name: "Novo Projeto", client_name: "Cliente", created_by: user.id, public_id: publicId })
-      .select()
-      .single();
-    if (data) {
-      setTemplateBudgetId(data.id);
-      setTemplateDialogOpen(true);
-    }
-  };
-
   let step = 0;
 
   return (
@@ -175,32 +134,9 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2">
             <PeriodFilter value={dateRange} onChange={setDateRange} />
 
-            <div className="relative">
-              <Button size="sm" className="gap-1.5 h-8" onClick={() => setNewMenuOpen(!newMenuOpen)}>
-                <Plus className="h-3.5 w-3.5" /> Novo
-              </Button>
-              {newMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setNewMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-lg border border-border bg-popover shadow-lg py-1">
-                    <button onClick={() => { setNewMenuOpen(false); createBudget(); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
-                      <FileText className="h-4 w-4 text-muted-foreground" /> Em branco
-                    </button>
-                    {(isAdmin || isOrcamentista) && (
-                      <button onClick={() => { setNewMenuOpen(false); createBudgetForTemplate(); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
-                        <LayoutTemplate className="h-4 w-4 text-muted-foreground" /> Usar template
-                      </button>
-                    )}
-                    <button onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("pdf"); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
-                      <Upload className="h-4 w-4 text-muted-foreground" /> Importar PDF
-                    </button>
-                    <button onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("excel"); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
-                      <FileSpreadsheet className="h-4 w-4 text-muted-foreground" /> Importar Planilha
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <Button size="sm" className="gap-1.5 h-8" onClick={() => setClientFormOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Novo cliente
+            </Button>
           </div>
         </div>
       </motion.div>
@@ -379,29 +315,14 @@ export default function AdminDashboard() {
       </motion.div>
 
       {/* ───── MODALS ───── */}
-      <ImportExcelModal
-        open={importOpen}
-        onOpenChange={(v) => { setImportOpen(v); if (!v) loadData(); }}
-        fileFilter={importType}
+      <ClientForm
+        open={clientFormOpen}
+        onOpenChange={setClientFormOpen}
+        onSaved={(client) => {
+          setClientFormOpen(false);
+          if (client?.id) navigate(`/admin/clientes/${client.id}`);
+        }}
       />
-
-      {templateBudgetId && (
-        <TemplateSelectorDialog
-          open={templateDialogOpen}
-          budgetId={templateBudgetId}
-          onOpenChange={(v) => {
-            setTemplateDialogOpen(v);
-            if (!v && templateBudgetId) {
-              navigate(`/admin/budget/${templateBudgetId}`);
-              setTemplateBudgetId(null);
-            }
-          }}
-          onConfirm={() => {
-            if (templateBudgetId) navigate(`/admin/budget/${templateBudgetId}`);
-            setTemplateBudgetId(null);
-          }}
-        />
-      )}
     </div>
   );
 }
