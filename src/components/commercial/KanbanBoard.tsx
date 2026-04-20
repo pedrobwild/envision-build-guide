@@ -333,6 +333,9 @@ function SubSectionGroup({
   compact = false,
   syncedBudgetIds = new Set(),
   pipelineMeta,
+  temperatureMap,
+  nextActionMap,
+  onNextAction,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -342,6 +345,9 @@ function SubSectionGroup({
   compact?: boolean;
   syncedBudgetIds?: Set<string>;
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
+  temperatureMap?: Map<string, DealTemperatureResult>;
+  nextActionMap?: Map<string, NextActionSuggestion | null>;
+  onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
@@ -369,46 +375,56 @@ function SubSectionGroup({
         header
       )}
       <div className="space-y-2">
-        {sorted.map((b) => (
-          <div key={b.id} className={subsection.cardBorderClass ? `rounded-md ${subsection.cardBorderClass}` : ""}>
-            {compact ? (
-              <CompactKanbanCard
-                projectName={b.project_name}
-                clientName={b.client_name}
-                priority={b.priority}
-                internalStatus={b.internal_status}
-                dueAt={b.due_at}
-                bairro={b.bairro}
-                city={b.city}
-                versionNumber={b.version_number}
-                sequentialCode={b.sequential_code}
-                commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
-                estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
-                isSynced={syncedBudgetIds.has(b.id)}
-                daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
-                onClick={() => onCardClick(b.id)}
-                onQuickAction={(action) => {
-                  if (action === "open") onCardClick(b.id);
-                  if (action === "copyLink" && b.public_id) {
-                    navigator.clipboard.writeText(getPublicBudgetUrl(b.public_id));
-                    toast.success("Link copiado!");
-                  } else if (action === "copyLink") {
-                    toast.error("Orçamento sem link público");
-                  }
-                }}
-              />
-            ) : (
-              <DraggableCard
-                budget={b}
-                locked={locked}
-                onClick={() => onCardClick(b.id)}
-                getProfileName={getProfileName}
-                isSynced={syncedBudgetIds.has(b.id)}
-                daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
-              />
-            )}
-          </div>
-        ))}
+        {sorted.map((b) => {
+          const temp = temperatureMap?.get(b.id) ?? null;
+          const next = nextActionMap?.get(b.id) ?? null;
+          return (
+            <div key={b.id} className={subsection.cardBorderClass ? `rounded-md ${subsection.cardBorderClass}` : ""}>
+              {compact ? (
+                <CompactKanbanCard
+                  projectName={b.project_name}
+                  clientName={b.client_name}
+                  priority={b.priority}
+                  internalStatus={b.internal_status}
+                  dueAt={b.due_at}
+                  bairro={b.bairro}
+                  city={b.city}
+                  versionNumber={b.version_number}
+                  sequentialCode={b.sequential_code}
+                  commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
+                  estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                  isSynced={syncedBudgetIds.has(b.id)}
+                  daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
+                  temperature={temp}
+                  nextAction={next}
+                  onClick={() => onCardClick(b.id)}
+                  onQuickAction={(action) => {
+                    if (action === "open") onCardClick(b.id);
+                    if (action === "nextAction" && next) onNextAction?.(b.id, next);
+                    if (action === "copyLink" && b.public_id) {
+                      navigator.clipboard.writeText(getPublicBudgetUrl(b.public_id));
+                      toast.success("Link copiado!");
+                    } else if (action === "copyLink") {
+                      toast.error("Orçamento sem link público");
+                    }
+                  }}
+                />
+              ) : (
+                <DraggableCard
+                  budget={b}
+                  locked={locked}
+                  onClick={() => onCardClick(b.id)}
+                  getProfileName={getProfileName}
+                  isSynced={syncedBudgetIds.has(b.id)}
+                  daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
+                  temperature={temp}
+                  nextAction={next}
+                  onNextAction={(s) => onNextAction?.(b.id, s)}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
