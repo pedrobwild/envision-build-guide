@@ -291,6 +291,39 @@ export default function CommercialDashboard() {
     return map;
   }, [budgets, activityMetaMap, pipelineMetaMap]);
 
+  // Linhas para o painel de cadências: somente negócios com sugestão pendente
+  // e que estão dentro do escopo dos filtros visíveis.
+  const cadenceRows = useMemo(() => {
+    const rows: Array<{
+      id: string;
+      client_name: string;
+      project_name: string;
+      sequential_code?: string | null;
+      internal_status: string;
+      client_phone?: string | null;
+      suggestion: NextActionSuggestion;
+      daysSinceLastActivity: number | null;
+      daysInStage: number | null;
+    }> = [];
+    for (const b of budgets) {
+      const sugg = nextActionMap.get(b.id);
+      if (!sugg) continue;
+      const meta = activityMetaMap?.get(b.id);
+      const stageMeta = pipelineMetaMap?.get(b.id);
+      rows.push({
+        id: b.id,
+        client_name: b.client_name,
+        project_name: b.project_name,
+        internal_status: b.internal_status,
+        client_phone: b.client_phone,
+        suggestion: sugg,
+        daysSinceLastActivity: meta?.days_since_last_activity ?? null,
+        daysInStage: stageMeta?.days_in_stage ?? null,
+      });
+    }
+    return rows;
+  }, [budgets, nextActionMap, activityMetaMap, pipelineMetaMap]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile, location.key]);
 
