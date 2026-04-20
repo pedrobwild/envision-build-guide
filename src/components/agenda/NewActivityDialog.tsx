@@ -27,6 +27,10 @@ interface NewActivityDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Pré-seleciona um negócio (opcional). */
   budgetId?: string;
+  /** Pré-preenche tipo (call, email, meeting, task, followup, visit). */
+  presetType?: string;
+  /** Pré-preenche título. */
+  presetTitle?: string;
 }
 
 const TYPES = [
@@ -47,10 +51,10 @@ function defaultScheduled() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function NewActivityDialog({ open, onOpenChange, budgetId }: NewActivityDialogProps) {
+export function NewActivityDialog({ open, onOpenChange, budgetId, presetType, presetTitle }: NewActivityDialogProps) {
   const [budget, setBudget] = useState<string>(budgetId ?? "");
-  const [type, setType] = useState("call");
-  const [title, setTitle] = useState("");
+  const [type, setType] = useState(presetType ?? "call");
+  const [title, setTitle] = useState(presetTitle ?? "");
   const [description, setDescription] = useState("");
   const [scheduledFor, setScheduledFor] = useState(defaultScheduled());
   const create = useCreateActivity();
@@ -74,12 +78,12 @@ export function NewActivityDialog({ open, onOpenChange, budgetId }: NewActivityD
   useEffect(() => {
     if (open) {
       setBudget(budgetId ?? "");
-      setType("call");
-      setTitle("");
+      setType(presetType ?? "call");
+      setTitle(presetTitle ?? "");
       setDescription("");
       setScheduledFor(defaultScheduled());
     }
-  }, [open, budgetId]);
+  }, [open, budgetId, presetType, presetTitle]);
 
   const canSave = useMemo(
     () => budget.length > 0 && title.trim().length > 0,
