@@ -273,6 +273,17 @@ export function CompactKanbanCard({
           </div>
         </div>
       </motion.div>
+      {onOpenHistory && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onOpenHistory(); }}
+          className="absolute top-1.5 right-1.5 z-10 h-5 w-5 rounded-full bg-card/80 border border-border/60 text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Ver histórico e comunicação"
+          aria-label="Histórico"
+        >
+          <History className="h-3 w-3" />
+        </button>
+      )}
       {nextAction && (
         <div className="mt-1 px-0.5">
           <NextActionChip
