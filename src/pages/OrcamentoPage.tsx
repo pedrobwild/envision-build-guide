@@ -9,6 +9,7 @@ import { ServicesSection } from "@/components/orcamento/ServicesSection";
 import { JourneySection } from "@/components/orcamento/JourneySection";
 import { ScopeSection } from "@/components/orcamento/ScopeSection";
 import { PortalWarrantyNextSteps } from "@/components/orcamento/PortalWarrantyNextSteps";
+import { PortalDemoAccessCard } from "@/components/budget/PortalDemoAccessCard";
 import { StickyBudgetSummary } from "@/components/orcamento/StickyBudgetSummary";
 import { ReformTimeline } from "@/components/budget/ReformTimeline";
 
