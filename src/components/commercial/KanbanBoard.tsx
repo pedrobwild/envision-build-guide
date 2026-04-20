@@ -670,7 +670,7 @@ function KanbanCard({
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set() }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
@@ -777,6 +777,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             getProfileName={getProfileName}
                             compact
                             syncedBudgetIds={syncedBudgetIds}
+                            pipelineMeta={pipelineMeta}
                           />
                         </div>
                       ));
@@ -810,6 +811,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             isSynced={syncedBudgetIds.has(b.id)}
+                            daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
@@ -852,6 +854,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             getProfileName={getProfileName}
             dueFilter={dueFilter}
             syncedBudgetIds={syncedBudgetIds}
+            pipelineMeta={pipelineMeta}
           />
         ))}
       </div>
