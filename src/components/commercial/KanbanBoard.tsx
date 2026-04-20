@@ -344,7 +344,6 @@ function SubSectionGroup({
   leadScoreMap,
   onNextAction,
   onOpenHistory,
-  ...
 }: SubsectionProps & {
   syncedBudgetIds?: Set<string>;
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
