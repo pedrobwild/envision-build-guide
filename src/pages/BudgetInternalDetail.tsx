@@ -250,17 +250,17 @@ export default function BudgetInternalDetail() {
           .select(
             "id, project_name, client_id, client_name, client_phone, lead_email, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source"
           )
-          .eq("id", budgetId)
+          .eq("id", id)
           .single(),
         supabase
           .from("budget_events")
           .select("id, event_type, from_status, to_status, note, user_id, created_at")
-          .eq("budget_id", budgetId)
+          .eq("budget_id", id)
           .order("created_at", { ascending: true }),
         supabase
           .from("budget_comments")
           .select("id, body, user_id, created_at")
-          .eq("budget_id", budgetId)
+          .eq("budget_id", id)
           .order("created_at", { ascending: true }),
         supabase.from("profiles").select("id, full_name"),
       ]);
@@ -292,7 +292,7 @@ export default function BudgetInternalDetail() {
       setLoading(false);
 
       // Compute total from items
-      const { data: secs } = await supabase.from("sections").select("id").eq("budget_id", budgetId);
+      const { data: secs } = await supabase.from("sections").select("id").eq("budget_id", id);
       const sectionIds = (secs ?? []).map((s) => s.id);
       if (cancelled) return;
       setSectionsCount(sectionIds.length);
