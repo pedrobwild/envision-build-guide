@@ -6,6 +6,9 @@ import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } fro
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RotBadge } from "@/components/admin/RotBadge";
+import { DealTemperatureBadge } from "@/components/admin/DealTemperatureBadge";
+import { NextActionChip } from "@/components/admin/NextActionChip";
+import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-temperature";
 
 interface CompactKanbanCardProps {
   projectName: string;
@@ -23,8 +26,12 @@ interface CompactKanbanCardProps {
   isSynced?: boolean;
   /** Dias parado na etapa atual — exibe RotBadge se >= warnThreshold. */
   daysInStage?: number | null;
+  /** Resultado do score de temperatura. */
+  temperature?: DealTemperatureResult | null;
+  /** Sugestão de próxima ação. */
+  nextAction?: NextActionSuggestion | null;
   onClick: () => void;
-  onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink") => void;
+  onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink" | "nextAction") => void;
 }
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
@@ -82,6 +89,8 @@ export function CompactKanbanCard({
   estimatorName,
   isSynced,
   daysInStage,
+  temperature,
+  nextAction,
   onClick,
   onQuickAction,
 }: CompactKanbanCardProps) {
