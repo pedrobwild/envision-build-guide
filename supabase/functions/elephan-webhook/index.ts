@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
 
   let detail: Record<string, unknown>;
   try {
-    const r = await fetch(detailUrl, {
+    const r = await fetchWithTimeout(detailUrl, {
       headers: {
         Authorization: `Bearer ${ELEPHAN_API_KEY}`,
         Accept: "application/json",
