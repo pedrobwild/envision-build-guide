@@ -576,6 +576,7 @@ function KanbanCard({
   onClick,
   getProfileName,
   isSynced,
+  daysInStage,
 }: {
   budget: BudgetRow;
   isDragging?: boolean;
@@ -583,6 +584,7 @@ function KanbanCard({
   onClick: () => void;
   getProfileName: (id: string | null) => string;
   isSynced?: boolean;
+  daysInStage?: number | null;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at, b.internal_status);
@@ -648,6 +650,9 @@ function KanbanCard({
             <Calendar className="h-2.5 w-2.5" />
             {due.label}
           </span>
+        )}
+        {typeof daysInStage === "number" && (
+          <RotBadge daysInStage={daysInStage} />
         )}
         {(b.version_number ?? 1) > 1 && (
           <span className="text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
