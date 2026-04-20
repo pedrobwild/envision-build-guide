@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { computeLeadScore, type LeadScoreResult } from "@/lib/lead-score";
@@ -9,10 +10,14 @@ import { differenceInCalendarDays } from "date-fns";
  * - Faz 1 query para budget_activities (recência)
  * - Combina tudo client-side via computeLeadScore.
  *
- * Cache: 2 min. Idempotente.
+ * Cache: 2 min. Idempotente. A queryKey é estabilizada com useMemo
+ * para evitar re-fetches a cada render do componente que consome.
  */
 export function useLeadScores(clientIds: string[]) {
-  const ids = [...new Set(clientIds.filter(Boolean))].sort();
+  const ids = useMemo(
+    () => [...new Set(clientIds.filter(Boolean))].sort(),
+    [clientIds],
+  );
 
   return useQuery({
     queryKey: ["lead_scores", ids],
