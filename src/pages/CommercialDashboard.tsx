@@ -251,6 +251,39 @@ export default function CommercialDashboard() {
   const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
   const { data: activityMetaMap } = useBudgetActivityMeta(budgetIds);
 
+  // Score de temperatura + sugestão de próxima ação para cada card
+  const temperatureMap = useMemo(() => {
+    const map = new Map<string, DealTemperatureResult>();
+    for (const b of budgets) {
+      const meta = activityMetaMap?.get(b.id);
+      const stageMeta = pipelineMetaMap?.get(b.id);
+      const result = computeDealTemperature({
+        daysSinceLastActivity: meta?.days_since_last_activity ?? null,
+        daysInStage: stageMeta?.days_in_stage ?? null,
+        manualTotal: b.manual_total ?? null,
+        internalStatus: b.internal_status,
+      });
+      map.set(b.id, result);
+    }
+    return map;
+  }, [budgets, activityMetaMap, pipelineMetaMap]);
+
+  const nextActionMap = useMemo(() => {
+    const map = new Map<string, NextActionSuggestion | null>();
+    for (const b of budgets) {
+      const meta = activityMetaMap?.get(b.id);
+      const stageMeta = pipelineMetaMap?.get(b.id);
+      const sugg = suggestNextAction({
+        internalStatus: b.internal_status,
+        daysSinceLastActivity: meta?.days_since_last_activity ?? null,
+        daysInStage: stageMeta?.days_in_stage ?? null,
+        hasScheduledActivity: meta?.has_scheduled ?? false,
+      });
+      map.set(b.id, sugg);
+    }
+    return map;
+  }, [budgets, activityMetaMap, pipelineMetaMap]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile, location.key]);
 
