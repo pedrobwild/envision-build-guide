@@ -237,9 +237,21 @@ export function ClientPropertiesManager({
           {properties.map((p) => {
             const summary = summarizeProperty(p);
             const count = budgetCountByProperty?.[p.id] ?? 0;
+            const propertyTypeLabel = p.property_type
+              ? (PROPERTY_TYPES.find((t) => t.value === p.property_type)?.label ?? p.property_type)
+              : null;
+            const fullAddress = [p.address, p.address_complement].filter(Boolean).join(", ");
+            const cityState = [p.city, p.state].filter(Boolean).join(" / ");
+            // Conta quantos campos do imóvel estão preenchidos (para a barra de completude)
+            const filledFields = [
+              p.empreendimento, p.metragem, p.address, p.bairro, p.city,
+              p.property_type, p.location_type, p.floor_plan_url,
+            ].filter(Boolean).length;
+            const completeness = Math.round((filledFields / 8) * 100);
             return (
               <Card key={p.id} className="p-4 group">
-                <div className="flex items-start justify-between gap-2">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <h4 className="text-sm font-display font-semibold truncate">{summary}</h4>
@@ -254,40 +266,102 @@ export function ClientPropertiesManager({
                         </Badge>
                       )}
                     </div>
-                    <div className="space-y-0.5 text-xs text-muted-foreground font-body">
-                      {p.address && (
-                        <p className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{[p.address, p.address_complement].filter(Boolean).join(", ")}</span>
-                        </p>
-                      )}
-                      {(p.city || p.state) && (
-                        <p className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          {[p.city, p.state].filter(Boolean).join(" / ")}
-                        </p>
-                      )}
-                      {p.property_type && (
-                        <p className="flex items-center gap-1">
-                          <Home className="h-3 w-3 shrink-0" />
-                          {PROPERTY_TYPES.find((t) => t.value === p.property_type)?.label ?? p.property_type}
-                          {p.location_type && ` · ${p.location_type}`}
-                        </p>
-                      )}
-                      {p.floor_plan_url && (
+                    {/* Barra de completude do cadastro */}
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70 font-body">
+                      <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden max-w-[120px]">
+                        <div
+                          className={`h-full transition-all ${completeness >= 75 ? "bg-emerald-500" : completeness >= 40 ? "bg-amber-500" : "bg-muted-foreground/40"}`}
+                          style={{ width: `${completeness}%` }}
+                        />
+                      </div>
+                      <span>{completeness}% preenchido</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid de dados estruturados */}
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs font-body mb-3">
+                  <div>
+                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">Metragem</dt>
+                    <dd className="flex items-center gap-1 text-foreground">
+                      <Ruler className="h-3 w-3 text-muted-foreground shrink-0" />
+                      {p.metragem || <span className="text-muted-foreground/50 italic">—</span>}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">Tipo</dt>
+                    <dd className="flex items-center gap-1 text-foreground truncate">
+                      <Home className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <span className="truncate">{propertyTypeLabel || <span className="text-muted-foreground/50 italic">—</span>}</span>
+                    </dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">Empreendimento / Condomínio</dt>
+                    <dd className="flex items-center gap-1 text-foreground truncate">
+                      <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <span className="truncate">{p.empreendimento || <span className="text-muted-foreground/50 italic">— não informado</span>}</span>
+                    </dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">Endereço</dt>
+                    <dd className="flex items-start gap-1 text-foreground">
+                      <MapPin className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                      <span className="truncate">
+                        {fullAddress || <span className="text-muted-foreground/50 italic">— não informado</span>}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">Bairro</dt>
+                    <dd className="text-foreground truncate">
+                      {p.bairro || <span className="text-muted-foreground/50 italic">—</span>}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">Cidade / UF</dt>
+                    <dd className="text-foreground truncate">
+                      {cityState || <span className="text-muted-foreground/50 italic">—</span>}
+                    </dd>
+                  </div>
+                  {p.zip_code && (
+                    <div>
+                      <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">CEP</dt>
+                      <dd className="text-foreground">{p.zip_code}</dd>
+                    </div>
+                  )}
+                  {p.location_type && (
+                    <div>
+                      <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">Locação</dt>
+                      <dd className="text-foreground truncate">{p.location_type}</dd>
+                    </div>
+                  )}
+                  <div className="col-span-2">
+                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">Planta do imóvel</dt>
+                    <dd>
+                      {p.floor_plan_url ? (
                         <a
                           href={p.floor_plan_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-primary hover:underline"
                         >
-                          <FileText className="h-3 w-3" /> Ver planta
+                          <FileText className="h-3 w-3" /> Ver planta anexada
                         </a>
+                      ) : (
+                        <span className="text-muted-foreground/50 italic">— sem planta anexada</span>
                       )}
-                    </div>
+                    </dd>
                   </div>
-                </div>
-                <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border/40">
+                  {p.notes && (
+                    <div className="col-span-2">
+                      <dt className="text-[10px] uppercase tracking-wide text-muted-foreground/60 mb-0.5">Observações</dt>
+                      <dd className="text-muted-foreground line-clamp-2">{p.notes}</dd>
+                    </div>
+                  )}
+                </dl>
+
+                {/* Ações */}
+                <div className="flex items-center gap-1 pt-3 border-t border-border/40">
                   <Button
                     variant="ghost"
                     size="sm"
