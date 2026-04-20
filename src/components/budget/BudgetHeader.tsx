@@ -110,9 +110,6 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         >
           <img src={logoWhite} alt="Bwild" className="h-10 sm:h-12 lg:h-11" />
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden lg:block">
-              <ReclameAquiSeal />
-            </div>
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
