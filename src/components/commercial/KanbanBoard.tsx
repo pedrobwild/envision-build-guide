@@ -323,6 +323,7 @@ function SubSectionGroup({
   getProfileName,
   compact = false,
   syncedBudgetIds = new Set(),
+  pipelineMeta,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -331,6 +332,7 @@ function SubSectionGroup({
   getProfileName: (id: string | null) => string;
   compact?: boolean;
   syncedBudgetIds?: Set<string>;
+  pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
@@ -374,6 +376,7 @@ function SubSectionGroup({
                 commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                 estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                 isSynced={syncedBudgetIds.has(b.id)}
+                daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                 onClick={() => onCardClick(b.id)}
                 onQuickAction={(action) => {
                   if (action === "open") onCardClick(b.id);
@@ -392,6 +395,7 @@ function SubSectionGroup({
                 onClick={() => onCardClick(b.id)}
                 getProfileName={getProfileName}
                 isSynced={syncedBudgetIds.has(b.id)}
+                daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
               />
             )}
           </div>
