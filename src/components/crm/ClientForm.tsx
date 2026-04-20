@@ -27,11 +27,14 @@ import {
   CLIENT_SOURCES,
   CLIENT_STATUSES,
   useUpsertClient,
+  findOrphanBudgetsForClient,
+  linkBudgetsToClient,
   type Client,
   type ClientStatus,
 } from "@/hooks/useClients";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ClientFormProps {
   open: boolean;
@@ -58,6 +61,7 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
   const { user } = useAuth();
   const { members: comerciais } = useTeamMembers("comercial");
   const upsert = useUpsertClient();
+  const queryClient = useQueryClient();
 
   // Dados do cliente
   const [name, setName] = useState("");
@@ -235,6 +239,45 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
       const result = await upsert.mutateAsync(payload as Parameters<typeof upsert.mutateAsync>[0]);
       onSaved?.(result);
       onOpenChange(false);
+
+      // Pós-salvamento: detecta orçamentos órfãos que combinam com este cliente
+      // (criados antes do cadastro). Útil quando o lead chegou via webhook/manual
+      // sem vínculo. Apresenta um toast com ação "Vincular".
+      try {
+        const orphans = await findOrphanBudgetsForClient({
+          name: result.name,
+          email: result.email,
+          phone: result.phone,
+        });
+        if (orphans.length > 0) {
+          const ids = orphans.map((o) => o.id);
+          const codes = orphans
+            .slice(0, 3)
+            .map((o) => o.sequential_code || o.project_name)
+            .join(", ");
+          const more = orphans.length > 3 ? ` +${orphans.length - 3}` : "";
+          toast(`${orphans.length} orçamento(s) sem cliente parecem ser de ${result.name}`, {
+            description: `${codes}${more}`,
+            duration: 12000,
+            action: {
+              label: "Vincular",
+              onClick: async () => {
+                try {
+                  const linked = await linkBudgetsToClient(ids, result.id);
+                  toast.success(`${linked} orçamento(s) vinculado(s) a ${result.name}.`);
+                  queryClient.invalidateQueries({ queryKey: ["clients"] });
+                  queryClient.invalidateQueries({ queryKey: ["budgets"] });
+                } catch (err) {
+                  const msg = err instanceof Error ? err.message : "Erro";
+                  toast.error(`Falha ao vincular: ${msg}`);
+                }
+              },
+            },
+          });
+        }
+      } catch {
+        /* matching opcional — silencia falhas */
+      }
     } catch {
       /* toast já é exibido pelo hook */
     }

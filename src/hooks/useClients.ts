@@ -279,6 +279,82 @@ export async function upsertClientByContact(input: {
   return data as Client;
 }
 
+/**
+ * Busca orçamentos órfãos (sem client_id) que possivelmente pertencem a este
+ * cliente: matching por nome (ilike), e/ou phone normalizado, e/ou email.
+ * Útil quando um cliente é cadastrado depois que o orçamento já existia.
+ */
+export async function findOrphanBudgetsForClient(input: {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+}): Promise<Array<{
+  id: string;
+  sequential_code: string | null;
+  project_name: string;
+  client_name: string;
+  client_phone: string | null;
+  lead_email: string | null;
+  internal_status: string;
+  created_at: string | null;
+}>> {
+  const name = input.name.trim();
+  const email = input.email?.trim() || null;
+  const phone = input.phone?.trim() || null;
+  if (!name && !email && !phone) return [];
+
+  const filters: string[] = [];
+  if (name) {
+    const safe = sanitizePostgrestPattern(name);
+    if (safe) filters.push(`client_name.ilike.%${safe}%`);
+  }
+  if (email) {
+    const safe = sanitizePostgrestPattern(email);
+    if (safe) filters.push(`lead_email.ilike.${safe}`);
+  }
+  if (phone) {
+    // Use os últimos 8 dígitos como heurística (DDD + 6 últimos podem variar)
+    const digits = phone.replace(/\D/g, "");
+    const tail = digits.slice(-8);
+    if (tail.length >= 6) filters.push(`client_phone.ilike.%${tail}%`);
+  }
+  if (filters.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("budgets")
+    .select("id, sequential_code, project_name, client_name, client_phone, lead_email, internal_status, created_at")
+    .is("client_id", null)
+    .or(filters.join(","))
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (error) throw error;
+  return (data ?? []) as Array<{
+    id: string;
+    sequential_code: string | null;
+    project_name: string;
+    client_name: string;
+    client_phone: string | null;
+    lead_email: string | null;
+    internal_status: string;
+    created_at: string | null;
+  }>;
+}
+
+/**
+ * Vincula uma lista de orçamentos a um cliente existente.
+ */
+export async function linkBudgetsToClient(budgetIds: string[], clientId: string): Promise<number> {
+  if (budgetIds.length === 0) return 0;
+  const { error, count } = await supabase
+    .from("budgets")
+    .update({ client_id: clientId }, { count: "exact" })
+    .in("id", budgetIds)
+    .is("client_id", null);
+  if (error) throw error;
+  return count ?? budgetIds.length;
+}
+
 export function useUpsertClient() {
   const queryClient = useQueryClient();
   return useMutation({
