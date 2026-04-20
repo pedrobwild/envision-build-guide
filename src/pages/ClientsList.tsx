@@ -60,6 +60,8 @@ import { showUndoToast } from "@/lib/inline-edit-undo";
 import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
 import { BulkActionsBar } from "@/components/crm/BulkActionsBar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useLeadScores } from "@/hooks/useLeadScores";
+import { LeadScoreBadge } from "@/components/admin/LeadScoreBadge";
 
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = Object.entries(
   CLIENT_STATUSES,
@@ -94,6 +96,8 @@ export default function ClientsList() {
   const { data: clients = [], isLoading } = useClients(filters);
   const deleteClient = useDeleteClient();
   const upsertClient = useUpsertClient();
+  const clientIds = useMemo(() => clients.map((c) => c.id), [clients]);
+  const { data: scoresMap } = useLeadScores(clientIds);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRowWithStats | null>(null);
