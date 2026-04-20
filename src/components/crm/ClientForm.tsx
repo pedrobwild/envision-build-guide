@@ -35,6 +35,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDuplicateClientCheck } from "@/hooks/useDuplicateClientCheck";
+import { DuplicateClientAlert } from "@/components/crm/DuplicateClientAlert";
 
 interface ClientFormProps {
   open: boolean;
@@ -294,6 +296,10 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
             Dados completos do cliente e do imóvel. Estes campos são compartilhados com todos os orçamentos.
           </DialogDescription>
         </DialogHeader>
+
+        {!initial?.id && (
+          <DuplicateBlock name={name} email={email} phone={phone} excludeId={initial?.id ?? null} />
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6 py-2">
           {/* === DADOS DO CLIENTE === */}

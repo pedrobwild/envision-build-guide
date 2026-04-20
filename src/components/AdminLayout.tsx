@@ -4,12 +4,19 @@ import { AdminBreadcrumb } from "@/components/AdminBreadcrumb";
 import { GlobalLoadingBar } from "@/components/GlobalLoadingBar";
 import { AdminBottomNav } from "@/components/admin/AdminBottomNav";
 import { CommandPalette, CommandPaletteTrigger } from "@/components/CommandPalette";
+import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
+
+function ShortcutsBridge() {
+  useGlobalShortcuts();
+  return null;
+}
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <GlobalLoadingBar />
       <CommandPalette />
+      <ShortcutsBridge />
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
