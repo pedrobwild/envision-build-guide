@@ -543,6 +543,14 @@ export default function PublicBudget() {
             </div>
 
             <div data-pdf-section>
+              <AnimatedSection id="portal-demo-access" index={99.2}>
+                <Suspense fallback={<LazyFallback />}>
+                  <PortalDemoAccessCard />
+                </Suspense>
+              </AnimatedSection>
+            </div>
+
+            <div data-pdf-section>
               <AnimatedSection id="cronograma-section" index={99.5}>
                 <Suspense fallback={<LazyFallback />}>
                   <ReformTimeline />
