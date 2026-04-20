@@ -900,13 +900,14 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             priority={b.priority}
                             internalStatus={b.internal_status}
                             dueAt={b.due_at}
-                            bairro={b.bairro}
-                            city={b.city}
                             versionNumber={b.version_number}
                             sequentialCode={b.sequential_code}
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             isSynced={syncedBudgetIds.has(b.id)}
+                            createdAt={b.created_at}
+                            updatedAt={b.updated_at}
+                            mode="commercial"
                             daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                             temperature={temp}
                             nextAction={next}
