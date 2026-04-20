@@ -51,6 +51,7 @@ import { DealTemperatureBadge } from "@/components/admin/DealTemperatureBadge";
 import { NextActionChip } from "@/components/admin/NextActionChip";
 import type { BudgetPipelineMetaRow } from "@/hooks/useBudgetPipelineMeta";
 import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-temperature";
+import type { LeadScoreResult } from "@/lib/lead-score";
 
 // Commercial Kanban column definitions
 const KANBAN_COLUMNS = [
@@ -215,6 +216,8 @@ interface KanbanBoardProps {
   temperatureMap?: Map<string, DealTemperatureResult>;
   /** Mapa budgetId → próxima ação sugerida. */
   nextActionMap?: Map<string, NextActionSuggestion | null>;
+  /** Mapa clientId → score do lead/cliente (Onda 5A). */
+  leadScoreMap?: Map<string, LeadScoreResult>;
   /** Callback quando o usuário clica no chip de próxima ação. */
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   /** Callback para abrir o drawer de comunicação/histórico. */
@@ -338,19 +341,16 @@ function SubSectionGroup({
   pipelineMeta,
   temperatureMap,
   nextActionMap,
+  leadScoreMap,
   onNextAction,
   onOpenHistory,
-}: {
-  subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
-  budgets: BudgetRow[];
-  locked: boolean;
-  onCardClick: (id: string) => void;
-  getProfileName: (id: string | null) => string;
-  compact?: boolean;
+  ...
+}: SubsectionProps & {
   syncedBudgetIds?: Set<string>;
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
   temperatureMap?: Map<string, DealTemperatureResult>;
   nextActionMap?: Map<string, NextActionSuggestion | null>;
+  leadScoreMap?: Map<string, LeadScoreResult>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   onOpenHistory?: (budget: BudgetRow) => void;
 }) {
@@ -402,6 +402,7 @@ function SubSectionGroup({
                   daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                   temperature={temp}
                   nextAction={next}
+                  leadScore={b.client_id ? leadScoreMap?.get(b.client_id) ?? null : null}
                   onClick={() => onCardClick(b.id)}
                   onOpenHistory={onOpenHistory ? () => onOpenHistory(b) : undefined}
                   onQuickAction={(action) => {
