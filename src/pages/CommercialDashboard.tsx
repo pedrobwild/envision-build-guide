@@ -1082,10 +1082,7 @@ export default function CommercialDashboard() {
 
           {/* Forecast & Previsibilidade */}
           {!loading && (
-            <ForecastPanel
-              ownerFilter={ownerFilter && ownerFilter !== "all" ? ownerFilter : null}
-              isAdmin={isAdmin}
-            />
+            <ForecastPanel ownerFilter={null} isAdmin={isAdmin} />
           )}
 
           {/* Kanban view */}
