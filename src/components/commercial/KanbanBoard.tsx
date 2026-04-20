@@ -448,6 +448,7 @@ function KanbanColumn({
   temperatureMap,
   nextActionMap,
   onNextAction,
+  onOpenHistory,
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
@@ -459,6 +460,7 @@ function KanbanColumn({
   temperatureMap?: Map<string, DealTemperatureResult>;
   nextActionMap?: Map<string, NextActionSuggestion | null>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
+  onOpenHistory?: (budget: BudgetRow) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
@@ -532,6 +534,7 @@ function KanbanColumn({
                   temperatureMap={temperatureMap}
                   nextActionMap={nextActionMap}
                   onNextAction={onNextAction}
+                  onOpenHistory={onOpenHistory}
                 />
               </div>
             ))}
