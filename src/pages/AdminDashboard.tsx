@@ -315,29 +315,14 @@ export default function AdminDashboard() {
       </motion.div>
 
       {/* ───── MODALS ───── */}
-      <ImportExcelModal
-        open={importOpen}
-        onOpenChange={(v) => { setImportOpen(v); if (!v) loadData(); }}
-        fileFilter={importType}
+      <ClientForm
+        open={clientFormOpen}
+        onOpenChange={setClientFormOpen}
+        onSaved={(client) => {
+          setClientFormOpen(false);
+          if (client?.id) navigate(`/admin/clientes/${client.id}`);
+        }}
       />
-
-      {templateBudgetId && (
-        <TemplateSelectorDialog
-          open={templateDialogOpen}
-          budgetId={templateBudgetId}
-          onOpenChange={(v) => {
-            setTemplateDialogOpen(v);
-            if (!v && templateBudgetId) {
-              navigate(`/admin/budget/${templateBudgetId}`);
-              setTemplateBudgetId(null);
-            }
-          }}
-          onConfirm={() => {
-            if (templateBudgetId) navigate(`/admin/budget/${templateBudgetId}`);
-            setTemplateBudgetId(null);
-          }}
-        />
-      )}
     </div>
   );
 }
