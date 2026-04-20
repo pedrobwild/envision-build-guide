@@ -771,6 +771,14 @@ export default function BudgetInternalDetail() {
         {/* MODULES GRID */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <ModuleCard
+            icon={Activity}
+            title="Tudo (Linha do Tempo)"
+            description="Status, notas, tarefas, reuniões e mensagens em uma só visão cronológica."
+            badge={{ label: "Novo", tone: "success" }}
+            active={activeModule === "unified"}
+            onClick={() => setActiveModule("unified")}
+          />
+          <ModuleCard
             icon={FileText}
             title="Briefing & Contexto"
             description={budget.briefing || budget.demand_context || "Sem briefing cadastrado ainda."}
