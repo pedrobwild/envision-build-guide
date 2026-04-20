@@ -727,6 +727,12 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
   );
 }
 
+function DuplicateInlineCheck({ name, email, phone }: { name: string; email: string; phone: string }) {
+  const { matches } = useDuplicateClientCheck({ name, email, phone });
+  if (matches.length === 0) return null;
+  return <DuplicateClientAlert matches={matches} />;
+}
+
 function SectionGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
