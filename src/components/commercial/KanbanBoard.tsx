@@ -46,6 +46,8 @@ import {
 import { INTERNAL_STATUSES, PRIORITIES, STATUS_GROUPS, type InternalStatus, type Priority } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RotBadge } from "@/components/admin/RotBadge";
+import type { BudgetPipelineMetaRow } from "@/hooks/useBudgetPipelineMeta";
 
 // Commercial Kanban column definitions
 const KANBAN_COLUMNS = [
@@ -203,6 +205,8 @@ interface KanbanBoardProps {
   getProfileName: (id: string | null) => string;
   dueFilter?: DueFilter;
   syncedBudgetIds?: Set<string>;
+  /** Mapa budgetId → meta de pipeline (dias parados, etc.). */
+  pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
 }
 
 function getColumnForBudget(internalStatus: string) {
