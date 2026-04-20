@@ -581,6 +581,37 @@ export default function BudgetInternalDetail() {
             </nav>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {budget.public_id && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
+                      toast.success("Link copiado");
+                    } catch {
+                      toast.error("Erro ao copiar link");
+                    }
+                  }}
+                  title="Copiar link público"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Copiar link</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank")}
+                  title="Abrir orçamento público"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Ver público</span>
+                </Button>
+              </>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -588,7 +619,7 @@ export default function BudgetInternalDetail() {
               onClick={() => commentTextareaRef.current?.focus()}
             >
               <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Nova nota</span>
+              <span className="hidden lg:inline">Nova nota</span>
             </Button>
             <Button
               size="sm"
@@ -596,7 +627,7 @@ export default function BudgetInternalDetail() {
               onClick={() => navigate(`/admin/budget/${budget.id}`)}
             >
               <Edit3 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Editar orçamento</span>
+              <span className="hidden sm:inline">Editar</span>
             </Button>
           </div>
         </div>
