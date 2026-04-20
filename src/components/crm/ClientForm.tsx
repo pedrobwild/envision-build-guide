@@ -27,11 +27,14 @@ import {
   CLIENT_SOURCES,
   CLIENT_STATUSES,
   useUpsertClient,
+  findOrphanBudgetsForClient,
+  linkBudgetsToClient,
   type Client,
   type ClientStatus,
 } from "@/hooks/useClients";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ClientFormProps {
   open: boolean;
