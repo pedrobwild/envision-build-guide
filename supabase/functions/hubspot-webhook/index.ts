@@ -112,17 +112,21 @@ Deno.serve(async (req) => {
       let estimatorOwnerId: string | null = null;
 
       if (orcamentistas && orcamentistas.length > 0) {
-        // Get the last assigned estimator
-        const { data: lastBudget } = await supabase
+        // Get the last assigned estimator (maybeSingle: pode não haver budget anterior)
+        const { data: lastBudget, error: lastBudgetErr } = await supabase
           .from("budgets")
           .select("estimator_owner_id")
           .not("estimator_owner_id", "is", null)
           .order("created_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
+
+        if (lastBudgetErr) {
+          console.error("hubspot-webhook: erro ao buscar último estimador:", lastBudgetErr);
+        }
 
         const orcamentistaIds = orcamentistas.map((o) => o.user_id);
-        const lastIdx = lastBudget
+        const lastIdx = lastBudget?.estimator_owner_id
           ? orcamentistaIds.indexOf(lastBudget.estimator_owner_id)
           : -1;
         const nextIdx = (lastIdx + 1) % orcamentistaIds.length;

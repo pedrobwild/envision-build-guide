@@ -510,7 +510,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
             ) : (
               <div className="space-y-3">
                 {tours.map((tour, index) => (
-                  <div key={index} className="flex items-start gap-2 p-3 rounded-lg border border-border bg-muted/30">
+                  <div key={tour.id ?? `${tour.room_id}-${index}`} className="flex items-start gap-2 p-3 rounded-lg border border-border bg-muted/30">
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-display font-semibold text-muted-foreground w-16 flex-shrink-0">Cômodo</span>

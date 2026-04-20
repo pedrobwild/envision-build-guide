@@ -44,8 +44,11 @@ export default function OrcamentoPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { data: budget, isLoading, error } = useOrcamentoBudget(projectId);
 
-  // Fallback to mock for "demo" slug or while loading fails
-  const resolvedBudget = budget ?? (projectId === "demo" || error ? mockBudget : null);
+  // Demo só é permitido quando explicitamente habilitado por env.
+  // Erros reais NÃO caem para mock — exibimos a tela de "não encontrado".
+  const allowDemo = import.meta.env.VITE_ALLOW_DEMO === "true";
+  const resolvedBudget =
+    budget ?? (projectId === "demo" && allowDemo ? mockBudget : null);
 
   if (isLoading && !resolvedBudget) {
     return (
@@ -61,7 +64,9 @@ export default function OrcamentoPage() {
         <div className="text-center space-y-2">
           <p className="text-lg font-display font-semibold text-foreground">Orçamento não encontrado</p>
           <p className="text-sm text-muted-foreground font-body">
-            Verifique o link ou entre em contato com a equipe.
+            {error
+              ? "Não foi possível carregar este orçamento. Verifique o link ou entre em contato com a equipe."
+              : "Verifique o link ou entre em contato com a equipe."}
           </p>
         </div>
       </div>

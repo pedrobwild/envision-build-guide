@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminLayout } from "@/components/AdminLayout";
 import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
@@ -18,7 +18,7 @@ const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const BudgetEditorV2 = lazy(() => import("./pages/BudgetEditorV2"));
-const BudgetEditor = lazy(() => import("./pages/BudgetEditor"));
+
 const PublicBudget = lazy(() => import("./pages/PublicBudget"));
 const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage"));
 const QAEvaluator = lazy(() => import("./pages/QAEvaluator"));
@@ -63,6 +63,12 @@ function AdminPage({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Redireciona /admin/budget/:budgetId/legacy → /admin/budget/:budgetId */
+function LegacyBudgetRedirect() {
+  const { budgetId } = useParams<{ budgetId: string }>();
+  return <Navigate to={`/admin/budget/${budgetId ?? ""}`} replace />;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -88,7 +94,7 @@ const App = () => (
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
                   <Route path="/admin/budget/:budgetId" element={<AdminPage><BudgetEditorV2 /></AdminPage>} />
-                  <Route path="/admin/budget/:budgetId/legacy" element={<AdminPage><BudgetEditor /></AdminPage>} />
+                  <Route path="/admin/budget/:budgetId/legacy" element={<LegacyBudgetRedirect />} />
                   <Route path="/admin/financeiro" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><FinancialHistory /></RoleGuard></AdminPage>} />
                   <Route path="/admin/solicitacoes" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><BudgetRequestsList /></RoleGuard></AdminPage>} />
                   <Route path="/admin/solicitacoes/nova" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><NewBudgetRequest /></RoleGuard></AdminPage>} />

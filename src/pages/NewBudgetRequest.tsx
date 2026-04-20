@@ -247,6 +247,8 @@ export default function NewBudgetRequest() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    // Guard contra double-submit (clicks rápidos / Enter duplicado)
+    if (loading) return;
     if (!clientName.trim()) {
       toast.error("Preencha ao menos o nome do cliente.");
       return;
