@@ -403,7 +403,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     <div className="py-12 lg:py-16" data-pdf-hide>
       <div className="mb-6">
         <h2 className="text-2xl lg:text-3xl font-display font-bold text-foreground tracking-tight">
-          124 projetos realizados pela Bwild em São Paulo
+          136 projetos realizados pela Bwild em São Paulo
         </h2>
         <p className="text-muted-foreground text-sm mt-1 font-body">
           Estamos presentes em mais de {TOTAL_NEIGHBORHOODS} bairros na região metropolitana
