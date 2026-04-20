@@ -66,6 +66,7 @@ import { toast } from "sonner";
 import { BlockingDialog } from "@/components/editor/BlockingDialog";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
+import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
 import { formatBRL } from "@/lib/formatBRL";
 
@@ -129,6 +130,7 @@ interface ProfileRow {
 }
 
 type ModuleKey =
+  | "unified"
   | "briefing"
   | "budget"
   | "activities"
@@ -769,6 +771,14 @@ export default function BudgetInternalDetail() {
         {/* MODULES GRID */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <ModuleCard
+            icon={Activity}
+            title="Tudo (Linha do Tempo)"
+            description="Status, notas, tarefas, reuniões e mensagens em uma só visão cronológica."
+            badge={{ label: "Novo", tone: "success" }}
+            active={activeModule === "unified"}
+            onClick={() => setActiveModule("unified")}
+          />
+          <ModuleCard
             icon={FileText}
             title="Briefing & Contexto"
             description={budget.briefing || budget.demand_context || "Sem briefing cadastrado ainda."}
@@ -915,6 +925,10 @@ export default function BudgetInternalDetail() {
                 </SheetHeader>
 
                 <div className="p-6">
+                  {activeModule === "unified" && budgetId && (
+                    <UnifiedActivityPanel budgetId={budgetId} getProfileName={getProfileName} />
+                  )}
+
                   {activeModule === "briefing" && (
                     <BriefingPanel
                       briefing={budget.briefing}
@@ -1111,6 +1125,7 @@ export default function BudgetInternalDetail() {
 }
 
 const moduleTitles: Record<ModuleKey, string> = {
+  unified: "Tudo em um só lugar",
   briefing: "Briefing & Contexto",
   budget: "Estrutura do Orçamento",
   activities: "Atividades & Notas",
@@ -1123,6 +1138,7 @@ const moduleTitles: Record<ModuleKey, string> = {
 };
 
 const moduleSubtitles: Record<ModuleKey, string> = {
+  unified: "Linha do tempo única com status, notas, tarefas, reuniões e mensagens.",
   briefing: "Contexto da demanda, observações internas e links de referência.",
   budget: "Seções, itens e composição financeira completa.",
   activities: "Histórico cronológico e notas internas da equipe.",
