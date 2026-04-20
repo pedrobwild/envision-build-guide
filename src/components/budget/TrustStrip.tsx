@@ -69,7 +69,7 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
               </a>
             ) : (
               <>
-                {"icon" in s && s.icon && (() => {
+                {"icon" in s && (s as { icon?: React.ElementType }).icon && (() => {
                   const Icon = (s as { icon: React.ElementType }).icon;
                   return <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />;
                 })()}

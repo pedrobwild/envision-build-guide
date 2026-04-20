@@ -113,10 +113,10 @@ export function SectionCard({
         )}
       >
         {/* ── Header ── */}
-        {hasCover ? (
+        {hasCover && section.cover_image_url ? (
           <div
             className="relative h-28 sm:h-36 overflow-hidden cursor-zoom-in group"
-            onClick={() => openLightbox(section.cover_image_url)}
+            onClick={() => openLightbox(section.cover_image_url!)}
           >
             <img
               src={section.cover_image_url}

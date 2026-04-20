@@ -61,16 +61,16 @@ export function ItemImageInline({
   const removeImage = async (imgId: string) => {
     await supabase.from("item_images").delete().eq("id", imgId);
     const updated = images.filter(i => i.id !== imgId);
-    if (updated.length > 0 && !updated.some(i => i.is_primary)) {
+    if (updated.length > 0 && !updated.some(i => i.is_primary) && updated[0].id) {
       updated[0] = { ...updated[0], is_primary: true };
-      await supabase.from("item_images").update({ is_primary: true }).eq("id", updated[0].id);
+      await supabase.from("item_images").update({ is_primary: true }).eq("id", updated[0].id!);
     }
     onImagesChange(updated);
   };
 
   const setPrimary = async (imgId: string) => {
     for (const img of images) {
-      if (img.is_primary) await supabase.from("item_images").update({ is_primary: false }).eq("id", img.id);
+      if (img.is_primary && img.id) await supabase.from("item_images").update({ is_primary: false }).eq("id", img.id);
     }
     await supabase.from("item_images").update({ is_primary: true }).eq("id", imgId);
     const updated = images.map(i => ({ ...i, is_primary: i.id === imgId }));
