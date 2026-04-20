@@ -301,6 +301,8 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       // Fit all pins after load — show entire territory on every device
       map.on("load", () => {
         map?.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 0 });
+        // Force a resize after load in case container was hidden/zero-width during init
+        requestAnimationFrame(() => safeResize());
       });
 
       // Prevent map canvas from stealing page scroll position on init
@@ -327,7 +329,10 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       setMapFailed(false);
       setMapLoaded(true);
       renderMarkers();
+      // Multiple resize attempts to handle Suspense/lazy mount race conditions
       requestAnimationFrame(() => safeResize());
+      setTimeout(() => safeResize(), 100);
+      setTimeout(() => safeResize(), 500);
     });
 
     map.on("error", (event: { error?: { message?: string } }) => {
