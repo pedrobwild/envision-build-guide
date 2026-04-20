@@ -9,6 +9,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -24,8 +27,9 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Pencil, Eye, MoreHorizontal, Copy, Handshake,
-  ShoppingBag, Archive, Trash2, GitCompare, Loader2,
+  ShoppingBag, Archive, Trash2, GitCompare, Loader2, Layers, Check,
 } from "lucide-react";
+import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
 
 interface BudgetActionsMenuProps {
   budget: {
@@ -37,6 +41,7 @@ interface BudgetActionsMenuProps {
     show_optional_items?: boolean;
     version_group_id?: string | null;
     version_number?: number | null;
+    pipeline_id?: string | null;
   };
   /** Extra menu items rendered before the separator (page-specific actions) */
   extraItems?: React.ReactNode;
