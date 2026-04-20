@@ -197,6 +197,7 @@ interface BudgetRow {
   version_group_id: string | null;
   is_current_version: boolean | null;
   is_published_version: boolean | null;
+  client_phone?: string | null;
 }
 
 export type DueFilter = "all" | "overdue" | "due_soon";
@@ -216,6 +217,8 @@ interface KanbanBoardProps {
   nextActionMap?: Map<string, NextActionSuggestion | null>;
   /** Callback quando o usuário clica no chip de próxima ação. */
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
+  /** Callback para abrir o drawer de comunicação/histórico. */
+  onOpenHistory?: (budget: BudgetRow) => void;
 }
 
 function getColumnForBudget(internalStatus: string) {
