@@ -53,17 +53,34 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
   }
 
   // Load template sections with their items + media_config
-  const { data: templateRow } = await supabase
+  const { data: templateRow, error: tplErr } = await supabase
     .from("budget_templates")
     .select("media_config")
     .eq("id", templateId)
-    .single();
+    .maybeSingle();
 
-  // Copy media_config from template to budget
-  if (templateRow?.media_config) {
+  if (tplErr) {
+    console.warn("Falha ao carregar template (media_config):", tplErr.message);
+  }
+
+  // Copy media_config from template to budget — only if it has actual content
+  const mc = templateRow?.media_config as
+    | { video3d?: string; projeto3d?: string[]; projetoExecutivo?: string[]; fotos?: string[] }
+    | null
+    | undefined;
+  const hasMediaContent =
+    !!mc &&
+    (
+      !!mc.video3d ||
+      (Array.isArray(mc.projeto3d) && mc.projeto3d.length > 0) ||
+      (Array.isArray(mc.projetoExecutivo) && mc.projetoExecutivo.length > 0) ||
+      (Array.isArray(mc.fotos) && mc.fotos.length > 0)
+    );
+
+  if (hasMediaContent) {
     const { error: mediaErr } = await supabase
       .from("budgets")
-      .update({ media_config: templateRow.media_config })
+      .update({ media_config: mc as unknown as Json })
       .eq("id", budgetId);
     if (mediaErr) {
       console.warn("Falha ao copiar media_config do template:", mediaErr.message);
