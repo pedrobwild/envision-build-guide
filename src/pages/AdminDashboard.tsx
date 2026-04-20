@@ -115,40 +115,6 @@ export default function AdminDashboard() {
     return computeDashboardMetrics(filteredBudgets, dateRange, profiles, deliveryTimestamps);
   }, [filteredBudgets, dateRange, profiles, deliveryTimestamps, loading]);
 
-  // Budget creation
-  const createBudget = async () => {
-    if (!user) return;
-    const publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-    const { data } = await supabase
-      .from("budgets")
-      .insert({ project_name: "Novo Projeto", client_name: "Cliente", created_by: user.id, public_id: publicId })
-      .select()
-      .single();
-    if (data) {
-      try {
-        const { seedFromTemplate } = await import("@/lib/seed-from-template");
-        await seedFromTemplate(data.id, "a01da86a-9184-4693-bd07-6798c2bf79b2");
-      } catch (e) {
-        toast.error("Erro ao aplicar template padrão.");
-      }
-      navigate(`/admin/budget/${data.id}`);
-    }
-  };
-
-  const createBudgetForTemplate = async () => {
-    if (!user) return;
-    const publicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-    const { data } = await supabase
-      .from("budgets")
-      .insert({ project_name: "Novo Projeto", client_name: "Cliente", created_by: user.id, public_id: publicId })
-      .select()
-      .single();
-    if (data) {
-      setTemplateBudgetId(data.id);
-      setTemplateDialogOpen(true);
-    }
-  };
-
   let step = 0;
 
   return (
