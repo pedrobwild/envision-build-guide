@@ -144,7 +144,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budget_comments_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_comments_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       budget_conversation_messages: {
         Row: {
@@ -281,7 +296,22 @@ export type Database = {
           to_status?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budget_events_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_events_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       budget_lost_reasons: {
         Row: {
