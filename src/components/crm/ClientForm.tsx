@@ -61,6 +61,7 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
   const { user } = useAuth();
   const { members: comerciais } = useTeamMembers("comercial");
   const upsert = useUpsertClient();
+  const queryClient = useQueryClient();
 
   // Dados do cliente
   const [name, setName] = useState("");
