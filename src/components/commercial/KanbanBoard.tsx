@@ -931,6 +931,9 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             dueFilter={dueFilter}
             syncedBudgetIds={syncedBudgetIds}
             pipelineMeta={pipelineMeta}
+            temperatureMap={temperatureMap}
+            nextActionMap={nextActionMap}
+            onNextAction={onNextAction}
           />
         ))}
       </div>
