@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RotBadge } from "@/components/admin/RotBadge";
 
 interface CompactKanbanCardProps {
   projectName: string;
