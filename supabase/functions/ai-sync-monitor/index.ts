@@ -152,12 +152,25 @@ Faça uma análise completa da saúde da integração. Inclua:
 
     // If auto_fix, parse and apply fixes
     if (action === "auto_fix") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let fixPlan: any;
+      const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+      const candidate = jsonMatch?.[0] ?? aiContent;
+      if (!candidate || typeof candidate !== "string") {
+        console.error("ai-sync-monitor: AI retornou conteúdo vazio", aiContent);
+        return new Response(JSON.stringify({
+          analysis: aiContent || "(vazio)",
+          fixes_applied: 0,
+          error: "AI não retornou conteúdo aproveitável.",
+        }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       try {
-        // Try to extract JSON from the response
-        const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
-        fixPlan = JSON.parse(jsonMatch ? jsonMatch[0] : aiContent);
-      } catch {
+        fixPlan = JSON.parse(candidate);
+      } catch (parseErr) {
+        console.error("ai-sync-monitor: JSON inválido da AI", { candidate, parseErr });
         return new Response(JSON.stringify({
           analysis: aiContent,
           fixes_applied: 0,

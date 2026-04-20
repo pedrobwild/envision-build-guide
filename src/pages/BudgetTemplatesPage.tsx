@@ -131,19 +131,11 @@ function TemplateDialog({
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Reset form state when dialog opens or template changes
-  const templateId = template?.id;
-  useState(() => {
+  // Sync form state with template prop (idiomático: useEffect)
+  useEffect(() => {
     setName(template?.name ?? "");
     setDescription(template?.description ?? "");
-  });
-  // Sync state when template prop changes
-  const prevTemplateRef = useRef(templateId);
-  if (prevTemplateRef.current !== templateId) {
-    prevTemplateRef.current = templateId;
-    setName(template?.name ?? "");
-    setDescription(template?.description ?? "");
-  }
+  }, [template?.id, template?.name, template?.description]);
 
   const isEdit = !!template;
 

@@ -61,6 +61,9 @@ export default function BudgetEditorV2() {
   const { data: currentVersionId } = useQuery({
     queryKey: ["current-version", budget?.version_group_id],
     queryFn: async () => {
+      // Guard: budget e version_group_id são exigidos pelo `enabled` abaixo,
+      // mas reasseguramos aqui para o type-checker e para resiliência em race conditions
+      if (!budget?.version_group_id) return null;
       const { data } = await supabase
         .from("budgets")
         .select("id")

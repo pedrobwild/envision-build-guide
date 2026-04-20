@@ -224,9 +224,16 @@ export default function PublicBudget() {
   }, [budget]);
 
   useEffect(() => {
+    const allowDemo = import.meta.env.VITE_ALLOW_DEMO === 'true';
     if (publicId === 'demo') {
-      setBudget(demoBudget as unknown as BudgetData);
-      setLoading(false);
+      if (allowDemo) {
+        setBudget(demoBudget as unknown as BudgetData);
+        setLoading(false);
+      } else {
+        setBudget(null);
+        setLoadError('Orçamento não encontrado.');
+        setLoading(false);
+      }
       return;
     }
     if (publicId) {
