@@ -1143,6 +1143,7 @@ export default function CommercialDashboard() {
               pipelineMeta={pipelineMetaMap}
               temperatureMap={temperatureMap}
               nextActionMap={nextActionMap}
+              leadScoreMap={leadScoreMap}
               onNextAction={handleNextActionClick}
               onOpenHistory={(b) => setHistoryBudget(b as unknown as BudgetRow)}
             />
