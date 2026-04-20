@@ -297,6 +297,10 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
           </DialogDescription>
         </DialogHeader>
 
+        {!initial?.id && (
+          <DuplicateBlock name={name} email={email} phone={phone} excludeId={initial?.id ?? null} />
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6 py-2">
           {/* === DADOS DO CLIENTE === */}
           <SectionGroup title="Dados do cliente">
