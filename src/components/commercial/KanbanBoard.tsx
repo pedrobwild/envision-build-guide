@@ -401,6 +401,7 @@ function SubSectionGroup({
                   temperature={temp}
                   nextAction={next}
                   onClick={() => onCardClick(b.id)}
+                  onOpenHistory={undefined}
                   onQuickAction={(action) => {
                     if (action === "open") onCardClick(b.id);
                     if (action === "nextAction" && next) onNextAction?.(b.id, next);
