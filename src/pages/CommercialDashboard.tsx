@@ -349,6 +349,12 @@ export default function CommercialDashboard() {
     return ids.map(id => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
   }, [isAdmin, budgets, getProfileName]);
 
+  // Lookup pipeline_id from active slug for filtering
+  const activePipelineId = useMemo(() => {
+    if (pipelineFilter === "all") return null;
+    return pipelines.find((p) => p.slug === pipelineFilter)?.id ?? null;
+  }, [pipelineFilter, pipelines]);
+
   const filtered = useMemo(() => {
     const result = budgets.filter(b => {
       const q = search.toLowerCase();
@@ -356,11 +362,11 @@ export default function CommercialDashboard() {
       const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
       if (!matchCommercial) return false;
 
+      if (activePipelineId !== null) {
+        if (b.pipeline_id !== activePipelineId) return false;
+      }
+
       if (dueFilter !== "all") {
-        // Use variant-based semantics from getDueInfo so the filter bucket
-        // matches the variant shown on each card and the Kanban column filter.
-        // "overdue" = "Vencidos / Hoje" (variants "overdue" + "today").
-        // "due_soon" = "Próximos (≤2d)" (variant "soon" only).
         const v = getDueInfo(b.due_at, b.internal_status).variant;
         if (dueFilter === "overdue" && v !== "overdue" && v !== "today") return false;
         if (dueFilter === "due_soon" && v !== "soon") return false;
@@ -392,7 +398,18 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [budgets, search, statusFilter, sortBy, commercialFilter, dueFilter]);
+  }, [budgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId]);
+
+  // Counts per pipeline (for the PipelineSwitcher tabs)
+  const pipelineCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const p of pipelines) map[p.slug] = 0;
+    for (const b of budgets) {
+      const slug = pipelines.find((p) => p.id === b.pipeline_id)?.slug;
+      if (slug) map[slug] = (map[slug] ?? 0) + 1;
+    }
+    return map;
+  }, [budgets, pipelines]);
 
   // Workflow groups for list view
   const isDefaultView = statusFilter === "all" && !search && dueFilter === "all" && commercialFilter === "all";
