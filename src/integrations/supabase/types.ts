@@ -1378,6 +1378,42 @@ export type Database = {
         }
         Relationships: []
       }
+      commercial_targets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deals_target: number
+          id: string
+          notes: string | null
+          owner_id: string | null
+          revenue_target_brl: number
+          target_month: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deals_target?: number
+          id?: string
+          notes?: string | null
+          owner_id?: string | null
+          revenue_target_brl?: number
+          target_month: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deals_target?: number
+          id?: string
+          notes?: string | null
+          owner_id?: string | null
+          revenue_target_brl?: number
+          target_month?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_metrics_snapshot: {
         Row: {
           active_commercial: number

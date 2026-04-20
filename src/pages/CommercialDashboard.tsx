@@ -54,6 +54,7 @@ import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/L
 import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
 import { LostIntelligencePanel } from "@/components/admin/LostIntelligencePanel";
+import { ForecastPanel } from "@/components/admin/ForecastPanel";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -1077,6 +1078,11 @@ export default function CommercialDashboard() {
           )}
           {showLostPanel && !loading && (
             <LostIntelligencePanel getProfileName={getProfileName} />
+          )}
+
+          {/* Forecast & Previsibilidade */}
+          {!loading && (
+            <ForecastPanel ownerFilter={null} isAdmin={isAdmin} />
           )}
 
           {/* Kanban view */}
