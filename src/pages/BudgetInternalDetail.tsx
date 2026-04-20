@@ -925,6 +925,10 @@ export default function BudgetInternalDetail() {
                 </SheetHeader>
 
                 <div className="p-6">
+                  {activeModule === "unified" && budgetId && (
+                    <UnifiedActivityPanel budgetId={budgetId} getProfileName={getProfileName} />
+                  )}
+
                   {activeModule === "briefing" && (
                     <BriefingPanel
                       briefing={budget.briefing}
