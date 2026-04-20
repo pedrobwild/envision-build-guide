@@ -559,7 +559,7 @@ export default function PublicBudget() {
 
           {/* Desktop sidebar */}
           <div className="hidden lg:block">
-            <div className="sticky top-4 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto pb-4 scrollbar-thin">
+            <div className="sticky top-4 space-y-4 pb-4">
               <BudgetSummary
                 sections={sections}
                 adjustments={adjustments}
