@@ -1091,7 +1091,7 @@ export default function CommercialDashboard() {
               temperatureMap={temperatureMap}
               nextActionMap={nextActionMap}
               onNextAction={handleNextActionClick}
-              onOpenHistory={(b) => setHistoryBudget(b)}
+              onOpenHistory={(b) => setHistoryBudget(b as unknown as BudgetRow)}
             />
           )}
 
