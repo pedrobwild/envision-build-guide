@@ -297,9 +297,7 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
           </DialogDescription>
         </DialogHeader>
 
-        {!initial?.id && (
-          <DuplicateBlock name={name} email={email} phone={phone} excludeId={initial?.id ?? null} />
-        )}
+        {!initial?.id && <DuplicateInlineCheck name={name} email={email} phone={phone} />}
 
         <form onSubmit={handleSubmit} className="space-y-6 py-2">
           {/* === DADOS DO CLIENTE === */}
@@ -727,6 +725,12 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
       </DialogContent>
     </Dialog>
   );
+}
+
+function DuplicateInlineCheck({ name, email, phone }: { name: string; email: string; phone: string }) {
+  const { matches } = useDuplicateClientCheck({ name, email, phone });
+  if (matches.length === 0) return null;
+  return <DuplicateClientAlert matches={matches} />;
 }
 
 function SectionGroup({ title, children }: { title: string; children: React.ReactNode }) {
