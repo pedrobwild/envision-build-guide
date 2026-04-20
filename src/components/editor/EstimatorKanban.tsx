@@ -244,15 +244,11 @@ function isHighPriority(p: string) {
 }
 
 function sortBudgets(budgets: BudgetRow[]): BudgetRow[] {
-  const po: Record<string, number> = { urgente: 0, alta: 1, normal: 2, baixa: 3 };
   return [...budgets].sort((a, b) => {
-    const aH = (po[a.priority] ?? 2) <= 1 ? 0 : 1;
-    const bH = (po[b.priority] ?? 2) <= 1 ? 0 : 1;
-    if (aH !== bH) return aH - bH;
-    if (a.due_at && b.due_at) return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
-    if (a.due_at) return -1;
-    if (b.due_at) return 1;
-    return (po[a.priority] ?? 2) - (po[b.priority] ?? 2);
+    // Mais recente primeiro (created_at desc)
+    const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return tb - ta;
   });
 }
 
