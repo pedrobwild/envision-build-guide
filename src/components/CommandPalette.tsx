@@ -26,6 +26,7 @@ import {
   Search,
   Inbox,
   ExternalLink,
+  CalendarClock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -43,11 +44,12 @@ interface ActionItem {
 }
 
 const NAV_ACTIONS: ActionItem[] = [
-  { id: "nav-dashboard", label: "Painel Geral", icon: LayoutDashboard, to: "/admin", roles: "all", keywords: "home dashboard inicio" },
-  { id: "nav-comercial", label: "Pipeline Comercial", icon: Briefcase, to: "/admin/comercial", roles: ["admin", "comercial"], keywords: "kanban vendas" },
-  { id: "nav-clients", label: "Clientes (CRM)", icon: Users, to: "/admin/crm", roles: ["admin", "comercial"], keywords: "carteira leads contatos" },
+  { id: "nav-dashboard", label: "Painel Geral", icon: LayoutDashboard, to: "/admin", roles: "all", shortcut: "G D", keywords: "home dashboard inicio" },
+  { id: "nav-comercial", label: "Pipeline Comercial", icon: Briefcase, to: "/admin/comercial", roles: ["admin", "comercial"], shortcut: "G C", keywords: "kanban vendas negocios" },
+  { id: "nav-agenda", label: "Agenda", icon: CalendarClock, to: "/admin/agenda", roles: ["admin", "comercial"], shortcut: "G A", keywords: "tarefas compromissos atividades" },
+  { id: "nav-clients", label: "Clientes (CRM)", icon: Users, to: "/admin/crm", roles: ["admin", "comercial"], shortcut: "G L", keywords: "carteira leads contatos" },
   { id: "nav-solicitacoes", label: "Solicitações", icon: FileText, to: "/admin/solicitacoes", roles: ["admin", "comercial"] },
-  { id: "nav-producao", label: "Pipeline Orçamentos", icon: Hammer, to: "/admin/producao", roles: ["admin", "orcamentista"], keywords: "estimativas producao" },
+  { id: "nav-producao", label: "Pipeline Orçamentos", icon: Hammer, to: "/admin/producao", roles: ["admin", "orcamentista"], shortcut: "G P", keywords: "estimativas producao" },
   { id: "nav-templates", label: "Templates", icon: LayoutTemplate, to: "/admin/templates", roles: ["admin", "orcamentista"] },
   { id: "nav-catalogo", label: "Catálogo", icon: Package, to: "/admin/catalogo", roles: ["admin", "orcamentista"] },
   { id: "nav-fotos", label: "Biblioteca de Fotos", icon: ImagePlus, to: "/admin/biblioteca-fotos", roles: ["admin", "orcamentista"] },
