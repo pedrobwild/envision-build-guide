@@ -63,6 +63,22 @@ export function PortalShowcase() {
           />
         </div>
 
+        <Button
+          asChild
+          className="w-full gap-2"
+          size="sm"
+        >
+          <a
+            href={PORTAL_DEMO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Acessar portal de obra demo em nova aba"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Experimentar o Portal — obra demo
+          </a>
+        </Button>
+
         <p className="text-xs text-muted-foreground font-body text-center">
           Acesso web e mobile durante toda a obra.
         </p>
