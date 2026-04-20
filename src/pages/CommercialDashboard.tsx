@@ -1114,6 +1114,11 @@ export default function CommercialDashboard() {
             <LostIntelligencePanel getProfileName={getProfileName} />
           )}
 
+          {/* Cadências automáticas — sugestões de próxima ação */}
+          {!loading && cadenceRows.length > 0 && (
+            <CadencePanel rows={cadenceRows} />
+          )}
+
           {/* Forecast & Previsibilidade */}
           {!loading && (
             <ForecastPanel ownerFilter={null} isAdmin={isAdmin} />
