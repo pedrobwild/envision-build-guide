@@ -134,32 +134,9 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2">
             <PeriodFilter value={dateRange} onChange={setDateRange} />
 
-            <div className="relative">
-              <Button size="sm" className="gap-1.5 h-8" onClick={() => setNewMenuOpen(!newMenuOpen)}>
-                <Plus className="h-3.5 w-3.5" /> Novo
-              </Button>
-              {newMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setNewMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-lg border border-border bg-popover shadow-lg py-1">
-                    <button onClick={() => { setNewMenuOpen(false); createBudget(); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
-                      <FileText className="h-4 w-4 text-muted-foreground" /> Em branco
-                    </button>
-                    {(isAdmin || isOrcamentista) && (
-                      <button onClick={() => { setNewMenuOpen(false); createBudgetForTemplate(); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
-                        <LayoutTemplate className="h-4 w-4 text-muted-foreground" /> Usar template
-                      </button>
-                    )}
-                    <button onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("pdf"); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
-                      <Upload className="h-4 w-4 text-muted-foreground" /> Importar PDF
-                    </button>
-                    <button onClick={() => { setNewMenuOpen(false); setImportOpen(true); setImportType("excel"); }} className="w-full px-3 py-2.5 text-left text-sm font-body text-foreground hover:bg-muted flex items-center gap-2.5">
-                      <FileSpreadsheet className="h-4 w-4 text-muted-foreground" /> Importar Planilha
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <Button size="sm" className="gap-1.5 h-8" onClick={() => setClientFormOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Novo cliente
+            </Button>
           </div>
         </div>
       </motion.div>
