@@ -46,6 +46,8 @@ import {
 import { INTERNAL_STATUSES, PRIORITIES, STATUS_GROUPS, type InternalStatus, type Priority } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RotBadge } from "@/components/admin/RotBadge";
+import type { BudgetPipelineMetaRow } from "@/hooks/useBudgetPipelineMeta";
 
 // Commercial Kanban column definitions
 const KANBAN_COLUMNS = [
@@ -203,6 +205,8 @@ interface KanbanBoardProps {
   getProfileName: (id: string | null) => string;
   dueFilter?: DueFilter;
   syncedBudgetIds?: Set<string>;
+  /** Mapa budgetId → meta de pipeline (dias parados, etc.). */
+  pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
 }
 
 function getColumnForBudget(internalStatus: string) {
@@ -319,6 +323,7 @@ function SubSectionGroup({
   getProfileName,
   compact = false,
   syncedBudgetIds = new Set(),
+  pipelineMeta,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -327,6 +332,7 @@ function SubSectionGroup({
   getProfileName: (id: string | null) => string;
   compact?: boolean;
   syncedBudgetIds?: Set<string>;
+  pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
@@ -370,6 +376,7 @@ function SubSectionGroup({
                 commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                 estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                 isSynced={syncedBudgetIds.has(b.id)}
+                daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                 onClick={() => onCardClick(b.id)}
                 onQuickAction={(action) => {
                   if (action === "open") onCardClick(b.id);
@@ -388,6 +395,7 @@ function SubSectionGroup({
                 onClick={() => onCardClick(b.id)}
                 getProfileName={getProfileName}
                 isSynced={syncedBudgetIds.has(b.id)}
+                daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
               />
             )}
           </div>
@@ -405,6 +413,7 @@ function KanbanColumn({
   getProfileName,
   dueFilter,
   syncedBudgetIds = new Set(),
+  pipelineMeta,
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
@@ -412,6 +421,7 @@ function KanbanColumn({
   getProfileName: (id: string | null) => string;
   dueFilter: DueFilter;
   syncedBudgetIds?: Set<string>;
+  pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
@@ -481,6 +491,7 @@ function KanbanColumn({
                   onCardClick={onCardClick}
                   getProfileName={getProfileName}
                   syncedBudgetIds={syncedBudgetIds}
+                  pipelineMeta={pipelineMeta}
                 />
               </div>
             ))}
@@ -508,6 +519,7 @@ function KanbanColumn({
                     onClick={() => onCardClick(b.id)}
                     getProfileName={getProfileName}
                     isSynced={syncedBudgetIds.has(b.id)}
+                    daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                   />
                 </div>
               );
@@ -531,12 +543,14 @@ function DraggableCard({
   onClick,
   getProfileName,
   isSynced,
+  daysInStage,
 }: {
   budget: BudgetRow;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
   isSynced?: boolean;
+  daysInStage?: number | null;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: budget.id,
@@ -550,7 +564,7 @@ function DraggableCard({
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} isSynced={isSynced} />
+      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} isSynced={isSynced} daysInStage={daysInStage} />
     </div>
   );
 }
@@ -562,6 +576,7 @@ function KanbanCard({
   onClick,
   getProfileName,
   isSynced,
+  daysInStage,
 }: {
   budget: BudgetRow;
   isDragging?: boolean;
@@ -569,6 +584,7 @@ function KanbanCard({
   onClick: () => void;
   getProfileName: (id: string | null) => string;
   isSynced?: boolean;
+  daysInStage?: number | null;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at, b.internal_status);
@@ -635,6 +651,9 @@ function KanbanCard({
             {due.label}
           </span>
         )}
+        {typeof daysInStage === "number" && (
+          <RotBadge daysInStage={daysInStage} />
+        )}
         {(b.version_number ?? 1) > 1 && (
           <span className="text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
             V{b.version_number}
@@ -651,7 +670,7 @@ function KanbanCard({
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set() }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
@@ -758,6 +777,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             getProfileName={getProfileName}
                             compact
                             syncedBudgetIds={syncedBudgetIds}
+                            pipelineMeta={pipelineMeta}
                           />
                         </div>
                       ));
@@ -791,6 +811,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             isSynced={syncedBudgetIds.has(b.id)}
+                            daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
@@ -833,6 +854,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             getProfileName={getProfileName}
             dueFilter={dueFilter}
             syncedBudgetIds={syncedBudgetIds}
+            pipelineMeta={pipelineMeta}
           />
         ))}
       </div>

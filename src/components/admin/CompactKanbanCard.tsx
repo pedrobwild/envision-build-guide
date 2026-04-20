@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RotBadge } from "@/components/admin/RotBadge";
 
 interface CompactKanbanCardProps {
   projectName: string;
@@ -20,6 +21,8 @@ interface CompactKanbanCardProps {
   estimatorName?: string;
   highPriority?: boolean;
   isSynced?: boolean;
+  /** Dias parado na etapa atual — exibe RotBadge se >= warnThreshold. */
+  daysInStage?: number | null;
   onClick: () => void;
   onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink") => void;
 }
@@ -78,6 +81,7 @@ export function CompactKanbanCard({
   commercialName,
   estimatorName,
   isSynced,
+  daysInStage,
   onClick,
   onQuickAction,
 }: CompactKanbanCardProps) {
@@ -237,6 +241,9 @@ export function CompactKanbanCard({
             </span>
           )}
           <div className="flex items-center gap-1">
+            {typeof daysInStage === "number" && (
+              <RotBadge daysInStage={daysInStage} />
+            )}
             {(versionNumber ?? 1) > 1 && (
               <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground ring-1 ring-border/40">
                 V{versionNumber}

@@ -45,6 +45,9 @@ import { ClientForm } from "@/components/crm/ClientForm";
 import { InlineEdit } from "@/components/ui/inline-edit";
 import { showUndoToast } from "@/lib/inline-edit-undo";
 import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
+import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
+import { useBudgetPipelineMeta } from "@/hooks/useBudgetPipelineMeta";
+import { PipelineSwitcher } from "@/components/admin/PipelineSwitcher";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -159,6 +162,7 @@ interface BudgetRow {
   is_published_version: boolean | null;
   budget_pdf_url: string | null;
   manual_total: number | null;
+  pipeline_id: string | null;
 }
 
 interface ProfileRow { id: string; full_name: string; }
@@ -229,10 +233,15 @@ export default function CommercialDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
+  const [pipelineFilter, setPipelineFilter] = useState<string>("all");
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
   const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
   const [newDealOpen, setNewDealOpen] = useState(false);
+
+  const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
+  const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
+  const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile, location.key]);
@@ -242,7 +251,7 @@ export default function CommercialDashboard() {
     const isAdmin = profile?.roles.includes("admin");
     let budgetQuery = supabase
       .from("budgets")
-      .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total")
+      .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id")
       .order("created_at", { ascending: false });
     if (!isAdmin) {
       // Inclui 'lead' (status default de novos negócios criados pelo trigger)
@@ -340,6 +349,12 @@ export default function CommercialDashboard() {
     return ids.map(id => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
   }, [isAdmin, budgets, getProfileName]);
 
+  // Lookup pipeline_id from active slug for filtering
+  const activePipelineId = useMemo(() => {
+    if (pipelineFilter === "all") return null;
+    return pipelines.find((p) => p.slug === pipelineFilter)?.id ?? null;
+  }, [pipelineFilter, pipelines]);
+
   const filtered = useMemo(() => {
     const result = budgets.filter(b => {
       const q = search.toLowerCase();
@@ -347,11 +362,11 @@ export default function CommercialDashboard() {
       const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
       if (!matchCommercial) return false;
 
+      if (activePipelineId !== null) {
+        if (b.pipeline_id !== activePipelineId) return false;
+      }
+
       if (dueFilter !== "all") {
-        // Use variant-based semantics from getDueInfo so the filter bucket
-        // matches the variant shown on each card and the Kanban column filter.
-        // "overdue" = "Vencidos / Hoje" (variants "overdue" + "today").
-        // "due_soon" = "Próximos (≤2d)" (variant "soon" only).
         const v = getDueInfo(b.due_at, b.internal_status).variant;
         if (dueFilter === "overdue" && v !== "overdue" && v !== "today") return false;
         if (dueFilter === "due_soon" && v !== "soon") return false;
@@ -383,7 +398,18 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [budgets, search, statusFilter, sortBy, commercialFilter, dueFilter]);
+  }, [budgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId]);
+
+  // Counts per pipeline (for the PipelineSwitcher tabs)
+  const pipelineCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const p of pipelines) map[p.slug] = 0;
+    for (const b of budgets) {
+      const slug = pipelines.find((p) => p.id === b.pipeline_id)?.slug;
+      if (slug) map[slug] = (map[slug] ?? 0) + 1;
+    }
+    return map;
+  }, [budgets, pipelines]);
 
   // Workflow groups for list view
   const isDefaultView = statusFilter === "all" && !search && dueFilter === "all" && commercialFilter === "all";
@@ -925,18 +951,26 @@ export default function CommercialDashboard() {
             </div>
           )}
 
+          {/* Pipeline switcher (Inbound / Indicação / Re-engajamento) */}
+          {(pipelinesLoading || pipelines.length > 0) && (
+            <PipelineSwitcher
+              pipelines={pipelines}
+              activeSlug={pipelineFilter}
+              onChange={setPipelineFilter}
+              counts={pipelineCounts}
+              loading={pipelinesLoading}
+            />
+          )}
+
           {/* Kanban view */}
           {!loading && viewMode === "kanban" && budgets.length > 0 && (
             <KanbanBoard
-              // Use the same `filtered` array the list view uses so search,
-              // statusFilter, commercialFilter and dueFilter all apply in the
-              // Kanban too. The board's internal dueFilter would otherwise
-              // operate on a different set of rows than the top-of-page cards.
               budgets={filtered}
               onStatusChange={changeStatus}
               onCardClick={(id) => navigate(`/admin/demanda/${id}`)}
               getProfileName={getProfileName}
               syncedBudgetIds={syncedBudgetIds}
+              pipelineMeta={pipelineMetaMap}
             />
           )}
 

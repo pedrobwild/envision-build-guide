@@ -9,6 +9,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -24,8 +27,9 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Pencil, Eye, MoreHorizontal, Copy, Handshake,
-  ShoppingBag, Archive, Trash2, GitCompare, Loader2,
+  ShoppingBag, Archive, Trash2, GitCompare, Loader2, Layers, Check,
 } from "lucide-react";
+import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
 
 interface BudgetActionsMenuProps {
   budget: {
@@ -37,6 +41,7 @@ interface BudgetActionsMenuProps {
     show_optional_items?: boolean;
     version_group_id?: string | null;
     version_number?: number | null;
+    pipeline_id?: string | null;
   };
   /** Extra menu items rendered before the separator (page-specific actions) */
   extraItems?: React.ReactNode;
@@ -63,6 +68,18 @@ export function BudgetActionsMenu({
   const [deleting, setDeleting] = useState(false);
   const [closingContract, setClosingContract] = useState(false);
   const [contractModalOpen, setContractModalOpen] = useState(false);
+  const { data: pipelines = [] } = useDealPipelines();
+
+  const movePipeline = async (pipelineId: string | null) => {
+    try {
+      await setBudgetPipeline(budget.id, pipelineId);
+      const target = pipelineId ? pipelines.find((p) => p.id === pipelineId)?.name ?? "pipeline" : "Sem pipeline";
+      toast.success(`Movido para ${target}`);
+      onRefresh?.();
+    } catch {
+      toast.error("Erro ao mover pipeline");
+    }
+  };
 
   const editPath = `/admin/budget/${budget.id}`;
   const hasPublicPage = !!budget.public_id;
@@ -342,6 +359,37 @@ export function BudgetActionsMenu({
             <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${budget.version_group_id}&right=${budget.id}`)}>
               <GitCompare className="h-4 w-4 mr-2" /> Comparar versões
             </DropdownMenuItem>
+          )}
+
+          {/* Move to pipeline */}
+          {pipelines.length > 0 && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Layers className="h-4 w-4 mr-2" /> Mover para pipeline
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-52">
+                {pipelines.map((p) => (
+                  <DropdownMenuItem key={p.id} onClick={() => movePipeline(p.id)}>
+                    <span className="flex items-center gap-2 flex-1">
+                      <span
+                        className="h-2 w-2 rounded-full bg-muted-foreground"
+                        style={p.color ? { backgroundColor: p.color } : undefined}
+                      />
+                      {p.name}
+                    </span>
+                    {budget.pipeline_id === p.id && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </DropdownMenuItem>
+                ))}
+                {budget.pipeline_id && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => movePipeline(null)}>
+                      <span className="text-muted-foreground">Remover pipeline</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
           )}
 
           {/* Page-specific extra items */}
