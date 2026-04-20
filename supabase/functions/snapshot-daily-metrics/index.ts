@@ -32,21 +32,39 @@ interface BudgetRow {
 interface SectionRow { budget_id: string; section_price: number | null; }
 interface ItemRow { section_id: string; internal_total: number | null; }
 
-async function sb(path: string, init?: RequestInit): Promise<unknown> {
-  const res = await fetch(`${SUPABASE_URL}${path}`, {
-    ...init,
-    headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`Supabase ${path} → ${res.status}: ${t}`);
+async function sb(path: string, init?: RequestInit, timeoutMs = 30000): Promise<unknown> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${SUPABASE_URL}${path}`, {
+      ...init,
+      signal: ctrl.signal,
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(`Supabase ${path} → ${res.status}: ${t}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json();
+}
+
+// Converte uma data YYYY-MM-DD (interpretada em America/Sao_Paulo, UTC-3 fixo
+// pois o BR não tem mais DST desde 2019) para os instantes UTC equivalentes
+// ao início e fim do dia local. Isso evita que orçamentos criados entre
+// 21h-00h UTC (18h-21h BRT) caiam no dia errado.
+function brtDayBoundsUtc(snapshotDate: string): { start: Date; end: Date } {
+  // BRT = UTC-3 → meia-noite local = 03:00 UTC do mesmo dia
+  const start = new Date(`${snapshotDate}T03:00:00Z`);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000 - 1);
+  return { start, end };
 }
 
 function clamp(n: number, min = 0, max = 100): number {
@@ -76,8 +94,8 @@ function calcHealthScore(kpis: {
 
 async function generateSnapshot(snapshotDate: string) {
   const now = new Date();
-  const dayStart = new Date(`${snapshotDate}T00:00:00Z`);
-  const dayEnd = new Date(`${snapshotDate}T23:59:59Z`);
+  // Bounds em UTC para o dia BRT (America/Sao_Paulo, UTC-3 sem DST)
+  const { start: dayStart, end: dayEnd } = brtDayBoundsUtc(snapshotDate);
   const weekAgo = new Date(now.getTime() - 7 * 86400 * 1000);
   const twoWeeksAgo = new Date(now.getTime() - 14 * 86400 * 1000);
 
@@ -97,8 +115,12 @@ async function generateSnapshot(snapshotDate: string) {
   }
   const totalOf = (b: BudgetRow) => b.manual_total ?? sectionsByBudget.get(b.id) ?? 0;
 
-  // 2. Volume métricas
-  const receivedToday = budgets.filter((b) => b.created_at >= dayStart.toISOString() && b.created_at <= dayEnd.toISOString()).length;
+  // 2. Volume métricas (recebidos no dia BRT, não UTC)
+  const dayStartIso = dayStart.toISOString();
+  const dayEndIso = dayEnd.toISOString();
+  const receivedToday = budgets.filter(
+    (b) => b.created_at >= dayStartIso && b.created_at <= dayEndIso,
+  ).length;
   const active = budgets.filter((b) => ACTIVE_STATUSES.includes(b.internal_status));
   const closed = budgets.filter((b) => CLOSED_STATUSES.includes(b.internal_status));
   const overdue = active.filter((b) => b.due_at && new Date(b.due_at) < now).length;

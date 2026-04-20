@@ -42,6 +42,21 @@ function pickNumber(obj: Record<string, unknown>, keys: string[]): number | null
   return null;
 }
 
+// Timeout wrapper para chamadas externas ao Elephan
+async function fetchWithTimeout(
+  input: string,
+  init: RequestInit = {},
+  timeoutMs = 15000,
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -115,7 +130,7 @@ Deno.serve(async (req) => {
 
   for (const id of idsToFetch) {
     try {
-      const r = await fetch(`${baseUrl}/transcribes/${id}`, {
+      const r = await fetchWithTimeout(`${baseUrl}/transcribes/${id}`, {
         headers: {
           Authorization: `Bearer ${ELEPHAN_API_KEY}`,
           Accept: "application/json",
