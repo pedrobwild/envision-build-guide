@@ -68,6 +68,18 @@ export function BudgetActionsMenu({
   const [deleting, setDeleting] = useState(false);
   const [closingContract, setClosingContract] = useState(false);
   const [contractModalOpen, setContractModalOpen] = useState(false);
+  const { data: pipelines = [] } = useDealPipelines();
+
+  const movePipeline = async (pipelineId: string | null) => {
+    try {
+      await setBudgetPipeline(budget.id, pipelineId);
+      const target = pipelineId ? pipelines.find((p) => p.id === pipelineId)?.name ?? "pipeline" : "Sem pipeline";
+      toast.success(`Movido para ${target}`);
+      onRefresh?.();
+    } catch {
+      toast.error("Erro ao mover pipeline");
+    }
+  };
 
   const editPath = `/admin/budget/${budget.id}`;
   const hasPublicPage = !!budget.public_id;
@@ -347,6 +359,37 @@ export function BudgetActionsMenu({
             <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${budget.version_group_id}&right=${budget.id}`)}>
               <GitCompare className="h-4 w-4 mr-2" /> Comparar versões
             </DropdownMenuItem>
+          )}
+
+          {/* Move to pipeline */}
+          {pipelines.length > 0 && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Layers className="h-4 w-4 mr-2" /> Mover para pipeline
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-52">
+                {pipelines.map((p) => (
+                  <DropdownMenuItem key={p.id} onClick={() => movePipeline(p.id)}>
+                    <span className="flex items-center gap-2 flex-1">
+                      <span
+                        className="h-2 w-2 rounded-full bg-muted-foreground"
+                        style={p.color ? { backgroundColor: p.color } : undefined}
+                      />
+                      {p.name}
+                    </span>
+                    {budget.pipeline_id === p.id && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </DropdownMenuItem>
+                ))}
+                {budget.pipeline_id && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => movePipeline(null)}>
+                      <span className="text-muted-foreground">Remover pipeline</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
           )}
 
           {/* Page-specific extra items */}
