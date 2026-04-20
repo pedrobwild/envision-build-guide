@@ -454,6 +454,7 @@ function KanbanColumn({
   pipelineMeta,
   temperatureMap,
   nextActionMap,
+  leadScoreMap,
   onNextAction,
   onOpenHistory,
 }: {
@@ -466,6 +467,7 @@ function KanbanColumn({
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
   temperatureMap?: Map<string, DealTemperatureResult>;
   nextActionMap?: Map<string, NextActionSuggestion | null>;
+  leadScoreMap?: Map<string, LeadScoreResult>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   onOpenHistory?: (budget: BudgetRow) => void;
 }) {
@@ -754,7 +756,7 @@ function KanbanCard({
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, onNextAction, onOpenHistory }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, leadScoreMap, onNextAction, onOpenHistory }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
