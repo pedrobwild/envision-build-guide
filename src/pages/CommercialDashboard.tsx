@@ -251,7 +251,6 @@ export default function CommercialDashboard() {
   const [nextActionBudgetId, setNextActionBudgetId] = useState<string | null>(null);
   const [nextActionPreset, setNextActionPreset] = useState<{ type: string; title: string } | null>(null);
   const [historyBudget, setHistoryBudget] = useState<BudgetRow | null>(null);
-  const [showLostPanel, setShowLostPanel] = useState(false);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
