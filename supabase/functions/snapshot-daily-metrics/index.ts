@@ -32,21 +32,39 @@ interface BudgetRow {
 interface SectionRow { budget_id: string; section_price: number | null; }
 interface ItemRow { section_id: string; internal_total: number | null; }
 
-async function sb(path: string, init?: RequestInit): Promise<unknown> {
-  const res = await fetch(`${SUPABASE_URL}${path}`, {
-    ...init,
-    headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`Supabase ${path} → ${res.status}: ${t}`);
+async function sb(path: string, init?: RequestInit, timeoutMs = 30000): Promise<unknown> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${SUPABASE_URL}${path}`, {
+      ...init,
+      signal: ctrl.signal,
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(`Supabase ${path} → ${res.status}: ${t}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json();
+}
+
+// Converte uma data YYYY-MM-DD (interpretada em America/Sao_Paulo, UTC-3 fixo
+// pois o BR não tem mais DST desde 2019) para os instantes UTC equivalentes
+// ao início e fim do dia local. Isso evita que orçamentos criados entre
+// 21h-00h UTC (18h-21h BRT) caiam no dia errado.
+function brtDayBoundsUtc(snapshotDate: string): { start: Date; end: Date } {
+  // BRT = UTC-3 → meia-noite local = 03:00 UTC do mesmo dia
+  const start = new Date(`${snapshotDate}T03:00:00Z`);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000 - 1);
+  return { start, end };
 }
 
 function clamp(n: number, min = 0, max = 100): number {
