@@ -439,6 +439,9 @@ function KanbanColumn({
   dueFilter,
   syncedBudgetIds = new Set(),
   pipelineMeta,
+  temperatureMap,
+  nextActionMap,
+  onNextAction,
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
@@ -447,6 +450,9 @@ function KanbanColumn({
   dueFilter: DueFilter;
   syncedBudgetIds?: Set<string>;
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
+  temperatureMap?: Map<string, DealTemperatureResult>;
+  nextActionMap?: Map<string, NextActionSuggestion | null>;
+  onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
