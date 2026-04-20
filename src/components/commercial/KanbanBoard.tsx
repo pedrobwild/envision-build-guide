@@ -47,7 +47,10 @@ import { INTERNAL_STATUSES, PRIORITIES, STATUS_GROUPS, type InternalStatus, type
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RotBadge } from "@/components/admin/RotBadge";
+import { DealTemperatureBadge } from "@/components/admin/DealTemperatureBadge";
+import { NextActionChip } from "@/components/admin/NextActionChip";
 import type { BudgetPipelineMetaRow } from "@/hooks/useBudgetPipelineMeta";
+import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-temperature";
 
 // Commercial Kanban column definitions
 const KANBAN_COLUMNS = [
@@ -207,6 +210,12 @@ interface KanbanBoardProps {
   syncedBudgetIds?: Set<string>;
   /** Mapa budgetId → meta de pipeline (dias parados, etc.). */
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
+  /** Mapa budgetId → score de temperatura. */
+  temperatureMap?: Map<string, DealTemperatureResult>;
+  /** Mapa budgetId → próxima ação sugerida. */
+  nextActionMap?: Map<string, NextActionSuggestion | null>;
+  /** Callback quando o usuário clica no chip de próxima ação. */
+  onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
 }
 
 function getColumnForBudget(internalStatus: string) {
