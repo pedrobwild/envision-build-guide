@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Smartphone, BarChart3, FileText, MessageSquare, Calendar, CreditCard, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { PORTAL_DEMO_URL } from "./PortalDemoAccessCard";
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
 const PORTAL_VIDEO_URL = `${SUPABASE_URL}/storage/v1/object/public/media/portal-demo.mp4`;
-const PORTAL_DEMO_URL = "https://portal-bwild.lovable.app/obra/6e451628-4818-4d36-8011-2db95c2b6b1b";
 
 const features = [
   { icon: FileText, text: "Projetos e documentos" },
