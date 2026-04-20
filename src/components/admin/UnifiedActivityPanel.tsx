@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 import { cn } from "@/lib/utils";
+import { BudgetTasksPanel } from "./BudgetTasksPanel";
+import { Separator } from "@/components/ui/separator";
 
 type Kind = "event" | "comment" | "activity" | "meeting" | "message";
 
@@ -243,7 +245,21 @@ export function UnifiedActivityPanel({ budgetId, getProfileName }: Props) {
   }, [data]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Painel de Tarefas com prazos */}
+      <BudgetTasksPanel budgetId={budgetId} getProfileName={getProfileName} />
+
+      <Separator />
+
+      <div className="space-y-1">
+        <h3 className="font-display text-sm font-semibold tracking-tight">
+          Histórico unificado
+        </h3>
+        <p className="text-[10.5px] text-muted-foreground font-body">
+          Todas as interações registradas — status, notas, tarefas, reuniões e mensagens.
+        </p>
+      </div>
+
       {/* Filtros + busca */}
       <div className="space-y-2.5 sticky top-0 bg-background/95 backdrop-blur z-10 -mx-1 px-1 pb-2 pt-1">
         <div className="relative">
