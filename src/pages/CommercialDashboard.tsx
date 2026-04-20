@@ -1153,6 +1153,25 @@ export default function CommercialDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <LostReasonDialog
+        open={!!pendingLostBudgetId}
+        onOpenChange={(open) => { if (!open) setPendingLostBudgetId(null); }}
+        onConfirm={confirmLostReason}
+      />
+
+      <NewActivityDialog
+        open={!!nextActionBudgetId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setNextActionBudgetId(null);
+            setNextActionPreset(null);
+          }
+        }}
+        budgetId={nextActionBudgetId ?? undefined}
+        presetType={nextActionPreset?.type}
+        presetTitle={nextActionPreset?.title}
+      />
     </>
   );
 }
