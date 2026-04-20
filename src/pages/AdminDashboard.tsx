@@ -6,11 +6,8 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { formatBRL } from "@/lib/formatBRL";
-import {
-  Plus, FileText, Upload, FileSpreadsheet, LayoutTemplate, Loader2,
-} from "lucide-react";
-import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
-import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
+import { Plus } from "lucide-react";
+import { ClientForm } from "@/components/crm/ClientForm";
 import { toast } from "sonner";
 import { subDays } from "date-fns";
 
