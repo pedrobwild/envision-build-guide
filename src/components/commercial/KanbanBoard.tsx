@@ -51,6 +51,7 @@ import { DealTemperatureBadge } from "@/components/admin/DealTemperatureBadge";
 import { NextActionChip } from "@/components/admin/NextActionChip";
 import type { BudgetPipelineMetaRow } from "@/hooks/useBudgetPipelineMeta";
 import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-temperature";
+import type { LeadScoreResult } from "@/lib/lead-score";
 
 // Commercial Kanban column definitions
 const KANBAN_COLUMNS = [
@@ -198,6 +199,7 @@ interface BudgetRow {
   is_current_version: boolean | null;
   is_published_version: boolean | null;
   client_phone?: string | null;
+  client_id?: string | null;
 }
 
 export type DueFilter = "all" | "overdue" | "due_soon";
@@ -215,6 +217,8 @@ interface KanbanBoardProps {
   temperatureMap?: Map<string, DealTemperatureResult>;
   /** Mapa budgetId → próxima ação sugerida. */
   nextActionMap?: Map<string, NextActionSuggestion | null>;
+  /** Mapa clientId → score do lead/cliente (Onda 5A). */
+  leadScoreMap?: Map<string, LeadScoreResult>;
   /** Callback quando o usuário clica no chip de próxima ação. */
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   /** Callback para abrir o drawer de comunicação/histórico. */
@@ -338,6 +342,7 @@ function SubSectionGroup({
   pipelineMeta,
   temperatureMap,
   nextActionMap,
+  leadScoreMap,
   onNextAction,
   onOpenHistory,
 }: {
@@ -351,6 +356,7 @@ function SubSectionGroup({
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
   temperatureMap?: Map<string, DealTemperatureResult>;
   nextActionMap?: Map<string, NextActionSuggestion | null>;
+  leadScoreMap?: Map<string, LeadScoreResult>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   onOpenHistory?: (budget: BudgetRow) => void;
 }) {
@@ -402,6 +408,7 @@ function SubSectionGroup({
                   daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                   temperature={temp}
                   nextAction={next}
+                  leadScore={b.client_id ? leadScoreMap?.get(b.client_id) ?? null : null}
                   onClick={() => onCardClick(b.id)}
                   onOpenHistory={onOpenHistory ? () => onOpenHistory(b) : undefined}
                   onQuickAction={(action) => {
@@ -447,6 +454,7 @@ function KanbanColumn({
   pipelineMeta,
   temperatureMap,
   nextActionMap,
+  leadScoreMap,
   onNextAction,
   onOpenHistory,
 }: {
@@ -459,6 +467,7 @@ function KanbanColumn({
   pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
   temperatureMap?: Map<string, DealTemperatureResult>;
   nextActionMap?: Map<string, NextActionSuggestion | null>;
+  leadScoreMap?: Map<string, LeadScoreResult>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   onOpenHistory?: (budget: BudgetRow) => void;
 }) {
@@ -533,6 +542,7 @@ function KanbanColumn({
                   pipelineMeta={pipelineMeta}
                   temperatureMap={temperatureMap}
                   nextActionMap={nextActionMap}
+                  leadScoreMap={leadScoreMap}
                   onNextAction={onNextAction}
                   onOpenHistory={onOpenHistory}
                 />
@@ -747,7 +757,7 @@ function KanbanCard({
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, onNextAction, onOpenHistory }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, leadScoreMap, onNextAction, onOpenHistory }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
@@ -857,6 +867,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             pipelineMeta={pipelineMeta}
                             temperatureMap={temperatureMap}
                             nextActionMap={nextActionMap}
+                            leadScoreMap={leadScoreMap}
                             onNextAction={onNextAction}
                           />
                         </div>
@@ -896,6 +907,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                             temperature={temp}
                             nextAction={next}
+                            leadScore={b.client_id ? leadScoreMap?.get(b.client_id) ?? null : null}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
@@ -942,6 +954,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             pipelineMeta={pipelineMeta}
             temperatureMap={temperatureMap}
             nextActionMap={nextActionMap}
+            leadScoreMap={leadScoreMap}
             onNextAction={onNextAction}
           />
         ))}

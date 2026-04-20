@@ -60,6 +60,8 @@ import { showUndoToast } from "@/lib/inline-edit-undo";
 import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
 import { BulkActionsBar } from "@/components/crm/BulkActionsBar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useLeadScores } from "@/hooks/useLeadScores";
+import { LeadScoreBadge } from "@/components/admin/LeadScoreBadge";
 
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = Object.entries(
   CLIENT_STATUSES,
@@ -94,6 +96,8 @@ export default function ClientsList() {
   const { data: clients = [], isLoading } = useClients(filters);
   const deleteClient = useDeleteClient();
   const upsertClient = useUpsertClient();
+  const clientIds = useMemo(() => clients.map((c) => c.id), [clients]);
+  const { data: scoresMap } = useLeadScores(clientIds);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRowWithStats | null>(null);
@@ -358,6 +362,7 @@ export default function ClientsList() {
                             </span>
                           )}
                           <p className="font-medium text-foreground font-body truncate">{c.name}</p>
+                          <LeadScoreBadge score={scoresMap?.get(c.id)} />
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5 truncate">
                           {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
@@ -474,7 +479,12 @@ export default function ClientsList() {
                     <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
                       {c.sequential_code ?? "—"}
                     </TableCell>
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate">{c.name}</span>
+                        <LeadScoreBadge score={scoresMap?.get(c.id)} />
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="text-xs text-muted-foreground space-y-0.5">
                         {c.email && (
