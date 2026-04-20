@@ -139,3 +139,38 @@ export function useRescheduleActivity() {
     },
   });
 }
+
+/** Cria nova atividade vinculada a um negócio. */
+export function useCreateActivity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      budget_id: string;
+      type: string;
+      title: string;
+      description?: string | null;
+      scheduled_for?: string | null;
+      owner_id?: string | null;
+    }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id ?? null;
+      const { error } = await supabase.from("budget_activities").insert({
+        budget_id: input.budget_id,
+        type: input.type,
+        title: input.title,
+        description: input.description ?? null,
+        scheduled_for: input.scheduled_for ?? null,
+        owner_id: input.owner_id ?? userId,
+        created_by: userId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budget_activities"] });
+      toast.success("Atividade criada");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Erro ao criar atividade");
+    },
+  });
+}

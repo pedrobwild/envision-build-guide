@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Filter,
   AlertTriangle,
+  Plus,
 } from "lucide-react";
 import { format, isPast, isToday, isTomorrow, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +26,7 @@ import {
   useCompleteActivity,
   type BudgetActivity,
 } from "@/hooks/useBudgetActivities";
+import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 
 const TYPE_ICONS: Record<string, React.ElementType> = {
   call: Phone,
@@ -53,11 +55,27 @@ function formatBucketLabel(bucketKey: string): string {
 export default function AgendaPage() {
   const navigate = useNavigate();
   const [includeOverdue, setIncludeOverdue] = useState(true);
+  const [newOpen, setNewOpen] = useState(false);
   const { data: activities = [], isLoading } = useUpcomingActivities({
     days: 14,
     includeOverdue,
   });
   const completeMut = useCompleteActivity();
+
+  // Atalho "A" abre o dialog de nova atividade quando estamos na Agenda
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const tgt = e.target as HTMLElement | null;
+      if (tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.isContentEditable)) return;
+      if (e.key.toLowerCase() === "a" && !newOpen) {
+        e.preventDefault();
+        setNewOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [newOpen]);
 
   const grouped = useMemo(() => {
     const buckets = new Map<string, BudgetActivity[]>();
@@ -103,8 +121,17 @@ export default function AgendaPage() {
             Incluir atrasadas
             <Switch checked={includeOverdue} onCheckedChange={setIncludeOverdue} />
           </label>
+          <Button size="sm" onClick={() => setNewOpen(true)} className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" />
+            Nova atividade
+            <kbd className="ml-1 hidden sm:inline-flex items-center rounded border border-border/40 bg-muted/50 px-1 font-mono text-[10px] font-medium text-muted-foreground">
+              A
+            </kbd>
+          </Button>
         </div>
       </header>
+
+      <NewActivityDialog open={newOpen} onOpenChange={setNewOpen} />
 
       {/* Summary chips */}
       <div className="flex items-center gap-2 flex-wrap">

@@ -2455,6 +2455,13 @@ export type Database = {
         }
         Returns: string
       }
+      run_reengagement_sweep: {
+        Args: never
+        Returns: {
+          moved_count: number
+          sample: Json
+        }[]
+      }
       set_primary_supplier_price: {
         Args: { p_catalog_item_id: string; p_price_id: string }
         Returns: undefined

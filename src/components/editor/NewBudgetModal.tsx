@@ -50,6 +50,7 @@ import { PRIORITIES, LOCATION_TYPES, type Priority } from "@/lib/role-constants"
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { seedFromTemplate } from "@/lib/seed-from-template";
 import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
+import { useDealPipelines } from "@/hooks/useDealPipelines";
 import { cn } from "@/lib/utils";
 
 /* ── Notion-like property row ── */
@@ -151,6 +152,11 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
   const { data: templates = [] } = useBudgetTemplates();
+  const { data: pipelines = [] } = useDealPipelines();
+  const inboundPipelineId = useMemo(
+    () => pipelines.find((p) => p.slug === "inbound")?.id ?? pipelines.find((p) => p.is_default)?.id ?? null,
+    [pipelines],
+  );
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
@@ -325,6 +331,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
         budget_pdf_url: budgetPdfPath,
         manual_total: manualTotal,
         public_id: publicId,
+        pipeline_id: inboundPipelineId,
       } as Record<string, unknown>)
       .select("id")
       .single();
