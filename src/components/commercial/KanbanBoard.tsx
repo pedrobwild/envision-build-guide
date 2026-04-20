@@ -523,6 +523,9 @@ function KanbanColumn({
                   getProfileName={getProfileName}
                   syncedBudgetIds={syncedBudgetIds}
                   pipelineMeta={pipelineMeta}
+                  temperatureMap={temperatureMap}
+                  nextActionMap={nextActionMap}
+                  onNextAction={onNextAction}
                 />
               </div>
             ))}
@@ -534,6 +537,8 @@ function KanbanColumn({
               const prevHighPrio = idx > 0 && isHighPriority(sorted[idx - 1].priority);
               const currHighPrio = isHighPriority(b.priority);
               const showDivider = idx > 0 && prevHighPrio && !currHighPrio;
+              const temp = temperatureMap?.get(b.id) ?? null;
+              const next = nextActionMap?.get(b.id) ?? null;
 
               return (
                 <div key={b.id}>
@@ -551,6 +556,9 @@ function KanbanColumn({
                     getProfileName={getProfileName}
                     isSynced={syncedBudgetIds.has(b.id)}
                     daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
+                    temperature={temp}
+                    nextAction={next}
+                    onNextAction={(s) => onNextAction?.(b.id, s)}
                   />
                 </div>
               );
