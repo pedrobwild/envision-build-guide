@@ -244,19 +244,6 @@ export default function AdminDashboard() {
         />
       </motion.div>
 
-      {/* ───── AGING & SLA RISK ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
-          Aging do backlog e risco de SLA
-        </h2>
-        <BacklogAgingPanel
-          agingBuckets={metrics?.agingBuckets ?? []}
-          slaRiskItems={metrics?.slaRiskItems ?? []}
-          stalledByStage={metrics?.stalledByStage ?? []}
-          loading={loading}
-        />
-      </motion.div>
-
       {/* ───── BACKLOG BY STATUS + FINANCIAL ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
