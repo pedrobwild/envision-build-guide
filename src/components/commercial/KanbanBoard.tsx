@@ -197,6 +197,7 @@ interface BudgetRow {
   version_group_id: string | null;
   is_current_version: boolean | null;
   is_published_version: boolean | null;
+  client_phone?: string | null;
 }
 
 export type DueFilter = "all" | "overdue" | "due_soon";
@@ -216,6 +217,8 @@ interface KanbanBoardProps {
   nextActionMap?: Map<string, NextActionSuggestion | null>;
   /** Callback quando o usuário clica no chip de próxima ação. */
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
+  /** Callback para abrir o drawer de comunicação/histórico. */
+  onOpenHistory?: (budget: BudgetRow) => void;
 }
 
 function getColumnForBudget(internalStatus: string) {
@@ -336,6 +339,7 @@ function SubSectionGroup({
   temperatureMap,
   nextActionMap,
   onNextAction,
+  onOpenHistory,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -348,6 +352,7 @@ function SubSectionGroup({
   temperatureMap?: Map<string, DealTemperatureResult>;
   nextActionMap?: Map<string, NextActionSuggestion | null>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
+  onOpenHistory?: (budget: BudgetRow) => void;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
@@ -398,6 +403,7 @@ function SubSectionGroup({
                   temperature={temp}
                   nextAction={next}
                   onClick={() => onCardClick(b.id)}
+                  onOpenHistory={onOpenHistory ? () => onOpenHistory(b) : undefined}
                   onQuickAction={(action) => {
                     if (action === "open") onCardClick(b.id);
                     if (action === "nextAction" && next) onNextAction?.(b.id, next);
@@ -442,6 +448,7 @@ function KanbanColumn({
   temperatureMap,
   nextActionMap,
   onNextAction,
+  onOpenHistory,
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
@@ -453,6 +460,7 @@ function KanbanColumn({
   temperatureMap?: Map<string, DealTemperatureResult>;
   nextActionMap?: Map<string, NextActionSuggestion | null>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
+  onOpenHistory?: (budget: BudgetRow) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
@@ -526,6 +534,7 @@ function KanbanColumn({
                   temperatureMap={temperatureMap}
                   nextActionMap={nextActionMap}
                   onNextAction={onNextAction}
+                  onOpenHistory={onOpenHistory}
                 />
               </div>
             ))}
@@ -738,7 +747,7 @@ function KanbanCard({
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, onNextAction }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, onNextAction, onOpenHistory }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();

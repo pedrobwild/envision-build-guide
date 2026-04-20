@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy } from "lucide-react";
+import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
@@ -32,6 +32,8 @@ interface CompactKanbanCardProps {
   nextAction?: NextActionSuggestion | null;
   onClick: () => void;
   onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink" | "nextAction") => void;
+  /** Callback opcional para abrir o histórico/comunicação do negócio. */
+  onOpenHistory?: () => void;
 }
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
@@ -93,6 +95,7 @@ export function CompactKanbanCard({
   nextAction,
   onClick,
   onQuickAction,
+  onOpenHistory,
 }: CompactKanbanCardProps) {
   const prio = PRIORITIES[priority as Priority] ?? PRIORITIES.normal;
   const statusMeta = INTERNAL_STATUSES[internalStatus as InternalStatus];
@@ -270,6 +273,17 @@ export function CompactKanbanCard({
           </div>
         </div>
       </motion.div>
+      {onOpenHistory && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onOpenHistory(); }}
+          className="absolute top-1.5 right-1.5 z-10 h-5 w-5 rounded-full bg-card/80 border border-border/60 text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Ver histórico e comunicação"
+          aria-label="Histórico"
+        >
+          <History className="h-3 w-3" />
+        </button>
+      )}
       {nextAction && (
         <div className="mt-1 px-0.5">
           <NextActionChip
