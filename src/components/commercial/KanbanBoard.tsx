@@ -542,6 +542,7 @@ function KanbanColumn({
                   pipelineMeta={pipelineMeta}
                   temperatureMap={temperatureMap}
                   nextActionMap={nextActionMap}
+                  leadScoreMap={leadScoreMap}
                   onNextAction={onNextAction}
                   onOpenHistory={onOpenHistory}
                 />
@@ -866,6 +867,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             pipelineMeta={pipelineMeta}
                             temperatureMap={temperatureMap}
                             nextActionMap={nextActionMap}
+                            leadScoreMap={leadScoreMap}
                             onNextAction={onNextAction}
                           />
                         </div>
@@ -905,6 +907,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                             temperature={temp}
                             nextAction={next}
+                            leadScore={b.client_id ? leadScoreMap?.get(b.client_id) ?? null : null}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
@@ -951,6 +954,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             pipelineMeta={pipelineMeta}
             temperatureMap={temperatureMap}
             nextActionMap={nextActionMap}
+            leadScoreMap={leadScoreMap}
             onNextAction={onNextAction}
           />
         ))}
