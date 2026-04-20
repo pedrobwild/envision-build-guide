@@ -251,6 +251,39 @@ export default function CommercialDashboard() {
   const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
   const { data: activityMetaMap } = useBudgetActivityMeta(budgetIds);
 
+  // Score de temperatura + sugestão de próxima ação para cada card
+  const temperatureMap = useMemo(() => {
+    const map = new Map<string, DealTemperatureResult>();
+    for (const b of budgets) {
+      const meta = activityMetaMap?.get(b.id);
+      const stageMeta = pipelineMetaMap?.get(b.id);
+      const result = computeDealTemperature({
+        daysSinceLastActivity: meta?.days_since_last_activity ?? null,
+        daysInStage: stageMeta?.days_in_stage ?? null,
+        manualTotal: b.manual_total ?? null,
+        internalStatus: b.internal_status,
+      });
+      map.set(b.id, result);
+    }
+    return map;
+  }, [budgets, activityMetaMap, pipelineMetaMap]);
+
+  const nextActionMap = useMemo(() => {
+    const map = new Map<string, NextActionSuggestion | null>();
+    for (const b of budgets) {
+      const meta = activityMetaMap?.get(b.id);
+      const stageMeta = pipelineMetaMap?.get(b.id);
+      const sugg = suggestNextAction({
+        internalStatus: b.internal_status,
+        daysSinceLastActivity: meta?.days_since_last_activity ?? null,
+        daysInStage: stageMeta?.days_in_stage ?? null,
+        hasScheduledActivity: meta?.has_scheduled ?? false,
+      });
+      map.set(b.id, sugg);
+    }
+    return map;
+  }, [budgets, activityMetaMap, pipelineMetaMap]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile, location.key]);
 
@@ -470,6 +503,12 @@ export default function CommercialDashboard() {
       if (target) { setContractUploadBudget(target); return; }
     }
 
+    // Forçar registro de motivo ao marcar como perdido
+    if (newStatus === "lost" && current.internal_status !== "lost") {
+      setPendingLostBudgetId(budgetId);
+      return;
+    }
+
     const { error } = await supabase
       .from("budgets")
       .update({ internal_status: newStatus, updated_at: new Date().toISOString() })
@@ -492,6 +531,53 @@ export default function CommercialDashboard() {
     setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, internal_status: newStatus, updated_at: new Date().toISOString() } : b));
     toast.success(`Status atualizado para "${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}"`);
   }
+
+  async function confirmLostReason(payload: LostReasonPayload) {
+    if (!pendingLostBudgetId || !user) return;
+    const budgetId = pendingLostBudgetId;
+    const current = budgets.find(b => b.id === budgetId);
+    // 1) salva motivo (upsert por budget_id)
+    const { error: lostErr } = await supabase
+      .from("budget_lost_reasons")
+      .upsert({
+        budget_id: budgetId,
+        reason_category: payload.reason_category,
+        reason_detail: payload.reason_detail || null,
+        competitor_name: payload.competitor_name ?? null,
+        competitor_value: payload.competitor_value ?? null,
+        created_by: user.id,
+      }, { onConflict: "budget_id" });
+    if (lostErr) {
+      toast.error("Erro ao registrar motivo", { description: lostErr.message });
+      return;
+    }
+    // 2) move o card para Perdido
+    const { error } = await supabase
+      .from("budgets")
+      .update({ internal_status: "lost", updated_at: new Date().toISOString() })
+      .eq("id", budgetId);
+    if (error) {
+      toast.error("Erro ao atualizar status", { description: error.message });
+      return;
+    }
+    await supabase.from("budget_events").insert({
+      budget_id: budgetId,
+      user_id: user.id,
+      event_type: "status_change",
+      from_status: current?.internal_status ?? null,
+      to_status: "lost",
+      note: `Motivo: ${payload.reason_category}`,
+    });
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, internal_status: "lost", updated_at: new Date().toISOString() } : b));
+    setPendingLostBudgetId(null);
+    toast.success("Negócio marcado como perdido");
+  }
+
+  function handleNextActionClick(budgetId: string, sugg: NextActionSuggestion) {
+    setNextActionPreset({ type: sugg.type, title: sugg.label });
+    setNextActionBudgetId(budgetId);
+  }
+
 
   async function claimBudget(budgetId: string) {
     if (!user) return;
@@ -979,6 +1065,9 @@ export default function CommercialDashboard() {
               getProfileName={getProfileName}
               syncedBudgetIds={syncedBudgetIds}
               pipelineMeta={pipelineMetaMap}
+              temperatureMap={temperatureMap}
+              nextActionMap={nextActionMap}
+              onNextAction={handleNextActionClick}
             />
           )}
 
@@ -1064,6 +1153,25 @@ export default function CommercialDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <LostReasonDialog
+        open={!!pendingLostBudgetId}
+        onOpenChange={(open) => { if (!open) setPendingLostBudgetId(null); }}
+        onConfirm={confirmLostReason}
+      />
+
+      <NewActivityDialog
+        open={!!nextActionBudgetId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setNextActionBudgetId(null);
+            setNextActionPreset(null);
+          }
+        }}
+        budgetId={nextActionBudgetId ?? undefined}
+        presetType={nextActionPreset?.type}
+        presetTitle={nextActionPreset?.title}
+      />
     </>
   );
 }

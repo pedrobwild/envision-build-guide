@@ -86,7 +86,6 @@ export default function AgendaPage() {
       arr.push(a);
       buckets.set(key, arr);
     }
-    // Sort buckets: overdue first, then today, then tomorrow, then chronologically
     const order = (k: string) => {
       if (k === "overdue") return -2;
       if (k === "today") return -1;
@@ -95,6 +94,28 @@ export default function AgendaPage() {
     };
     return [...buckets.entries()].sort((a, b) => order(a[0]) - order(b[0]));
   }, [activities]);
+
+  // Agrupamento por negócio dentro de uma lista de atividades
+  function groupByBudget(items: BudgetActivity[]) {
+    const map = new Map<string, BudgetActivity[]>();
+    for (const a of items) {
+      const arr = map.get(a.budget_id) ?? [];
+      arr.push(a);
+      map.set(a.budget_id, arr);
+    }
+    return [...map.entries()];
+  }
+
+  // "Zona de Foco" = Atrasadas + Hoje
+  const focusItems = useMemo(
+    () =>
+      activities.filter((a) => {
+        if (!a.scheduled_for) return false;
+        const d = new Date(a.scheduled_for);
+        return isToday(d) || (isPast(d) && !isToday(d));
+      }),
+    [activities],
+  );
 
   const overdueCount = activities.filter(
     (a) => a.scheduled_for && isPast(new Date(a.scheduled_for)) && !isToday(new Date(a.scheduled_for)),
@@ -168,7 +189,100 @@ export default function AgendaPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {grouped.map(([bucketKey, items]) => {
+          {/* Zona de Foco — Atrasadas + Hoje agrupadas por negócio */}
+          {focusItems.length > 0 && (
+            <Card className="border-l-4 border-l-destructive bg-gradient-to-br from-destructive/[0.03] to-warning/[0.03] p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center">
+                  <AlertTriangle className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="font-display font-bold text-foreground text-sm">Zona de Foco</h2>
+                  <p className="text-[11px] text-muted-foreground font-body">
+                    {overdueCount > 0 && `${overdueCount} atrasada${overdueCount !== 1 ? "s" : ""}`}
+                    {overdueCount > 0 && todayCount > 0 && " · "}
+                    {todayCount > 0 && `${todayCount} para hoje`}
+                  </p>
+                </div>
+                <Badge variant="outline" className="bg-background/60 font-mono text-xs">
+                  {focusItems.length}
+                </Badge>
+              </div>
+              <div className="space-y-3">
+                {groupByBudget(focusItems).map(([budgetId, items]) => {
+                  const ctx = items[0];
+                  return (
+                    <div key={budgetId} className="rounded-lg bg-background/60 ring-1 ring-border/40 p-2.5">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/admin/demanda/${budgetId}`)}
+                        className="flex items-center gap-1.5 text-xs font-display font-semibold text-foreground hover:text-primary transition-colors mb-1.5 w-full text-left"
+                      >
+                        <FileText className="h-3 w-3 shrink-0" />
+                        <span className="truncate">
+                          {ctx.budget_sequential_code ? `${ctx.budget_sequential_code} · ` : ""}
+                          {ctx.budget_project_name || ctx.budget_client_name || "Negócio"}
+                        </span>
+                        <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4 ml-auto">
+                          {items.length}
+                        </Badge>
+                      </button>
+                      <div className="space-y-1">
+                        {items.map((a) => {
+                          const Icon = TYPE_ICONS[a.type] ?? FileText;
+                          const time = a.scheduled_for ? format(new Date(a.scheduled_for), "HH:mm") : "—";
+                          const isOverdue =
+                            a.scheduled_for &&
+                            isPast(new Date(a.scheduled_for)) &&
+                            !isToday(new Date(a.scheduled_for));
+                          return (
+                            <div
+                              key={a.id}
+                              className={cn(
+                                "flex items-center gap-2 px-2 py-1.5 rounded-md group/item hover:bg-muted/50 transition-colors",
+                                isOverdue && "bg-destructive/[0.04]",
+                              )}
+                            >
+                              <Icon
+                                className={cn(
+                                  "h-3 w-3 shrink-0",
+                                  isOverdue ? "text-destructive" : "text-muted-foreground",
+                                )}
+                              />
+                              <span className="font-body text-xs text-foreground truncate flex-1">
+                                {a.title}
+                              </span>
+                              <span
+                                className={cn(
+                                  "text-[10px] font-mono tabular-nums shrink-0",
+                                  isOverdue ? "text-destructive font-semibold" : "text-muted-foreground",
+                                )}
+                              >
+                                {isOverdue ? format(new Date(a.scheduled_for!), "dd/MM") : time}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                onClick={() => completeMut.mutate({ id: a.id })}
+                              >
+                                <CheckCircle2 className="h-3 w-3" />
+                                OK
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          {grouped
+            .filter(([k]) => k !== "overdue" && k !== "today")
+            .map(([bucketKey, items]) => {
             const isOverdueBucket = bucketKey === "overdue";
             return (
               <section key={bucketKey}>
