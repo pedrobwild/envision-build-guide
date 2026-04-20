@@ -846,6 +846,9 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             compact
                             syncedBudgetIds={syncedBudgetIds}
                             pipelineMeta={pipelineMeta}
+                            temperatureMap={temperatureMap}
+                            nextActionMap={nextActionMap}
+                            onNextAction={onNextAction}
                           />
                         </div>
                       ));
@@ -857,6 +860,8 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                       const prevHigh = idx > 0 && isHighPriority(sorted[idx - 1].priority);
                       const currHigh = isHighPriority(b.priority);
                       const showDivider = idx > 0 && prevHigh && !currHigh;
+                      const temp = temperatureMap?.get(b.id) ?? null;
+                      const next = nextActionMap?.get(b.id) ?? null;
                       return (
                         <div key={b.id}>
                           {showDivider && (
@@ -880,9 +885,12 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             isSynced={syncedBudgetIds.has(b.id)}
                             daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
+                            temperature={temp}
+                            nextAction={next}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
+                              if (action === "nextAction" && next) onNextAction?.(b.id, next);
                               if (action === "copyLink") {
                                 if (b.public_id) {
                                   navigator.clipboard.writeText(getPublicBudgetUrl(b.public_id));
