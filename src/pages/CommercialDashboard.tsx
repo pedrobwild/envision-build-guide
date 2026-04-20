@@ -54,9 +54,7 @@ import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, 
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
-import { LostIntelligencePanel } from "@/components/admin/LostIntelligencePanel";
 import { ForecastPanel } from "@/components/admin/ForecastPanel";
-import { CadencePanel } from "@/components/admin/CadencePanel";
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
