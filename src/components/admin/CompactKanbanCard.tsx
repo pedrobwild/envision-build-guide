@@ -249,7 +249,8 @@ export function CompactKanbanCard({
               {statusMeta.icon} {statusMeta.label}
             </span>
           )}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap justify-end">
+            {temperature && <DealTemperatureBadge result={temperature} compact />}
             {typeof daysInStage === "number" && (
               <RotBadge daysInStage={daysInStage} />
             )}
@@ -269,6 +270,15 @@ export function CompactKanbanCard({
           </div>
         </div>
       </motion.div>
+      {nextAction && (
+        <div className="mt-1 px-0.5">
+          <NextActionChip
+            suggestion={nextAction}
+            compact
+            onClick={() => onQuickAction?.("nextAction")}
+          />
+        </div>
+      )}
     </div>
   );
 }
