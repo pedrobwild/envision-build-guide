@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export const PORTAL_DEMO_EMAIL = "demo@bwild.com.br";
 export const PORTAL_DEMO_PASSWORD = "123456";
-export const PORTAL_DEMO_URL = `https://portal-bwild.lovable.app/obra/6e451628-4818-4d36-8011-2db95c2b6b1b?email=${encodeURIComponent(PORTAL_DEMO_EMAIL)}&password=${encodeURIComponent(PORTAL_DEMO_PASSWORD)}`;
+export const PORTAL_DEMO_URL = `https://portal-bwild.lovable.app/auth?email=${encodeURIComponent(PORTAL_DEMO_EMAIL)}&password=${encodeURIComponent(PORTAL_DEMO_PASSWORD)}`;
 
 /**
  * Card destacado para o cliente acessar a obra demo do Portal BWild.
