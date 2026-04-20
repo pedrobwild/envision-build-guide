@@ -150,7 +150,7 @@ export default function NewBudgetRequest() {
   const { members: comerciais } = useTeamMembers("comercial");
   const { members: orcamentistas } = useTeamMembers("orcamentista");
   const { data: templates } = useBudgetTemplates();
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
   const [nextEstimatorId, setNextEstimatorId] = useState<string | null>(null);
 
   // Pré-preenche a partir de ?client_id=&name=&email=&phone= (vindo do CRM)
@@ -786,7 +786,7 @@ export default function NewBudgetRequest() {
                     <SelectValue placeholder="Sem template (orçamento em branco)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem template (em branco)</SelectItem>
+                    <SelectItem value="none">Sem template (em branco)</SelectItem>
                     {templates.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                     ))}
