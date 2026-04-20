@@ -339,6 +339,7 @@ function SubSectionGroup({
   temperatureMap,
   nextActionMap,
   onNextAction,
+  onOpenHistory,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -351,6 +352,7 @@ function SubSectionGroup({
   temperatureMap?: Map<string, DealTemperatureResult>;
   nextActionMap?: Map<string, NextActionSuggestion | null>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
+  onOpenHistory?: (budget: BudgetRow) => void;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
@@ -401,7 +403,7 @@ function SubSectionGroup({
                   temperature={temp}
                   nextAction={next}
                   onClick={() => onCardClick(b.id)}
-                  onOpenHistory={undefined}
+                  onOpenHistory={onOpenHistory ? () => onOpenHistory(b) : undefined}
                   onQuickAction={(action) => {
                     if (action === "open") onCardClick(b.id);
                     if (action === "nextAction" && next) onNextAction?.(b.id, next);
