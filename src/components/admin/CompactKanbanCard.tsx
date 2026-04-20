@@ -233,13 +233,30 @@ export function CompactKanbanCard({
             )}
           </div>
 
-          {/* Line 2: client · location · owner */}
+          {/* Line 2: datas (criação + atualização ou prazo) · responsável */}
           <div className="flex items-center gap-1.5 mt-1 text-[10.5px] text-muted-foreground font-body leading-tight">
-            <span className="truncate font-medium text-foreground/70">{clientName}</span>
-            {location && (
+            {createdLabel && (
+              <span className="truncate" title="Data de criação">
+                <span className="opacity-60">Criado:</span>{" "}
+                <span className="font-medium text-foreground/70">{createdLabel}</span>
+              </span>
+            )}
+            {mode === "commercial" && updatedLabel && (
               <>
                 <span className="opacity-30">•</span>
-                <span className="truncate">{location}</span>
+                <span className="truncate" title="Última atualização">
+                  <span className="opacity-60">Atualizado:</span>{" "}
+                  <span className="font-medium text-foreground/70">{updatedLabel}</span>
+                </span>
+              </>
+            )}
+            {mode === "estimator" && dueLabelShort && (
+              <>
+                <span className="opacity-30">•</span>
+                <span className="truncate" title="Prazo de entrega">
+                  <span className="opacity-60">Prazo:</span>{" "}
+                  <span className="font-medium text-foreground/70">{dueLabelShort}</span>
+                </span>
               </>
             )}
             {(commercialName || estimatorName) && (
