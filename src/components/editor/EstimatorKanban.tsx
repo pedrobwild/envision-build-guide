@@ -512,17 +512,26 @@ function EstimatorCard({
         )}
       </div>
 
-      <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1">
-        <User className="h-3 w-3 shrink-0" />
-        <span className="truncate">{b.client_name}</span>
+      <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-body mb-1.5 flex-wrap">
+        {b.created_at && (
+          <span className="inline-flex items-center gap-1" title="Data de solicitação">
+            <Calendar className="h-3 w-3 shrink-0" />
+            <span className="opacity-70">Solicitado</span>
+            <span className="font-medium text-foreground/80">
+              {format(new Date(b.created_at), "dd MMM", { locale: ptBR })}
+            </span>
+          </span>
+        )}
+        {b.due_at && (
+          <span className="inline-flex items-center gap-1" title="Prazo de entrega">
+            <span className="opacity-30">•</span>
+            <span className="opacity-70">Prazo</span>
+            <span className="font-medium text-foreground/80">
+              {format(new Date(b.due_at), "dd MMM", { locale: ptBR })}
+            </span>
+          </span>
+        )}
       </div>
-
-      {(b.bairro || b.city) && (
-        <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-body mb-1">
-          <Building2 className="h-3 w-3 shrink-0" />
-          <span className="truncate">{[b.bairro, b.city].filter(Boolean).join(", ")}</span>
-        </div>
-      )}
 
       {(b.commercial_owner_id || b.estimator_owner_id) && (
         <div className="flex items-center gap-1 flex-wrap text-[10px] text-muted-foreground font-body mb-1.5">
