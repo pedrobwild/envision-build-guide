@@ -244,52 +244,6 @@ export default function AdminDashboard() {
         />
       </motion.div>
 
-      {/* ───── BACKLOG BY STATUS + FINANCIAL ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
-          Eficiência operacional e resultado financeiro
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <BacklogByStatusChart
-            data={metrics?.backlogByStatus ?? []}
-            loading={loading}
-          />
-          <div className="lg:col-span-2">
-            <RevenueChart
-              data={metrics?.monthlyFinancials ?? []}
-              loading={loading}
-            />
-          </div>
-        </div>
-
-        {/* Financial summary */}
-        <div className="grid grid-cols-3 gap-4 mt-4">
-          <div className="rounded-xl border border-border bg-card p-4">
-            <KpiCardCompact
-              label="Receita fechada"
-              value={metrics ? formatBRL(metrics.revenue) : "—"}
-              subtitle={metrics != null && metrics.revenueChange != null ? `${metrics.revenueChange > 0 ? "+" : ""}${metrics.revenueChange}% vs anterior` : undefined}
-              loading={loading}
-            />
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <KpiCardCompact
-              label="Ticket médio"
-              value={metrics?.avgTicket ? formatBRL(metrics.avgTicket) : "—"}
-              subtitle={metrics ? `${metrics.closedCount} contrato${metrics.closedCount !== 1 ? "s" : ""}` : undefined}
-              loading={loading}
-            />
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <KpiCardCompact
-              label="Contratos no período"
-              value={metrics ? String(metrics.closedCount) : "—"}
-              loading={loading}
-            />
-          </div>
-        </div>
-      </motion.div>
-
       {/* ───── PERFORMANCE DA EQUIPE ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
