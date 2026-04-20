@@ -392,7 +392,8 @@ export default function NewBudgetRequest() {
 
       if (error || !inserted) {
         console.error("Budget insert error:", error?.message, error?.details, error?.hint, error);
-        toast.error(`Erro ao criar solicitação: ${error?.message || "resposta vazia"}`);
+        const detail = [error?.message, error?.details, error?.hint].filter(Boolean).join(" · ");
+        toast.error(`Erro ao criar solicitação: ${detail || "resposta vazia"}`, { duration: 10000 });
         return;
       }
 
