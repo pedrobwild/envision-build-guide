@@ -86,7 +86,6 @@ export default function AgendaPage() {
       arr.push(a);
       buckets.set(key, arr);
     }
-    // Sort buckets: overdue first, then today, then tomorrow, then chronologically
     const order = (k: string) => {
       if (k === "overdue") return -2;
       if (k === "today") return -1;
@@ -95,6 +94,28 @@ export default function AgendaPage() {
     };
     return [...buckets.entries()].sort((a, b) => order(a[0]) - order(b[0]));
   }, [activities]);
+
+  // Agrupamento por negócio dentro de uma lista de atividades
+  function groupByBudget(items: BudgetActivity[]) {
+    const map = new Map<string, BudgetActivity[]>();
+    for (const a of items) {
+      const arr = map.get(a.budget_id) ?? [];
+      arr.push(a);
+      map.set(a.budget_id, arr);
+    }
+    return [...map.entries()];
+  }
+
+  // "Zona de Foco" = Atrasadas + Hoje
+  const focusItems = useMemo(
+    () =>
+      activities.filter((a) => {
+        if (!a.scheduled_for) return false;
+        const d = new Date(a.scheduled_for);
+        return isToday(d) || (isPast(d) && !isToday(d));
+      }),
+    [activities],
+  );
 
   const overdueCount = activities.filter(
     (a) => a.scheduled_for && isPast(new Date(a.scheduled_for)) && !isToday(new Date(a.scheduled_for)),
