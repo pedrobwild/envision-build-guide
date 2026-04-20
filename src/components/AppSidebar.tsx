@@ -18,7 +18,7 @@ import {
   Inbox,
   Route as RouteIcon,
   BarChart3,
-} from "lucide-react";
+  CalendarClock,
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
