@@ -44,6 +44,7 @@ const DEMO_PORTFOLIO_IDS = (import.meta.env.VITE_DEMO_PORTFOLIO_IDS ?? "2aa03496
 const NeighborhoodDensityMap = lazy(() => import("@/components/budget/NeighborhoodDensityMap").then(m => ({ default: m.NeighborhoodDensityMap })));
 const ProjectGallery = lazy(() => import("@/components/budget/ProjectGallery").then(m => ({ default: m.ProjectGallery })));
 const PortalShowcase = lazy(() => import("@/components/budget/PortalShowcase").then(m => ({ default: m.PortalShowcase })));
+const PortalDemoAccessCard = lazy(() => import("@/components/budget/PortalDemoAccessCard").then(m => ({ default: m.PortalDemoAccessCard })));
 const RoomDetailModal = lazy(() => import("@/components/budget/RoomDetailModal").then(m => ({ default: m.RoomDetailModal })));
 const ReformTimeline = lazy(() => import("@/components/budget/ReformTimeline").then(m => ({ default: m.ReformTimeline })));
 
