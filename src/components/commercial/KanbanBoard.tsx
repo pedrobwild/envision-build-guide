@@ -491,6 +491,7 @@ function KanbanColumn({
                   onCardClick={onCardClick}
                   getProfileName={getProfileName}
                   syncedBudgetIds={syncedBudgetIds}
+                  pipelineMeta={pipelineMeta}
                 />
               </div>
             ))}
@@ -518,6 +519,7 @@ function KanbanColumn({
                     onClick={() => onCardClick(b.id)}
                     getProfileName={getProfileName}
                     isSynced={syncedBudgetIds.has(b.id)}
+                    daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
                   />
                 </div>
               );
@@ -541,12 +543,14 @@ function DraggableCard({
   onClick,
   getProfileName,
   isSynced,
+  daysInStage,
 }: {
   budget: BudgetRow;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
   isSynced?: boolean;
+  daysInStage?: number | null;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: budget.id,
@@ -560,7 +564,7 @@ function DraggableCard({
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} isSynced={isSynced} />
+      <KanbanCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} isSynced={isSynced} daysInStage={daysInStage} />
     </div>
   );
 }
