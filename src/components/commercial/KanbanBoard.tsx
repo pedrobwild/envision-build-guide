@@ -413,6 +413,7 @@ function KanbanColumn({
   getProfileName,
   dueFilter,
   syncedBudgetIds = new Set(),
+  pipelineMeta,
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
@@ -420,6 +421,7 @@ function KanbanColumn({
   getProfileName: (id: string | null) => string;
   dueFilter: DueFilter;
   syncedBudgetIds?: Set<string>;
+  pipelineMeta?: Map<string, BudgetPipelineMetaRow>;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
