@@ -48,6 +48,7 @@ import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
 import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
 import { useBudgetPipelineMeta } from "@/hooks/useBudgetPipelineMeta";
 import { useBudgetActivityMeta } from "@/hooks/useBudgetActivityMeta";
+import { useLeadScores } from "@/hooks/useLeadScores";
 import { PipelineSwitcher } from "@/components/admin/PipelineSwitcher";
 import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, type NextActionSuggestion } from "@/lib/deal-temperature";
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
@@ -172,6 +173,7 @@ interface BudgetRow {
   manual_total: number | null;
   pipeline_id: string | null;
   client_phone: string | null;
+  client_id: string | null;
 }
 
 interface ProfileRow { id: string; full_name: string; }
@@ -257,6 +259,12 @@ export default function CommercialDashboard() {
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
   const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
   const { data: activityMetaMap } = useBudgetActivityMeta(budgetIds);
+  // Onda 5A: scores de lead por cliente (agregado e cacheado)
+  const clientIds = useMemo(
+    () => budgets.map((b) => b.client_id).filter((v): v is string => !!v),
+    [budgets],
+  );
+  const { data: leadScoreMap } = useLeadScores(clientIds);
 
   // Score de temperatura + sugestão de próxima ação para cada card
   const temperatureMap = useMemo(() => {
@@ -332,7 +340,7 @@ export default function CommercialDashboard() {
     const isAdmin = profile?.roles.includes("admin");
     let budgetQuery = supabase
       .from("budgets")
-      .select("id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
+      .select("id, client_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
       .order("created_at", { ascending: false });
     if (!isAdmin) {
       // Inclui 'lead' (status default de novos negócios criados pelo trigger)
@@ -1135,6 +1143,7 @@ export default function CommercialDashboard() {
               pipelineMeta={pipelineMetaMap}
               temperatureMap={temperatureMap}
               nextActionMap={nextActionMap}
+              leadScoreMap={leadScoreMap}
               onNextAction={handleNextActionClick}
               onOpenHistory={(b) => setHistoryBudget(b as unknown as BudgetRow)}
             />
