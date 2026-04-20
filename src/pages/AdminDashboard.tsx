@@ -320,7 +320,7 @@ export default function AdminDashboard() {
         onOpenChange={setClientFormOpen}
         onSaved={(client) => {
           setClientFormOpen(false);
-          if (client?.id) navigate(`/admin/clientes/${client.id}`);
+          if (client?.id) navigate(`/admin/crm/${client.id}`);
         }}
       />
     </div>
