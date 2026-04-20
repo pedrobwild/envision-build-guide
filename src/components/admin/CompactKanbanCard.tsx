@@ -127,7 +127,11 @@ export function CompactKanbanCard({
   };
 
   const initials = getInitials(clientName);
-  const location = [bairro, city].filter(Boolean).join(", ");
+  // Datas exibidas no card (substituem cliente/bairro)
+  const fmtDate = (iso?: string | null) => (iso ? format(new Date(iso), "dd MMM", { locale: ptBR }) : null);
+  const createdLabel = fmtDate(createdAt);
+  const updatedLabel = fmtDate(updatedAt);
+  const dueLabelShort = fmtDate(dueAt);
 
   return (
     <div className="relative overflow-hidden rounded-xl">
