@@ -233,10 +233,15 @@ export default function CommercialDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
+  const [pipelineFilter, setPipelineFilter] = useState<string>("all");
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
   const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
   const [newDealOpen, setNewDealOpen] = useState(false);
+
+  const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
+  const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
+  const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (user && profile) loadData(); }, [user, profile, location.key]);
