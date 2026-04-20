@@ -44,6 +44,13 @@ export type Database = {
             foreignKeyName: "adjustments_budget_id_fkey"
             columns: ["budget_id"]
             isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adjustments_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
@@ -96,6 +103,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "budget_activities_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "budget_activities_budget_id_fkey"
             columns: ["budget_id"]
@@ -221,6 +235,13 @@ export type Database = {
             foreignKeyName: "budget_conversations_budget_id_fkey"
             columns: ["budget_id"]
             isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_conversations_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
@@ -294,6 +315,13 @@ export type Database = {
           reason_detail?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "budget_lost_reasons_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: true
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "budget_lost_reasons_budget_id_fkey"
             columns: ["budget_id"]
@@ -372,6 +400,13 @@ export type Database = {
             foreignKeyName: "budget_meetings_budget_id_fkey"
             columns: ["budget_id"]
             isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_meetings_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
@@ -409,6 +444,13 @@ export type Database = {
           section_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "budget_optional_selections_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "budget_optional_selections_budget_id_fkey"
             columns: ["budget_id"]
@@ -594,6 +636,13 @@ export type Database = {
             foreignKeyName: "budget_tours_budget_id_fkey"
             columns: ["budget_id"]
             isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_tours_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
@@ -655,6 +704,7 @@ export type Database = {
           metragem: string | null
           notes: string | null
           parent_budget_id: string | null
+          pipeline_id: string | null
           pipeline_stage: string | null
           prazo_dias_uteis: number | null
           priority: string
@@ -739,6 +789,7 @@ export type Database = {
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
+          pipeline_id?: string | null
           pipeline_stage?: string | null
           prazo_dias_uteis?: number | null
           priority?: string
@@ -823,6 +874,7 @@ export type Database = {
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
+          pipeline_id?: string | null
           pipeline_stage?: string | null
           prazo_dias_uteis?: number | null
           priority?: string
@@ -865,6 +917,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "deal_pipelines"
             referencedColumns: ["id"]
           },
           {
@@ -1430,6 +1489,45 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_pipelines: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          order_index: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          order_index?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          order_index?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       elephan_sync_state: {
         Row: {
           error_message: string | null
@@ -1767,6 +1865,13 @@ export type Database = {
             foreignKeyName: "lead_sources_budget_id_fkey"
             columns: ["budget_id"]
             isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_sources_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
@@ -1848,6 +1953,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_budget_id_fkey"
             columns: ["budget_id"]
@@ -2007,6 +2119,13 @@ export type Database = {
             foreignKeyName: "rooms_budget_id_fkey"
             columns: ["budget_id"]
             isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rooms_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
@@ -2062,6 +2181,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sections_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sections_budget_id_fkey"
             columns: ["budget_id"]
@@ -2205,6 +2331,25 @@ export type Database = {
       }
     }
     Views: {
+      budget_pipeline_view: {
+        Row: {
+          days_in_stage: number | null
+          id: string | null
+          pipeline_id: string | null
+          pipeline_name: string | null
+          pipeline_slug: string | null
+          stage_entered_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "deal_pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_stats: {
         Row: {
           active_budgets: number | null
@@ -2222,6 +2367,7 @@ export type Database = {
     }
     Functions: {
       archive_old_lead_payloads: { Args: never; Returns: number }
+      budget_days_in_stage: { Args: { p_budget_id: string }; Returns: number }
       calc_lead_time_from_events: {
         Args: { p_from: string; p_to: string }
         Returns: {
