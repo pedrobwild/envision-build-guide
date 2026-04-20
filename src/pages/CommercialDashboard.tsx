@@ -1065,6 +1065,9 @@ export default function CommercialDashboard() {
               getProfileName={getProfileName}
               syncedBudgetIds={syncedBudgetIds}
               pipelineMeta={pipelineMetaMap}
+              temperatureMap={temperatureMap}
+              nextActionMap={nextActionMap}
+              onNextAction={handleNextActionClick}
             />
           )}
 
