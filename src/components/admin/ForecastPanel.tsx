@@ -126,9 +126,9 @@ export function ForecastPanel({ ownerFilter, isAdmin = false }: ForecastPanelPro
                   {formatBRL(projected)}
                 </div>
                 <div className="text-[10px] text-muted-foreground">
-                  Fechado: <span className="text-emerald-600 font-medium">{formatBRL(bucket.closedRevenue)}</span>
+                  Fechado: <span className="text-success font-medium">{formatBRL(bucket.closedRevenue)}</span>
                   {" + "}
-                  Ponderado: <span className="text-amber-600 font-medium">{formatBRL(bucket.weighted)}</span>
+                  Ponderado: <span className="text-warning font-medium">{formatBRL(bucket.weighted)}</span>
                 </div>
               </div>
 
@@ -141,7 +141,7 @@ export function ForecastPanel({ ownerFilter, isAdmin = false }: ForecastPanelPro
                       Meta: {formatBRL(bucket.revenueTarget)}
                     </span>
                     {projectedPct !== null && (
-                      <span className={projectedPct >= 100 ? "text-emerald-600 font-semibold" : "text-foreground"}>
+                      <span className={projectedPct >= 100 ? "text-success font-semibold" : "text-foreground"}>
                         {projectedPct.toFixed(0)}%
                       </span>
                     )}
