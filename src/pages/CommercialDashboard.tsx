@@ -1104,29 +1104,6 @@ export default function CommercialDashboard() {
             />
           )}
 
-          {/* Toggle Inteligência de Perda */}
-          {!loading && (
-            <div className="flex items-center justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-destructive"
-                onClick={() => setShowLostPanel((v) => !v)}
-              >
-                <XCircle className="h-3.5 w-3.5" />
-                {showLostPanel ? "Ocultar" : "Ver"} Inteligência de Perda
-              </Button>
-            </div>
-          )}
-          {showLostPanel && !loading && (
-            <LostIntelligencePanel getProfileName={getProfileName} />
-          )}
-
-          {/* Cadências automáticas — sugestões de próxima ação */}
-          {!loading && cadenceRows.length > 0 && (
-            <CadencePanel rows={cadenceRows} />
-          )}
-
           {/* Forecast & Previsibilidade */}
           {!loading && (
             <ForecastPanel ownerFilter={null} isAdmin={isAdmin} />
