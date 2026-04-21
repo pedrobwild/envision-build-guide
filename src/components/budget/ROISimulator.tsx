@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
@@ -7,6 +7,7 @@ import {
   Info,
   CalendarCheck2,
   ChevronDown,
+  Maximize2,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,10 @@ import {
   formatPct,
   type DistrictRow,
 } from "@/data/districtMetrics";
+
+const ROISimulatorModal = lazy(() =>
+  import("./ROISimulatorModal").then((m) => ({ default: m.ROISimulatorModal })),
+);
 
 interface ROISimulatorProps {
   total: number;
