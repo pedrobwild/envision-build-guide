@@ -18,6 +18,8 @@ import {
   Trash2,
   Sparkles,
   ChevronDown,
+  Filter,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,6 +78,17 @@ const TYPE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
 interface Props {
   budgetId: string;
   getProfileName: (id: string | null) => string;
+  /**
+   * Filtro contextual baseado no módulo ativo da sidebar de demanda.
+   * Quando definido, filtra as ações por tipo e/ou palavras-chave no
+   * título/descrição. Pode ser limpo pelo usuário via botão "X".
+   */
+  contextFilter?: {
+    label: string;
+    types?: string[];
+    keywords?: string[];
+    onClear?: () => void;
+  } | null;
 }
 
 /**
@@ -84,7 +97,7 @@ interface Props {
  */
 type TaskFilter = "all" | "pending" | "overdue" | "due_soon" | "completed";
 
-export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
+export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Props) {
   const qc = useQueryClient();
   const [openNew, setOpenNew] = useState(false);
   const [initialValues, setInitialValues] = useState<ActivityInitialValues | null>(null);
@@ -167,8 +180,28 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
     onError: (err) => toast.error(err instanceof Error ? err.message : "Erro"),
   });
 
-  const { pending, completed, overdue, dueSoon, counts, visible } = useMemo(() => {
-    const all = data ?? [];
+  const { counts, visible, contextHidden } = useMemo(() => {
+    const raw = data ?? [];
+
+    // Aplica filtro contextual (módulo da sidebar) antes de tudo
+    const matchesContext = (a: Activity): boolean => {
+      if (!contextFilter) return true;
+      const types = contextFilter.types ?? [];
+      const keywords = (contextFilter.keywords ?? []).map((k) => k.toLowerCase());
+      if (types.length === 0 && keywords.length === 0) return true;
+
+      if (types.length > 0 && types.includes(a.type)) return true;
+
+      if (keywords.length > 0) {
+        const hay = `${a.title ?? ""} ${a.description ?? ""}`.toLowerCase();
+        if (keywords.some((k) => hay.includes(k))) return true;
+      }
+      return false;
+    };
+
+    const all = raw.filter(matchesContext);
+    const contextHidden = raw.length - all.length;
+
     const pending = all.filter((a) => !a.completed_at);
     const completed = all
       .filter((a) => !!a.completed_at)
@@ -207,8 +240,8 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
         visible = completed;
         break;
     }
-    return { pending, completed, overdue, dueSoon, counts, visible };
-  }, [data, filter]);
+    return { counts, visible, contextHidden };
+  }, [data, filter, contextFilter]);
 
   function submitOutcome() {
     if (!outcomeId) return;
@@ -290,7 +323,32 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
         </div>
       </div>
 
-      {/* Filter chips */}
+      {/* Context chip — quando filtrado por módulo da sidebar */}
+      {contextFilter && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/[0.04] px-2.5 py-1.5">
+          <Filter className="h-3 w-3 text-primary shrink-0" />
+          <p className="text-[11px] font-body text-foreground leading-tight flex-1 min-w-0">
+            Filtrando por contexto:{" "}
+            <span className="font-semibold text-primary">{contextFilter.label}</span>
+            <span className="text-muted-foreground ml-1.5 tabular-nums">
+              ({counts.all}
+              {contextHidden > 0 ? ` de ${counts.all + contextHidden}` : ""})
+            </span>
+          </p>
+          {contextFilter.onClear && (
+            <button
+              type="button"
+              onClick={contextFilter.onClear}
+              className="inline-flex items-center gap-1 text-[10.5px] font-body text-muted-foreground hover:text-foreground rounded px-1.5 py-0.5 hover:bg-muted/60 transition-colors shrink-0"
+              title="Mostrar todas as ações"
+            >
+              <X className="h-3 w-3" />
+              Limpar
+            </button>
+          )}
+        </div>
+      )}
+
       {(counts.all > 0 || isLoading) && (
         <div className="flex items-center gap-1.5 flex-wrap">
           {FILTERS.map((f) => {
@@ -337,23 +395,58 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
       ) : counts.all === 0 ? (
         <div className="text-center py-10 border border-dashed border-border rounded-lg">
           <Circle className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-          <p className="text-xs text-muted-foreground font-body mb-3">
-            Nenhuma ação criada ainda. Comece organizando o follow-up.
-          </p>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => openWithTemplate(null)}
-            className="h-7 gap-1 text-[11px]"
-          >
-            <Plus className="h-3 w-3" />
-            Criar primeira ação
-          </Button>
+          {contextFilter && contextHidden > 0 ? (
+            <>
+              <p className="text-xs text-muted-foreground font-body mb-3">
+                Nenhuma ação relacionada a{" "}
+                <span className="font-semibold text-foreground">{contextFilter.label}</span>.
+                Há {contextHidden} ação{contextHidden === 1 ? "" : "ões"} em outros contextos.
+              </p>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                {contextFilter.onClear && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={contextFilter.onClear}
+                    className="h-7 gap-1 text-[11px]"
+                  >
+                    <X className="h-3 w-3" />
+                    Mostrar todas
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openWithTemplate(null)}
+                  className="h-7 gap-1 text-[11px]"
+                >
+                  <Plus className="h-3 w-3" />
+                  Nova ação
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground font-body mb-3">
+                Nenhuma ação criada ainda. Comece organizando o follow-up.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openWithTemplate(null)}
+                className="h-7 gap-1 text-[11px]"
+              >
+                <Plus className="h-3 w-3" />
+                Criar primeira ação
+              </Button>
+            </>
+          )}
         </div>
       ) : visible.length === 0 ? (
         <div className="text-center py-8 border border-dashed border-border/60 rounded-lg">
           <p className="text-[11px] text-muted-foreground font-body">
-            Nenhuma ação neste filtro.
+            Nenhuma ação neste filtro
+            {contextFilter ? ` para "${contextFilter.label}"` : ""}.
           </p>
         </div>
       ) : (

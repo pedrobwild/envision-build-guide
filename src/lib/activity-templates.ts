@@ -185,3 +185,84 @@ export const TEMPLATE_GROUP_ORDER: ActivityTemplate["group"][] = [
   "Operacional",
   "Pós-venda",
 ];
+
+/**
+ * Contexto de atividades por módulo da sidebar de demanda.
+ *
+ * Quando o usuário troca de módulo (ex.: "Reuniões"), o painel "Ações & Tarefas"
+ * filtra automaticamente para mostrar apenas as ações relacionadas ao contexto
+ * (tipo de atividade ou palavras-chave no título/descrição).
+ *
+ * - `types`: filtra por `budget_activities.type` (ex.: meeting, email).
+ * - `keywords`: filtra por correspondência (case-insensitive) no título OU descrição.
+ *   Use para módulos sem tipo dedicado (ex.: orçamento, briefing).
+ * - `label`: rótulo amigável exibido no chip de contexto.
+ */
+export interface ModuleActivityContext {
+  label: string;
+  types?: string[];
+  keywords?: string[];
+}
+
+export const MODULE_ACTIVITY_CONTEXT: Record<string, ModuleActivityContext> = {
+  budget: {
+    label: "Orçamento",
+    keywords: [
+      "orçamento",
+      "orcamento",
+      "proposta",
+      "minuta",
+      "contrato",
+      "valor",
+      "preço",
+      "preco",
+      "revisão",
+      "revisao",
+      "ajuste",
+    ],
+  },
+  briefing: {
+    label: "Briefing",
+    keywords: [
+      "briefing",
+      "escopo",
+      "documento",
+      "planta",
+      "rg",
+      "cpf",
+      "comprovante",
+      "informaç",
+      "informac",
+      "contexto",
+    ],
+  },
+  meetings: {
+    label: "Reuniões",
+    types: ["meeting", "visit"],
+    keywords: ["reunião", "reuniao", "visita", "call", "videochamada"],
+  },
+  conversations: {
+    label: "Conversas",
+    types: ["call", "email"],
+    keywords: ["whatsapp", "ligar", "ligação", "ligacao", "mensagem", "e-mail", "email", "follow-up", "followup"],
+  },
+  client: {
+    label: "Cliente",
+    keywords: [
+      "cliente",
+      "cadastro",
+      "documento",
+      "rg",
+      "cpf",
+      "endereço",
+      "endereco",
+      "agradecimento",
+      "pós-venda",
+      "pos-venda",
+    ],
+  },
+  versions: {
+    label: "Versões",
+    keywords: ["versão", "versao", "pdf", "histórico", "historico", "comparar"],
+  },
+};
