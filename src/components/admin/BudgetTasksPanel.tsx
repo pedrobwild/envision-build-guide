@@ -92,6 +92,7 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
   const [outcomeId, setOutcomeId] = useState<string | null>(null);
   const [outcomeText, setOutcomeText] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   function openWithTemplate(values: ActivityInitialValues | null) {
     setInitialValues(values);
