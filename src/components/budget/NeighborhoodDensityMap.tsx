@@ -389,7 +389,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       e.preventDefault();
       focusCard(ids[nextIdx]);
     },
-    [filteredProjects, bairroFilter, focusCard]
+    [filteredProjects, bairroFilter, focusCard, activeCardId]
   );
 
   // Init map
