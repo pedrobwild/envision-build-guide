@@ -880,12 +880,15 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
       [inView, activeSlide, pendingNeighbor, project.fotos.length]
     );
 
-    // Autoplay subtly while hovering
+    // Autoplay subtly while hovering — disabled entirely when the user has
+    // requested reduced motion. Looping animations are one of the explicit
+    // categories WCAG flags as motion-sensitive.
     useEffect(() => {
+      if (reducedMotion) return;
       if (!emblaApi || !hovering || project.fotos.length <= 1) return;
       const interval = setInterval(() => emblaApi.scrollNext(), 2000);
       return () => clearInterval(interval);
-    }, [emblaApi, hovering, project.fotos.length]);
+    }, [emblaApi, hovering, project.fotos.length, reducedMotion]);
 
     const handleMouseEnter = () => {
       setHovering(true);
