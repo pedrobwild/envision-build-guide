@@ -734,6 +734,32 @@ function FilterChip({
 
 /* ── Individual Project Card with Carousel ── */
 
+/**
+ * Subscribes to the user's `prefers-reduced-motion` OS-level setting.
+ * Returns `true` when motion should be minimized — components can use this
+ * to skip autoplay, disable hover transforms, and remove looping animations
+ * (shimmer, scale, etc.) without breaking the visual hierarchy.
+ *
+ * SSR-safe: defaults to `false` until mounted, then syncs with the media query.
+ */
+function useReducedMotion(): boolean {
+  const [prefersReduced, setPrefersReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setPrefersReduced(mql.matches);
+    update();
+    // Modern browsers expose addEventListener; older Safari uses addListener.
+    if (mql.addEventListener) {
+      mql.addEventListener("change", update);
+      return () => mql.removeEventListener("change", update);
+    }
+    mql.addListener(update);
+    return () => mql.removeListener(update);
+  }, []);
+  return prefersReduced;
+}
+
 interface IndividualProjectCardProps {
   project: IndividualProject;
   isHighlighted?: boolean;
@@ -742,6 +768,7 @@ interface IndividualProjectCardProps {
 
 const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardProps>(
   ({ project, isHighlighted = false, onHover }, ref) => {
+    const reducedMotion = useReducedMotion();
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
     const [hovering, setHovering] = useState(false);
