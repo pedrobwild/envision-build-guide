@@ -180,8 +180,28 @@ export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Pr
     onError: (err) => toast.error(err instanceof Error ? err.message : "Erro"),
   });
 
-  const { pending, completed, overdue, dueSoon, counts, visible } = useMemo(() => {
-    const all = data ?? [];
+  const { counts, visible, contextHidden } = useMemo(() => {
+    const raw = data ?? [];
+
+    // Aplica filtro contextual (módulo da sidebar) antes de tudo
+    const matchesContext = (a: Activity): boolean => {
+      if (!contextFilter) return true;
+      const types = contextFilter.types ?? [];
+      const keywords = (contextFilter.keywords ?? []).map((k) => k.toLowerCase());
+      if (types.length === 0 && keywords.length === 0) return true;
+
+      if (types.length > 0 && types.includes(a.type)) return true;
+
+      if (keywords.length > 0) {
+        const hay = `${a.title ?? ""} ${a.description ?? ""}`.toLowerCase();
+        if (keywords.some((k) => hay.includes(k))) return true;
+      }
+      return false;
+    };
+
+    const all = raw.filter(matchesContext);
+    const contextHidden = raw.length - all.length;
+
     const pending = all.filter((a) => !a.completed_at);
     const completed = all
       .filter((a) => !!a.completed_at)
@@ -220,8 +240,8 @@ export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Pr
         visible = completed;
         break;
     }
-    return { pending, completed, overdue, dueSoon, counts, visible };
-  }, [data, filter]);
+    return { counts, visible, contextHidden };
+  }, [data, filter, contextFilter]);
 
   function submitOutcome() {
     if (!outcomeId) return;
