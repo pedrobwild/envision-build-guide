@@ -253,6 +253,93 @@ export function ROISimulator({
         </motion.div>
       </AnimatePresence>
 
+      {/* Efeito BWild — destaque do impacto da reforma personalizada */}
+      <div className="rounded-lg border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3.5 space-y-2.5">
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-primary font-mono font-bold leading-tight">
+              Efeito BWild
+            </p>
+            <p className="text-[10px] text-muted-foreground font-body leading-tight">
+              o que a reforma personalizada gera a mais
+            </p>
+          </div>
+        </div>
+
+        {/* Comparativo lado a lado */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-md bg-background/60 border border-border/60 p-2">
+            <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-mono mb-0.5">
+              Studio padrão
+            </p>
+            <p className="text-[11px] text-muted-foreground font-body">
+              Diária <strong className="text-foreground tabular-nums">{formatBRL(baseline.nightly)}</strong>
+            </p>
+            <p className="text-[11px] text-muted-foreground font-body">
+              Ocupação <strong className="text-foreground tabular-nums">{baseline.occupancy}%</strong>
+            </p>
+            <p
+              className="text-sm font-display font-bold text-foreground/70 mt-1 tabular-nums"
+            >
+              {formatBRL(baselineNetMonth)}/mês
+            </p>
+          </div>
+          <div className="rounded-md bg-primary/10 border border-primary/30 p-2 relative">
+            <Badge
+              variant="default"
+              className="absolute -top-2 right-1.5 text-[8px] font-mono px-1.5 py-0 h-4"
+            >
+              BWild
+            </Badge>
+            <p className="text-[9px] uppercase tracking-wide text-primary font-mono mb-0.5 font-semibold">
+              Com sua reforma
+            </p>
+            <p className="text-[11px] text-foreground font-body">
+              Diária <strong className="text-primary tabular-nums">{formatBRL(nightly)}</strong>
+            </p>
+            <p className="text-[11px] text-foreground font-body">
+              Ocupação <strong className="text-primary tabular-nums">{occupancy}%</strong>
+            </p>
+            <p
+              className="text-sm font-display font-bold text-primary mt-1 tabular-nums"
+            >
+              {formatBRL(netMonth)}/mês
+            </p>
+          </div>
+        </div>
+
+        {/* Ganho extra */}
+        <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-primary/15">
+          <div className="min-w-0">
+            <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-mono">
+              Ganho extra gerado pela reforma
+            </p>
+            <p className="text-[10px] text-muted-foreground font-body leading-tight mt-0.5">
+              Reforma se paga em <strong className="text-primary">{reformPaybackLabel}</strong> só com o ganho incremental
+            </p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p
+              className="font-display font-bold text-lg text-primary leading-none tabular-nums"
+            >
+              +{formatBRL(upliftMonth)}
+            </p>
+            <p className="text-[9px] text-muted-foreground font-mono mt-0.5">
+              /mês · {formatBRL(upliftYear)}/ano
+            </p>
+          </div>
+        </div>
+
+        <p className="text-[9px] text-muted-foreground/80 font-body italic leading-relaxed">
+          Projeção baseada no benchmark AirDNA "Top 10%" de listings premium em SP: design diferenciado,
+          mobília sob medida e fotografia profissional geram em média +{upliftPctNightly}% na diária e
+          +{BWILD_OCCUPANCY_UPLIFT}pp na ocupação vs. studios padrão.
+        </p>
+      </div>
+
       {/* ROI Total — renda + valorização */}
       <div className="rounded-lg border border-success/25 bg-gradient-to-br from-success/10 to-success/5 p-3">
         <div className="flex items-center justify-between gap-2 mb-1.5">
