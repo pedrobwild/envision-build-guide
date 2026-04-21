@@ -110,9 +110,11 @@ export default function OrcamentoPage() {
             </motion.div>
             */}
             <div className="w-full border-t border-border/30" />
+            {/* Cronograma de Reforma ocultado a pedido
             <motion.div id="cronograma-section" variants={sectionVariants} viewport={{ once: true, amount: 0.05, margin: "0px 0px -40px 0px" }} initial="hidden" whileInView="visible">
               <ReformTimeline />
             </motion.div>
+            */}
 
             {/* Bottom spacer for mobile CTA */}
             <div className="h-20 lg:hidden" />

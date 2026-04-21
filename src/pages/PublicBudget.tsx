@@ -564,6 +564,7 @@ export default function PublicBudget() {
             </div>
             */}
 
+            {/* Cronograma de Reforma ocultado a pedido
             <div data-pdf-section>
               <AnimatedSection id="cronograma-section" index={99.5}>
                 <Suspense fallback={<LazyFallback />}>
@@ -571,6 +572,7 @@ export default function PublicBudget() {
                 </Suspense>
               </AnimatedSection>
             </div>
+            */}
 
             <div id="mobile-next-steps" className="scroll-mt-20" data-pdf-section>
               <AnimatedSection id="next-steps" index={100}>
