@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, forwardRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MapPin, ArrowLeft, ChevronLeft, ChevronRight, Camera, Building2, MapPinned } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { MapPin, ChevronLeft, ChevronRight, Camera, Building2, MapPinned } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
 import { getIndividualProjects, brooklinEmpreendimentos, type IndividualProject } from "@/data/brooklin-projects";
