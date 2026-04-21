@@ -8,6 +8,8 @@ import {
   CalendarCheck2,
   ChevronDown,
   Maximize2,
+  Home,
+  ExternalLink,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +37,9 @@ interface ROISimulatorProps {
 
 const DAYS_PER_MONTH = 30;
 const DEFAULT_OPERATING_COST = 0.35;
+const DEFAULT_STUDIO_PRICE = 375_000; // média R$ 350–400k para studio em SP
+const STUDIO_PRICE_MIN = 250_000;
+const STUDIO_PRICE_MAX = 600_000;
 
 export function ROISimulator({
   total,
@@ -65,6 +70,7 @@ export function ROISimulator({
 
   const [nightly, setNightly] = useState<number>(baseline.nightly);
   const [occupancy, setOccupancy] = useState<number>(baseline.occupancy);
+  const [studioPrice, setStudioPrice] = useState<number>(DEFAULT_STUDIO_PRICE);
   const [showDetails, setShowDetails] = useState<boolean>(!compact);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -82,8 +88,12 @@ export function ROISimulator({
   const netMonth = grossMonth * (1 - operatingCostPct);
   const netYear = netMonth * 12;
   const safeTotal = total > 0 ? total : 0;
-  const roiYearPct = safeTotal > 0 ? (netYear / safeTotal) * 100 : 0;
-  const paybackMonths = safeTotal > 0 && netMonth > 0 ? safeTotal / netMonth : null;
+  // Investimento total = compra do studio + reforma
+  const totalInvestment = studioPrice + safeTotal;
+  const roiYearPct = totalInvestment > 0 ? (netYear / totalInvestment) * 100 : 0;
+  const roiReformOnlyPct = safeTotal > 0 ? (netYear / safeTotal) * 100 : 0;
+  const paybackMonths =
+    totalInvestment > 0 && netMonth > 0 ? totalInvestment / netMonth : null;
 
   const paybackLabel =
     paybackMonths === null
@@ -92,17 +102,22 @@ export function ROISimulator({
         ? `${Math.round(paybackMonths)} meses`
         : `${(paybackMonths / 12).toFixed(1).replace(".", ",")} anos`;
 
-  const isEdited = nightly !== baseline.nightly || occupancy !== baseline.occupancy;
+  const isEdited =
+    nightly !== baseline.nightly ||
+    occupancy !== baseline.occupancy ||
+    studioPrice !== DEFAULT_STUDIO_PRICE;
 
   const baselineRoi = useMemo(() => {
     const g = baseline.nightly * DAYS_PER_MONTH * (baseline.occupancy / 100);
     const n = g * (1 - operatingCostPct) * 12;
-    return safeTotal > 0 ? (n / safeTotal) * 100 : 0;
+    const inv = DEFAULT_STUDIO_PRICE + safeTotal;
+    return inv > 0 ? (n / inv) * 100 : 0;
   }, [baseline, operatingCostPct, safeTotal]);
 
   const handleReset = () => {
     setNightly(baseline.nightly);
     setOccupancy(baseline.occupancy);
+    setStudioPrice(DEFAULT_STUDIO_PRICE);
   };
 
   const competitionColor =
@@ -143,23 +158,24 @@ export function ROISimulator({
         </div>
       </div>
 
-      {/* Contexto */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body flex-wrap">
-        <MapPin className="h-3 w-3 flex-shrink-0" />
-        <span className="font-medium text-foreground">{baseline.label}</span>
+      {/* Bairro analisado — destaque */}
+      <div className="rounded-lg border border-primary/25 bg-primary/5 p-2.5 flex items-center gap-2 flex-wrap">
+        <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
+          Análise para
+        </span>
+        <span className="font-display font-bold text-sm text-foreground truncate">
+          {baseline.label}
+        </span>
         {baseline.isFallback && (
-          <span
-            className="italic text-muted-foreground/80"
-            title="Bairro sem dados de mercado — usando média de São Paulo."
-          >
-            (média SP)
-          </span>
+          <Badge variant="outline" className="text-[9px] font-body bg-background/60">
+            média SP
+          </Badge>
         )}
         {metragem && (
-          <>
-            <span aria-hidden>•</span>
-            <span>{metragem}</span>
-          </>
+          <span className="text-[10px] text-muted-foreground font-mono ml-auto">
+            {metragem}
+          </span>
         )}
       </div>
 
@@ -225,8 +241,72 @@ export function ROISimulator({
         </p>
       </div>
 
+      {/* Composição do investimento (compra + reforma) */}
+      <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+        <div className="flex items-center gap-1.5">
+          <Home className="h-3 w-3 text-primary" />
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
+            Investimento total considerado no payback
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-1.5 text-center">
+          <div className="rounded-md bg-background border border-border p-2">
+            <p className="text-[9px] text-muted-foreground font-mono uppercase">Studio</p>
+            <p
+              className="text-xs font-display font-bold text-foreground"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatBRL(studioPrice)}
+            </p>
+          </div>
+          <div className="rounded-md bg-background border border-border p-2">
+            <p className="text-[9px] text-muted-foreground font-mono uppercase">Reforma</p>
+            <p
+              className="text-xs font-display font-bold text-foreground"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatBRL(safeTotal)}
+            </p>
+          </div>
+          <div className="rounded-md bg-primary/10 border border-primary/25 p-2">
+            <p className="text-[9px] text-muted-foreground font-mono uppercase">Total</p>
+            <p
+              className="text-xs font-display font-bold text-primary"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatBRL(totalInvestment)}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Sliders */}
       <div className="space-y-4">
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-body text-muted-foreground">
+              Valor de compra do studio
+            </label>
+            <span
+              className="font-display font-bold text-sm text-foreground"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatBRL(studioPrice)}
+            </span>
+          </div>
+          <Slider
+            aria-label="Valor de compra do studio"
+            value={[studioPrice]}
+            min={STUDIO_PRICE_MIN}
+            max={STUDIO_PRICE_MAX}
+            step={5_000}
+            onValueChange={([v]) => setStudioPrice(v)}
+          />
+          <p className="text-[10px] text-muted-foreground font-body mt-1">
+            Mercado: studios em SP custam em média R$ 350 mil a R$ 400 mil
+          </p>
+        </div>
+
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-xs font-body text-muted-foreground">Diária média</label>
@@ -340,14 +420,36 @@ export function ROISimulator({
         </div>
       )}
 
-      {/* Footer */}
-      <div className="border-t border-border pt-3 flex items-start gap-1.5">
-        <Info className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5" />
-        <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
-          Projeção baseada em {district?.sourceLabel || "média de São Paulo"}. Resultado estimado —
-          sujeito a sazonalidade, gestão operacional e variação do mercado. Não constitui promessa
-          de retorno.
-        </p>
+      {/* Fonte dos dados — destaque */}
+      <div className="border-t border-border pt-3 space-y-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
+              Fonte dos dados
+            </span>
+            <Badge variant="outline" className="text-[10px] font-mono bg-background">
+              {district?.sourceLabel || "Bwild/AirDNA 2025 — média SP"}
+            </Badge>
+          </div>
+          <a
+            href="https://www.airdna.co/vacation-rental-data/app/br/sao-paulo/sao-paulo/overview"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[10px] font-mono text-primary hover:text-primary/80 transition-colors"
+          >
+            Ver fonte
+            <ExternalLink className="h-2.5 w-2.5" />
+          </a>
+        </div>
+        <div className="flex items-start gap-1.5">
+          <Info className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
+            Análise específica para <strong className="text-foreground">{baseline.label}</strong>.
+            Payback considera o investimento total (compra do studio + reforma). Resultado estimado
+            — sujeito a sazonalidade, gestão operacional e variação do mercado. Não constitui
+            promessa de retorno.
+          </p>
+        </div>
       </div>
 
       {/* CTA modal */}
