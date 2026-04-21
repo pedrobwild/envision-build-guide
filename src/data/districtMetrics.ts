@@ -26,9 +26,9 @@ export type DistrictRow = {
   adrRangeLabel: string;
   listingsCount: number;
   priceSqm: number;
-  /** Valorização anual típica do m² (FipeZap 12m) — % a.a. */
-  appreciationPctYear: number;
-  /** Receita típica por mês (12 valores) — sazonalidade jan→dez (multiplicador 0.7–1.3) */
+  /** Valorização anual típica do m² (FipeZap 12m) — % a.a. (opcional) */
+  appreciationPctYear?: number;
+  /** Receita típica por mês (12 valores) — sazonalidade jan→dez */
   seasonality?: number[];
   competition: CompetitionChip;
   sourceLabel: string;
