@@ -293,6 +293,49 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     };
   }, []);
 
+  // ── URL sync (write-side) ──
+  // Whenever the active filter or active card changes, mirror it onto the URL
+  // via `history.replaceState` so the state survives reloads, deep-links and
+  // back/forward without polluting the browser history with one entry per
+  // arrow-key press. We keep all unrelated query params intact.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+    const prevBairro = params.get("bairro");
+    const prevCard = params.get("card");
+    const nextBairro = bairroFilter ?? null;
+    const nextCard = activeCardId ?? null;
+    if (prevBairro === nextBairro && prevCard === nextCard) return;
+    if (nextBairro) params.set("bairro", nextBairro);
+    else params.delete("bairro");
+    if (nextCard) params.set("card", nextCard);
+    else params.delete("card");
+    const qs = params.toString();
+    const newUrl = `${url.pathname}${qs ? `?${qs}` : ""}${url.hash}`;
+    window.history.replaceState(window.history.state, "", newUrl);
+  }, [bairroFilter, activeCardId]);
+
+  // ── URL hydration (one-shot scroll restore) ──
+  // If we hydrated from the URL with a `card`, scroll it into view once the
+  // panel is mounted so the user lands on the previously selected item.
+  // Runs only on first paint — subsequent navigation already handles its own
+  // scrolling via `focusCard` / `handlePinClickScroll`.
+  const didRestoreScrollRef = useRef(false);
+  useEffect(() => {
+    if (didRestoreScrollRef.current) return;
+    if (!initialUrlState.card) {
+      didRestoreScrollRef.current = true;
+      return;
+    }
+    const el = cardRefs.current.get(initialUrlState.card);
+    if (!el) return; // Wait for the card to mount; effect re-runs on re-render.
+    didRestoreScrollRef.current = true;
+    // Use `auto` (instant) on first paint to avoid a long animated scroll
+    // before the user has interacted with anything.
+    el.scrollIntoView({ behavior: "auto", block: "center" });
+  });
+
   // Pin click → scroll first matching card into view + flash highlight
   const handlePinClickScroll = useCallback(
     (bairroId: string) => {
