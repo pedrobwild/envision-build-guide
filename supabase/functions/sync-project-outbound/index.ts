@@ -141,7 +141,8 @@ Deno.serve(async (req) => {
  * Syncs a single budget/project to Portal BWild.
  */
 async function syncSingleProject(
-  localDb: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  localDb: any,
   budgetId: string,
   portalUrl: string,
   integrationKey: string,

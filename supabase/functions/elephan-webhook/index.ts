@@ -70,7 +70,8 @@ interface MatchResult {
 }
 
 async function findBudgetIdForMeeting(
-  supabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
   participants: Participant[]
 ): Promise<MatchResult | null> {
   // E-mails de CLIENTES apenas — exclui domínios internos (@bwild.com.br).
