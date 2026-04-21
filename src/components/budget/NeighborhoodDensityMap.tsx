@@ -248,16 +248,35 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     userInitiatedSelectionRef.current = false;
   }, [selected, isMobile, hoveredBairroId]);
 
-  // Pin click → scroll first matching card into view + flash highlight
-  const handlePinClickScroll = useCallback((bairroId: string) => {
-    const target = ALL_INDIVIDUAL_PROJECTS.find((p) => getBairroId(p.bairro) === bairroId);
-    if (!target) return;
-    const el = cardRefs.current.get(target.id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    setHighlightedProjectId(target.id);
-    setTimeout(() => setHighlightedProjectId(null), 2000);
+  // Track timer so successive pin-clicks reset the highlight cleanly
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashHighlight = useCallback((id: string, durationMs = 2400) => {
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    setHighlightedProjectId(id);
+    highlightTimerRef.current = setTimeout(() => {
+      setHighlightedProjectId(null);
+      highlightTimerRef.current = null;
+    }, durationMs);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    };
+  }, []);
+
+  // Pin click → scroll first matching card into view + flash highlight
+  const handlePinClickScroll = useCallback(
+    (bairroId: string) => {
+      const target = ALL_INDIVIDUAL_PROJECTS.find((p) => getBairroId(p.bairro) === bairroId);
+      if (!target) return;
+      const el = cardRefs.current.get(target.id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      flashHighlight(target.id);
+    },
+    [flashHighlight]
+  );
 
   // Track scroll position to show fade gradients (top/bottom of panel)
   useEffect(() => {
@@ -278,24 +297,68 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     };
   }, [filteredProjects.length, selectedData]);
 
-  // Keyboard navigation: arrow keys move focus between cards inside the panel
-  const handlePanelKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-    const ids = filteredProjects.map((p) => p.id);
-    const active = document.activeElement as HTMLElement | null;
-    const activeId = active?.dataset?.projectCardId;
-    let nextIdx = 0;
-    if (activeId) {
-      const i = ids.indexOf(activeId);
-      nextIdx = e.key === "ArrowDown" ? Math.min(i + 1, ids.length - 1) : Math.max(i - 1, 0);
-    }
-    const nextEl = cardRefs.current.get(ids[nextIdx]);
-    if (nextEl) {
+  // Keyboard navigation inside the panel:
+  // ↑/↓ — move focus between cards (with wrap-around)
+  // Home/End — jump to first / last
+  // Esc — clear active highlight + bairro filter, return focus to panel
+  const focusCard = useCallback(
+    (id: string) => {
+      const el = cardRefs.current.get(id);
+      if (!el) return;
+      el.focus({ preventScroll: true });
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      flashHighlight(id, 1600);
+    },
+    [flashHighlight]
+  );
+
+  const handlePanelKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const ids = filteredProjects.map((p) => p.id);
+      if (ids.length === 0) return;
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (highlightTimerRef.current) {
+          clearTimeout(highlightTimerRef.current);
+          highlightTimerRef.current = null;
+        }
+        setHighlightedProjectId(null);
+        if (bairroFilter) setBairroFilter(null);
+        panelRef.current?.focus();
+        return;
+      }
+
+      const isVerticalNav = e.key === "ArrowDown" || e.key === "ArrowUp";
+      const isHorizontalNav = e.key === "ArrowRight" || e.key === "ArrowLeft";
+      const isJump = e.key === "Home" || e.key === "End";
+      // On mobile, the panel is horizontal — use ←/→ instead.
+      if (!isVerticalNav && !isHorizontalNav && !isJump) return;
+
+      const active = document.activeElement as HTMLElement | null;
+      const activeId = active?.dataset?.projectCardId;
+      const currentIdx = activeId ? ids.indexOf(activeId) : -1;
+
+      let nextIdx: number;
+      if (e.key === "Home") nextIdx = 0;
+      else if (e.key === "End") nextIdx = ids.length - 1;
+      else {
+        const forward = e.key === "ArrowDown" || e.key === "ArrowRight";
+        if (currentIdx === -1) {
+          nextIdx = forward ? 0 : ids.length - 1;
+        } else {
+          // Wrap-around for fluid keyboard exploration
+          nextIdx = forward
+            ? (currentIdx + 1) % ids.length
+            : (currentIdx - 1 + ids.length) % ids.length;
+        }
+      }
+
       e.preventDefault();
-      nextEl.focus();
-      nextEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  }, [filteredProjects]);
+      focusCard(ids[nextIdx]);
+    },
+    [filteredProjects, bairroFilter, focusCard]
+  );
 
   // Init map
   useEffect(() => {
