@@ -341,7 +341,7 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setOpenNew(true)}
+            onClick={() => openWithTemplate(null)}
             className="h-7 gap-1 text-[11px]"
           >
             <Plus className="h-3 w-3" />
