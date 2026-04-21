@@ -443,6 +443,21 @@ export function MetadataStep({ budget, onFieldChange }: MetadataStepProps) {
                 </span>
               </button>
             </PropertyRow>
+
+            <PropertyRow icon={ShoppingBag} label="Mostrar preços por item ao cliente">
+              <button
+                onClick={() => onFieldChange("show_item_prices", !budget.show_item_prices)}
+                className="flex items-center gap-2 py-1.5 px-2.5 text-sm font-body text-foreground"
+                aria-label="Alternar exibição de preços por item para o cliente"
+              >
+                <div className={cn("relative w-8 h-[18px] rounded-full transition-colors", budget.show_item_prices ? "bg-primary" : "bg-muted-foreground/30")}>
+                  <span className={cn("absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-transform", budget.show_item_prices && "translate-x-[14px]")} />
+                </div>
+                <span className="text-muted-foreground text-xs">
+                  {budget.show_item_prices ? "Visível" : "Oculto"}
+                </span>
+              </button>
+            </PropertyRow>
           </div>
         </div>
       )}
