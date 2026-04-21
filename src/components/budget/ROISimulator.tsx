@@ -125,11 +125,22 @@ export function ROISimulator({
             Simulador de Retorno
           </h4>
         </div>
-        {district?.score ? (
-          <Badge variant="secondary" className="font-mono text-[10px] tracking-wide">
-            Score {district.score}
-          </Badge>
-        ) : null}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {district?.score ? (
+            <Badge variant="secondary" className="font-mono text-[10px] tracking-wide">
+              Score {district.score}
+            </Badge>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wide text-primary hover:text-primary/80 border border-primary/20 hover:border-primary/40 bg-primary/5 px-2 py-1 rounded-md transition-colors"
+            aria-label="Abrir simulação completa"
+          >
+            <Maximize2 className="h-3 w-3" />
+            Completa
+          </button>
+        </div>
       </div>
 
       {/* Contexto */}
