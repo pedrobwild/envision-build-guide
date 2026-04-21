@@ -10,12 +10,15 @@ import {
   Maximize2,
   Home,
   ExternalLink,
+  ArrowDown,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AVERAGE_METRICS,
   findDistrict,
@@ -65,6 +68,7 @@ export function ROISimulator({
   compact = false,
   className,
 }: ROISimulatorProps) {
+  const isMobile = useIsMobile();
   const district: DistrictRow | null = useMemo(() => findDistrict(bairro), [bairro]);
 
   const baseline = useMemo(() => {
@@ -89,6 +93,8 @@ export function ROISimulator({
   const [studioPrice, setStudioPrice] = useState<number>(DEFAULT_STUDIO_PRICE);
   const [showDetails, setShowDetails] = useState<boolean>(!compact);
   const [modalOpen, setModalOpen] = useState(false);
+  // No mobile, "Personalize" inicia colapsado para priorizar resultados
+  const [personalizeOpen, setPersonalizeOpen] = useState<boolean>(false);
 
   const sliderLimits = useMemo(() => {
     const minNightly = Math.max(150, Math.round(baseline.nightly * 0.6));
@@ -165,13 +171,6 @@ export function ROISimulator({
 
   const upliftPctNightly = Math.round(BWILD_NIGHTLY_UPLIFT * 100);
 
-  const competitionColor =
-    district?.competition === "Alta"
-      ? "bg-warning/15 text-warning border-warning/30"
-      : district?.competition === "Média"
-        ? "bg-primary/10 text-primary border-primary/30"
-        : "bg-success/15 text-success border-success/30";
-
   // Percentual de uplift formatado
   const upliftPct = baselineNetMonth > 0
     ? Math.round((upliftMonth / baselineNetMonth) * 100)
@@ -186,17 +185,17 @@ export function ROISimulator({
       )}
     >
       {/* ─── Header premium com gradient ─── */}
-      <div className="relative bg-gradient-to-br from-primary/[0.08] via-primary/[0.04] to-transparent border-b border-border px-5 pt-5 pb-4">
-        <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="relative bg-gradient-to-br from-primary/[0.08] via-primary/[0.04] to-transparent border-b border-border px-4 sm:px-5 pt-4 sm:pt-5 pb-3.5 sm:pb-4">
+        <div className="flex items-start justify-between gap-2.5 mb-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
               <TrendingUp className="h-4.5 w-4.5 text-primary" strokeWidth={2.25} />
             </div>
             <div className="min-w-0">
-              <h4 className="font-display font-bold text-base text-foreground leading-tight">
+              <h4 className="font-display font-bold text-[15px] sm:text-base text-foreground leading-tight">
                 Simulador de retorno
               </h4>
-              <p className="text-[11px] text-muted-foreground font-body mt-0.5">
+              <p className="text-[11px] text-muted-foreground font-body mt-0.5 leading-snug">
                 Veja o impacto do design BWild no seu investimento
               </p>
             </div>
@@ -204,11 +203,15 @@ export function ROISimulator({
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30 px-2.5 py-1.5 rounded-lg transition-all flex-shrink-0"
+            className={cn(
+              "inline-flex items-center justify-center gap-1 text-[10px] font-mono uppercase tracking-wider text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30 rounded-lg transition-all flex-shrink-0",
+              "min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0",
+              "px-2 sm:px-2.5 py-0 sm:py-1.5",
+            )}
             aria-label="Abrir simulação completa"
           >
-            <Maximize2 className="h-3 w-3" />
-            Expandir
+            <Maximize2 className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+            <span className="hidden sm:inline">Expandir</span>
           </button>
         </div>
 
@@ -239,7 +242,7 @@ export function ROISimulator({
       </div>
 
       {/* ─── Conteúdo ─── */}
-      <div className="p-5 space-y-5">
+      <div className="p-4 sm:p-5 space-y-4 sm:space-y-5">
         {/* HERO — Efeito BWild */}
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -251,14 +254,21 @@ export function ROISimulator({
             </h5>
           </div>
 
-          {/* Comparativo lado a lado — design refinado */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Comparativo: empilhado no mobile (com seta), grid no desktop */}
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2.5 sm:gap-3 relative">
             {/* Studio padrão */}
             <div className="rounded-xl bg-muted/40 border border-border p-3.5">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-2 font-semibold">
-                Studio padrão
-              </p>
-              <div className="space-y-1 mb-3">
+              <div className="flex items-center justify-between sm:block mb-2">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-semibold sm:mb-2">
+                  Studio padrão
+                </p>
+                {/* Mobile: receita inline na header */}
+                <p className="sm:hidden text-base font-display font-bold text-foreground/70 tabular-nums leading-none">
+                  {formatBRL(baselineNetMonth)}
+                  <span className="text-[10px] text-muted-foreground font-mono ml-1.5 uppercase tracking-wider">/mês</span>
+                </p>
+              </div>
+              <div className="space-y-1 sm:mb-3">
                 <div className="flex items-baseline justify-between text-[11px] font-body">
                   <span className="text-muted-foreground">Diária</span>
                   <span className="text-foreground font-mono tabular-nums">{formatBRL(baseline.nightly)}</span>
@@ -268,11 +278,19 @@ export function ROISimulator({
                   <span className="text-foreground font-mono tabular-nums">{baseline.occupancy}%</span>
                 </div>
               </div>
-              <div className="pt-2.5 border-t border-border">
+              {/* Desktop: receita no rodapé do card */}
+              <div className="hidden sm:block pt-2.5 border-t border-border">
                 <p className="text-lg font-display font-bold text-foreground/70 tabular-nums leading-none">
                   {formatBRL(baselineNetMonth)}
                 </p>
                 <p className="text-[10px] text-muted-foreground font-mono mt-1 uppercase tracking-wider">/mês líquido</p>
+              </div>
+            </div>
+
+            {/* Seta indicadora — só mobile */}
+            <div className="sm:hidden flex items-center justify-center -my-1 relative z-10">
+              <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md">
+                <ArrowDown className="h-3.5 w-3.5" strokeWidth={2.5} />
               </div>
             </div>
 
@@ -281,10 +299,25 @@ export function ROISimulator({
               <Badge className="absolute -top-2 right-3 text-[9px] font-mono px-2 py-0 h-4 bg-background text-primary border border-primary/40 shadow-sm uppercase tracking-wider">
                 +{upliftPct}% receita
               </Badge>
-              <p className="text-[10px] uppercase tracking-wider text-primary-foreground/85 font-mono mb-2 font-semibold">
-                Projeto Bwild
-              </p>
-              <div className="space-y-1 mb-3">
+              <div className="flex items-center justify-between sm:block mb-2">
+                <p className="text-[10px] uppercase tracking-wider text-primary-foreground/85 font-mono font-semibold sm:mb-2">
+                  Projeto Bwild
+                </p>
+                {/* Mobile: receita inline na header */}
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={`m-${netMonth}`}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="sm:hidden text-base font-display font-bold text-primary-foreground tabular-nums leading-none"
+                  >
+                    {formatBRL(netMonth)}
+                    <span className="text-[10px] text-primary-foreground/75 font-mono ml-1.5 uppercase tracking-wider">/mês</span>
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+              <div className="space-y-1 sm:mb-3">
                 <div className="flex items-baseline justify-between text-[11px] font-body">
                   <span className="text-primary-foreground/80">Diária</span>
                   <span className="text-primary-foreground font-mono tabular-nums font-semibold">{formatBRL(nightly)}</span>
@@ -294,7 +327,8 @@ export function ROISimulator({
                   <span className="text-primary-foreground font-mono tabular-nums font-semibold">{occupancy}%</span>
                 </div>
               </div>
-              <div className="pt-2.5 border-t border-primary-foreground/20">
+              {/* Desktop: receita no rodapé do card */}
+              <div className="hidden sm:block pt-2.5 border-t border-primary-foreground/20">
                 <AnimatePresence mode="wait">
                   <motion.p
                     key={netMonth}
@@ -312,14 +346,14 @@ export function ROISimulator({
           </div>
 
           {/* Citação técnica — benchmark de mercado */}
-          <p className="mt-3 text-[10px] text-muted-foreground font-body leading-relaxed text-center px-2">
+          <p className="mt-3 text-[10px] text-muted-foreground font-body leading-relaxed text-center px-1 sm:px-2">
             Benchmark <strong className="text-foreground">AirDNA "Top 10%"</strong> em SP: design
             premium gera +{upliftPctNightly}% na diária e +{BWILD_OCCUPANCY_UPLIFT}pp na ocupação.
           </p>
 
           {/* Ganho extra — destaque success */}
-          <div className="mt-3 rounded-xl bg-card border border-border p-3.5 flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1">
+          <div className="mt-3 rounded-xl bg-card border border-border p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+            <div className="min-w-0 flex-1 order-2 sm:order-1">
               <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold mb-0.5">
                 Ganho extra mensal
               </p>
@@ -328,14 +362,14 @@ export function ROISimulator({
                 <strong className="text-success font-semibold">{reformPaybackLabel}</strong>
               </p>
             </div>
-            <div className="text-right flex-shrink-0">
+            <div className="text-left sm:text-right flex-shrink-0 order-1 sm:order-2">
               <AnimatePresence mode="wait">
                 <motion.p
                   key={upliftMonth}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.25 }}
-                  className="font-display font-bold text-xl text-success leading-none tabular-nums"
+                  className="font-display font-bold text-2xl sm:text-xl text-success leading-none tabular-nums"
                 >
                   +{formatBRL(upliftMonth)}
                 </motion.p>
@@ -348,44 +382,44 @@ export function ROISimulator({
         </div>
 
         {/* ─── KPIs principais ─── */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-border bg-card p-3.5">
-            <div className="flex items-center justify-between mb-1.5">
-              <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+          <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5">
+            <div className="flex items-center justify-between mb-1.5 gap-1">
+              <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold truncate">
                 ROI total
               </p>
-              <Badge variant="outline" className="text-[9px] font-mono border-foreground/20 text-foreground bg-background/60 px-1.5 py-0 h-4">
+              <Badge variant="outline" className="text-[9px] font-mono border-foreground/20 text-foreground bg-background/60 px-1.5 py-0 h-4 shrink-0">
                 +{formatPct(appreciationPctYear)} a.a.
               </Badge>
             </div>
             <p
-              className="font-display font-bold text-2xl text-success leading-none"
+              className="font-display font-bold text-[22px] sm:text-2xl text-success leading-none"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {formatPct(roiTotalPct)}
             </p>
-            <p className="text-[10px] text-muted-foreground font-body mt-1.5">
+            <p className="text-[10px] text-muted-foreground font-body mt-1.5 leading-tight">
               renda + valorização
             </p>
           </div>
-          <div className="rounded-xl border border-border bg-muted/30 p-3.5">
+          <div className="rounded-xl border border-border bg-muted/30 p-3 sm:p-3.5">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold mb-1.5">
               Payback total
             </p>
             <p
-              className="font-display font-bold text-2xl text-foreground leading-none"
+              className="font-display font-bold text-[22px] sm:text-2xl text-foreground leading-none"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {paybackLabel}
             </p>
-            <p className="text-[10px] text-muted-foreground font-body mt-1.5">
+            <p className="text-[10px] text-muted-foreground font-body mt-1.5 leading-tight">
               studio + reforma
             </p>
           </div>
         </div>
 
         {/* ─── Receita líquida — linha resumo ─── */}
-        <div className="flex items-center justify-between gap-3 rounded-xl bg-primary/[0.04] border border-primary/15 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-primary/[0.04] border border-primary/15 px-3.5 sm:px-4 py-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-0.5">
               Receita líquida estimada
@@ -410,7 +444,7 @@ export function ROISimulator({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-mono uppercase tracking-wider hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-mono uppercase tracking-wider hover:text-foreground transition-colors min-h-[32px]"
                   aria-label="Ver detalhamento dos custos operacionais"
                 >
                   −{Math.round(operatingCostPct * 100)}% custos
@@ -446,99 +480,109 @@ export function ROISimulator({
           </div>
         </div>
 
-        {/* ─── Personalize sua simulação ─── */}
-        <div className="rounded-xl border border-border bg-background/40 p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h6 className="text-xs font-display font-bold text-foreground uppercase tracking-wider">
-              Personalize sua simulação
-            </h6>
-            {isEdited && (
-              <button
-                type="button"
-                onClick={handleReset}
-                className="text-[10px] font-mono uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
-              >
-                ↺ Resetar
-              </button>
+        {/* ─── Personalize sua simulação — colapsável ─── */}
+        <div className="rounded-xl border border-border bg-background/40 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setPersonalizeOpen((p) => !p)}
+            aria-expanded={personalizeOpen}
+            className={cn(
+              "w-full flex items-center justify-between gap-3 px-3.5 sm:px-4 py-3 sm:py-3.5 min-h-[48px]",
+              "hover:bg-muted/30 transition-colors",
+              "focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]",
             )}
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-body text-muted-foreground flex items-center gap-1.5">
-                  <Home className="h-3 w-3" />
-                  Valor de compra do studio
-                </label>
-                <span
-                  className="font-display font-bold text-sm text-foreground tabular-nums"
-                >
-                  {formatBRL(studioPrice)}
-                </span>
-              </div>
-              <Slider
-                aria-label="Valor de compra do studio"
-                value={[studioPrice]}
-                min={STUDIO_PRICE_MIN}
-                max={STUDIO_PRICE_MAX}
-                step={5_000}
-                onValueChange={([v]) => setStudioPrice(v)}
-              />
-              <p className="text-[10px] text-muted-foreground font-body mt-1.5">
-                Studios em SP: R$ 350 mil a R$ 400 mil
-              </p>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-body text-muted-foreground">
-                  Diária média
-                </label>
-                <span
-                  className="font-display font-bold text-sm text-foreground tabular-nums"
-                >
-                  {formatBRL(nightly)}
-                </span>
-              </div>
-              <Slider
-                aria-label="Diária média"
-                value={[nightly]}
-                min={sliderLimits.nightlyMin}
-                max={sliderLimits.nightlyMax}
-                step={10}
-                onValueChange={([v]) => setNightly(v)}
-              />
-              {district?.adrRangeLabel && (
-                <p className="text-[10px] text-muted-foreground font-body mt-1.5">
-                  Mercado: {district.adrRangeLabel}
-                </p>
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+              <h6 className="text-xs font-display font-bold text-foreground uppercase tracking-wider truncate">
+                Personalize sua simulação
+              </h6>
+              {isEdited && (
+                <Badge variant="secondary" className="text-[9px] font-mono px-1.5 py-0 h-4 flex-shrink-0">
+                  editado
+                </Badge>
               )}
             </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-body text-muted-foreground">
-                  Taxa de ocupação
-                </label>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {isEdited && personalizeOpen && (
                 <span
-                  className="font-display font-bold text-sm text-foreground tabular-nums"
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReset();
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleReset();
+                    }
+                  }}
+                  className="text-[10px] font-mono uppercase tracking-wider text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded cursor-pointer"
                 >
-                  {occupancy}%
+                  ↺ Resetar
                 </span>
-              </div>
-              <Slider
-                aria-label="Taxa de ocupação"
-                value={[occupancy]}
-                min={40}
-                max={95}
-                step={1}
-                onValueChange={([v]) => setOccupancy(v)}
+              )}
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                  personalizeOpen && "rotate-180",
+                )}
               />
-              <p className="text-[10px] text-muted-foreground font-body mt-1.5">
-                Mercado padrão: {baseline.occupancy}%
-              </p>
             </div>
-          </div>
+          </button>
+
+          <AnimatePresence initial={false}>
+            {personalizeOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="px-3.5 sm:px-4 pb-4 pt-1 space-y-4 sm:space-y-5 border-t border-border/60">
+                  <SliderField
+                    icon={<Home className="h-3 w-3" />}
+                    label="Valor de compra do studio"
+                    value={formatBRL(studioPrice)}
+                    helper="Studios em SP: R$ 350 mil a R$ 400 mil"
+                    ariaLabel="Valor de compra do studio"
+                    sliderValue={[studioPrice]}
+                    min={STUDIO_PRICE_MIN}
+                    max={STUDIO_PRICE_MAX}
+                    step={5_000}
+                    onChange={(v) => setStudioPrice(v)}
+                  />
+
+                  <SliderField
+                    label="Diária média"
+                    value={formatBRL(nightly)}
+                    helper={district?.adrRangeLabel ? `Mercado: ${district.adrRangeLabel}` : undefined}
+                    ariaLabel="Diária média"
+                    sliderValue={[nightly]}
+                    min={sliderLimits.nightlyMin}
+                    max={sliderLimits.nightlyMax}
+                    step={10}
+                    onChange={(v) => setNightly(v)}
+                  />
+
+                  <SliderField
+                    label="Taxa de ocupação"
+                    value={`${occupancy}%`}
+                    helper={`Mercado padrão: ${baseline.occupancy}%`}
+                    ariaLabel="Taxa de ocupação"
+                    sliderValue={[occupancy]}
+                    min={40}
+                    max={95}
+                    step={1}
+                    onChange={(v) => setOccupancy(v)}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
 
@@ -548,7 +592,7 @@ export function ROISimulator({
             <button
               type="button"
               onClick={() => setShowDetails((p) => !p)}
-              className="flex items-center justify-between w-full text-xs font-body text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center justify-between w-full text-xs font-body text-muted-foreground hover:text-foreground transition-colors min-h-[36px]"
               aria-expanded={showDetails}
             >
               <span>Ver contexto do bairro</span>
@@ -597,7 +641,7 @@ export function ROISimulator({
       </div>
 
       {/* ─── Footer: fonte + disclaimer + CTA ─── */}
-      <div className="bg-muted/30 border-t border-border px-5 py-4 space-y-3">
+      <div className="bg-muted/30 border-t border-border px-4 sm:px-5 py-4 space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
@@ -611,7 +655,7 @@ export function ROISimulator({
             href="https://www.airdna.co/vacation-rental-data/app/br/sao-paulo/sao-paulo/overview"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[10px] font-mono text-primary hover:text-primary/80 transition-colors"
+            className="inline-flex items-center gap-1 text-[10px] font-mono text-primary hover:text-primary/80 transition-colors min-h-[28px]"
           >
             Ver fonte
             <ExternalLink className="h-2.5 w-2.5" />
@@ -628,7 +672,7 @@ export function ROISimulator({
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-body font-semibold text-primary-foreground bg-primary hover:bg-primary/90 px-3 py-2.5 rounded-lg transition-colors shadow-sm"
+          className="w-full inline-flex items-center justify-center gap-1.5 text-[13px] font-body font-semibold text-primary-foreground bg-primary hover:bg-primary/90 px-3 py-3 sm:py-2.5 rounded-lg transition-colors shadow-sm min-h-[44px]"
         >
           <Maximize2 className="h-3.5 w-3.5" />
           Abrir simulação completa
@@ -645,6 +689,58 @@ export function ROISimulator({
             metragem={metragem}
           />
         </Suspense>
+      )}
+    </div>
+  );
+}
+
+// ── Componente auxiliar: campo de slider mobile-friendly ──
+function SliderField({
+  icon,
+  label,
+  value,
+  helper,
+  ariaLabel,
+  sliderValue,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  value: string;
+  helper?: string;
+  ariaLabel: string;
+  sliderValue: number[];
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 mb-2.5">
+        <label className="text-[11px] sm:text-xs font-body text-muted-foreground flex items-center gap-1.5 min-w-0">
+          {icon}
+          <span className="truncate">{label}</span>
+        </label>
+        <span className="font-display font-bold text-sm text-foreground tabular-nums px-2 py-0.5 rounded-md bg-primary/[0.06] border border-primary/15 flex-shrink-0">
+          {value}
+        </span>
+      </div>
+      <div className="py-2 -my-1 touch-pan-y">
+        <Slider
+          aria-label={ariaLabel}
+          value={sliderValue}
+          min={min}
+          max={max}
+          step={step}
+          onValueChange={([v]) => onChange(v)}
+        />
+      </div>
+      {helper && (
+        <p className="text-[10px] text-muted-foreground font-body mt-2 leading-snug">{helper}</p>
       )}
     </div>
   );

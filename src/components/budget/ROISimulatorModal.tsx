@@ -159,33 +159,44 @@ export function ROISimulatorModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden max-h-[92dvh]">
-        {/* Header gradiente */}
-        <div className="relative bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border-b border-border px-5 sm:px-6 py-5">
+      <DialogContent
+        className={cn(
+          // Bottom-sheet no mobile, dialog centrado no desktop
+          "p-0 gap-0 overflow-hidden",
+          "max-w-[100vw] sm:max-w-3xl",
+          "h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[92dvh]",
+          // No mobile alinha embaixo (bottom-sheet feel) sem cantos arredondados no topo do viewport
+          "rounded-none sm:rounded-lg",
+          // Override do posicionamento padrão para bottom-sheet no mobile
+          "top-0 left-0 translate-x-0 translate-y-0 sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%]",
+        )}
+      >
+        {/* Header gradiente — sticky no mobile para contexto durante scroll */}
+        <div className="sticky top-0 z-20 relative bg-gradient-to-br from-primary/15 via-primary/5 to-card border-b border-border px-4 sm:px-6 py-4 sm:py-5">
           <DialogHeader className="text-left space-y-1.5">
             <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center">
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center flex-shrink-0">
                 <TrendingUp className="h-4 w-4 text-primary" />
               </div>
-              <div className="min-w-0">
-                <DialogTitle className="font-display font-bold text-lg sm:text-xl">
-                  Simulador de Retorno do Investimento
+              <div className="min-w-0 pr-8">
+                <DialogTitle className="font-display font-bold text-base sm:text-xl leading-tight">
+                  Simulador de Retorno
                 </DialogTitle>
-                <DialogDescription className="text-xs sm:text-sm font-body mt-0.5">
+                <DialogDescription className="text-[11px] sm:text-sm font-body mt-0.5 leading-snug">
                   Análise específica para o bairro do imóvel · dados reais de mercado
                 </DialogDescription>
               </div>
             </div>
 
             {/* Bairro analisado — destaque */}
-            <div className="mt-3 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-3">
+            <div className="mt-2 sm:mt-3 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-2.5 sm:p-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
                   Análise para
                 </span>
-                <span className="font-display font-bold text-base text-foreground inline-flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  {baseline.label}
+                <span className="font-display font-bold text-sm sm:text-base text-foreground inline-flex items-center gap-1.5 min-w-0">
+                  <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
+                  <span className="truncate">{baseline.label}</span>
                 </span>
                 {baseline.isFallback && (
                   <Badge variant="outline" className="text-[9px] font-body">
@@ -200,22 +211,23 @@ export function ROISimulatorModal({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap pt-2">
+            {/* Chips de contexto — em scroll horizontal no mobile pra não quebrar */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap pt-1.5 sm:pt-2 -mx-1 px-1 overflow-x-auto sm:overflow-visible scrollbar-none">
               {metragem && (
-                <Badge variant="outline" className="text-[10px] font-mono bg-background/60">
+                <Badge variant="outline" className="text-[10px] font-mono bg-background/60 flex-shrink-0">
                   <Building2 className="h-3 w-3 mr-1" />
                   {metragem}
                 </Badge>
               )}
-              <Badge variant="outline" className="text-[10px] font-mono bg-background/60">
+              <Badge variant="outline" className="text-[10px] font-mono bg-background/60 flex-shrink-0">
                 <Home className="h-3 w-3 mr-1" />
                 Studio {formatBRL(studioPrice)}
               </Badge>
-              <Badge variant="outline" className="text-[10px] font-mono bg-background/60">
+              <Badge variant="outline" className="text-[10px] font-mono bg-background/60 flex-shrink-0">
                 <Calculator className="h-3 w-3 mr-1" />
                 Reforma {formatBRL(safeTotal)}
               </Badge>
-              <Badge variant="secondary" className="text-[10px] font-mono">
+              <Badge variant="secondary" className="text-[10px] font-mono flex-shrink-0">
                 Total {formatBRL(totalInvestment)}
               </Badge>
             </div>
@@ -223,15 +235,15 @@ export function ROISimulatorModal({
         </div>
 
         {/* Conteúdo scrollável */}
-        <div className="overflow-y-auto px-5 sm:px-6 py-5 space-y-5">
-          {/* KPIs principais */}
+        <div className="overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-[max(env(safe-area-inset-bottom),1rem)]">
+          {/* KPIs principais — 2 cols mobile, 4 desktop, com hierarquia visual */}
           <AnimatePresence mode="wait">
             <motion.div
               key={`${nightly}-${occupancy}-${operatingCost}`}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-2.5"
+              className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5"
             >
               <KpiTile
                 label="ROI anual"
@@ -258,44 +270,46 @@ export function ROISimulatorModal({
           </AnimatePresence>
 
           <Tabs defaultValue="parametros" className="w-full">
-            <TabsList className="grid grid-cols-3 w-full">
-              <TabsTrigger value="parametros" className="text-xs sm:text-sm">
+            {/* TabsList sticky no mobile pra navegação rápida durante scroll */}
+            <TabsList className="grid grid-cols-3 w-full sticky top-0 z-10 bg-card/95 backdrop-blur-sm shadow-sm">
+              <TabsTrigger value="parametros" className="text-xs sm:text-sm min-h-[40px]">
                 Parâmetros
               </TabsTrigger>
-              <TabsTrigger value="projecao" className="text-xs sm:text-sm">
+              <TabsTrigger value="projecao" className="text-xs sm:text-sm min-h-[40px]">
                 Projeção
               </TabsTrigger>
-              <TabsTrigger value="bairro" className="text-xs sm:text-sm" disabled={!district}>
+              <TabsTrigger value="bairro" className="text-xs sm:text-sm min-h-[40px]" disabled={!district}>
                 {district ? "Bairro" : "Bairro —"}
               </TabsTrigger>
             </TabsList>
 
             {/* Parâmetros */}
-            <TabsContent value="parametros" className="space-y-5 mt-4">
+            <TabsContent value="parametros" className="space-y-4 sm:space-y-5 mt-4">
               {/* Composição do investimento */}
               <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <Home className="h-4 w-4 text-primary" />
-                  <h4 className="font-display font-bold text-sm text-foreground">
-                    Composição do investimento (base do payback)
+                  <Home className="h-4 w-4 text-primary flex-shrink-0" />
+                  <h4 className="font-display font-bold text-[13px] sm:text-sm text-foreground leading-tight">
+                    Composição do investimento
+                    <span className="hidden sm:inline"> (base do payback)</span>
                   </h4>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-center">
                   <div className="rounded-md bg-background border border-border p-2">
                     <p className="text-[9px] text-muted-foreground font-mono uppercase">Studio</p>
-                    <p className="text-xs font-display font-bold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <p className="text-[11px] sm:text-xs font-display font-bold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {formatBRL(studioPrice)}
                     </p>
                   </div>
                   <div className="rounded-md bg-background border border-border p-2">
                     <p className="text-[9px] text-muted-foreground font-mono uppercase">Reforma</p>
-                    <p className="text-xs font-display font-bold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <p className="text-[11px] sm:text-xs font-display font-bold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {formatBRL(safeTotal)}
                     </p>
                   </div>
                   <div className="rounded-md bg-primary/15 border border-primary/30 p-2">
                     <p className="text-[9px] text-muted-foreground font-mono uppercase">Total</p>
-                    <p className="text-xs font-display font-bold text-primary" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <p className="text-[11px] sm:text-xs font-display font-bold text-primary" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {formatBRL(totalInvestment)}
                     </p>
                   </div>
@@ -354,7 +368,7 @@ export function ROISimulatorModal({
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="text-xs text-primary underline underline-offset-2 hover:text-primary/80 transition-colors font-body"
+                  className="text-xs text-primary underline underline-offset-2 hover:text-primary/80 transition-colors font-body min-h-[36px] inline-flex items-center"
                 >
                   Voltar aos valores de referência (ROI {formatPct(baselineRoi)})
                 </button>
@@ -363,14 +377,14 @@ export function ROISimulatorModal({
 
             {/* Projeção */}
             <TabsContent value="projecao" className="space-y-4 mt-4">
-              <div className="rounded-lg border border-primary/15 bg-gradient-to-br from-primary/5 to-transparent p-4 space-y-3">
+              <div className="rounded-lg border border-primary/15 bg-gradient-to-br from-primary/5 to-transparent p-3 sm:p-4 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <h4 className="font-display font-bold text-sm text-foreground">
+                  <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+                  <h4 className="font-display font-bold text-[13px] sm:text-sm text-foreground">
                     Composição da receita mensal
                   </h4>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
                   <BreakdownCell label="Receita bruta" value={formatBRL(grossMonth)} positive />
                   <BreakdownCell
                     label={`Custos (${Math.round(operatingCost)}%)`}
@@ -386,19 +400,28 @@ export function ROISimulatorModal({
               </div>
 
               {/* Projeção composta — renda + valorização patrimonial */}
-              <div className="rounded-lg border border-success/25 bg-success/5 p-4 space-y-3">
+              <div className="rounded-lg border border-success/25 bg-success/5 p-3 sm:p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <CalendarCheck2 className="h-4 w-4 text-success" />
-                    <h4 className="font-display font-bold text-sm text-foreground">
-                      Projeção composta — renda + valorização
+                    <CalendarCheck2 className="h-4 w-4 text-success flex-shrink-0" />
+                    <h4 className="font-display font-bold text-[13px] sm:text-sm text-foreground">
+                      Renda + valorização
                     </h4>
                   </div>
                   <Badge variant="outline" className="text-[10px] font-mono border-success/30 text-success bg-background/60">
-                    +{formatPct(appreciationPctYear)} a.a. (FipeZap)
+                    +{formatPct(appreciationPctYear)} a.a.
                   </Badge>
                 </div>
-                <div className="overflow-hidden rounded-md border border-border bg-background">
+
+                {/* Mobile: cards empilhados (tabela quebra em telas estreitas) */}
+                <div className="sm:hidden space-y-2">
+                  <ProjectionCard period="1 ano" data={projection1y} />
+                  <ProjectionCard period="5 anos" data={projection5y} highlight />
+                  <ProjectionCard period="10 anos" data={projection10y} />
+                </div>
+
+                {/* Desktop: tabela */}
+                <div className="hidden sm:block overflow-hidden rounded-md border border-border bg-background">
                   <table className="w-full text-xs font-body">
                     <thead className="bg-muted/50">
                       <tr className="text-[10px] font-mono uppercase text-muted-foreground">
@@ -415,9 +438,10 @@ export function ROISimulatorModal({
                     </tbody>
                   </table>
                 </div>
-                <div className="flex items-start gap-2 text-xs font-body text-muted-foreground">
+
+                <div className="flex items-start gap-2 text-[11px] sm:text-xs font-body text-muted-foreground">
                   <ArrowRight className="h-3.5 w-3.5 text-success mt-0.5 flex-shrink-0" />
-                  <p>
+                  <p className="leading-relaxed">
                     Em 10 anos, o patrimônio total estimado (imóvel valorizado + renda acumulada)
                     chega a{" "}
                     <span className="font-semibold text-foreground">
@@ -433,19 +457,19 @@ export function ROISimulatorModal({
               </div>
 
               {/* Comparativo com benchmarks reais 2025 */}
-              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+              <div className="rounded-lg border border-border bg-muted/30 p-3 sm:p-4 space-y-2">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <Percent className="h-4 w-4 text-primary" />
-                    <h4 className="font-display font-bold text-sm text-foreground">
-                      Comparativo com investimentos tradicionais
+                    <Percent className="h-4 w-4 text-primary flex-shrink-0" />
+                    <h4 className="font-display font-bold text-[13px] sm:text-sm text-foreground">
+                      vs. investimentos tradicionais
                     </h4>
                   </div>
                   <Badge variant="outline" className="text-[10px] font-mono bg-background">
                     valores 2025
                   </Badge>
                 </div>
-                <div className="space-y-1.5 text-xs font-body">
+                <div className="space-y-1.5 text-[11px] sm:text-xs font-body">
                   <ComparisonRow label={`Poupança (~${BENCHMARKS_2025.poupanca}% a.a.)`} value={formatPct(BENCHMARKS_2025.poupanca)} />
                   <ComparisonRow label={`Tesouro IPCA+ real (~${BENCHMARKS_2025.ipcaPlus}% a.a.)`} value={formatPct(BENCHMARKS_2025.ipcaPlus)} />
                   <ComparisonRow label={`Fundos Imobiliários — IFIX (~${BENCHMARKS_2025.fundoImobiliario}% a.a.)`} value={formatPct(BENCHMARKS_2025.fundoImobiliario)} />
@@ -456,7 +480,7 @@ export function ROISimulatorModal({
                     highlight
                   />
                 </div>
-                <p className="text-[10px] text-muted-foreground/80 font-body italic mt-2">
+                <p className="text-[10px] text-muted-foreground/80 font-body italic mt-2 leading-relaxed">
                   Fontes: BCB (CDI/Selic), Tesouro Direto (IPCA+), B3 (IFIX), FipeZap (valorização imóvel).
                   Investimento imobiliário possui liquidez e risco diferentes de renda fixa.
                 </p>
@@ -467,9 +491,9 @@ export function ROISimulatorModal({
             <TabsContent value="bairro" className="space-y-4 mt-4">
               {district ? (
                 <>
-                  <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                  <div className="rounded-lg border border-border bg-card p-3 sm:p-4 space-y-3">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <h4 className="font-display font-bold text-sm text-foreground">
+                      <h4 className="font-display font-bold text-[13px] sm:text-sm text-foreground">
                         {district.districtName}
                       </h4>
                       <Badge
@@ -495,14 +519,14 @@ export function ROISimulatorModal({
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-primary/15 bg-primary/5 p-4 space-y-2">
+                  <div className="rounded-lg border border-primary/15 bg-primary/5 p-3 sm:p-4 space-y-2">
                     <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-primary" />
-                      <h4 className="font-display font-bold text-sm text-foreground">
+                      <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
+                      <h4 className="font-display font-bold text-[13px] sm:text-sm text-foreground">
                         Perfil recomendado
                       </h4>
                     </div>
-                    <p className="text-sm font-body text-foreground font-medium">
+                    <p className="text-[13px] sm:text-sm font-body text-foreground font-medium">
                       {district.recommendation.bestStudioType}
                     </p>
                     <p className="text-xs font-body text-muted-foreground leading-relaxed">
@@ -513,7 +537,7 @@ export function ROISimulatorModal({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="rounded-lg border border-success/20 bg-success/5 p-3 space-y-2">
                       <div className="flex items-center gap-1.5">
-                        <Lightbulb className="h-3.5 w-3.5 text-success" />
+                        <Lightbulb className="h-3.5 w-3.5 text-success flex-shrink-0" />
                         <h5 className="font-display font-bold text-xs text-foreground">
                           Boas práticas
                         </h5>
@@ -532,7 +556,7 @@ export function ROISimulatorModal({
                     </div>
                     <div className="rounded-lg border border-warning/20 bg-warning/5 p-3 space-y-2">
                       <div className="flex items-center gap-1.5">
-                        <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                        <AlertTriangle className="h-3.5 w-3.5 text-warning flex-shrink-0" />
                         <h5 className="font-display font-bold text-xs text-foreground">
                           Pontos de atenção
                         </h5>
@@ -564,7 +588,7 @@ export function ROISimulatorModal({
           {/* Footer — Fonte e disclaimer */}
           <div className="border-t border-border pt-3 space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
                   Fonte dos dados
                 </span>
@@ -576,7 +600,7 @@ export function ROISimulatorModal({
                 href="https://www.airdna.co/vacation-rental-data/app/br/sao-paulo/sao-paulo/overview"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[10px] font-mono text-primary hover:text-primary/80 transition-colors"
+                className="inline-flex items-center gap-1 text-[10px] font-mono text-primary hover:text-primary/80 transition-colors min-h-[28px]"
               >
                 Consultar dados de mercado
                 <ExternalLink className="h-2.5 w-2.5" />
@@ -608,7 +632,7 @@ export function ROISimulatorModal({
                         href={src.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] font-mono text-primary hover:underline"
+                        className="text-[10px] font-mono text-primary hover:underline break-words"
                       >
                         {src.label}
                       </a>
@@ -643,25 +667,25 @@ function KpiTile({
   return (
     <div
       className={cn(
-        "rounded-lg border p-3",
+        "rounded-lg border p-2.5 sm:p-3",
         accent
           ? "bg-primary/10 border-primary/25"
           : "bg-muted/40 border-border",
       )}
     >
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono mb-1">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono mb-1 truncate">
         {label}
       </p>
       <p
         className={cn(
-          "font-display font-bold text-lg sm:text-xl leading-tight",
+          "font-display font-bold text-base sm:text-xl leading-tight",
           accent ? "text-primary" : "text-foreground",
         )}
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
         {value}
       </p>
-      <p className="text-[10px] text-muted-foreground font-body mt-0.5">{hint}</p>
+      <p className="text-[10px] text-muted-foreground font-body mt-0.5 leading-tight truncate">{hint}</p>
     </div>
   );
 }
@@ -689,25 +713,27 @@ function SliderRow({
 }) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className="text-xs font-body text-muted-foreground">{label}</label>
+      <div className="flex items-center justify-between gap-2 mb-2.5">
+        <label className="text-[12px] sm:text-xs font-body text-muted-foreground min-w-0 truncate">{label}</label>
         <span
-          className="font-display font-bold text-sm text-foreground"
+          className="font-display font-bold text-sm text-foreground tabular-nums px-2 py-0.5 rounded-md bg-primary/[0.06] border border-primary/15 flex-shrink-0"
           style={{ fontVariantNumeric: "tabular-nums" }}
         >
           {value}
         </span>
       </div>
-      <Slider
-        aria-label={ariaLabel}
-        value={sliderValue}
-        min={min}
-        max={max}
-        step={step}
-        onValueChange={([v]) => onChange(v)}
-      />
+      <div className="py-2 -my-1 touch-pan-y">
+        <Slider
+          aria-label={ariaLabel}
+          value={sliderValue}
+          min={min}
+          max={max}
+          step={step}
+          onValueChange={([v]) => onChange(v)}
+        />
+      </div>
       {helper && (
-        <p className="text-[10px] text-muted-foreground font-body mt-1.5">{helper}</p>
+        <p className="text-[10px] text-muted-foreground font-body mt-2 leading-snug">{helper}</p>
       )}
     </div>
   );
@@ -729,52 +755,20 @@ function BreakdownCell({
   return (
     <div
       className={cn(
-        "rounded-md border p-2.5",
+        "rounded-md border p-2.5 flex sm:block items-center justify-between gap-2",
         highlight && "bg-primary/10 border-primary/25",
         !highlight && "bg-background/60 border-border",
       )}
     >
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono sm:mb-0">
         {label}
       </p>
       <p
         className={cn(
-          "font-display font-bold text-sm mt-0.5",
+          "font-display font-bold text-sm sm:mt-0.5",
           highlight && "text-primary",
           negative && "text-warning",
           positive && !highlight && "text-foreground",
-        )}
-        style={{ fontVariantNumeric: "tabular-nums" }}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function ProjectionTile({
-  period,
-  value,
-  highlight,
-}: {
-  period: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-md border p-3 text-center",
-        highlight ? "bg-primary/10 border-primary/25" : "bg-background border-border",
-      )}
-    >
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
-        {period}
-      </p>
-      <p
-        className={cn(
-          "font-display font-bold text-base mt-1",
-          highlight ? "text-primary" : "text-foreground",
         )}
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
@@ -821,6 +815,61 @@ function ProjectionRow({
   );
 }
 
+// Card empilhado para projeção no mobile (substitui a tabela)
+function ProjectionCard({
+  period,
+  data,
+  highlight,
+}: {
+  period: string;
+  data: { rent: number; appreciation: number; total: number; finalAsset: number };
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-md border bg-background p-2.5",
+        highlight ? "border-success/40 bg-success/[0.06] shadow-sm" : "border-border",
+      )}
+    >
+      <div className="flex items-baseline justify-between mb-2">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          Em
+        </span>
+        <span className="font-display font-bold text-sm text-foreground">{period}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5 text-[11px] font-body">
+        <div>
+          <p className="text-[9px] font-mono uppercase text-muted-foreground">Renda</p>
+          <p className="font-display font-semibold text-foreground tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
+            {formatBRL(data.rent)}
+          </p>
+        </div>
+        <div>
+          <p className="text-[9px] font-mono uppercase text-muted-foreground">Valorização</p>
+          <p className="font-display font-semibold text-foreground tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
+            {formatBRL(data.appreciation)}
+          </p>
+        </div>
+      </div>
+      <div className="mt-2 pt-2 border-t border-border flex items-baseline justify-between">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          Retorno total
+        </span>
+        <span
+          className={cn(
+            "font-display font-bold text-base tabular-nums",
+            highlight ? "text-success" : "text-foreground",
+          )}
+          style={{ fontVariantNumeric: "tabular-nums" }}
+        >
+          {formatBRL(data.total)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ComparisonRow({
   label,
   value,
@@ -833,16 +882,16 @@ function ComparisonRow({
   return (
     <div
       className={cn(
-        "flex items-center justify-between rounded-md px-2.5 py-1.5",
+        "flex items-center justify-between gap-2 rounded-md px-2.5 py-2 sm:py-1.5",
         highlight && "bg-primary/10 border border-primary/20",
       )}
     >
-      <span className={cn("font-body", highlight ? "text-foreground font-semibold" : "text-muted-foreground")}>
+      <span className={cn("font-body min-w-0 truncate", highlight ? "text-foreground font-semibold" : "text-muted-foreground")}>
         {label}
       </span>
       <span
         className={cn(
-          "font-display font-bold",
+          "font-display font-bold flex-shrink-0",
           highlight ? "text-primary" : "text-foreground",
         )}
         style={{ fontVariantNumeric: "tabular-nums" }}
