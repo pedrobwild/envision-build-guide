@@ -221,4 +221,3 @@ export function getIndividualProjects(bairro: string): IndividualProject[] {
     };
   });
 }
-}
