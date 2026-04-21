@@ -91,7 +91,12 @@ export function ROISimulator({
   const safeTotal = total > 0 ? total : 0;
   // Investimento total = compra do studio + reforma
   const totalInvestment = studioPrice + safeTotal;
+  // Valorização anual estimada do imóvel (FipeZap por bairro)
+  const appreciationPctYear = getAppreciationPctYear(district);
+  const appreciationYear = studioPrice * (appreciationPctYear / 100);
   const roiYearPct = totalInvestment > 0 ? (netYear / totalInvestment) * 100 : 0;
+  const roiTotalPct =
+    totalInvestment > 0 ? ((netYear + appreciationYear) / totalInvestment) * 100 : 0;
   const roiReformOnlyPct = safeTotal > 0 ? (netYear / safeTotal) * 100 : 0;
   const paybackMonths =
     totalInvestment > 0 && netMonth > 0 ? totalInvestment / netMonth : null;
