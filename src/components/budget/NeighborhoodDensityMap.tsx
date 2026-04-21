@@ -734,6 +734,32 @@ function FilterChip({
 
 /* ── Individual Project Card with Carousel ── */
 
+/**
+ * Subscribes to the user's `prefers-reduced-motion` OS-level setting.
+ * Returns `true` when motion should be minimized — components can use this
+ * to skip autoplay, disable hover transforms, and remove looping animations
+ * (shimmer, scale, etc.) without breaking the visual hierarchy.
+ *
+ * SSR-safe: defaults to `false` until mounted, then syncs with the media query.
+ */
+function useReducedMotion(): boolean {
+  const [prefersReduced, setPrefersReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setPrefersReduced(mql.matches);
+    update();
+    // Modern browsers expose addEventListener; older Safari uses addListener.
+    if (mql.addEventListener) {
+      mql.addEventListener("change", update);
+      return () => mql.removeEventListener("change", update);
+    }
+    mql.addListener(update);
+    return () => mql.removeListener(update);
+  }, []);
+  return prefersReduced;
+}
+
 interface IndividualProjectCardProps {
   project: IndividualProject;
   isHighlighted?: boolean;
@@ -742,6 +768,7 @@ interface IndividualProjectCardProps {
 
 const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardProps>(
   ({ project, isHighlighted = false, onHover }, ref) => {
+    const reducedMotion = useReducedMotion();
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
     const [hovering, setHovering] = useState(false);
@@ -853,12 +880,15 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
       [inView, activeSlide, pendingNeighbor, project.fotos.length]
     );
 
-    // Autoplay subtly while hovering
+    // Autoplay subtly while hovering — disabled entirely when the user has
+    // requested reduced motion. Looping animations are one of the explicit
+    // categories WCAG flags as motion-sensitive.
     useEffect(() => {
+      if (reducedMotion) return;
       if (!emblaApi || !hovering || project.fotos.length <= 1) return;
       const interval = setInterval(() => emblaApi.scrollNext(), 2000);
       return () => clearInterval(interval);
-    }, [emblaApi, hovering, project.fotos.length]);
+    }, [emblaApi, hovering, project.fotos.length, reducedMotion]);
 
     const handleMouseEnter = () => {
       setHovering(true);
@@ -916,13 +946,21 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         aria-label={`${project.displayName}, ${project.metragem} metros quadrados, ${project.bairro}`}
         className={cn(
           "group/card rounded-xl border overflow-hidden bg-card outline-none",
-          "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
+          // When motion is reduced, drop the transition + transform/scale
+          // entirely so the card snaps into its highlight state without
+          // animating layout — only color/border/shadow change.
+          reducedMotion
+            ? "transition-[box-shadow,border-color] duration-150 ease-out"
+            : "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
           "max-md:min-w-[260px] max-md:snap-start max-md:flex-shrink-0",
           "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           isHighlighted
-            ? "border-primary ring-4 ring-primary/40 shadow-xl shadow-primary/20 -translate-y-0.5 scale-[1.015]"
+            ? cn(
+                "border-primary ring-4 ring-primary/40 shadow-xl shadow-primary/20",
+                !reducedMotion && "-translate-y-0.5 scale-[1.015]"
+              )
             : hovering
-            ? "border-primary/40 shadow-md -translate-y-px"
+            ? cn("border-primary/40 shadow-md", !reducedMotion && "-translate-y-px")
             : "border-border"
         )}
         onMouseEnter={handleMouseEnter}
@@ -947,15 +985,19 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                   <div
                     aria-hidden="true"
                     className={cn(
-                      "absolute inset-0 overflow-hidden transition-opacity duration-500",
+                      "absolute inset-0 overflow-hidden",
+                      reducedMotion ? "" : "transition-opacity duration-500",
                       isLoaded ? "opacity-0" : "opacity-100"
                     )}
                   >
                     <div className="absolute inset-0 bg-muted" />
-                    {/* Shimmer sweep — pure CSS, GPU-friendly */}
-                    <div
-                      className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-foreground/[0.06] to-transparent"
-                    />
+                    {/* Shimmer sweep — pure CSS, GPU-friendly. Skipped for
+                        users with reduced motion to avoid the looping sweep. */}
+                    {!reducedMotion && (
+                      <div
+                        className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-foreground/[0.06] to-transparent"
+                      />
+                    )}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Camera className="h-8 w-8 text-muted-foreground/25" />
                     </div>
@@ -968,7 +1010,11 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                   {hasError && (
                     <div
                       aria-hidden="true"
-                      className="absolute inset-0 overflow-hidden animate-in fade-in duration-500"
+                      className={cn(
+                        "absolute inset-0 overflow-hidden",
+                        // Skip the entrance animation when motion is reduced.
+                        !reducedMotion && "animate-in fade-in duration-500"
+                      )}
                     >
                       {/* Soft color wash inspired by the brand palette */}
                       <div
@@ -995,7 +1041,10 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                       src={foto}
                       alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
                       className={cn(
-                        "relative w-full h-full object-cover transition-opacity duration-500",
+                        "relative w-full h-full object-cover",
+                        // Cross-fade kept for normal users; reduced motion gets
+                        // an instant swap to avoid even short opacity tweens.
+                        !reducedMotion && "transition-opacity duration-500",
                         isLoaded ? "opacity-100" : "opacity-0"
                       )}
                       // Active slide loads eagerly; the predicted neighbor
