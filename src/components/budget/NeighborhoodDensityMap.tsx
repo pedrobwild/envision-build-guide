@@ -917,6 +917,8 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
             {project.fotos.map((foto, i) => {
               const isActiveSlide = i === activeSlide;
               const isLoaded = loadedSlides.has(i);
+              const mount = shouldMount(i);
+              const isPrefetchTarget = pendingNeighbor === i;
               return (
                 <div key={i} className="flex-[0_0_100%] min-w-0 relative bg-muted">
                   {/* Skeleton: always rendered as the first paint frame.
