@@ -101,6 +101,14 @@ function normalize(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
 
+// Lookup: project bairro name -> neighborhood id (for hover sync)
+const BAIRRO_NAME_TO_ID = new Map<string, string>(
+  NEIGHBORHOOD_DATA.map((n) => [normalize(n.name), n.id])
+);
+function getBairroId(bairroName: string): string | null {
+  return BAIRRO_NAME_TO_ID.get(normalize(bairroName)) ?? null;
+}
+
 /* ── Component ── */
 interface NeighborhoodDensityMapProps {
   clientNeighborhood?: string;
