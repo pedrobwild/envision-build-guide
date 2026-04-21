@@ -38,17 +38,17 @@ export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummar
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="relative rounded-2xl border border-primary/10 px-5 py-5 overflow-hidden"
+        className="relative rounded-xl border border-primary/10 px-4 py-3.5 overflow-hidden"
         style={{
           background:
             "linear-gradient(145deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 40%, hsl(var(--background)) 100%)",
           boxShadow:
-            "0 8px 28px -8px hsl(var(--primary) / 0.10), 0 2px 8px -2px hsl(var(--primary) / 0.04)",
+            "0 6px 20px -8px hsl(var(--primary) / 0.10), 0 1px 4px -1px hsl(var(--primary) / 0.04)",
         }}
       >
         {/* Decorative glow */}
         <div
-          className="absolute -top-20 -right-20 w-44 h-44 rounded-full pointer-events-none"
+          className="absolute -top-16 -right-16 w-32 h-32 rounded-full pointer-events-none"
           style={{
             background:
               "radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
@@ -56,27 +56,27 @@ export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummar
           aria-hidden
         />
 
-        <div className="relative space-y-3">
+        <div className="relative space-y-2">
           {/* Total */}
-          <div className="space-y-1.5">
+          <div className="space-y-0.5">
             <p className={LABEL}>Investimento total</p>
             <CountUpValue
               value={total}
               className={cn(
                 "budget-currency font-extrabold text-primary leading-none block",
-                total >= 1_000_000 ? "text-[1.5rem]" : "text-[1.875rem]"
+                total >= 1_000_000 ? "text-[1.25rem]" : "text-[1.5rem]"
               )}
               style={{ letterSpacing: "-0.03em" }}
             />
           </div>
 
           {/* Installment inline preview */}
-          <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-[12px] font-body text-muted-foreground">ou</span>
-            <span className="budget-currency text-sm font-semibold text-foreground">
+          <div className="flex items-baseline gap-1 flex-wrap">
+            <span className="text-[11px] font-body text-muted-foreground">ou</span>
+            <span className="budget-currency text-[13px] font-semibold text-foreground">
               {formatBRL(total / installments)}
             </span>
-            <span className="text-[12px] font-body text-muted-foreground">
+            <span className="text-[11px] font-body text-muted-foreground">
               em <span className="budget-numeric">{installments}×</span> sem juros
             </span>
           </div>
