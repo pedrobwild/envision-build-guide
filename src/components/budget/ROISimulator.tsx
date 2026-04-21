@@ -535,11 +535,6 @@ export function ROISimulator({
           </div>
         </div>
 
-        {/* Citação técnica */}
-        <p className="text-[10px] text-muted-foreground font-body leading-relaxed text-center px-2">
-          Benchmark <strong className="text-foreground">AirDNA "Top 10%"</strong> em SP: design
-          premium gera +{upliftPctNightly}% na diária e +{BWILD_OCCUPANCY_UPLIFT}pp na ocupação.
-        </p>
 
         {/* Expand contexto */}
         {district && (
