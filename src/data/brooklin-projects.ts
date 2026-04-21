@@ -184,6 +184,7 @@ export type IndividualProject = {
   empreendimento: string;
   displayName: string;
   metragem: number;
+  bairro: string;
   fotos: string[];
 };
 
@@ -215,6 +216,7 @@ export function getIndividualProjects(bairro: string): IndividualProject[] {
       empreendimento: p.empreendimento,
       displayName,
       metragem: p.metragem,
+      bairro: p.bairro,
       fotos: p.fotos,
     };
   });
