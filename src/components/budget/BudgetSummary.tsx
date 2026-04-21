@@ -10,6 +10,7 @@ import { SectionSummaryRow } from "@/components/budget/SectionSummaryRow";
 import { CountUpValue } from "@/components/budget/CountUpValue";
 import { InstallmentSimulator } from "@/components/budget/summary/InstallmentSimulator";
 import { TrustBadgesRow } from "@/components/budget/summary/TrustBadgesRow";
+import { InstallmentPreview } from "@/components/budget/summary/InstallmentPreview";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 import type { SectionWithItems, AdjustmentRow } from "@/types/budget-common";
 

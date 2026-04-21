@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { motion } from "framer-motion";
 import { CountUpValue } from "../CountUpValue";
 import { TrustBadgesRow } from "./TrustBadgesRow";
-import { formatBRL } from "@/lib/formatBRL";
+import { InstallmentPreview } from "./InstallmentPreview";
 import { cn } from "@/lib/utils";
 
 const LABEL = "budget-label text-[10px] text-muted-foreground";
@@ -70,16 +70,8 @@ export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummar
             />
           </div>
 
-          {/* Installment inline preview */}
-          <div className="flex items-baseline gap-1 flex-wrap">
-            <span className="text-[11px] font-body text-muted-foreground">ou</span>
-            <span className="budget-currency text-[13px] font-semibold text-foreground">
-              {formatBRL(total / installments)}
-            </span>
-            <span className="text-[11px] font-body text-muted-foreground">
-              em <span className="budget-numeric">{installments}×</span> sem juros
-            </span>
-          </div>
+          {/* Installment inline preview — typography shared with desktop TotalCard */}
+          <InstallmentPreview total={total} installments={installments} />
 
           {/* Trust badges */}
           <TrustBadgesRow />
