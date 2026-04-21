@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { subDays } from "date-fns";
 import { BarChart3 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -28,6 +29,7 @@ const anim = (delay: number) => ({
 export default function AnalisesPage() {
   const { user } = useAuth();
   const { profile } = useUserProfile();
+  const location = useLocation();
   const isAdmin = profile?.roles.includes("admin") ?? false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
@@ -88,6 +90,16 @@ export default function AnalisesPage() {
 
   const aiInsights = useOperationsInsights(metrics, dateRange, !loading && !!metrics);
 
+  // Scroll to hash anchor (e.g. #forecast) after data is ready
+  useEffect(() => {
+    if (loading || !location.hash) return;
+    const id = location.hash.replace("#", "");
+    const el = document.getElementById(id);
+    if (el) {
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    }
+  }, [loading, location.hash]);
+
   let step = 0;
 
   return (
@@ -113,7 +125,7 @@ export default function AnalisesPage() {
       </motion.div>
 
       {/* FORECAST & PREVISIBILIDADE */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
+      <motion.div id="forecast" {...anim(step++ * SECTION_DELAY)}>
         <ForecastPanel ownerFilter={null} isAdmin={isAdmin} />
       </motion.div>
 
