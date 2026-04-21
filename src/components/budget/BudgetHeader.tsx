@@ -58,9 +58,18 @@ function formatName(str: string): string {
     .replace(/(^|\s)\S/g, (char) => char.toUpperCase());
 }
 
-/** Dot separator */
-function Dot() {
-  return <span className="text-white/30 select-none mx-0.5" aria-hidden>·</span>;
+/** Hairline separator */
+function Sep() {
+  return <span className="text-white/20 select-none mx-2" aria-hidden>·</span>;
+}
+
+/** Formats a date string/Date into 'Abril de 2026' (pt-BR) */
+function formatMonthYear(value?: string | Date | null): string {
+  if (!value) return "";
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
+    .replace(/^\p{L}/u, (l) => l.toLocaleUpperCase("pt-BR"));
 }
 
 export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderProps) {
@@ -73,20 +82,29 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const area = rawArea ? `${rawArea}m²` : "";
   const versionNum = budget.versao ? budget.versao.replace(/^v/i, '') : (budget.version_number ?? "1");
   const versionStr = String(versionNum);
+  const dateLabel = formatMonthYear(budget.date);
 
   const clientName = budget.client_name ? formatName(sanitizeClientName(budget.client_name)) : "";
   const projectTitle = budget.project_name || "Projeto e Reforma";
   const heroTitle = clientName || projectTitle;
+  const showProjectSubtitle = !!(clientName && projectTitle && !projectTitle.toLowerCase().includes(clientName.toLowerCase()));
 
   const tagline = cfg.custom_tagline || "Projeto personalizado · Gestão completa · Execução com garantia";
 
-  /** Build meta chips array */
-  const metaChips: { label: string; value: string; mono?: boolean }[] = [];
-  if (condominio) metaChips.push({ label: "Condomínio", value: condominio });
-  if (neighborhood) metaChips.push({ label: "Bairro", value: neighborhood });
-  if (area) metaChips.push({ label: "Área", value: area, mono: true });
-  if (versionStr) metaChips.push({ label: "Versão", value: `v${versionStr}`, mono: true });
-  if (budget.prazo_dias_uteis) metaChips.push({ label: "Prazo", value: `${budget.prazo_dias_uteis} dias úteis`, mono: true });
+  /** Eyebrow tokens: PROPOSTA · v2 · Abril de 2026 */
+  const eyebrow: { value: string; mono?: boolean }[] = [{ value: "Proposta" }];
+  if (versionStr) eyebrow.push({ value: `v${versionStr}`, mono: true });
+  if (dateLabel) eyebrow.push({ value: dateLabel });
+
+  /** Property meta: 85m² · Jardins · Edifício Aurora */
+  const propertyMeta: { value: string; mono?: boolean }[] = [];
+  if (area) propertyMeta.push({ value: area, mono: true });
+  if (neighborhood) propertyMeta.push({ value: neighborhood });
+  if (condominio) propertyMeta.push({ value: condominio });
+
+  /** Timeline meta — shown in a distinct row below */
+  const timelineMeta: { label: string; value: string; mono?: boolean }[] = [];
+  if (budget.prazo_dias_uteis) timelineMeta.push({ label: "Execução", value: `${budget.prazo_dias_uteis} dias úteis`, mono: true });
 
   return (
     <header className="relative">
@@ -124,98 +142,159 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           </div>
         </motion.div>
 
-        {/* ─── Company info strip — desktop ─── */}
-        <motion.div
-          variants={fadeUp} custom={0} initial="hidden" animate="visible"
-          className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-3 hidden lg:block"
-        >
-          <div className="py-2 border-b border-white/[0.08]">
-            <p className={`${LABEL_MICRO} text-white/45 leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis`}>
-              Bwild Reformas LTDA <Dot /> CNPJ <span className={MONO}>47.350.338/0001-37</span> <Dot /> Responsável Técnico: Thiago Dantas do Amor <Dot /> CAU <span className={MONO}>A162437-7</span>
-            </p>
-          </div>
-        </motion.div>
-
         {/* ─── Main content ─── */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
           {/* ── MOBILE ── */}
-          <div className="lg:hidden pt-4 pb-6 space-y-2.5">
+          <div className="lg:hidden pt-6 pb-7 space-y-4">
+            {/* Eyebrow */}
             <motion.div
-              variants={fadeUp} custom={0.3} initial="hidden" animate="visible"
-              className="space-y-1"
+              variants={fadeUp} custom={0.25} initial="hidden" animate="visible"
+              className="flex items-center flex-wrap"
             >
-              <h1 className="budget-heading font-extrabold text-[clamp(18px,5.5vw,24px)] text-white leading-[1.15] tracking-[-0.03em] break-words">
+              {eyebrow.map((e, i) => (
+                <span key={i} className="inline-flex items-center">
+                  {i > 0 && <Sep />}
+                  <span className={`budget-label text-[10px] text-white/55 ${e.mono ? `${MONO} normal-case tracking-[0.04em]` : ""}`}>
+                    {e.value}
+                  </span>
+                </span>
+              ))}
+            </motion.div>
+
+            {/* Title + project subtitle */}
+            <motion.div
+              variants={fadeUp} custom={0.35} initial="hidden" animate="visible"
+              className="space-y-1.5"
+            >
+              <h1 className="budget-heading font-extrabold text-[clamp(22px,6.5vw,30px)] text-white leading-[1.08] tracking-[-0.035em] break-words">
                 {heroTitle}
               </h1>
-              {clientName && projectTitle && !projectTitle.toLowerCase().includes(clientName.toLowerCase()) && (
-                <p className="text-[13px] font-body text-white/55 font-medium tracking-[-0.01em] break-words">
+              {showProjectSubtitle && (
+                <p className="text-[13px] font-body text-white/65 font-medium tracking-[-0.005em] break-words">
                   {projectTitle}
                 </p>
               )}
             </motion.div>
 
-            {!cfg.hide_tagline && (
-              <motion.p
-                variants={fadeUp} custom={0.4} initial="hidden" animate="visible"
-                className="text-[12px] text-white/50 font-body tracking-[-0.01em] font-medium leading-snug"
-              >
-                {tagline}
-              </motion.p>
-            )}
-
-            {metaChips.length > 0 && (
+            {/* Property meta — inline editorial */}
+            {propertyMeta.length > 0 && (
               <motion.div
-                variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
-                className="flex flex-wrap gap-1.5"
+                variants={fadeUp} custom={0.45} initial="hidden" animate="visible"
+                className="flex items-center flex-wrap text-[12.5px] font-body"
               >
-                {metaChips.map((chip) => (
-                  <span
-                    key={chip.label}
-                    className="inline-flex items-center gap-1 rounded-md bg-white/10 backdrop-blur-sm px-2 py-0.5 text-[11px]"
-                  >
-                    <span className="text-white/50 font-body font-medium uppercase tracking-[0.04em]">{chip.label}</span>
-                    <span className={`text-white/90 font-semibold ${chip.mono ? MONO : "font-body tracking-[-0.01em]"}`}>
-                      {chip.value}
+                {propertyMeta.map((m, i) => (
+                  <span key={i} className="inline-flex items-center">
+                    {i > 0 && <Sep />}
+                    <span className={`text-white/80 font-medium ${m.mono ? MONO : "tracking-[-0.005em]"}`}>
+                      {m.value}
                     </span>
                   </span>
                 ))}
               </motion.div>
             )}
+
+            {/* Tagline — promoted with top divider */}
+            {!cfg.hide_tagline && (
+              <motion.div
+                variants={fadeUp} custom={0.55} initial="hidden" animate="visible"
+                className="pt-4 border-t border-white/[0.08]"
+              >
+                <p className="text-[12.5px] text-white/60 font-body tracking-[-0.005em] leading-relaxed">
+                  {tagline}
+                </p>
+                {timelineMeta.length > 0 && (
+                  <div className="mt-2 flex items-center flex-wrap">
+                    {timelineMeta.map((m, i) => (
+                      <span key={i} className="inline-flex items-center">
+                        {i > 0 && <Sep />}
+                        <span className={`${LABEL_MICRO} text-white/45 mr-1.5`}>{m.label}</span>
+                        <span className={`text-[12px] text-white/85 font-medium ${m.mono ? MONO : ""}`}>
+                          {m.value}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
           </div>
 
           {/* ── DESKTOP ── */}
-          <div className="hidden lg:flex items-start justify-between py-8">
-            <div className="flex-1 min-w-0 space-y-3">
+          <div className="hidden lg:flex items-start justify-between py-12">
+            <div className="flex-1 min-w-0 space-y-5">
+              {/* Eyebrow */}
               <motion.div
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
-                className="space-y-2.5"
+                className="flex items-center"
               >
-                <h1 className="budget-heading font-extrabold text-[2.25rem] text-white leading-[1.08] tracking-[-0.03em] whitespace-nowrap overflow-hidden text-ellipsis">
+                {eyebrow.map((e, i) => (
+                  <span key={i} className="inline-flex items-center shrink-0">
+                    {i > 0 && <Sep />}
+                    <span className={`budget-label text-[10.5px] text-white/55 ${e.mono ? `${MONO} normal-case tracking-[0.04em]` : ""}`}>
+                      {e.value}
+                    </span>
+                  </span>
+                ))}
+              </motion.div>
+
+              {/* Title + project subtitle */}
+              <motion.div
+                variants={fadeUp} custom={0.5} initial="hidden" animate="visible"
+                className="space-y-2"
+              >
+                <h1 className="budget-heading font-extrabold text-[2.5rem] xl:text-[2.75rem] text-white leading-[1.02] tracking-[-0.035em] whitespace-nowrap overflow-hidden text-ellipsis">
                   {heroTitle}
                 </h1>
+                {showProjectSubtitle && (
+                  <p className="text-[15px] font-body text-white/65 font-medium tracking-[-0.005em]">
+                    {projectTitle}
+                  </p>
+                )}
+              </motion.div>
 
-                {/* Meta chips — single line */}
-                <div className="flex items-center gap-0 text-sm font-body whitespace-nowrap overflow-hidden">
-                  {metaChips.map((chip, i) => (
-                    <span key={chip.label} className="inline-flex items-center shrink-0">
-                      {i > 0 && <Dot />}
-                      <span className={`${LABEL_MICRO} text-white/50 mr-1`}>{chip.label}</span>
-                      <span className={`text-white/95 font-medium ${chip.mono ? MONO : "tracking-[-0.01em]"}`}>
-                        {chip.value}
+              {/* Property meta — editorial row */}
+              {propertyMeta.length > 0 && (
+                <motion.div
+                  variants={fadeUp} custom={1} initial="hidden" animate="visible"
+                  className="flex items-center flex-wrap text-[14px] font-body"
+                >
+                  {propertyMeta.map((m, i) => (
+                    <span key={i} className="inline-flex items-center shrink-0">
+                      {i > 0 && <Sep />}
+                      <span className={`text-white/85 font-medium ${m.mono ? MONO : "tracking-[-0.005em]"}`}>
+                        {m.value}
                       </span>
                     </span>
                   ))}
-                </div>
-              </motion.div>
+                </motion.div>
+              )}
 
-              {!cfg.hide_tagline && (
-                <motion.p
-                  variants={fadeUp} custom={1} initial="hidden" animate="visible"
-                  className="text-[13px] text-white/60 font-body tracking-[-0.01em] font-medium"
+              {/* Tagline + timeline — promoted with divider */}
+              {(!cfg.hide_tagline || timelineMeta.length > 0) && (
+                <motion.div
+                  variants={fadeUp} custom={1.5} initial="hidden" animate="visible"
+                  className="pt-5 border-t border-white/[0.08] max-w-xl space-y-2.5"
                 >
-                  {tagline}
-                </motion.p>
+                  {!cfg.hide_tagline && (
+                    <p className="text-[13.5px] text-white/65 font-body tracking-[-0.005em] leading-relaxed">
+                      {tagline}
+                    </p>
+                  )}
+                  {timelineMeta.length > 0 && (
+                    <div className="flex items-center flex-wrap">
+                      {timelineMeta.map((m, i) => (
+                        <span key={i} className="inline-flex items-center shrink-0">
+                          {i > 0 && <Sep />}
+                          <span className={`${LABEL_MICRO} text-white/45 mr-2`}>{m.label}</span>
+                          <span className={`text-[13px] text-white/90 font-medium ${m.mono ? MONO : ""}`}>
+                            {m.value}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
               )}
             </div>
 
@@ -230,6 +309,18 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
             )}
           </div>
         </div>
+
+        {/* ─── Corporate strip — footer ─── */}
+        <motion.div
+          variants={fadeUp} custom={2} initial="hidden" animate="visible"
+          className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8"
+        >
+          <div className="border-t border-white/[0.06] py-2.5 lg:py-3">
+            <p className={`${LABEL_MICRO} text-white/35 leading-relaxed text-[9.5px] lg:text-[10px] whitespace-nowrap overflow-hidden text-ellipsis`}>
+              Bwild Reformas LTDA <Sep /> CNPJ <span className={MONO}>47.350.338/0001-37</span> <Sep /> <span className="hidden sm:inline">Responsável Técnico: Thiago Dantas do Amor <Sep /></span> CAU <span className={MONO}>A162437-7</span>
+            </p>
+          </div>
+        </motion.div>
       </div>
     </header>
   );
