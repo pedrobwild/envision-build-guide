@@ -302,9 +302,9 @@ function TotalCard({ total, installments }: { total: number; installments: numbe
         style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)' }}
         aria-hidden
       />
-      <div className="relative space-y-2">
-        <div className="space-y-0.5">
-          <p className="budget-label text-[10px] text-muted-foreground">
+      <div className="relative space-y-1.5">
+        <div>
+          <p className="budget-label text-[10px] text-muted-foreground mb-0.5 leading-none">
             Investimento Total
           </p>
           <CountUpValue
