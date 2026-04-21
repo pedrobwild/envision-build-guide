@@ -10,6 +10,7 @@ import { SectionSummaryRow } from "@/components/budget/SectionSummaryRow";
 import { CountUpValue } from "@/components/budget/CountUpValue";
 import { InstallmentSimulator } from "@/components/budget/summary/InstallmentSimulator";
 import { TrustBadgesRow } from "@/components/budget/summary/TrustBadgesRow";
+import { InstallmentPreview } from "@/components/budget/summary/InstallmentPreview";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 import type { SectionWithItems, AdjustmentRow } from "@/types/budget-common";
 
@@ -316,16 +317,8 @@ function TotalCard({ total, installments }: { total: number; installments: numbe
           />
         </div>
 
-        {/* Installment preview */}
-        <div className="flex items-baseline gap-1 flex-wrap">
-          <span className="text-[11px] font-body text-muted-foreground">ou</span>
-          <span className="budget-currency text-[13px] font-semibold text-foreground">
-            {formatBRL(total / installments)}
-          </span>
-          <span className="text-[11px] font-body text-muted-foreground">
-            em <span className="budget-numeric">{installments}×</span> sem juros
-          </span>
-        </div>
+        {/* Installment preview — typography shared with mobile InvestmentSummaryCard */}
+        <InstallmentPreview total={total} installments={installments} />
 
         <TrustBadgesRow />
       </div>
