@@ -1,14 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { subDays } from "date-fns";
-import { BarChart3 } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { BarChart3, Hammer, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { InsightsHistoryPanel } from "@/components/dashboard/InsightsHistoryPanel";
-import { ForecastPanel } from "@/components/admin/ForecastPanel";
-import { useUserProfile } from "@/hooks/useUserProfile";
 import { OperationsAlertsPanel } from "@/components/dashboard/OperationsAlertsPanel";
 import { MetricsTrendChart } from "@/components/dashboard/MetricsTrendChart";
 import { TimeInStageChart } from "@/components/dashboard/TimeInStageChart";
@@ -26,16 +24,16 @@ const anim = (delay: number) => ({
   transition: { duration: 0.4, delay },
 });
 
+type PipelineTab = "orcamentos" | "comercial";
+
 export default function AnalisesPage() {
   const { user } = useAuth();
-  const { profile } = useUserProfile();
-  const location = useLocation();
-  const isAdmin = profile?.roles.includes("admin") ?? false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [deliveryTimestamps, setDeliveryTimestamps] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<PipelineTab>("orcamentos");
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
     to: new Date(),
@@ -90,22 +88,10 @@ export default function AnalisesPage() {
 
   const aiInsights = useOperationsInsights(metrics, dateRange, !loading && !!metrics);
 
-  // Scroll to hash anchor (e.g. #forecast) after data is ready
-  useEffect(() => {
-    if (loading || !location.hash) return;
-    const id = location.hash.replace("#", "");
-    const el = document.getElementById(id);
-    if (el) {
-      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
-    }
-  }, [loading, location.hash]);
-
-  let step = 0;
-
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       {/* HEADER */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
+      <motion.div {...anim(0)}>
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -116,7 +102,7 @@ export default function AnalisesPage() {
                 Análises e Relatórios
               </h1>
               <p className="text-sm text-muted-foreground font-body mt-0.5">
-                Inteligência operacional, alertas, tendências e comparações históricas
+                KPIs específicos por pipeline — escolha o contexto para visualizar
               </p>
             </div>
           </div>
@@ -124,43 +110,65 @@ export default function AnalisesPage() {
         </div>
       </motion.div>
 
-      {/* FORECAST & PREVISIBILIDADE */}
-      <motion.div id="forecast" {...anim(step++ * SECTION_DELAY)}>
-        <ForecastPanel ownerFilter={null} isAdmin={isAdmin} />
-      </motion.div>
+      {/* PIPELINE SELECTOR */}
+      <motion.div {...anim(SECTION_DELAY)}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as PipelineTab)}>
+          <TabsList className="h-11 p-1 w-full sm:w-auto">
+            <TabsTrigger value="orcamentos" className="gap-2 px-4 sm:px-6 text-sm flex-1 sm:flex-initial">
+              <Hammer className="h-4 w-4" />
+              Pipeline Orçamentos
+            </TabsTrigger>
+            <TabsTrigger value="comercial" className="gap-2 px-4 sm:px-6 text-sm flex-1 sm:flex-initial">
+              <Briefcase className="h-4 w-4" />
+              Pipeline Comercial
+            </TabsTrigger>
+          </TabsList>
 
-      {/* INTELLIGENT ANALYSIS (current) */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <IntelligentAlertsPanel
-          insights={aiInsights.data}
-          healthScore={metrics?.healthScore ?? null}
-          loading={aiInsights.loading || loading}
-          error={aiInsights.error}
-          onRefresh={aiInsights.refetch}
-        />
-      </motion.div>
+          {/* ORÇAMENTOS — operações, SLA, throughput, tempo em estágio */}
+          <TabsContent value="orcamentos" className="space-y-6 mt-6">
+            <motion.div {...anim(0)}>
+              <IntelligentAlertsPanel
+                insights={aiInsights.data}
+                healthScore={metrics?.healthScore ?? null}
+                loading={aiInsights.loading || loading}
+                error={aiInsights.error}
+                onRefresh={aiInsights.refetch}
+              />
+            </motion.div>
 
-      {/* INSIGHTS HISTORY */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <InsightsHistoryPanel
-          refreshKey={aiInsights.data?.generatedAt ? new Date(aiInsights.data.generatedAt).getTime() : 0}
-        />
-      </motion.div>
+            <motion.div {...anim(SECTION_DELAY)}>
+              <OperationsAlertsPanel />
+            </motion.div>
 
-      {/* PROACTIVE ALERTS */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <OperationsAlertsPanel />
-      </motion.div>
+            <motion.div {...anim(SECTION_DELAY * 2)}>
+              <MetricsTrendChart />
+            </motion.div>
 
-      {/* METRICS TREND */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <MetricsTrendChart />
-      </motion.div>
+            <motion.div {...anim(SECTION_DELAY * 3)} className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <TimeInStageChart />
+              <SnapshotComparisonPanel />
+            </motion.div>
+          </TabsContent>
 
-      {/* TIME IN STAGE + SNAPSHOT COMPARISON */}
-      <motion.div {...anim(step++ * SECTION_DELAY)} className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <TimeInStageChart />
-        <SnapshotComparisonPanel />
+          {/* COMERCIAL — histórico de insights e tendências de fechamento */}
+          <TabsContent value="comercial" className="space-y-6 mt-6">
+            <motion.div {...anim(0)}>
+              <InsightsHistoryPanel
+                refreshKey={aiInsights.data?.generatedAt ? new Date(aiInsights.data.generatedAt).getTime() : 0}
+              />
+            </motion.div>
+
+            <motion.div {...anim(SECTION_DELAY)} className="rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center">
+              <p className="text-sm text-muted-foreground font-body">
+                Para projeções de receita, metas mensais e attainment, acesse{" "}
+                <a href="/admin/forecast" className="text-primary font-medium hover:underline">
+                  Forecast & Previsibilidade
+                </a>
+                .
+              </p>
+            </motion.div>
+          </TabsContent>
+        </Tabs>
       </motion.div>
     </div>
   );

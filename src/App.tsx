@@ -41,6 +41,7 @@ const ClientDetail = lazy(() => import("./pages/ClientDetail"));
 const LeadSourcesPage = lazy(() => import("./pages/LeadSourcesPage"));
 const LeadRoutingRulesPage = lazy(() => import("./pages/LeadRoutingRulesPage"));
 const AnalisesPage = lazy(() => import("./pages/AnalisesPage"));
+const ForecastPage = lazy(() => import("./pages/ForecastPage"));
 const AgendaPage = lazy(() => import("./pages/AgendaPage"));
 const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -103,6 +104,7 @@ const App = () => (
                   <Route path="/admin/comercial" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><CommercialDashboard /></RoleGuard></AdminPage>} />
                   <Route path="/admin/operacoes" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AdminOperationsDashboard /></RoleGuard></AdminPage>} />
                   <Route path="/admin/analises" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AnalisesPage /></RoleGuard></AdminPage>} />
+                  <Route path="/admin/forecast" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><ForecastPage /></RoleGuard></AdminPage>} />
                   <Route path="/admin/usuarios" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><UserManagement /></RoleGuard></AdminPage>} />
                   <Route path="/admin/demanda/:budgetId" element={<AdminPage><BudgetInternalDetail /></AdminPage>} />
                   <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
