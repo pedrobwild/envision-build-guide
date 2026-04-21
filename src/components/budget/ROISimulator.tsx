@@ -161,329 +161,348 @@ export function ROISimulator({
         ? "bg-primary/10 text-primary border-primary/30"
         : "bg-success/15 text-success border-success/30";
 
+  // Percentual de uplift formatado
+  const upliftPct = baselineNetMonth > 0
+    ? Math.round((upliftMonth / baselineNetMonth) * 100)
+    : 0;
+
   return (
     <div
       data-pdf-section
-      className={cn("rounded-lg border border-border bg-card p-5 space-y-4", className)}
+      className={cn(
+        "rounded-2xl border border-border bg-card overflow-hidden",
+        className,
+      )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <TrendingUp className="h-4 w-4 text-primary flex-shrink-0" />
-          <h4 className="font-display font-bold text-sm text-foreground truncate">
-            Simulador de Retorno
-          </h4>
-        </div>
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {district?.score ? (
-            <Badge variant="secondary" className="font-mono text-[10px] tracking-wide">
-              Score {district.score}
-            </Badge>
-          ) : null}
+      {/* ─── Header premium com gradient ─── */}
+      <div className="relative bg-gradient-to-br from-primary/[0.08] via-primary/[0.04] to-transparent border-b border-border px-5 pt-5 pb-4">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="h-4.5 w-4.5 text-primary" strokeWidth={2.25} />
+            </div>
+            <div className="min-w-0">
+              <h4 className="font-display font-bold text-base text-foreground leading-tight">
+                Simulador de retorno
+              </h4>
+              <p className="text-[11px] text-muted-foreground font-body mt-0.5">
+                Veja o impacto do design BWild no seu investimento
+              </p>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wide text-primary hover:text-primary/80 border border-primary/20 hover:border-primary/40 bg-primary/5 px-2 py-1 rounded-md transition-colors"
+            className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30 px-2.5 py-1.5 rounded-lg transition-all flex-shrink-0"
             aria-label="Abrir simulação completa"
           >
             <Maximize2 className="h-3 w-3" />
-            Completa
+            Expandir
           </button>
+        </div>
+
+        {/* Bairro chip */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border px-2.5 py-1">
+            <MapPin className="h-3 w-3 text-primary flex-shrink-0" />
+            <span className="text-[11px] font-display font-bold text-foreground">
+              {baseline.label}
+            </span>
+            {baseline.isFallback && (
+              <span className="text-[9px] font-mono uppercase text-muted-foreground tracking-wide ml-0.5">
+                média
+              </span>
+            )}
+          </div>
+          {district?.score ? (
+            <Badge variant="secondary" className="font-mono text-[10px] tracking-wider">
+              Score {district.score}
+            </Badge>
+          ) : null}
+          {metragem && (
+            <span className="text-[10px] text-muted-foreground font-mono ml-auto">
+              {metragem}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Bairro analisado — destaque */}
-      <div className="rounded-lg border border-primary/25 bg-primary/5 p-2.5 flex items-center gap-2 flex-wrap">
-        <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
-          Análise para
-        </span>
-        <span className="font-display font-bold text-sm text-foreground truncate">
-          {baseline.label}
-        </span>
-        {baseline.isFallback && (
-          <Badge variant="outline" className="text-[9px] font-body bg-background/60">
-            média SP
-          </Badge>
-        )}
-        {metragem && (
-          <span className="text-[10px] text-muted-foreground font-mono ml-auto">
-            {metragem}
-          </span>
-        )}
-      </div>
+      {/* ─── Conteúdo ─── */}
+      <div className="p-5 space-y-5">
+        {/* HERO — Efeito BWild */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center flex-shrink-0">
+              <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+            </div>
+            <h5 className="font-display font-bold text-sm text-foreground tracking-tight">
+              O efeito BWild
+            </h5>
+            <Badge variant="outline" className="ml-auto text-[9px] font-mono uppercase tracking-wider border-primary/30 text-primary bg-primary/5">
+              +{upliftPct}% renda
+            </Badge>
+          </div>
 
-      {/* KPIs */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`${nightly}-${occupancy}`}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="grid grid-cols-2 gap-2"
-        >
-          <div className="rounded-lg bg-primary/5 border border-primary/15 p-3">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono mb-1">
-              ROI anual
-            </p>
+          {/* Comparativo lado a lado — design refinado */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Studio padrão */}
+            <div className="rounded-xl bg-muted/40 border border-border p-3.5">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-2 font-semibold">
+                Studio padrão
+              </p>
+              <div className="space-y-1 mb-3">
+                <div className="flex items-baseline justify-between text-[11px] font-body">
+                  <span className="text-muted-foreground">Diária</span>
+                  <span className="text-foreground font-mono tabular-nums">{formatBRL(baseline.nightly)}</span>
+                </div>
+                <div className="flex items-baseline justify-between text-[11px] font-body">
+                  <span className="text-muted-foreground">Ocupação</span>
+                  <span className="text-foreground font-mono tabular-nums">{baseline.occupancy}%</span>
+                </div>
+              </div>
+              <div className="pt-2.5 border-t border-border">
+                <p className="text-lg font-display font-bold text-foreground/70 tabular-nums leading-none">
+                  {formatBRL(baselineNetMonth)}
+                </p>
+                <p className="text-[10px] text-muted-foreground font-mono mt-1 uppercase tracking-wider">/mês líquido</p>
+              </div>
+            </div>
+
+            {/* Com sua reforma — premium */}
+            <div className="relative rounded-xl bg-gradient-to-br from-primary to-primary/85 p-3.5 shadow-lg shadow-primary/20">
+              <Badge className="absolute -top-2 right-3 text-[9px] font-mono px-2 py-0 h-4 bg-background text-primary border border-primary/40 shadow-sm">
+                <Sparkles className="h-2 w-2 mr-0.5" />
+                BWild
+              </Badge>
+              <p className="text-[10px] uppercase tracking-wider text-primary-foreground/85 font-mono mb-2 font-semibold">
+                Com sua reforma
+              </p>
+              <div className="space-y-1 mb-3">
+                <div className="flex items-baseline justify-between text-[11px] font-body">
+                  <span className="text-primary-foreground/80">Diária</span>
+                  <span className="text-primary-foreground font-mono tabular-nums font-semibold">{formatBRL(nightly)}</span>
+                </div>
+                <div className="flex items-baseline justify-between text-[11px] font-body">
+                  <span className="text-primary-foreground/80">Ocupação</span>
+                  <span className="text-primary-foreground font-mono tabular-nums font-semibold">{occupancy}%</span>
+                </div>
+              </div>
+              <div className="pt-2.5 border-t border-primary-foreground/20">
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={netMonth}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-lg font-display font-bold text-primary-foreground tabular-nums leading-none"
+                  >
+                    {formatBRL(netMonth)}
+                  </motion.p>
+                </AnimatePresence>
+                <p className="text-[10px] text-primary-foreground/75 font-mono mt-1 uppercase tracking-wider">/mês líquido</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Ganho extra — destaque success */}
+          <div className="mt-3 rounded-xl bg-success/[0.08] border border-success/25 p-3.5 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold mb-0.5">
+                Ganho extra mensal
+              </p>
+              <p className="text-[11px] text-muted-foreground font-body leading-snug">
+                Reforma paga sozinha em{" "}
+                <strong className="text-success font-semibold">{reformPaybackLabel}</strong>
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={upliftMonth}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.25 }}
+                  className="font-display font-bold text-xl text-success leading-none tabular-nums"
+                >
+                  +{formatBRL(upliftMonth)}
+                </motion.p>
+              </AnimatePresence>
+              <p className="text-[10px] text-muted-foreground font-mono mt-1.5 tabular-nums">
+                {formatBRL(upliftYear)}/ano
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── KPIs principais ─── */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-success/30 bg-gradient-to-br from-success/[0.08] to-transparent p-3.5">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold">
+                ROI total
+              </p>
+              <Badge variant="outline" className="text-[9px] font-mono border-success/30 text-success bg-background/60 px-1.5 py-0 h-4">
+                +{formatPct(appreciationPctYear)} a.a.
+              </Badge>
+            </div>
             <p
-              className="text-primary font-display font-bold text-xl"
+              className="font-display font-bold text-2xl text-success leading-none"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
-              {formatPct(roiYearPct)}
+              {formatPct(roiTotalPct)}
             </p>
-            <p className="text-[10px] text-muted-foreground font-body mt-0.5">
-              sobre o investimento
+            <p className="text-[10px] text-muted-foreground font-body mt-1.5">
+              renda + valorização
             </p>
           </div>
-          <div className="rounded-lg bg-muted/40 border border-border p-3">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono mb-1">
-              Payback
+          <div className="rounded-xl border border-border bg-muted/30 p-3.5">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold mb-1.5">
+              Payback total
             </p>
             <p
-              className="text-foreground font-display font-bold text-xl"
+              className="font-display font-bold text-2xl text-foreground leading-none"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {paybackLabel}
             </p>
-            <p className="text-[10px] text-muted-foreground font-body mt-0.5">
-              tempo estimado
+            <p className="text-[10px] text-muted-foreground font-body mt-1.5">
+              studio + reforma
             </p>
           </div>
-        </motion.div>
-      </AnimatePresence>
+        </div>
 
-      {/* Efeito BWild — destaque do impacto da reforma personalizada */}
-      <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-3 shadow-sm">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
+        {/* ─── Receita líquida — linha resumo ─── */}
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-primary/[0.04] border border-primary/15 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-wide text-foreground font-mono font-bold leading-tight">
-              Efeito BWild
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-0.5">
+              Receita líquida estimada
             </p>
-            <p className="text-[11px] text-muted-foreground font-body leading-tight mt-0.5">
-              o que a reforma personalizada gera a mais
-            </p>
-          </div>
-        </div>
-
-        {/* Comparativo lado a lado */}
-        <div className="grid grid-cols-2 gap-2.5">
-          {/* Studio padrão — visualmente "apagado" */}
-          <div className="rounded-lg bg-muted border border-border p-2.5">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono mb-1.5 font-semibold">
-              Studio padrão
-            </p>
-            <div className="space-y-0.5 mb-1.5">
-              <p className="text-[11px] text-muted-foreground font-body flex justify-between">
-                <span>Diária</span>
-                <strong className="text-foreground tabular-nums">{formatBRL(baseline.nightly)}</strong>
-              </p>
-              <p className="text-[11px] text-muted-foreground font-body flex justify-between">
-                <span>Ocupação</span>
-                <strong className="text-foreground tabular-nums">{baseline.occupancy}%</strong>
-              </p>
+            <div className="flex items-baseline gap-1.5">
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={netMonth}
+                  initial={{ opacity: 0, y: 3 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-xl font-display font-bold text-foreground tabular-nums leading-none"
+                >
+                  {formatBRL(netMonth)}
+                </motion.p>
+              </AnimatePresence>
+              <span className="text-xs text-muted-foreground font-body">/mês</span>
             </div>
-            <div className="pt-1.5 border-t border-border">
-              <p className="text-base font-display font-bold text-foreground tabular-nums leading-none">
-                {formatBRL(baselineNetMonth)}
-              </p>
-              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">/mês líquido</p>
-            </div>
-          </div>
-
-          {/* Com sua reforma — destaque forte */}
-          <div className="rounded-lg bg-primary border border-primary p-2.5 relative shadow-md">
-            <Badge
-              variant="secondary"
-              className="absolute -top-2 right-2 text-[9px] font-mono px-1.5 py-0 h-4 bg-background text-foreground border border-primary/30"
-            >
-              BWild
-            </Badge>
-            <p className="text-[10px] uppercase tracking-wide text-primary-foreground/80 font-mono mb-1.5 font-semibold">
-              Com sua reforma
-            </p>
-            <div className="space-y-0.5 mb-1.5">
-              <p className="text-[11px] text-primary-foreground/90 font-body flex justify-between">
-                <span>Diária</span>
-                <strong className="text-primary-foreground tabular-nums">{formatBRL(nightly)}</strong>
-              </p>
-              <p className="text-[11px] text-primary-foreground/90 font-body flex justify-between">
-                <span>Ocupação</span>
-                <strong className="text-primary-foreground tabular-nums">{occupancy}%</strong>
-              </p>
-            </div>
-            <div className="pt-1.5 border-t border-primary-foreground/20">
-              <p className="text-base font-display font-bold text-primary-foreground tabular-nums leading-none">
-                {formatBRL(netMonth)}
-              </p>
-              <p className="text-[10px] text-primary-foreground/80 font-mono mt-0.5">/mês líquido</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Ganho extra — barra de destaque */}
-        <div className="rounded-lg bg-success/10 border border-success/30 p-3 flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-wide text-success font-mono font-bold">
-              Ganho extra com a reforma
-            </p>
-            <p className="text-[11px] text-foreground font-body leading-tight mt-1">
-              Reforma se paga em <strong className="text-success">{reformPaybackLabel}</strong>
-            </p>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="font-display font-bold text-xl text-success leading-none tabular-nums">
-              +{formatBRL(upliftMonth)}
+            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
+              {Math.round(operatingCostPct * 100)}% custos
             </p>
-            <p className="text-[10px] text-muted-foreground font-mono mt-1">
-              /mês · {formatBRL(upliftYear)}/ano
+            <p className="text-[11px] text-muted-foreground font-body mt-0.5 tabular-nums">
+              Bruto {formatBRL(grossMonth)}
             </p>
           </div>
         </div>
 
-        <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
-          Projeção baseada no benchmark AirDNA "Top 10%" de listings premium em SP: design diferenciado,
-          mobília sob medida e fotografia profissional geram em média +{upliftPctNightly}% na diária e
-          +{BWILD_OCCUPANCY_UPLIFT}pp na ocupação vs. studios padrão.
+        {/* ─── Personalize sua simulação ─── */}
+        <div className="rounded-xl border border-border bg-background/40 p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h6 className="text-xs font-display font-bold text-foreground uppercase tracking-wider">
+              Personalize sua simulação
+            </h6>
+            {isEdited && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="text-[10px] font-mono uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+              >
+                ↺ Resetar
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[11px] font-body text-muted-foreground flex items-center gap-1.5">
+                  <Home className="h-3 w-3" />
+                  Valor de compra do studio
+                </label>
+                <span
+                  className="font-display font-bold text-sm text-foreground tabular-nums"
+                >
+                  {formatBRL(studioPrice)}
+                </span>
+              </div>
+              <Slider
+                aria-label="Valor de compra do studio"
+                value={[studioPrice]}
+                min={STUDIO_PRICE_MIN}
+                max={STUDIO_PRICE_MAX}
+                step={5_000}
+                onValueChange={([v]) => setStudioPrice(v)}
+              />
+              <p className="text-[10px] text-muted-foreground font-body mt-1.5">
+                Studios em SP: R$ 350 mil a R$ 400 mil
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[11px] font-body text-muted-foreground">
+                  Diária média
+                </label>
+                <span
+                  className="font-display font-bold text-sm text-foreground tabular-nums"
+                >
+                  {formatBRL(nightly)}
+                </span>
+              </div>
+              <Slider
+                aria-label="Diária média"
+                value={[nightly]}
+                min={sliderLimits.nightlyMin}
+                max={sliderLimits.nightlyMax}
+                step={10}
+                onValueChange={([v]) => setNightly(v)}
+              />
+              {district?.adrRangeLabel && (
+                <p className="text-[10px] text-muted-foreground font-body mt-1.5">
+                  Mercado: {district.adrRangeLabel}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[11px] font-body text-muted-foreground">
+                  Taxa de ocupação
+                </label>
+                <span
+                  className="font-display font-bold text-sm text-foreground tabular-nums"
+                >
+                  {occupancy}%
+                </span>
+              </div>
+              <Slider
+                aria-label="Taxa de ocupação"
+                value={[occupancy]}
+                min={40}
+                max={95}
+                step={1}
+                onValueChange={([v]) => setOccupancy(v)}
+              />
+              <p className="text-[10px] text-muted-foreground font-body mt-1.5">
+                Mercado padrão: {baseline.occupancy}%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Citação técnica */}
+        <p className="text-[10px] text-muted-foreground font-body leading-relaxed text-center px-2">
+          Benchmark <strong className="text-foreground">AirDNA "Top 10%"</strong> em SP: design
+          premium gera +{upliftPctNightly}% na diária e +{BWILD_OCCUPANCY_UPLIFT}pp na ocupação.
         </p>
       </div>
-
-      {/* ROI Total — renda + valorização */}
-      <div className="rounded-lg border border-success/25 bg-gradient-to-br from-success/10 to-success/5 p-3">
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-success font-mono font-semibold">
-            ROI total (renda + valorização)
-          </p>
-          <Badge variant="outline" className="text-[9px] font-mono border-success/30 text-success bg-background/60">
-            +{formatPct(appreciationPctYear)} a.a.
-          </Badge>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <p
-            className="font-display font-bold text-2xl text-success leading-none"
-            style={{ fontVariantNumeric: "tabular-nums" }}
-          >
-            {formatPct(roiTotalPct)}
-          </p>
-          <span className="text-[10px] text-muted-foreground font-body">por ano</span>
-        </div>
-        <p className="text-[10px] text-muted-foreground font-body mt-1.5 leading-relaxed">
-          Renda líquida ({formatBRL(netYear)}/ano) + valorização do imóvel ({formatBRL(appreciationYear)}/ano).
-          Fonte da valorização: <strong className="text-foreground">FipeZap {baseline.label}</strong>.
-        </p>
-      </div>
-
-      {/* Receita líquida */}
-      <div className="rounded-lg bg-gradient-to-br from-primary/5 to-transparent border border-primary/10 p-3">
-        <div className="flex items-center gap-1.5 mb-1">
-          <Sparkles className="h-3 w-3 text-primary" />
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
-            Receita líquida estimada
-          </p>
-        </div>
-        <div className="flex items-baseline gap-1.5">
-          <p
-            className="text-2xl font-display font-bold text-foreground"
-            style={{ fontVariantNumeric: "tabular-nums" }}
-          >
-            {formatBRL(netMonth)}
-          </p>
-          <span className="text-xs text-muted-foreground font-body">/mês</span>
-        </div>
-        <p className="text-[10px] text-muted-foreground font-body mt-1">
-          Bruto {formatBRL(grossMonth)}/mês · {Math.round(operatingCostPct * 100)}% custos operacionais
-        </p>
-      </div>
-
-      {/* Sliders */}
-      <div className="space-y-4">
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-body text-muted-foreground">
-              Valor de compra do studio
-            </label>
-            <span
-              className="font-display font-bold text-sm text-foreground"
-              style={{ fontVariantNumeric: "tabular-nums" }}
-            >
-              {formatBRL(studioPrice)}
-            </span>
-          </div>
-          <Slider
-            aria-label="Valor de compra do studio"
-            value={[studioPrice]}
-            min={STUDIO_PRICE_MIN}
-            max={STUDIO_PRICE_MAX}
-            step={5_000}
-            onValueChange={([v]) => setStudioPrice(v)}
-          />
-          <p className="text-[10px] text-muted-foreground font-body mt-1">
-            Mercado: studios em SP custam em média R$ 350 mil a R$ 400 mil
-          </p>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-body text-muted-foreground">Diária média</label>
-            <span
-              className="font-display font-bold text-sm text-foreground"
-              style={{ fontVariantNumeric: "tabular-nums" }}
-            >
-              {formatBRL(nightly)}
-            </span>
-          </div>
-          <Slider
-            aria-label="Diária média"
-            value={[nightly]}
-            min={sliderLimits.nightlyMin}
-            max={sliderLimits.nightlyMax}
-            step={10}
-            onValueChange={([v]) => setNightly(v)}
-          />
-          {district?.adrRangeLabel && (
-            <p className="text-[10px] text-muted-foreground font-body mt-1">
-              Mercado: {district.adrRangeLabel}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-body text-muted-foreground">Ocupação média</label>
-            <span
-              className="font-display font-bold text-sm text-foreground"
-              style={{ fontVariantNumeric: "tabular-nums" }}
-            >
-              {occupancy}%
-            </span>
-          </div>
-          <Slider
-            aria-label="Ocupação média"
-            value={[occupancy]}
-            min={40}
-            max={95}
-            step={1}
-            onValueChange={([v]) => setOccupancy(v)}
-          />
-          <p className="text-[10px] text-muted-foreground font-body mt-1">
-            Mercado: {baseline.occupancy}% de ocupação
-          </p>
-        </div>
-      </div>
-
-      {/* Reset */}
-      {isEdited && (
-        <button
-          type="button"
-          onClick={handleReset}
-          className="text-xs text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
-        >
-          Voltar para a projeção BWild padrão
-        </button>
-      )}
 
       {/* Expand contexto */}
       {district && (
