@@ -156,6 +156,12 @@ interface NeighborhoodDensityMapProps {
 export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensityMapProps) {
   const [hoveredBairroId, setHoveredBairroId] = useState<string | null>(null);
   const [highlightedProjectId, setHighlightedProjectId] = useState<string | null>(null);
+  // Roving tabindex state: only one card is in the tab order at a time.
+  // Defaults to the first project; updates as the user navigates with arrows
+  // or when a card is highlighted via map/filter. Decoupled from
+  // `highlightedProjectId` so the visual highlight (which auto-clears) doesn't
+  // strip the card from the tab sequence after the flash fades.
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [bairroFilter, setBairroFilter] = useState<string | null>(null);
   const [scrollState, setScrollState] = useState<{ top: boolean; bottom: boolean }>({ top: true, bottom: false });
   const [mapLoaded, setMapLoaded] = useState(false);
