@@ -1627,6 +1627,45 @@ export type Database = {
         }
         Relationships: []
       }
+      elephant_insights_cache: {
+        Row: {
+          cache_key: string
+          charts_data: Json | null
+          consultant_name: string | null
+          created_at: string
+          insights: Json | null
+          latest_meeting: string | null
+          positive_sentiment_pct: number | null
+          total_duration_minutes: number | null
+          total_meetings: number | null
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          charts_data?: Json | null
+          consultant_name?: string | null
+          created_at?: string
+          insights?: Json | null
+          latest_meeting?: string | null
+          positive_sentiment_pct?: number | null
+          total_duration_minutes?: number | null
+          total_meetings?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          charts_data?: Json | null
+          consultant_name?: string | null
+          created_at?: string
+          insights?: Json | null
+          latest_meeting?: string | null
+          positive_sentiment_pct?: number | null
+          total_duration_minutes?: number | null
+          total_meetings?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       integration_sync_log: {
         Row: {
           attempts: number | null
