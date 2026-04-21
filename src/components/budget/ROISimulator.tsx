@@ -354,7 +354,7 @@ export function ROISimulator({
               <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold">
                 ROI total
               </p>
-              <Badge variant="outline" className="text-[9px] font-mono border-success/30 text-success bg-background/60 px-1.5 py-0 h-4">
+              <Badge variant="outline" className="text-[9px] font-mono border-foreground/20 text-foreground bg-background/60 px-1.5 py-0 h-4">
                 +{formatPct(appreciationPctYear)} a.a.
               </Badge>
             </div>
