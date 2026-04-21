@@ -49,6 +49,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ActivityDetailDrawer } from "./ActivityDetailDrawer";
 
 interface Activity {
   id: string;
