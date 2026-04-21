@@ -241,11 +241,29 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const flashHighlight = useCallback((id: string, durationMs = 2400) => {
     if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     setHighlightedProjectId(id);
+    // Keep roving tabindex in sync: the card the user just landed on becomes
+    // the new tab stop.
+    setActiveCardId(id);
     highlightTimerRef.current = setTimeout(() => {
       setHighlightedProjectId(null);
       highlightTimerRef.current = null;
     }, durationMs);
   }, []);
+
+  // Keep `activeCardId` valid as the filtered list changes. If the active
+  // card was filtered out (or there's no active card yet), fall back to the
+  // first project in the visible list. This guarantees Tab always lands on a
+  // real, visible card.
+  useEffect(() => {
+    if (filteredProjects.length === 0) {
+      setActiveCardId(null);
+      return;
+    }
+    setActiveCardId((prev) => {
+      if (prev && filteredProjects.some((p) => p.id === prev)) return prev;
+      return filteredProjects[0].id;
+    });
+  }, [filteredProjects]);
 
   useEffect(() => {
     return () => {
