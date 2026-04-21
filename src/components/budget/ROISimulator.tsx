@@ -133,12 +133,13 @@ export function ROISimulator({
     totalInvestment > 0 && netMonth > 0 ? totalInvestment / netMonth : null;
 
   const formatPayback = (months: number | null) => {
-    if (months === null) return "—";
+    if (months === null || !Number.isFinite(months) || months <= 0) return "";
     if (months < 12) return `${Math.round(months)} meses`;
     return `${(months / 12).toFixed(1).replace(".", ",")} anos`;
   };
-  const paybackLabel = formatPayback(paybackMonths);
+  const paybackLabel = formatPayback(paybackMonths) || "—";
   const reformPaybackLabel = formatPayback(reformPaybackMonths);
+  const hasReformPayback = reformPaybackLabel.length > 0;
 
   // Defaults BWild = baseline + uplift de mercado premium
   const bwildNightlyDefault = useMemo(
@@ -358,7 +359,20 @@ export function ROISimulator({
                 Ganho extra mensal
               </p>
               <p className="text-[11px] text-muted-foreground font-body leading-snug">
-                Nosso diferencial em personalizar e projetar designs <strong className="text-success font-semibold">premium e exclusivos</strong> é o que proporciona esse resultado.
+                {hasReformPayback ? (
+                  <>
+                    Nosso diferencial em personalizar e projetar designs{" "}
+                    <strong className="text-success font-semibold">premium e exclusivos</strong>{" "}
+                    é o que proporciona esse resultado em{" "}
+                    <strong className="text-success font-semibold">{reformPaybackLabel}</strong>.
+                  </>
+                ) : (
+                  <>
+                    Nosso diferencial em personalizar e projetar designs{" "}
+                    <strong className="text-success font-semibold">premium e exclusivos</strong>{" "}
+                    valoriza o seu imóvel e potencializa o retorno do investimento.
+                  </>
+                )}
               </p>
             </div>
             <div className="text-left sm:text-right flex-shrink-0 order-1 sm:order-2">
