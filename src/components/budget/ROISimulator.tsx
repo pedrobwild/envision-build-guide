@@ -19,6 +19,7 @@ import {
   AVERAGE_METRICS,
   findDistrict,
   formatPct,
+  getAppreciationPctYear,
   type DistrictRow,
 } from "@/data/districtMetrics";
 
