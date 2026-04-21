@@ -367,33 +367,44 @@ export function ROISimulator({
                   Premium &amp; exclusivo
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground font-body leading-snug text-balance">
-                {hasReformPayback ? (
-                  <>
-                    <span className="sm:hidden">
-                      Design que valoriza seu imóvel — retorno em{" "}
-                      <strong className="text-success font-semibold tabular-nums whitespace-nowrap">
-                        {reformPaybackLabel}
-                      </strong>
-                      .
-                    </span>
-                    <span className="hidden sm:inline">
-                      Nosso design valoriza o seu imóvel e devolve o investimento em{" "}
-                      <strong className="text-success font-semibold tabular-nums whitespace-nowrap">
-                        {reformPaybackLabel}
-                      </strong>
-                      .
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="sm:hidden">Design que valoriza seu imóvel e amplia o retorno.</span>
-                    <span className="hidden sm:inline">
-                      Nosso design valoriza o seu imóvel e potencializa o retorno do investimento.
-                    </span>
-                  </>
-                )}
-              </p>
+              <div className="relative min-h-[30px] sm:min-h-[34px]">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.p
+                    key={hasReformPayback ? "with-payback" : "fallback"}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="absolute inset-0 text-[11px] text-muted-foreground font-body leading-snug text-balance"
+                  >
+                    {hasReformPayback ? (
+                      <>
+                        <span className="sm:hidden">
+                          Design que valoriza seu imóvel — retorno em{" "}
+                          <strong className="text-success font-semibold tabular-nums whitespace-nowrap">
+                            {reformPaybackLabel}
+                          </strong>
+                          .
+                        </span>
+                        <span className="hidden sm:inline">
+                          Nosso design valoriza o seu imóvel e devolve o investimento em{" "}
+                          <strong className="text-success font-semibold tabular-nums whitespace-nowrap">
+                            {reformPaybackLabel}
+                          </strong>
+                          .
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="sm:hidden">Design que valoriza seu imóvel e amplia o retorno.</span>
+                        <span className="hidden sm:inline">
+                          Nosso design valoriza o seu imóvel e potencializa o retorno do investimento.
+                        </span>
+                      </>
+                    )}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
             </div>
             <div className="text-left sm:text-right flex-shrink-0 order-1 sm:order-2">
               <AnimatePresence mode="wait">
