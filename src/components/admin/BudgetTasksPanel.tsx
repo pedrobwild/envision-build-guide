@@ -501,6 +501,13 @@ export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Pr
             const active = filter === f.key;
             const count = counts[f.key];
             const disabled = !isLoading && count === 0 && f.key !== "pending";
+            const shortcutHint: Record<TaskFilter, string> = {
+              pending: "T (alterna) · ⇧T→P",
+              completed: "T (alterna) · ⇧T→C",
+              overdue: "⇧T→A",
+              due_soon: "⇧T→H",
+              all: "⇧T→L",
+            };
             return (
               <button
                 key={f.key}
@@ -508,6 +515,7 @@ export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Pr
                 data-active={active}
                 disabled={disabled}
                 onClick={() => setFilter(f.key)}
+                title={`${f.label} — atalho: ${shortcutHint[f.key]}`}
                 className={cn(
                   "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-[11px] font-body font-medium transition-all",
                   "border-border bg-card text-muted-foreground hover:text-foreground hover:border-border/80",
