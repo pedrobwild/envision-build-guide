@@ -645,25 +645,25 @@ function KpiTile({
   return (
     <div
       className={cn(
-        "rounded-lg border p-2.5 sm:p-3",
+        "rounded-lg border p-2 sm:p-2.5",
         accent
           ? "bg-primary/10 border-primary/25"
           : "bg-muted/40 border-border",
       )}
     >
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono mb-1 truncate">
+      <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-mono mb-0.5 truncate">
         {label}
       </p>
       <p
         className={cn(
-          "font-display font-bold text-base sm:text-xl leading-tight",
+          "font-display font-bold text-[15px] sm:text-lg leading-tight",
           accent ? "text-primary" : "text-foreground",
         )}
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
         {value}
       </p>
-      <p className="text-[10px] text-muted-foreground font-body mt-0.5 leading-tight truncate">{hint}</p>
+      <p className="text-[9px] text-muted-foreground font-body mt-0.5 leading-tight truncate">{hint}</p>
     </div>
   );
 }
