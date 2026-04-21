@@ -764,17 +764,25 @@ interface IndividualProjectCardProps {
   project: IndividualProject;
   isHighlighted?: boolean;
   onHover?: (hovered: boolean) => void;
+  /** Position string like "3 de 32" announced to screen-readers */
+  positionLabel?: string;
 }
 
 const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardProps>(
-  ({ project, isHighlighted = false, onHover }, ref) => {
+  ({ project, isHighlighted = false, onHover, positionLabel }, ref) => {
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
     const [hovering, setHovering] = useState(false);
+    const [hasFocus, setHasFocus] = useState(false);
     const [inView, setInView] = useState(false);
     // Holds the currently observed element + its disposer so we can swap
     // observers when the DOM node changes without re-running effects.
     const observedRef = useRef<{ el: Element; dispose: () => void } | null>(null);
+    // Stable ids for aria-controls / aria-labelledby wiring
+    const reactId = useId();
+    const carouselId = `proj-carousel-${reactId}`;
+    const titleId = `proj-title-${reactId}`;
+    const slideStatusId = `proj-slide-status-${reactId}`;
 
     const onSlideChange = useCallback(() => {
       if (!emblaApi) return;
@@ -787,12 +795,13 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
       onSlideChange();
     }, [emblaApi, onSlideChange]);
 
-    // Autoplay subtly while hovering
+    // Autoplay subtly while hovering (paused when keyboard-focused so SR users
+    // aren't bombarded with slide-change announcements they didn't trigger).
     useEffect(() => {
-      if (!emblaApi || !hovering || project.fotos.length <= 1) return;
+      if (!emblaApi || !hovering || hasFocus || project.fotos.length <= 1) return;
       const interval = setInterval(() => emblaApi.scrollNext(), 2000);
       return () => clearInterval(interval);
-    }, [emblaApi, hovering, project.fotos.length]);
+    }, [emblaApi, hovering, hasFocus, project.fotos.length]);
 
     const handleMouseEnter = () => {
       setHovering(true);
@@ -800,6 +809,14 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     };
     const handleMouseLeave = () => {
       setHovering(false);
+      onHover?.(false);
+    };
+    const handleFocus = () => {
+      setHasFocus(true);
+      onHover?.(true);
+    };
+    const handleBlur = () => {
+      setHasFocus(false);
       onHover?.(false);
     };
 
@@ -840,14 +857,19 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
       };
     }, []);
 
+    const showCarouselControls = project.fotos.length > 1;
+    const controlsVisible = hovering || hasFocus;
+    const cardLabel = `Empreendimento entregue ${positionLabel ? positionLabel + ": " : ""}${project.displayName}, ${project.metragem} metros quadrados, bairro ${project.bairro}${showCarouselControls ? `. Galeria com ${project.fotos.length} fotos` : ""}`;
+
     return (
-      <div
+      <article
         ref={setRefs}
         data-project-card-id={project.id}
         tabIndex={0}
-        role="option"
-        aria-selected={isHighlighted}
-        aria-label={`${project.displayName}, ${project.metragem} metros quadrados, ${project.bairro}`}
+        role="listitem"
+        aria-labelledby={titleId}
+        aria-label={cardLabel}
+        aria-current={isHighlighted ? "true" : undefined}
         className={cn(
           "group/card rounded-xl border overflow-hidden bg-card outline-none",
           "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
@@ -861,20 +883,35 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         )}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onFocus={handleMouseEnter}
-        onBlur={handleMouseLeave}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
       >
-        {/* Photo carousel */}
-        <div className="relative aspect-[16/10] overflow-hidden bg-muted" ref={emblaRef}>
+        {/* Photo carousel — semantic group with live slide announcement */}
+        <div
+          id={carouselId}
+          ref={emblaRef}
+          role="group"
+          aria-roledescription="carrossel de fotos"
+          aria-label={`Fotos de ${project.displayName}`}
+          className="relative aspect-[16/10] overflow-hidden bg-muted"
+        >
           <div className="flex h-full">
             {project.fotos.map((foto, i) => {
               const isActiveSlide = i === activeSlide;
               return (
-                <div key={i} className="flex-[0_0_100%] min-w-0 relative">
+                <div
+                  key={i}
+                  className="flex-[0_0_100%] min-w-0 relative"
+                  role="group"
+                  aria-roledescription="slide"
+                  aria-label={`Foto ${i + 1} de ${project.fotos.length}`}
+                  aria-hidden={!isActiveSlide}
+                >
                   {inView ? (
                     <img
                       src={foto}
-                      alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
+                      alt={isActiveSlide ? `Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}` : ""}
+                      aria-hidden={!isActiveSlide || undefined}
                       className="w-full h-full object-cover"
                       // First slide loads eagerly so it appears the instant the
                       // card enters viewport; subsequent slides stay lazy.
@@ -893,9 +930,12 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                       }}
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-muted animate-pulse" />
+                    <div className="absolute inset-0 bg-muted animate-pulse" aria-hidden="true" />
                   )}
-                  <div className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden">
+                  <div
+                    aria-hidden="true"
+                    className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden"
+                  >
                     <Camera className="h-8 w-8 text-muted-foreground/40" />
                   </div>
                 </div>
@@ -903,16 +943,34 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
             })}
           </div>
 
-          {/* Photo counter */}
-          {project.fotos.length > 1 && (
-            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/55 backdrop-blur-sm text-white text-[10px] font-mono tabular-nums">
+          {/* Live region announcing current slide to screen readers */}
+          {showCarouselControls && (
+            <div
+              id={slideStatusId}
+              className="sr-only"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              Foto {activeSlide + 1} de {project.fotos.length}
+            </div>
+          )}
+
+          {/* Visual photo counter (decorative — info already in live region) */}
+          {showCarouselControls && (
+            <div
+              aria-hidden="true"
+              className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/55 backdrop-blur-sm text-white text-[10px] font-mono tabular-nums"
+            >
               {activeSlide + 1}/{project.fotos.length}
             </div>
           )}
 
-          {/* Dots */}
-          {project.fotos.length > 1 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+          {/* Dots (decorative; navigation provided by buttons) */}
+          {showCarouselControls && (
+            <div
+              aria-hidden="true"
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1"
+            >
               {project.fotos.map((_, i) => (
                 <div
                   key={i}
@@ -925,24 +983,38 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
             </div>
           )}
 
-          {/* Arrows on hover */}
-          {hovering && project.fotos.length > 1 && (
+          {/* Carousel controls — always rendered for keyboard/SR users; only
+              visually shown on hover/focus. Buttons remain keyboard-reachable
+              when the card is focused. */}
+          {showCarouselControls && (
             <>
               <button
                 type="button"
-                aria-label="Foto anterior"
+                aria-label={`Foto anterior (atual: ${activeSlide + 1} de ${project.fotos.length})`}
+                aria-controls={carouselId}
                 onClick={(e) => { e.stopPropagation(); emblaApi?.scrollPrev(); }}
-                className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
+                tabIndex={hasFocus ? 0 : -1}
+                className={cn(
+                  "absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/85 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow",
+                  "transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+                  controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
               >
-                <ChevronLeft className="h-4 w-4 text-foreground" />
+                <ChevronLeft className="h-4 w-4 text-foreground" aria-hidden="true" />
               </button>
               <button
                 type="button"
-                aria-label="Próxima foto"
+                aria-label={`Próxima foto (atual: ${activeSlide + 1} de ${project.fotos.length})`}
+                aria-controls={carouselId}
                 onClick={(e) => { e.stopPropagation(); emblaApi?.scrollNext(); }}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
+                tabIndex={hasFocus ? 0 : -1}
+                className={cn(
+                  "absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/85 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow",
+                  "transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+                  controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
               >
-                <ChevronRight className="h-4 w-4 text-foreground" />
+                <ChevronRight className="h-4 w-4 text-foreground" aria-hidden="true" />
               </button>
             </>
           )}
@@ -950,24 +1022,29 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
 
         {/* Info */}
         <div className="p-3 flex items-start gap-2">
-          <Building2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <Building2 className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
           <div className="min-w-0 flex-1">
-            <h4 className="text-sm font-display font-bold text-foreground leading-tight truncate">
+            <h4
+              id={titleId}
+              className="text-sm font-display font-bold text-foreground leading-tight truncate"
+            >
               {project.displayName}
             </h4>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
               <span className="text-xs text-muted-foreground font-body tabular-nums">
+                <span className="sr-only">Metragem: </span>
                 {project.metragem}m²
               </span>
-              <span className="text-muted-foreground/40 text-xs">·</span>
+              <span aria-hidden="true" className="text-muted-foreground/40 text-xs">·</span>
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-body">
-                <MapPinned className="h-3 w-3" />
+                <MapPinned className="h-3 w-3" aria-hidden="true" />
+                <span className="sr-only">Bairro: </span>
                 {project.bairro}
               </span>
             </div>
           </div>
         </div>
-      </div>
+      </article>
     );
   }
 );
