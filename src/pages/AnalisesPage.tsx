@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { subDays } from "date-fns";
 import { BarChart3 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -28,6 +29,7 @@ const anim = (delay: number) => ({
 export default function AnalisesPage() {
   const { user } = useAuth();
   const { profile } = useUserProfile();
+  const location = useLocation();
   const isAdmin = profile?.roles.includes("admin") ?? false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
