@@ -99,7 +99,11 @@ export function ROISimulatorModal({
   const grossYear = grossMonth * 12;
   const safeTotal = total > 0 ? total : 0;
   const totalInvestment = studioPrice + safeTotal; // compra + reforma
+  const appreciationPctYear = getAppreciationPctYear(district);
+  const appreciationYear = studioPrice * (appreciationPctYear / 100);
   const roiYearPct = totalInvestment > 0 ? (netYear / totalInvestment) * 100 : 0;
+  const roiTotalPct =
+    totalInvestment > 0 ? ((netYear + appreciationYear) / totalInvestment) * 100 : 0;
   const paybackMonths =
     totalInvestment > 0 && netMonth > 0 ? totalInvestment / netMonth : null;
 
@@ -110,8 +114,21 @@ export function ROISimulatorModal({
         ? `${Math.round(paybackMonths)} meses`
         : `${(paybackMonths / 12).toFixed(1).replace(".", ",")} anos`;
 
-  const fiveYearReturn = netYear * 5;
-  const tenYearReturn = netYear * 10;
+  // Projeção composta — renda acumulada + valorização patrimonial
+  const buildProjection = (years: number) => {
+    const rentAccum = netYear * years;
+    const propertyValueFuture = studioPrice * Math.pow(1 + appreciationPctYear / 100, years);
+    const propertyAppreciation = propertyValueFuture - studioPrice;
+    return {
+      rent: rentAccum,
+      appreciation: propertyAppreciation,
+      total: rentAccum + propertyAppreciation,
+      finalAsset: propertyValueFuture + rentAccum,
+    };
+  };
+  const projection5y = buildProjection(5);
+  const projection10y = buildProjection(10);
+  const projection1y = buildProjection(1);
 
   const isEdited =
     nightly !== baseline.nightly ||
