@@ -52,7 +52,7 @@ export function useGlobalShortcuts() {
         e.preventDefault();
         toast("Atalhos de teclado", {
           description:
-            "G→D Painel · G→C Comercial · G→P Produção · G→A Agenda · G→L Clientes · N Novo negócio · ⌘K Buscar",
+            "G→D Painel · G→C Comercial · G→P Produção · G→A Agenda · G→L Clientes · N Novo negócio · T Pendentes/Concluídas · ⇧T+P/C/A/H/L · ⌘K Buscar",
           duration: 6000,
         });
         return;
