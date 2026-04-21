@@ -688,7 +688,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
                 // desktop: vertical stack
                 "md:space-y-3"
               )}
-              tabIndex={0}
+              // The panel itself stays focusable as a fallback (e.g., when
+              // the list is empty) but `aria-activedescendant` + roving
+              // tabindex on cards mean Tab usually lands on the active card,
+              // not the wrapper.
+              tabIndex={filteredProjects.length === 0 ? 0 : -1}
               role="listbox"
               aria-label="Lista de empreendimentos entregues. Use as setas para navegar e Esc para limpar o filtro."
               aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"
@@ -705,6 +709,9 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
                   project={proj}
                   ref={setCardRef(proj.id)}
                   isHighlighted={highlightedProjectId === proj.id}
+                  // Roving tabindex: only the active card is reachable via Tab.
+                  tabIndex={activeCardId === proj.id ? 0 : -1}
+                  onCardFocus={() => setActiveCardId(proj.id)}
                   onHover={(hovered) => {
                     const id = getBairroId(proj.bairro);
                     if (!id) return;
