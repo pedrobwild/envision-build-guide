@@ -925,6 +925,13 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
     const [hovering, setHovering] = useState(false);
+    // Persistent keyboard-focus indicator. Tracks whether the card currently
+    // owns *real* DOM focus (not just hover) so the visual ring stays put
+    // even while the user is reading — matches `:focus-visible` semantics
+    // (only true when focus arrived via keyboard / programmatic focus, not
+    // from a mouse click) so click-to-scroll interactions don't leave a
+    // sticky ring behind.
+    const [isKeyboardFocused, setIsKeyboardFocused] = useState(false);
     const [inView, setInView] = useState(false);
     // Track which slide images have finished loading so we can fade them in
     // over the skeleton individually, instead of waiting for the whole gallery.
@@ -1113,11 +1120,24 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
             ? "transition-[box-shadow,border-color] duration-150 ease-out"
             : "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
           "max-md:min-w-[260px] max-md:snap-start max-md:flex-shrink-0",
+          // Keep the native focus-visible ring as a baseline for assistive
+          // tech / forced-colors mode; the richer indicator below replaces it
+          // visually but doesn't remove the semantic.
           "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          // Visual priority: explicit highlight (map click / arrow nav) wins,
+          // then persistent keyboard focus, then hover, then resting state.
+          // A card that is both focused AND highlighted still reads as
+          // highlighted; a focused-only card is clearly distinct from a
+          // merely hovered one and the indicator stays put while reading.
           isHighlighted
             ? cn(
                 "border-primary ring-4 ring-primary/40 shadow-xl shadow-primary/20",
                 !reducedMotion && "-translate-y-0.5 scale-[1.015]"
+              )
+            : isKeyboardFocused
+            ? cn(
+                "border-primary ring-2 ring-primary/60 ring-offset-2 ring-offset-background shadow-lg shadow-primary/15",
+                !reducedMotion && "-translate-y-0.5"
               )
             : hovering
             ? cn("border-primary/40 shadow-md", !reducedMotion && "-translate-y-px")
@@ -1125,13 +1145,29 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         )}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onFocus={() => {
+        onFocus={(e) => {
           handleMouseEnter();
+          // Only treat this as a "keyboard focus" (sticky ring) when the
+          // browser itself agrees via `:focus-visible` — focus arrived
+          // from keyboard navigation or programmatic focus, not a mouse
+          // click. Avoids a lingering ring after click-to-scroll.
+          let keyboard = false;
+          try {
+            keyboard = e.currentTarget.matches(":focus-visible");
+          } catch {
+            // `:focus-visible` not supported — fall back to always treating
+            // focus as keyboard focus, which is safer for accessibility.
+            keyboard = true;
+          }
+          setIsKeyboardFocused(keyboard);
           // Promote this card to the active tab stop whenever it actually
           // receives focus (mouse click, programmatic focus, etc.).
           onCardFocus?.();
         }}
-        onBlur={handleMouseLeave}
+        onBlur={() => {
+          handleMouseLeave();
+          setIsKeyboardFocused(false);
+        }}
       >
         {/* Photo carousel */}
         <div className="relative aspect-[16/10] overflow-hidden bg-muted" ref={emblaRef}>
