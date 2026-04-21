@@ -383,7 +383,11 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
       <NewBudgetActivityDialog
         budgetId={budgetId}
         open={openNew}
-        onOpenChange={setOpenNew}
+        onOpenChange={(v) => {
+          setOpenNew(v);
+          if (!v) setInitialValues(null);
+        }}
+        initialValues={initialValues}
       />
 
       {/* Modal: outcome ao concluir */}
