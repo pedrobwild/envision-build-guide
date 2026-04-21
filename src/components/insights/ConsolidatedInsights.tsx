@@ -11,13 +11,14 @@ import { useToast } from "@/hooks/use-toast";
 import InsightsDashboard from "./InsightsDashboard";
 import QualitativeHighlights from "./QualitativeHighlights";
 import ExecutiveSummary from "./ExecutiveSummary";
+import type { ElephantInsightsCacheRow, InsightChartsData } from "@/types/insights";
 
 interface ConsolidatedData {
   totalMeetings: number;
   totalDurationMinutes: number;
   consultoresCount: number;
   latestMeeting: string | null;
-  dashboard: any;
+  dashboard: InsightChartsData | Record<string, unknown>;
   cached: boolean;
   cacheAge?: number;
   noShowCount: number;
@@ -40,7 +41,8 @@ export default function ConsolidatedInsights() {
       const { data: caches, error } = await (supabase as any)
         .from("elephant_insights_cache")
         .select("*")
-        .like("cache_key", "user_%");
+        .like("cache_key", "user_%")
+        .returns<ElephantInsightsCacheRow[]>();
 
       if (error || !caches?.length) {
         setData(null);
@@ -245,7 +247,7 @@ function deduplicateByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
 }
 
 /** Merge multiple cache entries into a consolidated view */
-function mergeCacheEntries(caches: any[]): ConsolidatedData {
+function mergeCacheEntries(caches: ElephantInsightsCacheRow[]): ConsolidatedData {
   let totalMeetings = 0;
   let totalDuration = 0;
   let latestMeeting: string | null = null;
