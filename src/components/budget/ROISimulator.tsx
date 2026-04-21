@@ -367,14 +367,31 @@ export function ROISimulator({
                   Premium &amp; exclusivo
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground font-body leading-snug">
+              <p className="text-[11px] text-muted-foreground font-body leading-snug text-balance">
                 {hasReformPayback ? (
                   <>
-                    Nosso design valoriza o seu imóvel e devolve o investimento em{" "}
-                    <strong className="text-success font-semibold tabular-nums">{reformPaybackLabel}</strong>.
+                    <span className="sm:hidden">
+                      Design que valoriza seu imóvel — retorno em{" "}
+                      <strong className="text-success font-semibold tabular-nums whitespace-nowrap">
+                        {reformPaybackLabel}
+                      </strong>
+                      .
+                    </span>
+                    <span className="hidden sm:inline">
+                      Nosso design valoriza o seu imóvel e devolve o investimento em{" "}
+                      <strong className="text-success font-semibold tabular-nums whitespace-nowrap">
+                        {reformPaybackLabel}
+                      </strong>
+                      .
+                    </span>
                   </>
                 ) : (
-                  <>Nosso design valoriza o seu imóvel e potencializa o retorno do investimento.</>
+                  <>
+                    <span className="sm:hidden">Design que valoriza seu imóvel e amplia o retorno.</span>
+                    <span className="hidden sm:inline">
+                      Nosso design valoriza o seu imóvel e potencializa o retorno do investimento.
+                    </span>
+                  </>
                 )}
               </p>
             </div>
