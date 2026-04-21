@@ -593,7 +593,9 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
             <div
               ref={mapContainer}
               className="w-full h-[360px] md:h-[600px] rounded-xl overflow-hidden border border-border"
-              aria-label="Mapa de densidade por bairro"
+              role="application"
+              aria-roledescription="Mapa interativo"
+              aria-label={`Mapa de São Paulo com ${TOTAL_NEIGHBORHOODS} bairros atendidos pela Bwild. Clique em um marcador para filtrar a lista de empreendimentos ao lado.`}
             />
           ) : (
             <MapFallback height={isMobile ? "360px" : "600px"} />
