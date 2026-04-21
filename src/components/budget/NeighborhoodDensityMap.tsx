@@ -668,6 +668,12 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
               role="listbox"
               aria-label="Lista de empreendimentos entregues. Use as setas para navegar e Esc para limpar o filtro."
               aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"
+              // Tells assistive tech which option is currently "active" inside
+              // the listbox (the highlighted card) without changing real DOM
+              // focus. Screen readers announce the option's accessible name.
+              aria-activedescendant={
+                highlightedProjectId ? `project-card-${highlightedProjectId}` : undefined
+              }
             >
               {filteredProjects.map((proj) => (
                 <IndividualProjectCard
@@ -687,6 +693,25 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
                   Nenhum empreendimento neste filtro.
                 </div>
               )}
+            </div>
+
+            {/* Visually-hidden live region: announces the highlighted card
+                whenever it changes (via map pin click, filter chip, or
+                keyboard nav). `aria-live="polite"` waits for the screen
+                reader to finish current speech; `aria-atomic` ensures the
+                full message is read each time, not just diffs. */}
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="sr-only"
+            >
+              {(() => {
+                if (!highlightedProjectId) return "Nenhum empreendimento destacado.";
+                const p = filteredProjects.find((x) => x.id === highlightedProjectId);
+                if (!p) return "";
+                return `Destaque: ${p.displayName}, ${p.metragem} metros quadrados, bairro ${p.bairro}.`;
+              })()}
             </div>
           </div>
         </div>
@@ -939,6 +964,10 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     return (
       <div
         ref={setRefs}
+        // Stable DOM id used by the listbox's `aria-activedescendant` so
+        // screen readers announce the highlighted card without moving real
+        // focus. Must match the format used by the parent panel below.
+        id={`project-card-${project.id}`}
         data-project-card-id={project.id}
         tabIndex={0}
         role="option"
