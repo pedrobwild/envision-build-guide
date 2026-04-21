@@ -14,7 +14,9 @@ const ALL_INDIVIDUAL_PROJECTS: IndividualProject[] = Array.from(
 // Bairros that actually appear in the project carousel
 const CAROUSEL_BAIRROS: string[] = Array.from(
   new Set(ALL_INDIVIDUAL_PROJECTS.map((p) => p.bairro))
-).sort();
+)
+  .filter((b) => b.toLowerCase() !== "brooklin")
+  .sort();
 
 /* ── Shared IntersectionObserver for lazy-loading project cards ──
  * One observer instance is reused across every card to avoid the cost of
@@ -617,14 +619,6 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
               >
                 Empreendimentos entregues
               </h3>
-              <span
-                className="text-xs font-mono text-muted-foreground tabular-nums"
-                aria-live="polite"
-                aria-atomic="true"
-              >
-                <span className="sr-only">Total: </span>
-                {filteredProjects.length} {filteredProjects.length === 1 ? "unidade" : "unidades"}
-              </span>
             </div>
             {/* Visually-hidden description of keyboard shortcuts for SR users */}
             <p id="neighborhood-projects-help" className="sr-only">
