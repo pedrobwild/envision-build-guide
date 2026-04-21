@@ -66,10 +66,12 @@ interface Props {
  * Painel de Ações & Tarefas: criar, agendar prazo, marcar concluído,
  * sinalizar atrasos e visualizar pendências separadas das concluídas.
  */
+type TaskFilter = "all" | "pending" | "overdue" | "due_soon" | "completed";
+
 export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
   const qc = useQueryClient();
   const [openNew, setOpenNew] = useState(false);
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [filter, setFilter] = useState<TaskFilter>("pending");
   const [outcomeId, setOutcomeId] = useState<string | null>(null);
   const [outcomeText, setOutcomeText] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
