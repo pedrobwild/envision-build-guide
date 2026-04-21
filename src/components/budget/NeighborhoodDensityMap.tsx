@@ -699,27 +699,10 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
     const [hovering, setHovering] = useState(false);
-    const cardInnerRef = useRef<HTMLDivElement | null>(null);
     const [inView, setInView] = useState(false);
-
-    // Lazy-load images: only mount <img> tags once card is near viewport
-    useEffect(() => {
-      const el = cardInnerRef.current;
-      if (!el) return;
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setInView(true);
-              io.disconnect();
-            }
-          });
-        },
-        { rootMargin: "200px" }
-      );
-      io.observe(el);
-      return () => io.disconnect();
-    }, []);
+    // Holds the currently observed element + its disposer so we can swap
+    // observers when the DOM node changes without re-running effects.
+    const observedRef = useRef<{ el: Element; dispose: () => void } | null>(null);
 
     const onSlideChange = useCallback(() => {
       if (!emblaApi) return;
@@ -748,15 +731,42 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
       onHover?.(false);
     };
 
-    // Combine forwarded ref with internal ref
+    // Combine forwarded ref + register element with the SHARED observer.
+    // Doing this inside the ref callback (instead of a useEffect) guarantees
+    // the observer attaches the moment the DOM node mounts and avoids
+    // recreating an IntersectionObserver per re-render.
     const setRefs = useCallback(
       (el: HTMLDivElement | null) => {
-        cardInnerRef.current = el;
+        // Forward the ref to parent
         if (typeof ref === "function") ref(el);
         else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = el;
+
+        // Swap observation target if the node changed
+        if (observedRef.current && observedRef.current.el !== el) {
+          observedRef.current.dispose();
+          observedRef.current = null;
+        }
+        if (el && !observedRef.current) {
+          // Eager-fire if already in viewport at mount (avoids waiting one tick)
+          const rect = el.getBoundingClientRect();
+          const vh = window.innerHeight || document.documentElement.clientHeight;
+          if (rect.top < vh + 300 && rect.bottom > -300) {
+            setInView(true);
+          }
+          const dispose = observeCard(el, () => setInView(true));
+          observedRef.current = { el, dispose };
+        }
       },
       [ref]
     );
+
+    // Cleanup on unmount
+    useEffect(() => {
+      return () => {
+        observedRef.current?.dispose();
+        observedRef.current = null;
+      };
+    }, []);
 
     return (
       <div
@@ -784,33 +794,40 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         {/* Photo carousel */}
         <div className="relative aspect-[16/10] overflow-hidden bg-muted" ref={emblaRef}>
           <div className="flex h-full">
-            {project.fotos.map((foto, i) => (
-              <div key={i} className="flex-[0_0_100%] min-w-0 relative">
-                {inView ? (
-                  <img
-                    src={foto}
-                    alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => {
-                      const el = e.target as HTMLImageElement;
-                      el.style.display = "none";
-                      const parent = el.parentElement;
-                      if (parent) {
-                        const fallback = parent.querySelector(".fallback-bg") as HTMLElement;
-                        if (fallback) fallback.style.display = "flex";
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-muted animate-pulse" />
-                )}
-                <div className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden">
-                  <Camera className="h-8 w-8 text-muted-foreground/40" />
+            {project.fotos.map((foto, i) => {
+              const isActiveSlide = i === activeSlide;
+              return (
+                <div key={i} className="flex-[0_0_100%] min-w-0 relative">
+                  {inView ? (
+                    <img
+                      src={foto}
+                      alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
+                      className="w-full h-full object-cover"
+                      // First slide loads eagerly so it appears the instant the
+                      // card enters viewport; subsequent slides stay lazy.
+                      loading={isActiveSlide ? "eager" : "lazy"}
+                      decoding={isActiveSlide ? "sync" : "async"}
+                      // @ts-expect-error fetchpriority is valid HTML, not yet in TS lib
+                      fetchpriority={isActiveSlide ? "high" : "auto"}
+                      onError={(e) => {
+                        const el = e.target as HTMLImageElement;
+                        el.style.display = "none";
+                        const parent = el.parentElement;
+                        if (parent) {
+                          const fallback = parent.querySelector(".fallback-bg") as HTMLElement;
+                          if (fallback) fallback.style.display = "flex";
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-muted animate-pulse" />
+                  )}
+                  <div className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden">
+                    <Camera className="h-8 w-8 text-muted-foreground/40" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Photo counter */}
