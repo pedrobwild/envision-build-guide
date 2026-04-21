@@ -454,58 +454,6 @@ function MapFallback({ height }: { height: string }) {
   );
 }
 
-function SummaryPanel({ onSelectNeighborhood }: { onSelectNeighborhood: (id: string) => void }) {
-  return (
-    <div className="bg-card border border-border rounded-2xl p-6 h-full flex flex-col">
-      <p className="text-lg font-display font-bold text-foreground mb-4">🏙️ Presença em SP</p>
-
-      <div className="flex gap-6 mb-4">
-        <div>
-          <span className="font-mono text-3xl font-bold text-primary">{TOTAL_PROJECTS}</span>
-          <p className="text-sm text-muted-foreground font-body">projetos entregues</p>
-        </div>
-        <div>
-          <span className="font-mono text-3xl font-bold text-primary">{TOTAL_NEIGHBORHOODS}</span>
-          <p className="text-sm text-muted-foreground font-body">bairros atendidos</p>
-        </div>
-      </div>
-
-      <div className="mt-1 pt-5 border-t border-border">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Bairros mais ativos
-        </p>
-        {TOP_5.map((b, i) => (
-          <button
-            key={b.id}
-            onClick={() => onSelectNeighborhood(b.id)}
-            className="w-full flex items-center justify-between py-2 px-2 -mx-0 hover:bg-muted rounded-lg transition-colors group"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground font-mono w-4">{i + 1}</span>
-              <span className="text-sm text-foreground group-hover:text-primary transition-colors">
-                {b.name}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div
-                className="h-1.5 rounded-full bg-primary/20"
-                style={{ width: `${(b.count / 17) * 56}px` }}
-              />
-              <span className="text-xs font-mono font-semibold text-primary w-8 text-right">
-                {b.count}
-              </span>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      <p className="text-xs text-muted-foreground font-body mt-auto pt-4 text-center">
-        Clique em um bairro no mapa para ver detalhes
-      </p>
-    </div>
-  );
-}
-
 function NeighborhoodDetail({
   data,
   onBack,
