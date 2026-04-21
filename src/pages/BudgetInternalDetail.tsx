@@ -68,6 +68,8 @@ import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
+import { BudgetTasksPanel } from "@/components/admin/BudgetTasksPanel";
+import { DemandSidebarNav } from "@/components/demanda/DemandSidebarNav";
 import { formatBRL } from "@/lib/formatBRL";
 
 interface BudgetDetail {
