@@ -12,6 +12,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
@@ -37,7 +38,17 @@ interface ROISimulatorProps {
 }
 
 const DAYS_PER_MONTH = 30;
-const DEFAULT_OPERATING_COST = 0.35;
+// Custos operacionais reais Airbnb SP (% sobre receita bruta):
+// Comissão Airbnb 15% + Gestão/co-host 18% + Limpeza/lavanderia 7%
+// + Condomínio/IPTU/utilities 8% + Manutenção/reservas 2% ≈ 50%
+const DEFAULT_OPERATING_COST = 0.5;
+const OPERATING_COST_BREAKDOWN = [
+  { label: "Comissão Airbnb", pct: 15 },
+  { label: "Gestão / co-host", pct: 18 },
+  { label: "Limpeza e lavanderia", pct: 7 },
+  { label: "Condomínio, IPTU e utilities", pct: 8 },
+  { label: "Manutenção e reservas", pct: 2 },
+];
 const DEFAULT_STUDIO_PRICE = 375_000; // média R$ 350–400k para studio em SP
 const STUDIO_PRICE_MIN = 250_000;
 const STUDIO_PRICE_MAX = 600_000;
@@ -393,9 +404,40 @@ export function ROISimulator({
             </div>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
-              {Math.round(operatingCostPct * 100)}% custos
-            </p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-mono uppercase tracking-wider hover:text-foreground transition-colors"
+                  aria-label="Ver detalhamento dos custos operacionais"
+                >
+                  −{Math.round(operatingCostPct * 100)}% custos
+                  <Info className="h-2.5 w-2.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 p-3">
+                <p className="text-[11px] font-display font-bold uppercase tracking-wider text-foreground mb-2">
+                  Custos sobre receita bruta
+                </p>
+                <ul className="space-y-1.5">
+                  {OPERATING_COST_BREAKDOWN.map((c) => (
+                    <li key={c.label} className="flex justify-between text-[11px] font-body text-muted-foreground">
+                      <span>{c.label}</span>
+                      <span className="tabular-nums font-mono text-foreground">{c.pct}%</span>
+                    </li>
+                  ))}
+                  <li className="flex justify-between pt-1.5 mt-1.5 border-t border-border text-[11px] font-display font-bold">
+                    <span className="text-foreground">Total</span>
+                    <span className="tabular-nums text-foreground">
+                      {OPERATING_COST_BREAKDOWN.reduce((s, c) => s + c.pct, 0)}%
+                    </span>
+                  </li>
+                </ul>
+                <p className="text-[10px] text-muted-foreground mt-2.5 leading-relaxed">
+                  Estimativa média para studios em São Paulo. Pode variar conforme condomínio, ocupação e modelo de gestão.
+                </p>
+              </PopoverContent>
+            </Popover>
             <p className="text-[11px] text-muted-foreground font-body mt-0.5 tabular-nums">
               Bruto {formatBRL(grossMonth)}
             </p>
