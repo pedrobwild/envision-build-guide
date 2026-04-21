@@ -66,6 +66,7 @@ export function ROISimulator({
   const [nightly, setNightly] = useState<number>(baseline.nightly);
   const [occupancy, setOccupancy] = useState<number>(baseline.occupancy);
   const [showDetails, setShowDetails] = useState<boolean>(!compact);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const sliderLimits = useMemo(() => {
     const minNightly = Math.max(150, Math.round(baseline.nightly * 0.6));
