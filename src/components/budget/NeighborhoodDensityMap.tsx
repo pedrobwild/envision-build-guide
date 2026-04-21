@@ -515,16 +515,95 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
             <MapFallback height={isMobile ? "360px" : "600px"} />
           )}
         </div>
-        <div className="flex-[2] md:max-h-[600px] overflow-y-auto" ref={panelRef}>
-          {selectedData ? (
-            <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} />
-          ) : (
-            <div className="space-y-3 pr-1">
-              {ALL_INDIVIDUAL_PROJECTS.map((proj) => (
-                <IndividualProjectCard key={proj.id} project={proj} />
+
+        {/* Right panel: vertical (desktop) / horizontal snap (mobile) carousel of all projects */}
+        <div className="flex-[2] md:max-h-[600px] flex flex-col bg-card border border-border rounded-xl overflow-hidden">
+          {/* Sticky header */}
+          <div className="px-4 pt-3 pb-2 border-b border-border bg-card sticky top-0 z-10">
+            <div className="flex items-baseline justify-between gap-2 mb-2">
+              <h3 className="font-display font-bold text-sm text-foreground tracking-tight">
+                Empreendimentos entregues
+              </h3>
+              <span className="text-xs font-mono text-muted-foreground tabular-nums">
+                {filteredProjects.length} {filteredProjects.length === 1 ? "unidade" : "unidades"}
+              </span>
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1 -mx-1 px-1 snap-x">
+              <FilterChip
+                label="Todos"
+                active={bairroFilter === null}
+                onClick={() => setBairroFilter(null)}
+              />
+              {CAROUSEL_BAIRROS.map((b) => (
+                <FilterChip
+                  key={b}
+                  label={b}
+                  active={normalize(bairroFilter ?? "") === normalize(b)}
+                  onClick={() => {
+                    setBairroFilter((prev) => (normalize(prev ?? "") === normalize(b) ? null : b));
+                    const id = getBairroId(b);
+                    if (id) {
+                      const n = NEIGHBORHOOD_DATA.find((x) => x.id === id);
+                      if (n) mapRef.current?.flyTo({ center: [n.lng, n.lat], zoom: 14, duration: 700 });
+                    }
+                  }}
+                />
               ))}
             </div>
-          )}
+          </div>
+
+          {/* Scroll area with fade gradients */}
+          <div className="relative flex-1 min-h-0">
+            {/* Fade gradients */}
+            <div
+              aria-hidden
+              className={cn(
+                "pointer-events-none absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-card to-transparent z-[5] transition-opacity",
+                scrollState.top ? "opacity-0" : "opacity-100"
+              )}
+            />
+            <div
+              aria-hidden
+              className={cn(
+                "pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-card to-transparent z-[5] transition-opacity",
+                scrollState.bottom ? "opacity-0" : "opacity-100"
+              )}
+            />
+
+            <div
+              ref={panelRef}
+              onKeyDown={handlePanelKeyDown}
+              className={cn(
+                "h-full overflow-y-auto md:overflow-y-auto p-3",
+                // mobile: horizontal snap
+                "max-md:flex max-md:gap-3 max-md:overflow-x-auto max-md:overflow-y-hidden max-md:snap-x max-md:snap-mandatory",
+                // desktop: vertical stack
+                "md:space-y-3"
+              )}
+              tabIndex={0}
+              role="listbox"
+              aria-label="Lista de empreendimentos entregues"
+            >
+              {filteredProjects.map((proj) => (
+                <IndividualProjectCard
+                  key={proj.id}
+                  project={proj}
+                  ref={setCardRef(proj.id)}
+                  isHighlighted={highlightedProjectId === proj.id}
+                  onHover={(hovered) => {
+                    const id = getBairroId(proj.bairro);
+                    if (!id) return;
+                    setHoveredBairroId(hovered ? id : null);
+                  }}
+                />
+              ))}
+              {filteredProjects.length === 0 && (
+                <div className="text-sm text-muted-foreground font-body text-center py-8">
+                  Nenhum empreendimento neste filtro.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
