@@ -21,6 +21,7 @@ import { ScrollToTopButton } from "@/components/budget/ScrollToTopButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
 import { OptionalItemsSimulator } from "@/components/budget/OptionalItemsSimulator";
+import { ROISimulator } from "@/components/budget/ROISimulator";
 import { MobileHeroCard } from "@/components/budget/MobileHeroCard";
 import { MobilePriceAnchor } from "@/components/budget/MobilePriceAnchor";
 import { MobileTestimonialInline } from "@/components/budget/MobileTestimonialInline";
@@ -530,6 +531,17 @@ export default function PublicBudget() {
               </div>
             )}
 
+            {/* ── Mobile ROI simulator (inteligência de mercado por bairro) ── */}
+            <div className="lg:hidden" data-pdf-section>
+              <AnimatedSection id="roi-simulator-mobile" index={90}>
+                <ROISimulator
+                  total={total}
+                  bairro={budget.bairro}
+                  metragem={budget.metragem}
+                />
+              </AnimatedSection>
+            </div>
+
 
             {/* mobile-portal anchor kept for nav */}
             <div id="mobile-portal" className="scroll-mt-20" />
@@ -592,6 +604,12 @@ export default function PublicBudget() {
                   projectName={budget.project_name}
                 />
               )}
+              <ROISimulator
+                total={total}
+                bairro={budget.bairro}
+                metragem={budget.metragem}
+                compact
+              />
               <InstallmentSimulator total={total} />
               <ApprovalCTA
                 budgetId={budget.id}
