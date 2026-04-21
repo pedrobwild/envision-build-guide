@@ -554,6 +554,7 @@ export default function PublicBudget() {
               </AnimatedSection>
             </div>
 
+            {/* Card "Veja o Portal em ação" ocultado a pedido
             <div data-pdf-section>
               <AnimatedSection id="portal-demo-access" index={99.2}>
                 <Suspense fallback={<LazyFallback />}>
@@ -561,6 +562,7 @@ export default function PublicBudget() {
                 </Suspense>
               </AnimatedSection>
             </div>
+            */}
 
             <div data-pdf-section>
               <AnimatedSection id="cronograma-section" index={99.5}>
