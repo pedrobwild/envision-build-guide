@@ -20,6 +20,7 @@ import {
   BarChart3,
   CalendarClock,
   Brain,
+  TrendingUp,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, Link } from "react-router-dom";
@@ -82,6 +83,7 @@ const DADOS_MESTRES_ITEMS: NavItem[] = [
 const ANALISE_ITEMS: NavItem[] = [
   { title: "Operações", url: "/admin/operacoes", icon: Settings, roles: ["admin"] },
   { title: "Análises e Relatórios", url: "/admin/analises", icon: BarChart3, roles: ["admin"] },
+  { title: "Forecast & Previsibilidade", url: "/admin/analises#forecast", icon: TrendingUp, roles: ["admin"] },
   { title: "Financeiro", url: "/admin/financeiro", icon: DollarSign, roles: ["admin"] },
 ];
 
