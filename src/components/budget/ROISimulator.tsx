@@ -502,70 +502,70 @@ export function ROISimulator({
           Benchmark <strong className="text-foreground">AirDNA "Top 10%"</strong> em SP: design
           premium gera +{upliftPctNightly}% na diária e +{BWILD_OCCUPANCY_UPLIFT}pp na ocupação.
         </p>
+
+        {/* Expand contexto */}
+        {district && (
+          <div className="border-t border-border pt-3">
+            <button
+              type="button"
+              onClick={() => setShowDetails((p) => !p)}
+              className="flex items-center justify-between w-full text-xs font-body text-muted-foreground hover:text-foreground transition-colors"
+              aria-expanded={showDetails}
+            >
+              <span>Ver contexto do bairro</span>
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", showDetails && "rotate-180")}
+              />
+            </button>
+            <AnimatePresence initial={false}>
+              {showDetails && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-3 space-y-2.5">
+                    <div className="flex flex-wrap gap-1.5">
+                      {district.chips.map((chip) => (
+                        <Badge key={chip} variant="outline" className="text-[10px] font-body">
+                          {chip}
+                        </Badge>
+                      ))}
+                      <Badge
+                        variant="outline"
+                        className={cn("text-[10px] font-body border", competitionColor)}
+                      >
+                        Competição: {district.competition}
+                      </Badge>
+                    </div>
+                    <div className="flex items-start gap-1.5 text-xs font-body text-muted-foreground">
+                      <CalendarCheck2 className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
+                      <span>
+                        Perfil recomendado:{" "}
+                        <span className="text-foreground font-medium">
+                          {district.recommendation.bestStudioType}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
-      {/* Expand contexto */}
-      {district && (
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowDetails((p) => !p)}
-            className="flex items-center justify-between w-full text-xs font-body text-muted-foreground hover:text-foreground transition-colors"
-            aria-expanded={showDetails}
-          >
-            <span>Ver contexto do bairro</span>
-            <ChevronDown
-              className={cn("h-3.5 w-3.5 transition-transform", showDetails && "rotate-180")}
-            />
-          </button>
-          <AnimatePresence initial={false}>
-            {showDetails && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="overflow-hidden"
-              >
-                <div className="pt-3 space-y-2.5">
-                  <div className="flex flex-wrap gap-1.5">
-                    {district.chips.map((chip) => (
-                      <Badge key={chip} variant="outline" className="text-[10px] font-body">
-                        {chip}
-                      </Badge>
-                    ))}
-                    <Badge
-                      variant="outline"
-                      className={cn("text-[10px] font-body border", competitionColor)}
-                    >
-                      Competição: {district.competition}
-                    </Badge>
-                  </div>
-                  <div className="flex items-start gap-1.5 text-xs font-body text-muted-foreground">
-                    <CalendarCheck2 className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
-                    <span>
-                      Perfil recomendado:{" "}
-                      <span className="text-foreground font-medium">
-                        {district.recommendation.bestStudioType}
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Fonte dos dados — destaque */}
-      <div className="border-t border-border pt-3 space-y-2">
+      {/* ─── Footer: fonte + disclaimer + CTA ─── */}
+      <div className="bg-muted/30 border-t border-border px-5 py-4 space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
-              Fonte dos dados
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+              Fonte
             </span>
             <Badge variant="outline" className="text-[10px] font-mono bg-background">
-              {district?.sourceLabel || "Bwild/AirDNA 2025 — média SP"}
+              {district?.sourceLabel || "Bwild/AirDNA 2025"}
             </Badge>
           </div>
           <a
@@ -581,23 +581,20 @@ export function ROISimulator({
         <div className="flex items-start gap-1.5">
           <Info className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5" />
           <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
-            Análise específica para <strong className="text-foreground">{baseline.label}</strong>.
-            Payback considera o investimento total (compra do studio + reforma). Resultado estimado
-            — sujeito a sazonalidade, gestão operacional e variação do mercado. Não constitui
+            Análise para <strong className="text-foreground">{baseline.label}</strong>. Payback
+            considera o investimento total (studio + reforma). Resultado estimado — não constitui
             promessa de retorno.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-body font-semibold text-primary-foreground bg-primary hover:bg-primary/90 px-3 py-2.5 rounded-lg transition-colors shadow-sm"
+        >
+          <Maximize2 className="h-3.5 w-3.5" />
+          Abrir simulação completa
+        </button>
       </div>
-
-      {/* CTA modal */}
-      <button
-        type="button"
-        onClick={() => setModalOpen(true)}
-        className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-body font-medium text-primary hover:text-primary-foreground bg-primary/5 hover:bg-primary border border-primary/20 hover:border-primary px-3 py-2 rounded-md transition-colors"
-      >
-        <Maximize2 className="h-3.5 w-3.5" />
-        Abrir simulação completa
-      </button>
 
       {modalOpen && (
         <Suspense fallback={null}>
