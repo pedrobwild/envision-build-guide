@@ -37,6 +37,9 @@ interface ROISimulatorProps {
 
 const DAYS_PER_MONTH = 30;
 const DEFAULT_OPERATING_COST = 0.35;
+const DEFAULT_STUDIO_PRICE = 375_000; // média R$ 350–400k para studio em SP
+const STUDIO_PRICE_MIN = 250_000;
+const STUDIO_PRICE_MAX = 600_000;
 
 export function ROISimulator({
   total,
