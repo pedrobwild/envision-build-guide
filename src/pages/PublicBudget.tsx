@@ -397,15 +397,36 @@ export default function PublicBudget() {
           {/* Content column */}
           <div className="min-w-0 space-y-3 sm:space-y-4">
 
-            {/* ─── MOBILE ORDER 1: O que está incluído (Arq + Eng merged) ─── */}
+            {/* ─── MOBILE ORDER 1: Resumo do investimento (centro no desktop) ─── */}
             <div id="mobile-included" className="scroll-mt-20">
               <div data-pdf-section>
-              <AnimatedSection id="arquitetonico-section" index={0}>
-                <ArquitetonicoExpander />
-              </AnimatedSection>
+                <AnimatedSection id="budget-summary-section" index={0}>
+                  <BudgetSummary
+                    sections={sections}
+                    adjustments={adjustments}
+                    total={total}
+                    generatedAt={budget.generated_at || ""}
+                    budgetDate={budget.date}
+                    validityDays={budget.validity_days || 30}
+                    activeSection={activeSection}
+                    categorizedGroups={categorizedGroups}
+                    budgetId={budget.id}
+                    editable={isAdmin}
+                    allCategoriesOpenSheet={DEMO_PORTFOLIO_IDS.includes(publicId || "")}
+                    forceExpandItems={exporting}
+                  />
+                </AnimatedSection>
               </div>
 
-              <div className="mt-3" data-pdf-section>
+              {/* Arquitetura e Engenharia agora ficam na sidebar direita no desktop;
+                  no mobile aparecem aqui logo abaixo do resumo. */}
+              <div className="lg:hidden mt-3" data-pdf-section>
+                <AnimatedSection id="arquitetonico-section" index={0.4}>
+                  <ArquitetonicoExpander />
+                </AnimatedSection>
+              </div>
+
+              <div className="lg:hidden mt-3" data-pdf-section>
                 <AnimatedSection id="engenharia-section" index={0.5}>
                   <EngenhariaExpander />
                 </AnimatedSection>
@@ -582,23 +603,11 @@ export default function PublicBudget() {
 
           </div>
 
-          {/* Desktop sidebar */}
+          {/* Desktop sidebar: Arquitetura + Engenharia + simuladores + CTA */}
           <div className="hidden lg:block">
             <div className="sticky top-4 space-y-4 pb-4">
-              <BudgetSummary
-                sections={sections}
-                adjustments={adjustments}
-                total={total}
-                generatedAt={budget.generated_at || ""}
-                budgetDate={budget.date}
-                validityDays={budget.validity_days || 30}
-                activeSection={activeSection}
-                categorizedGroups={categorizedGroups}
-                budgetId={budget.id}
-                editable={isAdmin}
-                allCategoriesOpenSheet={DEMO_PORTFOLIO_IDS.includes(publicId || "")}
-                forceExpandItems={exporting}
-              />
+              <ArquitetonicoExpander />
+              <EngenhariaExpander />
               {budget.show_optional_items && (
                 <OptionalItemsSimulator
                   budgetId={budget.id}
