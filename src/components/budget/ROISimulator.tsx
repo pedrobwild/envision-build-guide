@@ -41,6 +41,10 @@ const DEFAULT_OPERATING_COST = 0.35;
 const DEFAULT_STUDIO_PRICE = 375_000; // média R$ 350–400k para studio em SP
 const STUDIO_PRICE_MIN = 250_000;
 const STUDIO_PRICE_MAX = 600_000;
+// Efeito BWild — projetos personalizados com design e mobília premium
+// Benchmarks: AirDNA "Top 10%" vs mediana → +20-30% ADR, +10-15pp ocupação
+const BWILD_NIGHTLY_UPLIFT = 0.28; // +28% na diária
+const BWILD_OCCUPANCY_UPLIFT = 12; // +12 pontos percentuais
 
 export function ROISimulator({
   total,
