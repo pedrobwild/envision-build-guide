@@ -37,7 +37,7 @@ export default function ConsolidatedInsights() {
 
   const loadFromCache = async () => {
     try {
-      const { data: caches, error } = await supabase
+      const { data: caches, error } = await (supabase as any)
         .from("elephant_insights_cache")
         .select("*")
         .like("cache_key", "user_%");

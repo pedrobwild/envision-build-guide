@@ -68,7 +68,7 @@ export default function ConsultorPerformance() {
     if (!selectedConsultor) { setInitialLoad(false); return; }
     const loadCache = async () => {
       try {
-        const { data: cached } = await supabase
+        const { data: cached } = await (supabase as any)
           .from("elephant_insights_cache")
           .select("*")
           .eq("cache_key", `user_${selectedConsultor}`)

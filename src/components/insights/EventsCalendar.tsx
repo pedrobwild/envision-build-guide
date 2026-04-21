@@ -280,9 +280,9 @@ export default function EventsCalendar({ onDataLoaded }: { onDataLoaded?: (data:
           </Card>
 
           {/* Citations */}
-          {data.citations?.length > 0 && (
+          {(data.citations?.length ?? 0) > 0 && (
             <p className="text-[10px] text-muted-foreground/50">
-              Fontes: {data.citations.slice(0, 5).map((c, i) => (
+              Fontes: {data.citations!.slice(0, 5).map((c, i) => (
                 <a key={i} href={c} target="_blank" rel="noopener noreferrer" className="underline hover:text-muted-foreground mr-2">
                   [{i + 1}]
                 </a>
