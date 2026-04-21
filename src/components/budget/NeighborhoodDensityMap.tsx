@@ -946,13 +946,21 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         aria-label={`${project.displayName}, ${project.metragem} metros quadrados, ${project.bairro}`}
         className={cn(
           "group/card rounded-xl border overflow-hidden bg-card outline-none",
-          "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
+          // When motion is reduced, drop the transition + transform/scale
+          // entirely so the card snaps into its highlight state without
+          // animating layout — only color/border/shadow change.
+          reducedMotion
+            ? "transition-[box-shadow,border-color] duration-150 ease-out"
+            : "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
           "max-md:min-w-[260px] max-md:snap-start max-md:flex-shrink-0",
           "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           isHighlighted
-            ? "border-primary ring-4 ring-primary/40 shadow-xl shadow-primary/20 -translate-y-0.5 scale-[1.015]"
+            ? cn(
+                "border-primary ring-4 ring-primary/40 shadow-xl shadow-primary/20",
+                !reducedMotion && "-translate-y-0.5 scale-[1.015]"
+              )
             : hovering
-            ? "border-primary/40 shadow-md -translate-y-px"
+            ? cn("border-primary/40 shadow-md", !reducedMotion && "-translate-y-px")
             : "border-border"
         )}
         onMouseEnter={handleMouseEnter}
