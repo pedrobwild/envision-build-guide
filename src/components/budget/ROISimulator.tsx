@@ -349,7 +349,7 @@ export function ROISimulator({
 
         {/* ─── KPIs principais ─── */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-success/30 bg-gradient-to-br from-success/[0.08] to-transparent p-3.5">
+          <div className="rounded-xl border border-border bg-card p-3.5">
             <div className="flex items-center justify-between mb-1.5">
               <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold">
                 ROI total
