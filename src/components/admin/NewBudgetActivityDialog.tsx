@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,14 +19,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateActivity } from "@/hooks/useBudgetActivities";
-import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+
+export interface ActivityInitialValues {
+  type?: string;
+  title?: string;
+  description?: string;
+  /** Offset em horas a partir de "agora" para o prazo. */
+  scheduledOffsetHours?: number;
+  /** Hora do dia (0-23) para o prazo, aplicada após o offset. */
+  scheduledHour?: number;
+}
 
 interface Props {
   budgetId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: () => void;
+  initialValues?: ActivityInitialValues | null;
 }
 
 const ACTIVITY_TYPES = [
@@ -50,17 +60,44 @@ function toLocalInputValue(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function buildDate(offsetHours: number, hour?: number) {
+  const d = new Date();
+  d.setHours(d.getHours() + offsetHours);
+  if (typeof hour === "number") d.setHours(hour, 0, 0, 0);
+  return d;
+}
+
 export function NewBudgetActivityDialog({
   budgetId,
   open,
   onOpenChange,
   onCreated,
+  initialValues,
 }: Props) {
   const [type, setType] = useState("task");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [scheduledFor, setScheduledFor] = useState<string>("");
   const create = useCreateActivity();
+
+  // Aplica os valores iniciais sempre que o dialog abre com um template.
+  useEffect(() => {
+    if (!open) return;
+    if (initialValues) {
+      setType(initialValues.type ?? "task");
+      setTitle(initialValues.title ?? "");
+      setDescription(initialValues.description ?? "");
+      if (typeof initialValues.scheduledOffsetHours === "number") {
+        setScheduledFor(
+          toLocalInputValue(
+            buildDate(initialValues.scheduledOffsetHours, initialValues.scheduledHour),
+          ),
+        );
+      } else {
+        setScheduledFor("");
+      }
+    }
+  }, [open, initialValues]);
 
   function applyQuick(offsetHours: number, hour: number) {
     const d = new Date();
