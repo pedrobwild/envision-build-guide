@@ -604,12 +604,6 @@ export default function PublicBudget() {
                   projectName={budget.project_name}
                 />
               )}
-              <ROISimulator
-                total={total}
-                bairro={budget.bairro}
-                metragem={budget.metragem}
-                compact
-              />
               <InstallmentSimulator total={total} />
               <ApprovalCTA
                 budgetId={budget.id}
