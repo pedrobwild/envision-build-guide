@@ -1147,6 +1147,13 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         aria-label={`${project.displayName}, ${project.metragem} metros quadrados, ${project.bairro}`}
         className={cn(
           "group/card rounded-xl border overflow-hidden bg-card outline-none",
+          // Reserve breathing room around the card whenever the browser
+          // (or `scrollIntoView`) decides to scroll it into view. This
+          // guarantees a Tab-focused or programmatically-focused card is
+          // never flush against the panel's edge — combined with the
+          // panel's CSS scroll-snap it produces a fully-visible, snapped
+          // result without the roving tabindex losing track of focus.
+          "scroll-m-3 max-md:scroll-mx-3 md:scroll-my-3",
           // When motion is reduced, drop the transition + transform/scale
           // entirely so the card snaps into its highlight state without
           // animating layout — only color/border/shadow change.
