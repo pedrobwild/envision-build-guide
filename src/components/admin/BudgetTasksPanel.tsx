@@ -97,7 +97,7 @@ interface Props {
  */
 type TaskFilter = "all" | "pending" | "overdue" | "due_soon" | "completed";
 
-export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
+export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Props) {
   const qc = useQueryClient();
   const [openNew, setOpenNew] = useState(false);
   const [initialValues, setInitialValues] = useState<ActivityInitialValues | null>(null);
