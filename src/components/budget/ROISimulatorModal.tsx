@@ -757,6 +757,43 @@ function ProjectionTile({
   );
 }
 
+function ProjectionRow({
+  period,
+  data,
+  highlight,
+}: {
+  period: string;
+  data: { rent: number; appreciation: number; total: number; finalAsset: number };
+  highlight?: boolean;
+}) {
+  return (
+    <tr className={cn(highlight && "bg-success/10")}>
+      <td className="px-3 py-2 font-display font-bold text-foreground">{period}</td>
+      <td
+        className="px-3 py-2 text-right text-foreground"
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {formatBRL(data.rent)}
+      </td>
+      <td
+        className="px-3 py-2 text-right text-foreground"
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {formatBRL(data.appreciation)}
+      </td>
+      <td
+        className={cn(
+          "px-3 py-2 text-right font-display font-bold",
+          highlight ? "text-success" : "text-foreground",
+        )}
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {formatBRL(data.total)}
+      </td>
+    </tr>
+  );
+}
+
 function ComparisonRow({
   label,
   value,
