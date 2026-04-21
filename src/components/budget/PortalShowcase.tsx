@@ -5,8 +5,6 @@ import { motion } from "framer-motion";
 
 import { PORTAL_DEMO_URL } from "./PortalDemoAccessCard";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
-const PORTAL_VIDEO_URL = `${SUPABASE_URL}/storage/v1/object/public/media/portal-demo.mp4`;
 
 const features = [
   { icon: FileText, text: "Projetos e documentos" },
@@ -49,19 +47,6 @@ export function PortalShowcase() {
               <span className="text-xs font-body text-foreground">{f.text}</span>
             </motion.div>
           ))}
-        </div>
-
-        <div className="rounded-lg overflow-hidden border border-border">
-          <video
-            src={PORTAL_VIDEO_URL}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            className="w-full h-auto"
-            aria-label="Portal Bwild — acompanhamento de obra em tempo real"
-          />
         </div>
 
         <Button
