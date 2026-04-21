@@ -37,7 +37,17 @@ interface ROISimulatorProps {
 }
 
 const DAYS_PER_MONTH = 30;
-const DEFAULT_OPERATING_COST = 0.35;
+// Custos operacionais reais Airbnb SP (% sobre receita bruta):
+// Comissão Airbnb 15% + Gestão/co-host 18% + Limpeza/lavanderia 7%
+// + Condomínio/IPTU/utilities 8% + Manutenção/reservas 2% ≈ 50%
+const DEFAULT_OPERATING_COST = 0.5;
+const OPERATING_COST_BREAKDOWN = [
+  { label: "Comissão Airbnb", pct: 15 },
+  { label: "Gestão / co-host", pct: 18 },
+  { label: "Limpeza e lavanderia", pct: 7 },
+  { label: "Condomínio, IPTU e utilities", pct: 8 },
+  { label: "Manutenção e reservas", pct: 2 },
+];
 const DEFAULT_STUDIO_PRICE = 375_000; // média R$ 350–400k para studio em SP
 const STUDIO_PRICE_MIN = 250_000;
 const STUDIO_PRICE_MAX = 600_000;
