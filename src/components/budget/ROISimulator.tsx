@@ -284,6 +284,31 @@ export function ROISimulator({
       <div className="space-y-4">
         <div>
           <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-body text-muted-foreground">
+              Valor de compra do studio
+            </label>
+            <span
+              className="font-display font-bold text-sm text-foreground"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatBRL(studioPrice)}
+            </span>
+          </div>
+          <Slider
+            aria-label="Valor de compra do studio"
+            value={[studioPrice]}
+            min={STUDIO_PRICE_MIN}
+            max={STUDIO_PRICE_MAX}
+            step={5_000}
+            onValueChange={([v]) => setStudioPrice(v)}
+          />
+          <p className="text-[10px] text-muted-foreground font-body mt-1">
+            Mercado: studios em SP custam em média R$ 350 mil a R$ 400 mil
+          </p>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
             <label className="text-xs font-body text-muted-foreground">Diária média</label>
             <span
               className="font-display font-bold text-sm text-foreground"
