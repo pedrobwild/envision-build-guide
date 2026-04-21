@@ -985,15 +985,19 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                   <div
                     aria-hidden="true"
                     className={cn(
-                      "absolute inset-0 overflow-hidden transition-opacity duration-500",
+                      "absolute inset-0 overflow-hidden",
+                      reducedMotion ? "" : "transition-opacity duration-500",
                       isLoaded ? "opacity-0" : "opacity-100"
                     )}
                   >
                     <div className="absolute inset-0 bg-muted" />
-                    {/* Shimmer sweep — pure CSS, GPU-friendly */}
-                    <div
-                      className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-foreground/[0.06] to-transparent"
-                    />
+                    {/* Shimmer sweep — pure CSS, GPU-friendly. Skipped for
+                        users with reduced motion to avoid the looping sweep. */}
+                    {!reducedMotion && (
+                      <div
+                        className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-foreground/[0.06] to-transparent"
+                      />
+                    )}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Camera className="h-8 w-8 text-muted-foreground/25" />
                     </div>
