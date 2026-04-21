@@ -144,22 +144,48 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
     onError: (err) => toast.error(err instanceof Error ? err.message : "Erro"),
   });
 
-  const { pending, completed, overdueCount, dueSoonCount } = useMemo(() => {
+  const { pending, completed, overdue, dueSoon, counts, visible } = useMemo(() => {
     const all = data ?? [];
     const pending = all.filter((a) => !a.completed_at);
-    const completed = all.filter((a) => !!a.completed_at)
+    const completed = all
+      .filter((a) => !!a.completed_at)
       .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime());
     const now = new Date();
-    let overdueCount = 0;
-    let dueSoonCount = 0;
+    const overdue: Activity[] = [];
+    const dueSoon: Activity[] = [];
     for (const a of pending) {
       if (!a.scheduled_for) continue;
       const due = new Date(a.scheduled_for);
-      if (due < now) overdueCount++;
-      else if (differenceInHours(due, now) <= 24) dueSoonCount++;
+      if (due < now) overdue.push(a);
+      else if (differenceInHours(due, now) <= 24) dueSoon.push(a);
     }
-    return { pending, completed, overdueCount, dueSoonCount };
-  }, [data]);
+    const counts = {
+      all: all.length,
+      pending: pending.length,
+      overdue: overdue.length,
+      due_soon: dueSoon.length,
+      completed: completed.length,
+    };
+    let visible: Activity[] = [];
+    switch (filter) {
+      case "all":
+        visible = [...pending, ...completed];
+        break;
+      case "pending":
+        visible = pending;
+        break;
+      case "overdue":
+        visible = overdue;
+        break;
+      case "due_soon":
+        visible = dueSoon;
+        break;
+      case "completed":
+        visible = completed;
+        break;
+    }
+    return { pending, completed, overdue, dueSoon, counts, visible };
+  }, [data, filter]);
 
   function submitOutcome() {
     if (!outcomeId) return;
