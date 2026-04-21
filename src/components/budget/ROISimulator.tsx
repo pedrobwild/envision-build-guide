@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
@@ -7,6 +7,7 @@ import {
   Info,
   CalendarCheck2,
   ChevronDown,
+  Maximize2,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,10 @@ import {
   formatPct,
   type DistrictRow,
 } from "@/data/districtMetrics";
+
+const ROISimulatorModal = lazy(() =>
+  import("./ROISimulatorModal").then((m) => ({ default: m.ROISimulatorModal })),
+);
 
 interface ROISimulatorProps {
   total: number;
@@ -61,6 +66,7 @@ export function ROISimulator({
   const [nightly, setNightly] = useState<number>(baseline.nightly);
   const [occupancy, setOccupancy] = useState<number>(baseline.occupancy);
   const [showDetails, setShowDetails] = useState<boolean>(!compact);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const sliderLimits = useMemo(() => {
     const minNightly = Math.max(150, Math.round(baseline.nightly * 0.6));
@@ -119,11 +125,22 @@ export function ROISimulator({
             Simulador de Retorno
           </h4>
         </div>
-        {district?.score ? (
-          <Badge variant="secondary" className="font-mono text-[10px] tracking-wide">
-            Score {district.score}
-          </Badge>
-        ) : null}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {district?.score ? (
+            <Badge variant="secondary" className="font-mono text-[10px] tracking-wide">
+              Score {district.score}
+            </Badge>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wide text-primary hover:text-primary/80 border border-primary/20 hover:border-primary/40 bg-primary/5 px-2 py-1 rounded-md transition-colors"
+            aria-label="Abrir simulação completa"
+          >
+            <Maximize2 className="h-3 w-3" />
+            Completa
+          </button>
+        </div>
       </div>
 
       {/* Contexto */}
@@ -332,6 +349,28 @@ export function ROISimulator({
           de retorno.
         </p>
       </div>
+
+      {/* CTA modal */}
+      <button
+        type="button"
+        onClick={() => setModalOpen(true)}
+        className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-body font-medium text-primary hover:text-primary-foreground bg-primary/5 hover:bg-primary border border-primary/20 hover:border-primary px-3 py-2 rounded-md transition-colors"
+      >
+        <Maximize2 className="h-3.5 w-3.5" />
+        Abrir simulação completa
+      </button>
+
+      {modalOpen && (
+        <Suspense fallback={null}>
+          <ROISimulatorModal
+            open={modalOpen}
+            onOpenChange={setModalOpen}
+            total={total}
+            bairro={bairro}
+            metragem={metragem}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

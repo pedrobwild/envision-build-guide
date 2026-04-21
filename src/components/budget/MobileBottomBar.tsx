@@ -68,7 +68,7 @@ const CTA_MAP: Record<string, CtaVariant> = {
     icon: FileSignature,
     action: "contract",
   },
-  "mobile-faq": {
+  "roi-full": {
     label: "Solicitar contrato",
     icon: FileSignature,
     action: "contract",
@@ -147,7 +147,7 @@ export function MobileBottomBar({
                 </span>
                 <span className="text-muted-foreground/20" aria-hidden="true">·</span>
                 <StepProgressIndicator
-                  sectionIds={["mobile-included", "mobile-scope", "mobile-trust", "mobile-portal", "mobile-next-steps", "mobile-faq"]}
+                  sectionIds={["mobile-included", "mobile-scope", "mobile-trust", "mobile-portal", "mobile-next-steps", "roi-full"]}
                 />
               </div>
               <div className="flex items-center justify-between px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]">
