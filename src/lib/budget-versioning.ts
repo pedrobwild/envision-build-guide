@@ -95,13 +95,8 @@ export async function duplicateBudgetAsVersion(
 
   if (!source) throw new Error("Orçamento fonte não encontrado");
 
-  // 2. Demote all current versions in this group
-  await supabase
-    .from("budgets")
-    .update({ is_current_version: false })
-    .eq("version_group_id", groupId);
-
-  // 3. Create new budget (copy metadata)
+  // 2. Create new budget FIRST (insert before demote) — prevents orphan groups
+  // where all versions get is_current_version=false if the insert fails.
   // Strip auto-generated / unique / version-specific fields so the new row
   // doesn't collide on UNIQUE constraints (public_id, sequential_code) and
   // gets a fresh lifecycle.
@@ -116,13 +111,14 @@ export async function duplicateBudgetAsVersion(
     ...meta
   } = source;
 
+  // Insert as is_current_version=false initially; we'll flip after demoting siblings.
   const { data: newBudget, error: budgetErr } = await supabase
     .from("budgets")
     .insert({
       ...meta,
       version_group_id: groupId,
       version_number: nextVersion,
-      is_current_version: true,
+      is_current_version: false,
       is_published_version: false,
       parent_budget_id: sourceBudgetId,
       change_reason: changeReason || null,
@@ -135,6 +131,19 @@ export async function duplicateBudgetAsVersion(
     .single();
 
   if (budgetErr || !newBudget) throw budgetErr || new Error("Falha ao criar versão");
+
+  // 3. Demote siblings and promote the new version atomically (best-effort: two updates).
+  // If any of these fail we still have a valid group state because the new row exists.
+  await supabase
+    .from("budgets")
+    .update({ is_current_version: false })
+    .eq("version_group_id", groupId)
+    .neq("id", newBudget.id);
+
+  await supabase
+    .from("budgets")
+    .update({ is_current_version: true })
+    .eq("id", newBudget.id);
 
   // Log audit events
   await logVersionEvent({
@@ -415,13 +424,8 @@ export async function assignImportedBudgetToGroup(
   const groupId = await ensureVersionGroup(existingBudgetId);
   const nextVersion = await getNextVersionNumber(groupId);
 
-  // Demote current
-  await supabase
-    .from("budgets")
-    .update({ is_current_version: false })
-    .eq("version_group_id", groupId);
-
-  // Assign the imported budget to this group
+  // 1. Assign the imported budget to this group FIRST (insert/update before demote)
+  // to avoid leaving the group without a current version if the second step fails.
   await supabase
     .from("budgets")
     .update({
@@ -433,4 +437,11 @@ export async function assignImportedBudgetToGroup(
       versao: `${nextVersion}`,
     })
     .eq("id", newBudgetId);
+
+  // 2. Demote previous current versions (excluding the one we just promoted)
+  await supabase
+    .from("budgets")
+    .update({ is_current_version: false })
+    .eq("version_group_id", groupId)
+    .neq("id", newBudgetId);
 }
