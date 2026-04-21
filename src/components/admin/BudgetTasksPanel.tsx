@@ -323,7 +323,32 @@ export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Pr
         </div>
       </div>
 
-      {/* Filter chips */}
+      {/* Context chip — quando filtrado por módulo da sidebar */}
+      {contextFilter && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/[0.04] px-2.5 py-1.5">
+          <Filter className="h-3 w-3 text-primary shrink-0" />
+          <p className="text-[11px] font-body text-foreground leading-tight flex-1 min-w-0">
+            Filtrando por contexto:{" "}
+            <span className="font-semibold text-primary">{contextFilter.label}</span>
+            <span className="text-muted-foreground ml-1.5 tabular-nums">
+              ({counts.all}
+              {contextHidden > 0 ? ` de ${counts.all + contextHidden}` : ""})
+            </span>
+          </p>
+          {contextFilter.onClear && (
+            <button
+              type="button"
+              onClick={contextFilter.onClear}
+              className="inline-flex items-center gap-1 text-[10.5px] font-body text-muted-foreground hover:text-foreground rounded px-1.5 py-0.5 hover:bg-muted/60 transition-colors shrink-0"
+              title="Mostrar todas as ações"
+            >
+              <X className="h-3 w-3" />
+              Limpar
+            </button>
+          )}
+        </div>
+      )}
+
       {(counts.all > 0 || isLoading) && (
         <div className="flex items-center gap-1.5 flex-wrap">
           {FILTERS.map((f) => {
