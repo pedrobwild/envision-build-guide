@@ -158,23 +158,24 @@ export function ROISimulator({
         </div>
       </div>
 
-      {/* Contexto */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body flex-wrap">
-        <MapPin className="h-3 w-3 flex-shrink-0" />
-        <span className="font-medium text-foreground">{baseline.label}</span>
+      {/* Bairro analisado — destaque */}
+      <div className="rounded-lg border border-primary/25 bg-primary/5 p-2.5 flex items-center gap-2 flex-wrap">
+        <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
+          Análise para
+        </span>
+        <span className="font-display font-bold text-sm text-foreground truncate">
+          {baseline.label}
+        </span>
         {baseline.isFallback && (
-          <span
-            className="italic text-muted-foreground/80"
-            title="Bairro sem dados de mercado — usando média de São Paulo."
-          >
-            (média SP)
-          </span>
+          <Badge variant="outline" className="text-[9px] font-body bg-background/60">
+            média SP
+          </Badge>
         )}
         {metragem && (
-          <>
-            <span aria-hidden>•</span>
-            <span>{metragem}</span>
-          </>
+          <span className="text-[10px] text-muted-foreground font-mono ml-auto">
+            {metragem}
+          </span>
         )}
       </div>
 
