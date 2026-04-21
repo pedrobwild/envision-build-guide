@@ -375,11 +375,20 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
                 }
                 onReopen={isCompleted ? () => reopen.mutate(a.id) : undefined}
                 onDelete={() => setDeleteId(a.id)}
+                onOpenDetail={() => setDetailId(a.id)}
               />
             );
           })}
         </ul>
       )}
+
+      {/* Drawer: detalhes da ação */}
+      <ActivityDetailDrawer
+        activityId={detailId}
+        open={!!detailId}
+        onOpenChange={(v) => !v && setDetailId(null)}
+        getProfileName={getProfileName}
+      />
 
       {/* Modal: nova ação */}
       <NewBudgetActivityDialog
