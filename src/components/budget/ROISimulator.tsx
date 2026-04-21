@@ -70,6 +70,7 @@ export function ROISimulator({
 
   const [nightly, setNightly] = useState<number>(baseline.nightly);
   const [occupancy, setOccupancy] = useState<number>(baseline.occupancy);
+  const [studioPrice, setStudioPrice] = useState<number>(DEFAULT_STUDIO_PRICE);
   const [showDetails, setShowDetails] = useState<boolean>(!compact);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -87,8 +88,12 @@ export function ROISimulator({
   const netMonth = grossMonth * (1 - operatingCostPct);
   const netYear = netMonth * 12;
   const safeTotal = total > 0 ? total : 0;
-  const roiYearPct = safeTotal > 0 ? (netYear / safeTotal) * 100 : 0;
-  const paybackMonths = safeTotal > 0 && netMonth > 0 ? safeTotal / netMonth : null;
+  // Investimento total = compra do studio + reforma
+  const totalInvestment = studioPrice + safeTotal;
+  const roiYearPct = totalInvestment > 0 ? (netYear / totalInvestment) * 100 : 0;
+  const roiReformOnlyPct = safeTotal > 0 ? (netYear / safeTotal) * 100 : 0;
+  const paybackMonths =
+    totalInvestment > 0 && netMonth > 0 ? totalInvestment / netMonth : null;
 
   const paybackLabel =
     paybackMonths === null
@@ -97,17 +102,22 @@ export function ROISimulator({
         ? `${Math.round(paybackMonths)} meses`
         : `${(paybackMonths / 12).toFixed(1).replace(".", ",")} anos`;
 
-  const isEdited = nightly !== baseline.nightly || occupancy !== baseline.occupancy;
+  const isEdited =
+    nightly !== baseline.nightly ||
+    occupancy !== baseline.occupancy ||
+    studioPrice !== DEFAULT_STUDIO_PRICE;
 
   const baselineRoi = useMemo(() => {
     const g = baseline.nightly * DAYS_PER_MONTH * (baseline.occupancy / 100);
     const n = g * (1 - operatingCostPct) * 12;
-    return safeTotal > 0 ? (n / safeTotal) * 100 : 0;
+    const inv = DEFAULT_STUDIO_PRICE + safeTotal;
+    return inv > 0 ? (n / inv) * 100 : 0;
   }, [baseline, operatingCostPct, safeTotal]);
 
   const handleReset = () => {
     setNightly(baseline.nightly);
     setOccupancy(baseline.occupancy);
+    setStudioPrice(DEFAULT_STUDIO_PRICE);
   };
 
   const competitionColor =
