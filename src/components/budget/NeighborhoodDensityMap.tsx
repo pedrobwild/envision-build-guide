@@ -998,7 +998,10 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         // focus. Must match the format used by the parent panel below.
         id={`project-card-${project.id}`}
         data-project-card-id={project.id}
-        tabIndex={0}
+        // Roving tabindex: only the active card is part of the tab order.
+        // Siblings get -1 so Tab moves out of the listbox after one stop;
+        // arrow keys handle navigation within the list.
+        tabIndex={tabIndex}
         role="option"
         aria-selected={isHighlighted}
         aria-label={`${project.displayName}, ${project.metragem} metros quadrados, ${project.bairro}`}
