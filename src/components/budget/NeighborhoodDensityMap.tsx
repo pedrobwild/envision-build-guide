@@ -621,146 +621,226 @@ function MapFallback({ height }: { height: string }) {
   );
 }
 
-function NeighborhoodDetail({
-  data,
-  onBack,
+function FilterChip({
+  label,
+  active,
+  onClick,
 }: {
-  data: Neighborhood;
-  onBack: () => void;
+  label: string;
+  active: boolean;
+  onClick: () => void;
 }) {
-  const projects = getIndividualProjects(data.name);
-
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-4">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground font-body transition-colors min-h-[44px] self-start"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar
-      </button>
-
-      <div>
-        <h3 className="text-xl font-display font-bold text-foreground">{data.name}</h3>
-        <Badge className="mt-1 bg-primary text-primary-foreground text-xs">
-          {data.count} {data.count === 1 ? "projeto entregue" : "projetos entregues"}
-        </Badge>
-      </div>
-
-      {/* Individual project cards */}
-      {projects.length > 0 && (
-        <div className="space-y-3 pt-2 border-t border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Empreendimentos
-          </p>
-          {projects.map((proj) => (
-            <IndividualProjectCard key={proj.id} project={proj} />
-          ))}
-        </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "shrink-0 snap-start px-2.5 py-1 rounded-full text-[11px] font-medium font-body whitespace-nowrap border transition-all",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+        active
+          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+          : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
       )}
-
-      <p className="text-sm text-muted-foreground font-body leading-relaxed">
-        Já entregamos {data.count} {data.count === 1 ? "studio reformado" : "studios reformados"} no{" "}
-        {data.name}, um dos bairros com maior demanda de short stay em SP.
-      </p>
-    </div>
+    >
+      {label}
+    </button>
   );
 }
 
 /* ── Individual Project Card with Carousel ── */
-function IndividualProjectCard({ project }: { project: IndividualProject }) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [hovering, setHovering] = useState(false);
+import { forwardRef } from "react";
 
-  const onSlideChange = useCallback(() => {
-    if (!emblaApi) return;
-    setActiveSlide(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
+interface IndividualProjectCardProps {
+  project: IndividualProject;
+  isHighlighted?: boolean;
+  onHover?: (hovered: boolean) => void;
+}
 
-  useEffect(() => {
-    if (!emblaApi) return;
-    emblaApi.on("select", onSlideChange);
-    onSlideChange();
-  }, [emblaApi, onSlideChange]);
+const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardProps>(
+  ({ project, isHighlighted = false, onHover }, ref) => {
+    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+    const [activeSlide, setActiveSlide] = useState(0);
+    const [hovering, setHovering] = useState(false);
+    const cardInnerRef = useRef<HTMLDivElement>(null);
+    const [inView, setInView] = useState(false);
 
-  return (
-    <div
-      className="rounded-xl border border-border overflow-hidden bg-card"
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-    >
-      {/* Photo carousel */}
-      <div className="relative aspect-[16/10] overflow-hidden" ref={emblaRef}>
-        <div className="flex h-full">
-          {project.fotos.map((foto, i) => (
-            <div key={i} className="flex-[0_0_100%] min-w-0 relative">
-              <img
-                src={foto}
-                alt={`${project.displayName} — foto ${i + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={(e) => {
-                  const el = e.target as HTMLImageElement;
-                  el.style.display = "none";
-                  const parent = el.parentElement;
-                  if (parent) {
-                    const fallback = parent.querySelector(".fallback-bg") as HTMLElement;
-                    if (fallback) fallback.style.display = "flex";
-                  }
-                }}
-              />
-              <div className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden">
-                <Camera className="h-8 w-8 text-muted-foreground/40" />
-              </div>
-            </div>
-          ))}
-        </div>
+    // Lazy-load images: only mount <img> tags once card is near viewport
+    useEffect(() => {
+      const el = cardInnerRef.current;
+      if (!el) return;
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setInView(true);
+              io.disconnect();
+            }
+          });
+        },
+        { rootMargin: "200px" }
+      );
+      io.observe(el);
+      return () => io.disconnect();
+    }, []);
 
-        {/* Dots */}
-        {project.fotos.length > 1 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-            {project.fotos.map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "w-1.5 h-1.5 rounded-full transition-colors",
-                  i === activeSlide ? "bg-white" : "bg-white/40"
+    const onSlideChange = useCallback(() => {
+      if (!emblaApi) return;
+      setActiveSlide(emblaApi.selectedScrollSnap());
+    }, [emblaApi]);
+
+    useEffect(() => {
+      if (!emblaApi) return;
+      emblaApi.on("select", onSlideChange);
+      onSlideChange();
+    }, [emblaApi, onSlideChange]);
+
+    // Autoplay subtly while hovering
+    useEffect(() => {
+      if (!emblaApi || !hovering || project.fotos.length <= 1) return;
+      const interval = setInterval(() => emblaApi.scrollNext(), 2000);
+      return () => clearInterval(interval);
+    }, [emblaApi, hovering, project.fotos.length]);
+
+    const handleMouseEnter = () => {
+      setHovering(true);
+      onHover?.(true);
+    };
+    const handleMouseLeave = () => {
+      setHovering(false);
+      onHover?.(false);
+    };
+
+    // Combine forwarded ref with internal ref
+    const setRefs = useCallback(
+      (el: HTMLDivElement | null) => {
+        cardInnerRef.current = el;
+        if (typeof ref === "function") ref(el);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      },
+      [ref]
+    );
+
+    return (
+      <div
+        ref={setRefs}
+        data-project-card-id={project.id}
+        tabIndex={0}
+        role="option"
+        aria-selected={isHighlighted}
+        aria-label={`${project.displayName}, ${project.metragem} metros quadrados, ${project.bairro}`}
+        className={cn(
+          "rounded-xl border overflow-hidden bg-card transition-all duration-300 outline-none",
+          "max-md:min-w-[260px] max-md:snap-start max-md:flex-shrink-0",
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+          isHighlighted
+            ? "border-primary ring-2 ring-primary/30 shadow-lg"
+            : hovering
+            ? "border-primary/40 shadow-md"
+            : "border-border"
+        )}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleMouseEnter}
+        onBlur={handleMouseLeave}
+      >
+        {/* Photo carousel */}
+        <div className="relative aspect-[16/10] overflow-hidden bg-muted" ref={emblaRef}>
+          <div className="flex h-full">
+            {project.fotos.map((foto, i) => (
+              <div key={i} className="flex-[0_0_100%] min-w-0 relative">
+                {inView ? (
+                  <img
+                    src={foto}
+                    alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      const el = e.target as HTMLImageElement;
+                      el.style.display = "none";
+                      const parent = el.parentElement;
+                      if (parent) {
+                        const fallback = parent.querySelector(".fallback-bg") as HTMLElement;
+                        if (fallback) fallback.style.display = "flex";
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-muted animate-pulse" />
                 )}
-              />
+                <div className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden">
+                  <Camera className="h-8 w-8 text-muted-foreground/40" />
+                </div>
+              </div>
             ))}
           </div>
-        )}
 
-        {/* Arrows on hover */}
-        {hovering && project.fotos.length > 1 && (
-          <>
-            <button
-              onClick={(e) => { e.stopPropagation(); emblaApi?.scrollPrev(); }}
-              className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
-            >
-              <ChevronLeft className="h-4 w-4 text-foreground" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); emblaApi?.scrollNext(); }}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
-            >
-              <ChevronRight className="h-4 w-4 text-foreground" />
-            </button>
-          </>
-        )}
-      </div>
+          {/* Photo counter */}
+          {project.fotos.length > 1 && (
+            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/55 backdrop-blur-sm text-white text-[10px] font-mono tabular-nums">
+              {activeSlide + 1}/{project.fotos.length}
+            </div>
+          )}
 
-      {/* Info */}
-      <div className="p-3 flex items-center gap-2">
-        <Building2 className="h-4 w-4 text-primary shrink-0" />
-        <div className="min-w-0">
-          <h4 className="text-sm font-display font-bold text-foreground leading-tight truncate">
-            {project.displayName}
-          </h4>
-          <p className="text-xs text-muted-foreground font-body">{project.metragem}m²</p>
+          {/* Dots */}
+          {project.fotos.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {project.fotos.map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full transition-colors",
+                    i === activeSlide ? "bg-white" : "bg-white/40"
+                  )}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Arrows on hover */}
+          {hovering && project.fotos.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Foto anterior"
+                onClick={(e) => { e.stopPropagation(); emblaApi?.scrollPrev(); }}
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
+              >
+                <ChevronLeft className="h-4 w-4 text-foreground" />
+              </button>
+              <button
+                type="button"
+                aria-label="Próxima foto"
+                onClick={(e) => { e.stopPropagation(); emblaApi?.scrollNext(); }}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
+              >
+                <ChevronRight className="h-4 w-4 text-foreground" />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="p-3 flex items-start gap-2">
+          <Building2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <h4 className="text-sm font-display font-bold text-foreground leading-tight truncate">
+              {project.displayName}
+            </h4>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <span className="text-xs text-muted-foreground font-body tabular-nums">
+                {project.metragem}m²
+              </span>
+              <span className="text-muted-foreground/40 text-xs">·</span>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-body">
+                <MapPinned className="h-3 w-3" />
+                {project.bairro}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+);
+IndividualProjectCard.displayName = "IndividualProjectCard";
