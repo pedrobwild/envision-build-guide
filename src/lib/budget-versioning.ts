@@ -424,13 +424,8 @@ export async function assignImportedBudgetToGroup(
   const groupId = await ensureVersionGroup(existingBudgetId);
   const nextVersion = await getNextVersionNumber(groupId);
 
-  // Demote current
-  await supabase
-    .from("budgets")
-    .update({ is_current_version: false })
-    .eq("version_group_id", groupId);
-
-  // Assign the imported budget to this group
+  // 1. Assign the imported budget to this group FIRST (insert/update before demote)
+  // to avoid leaving the group without a current version if the second step fails.
   await supabase
     .from("budgets")
     .update({
@@ -442,4 +437,11 @@ export async function assignImportedBudgetToGroup(
       versao: `${nextVersion}`,
     })
     .eq("id", newBudgetId);
+
+  // 2. Demote previous current versions (excluding the one we just promoted)
+  await supabase
+    .from("budgets")
+    .update({ is_current_version: false })
+    .eq("version_group_id", groupId)
+    .neq("id", newBudgetId);
 }
