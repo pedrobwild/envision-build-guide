@@ -90,6 +90,16 @@ export default function AnalisesPage() {
 
   const aiInsights = useOperationsInsights(metrics, dateRange, !loading && !!metrics);
 
+  // Scroll to hash anchor (e.g. #forecast) after data is ready
+  useEffect(() => {
+    if (loading || !location.hash) return;
+    const id = location.hash.replace("#", "");
+    const el = document.getElementById(id);
+    if (el) {
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    }
+  }, [loading, location.hash]);
+
   let step = 0;
 
   return (
