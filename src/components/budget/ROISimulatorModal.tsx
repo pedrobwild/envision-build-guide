@@ -593,6 +593,33 @@ export function ROISimulatorModal({
                 mercado. Não constitui promessa de retorno.
               </p>
             </div>
+
+            {/* Fontes oficiais detalhadas */}
+            <div className="rounded-md border border-border bg-muted/20 p-2.5 space-y-1.5">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono font-semibold">
+                Fontes oficiais consultadas
+              </p>
+              <ul className="space-y-1">
+                {DATA_SOURCES.map((src) => (
+                  <li key={src.label} className="flex items-start gap-1.5">
+                    <ExternalLink className="h-2.5 w-2.5 text-primary flex-shrink-0 mt-1" />
+                    <div className="min-w-0">
+                      <a
+                        href={src.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-mono text-primary hover:underline"
+                      >
+                        {src.label}
+                      </a>
+                      <p className="text-[10px] text-muted-foreground font-body leading-snug">
+                        {src.description}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </DialogContent>
