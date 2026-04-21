@@ -200,23 +200,18 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     else cardRefs.current.delete(id);
   }, []);
 
-  // Auto-select disabled — always show all pins on both mobile and desktop
-  // to maximise perception of regional coverage.
-
-  // Sync map with selection
+  // Sync map markers with the active bairro filter (no detail panel anymore;
+  // pin click only filters the carousel + flies to bairro).
   useEffect(() => {
     if (!mapRef.current) return;
-    if (selected) {
-      const n = NEIGHBORHOOD_DATA.find((d) => d.id === selected);
-      if (n) mapRef.current.flyTo({ center: [n.lng, n.lat], zoom: 14, duration: 800 });
-    } else {
-      // Always show all pins (no auto-zoom to neighborhood)
+    if (!activeBairroId) {
+      // Always show all pins when no filter active
       mapRef.current.fitBounds(ALL_PINS_BOUNDS, { padding: 30, duration: 600 });
     }
 
-    // Update marker styles
+    // Update marker styles based on filter + hover only
     markersRef.current.forEach((entry, id) => {
-      const isActive = id === selected;
+      const isActive = id === activeBairroId;
       const isHovered = id === hoveredBairroId && !isActive;
       const count = NEIGHBORHOOD_DATA.find((d) => d.id === id)!.count;
       const style = getPinStyle(count);
@@ -233,13 +228,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       entry.el.style.borderWidth = isActive ? "3px" : "2px";
       entry.el.style.zIndex = isActive || isHovered ? "10" : "1";
     });
-
-    if (selected && isMobile && userInitiatedSelectionRef.current && panelRef.current) {
-      panelRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-
-    userInitiatedSelectionRef.current = false;
-  }, [selected, isMobile, hoveredBairroId]);
+  }, [activeBairroId, isMobile, hoveredBairroId]);
 
   // Track timer so successive pin-clicks reset the highlight cleanly
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
