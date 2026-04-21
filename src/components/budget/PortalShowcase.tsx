@@ -51,7 +51,7 @@ export function PortalShowcase() {
 
         <Button
           asChild
-          className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
           size="sm"
         >
           <a
