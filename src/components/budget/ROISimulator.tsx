@@ -354,24 +354,27 @@ export function ROISimulator({
 
           {/* Ganho extra — destaque success */}
           <div className="mt-3 rounded-xl bg-card border border-border p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
-            <div className="min-w-0 flex-1 order-2 sm:order-1">
-              <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold mb-0.5">
-                Ganho extra mensal
-              </p>
+            <div className="min-w-0 flex-1 order-2 sm:order-1 space-y-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold">
+                  Ganho extra mensal
+                </p>
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-success/12 text-success border border-success/25 px-1.5 py-0 h-4 text-[9px] font-mono font-bold uppercase tracking-wider leading-none"
+                  aria-label="Design premium e exclusivo"
+                >
+                  <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />
+                  Premium &amp; exclusivo
+                </span>
+              </div>
               <p className="text-[11px] text-muted-foreground font-body leading-snug">
                 {hasReformPayback ? (
                   <>
-                    Nosso diferencial em personalizar e projetar designs{" "}
-                    <strong className="text-success font-semibold">premium e exclusivos</strong>{" "}
-                    é o que proporciona esse resultado em{" "}
-                    <strong className="text-success font-semibold">{reformPaybackLabel}</strong>.
+                    Nosso design valoriza o seu imóvel e devolve o investimento em{" "}
+                    <strong className="text-success font-semibold tabular-nums">{reformPaybackLabel}</strong>.
                   </>
                 ) : (
-                  <>
-                    Nosso diferencial em personalizar e projetar designs{" "}
-                    <strong className="text-success font-semibold">premium e exclusivos</strong>{" "}
-                    valoriza o seu imóvel e potencializa o retorno do investimento.
-                  </>
+                  <>Nosso design valoriza o seu imóvel e potencializa o retorno do investimento.</>
                 )}
               </p>
             </div>
