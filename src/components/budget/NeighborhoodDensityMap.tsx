@@ -746,6 +746,17 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     const [activeSlide, setActiveSlide] = useState(0);
     const [hovering, setHovering] = useState(false);
     const [inView, setInView] = useState(false);
+    // Track which slide images have finished loading so we can fade them in
+    // over the skeleton individually, instead of waiting for the whole gallery.
+    const [loadedSlides, setLoadedSlides] = useState<Set<number>>(() => new Set());
+    const markLoaded = useCallback((idx: number) => {
+      setLoadedSlides((prev) => {
+        if (prev.has(idx)) return prev;
+        const next = new Set(prev);
+        next.add(idx);
+        return next;
+      });
+    }, []);
     // Holds the currently observed element + its disposer so we can swap
     // observers when the DOM node changes without re-running effects.
     const observedRef = useRef<{ el: Element; dispose: () => void } | null>(null);
