@@ -70,6 +70,7 @@ import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
 import { BudgetTasksPanel } from "@/components/admin/BudgetTasksPanel";
 import { DemandSidebarNav } from "@/components/demanda/DemandSidebarNav";
+import { MODULE_ACTIVITY_CONTEXT } from "@/lib/activity-templates";
 import { formatBRL } from "@/lib/formatBRL";
 
 interface BudgetDetail {
