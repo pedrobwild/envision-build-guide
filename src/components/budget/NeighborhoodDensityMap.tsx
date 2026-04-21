@@ -322,13 +322,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         `;
         el.textContent = String(n.count);
 
-        el.addEventListener("mouseenter", () => {
-          el.style.transform = "scale(1.12)";
-        });
-
-        el.addEventListener("mouseleave", () => {
-          el.style.transform = "scale(1)";
-        });
+        // (hover handled below in sync with React state)
 
         el.addEventListener("click", (e) => {
           e.stopPropagation();
