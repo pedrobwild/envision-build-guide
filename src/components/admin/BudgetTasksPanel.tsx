@@ -16,6 +16,8 @@ import {
   FileText,
   Loader2,
   Trash2,
+  Sparkles,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +26,19 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { NewBudgetActivityDialog } from "./NewBudgetActivityDialog";
+import type { ActivityInitialValues } from "./NewBudgetActivityDialog";
+import {
+  ACTIVITY_TEMPLATES,
+  TEMPLATE_GROUP_ORDER,
+} from "@/lib/activity-templates";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
