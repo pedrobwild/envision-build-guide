@@ -41,8 +41,7 @@ export default function ConsolidatedInsights() {
       const { data: caches, error } = await (supabase as any)
         .from("elephant_insights_cache")
         .select("*")
-        .like("cache_key", "user_%")
-        .returns<ElephantInsightsCacheRow[]>();
+        .like("cache_key", "user_%");
 
       if (error || !caches?.length) {
         setData(null);
@@ -283,15 +282,15 @@ function mergeCacheEntries(caches: ElephantInsightsCacheRow[]): ConsolidatedData
   const weeklyAgg = new Map<string, { label: string; meetings: number; scoreSum: number }>();
 
   for (const cache of caches) {
-    totalMeetings += cache.total_meetings;
-    totalDuration += cache.total_duration_minutes;
+    totalMeetings += cache.total_meetings ?? 0;
+    totalDuration += cache.total_duration_minutes ?? 0;
 
     if (cache.latest_meeting && (!latestMeeting || cache.latest_meeting > latestMeeting)) {
       latestMeeting = cache.latest_meeting;
     }
 
-    const updated = new Date(cache.updated_at);
-    if (!oldestUpdate || updated < oldestUpdate) oldestUpdate = updated;
+    const updated = cache.updated_at ? new Date(cache.updated_at) : null;
+    if (updated && (!oldestUpdate || updated < oldestUpdate)) oldestUpdate = updated;
 
     const d = cache.charts_data;
     if (!d) continue;
