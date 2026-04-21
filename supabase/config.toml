@@ -29,3 +29,8 @@ verify_jwt = false
 
 [functions.elephan-webhook]
 verify_jwt = false
+[functions.elephant-insights]
+verify_jwt = true
+
+[functions.elephan-sync]
+verify_jwt = true
