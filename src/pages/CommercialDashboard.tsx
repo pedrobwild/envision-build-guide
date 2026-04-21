@@ -54,7 +54,7 @@ import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, 
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
-import { ForecastPanel } from "@/components/admin/ForecastPanel";
+
 
 // Pipeline groups for the commercial view
 const LOCKED_STATUSES: readonly string[] = [
@@ -1066,11 +1066,6 @@ export default function CommercialDashboard() {
               counts={pipelineCounts}
               loading={pipelinesLoading}
             />
-          )}
-
-          {/* Forecast & Previsibilidade */}
-          {!loading && (
-            <ForecastPanel ownerFilter={null} isAdmin={isAdmin} />
           )}
 
           {/* Kanban view */}
