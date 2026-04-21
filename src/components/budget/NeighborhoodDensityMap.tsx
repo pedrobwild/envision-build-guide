@@ -925,6 +925,13 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
     const [hovering, setHovering] = useState(false);
+    // Persistent keyboard-focus indicator. Tracks whether the card currently
+    // owns *real* DOM focus (not just hover) so the visual ring stays put
+    // even while the user is reading — matches `:focus-visible` semantics
+    // (only true when focus arrived via keyboard / programmatic focus, not
+    // from a mouse click) so click-to-scroll interactions don't leave a
+    // sticky ring behind.
+    const [isKeyboardFocused, setIsKeyboardFocused] = useState(false);
     const [inView, setInView] = useState(false);
     // Track which slide images have finished loading so we can fade them in
     // over the skeleton individually, instead of waiting for the whole gallery.
