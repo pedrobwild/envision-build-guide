@@ -1041,7 +1041,10 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                       src={foto}
                       alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
                       className={cn(
-                        "relative w-full h-full object-cover transition-opacity duration-500",
+                        "relative w-full h-full object-cover",
+                        // Cross-fade kept for normal users; reduced motion gets
+                        // an instant swap to avoid even short opacity tweens.
+                        !reducedMotion && "transition-opacity duration-500",
                         isLoaded ? "opacity-100" : "opacity-0"
                       )}
                       // Active slide loads eagerly; the predicted neighbor
