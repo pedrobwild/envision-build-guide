@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, forwardRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useId, forwardRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin, ChevronLeft, ChevronRight, Camera, Building2, MapPinned } from "lucide-react";
@@ -593,7 +593,9 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
             <div
               ref={mapContainer}
               className="w-full h-[360px] md:h-[600px] rounded-xl overflow-hidden border border-border"
-              aria-label="Mapa de densidade por bairro"
+              role="application"
+              aria-roledescription="Mapa interativo"
+              aria-label={`Mapa de São Paulo com ${TOTAL_NEIGHBORHOODS} bairros atendidos pela Bwild. Clique em um marcador para filtrar a lista de empreendimentos ao lado.`}
             />
           ) : (
             <MapFallback height={isMobile ? "360px" : "600px"} />
@@ -601,18 +603,39 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         </div>
 
         {/* Right panel: vertical (desktop) / horizontal snap (mobile) carousel of all projects */}
-        <div className="flex-[2] md:max-h-[600px] flex flex-col bg-card border border-border rounded-xl overflow-hidden">
+        <section
+          className="flex-[2] md:max-h-[600px] flex flex-col bg-card border border-border rounded-xl overflow-hidden"
+          aria-labelledby="neighborhood-projects-heading"
+          aria-describedby="neighborhood-projects-help"
+        >
           {/* Sticky header */}
           <div className="px-4 pt-3 pb-2 border-b border-border bg-card sticky top-0 z-10">
             <div className="flex items-baseline justify-between gap-2 mb-2">
-              <h3 className="font-display font-bold text-sm text-foreground tracking-tight">
+              <h3
+                id="neighborhood-projects-heading"
+                className="font-display font-bold text-sm text-foreground tracking-tight"
+              >
                 Empreendimentos entregues
               </h3>
-              <span className="text-xs font-mono text-muted-foreground tabular-nums">
+              <span
+                className="text-xs font-mono text-muted-foreground tabular-nums"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <span className="sr-only">Total: </span>
                 {filteredProjects.length} {filteredProjects.length === 1 ? "unidade" : "unidades"}
               </span>
             </div>
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1 -mx-1 px-1 snap-x">
+            {/* Visually-hidden description of keyboard shortcuts for SR users */}
+            <p id="neighborhood-projects-help" className="sr-only">
+              Use as setas para navegar entre os empreendimentos. Pressione Home ou End para ir ao início ou fim da lista, e Esc para limpar o filtro de bairro.
+            </p>
+            <div
+              role="toolbar"
+              aria-label="Filtrar empreendimentos por bairro"
+              aria-orientation="horizontal"
+              className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1 -mx-1 px-1 snap-x"
+            >
               <FilterChip
                 label="Todos"
                 active={bairroFilter === null}
@@ -638,16 +661,16 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
           {/* Scroll area with fade gradients */}
           <div className="relative flex-1 min-h-0">
-            {/* Fade gradients */}
+            {/* Fade gradients (decorative only) */}
             <div
-              aria-hidden
+              aria-hidden="true"
               className={cn(
                 "pointer-events-none absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-card to-transparent z-[5] transition-opacity",
                 scrollState.top ? "opacity-0" : "opacity-100"
               )}
             />
             <div
-              aria-hidden
+              aria-hidden="true"
               className={cn(
                 "pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-card to-transparent z-[5] transition-opacity",
                 scrollState.bottom ? "opacity-0" : "opacity-100"
@@ -665,14 +688,15 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
                 "md:space-y-3"
               )}
               tabIndex={0}
-              role="listbox"
-              aria-label="Lista de empreendimentos entregues. Use as setas para navegar e Esc para limpar o filtro."
+              role="list"
+              aria-label={`${filteredProjects.length} ${filteredProjects.length === 1 ? "empreendimento entregue" : "empreendimentos entregues"}${bairroFilter ? ` no bairro ${bairroFilter}` : ""}`}
               aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"
             >
-              {filteredProjects.map((proj) => (
+              {filteredProjects.map((proj, idx) => (
                 <IndividualProjectCard
                   key={proj.id}
                   project={proj}
+                  positionLabel={`${idx + 1} de ${filteredProjects.length}`}
                   ref={setCardRef(proj.id)}
                   isHighlighted={highlightedProjectId === proj.id}
                   onHover={(hovered) => {
@@ -683,13 +707,13 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
                 />
               ))}
               {filteredProjects.length === 0 && (
-                <div className="text-sm text-muted-foreground font-body text-center py-8">
+                <div role="status" className="text-sm text-muted-foreground font-body text-center py-8">
                   Nenhum empreendimento neste filtro.
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
@@ -719,6 +743,8 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
+      aria-label={active ? `Bairro ${label} selecionado, clique para remover filtro` : `Filtrar por bairro ${label}`}
       className={cn(
         "shrink-0 snap-start px-2.5 py-1 rounded-full text-[11px] font-medium font-body whitespace-nowrap border transition-all",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
@@ -738,17 +764,25 @@ interface IndividualProjectCardProps {
   project: IndividualProject;
   isHighlighted?: boolean;
   onHover?: (hovered: boolean) => void;
+  /** Position string like "3 de 32" announced to screen-readers */
+  positionLabel?: string;
 }
 
 const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardProps>(
-  ({ project, isHighlighted = false, onHover }, ref) => {
+  ({ project, isHighlighted = false, onHover, positionLabel }, ref) => {
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
     const [hovering, setHovering] = useState(false);
+    const [hasFocus, setHasFocus] = useState(false);
     const [inView, setInView] = useState(false);
     // Holds the currently observed element + its disposer so we can swap
     // observers when the DOM node changes without re-running effects.
     const observedRef = useRef<{ el: Element; dispose: () => void } | null>(null);
+    // Stable ids for aria-controls / aria-labelledby wiring
+    const reactId = useId();
+    const carouselId = `proj-carousel-${reactId}`;
+    const titleId = `proj-title-${reactId}`;
+    const slideStatusId = `proj-slide-status-${reactId}`;
 
     const onSlideChange = useCallback(() => {
       if (!emblaApi) return;
@@ -761,12 +795,13 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
       onSlideChange();
     }, [emblaApi, onSlideChange]);
 
-    // Autoplay subtly while hovering
+    // Autoplay subtly while hovering (paused when keyboard-focused so SR users
+    // aren't bombarded with slide-change announcements they didn't trigger).
     useEffect(() => {
-      if (!emblaApi || !hovering || project.fotos.length <= 1) return;
+      if (!emblaApi || !hovering || hasFocus || project.fotos.length <= 1) return;
       const interval = setInterval(() => emblaApi.scrollNext(), 2000);
       return () => clearInterval(interval);
-    }, [emblaApi, hovering, project.fotos.length]);
+    }, [emblaApi, hovering, hasFocus, project.fotos.length]);
 
     const handleMouseEnter = () => {
       setHovering(true);
@@ -774,6 +809,14 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     };
     const handleMouseLeave = () => {
       setHovering(false);
+      onHover?.(false);
+    };
+    const handleFocus = () => {
+      setHasFocus(true);
+      onHover?.(true);
+    };
+    const handleBlur = () => {
+      setHasFocus(false);
       onHover?.(false);
     };
 
@@ -814,14 +857,19 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
       };
     }, []);
 
+    const showCarouselControls = project.fotos.length > 1;
+    const controlsVisible = hovering || hasFocus;
+    const cardLabel = `Empreendimento entregue ${positionLabel ? positionLabel + ": " : ""}${project.displayName}, ${project.metragem} metros quadrados, bairro ${project.bairro}${showCarouselControls ? `. Galeria com ${project.fotos.length} fotos` : ""}`;
+
     return (
-      <div
+      <article
         ref={setRefs}
         data-project-card-id={project.id}
         tabIndex={0}
-        role="option"
-        aria-selected={isHighlighted}
-        aria-label={`${project.displayName}, ${project.metragem} metros quadrados, ${project.bairro}`}
+        role="listitem"
+        aria-labelledby={titleId}
+        aria-label={cardLabel}
+        aria-current={isHighlighted ? "true" : undefined}
         className={cn(
           "group/card rounded-xl border overflow-hidden bg-card outline-none",
           "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
@@ -835,20 +883,35 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         )}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onFocus={handleMouseEnter}
-        onBlur={handleMouseLeave}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
       >
-        {/* Photo carousel */}
-        <div className="relative aspect-[16/10] overflow-hidden bg-muted" ref={emblaRef}>
+        {/* Photo carousel — semantic group with live slide announcement */}
+        <div
+          id={carouselId}
+          ref={emblaRef}
+          role="group"
+          aria-roledescription="carrossel de fotos"
+          aria-label={`Fotos de ${project.displayName}`}
+          className="relative aspect-[16/10] overflow-hidden bg-muted"
+        >
           <div className="flex h-full">
             {project.fotos.map((foto, i) => {
               const isActiveSlide = i === activeSlide;
               return (
-                <div key={i} className="flex-[0_0_100%] min-w-0 relative">
+                <div
+                  key={i}
+                  className="flex-[0_0_100%] min-w-0 relative"
+                  role="group"
+                  aria-roledescription="slide"
+                  aria-label={`Foto ${i + 1} de ${project.fotos.length}`}
+                  aria-hidden={!isActiveSlide}
+                >
                   {inView ? (
                     <img
                       src={foto}
-                      alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
+                      alt={isActiveSlide ? `Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}` : ""}
+                      aria-hidden={!isActiveSlide || undefined}
                       className="w-full h-full object-cover"
                       // First slide loads eagerly so it appears the instant the
                       // card enters viewport; subsequent slides stay lazy.
@@ -867,9 +930,12 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                       }}
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-muted animate-pulse" />
+                    <div className="absolute inset-0 bg-muted animate-pulse" aria-hidden="true" />
                   )}
-                  <div className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden">
+                  <div
+                    aria-hidden="true"
+                    className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden"
+                  >
                     <Camera className="h-8 w-8 text-muted-foreground/40" />
                   </div>
                 </div>
@@ -877,16 +943,34 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
             })}
           </div>
 
-          {/* Photo counter */}
-          {project.fotos.length > 1 && (
-            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/55 backdrop-blur-sm text-white text-[10px] font-mono tabular-nums">
+          {/* Live region announcing current slide to screen readers */}
+          {showCarouselControls && (
+            <div
+              id={slideStatusId}
+              className="sr-only"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              Foto {activeSlide + 1} de {project.fotos.length}
+            </div>
+          )}
+
+          {/* Visual photo counter (decorative — info already in live region) */}
+          {showCarouselControls && (
+            <div
+              aria-hidden="true"
+              className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/55 backdrop-blur-sm text-white text-[10px] font-mono tabular-nums"
+            >
               {activeSlide + 1}/{project.fotos.length}
             </div>
           )}
 
-          {/* Dots */}
-          {project.fotos.length > 1 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+          {/* Dots (decorative; navigation provided by buttons) */}
+          {showCarouselControls && (
+            <div
+              aria-hidden="true"
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1"
+            >
               {project.fotos.map((_, i) => (
                 <div
                   key={i}
@@ -899,24 +983,38 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
             </div>
           )}
 
-          {/* Arrows on hover */}
-          {hovering && project.fotos.length > 1 && (
+          {/* Carousel controls — always rendered for keyboard/SR users; only
+              visually shown on hover/focus. Buttons remain keyboard-reachable
+              when the card is focused. */}
+          {showCarouselControls && (
             <>
               <button
                 type="button"
-                aria-label="Foto anterior"
+                aria-label={`Foto anterior (atual: ${activeSlide + 1} de ${project.fotos.length})`}
+                aria-controls={carouselId}
                 onClick={(e) => { e.stopPropagation(); emblaApi?.scrollPrev(); }}
-                className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
+                tabIndex={hasFocus ? 0 : -1}
+                className={cn(
+                  "absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/85 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow",
+                  "transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+                  controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
               >
-                <ChevronLeft className="h-4 w-4 text-foreground" />
+                <ChevronLeft className="h-4 w-4 text-foreground" aria-hidden="true" />
               </button>
               <button
                 type="button"
-                aria-label="Próxima foto"
+                aria-label={`Próxima foto (atual: ${activeSlide + 1} de ${project.fotos.length})`}
+                aria-controls={carouselId}
                 onClick={(e) => { e.stopPropagation(); emblaApi?.scrollNext(); }}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow transition-opacity"
+                tabIndex={hasFocus ? 0 : -1}
+                className={cn(
+                  "absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/85 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow",
+                  "transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+                  controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
               >
-                <ChevronRight className="h-4 w-4 text-foreground" />
+                <ChevronRight className="h-4 w-4 text-foreground" aria-hidden="true" />
               </button>
             </>
           )}
@@ -924,24 +1022,29 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
 
         {/* Info */}
         <div className="p-3 flex items-start gap-2">
-          <Building2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <Building2 className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
           <div className="min-w-0 flex-1">
-            <h4 className="text-sm font-display font-bold text-foreground leading-tight truncate">
+            <h4
+              id={titleId}
+              className="text-sm font-display font-bold text-foreground leading-tight truncate"
+            >
               {project.displayName}
             </h4>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
               <span className="text-xs text-muted-foreground font-body tabular-nums">
+                <span className="sr-only">Metragem: </span>
                 {project.metragem}m²
               </span>
-              <span className="text-muted-foreground/40 text-xs">·</span>
+              <span aria-hidden="true" className="text-muted-foreground/40 text-xs">·</span>
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-body">
-                <MapPinned className="h-3 w-3" />
+                <MapPinned className="h-3 w-3" aria-hidden="true" />
+                <span className="sr-only">Bairro: </span>
                 {project.bairro}
               </span>
             </div>
           </div>
         </div>
-      </div>
+      </article>
     );
   }
 );
