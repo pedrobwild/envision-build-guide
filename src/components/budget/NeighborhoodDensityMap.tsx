@@ -749,7 +749,26 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     // Track which slide images have finished loading so we can fade them in
     // over the skeleton individually, instead of waiting for the whole gallery.
     const [loadedSlides, setLoadedSlides] = useState<Set<number>>(() => new Set());
+    // Track failed slides so we can render a soft blurred placeholder instead
+    // of leaving a broken-image flash or a bare skeleton.
+    const [erroredSlides, setErroredSlides] = useState<Set<number>>(() => new Set());
     const markLoaded = useCallback((idx: number) => {
+      setLoadedSlides((prev) => {
+        if (prev.has(idx)) return prev;
+        const next = new Set(prev);
+        next.add(idx);
+        return next;
+      });
+    }, []);
+    const markErrored = useCallback((idx: number) => {
+      setErroredSlides((prev) => {
+        if (prev.has(idx)) return prev;
+        const next = new Set(prev);
+        next.add(idx);
+        return next;
+      });
+      // Stop the skeleton shimmer; the blurred placeholder becomes the
+      // resting state for this slide.
       setLoadedSlides((prev) => {
         if (prev.has(idx)) return prev;
         const next = new Set(prev);
