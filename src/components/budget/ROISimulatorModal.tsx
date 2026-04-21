@@ -516,14 +516,38 @@ export function ROISimulatorModal({
             </TabsContent>
           </Tabs>
 
-          {/* Footer disclaimer */}
-          <div className="border-t border-border pt-3 flex items-start gap-2">
-            <Info className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
-            <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
-              Projeção baseada em {district?.sourceLabel || "média de São Paulo (Bwild/AirDNA 2025)"}
-              . Resultado estimado — sujeito a sazonalidade, gestão operacional, qualidade do
-              anúncio e variação do mercado. Não constitui promessa de retorno.
-            </p>
+          {/* Footer — Fonte e disclaimer */}
+          <div className="border-t border-border pt-3 space-y-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
+                  Fonte dos dados
+                </span>
+                <Badge variant="outline" className="text-[10px] font-mono bg-background">
+                  {district?.sourceLabel || "Bwild/AirDNA 2025 — média SP"}
+                </Badge>
+              </div>
+              <a
+                href="https://www.airdna.co/vacation-rental-data/app/br/sao-paulo/sao-paulo/overview"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] font-mono text-primary hover:text-primary/80 transition-colors"
+              >
+                Consultar dados de mercado
+                <ExternalLink className="h-2.5 w-2.5" />
+              </a>
+            </div>
+            <div className="flex items-start gap-2">
+              <Info className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
+                Análise específica para{" "}
+                <strong className="text-foreground">{baseline.label}</strong>. O payback considera o{" "}
+                <strong className="text-foreground">investimento total</strong> = compra do studio
+                ({formatBRL(studioPrice)}) + reforma ({formatBRL(safeTotal)}). Resultado estimado —
+                sujeito a sazonalidade, gestão operacional, qualidade do anúncio e variação do
+                mercado. Não constitui promessa de retorno.
+              </p>
+            </div>
           </div>
         </div>
       </DialogContent>
