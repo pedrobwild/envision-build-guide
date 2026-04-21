@@ -86,10 +86,16 @@ type TaskFilter = "all" | "pending" | "overdue" | "due_soon" | "completed";
 export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
   const qc = useQueryClient();
   const [openNew, setOpenNew] = useState(false);
+  const [initialValues, setInitialValues] = useState<ActivityInitialValues | null>(null);
   const [filter, setFilter] = useState<TaskFilter>("pending");
   const [outcomeId, setOutcomeId] = useState<string | null>(null);
   const [outcomeText, setOutcomeText] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  function openWithTemplate(values: ActivityInitialValues | null) {
+    setInitialValues(values);
+    setOpenNew(true);
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["budget_tasks", budgetId],
