@@ -78,6 +78,7 @@ export function ROISimulatorModal({
   const [nightly, setNightly] = useState<number>(baseline.nightly);
   const [occupancy, setOccupancy] = useState<number>(baseline.occupancy);
   const [operatingCost, setOperatingCost] = useState<number>(DEFAULT_OPERATING_COST * 100);
+  const [studioPrice, setStudioPrice] = useState<number>(DEFAULT_STUDIO_PRICE);
 
   const sliderLimits = useMemo(() => {
     return {
@@ -94,8 +95,10 @@ export function ROISimulatorModal({
   const netYear = netMonth * 12;
   const grossYear = grossMonth * 12;
   const safeTotal = total > 0 ? total : 0;
-  const roiYearPct = safeTotal > 0 ? (netYear / safeTotal) * 100 : 0;
-  const paybackMonths = safeTotal > 0 && netMonth > 0 ? safeTotal / netMonth : null;
+  const totalInvestment = studioPrice + safeTotal; // compra + reforma
+  const roiYearPct = totalInvestment > 0 ? (netYear / totalInvestment) * 100 : 0;
+  const paybackMonths =
+    totalInvestment > 0 && netMonth > 0 ? totalInvestment / netMonth : null;
 
   const paybackLabel =
     paybackMonths === null
@@ -110,18 +113,21 @@ export function ROISimulatorModal({
   const isEdited =
     nightly !== baseline.nightly ||
     occupancy !== baseline.occupancy ||
-    operatingCost !== DEFAULT_OPERATING_COST * 100;
+    operatingCost !== DEFAULT_OPERATING_COST * 100 ||
+    studioPrice !== DEFAULT_STUDIO_PRICE;
 
   const baselineRoi = useMemo(() => {
     const g = baseline.nightly * DAYS_PER_MONTH * (baseline.occupancy / 100);
     const n = g * (1 - DEFAULT_OPERATING_COST) * 12;
-    return safeTotal > 0 ? (n / safeTotal) * 100 : 0;
+    const inv = DEFAULT_STUDIO_PRICE + safeTotal;
+    return inv > 0 ? (n / inv) * 100 : 0;
   }, [baseline, safeTotal]);
 
   const handleReset = () => {
     setNightly(baseline.nightly);
     setOccupancy(baseline.occupancy);
     setOperatingCost(DEFAULT_OPERATING_COST * 100);
+    setStudioPrice(DEFAULT_STUDIO_PRICE);
   };
 
   const competitionColor =
