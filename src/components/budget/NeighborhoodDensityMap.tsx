@@ -647,7 +647,6 @@ function FilterChip({
 }
 
 /* ── Individual Project Card with Carousel ── */
-import { forwardRef } from "react";
 
 interface IndividualProjectCardProps {
   project: IndividualProject;
