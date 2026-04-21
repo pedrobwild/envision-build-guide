@@ -365,8 +365,8 @@ export function ROISimulator({
                   title="Design premium e exclusivo"
                 >
                   <Sparkles className="h-2.5 w-2.5 flex-shrink-0" strokeWidth={2.5} />
-                  <span className="hidden xs:inline">Premium &amp; exclusivo</span>
-                  <span className="xs:hidden">Premium</span>
+                  <span className="hidden min-[380px]:inline">Premium &amp; exclusivo</span>
+                  <span className="min-[380px]:hidden">Premium</span>
                 </span>
               </div>
               <div className="relative min-h-[30px] sm:min-h-[34px]">
