@@ -152,29 +152,51 @@ export function ROISimulatorModal({
                   Simulador de Retorno do Investimento
                 </DialogTitle>
                 <DialogDescription className="text-xs sm:text-sm font-body mt-0.5">
-                  Projeção financeira baseada em dados reais de mercado
+                  Análise específica para o bairro do imóvel · dados reais de mercado
                 </DialogDescription>
               </div>
             </div>
+
+            {/* Bairro analisado — destaque */}
+            <div className="mt-3 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
+                  Análise para
+                </span>
+                <span className="font-display font-bold text-base text-foreground inline-flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  {baseline.label}
+                </span>
+                {baseline.isFallback && (
+                  <Badge variant="outline" className="text-[9px] font-body">
+                    média SP
+                  </Badge>
+                )}
+                {district?.score && (
+                  <Badge variant="secondary" className="text-[10px] font-mono ml-auto">
+                    Score {district.score}/100
+                  </Badge>
+                )}
+              </div>
+            </div>
+
             <div className="flex items-center gap-2 flex-wrap pt-2">
-              <Badge variant="outline" className="text-[10px] font-mono bg-background/60">
-                <MapPin className="h-3 w-3 mr-1" />
-                {baseline.label}
-              </Badge>
               {metragem && (
                 <Badge variant="outline" className="text-[10px] font-mono bg-background/60">
                   <Building2 className="h-3 w-3 mr-1" />
                   {metragem}
                 </Badge>
               )}
-              {district?.score && (
-                <Badge variant="secondary" className="text-[10px] font-mono">
-                  Score {district.score}/100
-                </Badge>
-              )}
+              <Badge variant="outline" className="text-[10px] font-mono bg-background/60">
+                <Home className="h-3 w-3 mr-1" />
+                Studio {formatBRL(studioPrice)}
+              </Badge>
               <Badge variant="outline" className="text-[10px] font-mono bg-background/60">
                 <Calculator className="h-3 w-3 mr-1" />
-                Investimento {formatBRL(safeTotal)}
+                Reforma {formatBRL(safeTotal)}
+              </Badge>
+              <Badge variant="secondary" className="text-[10px] font-mono">
+                Total {formatBRL(totalInvestment)}
               </Badge>
             </div>
           </DialogHeader>
