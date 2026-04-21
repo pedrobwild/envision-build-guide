@@ -156,6 +156,12 @@ interface NeighborhoodDensityMapProps {
 export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensityMapProps) {
   const [hoveredBairroId, setHoveredBairroId] = useState<string | null>(null);
   const [highlightedProjectId, setHighlightedProjectId] = useState<string | null>(null);
+  // Roving tabindex state: only one card is in the tab order at a time.
+  // Defaults to the first project; updates as the user navigates with arrows
+  // or when a card is highlighted via map/filter. Decoupled from
+  // `highlightedProjectId` so the visual highlight (which auto-clears) doesn't
+  // strip the card from the tab sequence after the flash fades.
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [bairroFilter, setBairroFilter] = useState<string | null>(null);
   const [scrollState, setScrollState] = useState<{ top: boolean; bottom: boolean }>({ top: true, bottom: false });
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -235,11 +241,29 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const flashHighlight = useCallback((id: string, durationMs = 2400) => {
     if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     setHighlightedProjectId(id);
+    // Keep roving tabindex in sync: the card the user just landed on becomes
+    // the new tab stop.
+    setActiveCardId(id);
     highlightTimerRef.current = setTimeout(() => {
       setHighlightedProjectId(null);
       highlightTimerRef.current = null;
     }, durationMs);
   }, []);
+
+  // Keep `activeCardId` valid as the filtered list changes. If the active
+  // card was filtered out (or there's no active card yet), fall back to the
+  // first project in the visible list. This guarantees Tab always lands on a
+  // real, visible card.
+  useEffect(() => {
+    if (filteredProjects.length === 0) {
+      setActiveCardId(null);
+      return;
+    }
+    setActiveCardId((prev) => {
+      if (prev && filteredProjects.some((p) => p.id === prev)) return prev;
+      return filteredProjects[0].id;
+    });
+  }, [filteredProjects]);
 
   useEffect(() => {
     return () => {
@@ -664,7 +688,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
                 // desktop: vertical stack
                 "md:space-y-3"
               )}
-              tabIndex={0}
+              // The panel itself stays focusable as a fallback (e.g., when
+              // the list is empty) but `aria-activedescendant` + roving
+              // tabindex on cards mean Tab usually lands on the active card,
+              // not the wrapper.
+              tabIndex={filteredProjects.length === 0 ? 0 : -1}
               role="listbox"
               aria-label="Lista de empreendimentos entregues. Use as setas para navegar e Esc para limpar o filtro."
               aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"
@@ -681,6 +709,9 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
                   project={proj}
                   ref={setCardRef(proj.id)}
                   isHighlighted={highlightedProjectId === proj.id}
+                  // Roving tabindex: only the active card is reachable via Tab.
+                  tabIndex={activeCardId === proj.id ? 0 : -1}
+                  onCardFocus={() => setActiveCardId(proj.id)}
                   onHover={(hovered) => {
                     const id = getBairroId(proj.bairro);
                     if (!id) return;
@@ -789,10 +820,15 @@ interface IndividualProjectCardProps {
   project: IndividualProject;
   isHighlighted?: boolean;
   onHover?: (hovered: boolean) => void;
+  /** Roving tabindex value: 0 for the active tab stop, -1 for siblings. */
+  tabIndex?: number;
+  /** Notifies the parent when this card receives focus so it can promote
+   *  the card to the active tab stop (so future Tab presses come back here). */
+  onCardFocus?: () => void;
 }
 
 const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardProps>(
-  ({ project, isHighlighted = false, onHover }, ref) => {
+  ({ project, isHighlighted = false, onHover, tabIndex = -1, onCardFocus }, ref) => {
     const reducedMotion = useReducedMotion();
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
@@ -969,7 +1005,10 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         // focus. Must match the format used by the parent panel below.
         id={`project-card-${project.id}`}
         data-project-card-id={project.id}
-        tabIndex={0}
+        // Roving tabindex: only the active card is part of the tab order.
+        // Siblings get -1 so Tab moves out of the listbox after one stop;
+        // arrow keys handle navigation within the list.
+        tabIndex={tabIndex}
         role="option"
         aria-selected={isHighlighted}
         aria-label={`${project.displayName}, ${project.metragem} metros quadrados, ${project.bairro}`}
@@ -994,7 +1033,12 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         )}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onFocus={handleMouseEnter}
+        onFocus={() => {
+          handleMouseEnter();
+          // Promote this card to the active tab stop whenever it actually
+          // receives focus (mouse click, programmatic focus, etc.).
+          onCardFocus?.();
+        }}
         onBlur={handleMouseLeave}
       >
         {/* Photo carousel */}
