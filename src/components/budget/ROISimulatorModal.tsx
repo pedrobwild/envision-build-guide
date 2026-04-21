@@ -19,6 +19,8 @@ import {
   Percent,
   Calculator,
   ArrowRight,
+  Home,
+  ExternalLink,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
