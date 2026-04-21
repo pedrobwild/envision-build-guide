@@ -89,46 +89,70 @@ export function ROISimulator({
   }, [baseline.nightly]);
 
   // ── Cálculos ──
+  // Cenário SEM reforma — studio padrão do mercado
+  const baselineGrossMonth = baseline.nightly * DAYS_PER_MONTH * (baseline.occupancy / 100);
+  const baselineNetMonth = baselineGrossMonth * (1 - operatingCostPct);
+  const baselineNetYear = baselineNetMonth * 12;
+
+  // Cenário COM reforma BWild
   const grossMonth = nightly * DAYS_PER_MONTH * (occupancy / 100);
   const netMonth = grossMonth * (1 - operatingCostPct);
   const netYear = netMonth * 12;
+
+  // Ganho incremental gerado pela reforma
+  const upliftMonth = netMonth - baselineNetMonth;
+  const upliftYear = netYear - baselineNetYear;
+
   const safeTotal = total > 0 ? total : 0;
-  // Investimento total = compra do studio + reforma
   const totalInvestment = studioPrice + safeTotal;
-  // Valorização anual estimada do imóvel (FipeZap por bairro)
   const appreciationPctYear = getAppreciationPctYear(district);
   const appreciationYear = studioPrice * (appreciationPctYear / 100);
   const roiYearPct = totalInvestment > 0 ? (netYear / totalInvestment) * 100 : 0;
   const roiTotalPct =
     totalInvestment > 0 ? ((netYear + appreciationYear) / totalInvestment) * 100 : 0;
-  const roiReformOnlyPct = safeTotal > 0 ? (netYear / safeTotal) * 100 : 0;
+  // Payback da REFORMA — em quanto tempo o ganho extra paga a obra
+  const reformPaybackMonths = upliftMonth > 0 ? safeTotal / upliftMonth : null;
   const paybackMonths =
     totalInvestment > 0 && netMonth > 0 ? totalInvestment / netMonth : null;
 
-  const paybackLabel =
-    paybackMonths === null
-      ? "—"
-      : paybackMonths < 12
-        ? `${Math.round(paybackMonths)} meses`
-        : `${(paybackMonths / 12).toFixed(1).replace(".", ",")} anos`;
+  const formatPayback = (months: number | null) => {
+    if (months === null) return "—";
+    if (months < 12) return `${Math.round(months)} meses`;
+    return `${(months / 12).toFixed(1).replace(".", ",")} anos`;
+  };
+  const paybackLabel = formatPayback(paybackMonths);
+  const reformPaybackLabel = formatPayback(reformPaybackMonths);
+
+  // Defaults BWild = baseline + uplift de mercado premium
+  const bwildNightlyDefault = useMemo(
+    () => Math.round(baseline.nightly * (1 + BWILD_NIGHTLY_UPLIFT)),
+    [baseline.nightly],
+  );
+  const bwildOccupancyDefault = useMemo(
+    () => Math.min(95, baseline.occupancy + BWILD_OCCUPANCY_UPLIFT),
+    [baseline.occupancy],
+  );
+
+  // Aplica os defaults BWild na primeira montagem (uma vez por baseline)
+  const [bwildApplied, setBwildApplied] = useState(false);
+  if (!bwildApplied) {
+    setNightly(bwildNightlyDefault);
+    setOccupancy(bwildOccupancyDefault);
+    setBwildApplied(true);
+  }
 
   const isEdited =
-    nightly !== baseline.nightly ||
-    occupancy !== baseline.occupancy ||
+    nightly !== bwildNightlyDefault ||
+    occupancy !== bwildOccupancyDefault ||
     studioPrice !== DEFAULT_STUDIO_PRICE;
 
-  const baselineRoi = useMemo(() => {
-    const g = baseline.nightly * DAYS_PER_MONTH * (baseline.occupancy / 100);
-    const n = g * (1 - operatingCostPct) * 12;
-    const inv = DEFAULT_STUDIO_PRICE + safeTotal;
-    return inv > 0 ? (n / inv) * 100 : 0;
-  }, [baseline, operatingCostPct, safeTotal]);
-
   const handleReset = () => {
-    setNightly(baseline.nightly);
-    setOccupancy(baseline.occupancy);
+    setNightly(bwildNightlyDefault);
+    setOccupancy(bwildOccupancyDefault);
     setStudioPrice(DEFAULT_STUDIO_PRICE);
   };
+
+  const upliftPctNightly = Math.round(BWILD_NIGHTLY_UPLIFT * 100);
 
   const competitionColor =
     district?.competition === "Alta"
