@@ -8,6 +8,8 @@ import {
   CalendarCheck2,
   ChevronDown,
   Maximize2,
+  Home,
+  ExternalLink,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
