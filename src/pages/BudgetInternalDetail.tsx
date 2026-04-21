@@ -907,7 +907,18 @@ export default function BudgetInternalDetail() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-              <BudgetTasksPanel budgetId={budget.id} getProfileName={getProfileName} />
+              <BudgetTasksPanel
+                budgetId={budget.id}
+                getProfileName={getProfileName}
+                contextFilter={
+                  activeModule && MODULE_ACTIVITY_CONTEXT[activeModule]
+                    ? {
+                        ...MODULE_ACTIVITY_CONTEXT[activeModule],
+                        onClear: () => setActiveModule(null),
+                      }
+                    : null
+                }
+              />
             </div>
 
             {/* Notas internas rápidas */}
