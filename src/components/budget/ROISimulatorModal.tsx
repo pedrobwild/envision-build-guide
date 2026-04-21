@@ -383,9 +383,10 @@ export function ROISimulatorModal({
                   <p>
                     Em 5 anos, o retorno acumulado representa{" "}
                     <span className="font-semibold text-foreground">
-                      {safeTotal > 0 ? formatPct((fiveYearReturn / safeTotal) * 100) : "—"}
+                      {totalInvestment > 0 ? formatPct((fiveYearReturn / totalInvestment) * 100) : "—"}
                     </span>{" "}
-                    do valor investido na reforma — sem considerar a valorização do imóvel.
+                    do investimento total (compra + reforma) — sem considerar a valorização do
+                    imóvel.
                   </p>
                 </div>
               </div>
