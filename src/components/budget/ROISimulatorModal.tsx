@@ -30,8 +30,11 @@ import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 import {
   AVERAGE_METRICS,
+  BENCHMARKS_2025,
+  DATA_SOURCES,
   findDistrict,
   formatPct,
+  getAppreciationPctYear,
   type DistrictRow,
 } from "@/data/districtMetrics";
 
