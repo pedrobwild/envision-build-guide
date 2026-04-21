@@ -230,14 +230,62 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
         <h3 className="font-display text-sm font-semibold tracking-tight">
           Ações & Tarefas
         </h3>
-        <Button
-          size="sm"
-          onClick={() => setOpenNew(true)}
-          className="h-8 gap-1.5 text-xs"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Nova ação
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+                <Sparkles className="h-3.5 w-3.5" />
+                Templates
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Ações pré-configuradas
+              </DropdownMenuLabel>
+              {TEMPLATE_GROUP_ORDER.map((group, gi) => {
+                const items = ACTIVITY_TEMPLATES.filter((t) => t.group === group);
+                if (!items.length) return null;
+                return (
+                  <div key={group}>
+                    {gi > 0 && <DropdownMenuSeparator />}
+                    <DropdownMenuLabel className="text-[10px] font-body font-medium text-muted-foreground/80 uppercase tracking-wide pt-2">
+                      {group}
+                    </DropdownMenuLabel>
+                    {items.map((tpl) => {
+                      const TIcon = tpl.icon;
+                      return (
+                        <DropdownMenuItem
+                          key={tpl.id}
+                          onSelect={() => openWithTemplate(tpl.values)}
+                          className="gap-2.5 py-2 cursor-pointer items-start"
+                        >
+                          <TIcon className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-body font-medium leading-tight">
+                              {tpl.label}
+                            </p>
+                            <p className="text-[10.5px] text-muted-foreground font-body mt-0.5 leading-snug">
+                              {tpl.description}
+                            </p>
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            size="sm"
+            onClick={() => openWithTemplate(null)}
+            className="h-8 gap-1.5 text-xs"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Nova ação
+          </Button>
+        </div>
       </div>
 
       {/* Filter chips */}
