@@ -66,7 +66,7 @@ export function PortalShowcase() {
         </Button>
 
         <p className="text-xs text-muted-foreground font-body text-center">
-          Acesso web e mobile durante toda a obra.
+          Navegue por uma obra real: cronograma, fotos semanais, documentos e relatórios — exatamente o que você terá durante a sua reforma
         </p>
       </CardContent>
     </Card>
