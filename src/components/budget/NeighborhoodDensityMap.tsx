@@ -5,7 +5,12 @@ import { MapPin, ArrowLeft, ChevronLeft, ChevronRight, Camera, Building2 } from 
 import { Badge } from "@/components/ui/badge";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
-import { getIndividualProjects, type IndividualProject } from "@/data/brooklin-projects";
+import { getIndividualProjects, brooklinEmpreendimentos, type IndividualProject } from "@/data/brooklin-projects";
+
+// All individual projects across every bairro (for the vertical carousel)
+const ALL_INDIVIDUAL_PROJECTS: IndividualProject[] = Array.from(
+  new Set(brooklinEmpreendimentos.map((p) => p.bairro))
+).flatMap((bairro) => getIndividualProjects(bairro));
 
 /* ── Data ── */
 type Neighborhood = {
