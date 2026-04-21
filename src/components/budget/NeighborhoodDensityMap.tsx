@@ -321,28 +321,54 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const handlePanelKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       const ids = filteredProjects.map((p) => p.id);
-      if (ids.length === 0) return;
+      // Detect orientation at keypress time so the same handler serves
+      // both mobile (horizontal snap carousel) and desktop (vertical stack)
+      // even if the user resizes/rotates the device mid-session.
+      const isMobileNow =
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(max-width: 767px)").matches;
 
       if (e.key === "Escape") {
         e.preventDefault();
+        // Cancel any pending flash-highlight timer so it can't reappear
+        // after the user has explicitly cleared the state.
         if (highlightTimerRef.current) {
           clearTimeout(highlightTimerRef.current);
           highlightTimerRef.current = null;
         }
         setHighlightedProjectId(null);
+        // Also reset the bairro filter (acts as the active "search").
         if (bairroFilter) setBairroFilter(null);
+        // Drop the roving tabindex back to the natural starting point so
+        // the next Tab into the panel lands on the first visible card.
+        setActiveCardId(filteredProjects[0]?.id ?? null);
+        // Always return focus to the panel container itself, regardless of
+        // which card was previously focused — gives the user a clean reset.
         panelRef.current?.focus();
         return;
       }
 
-      const isVerticalNav = e.key === "ArrowDown" || e.key === "ArrowUp";
+      if (ids.length === 0) return;
+
+      // Mobile: ONLY ←/→ are valid (panel is a horizontal carousel).
+      // Desktop: ↑/↓ for the vertical stack, plus Home/End for jumps.
+      // ←/→ stays available on desktop too as a convenience for trackpads
+      // and to mirror screen-reader expectations on listbox widgets.
       const isHorizontalNav = e.key === "ArrowRight" || e.key === "ArrowLeft";
+      const isVerticalNav = e.key === "ArrowDown" || e.key === "ArrowUp";
       const isJump = e.key === "Home" || e.key === "End";
-      // On mobile, the panel is horizontal — use ←/→ instead.
-      if (!isVerticalNav && !isHorizontalNav && !isJump) return;
+
+      if (isMobileNow) {
+        // Block ↑/↓ and Home/End so they don't accidentally scroll the page
+        // or move focus out of the carousel on mobile.
+        if (!isHorizontalNav) return;
+      } else {
+        if (!isVerticalNav && !isHorizontalNav && !isJump) return;
+      }
 
       const active = document.activeElement as HTMLElement | null;
-      const activeId = active?.dataset?.projectCardId;
+      const activeId = active?.dataset?.projectCardId ?? activeCardId;
       const currentIdx = activeId ? ids.indexOf(activeId) : -1;
 
       let nextIdx: number;
@@ -353,7 +379,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         if (currentIdx === -1) {
           nextIdx = forward ? 0 : ids.length - 1;
         } else {
-          // Wrap-around for fluid keyboard exploration
+          // Wrap-around for fluid keyboard exploration on both axes.
           nextIdx = forward
             ? (currentIdx + 1) % ids.length
             : (currentIdx - 1 + ids.length) % ids.length;
@@ -363,7 +389,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       e.preventDefault();
       focusCard(ids[nextIdx]);
     },
-    [filteredProjects, bairroFilter, focusCard]
+    [filteredProjects, bairroFilter, focusCard, activeCardId]
   );
 
   // Init map
@@ -694,8 +720,9 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
               // not the wrapper.
               tabIndex={filteredProjects.length === 0 ? 0 : -1}
               role="listbox"
-              aria-label="Lista de empreendimentos entregues. Use as setas para navegar e Esc para limpar o filtro."
-              aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"
+              aria-label="Lista de empreendimentos entregues. Use as setas para navegar entre cards e Esc para limpar o filtro e voltar ao painel."
+              // Mobile uses ←/→ only; desktop adds ↑/↓ and Home/End.
+              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
               // Tells assistive tech which option is currently "active" inside
               // the listbox (the highlighted card) without changing real DOM
               // focus. Screen readers announce the option's accessible name.
