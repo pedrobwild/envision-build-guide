@@ -84,7 +84,7 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
     try {
       // Try cache first
       const cacheKey = `user_${userId}`;
-      const { data: cached } = await supabase
+      const { data: cached } = await (supabase as any)
         .from("elephant_insights_cache")
         .select("*")
         .eq("cache_key", cacheKey)
