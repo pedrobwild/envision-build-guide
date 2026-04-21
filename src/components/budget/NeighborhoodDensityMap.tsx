@@ -1010,7 +1010,11 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                   {hasError && (
                     <div
                       aria-hidden="true"
-                      className="absolute inset-0 overflow-hidden animate-in fade-in duration-500"
+                      className={cn(
+                        "absolute inset-0 overflow-hidden",
+                        // Skip the entrance animation when motion is reduced.
+                        !reducedMotion && "animate-in fade-in duration-500"
+                      )}
                     >
                       {/* Soft color wash inspired by the brand palette */}
                       <div
