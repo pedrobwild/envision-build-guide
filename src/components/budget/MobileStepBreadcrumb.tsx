@@ -8,7 +8,7 @@ const SECTIONS = [
   { id: "mobile-scope", label: "Itens" },
   { id: "mobile-portal", label: "Portal" },
   { id: "mobile-next-steps", label: "Próximos passos" },
-  { id: "mobile-faq", label: "FAQ" },
+  { id: "roi-full", label: "Retorno" },
 ];
 
 export function MobileStepBreadcrumb() {

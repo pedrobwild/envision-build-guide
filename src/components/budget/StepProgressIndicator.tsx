@@ -10,7 +10,7 @@ const STEP_LABELS: Record<string, string> = {
   "mobile-trust": "Portfólio",
   "mobile-portal": "Portal",
   "mobile-next-steps": "Próximos",
-  "mobile-faq": "FAQ",
+  "roi-full": "Retorno",
 };
 
 export function StepProgressIndicator({ sectionIds }: StepProgressIndicatorProps) {
