@@ -318,7 +318,7 @@ export function ROISimulator({
           </p>
 
           {/* Ganho extra — destaque success */}
-          <div className="mt-3 rounded-xl bg-success/[0.08] border border-success/25 p-3.5 flex items-center justify-between gap-3">
+          <div className="mt-3 rounded-xl bg-card border border-border p-3.5 flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-[10px] uppercase tracking-wider text-success font-mono font-bold mb-0.5">
                 Ganho extra mensal
