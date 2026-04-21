@@ -69,6 +69,10 @@ import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
 import { formatBRL } from "@/lib/formatBRL";
+import { DemandWorkspaceV2 } from "@/components/demanda/DemandWorkspaceV2";
+import type { CadenceStep } from "@/components/demanda/CadencePlaybook";
+import type { RiskSignal } from "@/components/demanda/RiskSignalsCard";
+import type { LostReasonBenchmarkItem } from "@/components/demanda/LostReasonBenchmark";
 
 interface BudgetDetail {
   id: string;
@@ -786,7 +790,38 @@ export default function BudgetInternalDetail() {
           </div>
         </section>
 
+        {/* V2 WORKSPACE (feature flag: ?v=2) */}
+        {searchParams.get("v") === "2" && (
+          <DemandWorkspaceV2
+            budgetId={budget.id}
+            budget={budget}
+            budgetTotal={budgetTotal ?? undefined}
+            itemsCount={itemsCount}
+            sectionsCount={sectionsCount}
+            getProfileName={getProfileName}
+            onOpenBudgetEditor={() => navigate(`/admin/budget/${budget.id}`)}
+            onOpenVersionHistory={() => setActiveModule("versions")}
+            onOpenMeetings={() => setActiveModule("meetings")}
+            onOpenConversations={() => setActiveModule("conversations")}
+            onOpenClient={() => setActiveModule("client")}
+            onOpenBriefing={() => setActiveModule("briefing")}
+            onMarkLost={() => setLostDialogOpen(true)}
+            riskSignals={buildRiskSignals(budget, overdue, daysLeft, probability)}
+            cadenceStage={status.label}
+            cadenceSteps={buildCadenceSteps(budget.internal_status)}
+            lostBenchmark={LOST_BENCHMARK}
+            nextBestAction={buildNextBestAction(hub.data, budget, overdue)}
+            conversationsPreview={[]}
+            versionsPreview={[
+              { label: "v2", status: "em ajuste", at: "hoje", current: true },
+              { label: "v1", status: "enviada", at: budget.updated_at ? format(new Date(budget.updated_at), "dd/MM") : "—" },
+            ]}
+            breakdown={[]}
+          />
+        )}
+
         {/* MODULES HEADER */}
+        {searchParams.get("v") !== "2" && (
         <div className="flex items-center justify-between mb-3 mt-8">
           <h2 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
             Módulos
@@ -799,7 +834,9 @@ export default function BudgetInternalDetail() {
           )}
         </div>
 
-        {/* MODULES GRID */}
+        )}
+        {/* MODULES GRID (legacy) */}
+        {searchParams.get("v") !== "2" && (
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <ModuleCard
             icon={Activity}
@@ -908,6 +945,7 @@ export default function BudgetInternalDetail() {
             }}
           />
         </section>
+        )}
 
         {/* DRILL-DOWN DRAWER */}
         <Sheet open={!!activeModule} onOpenChange={(o) => !o && setActiveModule(null)}>
@@ -1153,6 +1191,137 @@ export default function BudgetInternalDetail() {
       />
     </div>
   );
+}
+
+// ------- V2 helpers (feature flag ?v=2) -------
+
+const LOST_BENCHMARK: LostReasonBenchmarkItem[] = [
+  { label: "Preço acima da concorrência", percentage: 38, tone: "danger" },
+  { label: "Escopo não atende", percentage: 24, tone: "warning" },
+  { label: "Timing / adiou obra", percentage: 18, tone: "muted" },
+];
+
+function buildRiskSignals(
+  budget: BudgetDetail,
+  overdue: boolean,
+  daysLeft: number | null,
+  probability: number
+): RiskSignal[] {
+  const signals: RiskSignal[] = [];
+  if (overdue && daysLeft !== null) {
+    signals.push({
+      tone: "danger",
+      title: `SLA vencido há ${Math.abs(daysLeft)}d`,
+      detail: "Risco de esfriar. Agende um follow-up hoje.",
+    });
+  }
+  if (budget.internal_status === "waiting_info") {
+    signals.push({
+      tone: "warning",
+      title: "Aguardando informação do cliente",
+      detail: "Negociação pausada. Acompanhe a última conversa.",
+    });
+  }
+  if (probability >= 60) {
+    signals.push({
+      tone: "ok",
+      title: "Engajamento saudável",
+      detail: `Probabilidade em ${probability}%.`,
+    });
+  } else if (probability > 0 && probability < 30) {
+    signals.push({
+      tone: "warning",
+      title: "Probabilidade baixa",
+      detail: "Revise escopo, preço ou timing.",
+    });
+  }
+  if (signals.length === 0) {
+    signals.push({
+      tone: "ok",
+      title: "Sem sinais de risco",
+      detail: "Mantenha a cadência sugerida.",
+    });
+  }
+  return signals;
+}
+
+function buildCadenceSteps(status: string): CadenceStep[] {
+  // Playbook mínimo por fase comercial.
+  if (["mql", "qualificacao", "lead"].includes(status)) {
+    return [
+      { label: "Qualificar lead (WhatsApp ou ligação)", status: "current" },
+      { label: "Coletar briefing inicial", status: "pending", hint: "+1 dia" },
+      { label: "Agendar visita técnica", status: "pending", hint: "+3 dias" },
+    ];
+  }
+  if (["validacao_briefing", "novo", "requested"].includes(status)) {
+    return [
+      { label: "Qualificar lead", status: "done" },
+      { label: "Validar briefing com cliente", status: "current" },
+      { label: "Agendar visita técnica", status: "pending", hint: "+2 dias" },
+    ];
+  }
+  if (["triage", "assigned", "in_progress", "ready_for_review", "revision_requested"].includes(status)) {
+    return [
+      { label: "Briefing validado", status: "done" },
+      { label: "Visita técnica", status: "done" },
+      { label: "Elaborar proposta v1", status: "current" },
+      { label: "Follow-up telefônico", status: "pending", hint: "+2 dias após envio" },
+      { label: "Reunião de fechamento", status: "pending", hint: "+7 dias" },
+    ];
+  }
+  if (["delivered_to_sales", "sent_to_client"].includes(status)) {
+    return [
+      { label: "Proposta enviada", status: "done" },
+      { label: "Follow-up telefônico", status: "current", hint: "+2 dias" },
+      { label: "Responder objeções", status: "pending" },
+      { label: "Reunião de fechamento", status: "pending", hint: "+7 dias" },
+      { label: "Solicitar minuta", status: "pending" },
+    ];
+  }
+  if (status === "minuta_solicitada") {
+    return [
+      { label: "Proposta aprovada", status: "done" },
+      { label: "Minuta enviada ao jurídico", status: "current" },
+      { label: "Assinatura do contrato", status: "pending" },
+    ];
+  }
+  return [
+    { label: "Registrar próxima interação", status: "current" },
+  ];
+}
+
+function buildNextBestAction(
+  hub: { meetingsCount?: number; nextActivityDate?: string | null; lastConversationAt?: string | null } | undefined,
+  budget: BudgetDetail,
+  overdue: boolean
+) {
+  if (overdue) {
+    return {
+      title: "Faça um follow-up hoje",
+      rationale: "O SLA venceu e o cliente pode estar esfriando. Uma mensagem curta recupera o contato.",
+      liftLabel: "+15pp",
+    };
+  }
+  if (budget.internal_status === "waiting_info") {
+    return {
+      title: "Reforce o pedido de informação",
+      rationale: "A negociação está pausada aguardando retorno. Uma nota curta reduz o tempo parado.",
+      liftLabel: "+6pp",
+    };
+  }
+  if (hub?.meetingsCount && hub.meetingsCount > 0) {
+    return {
+      title: "Transforme decisões da última reunião em tarefas",
+      rationale: "O Elephan.ia extraiu itens acionáveis da conversa. Converta em atividades agora para não perder contexto.",
+      liftLabel: "+10pp",
+    };
+  }
+  return {
+    title: "Agende o próximo toque",
+    rationale: "Cadência consistente aumenta a probabilidade de fechamento.",
+    liftLabel: "+5pp",
+  };
 }
 
 const moduleTitles: Record<ModuleKey, string> = {
