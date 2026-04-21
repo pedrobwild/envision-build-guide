@@ -113,7 +113,7 @@ export default function AnalisesPage() {
       </motion.div>
 
       {/* FORECAST & PREVISIBILIDADE */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
+      <motion.div id="forecast" {...anim(step++ * SECTION_DELAY)}>
         <ForecastPanel ownerFilter={null} isAdmin={isAdmin} />
       </motion.div>
 
