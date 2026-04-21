@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Sparkles, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
-export const PORTAL_DEMO_EMAIL = "demo@bwild.com.br";
-export const PORTAL_DEMO_PASSWORD = "123456";
-export const PORTAL_DEMO_URL = `https://portal-bwild.lovable.app/auth?email=${encodeURIComponent(PORTAL_DEMO_EMAIL)}&password=${encodeURIComponent(PORTAL_DEMO_PASSWORD)}`;
+export const PORTAL_DEMO_EMAIL = "contato@bwild.com.br";
+export const PORTAL_DEMO_PASSWORD = "512451";
+export const PORTAL_DEMO_PROJECT_URL = "https://bwildworkflow.com/obra/2f224a62-b269-493a-b104-2762f652a105";
+export const PORTAL_DEMO_URL = `https://bwildworkflow.com/auth?email=${encodeURIComponent(PORTAL_DEMO_EMAIL)}&password=${encodeURIComponent(PORTAL_DEMO_PASSWORD)}&redirect=${encodeURIComponent("/obra/2f224a62-b269-493a-b104-2762f652a105")}`;
 
 /**
  * Card destacado para o cliente acessar a obra demo do Portal BWild.
