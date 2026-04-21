@@ -162,6 +162,43 @@
     @apply text-[11px] font-medium uppercase tracking-[0.05em] text-muted-foreground;
     font-family: var(--font-body);
   }
+
+  /* ────────────────────────────────────────────────────────────────
+     Tokens tipográficos do Orçamento Público
+     Padrão único de fontes para garantir coesão visual em toda a
+     página pública do orçamento (PublicBudget).
+
+     Regras de uso:
+     • `.budget-currency`  → TODOS os valores monetários (R$)
+     • `.budget-numeric`   → Quaisquer números tabulares (qty, %, dias)
+     • `.budget-heading`   → Títulos e headings (h1..h4)
+     • `.budget-label`     → Micro-labels em caixa-alta
+     • `.budget-body`      → Corpo de texto / descrições
+     ──────────────────────────────────────────────────────────────── */
+  .budget-currency {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.02em;
+  }
+  .budget-numeric {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+  .budget-heading {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+  }
+  .budget-label {
+    font-family: var(--font-body);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .budget-body {
+    font-family: var(--font-body);
+  }
 }
 
 /* MapLibre popup styling */

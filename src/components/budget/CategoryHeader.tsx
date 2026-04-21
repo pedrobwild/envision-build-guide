@@ -16,18 +16,22 @@ export function CategoryHeader({ category, subtotal, sectionCount, itemCount }: 
         <div className={cn("w-1 self-stretch rounded-full", category.bgClass)} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <span className={cn("text-sm sm:text-base font-display font-bold tracking-tight", category.colorClass)}>
+            <span className={cn("text-sm sm:text-base budget-heading font-bold", category.colorClass)}>
               {category.label}
             </span>
-            <span className="font-display font-bold text-sm sm:text-base text-foreground tabular-nums flex-shrink-0">
+            <span className="budget-currency font-semibold text-sm sm:text-base text-foreground flex-shrink-0">
               {formatBRL(subtotal)}
             </span>
           </div>
           {(sectionCount || itemCount) && (
             <p className="text-xs text-muted-foreground font-body mt-0.5">
-              {sectionCount && sectionCount > 0 && `${sectionCount} ${sectionCount === 1 ? 'seção' : 'seções'}`}
+              {sectionCount && sectionCount > 0 && (
+                <><span className="budget-numeric">{sectionCount}</span> {sectionCount === 1 ? 'seção' : 'seções'}</>
+              )}
               {sectionCount && itemCount ? ' · ' : ''}
-              {itemCount && itemCount > 0 && `${itemCount} ${itemCount === 1 ? 'item' : 'itens'}`}
+              {itemCount && itemCount > 0 && (
+                <><span className="budget-numeric">{itemCount}</span> {itemCount === 1 ? 'item' : 'itens'}</>
+              )}
             </p>
           )}
         </div>

@@ -59,7 +59,7 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
                   className="h-[18px] w-[18px] object-contain"
                 />
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-display font-semibold text-success leading-tight">
+                  <span className="text-[11px] font-body font-semibold text-success leading-tight">
                     {s.label}
                   </span>
                   <span className="text-[10px] text-success/70 font-body leading-tight mt-0.5">
@@ -74,7 +74,7 @@ export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
                   return <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />;
                 })()}
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-display font-semibold text-foreground leading-tight">
+                  <span className="text-[11px] font-body font-semibold text-foreground leading-tight">
                     {s.label}
                   </span>
                   <span className="text-[10px] text-muted-foreground font-body leading-tight mt-0.5">

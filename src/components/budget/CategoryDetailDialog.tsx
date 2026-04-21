@@ -57,7 +57,7 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
   if (!group) return null;
 
   const titleContent = (
-    <div className="flex items-center gap-2 font-display">
+    <div className="flex items-center gap-2 budget-heading">
       <button
         onClick={onClose}
         className="flex items-center justify-center h-8 w-8 rounded-lg hover:bg-muted/60 active:bg-muted transition-colors flex-shrink-0 -ml-1"
@@ -67,7 +67,7 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
       </button>
       <div className={`w-1.5 h-5 rounded-full ${group.category.bgClass}`} />
       <span className="truncate">{group.category.label}</span>
-      <span className={`ml-auto text-base font-mono tabular-nums shrink-0 ${group.category.colorClass}`}>
+      <span className={`ml-auto text-base budget-currency shrink-0 ${group.category.colorClass}`}>
         {formatBRL(group.subtotal)}
       </span>
     </div>

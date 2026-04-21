@@ -29,8 +29,7 @@ interface MobileFinancialSheetProps {
 
 const DEFAULT_PHONE = "5511911906183";
 const SNAP_POINTS = [0.45, 0.88] as const;
-const LABEL = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground";
-const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
+const LABEL = "budget-label text-[10px] text-muted-foreground";
 
 export function MobileFinancialSheet({
   open,
@@ -96,10 +95,10 @@ export function MobileFinancialSheet({
                     <p className={LABEL}>Investimento total</p>
                     <p
                       className={cn(
-                        "font-mono font-extrabold text-primary tabular-nums leading-none",
+                        "budget-currency font-extrabold text-primary leading-none",
                         total >= 1_000_000 ? "text-lg" : "text-xl"
                       )}
-                      style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
+                      style={{ letterSpacing: '-0.03em' }}
                     >
                       {formatBRL(total)}
                     </p>
@@ -108,11 +107,11 @@ export function MobileFinancialSheet({
                   {/* Installment preview inline */}
                   <div className="flex items-baseline gap-1.5 flex-wrap">
                     <span className="text-[12px] font-body text-muted-foreground">ou</span>
-                    <span className="font-mono text-sm font-semibold text-foreground tabular-nums" style={MONO_STYLE}>
+                    <span className="budget-currency text-sm font-semibold text-foreground">
                       {formatBRL(total / installments)}
                     </span>
                     <span className="text-[12px] font-body text-muted-foreground">
-                      em {installments}× sem juros
+                      em <span className="budget-numeric">{installments}×</span> sem juros
                     </span>
                   </div>
 

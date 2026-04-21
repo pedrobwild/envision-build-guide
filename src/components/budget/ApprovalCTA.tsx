@@ -73,7 +73,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
     return (
       <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-5 text-center space-y-3">
         <AlertTriangle className="h-6 w-6 text-destructive mx-auto" />
-        <p className="font-display font-semibold text-foreground text-sm">Condições expiradas</p>
+        <p className="budget-heading font-semibold text-foreground text-sm">Condições expiradas</p>
         <p className="text-xs text-muted-foreground font-body">
           Os valores desta proposta não estão mais vigentes.
         </p>
@@ -81,7 +81,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
           href={whatsappUpdateUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-display font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
           <MessageCircle className="h-4 w-4" />
           Solicitar atualização
@@ -98,7 +98,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
           onClick={() => setContractOpen(true)}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-display font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
           <FileSignature className="h-5 w-5" />
           Solicitar Contrato
@@ -128,7 +128,7 @@ export function ApprovalCTA({ budgetId, publicId, expired, projectName, clientNa
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display">Receber esta proposta por email</DialogTitle>
+            <DialogTitle className="budget-heading">Receber esta proposta por email</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground font-body">
             Enviaremos o link desta proposta para você acessar quando quiser.

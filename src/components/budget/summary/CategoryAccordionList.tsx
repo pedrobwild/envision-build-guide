@@ -5,8 +5,7 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { CategoryAccordionItem, type CategoryAccordionItemData } from "./CategoryAccordionItem";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
-const LABEL = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground/50";
-const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
+const LABEL = "budget-label text-[10px] text-muted-foreground/50";
 
 interface CategoryAccordionListProps {
   categorizedGroups: CategorizedGroup[];
@@ -78,10 +77,7 @@ export function CategoryAccordionList({
           <Layers className="h-3.5 w-3.5 text-muted-foreground/40" aria-hidden />
           <p className={LABEL}>O que está incluído</p>
         </div>
-        <span
-          className="text-[10px] font-mono text-muted-foreground/35 tabular-nums"
-          style={MONO_STYLE}
-        >
+        <span className="budget-numeric text-[10px] text-muted-foreground/35">
           {totalSections} {totalSections === 1 ? "categoria" : "categorias"} · {totalItems} itens
         </span>
       </div>

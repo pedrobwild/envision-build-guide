@@ -22,11 +22,11 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
     <div className="rounded-lg border border-border bg-card p-5">
       <div className="flex items-center gap-2 mb-3">
         <CreditCard className="h-4 w-4 text-primary" />
-        <h4 className="font-display font-bold text-sm text-foreground">Formas de Pagamento</h4>
+        <h4 className="budget-heading font-bold text-sm text-foreground">Formas de Pagamento</h4>
       </div>
 
       <p className="text-sm text-muted-foreground font-body mb-4">
-        Cartão de crédito em até <strong className="text-foreground">12× sem juros</strong>.
+        Cartão de crédito em até <strong className="text-foreground"><span className="budget-numeric">12×</span> sem juros</strong>.
       </p>
 
       {/* Dropdown selector */}
@@ -61,7 +61,7 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
                     }`}
                   >
                     <span>{opt.label}</span>
-                    <span className="font-semibold tabular-nums">{formatBRL(total / opt.months)} <span className="font-normal text-muted-foreground">sem juros</span></span>
+                    <span className="font-semibold budget-currency">{formatBRL(total / opt.months)} <span className="font-normal font-body text-muted-foreground">sem juros</span></span>
                   </button>
                 </li>
               ))}
@@ -77,9 +77,9 @@ export function InstallmentSimulator({ total }: InstallmentSimulatorProps) {
         className="text-center"
       >
         <p className="text-sm text-muted-foreground font-body mb-1">
-          {selected}× de
+          <span className="budget-numeric font-semibold text-foreground">{selected}×</span> de
         </p>
-        <p className="font-display font-bold text-xl text-primary" style={{ fontVariantNumeric: "tabular-nums" }}>
+        <p className="budget-currency font-extrabold text-xl text-primary">
           {formatBRL(total / selected)}
         </p>
         <p className="text-xs text-muted-foreground font-body mt-3">

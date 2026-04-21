@@ -83,7 +83,7 @@ export function BudgetSummary({
       <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xl">
         {/* Header — clean, typographic */}
         <div className="px-5 pt-5 pb-3">
-          <h3 className="font-display font-bold text-base text-foreground tracking-tight">
+          <h3 className="budget-heading font-bold text-base text-foreground">
             Orçamento. Bwild
           </h3>
           <p className="mt-1.5 text-xs text-muted-foreground font-body">
@@ -250,7 +250,7 @@ function FlatSectionList({
             </span>
             <span
               className={cn(
-                "text-sm font-mono tabular-nums whitespace-nowrap",
+                "text-sm budget-currency whitespace-nowrap",
                 isActive ? "text-primary font-semibold" : "text-muted-foreground"
               )}
             >
@@ -274,7 +274,7 @@ function AdjustmentsList({ adjustments }: { adjustments: AdjustmentRow[] }) {
             </span>
             <span
               className={cn(
-                "text-sm font-medium font-mono tabular-nums",
+                "text-sm font-medium budget-currency",
                 adj.sign > 0 ? "text-foreground" : "text-success"
               )}
             >
@@ -288,8 +288,6 @@ function AdjustmentsList({ adjustments }: { adjustments: AdjustmentRow[] }) {
 }
 
 function TotalCard({ total, installments }: { total: number; installments: number }) {
-  const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
-
   return (
     <div
       className="mx-5 mb-4 rounded-xl border border-primary/10 px-5 py-5 relative overflow-hidden"
@@ -305,30 +303,27 @@ function TotalCard({ total, installments }: { total: number; installments: numbe
       />
       <div className="relative space-y-3">
         <div className="space-y-1.5">
-          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground">
+          <p className="budget-label text-[10px] text-muted-foreground">
             Investimento Total
           </p>
           <CountUpValue
             value={total}
             className={cn(
-              "font-mono font-extrabold text-primary leading-none block tabular-nums",
+              "budget-currency font-extrabold text-primary leading-none block",
               total >= 1_000_000 ? "text-[1.5rem]" : "text-[1.875rem]"
             )}
-            style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}
+            style={{ letterSpacing: '-0.03em' }}
           />
         </div>
 
         {/* Installment preview */}
         <div className="flex items-baseline gap-1.5 flex-wrap">
           <span className="text-[12px] font-body text-muted-foreground">ou</span>
-          <span
-            className="font-mono text-sm font-semibold text-foreground tabular-nums"
-            style={MONO_STYLE}
-          >
+          <span className="budget-currency text-sm font-semibold text-foreground">
             {formatBRL(total / installments)}
           </span>
           <span className="text-[12px] font-body text-muted-foreground">
-            em {installments}× sem juros
+            em <span className="budget-numeric">{installments}×</span> sem juros
           </span>
         </div>
 

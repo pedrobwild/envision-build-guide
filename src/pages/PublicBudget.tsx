@@ -80,12 +80,12 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
         )}
       >
         <div className={cn("w-1 h-5 rounded-full", group.category.bgClass)} />
-        <span className={cn("text-sm sm:text-base font-display font-bold tracking-tight flex-1", group.category.colorClass)}>
+        <span className={cn("text-sm sm:text-base budget-heading font-bold tracking-tight flex-1", group.category.colorClass)}>
           {group.category.label}
         </span>
         {/* Mobile: item count badge + chevron */}
         <span className="flex items-center gap-1.5 sm:hidden">
-          <span className="text-xs font-mono text-muted-foreground tabular-nums bg-muted/60 px-1.5 py-0.5 rounded-full">
+          <span className="text-xs budget-numeric text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">
             {itemCount}
           </span>
           <motion.svg
@@ -130,7 +130,7 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />
                     <span className="flex-1">{item.title}</span>
                     {item.qty && (
-                      <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
+                      <span className="text-xs text-muted-foreground budget-numeric flex-shrink-0">
                         {item.qty} {item.unit || "un"}
                       </span>
                     )}
@@ -286,7 +286,7 @@ export default function PublicBudget() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">Erro ao carregar</h1>
+          <h1 className="text-2xl sm:text-3xl budget-heading font-bold text-foreground mb-2">Erro ao carregar</h1>
           <p className="text-sm text-muted-foreground font-body">{loadError}</p>
         </div>
       </div>
@@ -297,7 +297,7 @@ export default function PublicBudget() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-2">Proposta não encontrada</h1>
+          <h1 className="text-2xl sm:text-3xl budget-heading font-bold text-foreground mb-2">Proposta não encontrada</h1>
           <p className="text-sm text-muted-foreground font-body">Este link pode ter expirado ou estar incorreto. Entre em contato com sua consultora.</p>
         </div>
       </div>
@@ -333,7 +333,7 @@ export default function PublicBudget() {
       {/* Skip to content — keyboard/screen reader */}
       <a
         href="#budget-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:text-sm focus:font-display focus:font-bold"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:text-sm focus:font-body focus:font-bold"
       >
         Ir para o conteúdo
       </a>
@@ -510,7 +510,7 @@ export default function PublicBudget() {
                       {/* Desktop-only static header */}
                       <div className="hidden lg:flex items-center justify-between pt-1 sm:pt-2 pb-2 sm:pb-3 gap-2 sm:gap-3">
                         <div className="min-w-0">
-                          <h2 className="text-lg lg:text-3xl font-display font-bold text-foreground tracking-tight leading-tight">
+                          <h2 className="text-lg lg:text-3xl budget-heading font-bold text-foreground tracking-tight leading-tight">
                             Itens do Projeto
                           </h2>
                           <p className="text-muted-foreground text-xs mt-0.5 font-body">

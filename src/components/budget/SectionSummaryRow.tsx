@@ -17,8 +17,6 @@ function toTitleCase(str: string): string {
     .join(" ");
 }
 
-const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
-
 interface SectionSummaryRowProps {
   section: BudgetSection;
   colorClass: string;
@@ -106,10 +104,9 @@ export function SectionSummaryRow({
         {/* Value */}
         <span
           className={cn(
-            "font-mono tabular-nums font-semibold whitespace-nowrap text-foreground",
+            "budget-currency font-semibold whitespace-nowrap text-foreground",
             compact ? "text-[13px]" : "text-sm"
           )}
-          style={MONO_STYLE}
         >
           {formatBRL(subtotal)}
         </span>
@@ -173,7 +170,7 @@ export function SectionSummaryRow({
                         )}
                         <span className="text-[12px] font-body text-muted-foreground leading-relaxed flex-1">
                           {item.qty && item.qty > 1 && (
-                            <span className="font-mono text-[11px] text-muted-foreground mr-1 tabular-nums" style={MONO_STYLE}>
+                            <span className="budget-numeric text-[11px] text-muted-foreground mr-1">
                               {item.qty}×
                             </span>
                           )}
@@ -181,10 +178,7 @@ export function SectionSummaryRow({
                         </span>
                       </div>
                       {item.unit && (
-                        <span
-                          className="text-[10px] text-muted-foreground font-mono uppercase whitespace-nowrap tracking-wider mt-0.5 tabular-nums"
-                          style={MONO_STYLE}
-                        >
+                        <span className="budget-numeric text-[10px] text-muted-foreground uppercase whitespace-nowrap tracking-wider mt-0.5">
                           {item.unit}
                         </span>
                       )}

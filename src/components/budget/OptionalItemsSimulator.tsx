@@ -122,7 +122,7 @@ export function OptionalItemsSimulator({
           <ShoppingBag className="h-5 w-5 text-warning" />
         </div>
         <div>
-          <h3 className="font-display font-bold text-base text-foreground tracking-tight">
+          <h3 className="budget-heading font-bold text-base text-foreground">
             Itens Opcionais
           </h3>
           <p className="text-xs text-muted-foreground font-body mt-0.5">
@@ -182,7 +182,7 @@ export function OptionalItemsSimulator({
               {/* Value */}
               <span
                 className={cn(
-                  "text-sm font-mono tabular-nums font-semibold whitespace-nowrap",
+                  "text-sm budget-currency font-semibold whitespace-nowrap",
                   isSelected ? "text-primary" : "text-muted-foreground"
                 )}
               >
@@ -209,7 +209,7 @@ export function OptionalItemsSimulator({
                   <span className="text-xs text-muted-foreground font-body">
                     Total base
                   </span>
-                  <span className="text-sm font-mono tabular-nums text-muted-foreground">
+                  <span className="text-sm budget-currency text-muted-foreground">
                     {formatBRL(baseTotal)}
                   </span>
                 </div>
@@ -217,7 +217,7 @@ export function OptionalItemsSimulator({
                   <span className="text-xs text-warning font-body font-medium flex items-center gap-1">
                     <Sparkles className="h-3 w-3" /> Opcionais selecionados
                   </span>
-                  <span className="text-sm font-mono tabular-nums text-warning font-semibold">
+                  <span className="text-sm budget-currency text-warning font-semibold">
                     + {formatBRL(selectedTotal)}
                   </span>
                 </div>
@@ -230,7 +230,7 @@ export function OptionalItemsSimulator({
                       key={simulatedTotal}
                       initial={{ scale: 0.95 }}
                       animate={{ scale: 1 }}
-                      className="font-display font-extrabold text-lg text-primary tabular-nums"
+                      className="budget-currency font-extrabold text-lg text-primary"
                     >
                       {formatBRL(simulatedTotal)}
                     </motion.span>

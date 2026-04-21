@@ -28,8 +28,8 @@ export function MobilePriceAnchor({ total, validityDaysLeft, expired }: MobilePr
       <div className="flex items-center justify-between gap-3">
         {/* Price block */}
         <div className="min-w-0">
-          <p className="text-xs text-muted-foreground font-body mb-0.5">Investimento total</p>
-          <p className="text-2xl font-display font-bold text-foreground leading-none" style={{ letterSpacing: '-0.03em', fontFeatureSettings: '"tnum" 1' }}>
+          <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-muted-foreground mb-1">Investimento total</p>
+          <p className="text-2xl budget-currency font-extrabold text-foreground leading-none" style={{ letterSpacing: '-0.03em' }}>
             {formatBRL(total)}
           </p>
         </div>
@@ -45,8 +45,10 @@ export function MobilePriceAnchor({ total, validityDaysLeft, expired }: MobilePr
           }`}
         >
           <TrendingUp className="h-3.5 w-3.5 mb-0.5" />
-          <span className="text-[10px] font-body font-medium leading-tight">
-            {expired ? "Expirado" : `${validityDaysLeft}d`}
+          <span className="text-[10px] font-body font-semibold leading-tight">
+            {expired ? "Expirado" : (
+              <><span className="budget-numeric">{validityDaysLeft}</span>d</>
+            )}
           </span>
           {!expired && (
             <span className="text-[9px] font-body opacity-70 leading-tight">restantes</span>

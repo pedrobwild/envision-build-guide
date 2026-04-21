@@ -160,7 +160,7 @@ export function MobileBottomBar({
                   className="flex flex-col min-h-[44px] justify-center"
                   aria-label="Ver resumo financeiro"
                 >
-                  <span className="font-display font-bold text-foreground text-base tabular-nums">
+                  <span className="budget-currency font-bold text-foreground text-base">
                     {formatBRL(total)}
                   </span>
                   <span className="text-xs text-muted-foreground font-body flex items-center gap-1">
@@ -176,7 +176,7 @@ export function MobileBottomBar({
                     target="_blank"
                     rel="noopener noreferrer"
                     whileTap={{ scale: 0.97 }}
-                    className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
+                    className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap shadow-md shadow-primary/20 active:shadow-sm transition-shadow tracking-[-0.01em]"
                   >
                     <MessageCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                     Solicitar atualização
@@ -195,7 +195,7 @@ export function MobileBottomBar({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
                       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                      className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-display font-bold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap shadow-md shadow-primary/20 active:shadow-sm transition-shadow"
+                      className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm min-h-[48px] flex items-center gap-2 whitespace-nowrap shadow-md shadow-primary/20 active:shadow-sm transition-shadow tracking-[-0.01em]"
                     >
                       <CtaIcon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                       {currentCta.label}

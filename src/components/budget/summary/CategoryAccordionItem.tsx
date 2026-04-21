@@ -4,11 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 
-const MONO_STYLE: React.CSSProperties = {
-  fontFeatureSettings: '"tnum" 1',
-  letterSpacing: "-0.02em",
-};
-
 const LOWERCASE_WORDS = new Set([
   "e","de","do","da","dos","das","em","no","na","nos","nas","com","por","para","ao","aos",
 ]);
@@ -107,10 +102,7 @@ export function CategoryAccordionItem({
         )}
 
         {/* Value */}
-        <span
-          className="font-mono tabular-nums font-semibold whitespace-nowrap text-foreground text-[13px]"
-          style={MONO_STYLE}
-        >
+        <span className="budget-currency font-semibold whitespace-nowrap text-foreground text-[13px]">
           {formatBRL(data.subtotal)}
         </span>
       </button>
@@ -178,10 +170,7 @@ export function CategoryAccordionItem({
                         )}
                         <span className="text-[12px] font-body text-foreground/80 leading-relaxed flex-1">
                           {item.qty && item.qty > 1 && (
-                            <span
-                              className="font-mono text-[11px] text-muted-foreground mr-1 tabular-nums"
-                              style={MONO_STYLE}
-                            >
+                            <span className="budget-numeric text-[11px] text-muted-foreground mr-1">
                               {item.qty}×
                             </span>
                           )}
@@ -189,10 +178,7 @@ export function CategoryAccordionItem({
                         </span>
                       </div>
                       {item.unit && (
-                        <span
-                          className="text-[10px] text-muted-foreground font-mono uppercase whitespace-nowrap tracking-wider mt-0.5 tabular-nums"
-                          style={MONO_STYLE}
-                        >
+                        <span className="budget-numeric text-[10px] text-muted-foreground uppercase whitespace-nowrap tracking-wider mt-0.5">
                           {item.unit}
                         </span>
                       )}

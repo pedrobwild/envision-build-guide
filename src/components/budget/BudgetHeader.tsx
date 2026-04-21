@@ -28,8 +28,8 @@ interface BudgetHeaderProps {
 }
 
 /** Shared typography tokens */
-const MONO = "font-mono tabular-nums";
-const LABEL_MICRO = "text-[10px] uppercase tracking-[0.08em] font-body font-semibold";
+const MONO = "budget-numeric";
+const LABEL_MICRO = "budget-label text-[10px]";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 14 },
@@ -145,7 +145,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
               variants={fadeUp} custom={0.3} initial="hidden" animate="visible"
               className="space-y-1"
             >
-              <h1 className="font-display font-extrabold text-[clamp(18px,5.5vw,24px)] text-white leading-[1.15] tracking-[-0.03em] break-words">
+              <h1 className="budget-heading font-extrabold text-[clamp(18px,5.5vw,24px)] text-white leading-[1.15] tracking-[-0.03em] break-words">
                 {heroTitle}
               </h1>
               {clientName && projectTitle && !projectTitle.toLowerCase().includes(clientName.toLowerCase()) && (
@@ -191,7 +191,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
                 variants={fadeUp} custom={0} initial="hidden" animate="visible"
                 className="space-y-2.5"
               >
-                <h1 className="font-display font-extrabold text-[2.25rem] text-white leading-[1.08] tracking-[-0.03em] whitespace-nowrap overflow-hidden text-ellipsis">
+                <h1 className="budget-heading font-extrabold text-[2.25rem] text-white leading-[1.08] tracking-[-0.03em] whitespace-nowrap overflow-hidden text-ellipsis">
                   {heroTitle}
                 </h1>
 

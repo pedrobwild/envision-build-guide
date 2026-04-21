@@ -4,8 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 
-const MONO_VALUE = "font-mono tabular-nums font-semibold text-primary";
-const MONO_STYLE: React.CSSProperties = { fontFeatureSettings: '"tnum" 1', letterSpacing: '-0.02em' };
 const INSTALLMENT_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 12];
 
 interface InstallmentSimulatorProps {
@@ -38,7 +36,7 @@ export function InstallmentSimulator({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className={cn(MONO_VALUE, "text-[13px]")} style={MONO_STYLE}>
+          <span className="budget-currency text-[13px] font-semibold text-primary">
             {installments}×
           </span>
           <ChevronDown
@@ -78,17 +76,12 @@ export function InstallmentSimulator({
                     )}
                   >
                     <span className="font-body text-[13px]">
-                      <span className="font-mono tabular-nums" style={MONO_STYLE}>
-                        {n}
-                      </span>
+                      <span className="budget-numeric">{n}</span>
                       <span className="text-muted-foreground ml-1">
                         × {n === 1 ? "parcela" : "parcelas"}
                       </span>
                     </span>
-                    <span
-                      className="font-mono font-semibold tabular-nums text-[13px]"
-                      style={MONO_STYLE}
-                    >
+                    <span className="budget-currency font-semibold text-[13px]">
                       {formatBRL(total / n)}
                     </span>
                   </button>
