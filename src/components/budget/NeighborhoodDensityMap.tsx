@@ -938,6 +938,7 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
               const isLoaded = loadedSlides.has(i);
               const mount = shouldMount(i);
               const isPrefetchTarget = pendingNeighbor === i;
+              const hasError = erroredSlides.has(i);
               return (
                 <div key={i} className="flex-[0_0_100%] min-w-0 relative bg-muted">
                   {/* Skeleton: always rendered as the first paint frame.
@@ -960,7 +961,36 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                     </div>
                   </div>
 
-                  {mount && (
+                  {/* Blurred placeholder: shown when the image fails to load.
+                      Uses layered radial gradients to mimic an out-of-focus
+                      photo — no extra HTTP request, no broken-image flash.
+                      Fades in over the skeleton for a calm transition. */}
+                  {hasError && (
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-0 overflow-hidden animate-in fade-in duration-500"
+                    >
+                      {/* Soft color wash inspired by the brand palette */}
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background:
+                            "radial-gradient(120% 80% at 20% 20%, hsl(var(--primary) / 0.18), transparent 60%), radial-gradient(120% 80% at 80% 80%, hsl(var(--accent) / 0.16), transparent 60%), linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(var(--card)) 100%)",
+                          filter: "blur(2px)",
+                        }}
+                      />
+                      {/* Subtle noise/blur layer using backdrop for depth */}
+                      <div className="absolute inset-0 backdrop-blur-[6px]" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground/70">
+                        <Camera className="h-7 w-7" />
+                        <span className="text-[10px] font-body uppercase tracking-wider">
+                          Foto indisponível
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {mount && !hasError && (
                     <img
                       src={foto}
                       alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
@@ -984,24 +1014,13 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                         // If the image came straight from cache, onLoad may
                         // have already fired before React attached the listener.
                         if (el?.complete && el.naturalWidth > 0) markLoaded(i);
+                        // Some browsers report `complete` with naturalWidth=0
+                        // on broken images that resolved synchronously.
+                        else if (el?.complete && el.naturalWidth === 0) markErrored(i);
                       }}
-                      onError={(e) => {
-                        const el = e.target as HTMLImageElement;
-                        el.style.display = "none";
-                        const parent = el.parentElement;
-                        if (parent) {
-                          const fallback = parent.querySelector(".fallback-bg") as HTMLElement;
-                          if (fallback) fallback.style.display = "flex";
-                        }
-                        // Mark "loaded" so the skeleton stops shimmering and
-                        // the fallback (or empty slot) becomes the resting state.
-                        markLoaded(i);
-                      }}
+                      onError={() => markErrored(i)}
                     />
                   )}
-                  <div className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden">
-                    <Camera className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
                 </div>
               );
             })}
