@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 import { InsightsHistoryPanel } from "@/components/dashboard/InsightsHistoryPanel";
+import { ForecastPanel } from "@/components/admin/ForecastPanel";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { OperationsAlertsPanel } from "@/components/dashboard/OperationsAlertsPanel";
 import { MetricsTrendChart } from "@/components/dashboard/MetricsTrendChart";
 import { TimeInStageChart } from "@/components/dashboard/TimeInStageChart";
@@ -25,6 +27,8 @@ const anim = (delay: number) => ({
 
 export default function AnalisesPage() {
   const { user } = useAuth();
+  const { profile } = useUserProfile();
+  const isAdmin = profile?.roles.includes("admin") ?? false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
@@ -106,6 +110,11 @@ export default function AnalisesPage() {
           </div>
           <PeriodFilter value={dateRange} onChange={setDateRange} />
         </div>
+      </motion.div>
+
+      {/* FORECAST & PREVISIBILIDADE */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <ForecastPanel ownerFilter={null} isAdmin={isAdmin} />
       </motion.div>
 
       {/* INTELLIGENT ANALYSIS (current) */}
