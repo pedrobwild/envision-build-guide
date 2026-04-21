@@ -241,6 +241,45 @@ export function ROISimulator({
         </p>
       </div>
 
+      {/* Composição do investimento (compra + reforma) */}
+      <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+        <div className="flex items-center gap-1.5">
+          <Home className="h-3 w-3 text-primary" />
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
+            Investimento total considerado no payback
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-1.5 text-center">
+          <div className="rounded-md bg-background border border-border p-2">
+            <p className="text-[9px] text-muted-foreground font-mono uppercase">Studio</p>
+            <p
+              className="text-xs font-display font-bold text-foreground"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatBRL(studioPrice)}
+            </p>
+          </div>
+          <div className="rounded-md bg-background border border-border p-2">
+            <p className="text-[9px] text-muted-foreground font-mono uppercase">Reforma</p>
+            <p
+              className="text-xs font-display font-bold text-foreground"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatBRL(safeTotal)}
+            </p>
+          </div>
+          <div className="rounded-md bg-primary/10 border border-primary/25 p-2">
+            <p className="text-[9px] text-muted-foreground font-mono uppercase">Total</p>
+            <p
+              className="text-xs font-display font-bold text-primary"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatBRL(totalInvestment)}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Sliders */}
       <div className="space-y-4">
         <div>
