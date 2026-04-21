@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, formatDistanceToNow, isPast, differenceInHours } from "date-fns";
@@ -249,6 +249,101 @@ export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Pr
     setOutcomeId(null);
     setOutcomeText("");
   }
+
+  // Atalho de teclado: pressione "T" para alternar entre Pendentes e Concluídas.
+  // Sequência "T → A" mostra Atrasadas, "T → 2" (ou "T → H") mostra "Em 24h",
+  // "T → L" mostra Todas. Ignora quando o usuário está digitando ou modais abertos.
+  const filterRef = useRef<TaskFilter>(filter);
+  useEffect(() => {
+    filterRef.current = filter;
+  }, [filter]);
+
+  useEffect(() => {
+    let waitingForSecond = false;
+    let resetTimer: ReturnType<typeof setTimeout> | null = null;
+    const reset = () => {
+      waitingForSecond = false;
+      if (resetTimer) clearTimeout(resetTimer);
+      resetTimer = null;
+    };
+
+    const isTyping = (target: EventTarget | null): boolean => {
+      if (!(target instanceof HTMLElement)) return false;
+      const tag = target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+      if (target.isContentEditable) return true;
+      if (target.closest("[role='combobox']")) return true;
+      if (target.closest("[role='dialog']")) return true;
+      return false;
+    };
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isTyping(e.target)) return;
+      // Não disparar se houver dialog/sheet/drawer aberto na página
+      if (document.querySelector("[role='dialog'][data-state='open']")) return;
+
+      const key = e.key.toLowerCase();
+
+      if (waitingForSecond) {
+        e.preventDefault();
+        reset();
+        switch (key) {
+          case "p":
+            setFilter("pending");
+            toast("Filtro: Pendentes", { duration: 1200 });
+            break;
+          case "c":
+            setFilter("completed");
+            toast("Filtro: Concluídas", { duration: 1200 });
+            break;
+          case "a":
+            setFilter("overdue");
+            toast("Filtro: Atrasadas", { duration: 1200 });
+            break;
+          case "h":
+          case "2":
+            setFilter("due_soon");
+            toast("Filtro: Em 24h", { duration: 1200 });
+            break;
+          case "l":
+            setFilter("all");
+            toast("Filtro: Todas", { duration: 1200 });
+            break;
+        }
+        return;
+      }
+
+      // Tecla única: "T" alterna Pendentes ↔ Concluídas, ou inicia sequência
+      if (key === "t" && !e.shiftKey) {
+        e.preventDefault();
+        const next: TaskFilter = filterRef.current === "pending" ? "completed" : "pending";
+        setFilter(next);
+        toast(next === "pending" ? "Filtro: Pendentes" : "Filtro: Concluídas", {
+          description: "T novamente para alternar · T→A Atrasadas · T→H Em 24h · T→L Todas",
+          duration: 1800,
+        });
+        return;
+      }
+
+      // Shift+T abre o modo de sequência (sem alternar imediatamente)
+      if (key === "t" && e.shiftKey) {
+        e.preventDefault();
+        waitingForSecond = true;
+        resetTimer = setTimeout(reset, 1500);
+        toast("Filtro de tarefas", {
+          description: "P Pendentes · C Concluídas · A Atrasadas · H Em 24h · L Todas",
+          duration: 1500,
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      if (resetTimer) clearTimeout(resetTimer);
+    };
+  }, []);
 
   const FILTERS: { key: TaskFilter; label: string; icon: React.ComponentType<{ className?: string }>; tone: string }[] = [
     { key: "pending", label: "Pendentes", icon: Circle, tone: "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:border-primary/30" },
