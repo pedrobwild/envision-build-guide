@@ -840,13 +840,14 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         aria-selected={isHighlighted}
         aria-label={`${project.displayName}, ${project.metragem} metros quadrados, ${project.bairro}`}
         className={cn(
-          "rounded-xl border overflow-hidden bg-card transition-all duration-300 outline-none",
+          "group/card rounded-xl border overflow-hidden bg-card outline-none",
+          "transition-[transform,box-shadow,border-color] duration-300 ease-out will-change-transform",
           "max-md:min-w-[260px] max-md:snap-start max-md:flex-shrink-0",
-          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           isHighlighted
-            ? "border-primary ring-2 ring-primary/30 shadow-lg"
+            ? "border-primary ring-4 ring-primary/40 shadow-xl shadow-primary/20 -translate-y-0.5 scale-[1.015]"
             : hovering
-            ? "border-primary/40 shadow-md"
+            ? "border-primary/40 shadow-md -translate-y-px"
             : "border-border"
         )}
         onMouseEnter={handleMouseEnter}
