@@ -252,6 +252,48 @@ export function ROISimulatorModal({
 
             {/* Parâmetros */}
             <TabsContent value="parametros" className="space-y-5 mt-4">
+              {/* Composição do investimento */}
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Home className="h-4 w-4 text-primary" />
+                  <h4 className="font-display font-bold text-sm text-foreground">
+                    Composição do investimento (base do payback)
+                  </h4>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-md bg-background border border-border p-2">
+                    <p className="text-[9px] text-muted-foreground font-mono uppercase">Studio</p>
+                    <p className="text-xs font-display font-bold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatBRL(studioPrice)}
+                    </p>
+                  </div>
+                  <div className="rounded-md bg-background border border-border p-2">
+                    <p className="text-[9px] text-muted-foreground font-mono uppercase">Reforma</p>
+                    <p className="text-xs font-display font-bold text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatBRL(safeTotal)}
+                    </p>
+                  </div>
+                  <div className="rounded-md bg-primary/15 border border-primary/30 p-2">
+                    <p className="text-[9px] text-muted-foreground font-mono uppercase">Total</p>
+                    <p className="text-xs font-display font-bold text-primary" style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatBRL(totalInvestment)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <SliderRow
+                label="Valor de compra do studio"
+                value={formatBRL(studioPrice)}
+                helper="Mercado: studios em SP custam em média R$ 350 mil a R$ 400 mil"
+                ariaLabel="Valor de compra do studio"
+                sliderValue={[studioPrice]}
+                min={STUDIO_PRICE_MIN}
+                max={STUDIO_PRICE_MAX}
+                step={5_000}
+                onChange={(v) => setStudioPrice(v)}
+              />
+
               <SliderRow
                 label="Diária média"
                 value={formatBRL(nightly)}
@@ -294,7 +336,7 @@ export function ROISimulatorModal({
                   onClick={handleReset}
                   className="text-xs text-primary underline underline-offset-2 hover:text-primary/80 transition-colors font-body"
                 >
-                  Voltar para a média do bairro (ROI {formatPct(baselineRoi)})
+                  Voltar aos valores de referência (ROI {formatPct(baselineRoi)})
                 </button>
               )}
             </TabsContent>
