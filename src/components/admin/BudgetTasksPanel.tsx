@@ -456,12 +456,14 @@ function TaskRow({
   onComplete,
   onReopen,
   onDelete,
+  onOpenDetail,
 }: {
   activity: Activity;
   ownerName: string;
   onComplete?: () => void;
   onReopen?: () => void;
   onDelete?: () => void;
+  onOpenDetail?: () => void;
 }) {
   const Icon = TYPE_ICON[activity.type] ?? FileText;
   const completed = !!activity.completed_at;
@@ -474,12 +476,18 @@ function TaskRow({
   return (
     <li
       className={cn(
-        "group rounded-lg border bg-card p-2.5 transition-colors",
+        "group rounded-lg border bg-card p-2.5 transition-colors cursor-pointer",
         completed && "border-border/40",
         isOverdue && "border-destructive/40 bg-destructive/[0.03]",
         isDueSoon && "border-warning/40 bg-warning/[0.03]",
         !completed && !isOverdue && !isDueSoon && "border-border hover:border-border/80",
       )}
+      onClick={(e) => {
+        // Ignora cliques nos botões internos (checkbox/delete)
+        const target = e.target as HTMLElement;
+        if (target.closest("button")) return;
+        onOpenDetail?.();
+      }}
     >
       <div className="flex items-start gap-2.5">
         <button
