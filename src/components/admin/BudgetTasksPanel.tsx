@@ -323,29 +323,79 @@ export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Pr
         </div>
       </div>
 
-      {/* Context chip — quando filtrado por módulo da sidebar */}
-      {contextFilter && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/[0.04] px-2.5 py-1.5">
-          <Filter className="h-3 w-3 text-primary shrink-0" />
-          <p className="text-[11px] font-body text-foreground leading-tight flex-1 min-w-0">
-            Filtrando por contexto:{" "}
-            <span className="font-semibold text-primary">{contextFilter.label}</span>
-            <span className="text-muted-foreground ml-1.5 tabular-nums">
-              ({counts.all}
-              {contextHidden > 0 ? ` de ${counts.all + contextHidden}` : ""})
-            </span>
-          </p>
-          {contextFilter.onClear && (
-            <button
-              type="button"
-              onClick={contextFilter.onClear}
-              className="inline-flex items-center gap-1 text-[10.5px] font-body text-muted-foreground hover:text-foreground rounded px-1.5 py-0.5 hover:bg-muted/60 transition-colors shrink-0"
-              title="Mostrar todas as ações"
-            >
-              <X className="h-3 w-3" />
-              Limpar
-            </button>
+      {/* Filtros ativos — mostra contexto + status simultaneamente */}
+      {(contextFilter || filter !== "pending") && (
+        <div
+          className={cn(
+            "flex items-start gap-2 rounded-lg border px-2.5 py-2",
+            contextFilter
+              ? "border-primary/30 bg-primary/[0.04]"
+              : "border-border bg-muted/30",
           )}
+        >
+          <Filter
+            className={cn(
+              "h-3 w-3 mt-0.5 shrink-0",
+              contextFilter ? "text-primary" : "text-muted-foreground",
+            )}
+          />
+          <div className="flex-1 min-w-0 flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-body uppercase tracking-wider text-muted-foreground">
+              Filtros ativos:
+            </span>
+
+            {/* Pílula de contexto */}
+            {contextFilter && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 pl-2 pr-1 py-0.5 text-[10.5px] font-body font-medium text-primary">
+                <span className="text-[9px] font-normal text-primary/70">
+                  Contexto:
+                </span>
+                {contextFilter.label}
+                {contextFilter.onClear && (
+                  <button
+                    type="button"
+                    onClick={contextFilter.onClear}
+                    className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full hover:bg-primary/20 transition-colors"
+                    title="Limpar filtro de contexto"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                )}
+              </span>
+            )}
+
+            {/* Pílula de status (quando diferente do default) */}
+            {filter !== "pending" && (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border pl-2 pr-1 py-0.5 text-[10.5px] font-body font-medium",
+                  filter === "overdue" && "border-destructive/30 bg-destructive/10 text-destructive",
+                  filter === "due_soon" && "border-warning/30 bg-warning/15 text-warning",
+                  filter === "completed" && "border-success/30 bg-success/10 text-success",
+                  filter === "all" && "border-border bg-muted text-foreground",
+                )}
+              >
+                <span className="text-[9px] font-normal opacity-70">Status:</span>
+                {FILTERS.find((f) => f.key === filter)?.label}
+                <button
+                  type="button"
+                  onClick={() => setFilter("pending")}
+                  className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full hover:bg-foreground/10 transition-colors"
+                  title="Voltar para Pendentes"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            )}
+
+            {/* Resumo de resultados */}
+            <span className="text-[10.5px] font-body text-muted-foreground tabular-nums ml-auto pl-1">
+              {visible.length} {visible.length === 1 ? "resultado" : "resultados"}
+              {contextFilter && contextHidden > 0 && (
+                <span className="opacity-70"> · {contextHidden} oculta(s) por contexto</span>
+              )}
+            </span>
+          </div>
         </div>
       )}
 
