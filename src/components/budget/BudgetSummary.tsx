@@ -164,30 +164,14 @@ export function BudgetSummary({
 
 function ValidityNotice({ validity }: { validity: ReturnType<typeof getValidityInfo> | null }) {
   if (!validity) return null;
+  // Aviso "Valores válidos até ..." removido a pedido — mantém apenas o estado de expirado.
+  if (!validity.expired) return null;
 
   return (
-    <div
-      className={cn(
-        "rounded-xl p-3.5 flex items-start gap-2.5",
-        validity.expired
-          ? "bg-destructive/8 border border-destructive/15"
-          : "bg-warning/8 border border-warning/15"
-      )}
-    >
-      {validity.expired ? (
-        <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
-      ) : (
-        <Clock className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
-      )}
-      <p
-        className={cn(
-          "text-[13px] font-body leading-relaxed",
-          validity.expired ? "text-destructive" : "text-foreground"
-        )}
-      >
-        {validity.expired
-          ? "Valores e condições expirados — solicite uma atualização."
-          : `Valores válidos até ${formatDateLong(validity.expiresAt)}.`}
+    <div className="rounded-xl p-3.5 flex items-start gap-2.5 bg-destructive/8 border border-destructive/15">
+      <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+      <p className="text-[13px] font-body leading-relaxed text-destructive">
+        Valores e condições expirados — solicite uma atualização.
       </p>
     </div>
   );
