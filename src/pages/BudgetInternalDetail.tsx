@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { CommentQuickTemplates } from "@/components/editor/CommentQuickTemplates";
 import { Separator } from "@/components/ui/separator";
-import { ModuleCard } from "@/components/demanda/ModuleCard";
+// ModuleCard removido: a página de demanda agora usa DemandSidebarNav
 import { PipelineProgress, type PipelineStage } from "@/components/demanda/PipelineProgress";
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { useBudgetHub } from "@/hooks/useBudgetHub";
@@ -68,6 +68,8 @@ import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
+import { BudgetTasksPanel } from "@/components/admin/BudgetTasksPanel";
+import { DemandSidebarNav } from "@/components/demanda/DemandSidebarNav";
 import { formatBRL } from "@/lib/formatBRL";
 
 interface BudgetDetail {
@@ -786,127 +788,199 @@ export default function BudgetInternalDetail() {
           </div>
         </section>
 
-        {/* MODULES HEADER */}
-        <div className="flex items-center justify-between mb-3 mt-8">
-          <h2 className="text-xs font-display font-semibold text-muted-foreground uppercase tracking-wider">
-            Módulos
-          </h2>
-          {budget.updated_at && (
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground font-body">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Atualizado {format(new Date(budget.updated_at), "dd/MM HH:mm")}
-            </span>
-          )}
-        </div>
+        {/* WORKSPACE: Sidebar de módulos + Painel de ações */}
+        <section className="mt-8 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-5">
+          {/* Coluna esquerda: lista de botões */}
+          <aside className="lg:sticky lg:top-20 lg:self-start">
+            <DemandSidebarNav
+              items={[
+                {
+                  key: "budget",
+                  icon: ClipboardList,
+                  label: "Orçamento",
+                  description: `${sectionsCount} seções · ${itemsCount} itens · ${formatBRL(totalDisplay)}`,
+                  badge: budget.public_id
+                    ? { label: "publicado", tone: "info" }
+                    : { label: "rascunho", tone: "neutral" },
+                  active: activeModule === "budget",
+                  onClick: () => setActiveModule("budget"),
+                },
+                {
+                  key: "briefing",
+                  icon: FileText,
+                  label: "Briefing & Contexto",
+                  description: budget.briefing || budget.demand_context || "Sem briefing cadastrado.",
+                  active: activeModule === "briefing",
+                  onClick: () => setActiveModule("briefing"),
+                },
+                {
+                  key: "unified",
+                  icon: Activity,
+                  label: "Linha do Tempo",
+                  description: "Status, notas, reuniões e mensagens cronológicas.",
+                  badge: { label: "novo", tone: "success" },
+                  active: activeModule === "unified",
+                  onClick: () => setActiveModule("unified"),
+                },
+                {
+                  key: "meetings",
+                  icon: Video,
+                  label: "Reuniões",
+                  description: hub.data?.meetingsCount
+                    ? `${hub.data.meetingsCount} gravada${hub.data.meetingsCount === 1 ? "" : "s"} pela IA`
+                    : "Gravações e análise IA.",
+                  active: activeModule === "meetings",
+                  onClick: () => setActiveModule("meetings"),
+                },
+                {
+                  key: "conversations",
+                  icon: MessageCircle,
+                  label: "Conversas",
+                  description: hub.data?.conversationsCount
+                    ? `${hub.data.conversationsCount} conversa${hub.data.conversationsCount === 1 ? "" : "s"}`
+                    : "WhatsApp e canais.",
+                  badge: { label: "em breve", tone: "info" },
+                  active: activeModule === "conversations",
+                  onClick: () => setActiveModule("conversations"),
+                },
+                {
+                  key: "media",
+                  icon: ImageIcon,
+                  label: "Mídias & Projetos",
+                  description: "Vídeos 3D, fotos e PDFs.",
+                  onClick: () => navigate(`/admin/budget/${budget.id}`),
+                },
+                {
+                  key: "client",
+                  icon: User,
+                  label: "Cliente",
+                  description: budget.client_name,
+                  active: activeModule === "client",
+                  onClick: () => setActiveModule("client"),
+                },
+                {
+                  key: "versions",
+                  icon: History,
+                  label: "Versões & PDFs",
+                  description: "Histórico de versões.",
+                  active: activeModule === "versions",
+                  onClick: () => setActiveModule("versions"),
+                },
+                {
+                  key: "lost",
+                  icon: XCircle,
+                  label: budget.internal_status === "lost" ? "Negócio perdido" : "Marcar como perdida",
+                  description: hub.data?.lostReason
+                    ? `${hub.data.lostReason.reason_category}${hub.data.lostReason.competitor_name ? ` · ${hub.data.lostReason.competitor_name}` : ""}`
+                    : "Registrar motivo estruturado.",
+                  destructive: true,
+                  badge: budget.internal_status === "lost" ? { label: "perdida", tone: "destructive" } : undefined,
+                  onClick: () => {
+                    if (budget.internal_status === "lost") {
+                      setActiveModule("lost");
+                    } else {
+                      setLostDialogOpen(true);
+                    }
+                  },
+                },
+              ]}
+            />
+          </aside>
 
-        {/* MODULES GRID */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <ModuleCard
-            icon={Activity}
-            title="Tudo (Linha do Tempo)"
-            description="Status, notas, tarefas, reuniões e mensagens em uma só visão cronológica."
-            badge={{ label: "Novo", tone: "success" }}
-            active={activeModule === "unified"}
-            onClick={() => setActiveModule("unified")}
-          />
-          <ModuleCard
-            icon={FileText}
-            title="Briefing & Contexto"
-            description={budget.briefing || budget.demand_context || "Sem briefing cadastrado ainda."}
-            meta={links.length > 0 ? `${links.length} ${links.length === 1 ? "link" : "links"}` : undefined}
-            active={activeModule === "briefing"}
-            onClick={() => setActiveModule("briefing")}
-          />
-          <ModuleCard
-            icon={ClipboardList}
-            title="Orçamento"
-            description={`${sectionsCount} seções · ${itemsCount} itens · ${formatBRL(totalDisplay)}`}
-            badge={budget.public_id ? { label: "publicado", tone: "info" } : { label: "rascunho", tone: "neutral" }}
-            active={activeModule === "budget"}
-            onClick={() => setActiveModule("budget")}
-          />
-          <ModuleCard
-            icon={Activity}
-            title="Atividades"
-            description={
-              hub.data?.pendingActivitiesCount
-                ? `${hub.data.pendingActivitiesCount} pendente${hub.data.pendingActivitiesCount === 1 ? "" : "s"} · ${events.length} eventos`
-                : `${events.length} eventos · ${comments.length} notas internas`
-            }
-            meta={
-              hub.data?.nextActivityDate
-                ? `Próxima ${format(new Date(hub.data.nextActivityDate), "dd/MM HH:mm")}`
-                : events.length > 0
-                ? `Última ${format(new Date(events[events.length - 1].created_at), "dd/MM HH:mm")}`
-                : undefined
-            }
-            badgeRight={comments.length > 0 ? { label: `${comments.length}`, tone: "neutral" } : undefined}
-            active={activeModule === "activities"}
-            onClick={() => setActiveModule("activities")}
-          />
-          <ModuleCard
-            icon={Video}
-            title="Reuniões"
-            description={
-              hub.data?.meetingsCount
-                ? `${hub.data.meetingsCount} reunião${hub.data.meetingsCount === 1 ? "" : "ões"} gravada${hub.data.meetingsCount === 1 ? "" : "s"} pela IA`
-                : "Gravações, vídeos e análise IA (Elephan.ia)."
-            }
-            badgeRight={{ label: "Elephan.ia", tone: "success" }}
-            active={activeModule === "meetings"}
-            onClick={() => setActiveModule("meetings")}
-          />
-          <ModuleCard
-            icon={MessageCircle}
-            title="Conversas"
-            description={
-              hub.data?.conversationsCount
-                ? `${hub.data.conversationsCount} conversa${hub.data.conversationsCount === 1 ? "" : "s"}${hub.data.lastConversationAt ? ` · última ${format(new Date(hub.data.lastConversationAt), "dd/MM HH:mm")}` : ""}`
-                : "WhatsApp e canais de atendimento (Digisac)."
-            }
-            badgeRight={{ label: "Em breve", tone: "info" }}
-            active={activeModule === "conversations"}
-            onClick={() => setActiveModule("conversations")}
-          />
-          <ModuleCard
-            icon={ImageIcon}
-            title="Mídias & Projetos"
-            description="Vídeos 3D, fotos e PDFs executivos do orçamento."
-            onClick={() => navigate(`/admin/budget/${budget.id}`)}
-          />
-          <ModuleCard
-            icon={User}
-            title="Cliente"
-            description={budget.client_name}
-            meta={budget.client_phone ?? undefined}
-            active={activeModule === "client"}
-            onClick={() => setActiveModule("client")}
-          />
-          <ModuleCard
-            icon={History}
-            title="Versões & PDFs"
-            description="Histórico de versões publicadas e em ajuste."
-            active={activeModule === "versions"}
-            onClick={() => setActiveModule("versions")}
-          />
-          <ModuleCard
-            icon={XCircle}
-            title={budget.internal_status === "lost" ? "Negócio perdido" : "Marcar como perdida"}
-            description={
-              hub.data?.lostReason
-                ? `${hub.data.lostReason.reason_category}${hub.data.lostReason.competitor_name ? ` · ${hub.data.lostReason.competitor_name}` : ""}`
-                : "Registrar motivo estruturado · concorrente, preço, escopo…"
-            }
-            destructive
-            badgeRight={budget.internal_status === "lost" ? { label: "perdida", tone: "destructive" } : undefined}
-            onClick={() => {
-              if (budget.internal_status === "lost") {
-                setActiveModule("lost");
-              } else {
-                setLostDialogOpen(true);
-              }
-            }}
-          />
+          {/* Coluna direita: Ações & Tarefas (sempre visível) */}
+          <div className="min-w-0 space-y-5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <h2 className="text-base font-display font-semibold tracking-tight text-foreground">
+                  Ações & Acontecimentos
+                </h2>
+                <p className="text-xs text-muted-foreground font-body mt-0.5">
+                  Registre tarefas com prazo, marque concluídas e acompanhe o que está atrasado.
+                </p>
+              </div>
+              {budget.updated_at && (
+                <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-body">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Atualizado {format(new Date(budget.updated_at), "dd/MM HH:mm")}
+                </span>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+              <BudgetTasksPanel budgetId={budget.id} getProfileName={getProfileName} />
+            </div>
+
+            {/* Notas internas rápidas */}
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-2">
+                  💬 Notas Internas
+                  <span className="text-[11px] text-muted-foreground font-body font-normal">
+                    ({comments.length})
+                  </span>
+                </h3>
+                {comments.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveModule("activities")}
+                    className="text-[11px] text-primary hover:underline font-body"
+                  >
+                    Ver todas →
+                  </button>
+                )}
+              </div>
+
+              {comments.length === 0 ? (
+                <p className="text-xs text-muted-foreground font-body italic mb-3">
+                  Nenhuma nota interna ainda. Registre o primeiro acontecimento abaixo.
+                </p>
+              ) : (
+                <div className="space-y-2.5 mb-3 max-h-64 overflow-y-auto">
+                  {comments.slice(-3).reverse().map((c) => (
+                    <div key={c.id} className="flex gap-2.5">
+                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <User className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[12px] font-medium font-body text-foreground">
+                            {getProfileName(c.user_id)}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-body">
+                            {format(new Date(c.created_at), "dd/MM HH:mm")}
+                          </span>
+                        </div>
+                        <p className="text-[12.5px] font-body text-foreground whitespace-pre-wrap leading-relaxed">
+                          {c.body}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <CommentQuickTemplates value={newComment} onChange={setNewComment} textareaRef={commentTextareaRef} />
+              <div className="flex gap-2 mt-2">
+                <Textarea
+                  ref={commentTextareaRef}
+                  placeholder="Registre um acontecimento ou nota interna... (digite / para templates)"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  rows={2}
+                  className="flex-1 text-sm"
+                  maxLength={2000}
+                />
+                <Button
+                  size="icon"
+                  disabled={!newComment.trim() || submitting}
+                  onClick={addComment}
+                  className="shrink-0 self-end"
+                >
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* DRILL-DOWN DRAWER */}
