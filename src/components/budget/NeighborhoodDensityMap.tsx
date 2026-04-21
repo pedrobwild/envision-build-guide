@@ -1026,7 +1026,12 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
         )}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onFocus={handleMouseEnter}
+        onFocus={() => {
+          handleMouseEnter();
+          // Promote this card to the active tab stop whenever it actually
+          // receives focus (mouse click, programmatic focus, etc.).
+          onCardFocus?.();
+        }}
         onBlur={handleMouseLeave}
       >
         {/* Photo carousel */}
