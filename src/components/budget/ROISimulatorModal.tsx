@@ -163,71 +163,48 @@ export function ROISimulatorModal({
         className={cn(
           // Bottom-sheet no mobile, dialog centrado no desktop
           "p-0 gap-0 overflow-hidden",
-          "max-w-[100vw] sm:max-w-3xl",
-          "h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[92dvh]",
+          "max-w-[100vw] sm:max-w-2xl",
+          "h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[88dvh]",
           // No mobile alinha embaixo (bottom-sheet feel) sem cantos arredondados no topo do viewport
           "rounded-none sm:rounded-lg",
           // Override do posicionamento padrão para bottom-sheet no mobile
           "top-0 left-0 translate-x-0 translate-y-0 sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%]",
         )}
       >
-        {/* Header gradiente — sticky no mobile para contexto durante scroll */}
-        <div className="sticky top-0 z-20 relative bg-gradient-to-br from-primary/15 via-primary/5 to-card border-b border-border px-4 sm:px-6 py-4 sm:py-5">
-          <DialogHeader className="text-left space-y-1.5">
+        {/* Header gradiente — compacto, sticky no mobile para contexto durante scroll */}
+        <div className="sticky top-0 z-20 relative bg-gradient-to-br from-primary/15 via-primary/5 to-card border-b border-border px-4 sm:px-5 py-3 sm:py-3.5">
+          <DialogHeader className="text-left space-y-1">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="h-4 w-4 text-primary" />
+              <div className="h-7 w-7 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" />
               </div>
               <div className="min-w-0 pr-8">
-                <DialogTitle className="font-display font-bold text-base sm:text-xl leading-tight">
+                <DialogTitle className="font-display font-bold text-[15px] sm:text-base leading-tight">
                   Simulador de Retorno
                 </DialogTitle>
-                <DialogDescription className="text-[11px] sm:text-sm font-body mt-0.5 leading-snug text-balance">
-                  <span className="sm:hidden">Design premium que valoriza seu imóvel — dados reais por bairro.</span>
-                  <span className="hidden sm:inline">Como nosso design premium e exclusivo valoriza o seu investimento — análise por bairro com dados reais de mercado</span>
+                <DialogDescription className="text-[10px] sm:text-[11px] font-body leading-snug text-balance text-muted-foreground">
+                  Design premium · análise por bairro
                 </DialogDescription>
               </div>
             </div>
 
-            {/* Bairro analisado — destaque */}
-            <div className="mt-2 sm:mt-3 rounded-lg border border-primary/30 bg-background/80 backdrop-blur-sm p-2.5 sm:p-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
-                  Análise para
-                </span>
-                <span className="font-display font-bold text-sm sm:text-base text-foreground inline-flex items-center gap-1.5 min-w-0">
-                  <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                  <span className="truncate">{baseline.label}</span>
-                </span>
-                {baseline.isFallback && (
-                  <Badge variant="outline" className="text-[9px] font-body">
-                    média SP
-                  </Badge>
-                )}
+            {/* Linha unificada: bairro + chips em scroll horizontal */}
+            <div className="flex items-center gap-1.5 flex-nowrap pt-1.5 -mx-1 px-1 overflow-x-auto scrollbar-none">
+              <Badge
+                variant="outline"
+                className="text-[10px] font-mono bg-background/80 border-primary/30 flex-shrink-0"
+              >
+                <MapPin className="h-3 w-3 mr-1 text-primary" />
+                <span className="truncate max-w-[120px]">{baseline.label}</span>
                 {district?.score && (
-                  <Badge variant="secondary" className="text-[10px] font-mono ml-auto">
-                    Score {district.score}/100
-                  </Badge>
+                  <span className="ml-1 text-muted-foreground">· {district.score}</span>
                 )}
-              </div>
-            </div>
-
-            {/* Chips de contexto — em scroll horizontal no mobile pra não quebrar */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap pt-1.5 sm:pt-2 -mx-1 px-1 overflow-x-auto sm:overflow-visible scrollbar-none">
+              </Badge>
               {metragem && (
                 <Badge variant="outline" className="text-[10px] font-mono bg-background/60 flex-shrink-0">
-                  <Building2 className="h-3 w-3 mr-1" />
                   {metragem}
                 </Badge>
               )}
-              <Badge variant="outline" className="text-[10px] font-mono bg-background/60 flex-shrink-0">
-                <Home className="h-3 w-3 mr-1" />
-                Studio {formatBRL(studioPrice)}
-              </Badge>
-              <Badge variant="outline" className="text-[10px] font-mono bg-background/60 flex-shrink-0">
-                <Calculator className="h-3 w-3 mr-1" />
-                Reforma {formatBRL(safeTotal)}
-              </Badge>
               <Badge variant="secondary" className="text-[10px] font-mono flex-shrink-0">
                 Total {formatBRL(totalInvestment)}
               </Badge>
@@ -236,7 +213,7 @@ export function ROISimulatorModal({
         </div>
 
         {/* Conteúdo scrollável */}
-        <div className="overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-[max(env(safe-area-inset-bottom),1rem)]">
+        <div className="overflow-y-auto overscroll-contain px-4 sm:px-5 py-3 sm:py-4 space-y-3 sm:space-y-4 pb-[max(env(safe-area-inset-bottom),1rem)]">
           {/* KPIs principais — 2 cols mobile, 4 desktop, com hierarquia visual */}
           <AnimatePresence mode="wait">
             <motion.div
@@ -586,65 +563,27 @@ export function ROISimulatorModal({
             </TabsContent>
           </Tabs>
 
-          {/* Footer — Fonte e disclaimer */}
-          <div className="border-t border-border pt-3 space-y-2">
+          {/* Footer — Fonte e disclaimer compacto */}
+          <div className="border-t border-border pt-2.5 space-y-1.5">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono">
-                  Fonte dos dados
-                </span>
-                <Badge variant="outline" className="text-[10px] font-mono bg-background">
-                  {district?.sourceLabel || "Bwild/AirDNA 2025 — média SP"}
-                </Badge>
-              </div>
+              <Badge variant="outline" className="text-[10px] font-mono bg-background">
+                {district?.sourceLabel || "Bwild/AirDNA 2025 — média SP"}
+              </Badge>
               <a
                 href="https://www.airdna.co/vacation-rental-data/app/br/sao-paulo/sao-paulo/overview"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[10px] font-mono text-primary hover:text-primary/80 transition-colors min-h-[28px]"
+                className="inline-flex items-center gap-1 text-[10px] font-mono text-primary hover:text-primary/80 transition-colors"
               >
-                Consultar dados de mercado
+                Ver mercado
                 <ExternalLink className="h-2.5 w-2.5" />
               </a>
             </div>
-            <div className="flex items-start gap-2">
-              <Info className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
-                Análise específica para{" "}
-                <strong className="text-foreground">{baseline.label}</strong>. O payback considera o{" "}
-                <strong className="text-foreground">investimento total</strong> = compra do studio
-                ({formatBRL(studioPrice)}) + reforma ({formatBRL(safeTotal)}). Resultado estimado —
-                sujeito a sazonalidade, gestão operacional, qualidade do anúncio e variação do
-                mercado. Não constitui promessa de retorno.
-              </p>
-            </div>
-
-            {/* Fontes oficiais detalhadas */}
-            <div className="rounded-md border border-border bg-muted/20 p-2.5 space-y-1.5">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono font-semibold">
-                Fontes oficiais consultadas
-              </p>
-              <ul className="space-y-1">
-                {DATA_SOURCES.map((src) => (
-                  <li key={src.label} className="flex items-start gap-1.5">
-                    <ExternalLink className="h-2.5 w-2.5 text-primary flex-shrink-0 mt-1" />
-                    <div className="min-w-0">
-                      <a
-                        href={src.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] font-mono text-primary hover:underline break-words"
-                      >
-                        {src.label}
-                      </a>
-                      <p className="text-[10px] text-muted-foreground font-body leading-snug">
-                        {src.description}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <p className="text-[10px] text-muted-foreground font-body leading-snug">
+              <Info className="h-3 w-3 inline mr-1 -mt-0.5" />
+              Investimento total = studio ({formatBRL(studioPrice)}) + reforma ({formatBRL(safeTotal)}).
+              Estimativa sujeita a sazonalidade e gestão. Não constitui promessa de retorno.
+            </p>
           </div>
         </div>
       </DialogContent>
@@ -668,25 +607,25 @@ function KpiTile({
   return (
     <div
       className={cn(
-        "rounded-lg border p-2.5 sm:p-3",
+        "rounded-lg border p-2 sm:p-2.5",
         accent
           ? "bg-primary/10 border-primary/25"
           : "bg-muted/40 border-border",
       )}
     >
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono mb-1 truncate">
+      <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-mono mb-0.5 truncate">
         {label}
       </p>
       <p
         className={cn(
-          "font-display font-bold text-base sm:text-xl leading-tight",
+          "font-display font-bold text-[15px] sm:text-lg leading-tight",
           accent ? "text-primary" : "text-foreground",
         )}
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
         {value}
       </p>
-      <p className="text-[10px] text-muted-foreground font-body mt-0.5 leading-tight truncate">{hint}</p>
+      <p className="text-[9px] text-muted-foreground font-body mt-0.5 leading-tight truncate">{hint}</p>
     </div>
   );
 }
