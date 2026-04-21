@@ -941,7 +941,7 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                     </div>
                   </div>
 
-                  {inView && (
+                  {mount && (
                     <img
                       src={foto}
                       alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
@@ -949,12 +949,17 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                         "relative w-full h-full object-cover transition-opacity duration-500",
                         isLoaded ? "opacity-100" : "opacity-0"
                       )}
-                      // First slide loads eagerly so it appears the instant the
-                      // card enters viewport; subsequent slides stay lazy.
-                      loading={isActiveSlide ? "eager" : "lazy"}
-                      decoding={isActiveSlide ? "sync" : "async"}
+                      // Active slide loads eagerly; the predicted neighbor
+                      // (user is swiping toward it) also gets eager+sync to
+                      // avoid mid-swipe decode jank. Other prefetched
+                      // neighbors stay lazy/async — browser will fetch them
+                      // opportunistically without blocking the main thread.
+                      loading={isActiveSlide || isPrefetchTarget ? "eager" : "lazy"}
+                      decoding={isActiveSlide || isPrefetchTarget ? "sync" : "async"}
                       // @ts-expect-error fetchpriority is valid HTML, not yet in TS lib
-                      fetchpriority={isActiveSlide ? "high" : "auto"}
+                      fetchpriority={
+                        isActiveSlide ? "high" : isPrefetchTarget ? "high" : "low"
+                      }
                       onLoad={() => markLoaded(i)}
                       ref={(el) => {
                         // If the image came straight from cache, onLoad may
