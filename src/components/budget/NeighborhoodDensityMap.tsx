@@ -16,6 +16,46 @@ const CAROUSEL_BAIRROS: string[] = Array.from(
   new Set(ALL_INDIVIDUAL_PROJECTS.map((p) => p.bairro))
 ).sort();
 
+/* ── Shared IntersectionObserver for lazy-loading project cards ──
+ * One observer instance is reused across every card to avoid the cost of
+ * spinning up an IO per card on every render. Cards register/unregister via
+ * `observeCard` and the observer never gets recreated.
+ */
+type LazyLoadCallback = (visible: boolean) => void;
+const lazyCallbacks = new WeakMap<Element, LazyLoadCallback>();
+let sharedLazyObserver: IntersectionObserver | null = null;
+
+function getSharedLazyObserver(): IntersectionObserver | null {
+  if (typeof window === "undefined" || typeof IntersectionObserver === "undefined") return null;
+  if (!sharedLazyObserver) {
+    sharedLazyObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const cb = lazyCallbacks.get(entry.target);
+          if (cb && entry.isIntersecting) cb(true);
+        }
+      },
+      { rootMargin: "300px 0px", threshold: 0.01 }
+    );
+  }
+  return sharedLazyObserver;
+}
+
+function observeCard(el: Element, cb: LazyLoadCallback): () => void {
+  const observer = getSharedLazyObserver();
+  if (!observer) {
+    // SSR or unsupported — show immediately
+    cb(true);
+    return () => {};
+  }
+  lazyCallbacks.set(el, cb);
+  observer.observe(el);
+  return () => {
+    observer.unobserve(el);
+    lazyCallbacks.delete(el);
+  };
+}
+
 /* ── Data ── */
 type Neighborhood = {
   id: string;
