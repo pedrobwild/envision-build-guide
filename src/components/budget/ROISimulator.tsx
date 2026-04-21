@@ -254,86 +254,97 @@ export function ROISimulator({
       </AnimatePresence>
 
       {/* Efeito BWild — destaque do impacto da reforma personalizada */}
-      <div className="rounded-lg border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3.5 space-y-2.5">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+      <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-3 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+            <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wide text-primary font-mono font-bold leading-tight">
+            <p className="text-xs uppercase tracking-wide text-foreground font-mono font-bold leading-tight">
               Efeito BWild
             </p>
-            <p className="text-[10px] text-muted-foreground font-body leading-tight">
+            <p className="text-[11px] text-muted-foreground font-body leading-tight mt-0.5">
               o que a reforma personalizada gera a mais
             </p>
           </div>
         </div>
 
         {/* Comparativo lado a lado */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-md bg-background/60 border border-border/60 p-2">
-            <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-mono mb-0.5">
+        <div className="grid grid-cols-2 gap-2.5">
+          {/* Studio padrão — visualmente "apagado" */}
+          <div className="rounded-lg bg-muted border border-border p-2.5">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono mb-1.5 font-semibold">
               Studio padrão
             </p>
-            <p className="text-[11px] text-muted-foreground font-body">
-              Diária <strong className="text-foreground tabular-nums">{formatBRL(baseline.nightly)}</strong>
-            </p>
-            <p className="text-[11px] text-muted-foreground font-body">
-              Ocupação <strong className="text-foreground tabular-nums">{baseline.occupancy}%</strong>
-            </p>
-            <p
-              className="text-sm font-display font-bold text-foreground/70 mt-1 tabular-nums"
-            >
-              {formatBRL(baselineNetMonth)}/mês
-            </p>
+            <div className="space-y-0.5 mb-1.5">
+              <p className="text-[11px] text-muted-foreground font-body flex justify-between">
+                <span>Diária</span>
+                <strong className="text-foreground tabular-nums">{formatBRL(baseline.nightly)}</strong>
+              </p>
+              <p className="text-[11px] text-muted-foreground font-body flex justify-between">
+                <span>Ocupação</span>
+                <strong className="text-foreground tabular-nums">{baseline.occupancy}%</strong>
+              </p>
+            </div>
+            <div className="pt-1.5 border-t border-border">
+              <p className="text-base font-display font-bold text-foreground tabular-nums leading-none">
+                {formatBRL(baselineNetMonth)}
+              </p>
+              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">/mês líquido</p>
+            </div>
           </div>
-          <div className="rounded-md bg-primary/10 border border-primary/30 p-2 relative">
+
+          {/* Com sua reforma — destaque forte */}
+          <div className="rounded-lg bg-primary border border-primary p-2.5 relative shadow-md">
             <Badge
-              variant="default"
-              className="absolute -top-2 right-1.5 text-[8px] font-mono px-1.5 py-0 h-4"
+              variant="secondary"
+              className="absolute -top-2 right-2 text-[9px] font-mono px-1.5 py-0 h-4 bg-background text-foreground border border-primary/30"
             >
               BWild
             </Badge>
-            <p className="text-[9px] uppercase tracking-wide text-primary font-mono mb-0.5 font-semibold">
+            <p className="text-[10px] uppercase tracking-wide text-primary-foreground/80 font-mono mb-1.5 font-semibold">
               Com sua reforma
             </p>
-            <p className="text-[11px] text-foreground font-body">
-              Diária <strong className="text-primary tabular-nums">{formatBRL(nightly)}</strong>
-            </p>
-            <p className="text-[11px] text-foreground font-body">
-              Ocupação <strong className="text-primary tabular-nums">{occupancy}%</strong>
-            </p>
-            <p
-              className="text-sm font-display font-bold text-primary mt-1 tabular-nums"
-            >
-              {formatBRL(netMonth)}/mês
-            </p>
+            <div className="space-y-0.5 mb-1.5">
+              <p className="text-[11px] text-primary-foreground/90 font-body flex justify-between">
+                <span>Diária</span>
+                <strong className="text-primary-foreground tabular-nums">{formatBRL(nightly)}</strong>
+              </p>
+              <p className="text-[11px] text-primary-foreground/90 font-body flex justify-between">
+                <span>Ocupação</span>
+                <strong className="text-primary-foreground tabular-nums">{occupancy}%</strong>
+              </p>
+            </div>
+            <div className="pt-1.5 border-t border-primary-foreground/20">
+              <p className="text-base font-display font-bold text-primary-foreground tabular-nums leading-none">
+                {formatBRL(netMonth)}
+              </p>
+              <p className="text-[10px] text-primary-foreground/80 font-mono mt-0.5">/mês líquido</p>
+            </div>
           </div>
         </div>
 
-        {/* Ganho extra */}
-        <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-primary/15">
-          <div className="min-w-0">
-            <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-mono">
-              Ganho extra gerado pela reforma
+        {/* Ganho extra — barra de destaque */}
+        <div className="rounded-lg bg-success/10 border border-success/30 p-3 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-wide text-success font-mono font-bold">
+              Ganho extra com a reforma
             </p>
-            <p className="text-[10px] text-muted-foreground font-body leading-tight mt-0.5">
-              Reforma se paga em <strong className="text-primary">{reformPaybackLabel}</strong> só com o ganho incremental
+            <p className="text-[11px] text-foreground font-body leading-tight mt-1">
+              Reforma se paga em <strong className="text-success">{reformPaybackLabel}</strong>
             </p>
           </div>
           <div className="text-right flex-shrink-0">
-            <p
-              className="font-display font-bold text-lg text-primary leading-none tabular-nums"
-            >
+            <p className="font-display font-bold text-xl text-success leading-none tabular-nums">
               +{formatBRL(upliftMonth)}
             </p>
-            <p className="text-[9px] text-muted-foreground font-mono mt-0.5">
+            <p className="text-[10px] text-muted-foreground font-mono mt-1">
               /mês · {formatBRL(upliftYear)}/ano
             </p>
           </div>
         </div>
 
-        <p className="text-[9px] text-muted-foreground/80 font-body italic leading-relaxed">
+        <p className="text-[10px] text-muted-foreground font-body leading-relaxed">
           Projeção baseada no benchmark AirDNA "Top 10%" de listings premium em SP: design diferenciado,
           mobília sob medida e fotografia profissional geram em média +{upliftPctNightly}% na diária e
           +{BWILD_OCCUPANCY_UPLIFT}pp na ocupação vs. studios padrão.
