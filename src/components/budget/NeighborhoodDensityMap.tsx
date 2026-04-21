@@ -761,16 +761,78 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     // observers when the DOM node changes without re-running effects.
     const observedRef = useRef<{ el: Element; dispose: () => void } | null>(null);
 
+    // Index of the slide the user is *about* to land on. Set as soon as we
+    // detect intent (pointer drag or scroll motion) so the browser can start
+    // fetching the next image before the transition begins — eliminating the
+    // jank caused by decoding a fresh JPEG mid-animation.
+    const [pendingNeighbor, setPendingNeighbor] = useState<number | null>(null);
+
     const onSlideChange = useCallback(() => {
       if (!emblaApi) return;
       setActiveSlide(emblaApi.selectedScrollSnap());
+      // Once the slide actually changes, the prefetch has served its purpose.
+      setPendingNeighbor(null);
     }, [emblaApi]);
 
     useEffect(() => {
       if (!emblaApi) return;
+
+      const total = emblaApi.scrollSnapList().length;
+
+      // Predict the neighbor the user is heading toward based on drag direction
+      // (or wheel/scroll motion). Embla's `scroll` event fires on every frame
+      // of motion with the engine's progress; the sign of `scrollProgress`
+      // delta tells us direction.
+      let lastProgress = emblaApi.scrollProgress();
+      const onScroll = () => {
+        const current = emblaApi.scrollProgress();
+        const delta = current - lastProgress;
+        lastProgress = current;
+        if (Math.abs(delta) < 0.0005) return; // ignore noise / settled state
+        const selected = emblaApi.selectedScrollSnap();
+        const dir = delta > 0 ? 1 : -1;
+        const target = (selected + dir + total) % total;
+        setPendingNeighbor((prev) => (prev === target ? prev : target));
+      };
+
+      const onPointerDown = () => {
+        // On drag start we don't yet know direction — preload both neighbors
+        // by leaving pendingNeighbor null (both ±1 already mount via shouldMount).
+        // The subsequent `scroll` events will narrow it to the actual target.
+        setPendingNeighbor(null);
+      };
+
       emblaApi.on("select", onSlideChange);
+      emblaApi.on("scroll", onScroll);
+      emblaApi.on("pointerDown", onPointerDown);
       onSlideChange();
+
+      return () => {
+        emblaApi.off("select", onSlideChange);
+        emblaApi.off("scroll", onScroll);
+        emblaApi.off("pointerDown", onPointerDown);
+      };
     }, [emblaApi, onSlideChange]);
+
+    // Decide which slides should have their <img> mounted in the DOM.
+    // Always: the active slide. Also: immediate neighbors (loop-aware) so a
+    // quick swipe never reveals a blank slot. Plus the predicted target if
+    // motion is in progress.
+    const shouldMount = useCallback(
+      (i: number) => {
+        if (!inView) return false;
+        const total = project.fotos.length;
+        const prev = (activeSlide - 1 + total) % total;
+        const next = (activeSlide + 1) % total;
+        return (
+          i === activeSlide ||
+          i === prev ||
+          i === next ||
+          (pendingNeighbor !== null && i === pendingNeighbor)
+        );
+      },
+      [inView, activeSlide, pendingNeighbor, project.fotos.length]
+    );
 
     // Autoplay subtly while hovering
     useEffect(() => {
@@ -855,6 +917,8 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
             {project.fotos.map((foto, i) => {
               const isActiveSlide = i === activeSlide;
               const isLoaded = loadedSlides.has(i);
+              const mount = shouldMount(i);
+              const isPrefetchTarget = pendingNeighbor === i;
               return (
                 <div key={i} className="flex-[0_0_100%] min-w-0 relative bg-muted">
                   {/* Skeleton: always rendered as the first paint frame.
@@ -877,7 +941,7 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                     </div>
                   </div>
 
-                  {inView && (
+                  {mount && (
                     <img
                       src={foto}
                       alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
@@ -885,12 +949,17 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                         "relative w-full h-full object-cover transition-opacity duration-500",
                         isLoaded ? "opacity-100" : "opacity-0"
                       )}
-                      // First slide loads eagerly so it appears the instant the
-                      // card enters viewport; subsequent slides stay lazy.
-                      loading={isActiveSlide ? "eager" : "lazy"}
-                      decoding={isActiveSlide ? "sync" : "async"}
+                      // Active slide loads eagerly; the predicted neighbor
+                      // (user is swiping toward it) also gets eager+sync to
+                      // avoid mid-swipe decode jank. Other prefetched
+                      // neighbors stay lazy/async — browser will fetch them
+                      // opportunistically without blocking the main thread.
+                      loading={isActiveSlide || isPrefetchTarget ? "eager" : "lazy"}
+                      decoding={isActiveSlide || isPrefetchTarget ? "sync" : "async"}
                       // @ts-expect-error fetchpriority is valid HTML, not yet in TS lib
-                      fetchpriority={isActiveSlide ? "high" : "auto"}
+                      fetchpriority={
+                        isActiveSlide ? "high" : isPrefetchTarget ? "high" : "low"
+                      }
                       onLoad={() => markLoaded(i)}
                       ref={(el) => {
                         // If the image came straight from cache, onLoad may
