@@ -185,16 +185,21 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     // Update marker styles
     markersRef.current.forEach((entry, id) => {
       const isActive = id === selected;
+      const isHovered = id === hoveredBairroId && !isActive;
       const count = NEIGHBORHOOD_DATA.find((d) => d.id === id)!.count;
       const style = getPinStyle(count);
       const sz = isMobile ? style.mobileSize : style.size;
-      entry.el.style.width = `${isActive ? sz + 6 : sz}px`;
-      entry.el.style.height = `${isActive ? sz + 6 : sz}px`;
+      const bonusSize = isActive ? 6 : isHovered ? 4 : 0;
+      entry.el.style.width = `${sz + bonusSize}px`;
+      entry.el.style.height = `${sz + bonusSize}px`;
       entry.el.style.boxShadow = isActive
         ? `0 0 0 4px rgba(0,76,127,0.35), ${style.shadow}`
+        : isHovered
+        ? `0 0 0 3px rgba(0,76,127,0.25), ${style.shadow}`
         : style.shadow;
-      entry.el.style.transform = isActive ? "scale(1.12)" : "scale(1)";
+      entry.el.style.transform = isActive ? "scale(1.12)" : isHovered ? "scale(1.08)" : "scale(1)";
       entry.el.style.borderWidth = isActive ? "3px" : "2px";
+      entry.el.style.zIndex = isActive || isHovered ? "10" : "1";
     });
 
     if (selected && isMobile && userInitiatedSelectionRef.current && panelRef.current) {
@@ -202,7 +207,56 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     }
 
     userInitiatedSelectionRef.current = false;
-  }, [selected, isMobile]);
+  }, [selected, isMobile, hoveredBairroId]);
+
+  // Pin click → scroll first matching card into view + flash highlight
+  const handlePinClickScroll = useCallback((bairroId: string) => {
+    const target = ALL_INDIVIDUAL_PROJECTS.find((p) => getBairroId(p.bairro) === bairroId);
+    if (!target) return;
+    const el = cardRefs.current.get(target.id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlightedProjectId(target.id);
+    setTimeout(() => setHighlightedProjectId(null), 2000);
+  }, []);
+
+  // Track scroll position to show fade gradients (top/bottom of panel)
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const update = () => {
+      const top = el.scrollTop <= 4;
+      const bottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4;
+      setScrollState({ top, bottom });
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [filteredProjects.length, selectedData]);
+
+  // Keyboard navigation: arrow keys move focus between cards inside the panel
+  const handlePanelKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const ids = filteredProjects.map((p) => p.id);
+    const active = document.activeElement as HTMLElement | null;
+    const activeId = active?.dataset?.projectCardId;
+    let nextIdx = 0;
+    if (activeId) {
+      const i = ids.indexOf(activeId);
+      nextIdx = e.key === "ArrowDown" ? Math.min(i + 1, ids.length - 1) : Math.max(i - 1, 0);
+    }
+    const nextEl = cardRefs.current.get(ids[nextIdx]);
+    if (nextEl) {
+      e.preventDefault();
+      nextEl.focus();
+      nextEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [filteredProjects]);
 
   // Init map
   useEffect(() => {
