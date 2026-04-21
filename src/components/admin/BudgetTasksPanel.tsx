@@ -66,10 +66,12 @@ interface Props {
  * Painel de Ações & Tarefas: criar, agendar prazo, marcar concluído,
  * sinalizar atrasos e visualizar pendências separadas das concluídas.
  */
+type TaskFilter = "all" | "pending" | "overdue" | "due_soon" | "completed";
+
 export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
   const qc = useQueryClient();
   const [openNew, setOpenNew] = useState(false);
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [filter, setFilter] = useState<TaskFilter>("pending");
   const [outcomeId, setOutcomeId] = useState<string | null>(null);
   const [outcomeText, setOutcomeText] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -142,22 +144,48 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
     onError: (err) => toast.error(err instanceof Error ? err.message : "Erro"),
   });
 
-  const { pending, completed, overdueCount, dueSoonCount } = useMemo(() => {
+  const { pending, completed, overdue, dueSoon, counts, visible } = useMemo(() => {
     const all = data ?? [];
     const pending = all.filter((a) => !a.completed_at);
-    const completed = all.filter((a) => !!a.completed_at)
+    const completed = all
+      .filter((a) => !!a.completed_at)
       .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime());
     const now = new Date();
-    let overdueCount = 0;
-    let dueSoonCount = 0;
+    const overdue: Activity[] = [];
+    const dueSoon: Activity[] = [];
     for (const a of pending) {
       if (!a.scheduled_for) continue;
       const due = new Date(a.scheduled_for);
-      if (due < now) overdueCount++;
-      else if (differenceInHours(due, now) <= 24) dueSoonCount++;
+      if (due < now) overdue.push(a);
+      else if (differenceInHours(due, now) <= 24) dueSoon.push(a);
     }
-    return { pending, completed, overdueCount, dueSoonCount };
-  }, [data]);
+    const counts = {
+      all: all.length,
+      pending: pending.length,
+      overdue: overdue.length,
+      due_soon: dueSoon.length,
+      completed: completed.length,
+    };
+    let visible: Activity[] = [];
+    switch (filter) {
+      case "all":
+        visible = [...pending, ...completed];
+        break;
+      case "pending":
+        visible = pending;
+        break;
+      case "overdue":
+        visible = overdue;
+        break;
+      case "due_soon":
+        visible = dueSoon;
+        break;
+      case "completed":
+        visible = completed;
+        break;
+    }
+    return { pending, completed, overdue, dueSoon, counts, visible };
+  }, [data, filter]);
 
   function submitOutcome() {
     if (!outcomeId) return;
@@ -166,27 +194,21 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
     setOutcomeText("");
   }
 
+  const FILTERS: { key: TaskFilter; label: string; icon: React.ComponentType<{ className?: string }>; tone: string }[] = [
+    { key: "pending", label: "Pendentes", icon: Circle, tone: "data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:border-primary/30" },
+    { key: "overdue", label: "Atrasadas", icon: AlertTriangle, tone: "data-[active=true]:bg-destructive/10 data-[active=true]:text-destructive data-[active=true]:border-destructive/30" },
+    { key: "due_soon", label: "Em 24h", icon: Clock, tone: "data-[active=true]:bg-warning/15 data-[active=true]:text-warning data-[active=true]:border-warning/30" },
+    { key: "completed", label: "Concluídas", icon: CheckCircle2, tone: "data-[active=true]:bg-success/10 data-[active=true]:text-success data-[active=true]:border-success/30" },
+    { key: "all", label: "Todas", icon: FileText, tone: "data-[active=true]:bg-muted data-[active=true]:text-foreground data-[active=true]:border-border" },
+  ];
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="font-display text-sm font-semibold tracking-tight">
-            Ações & Tarefas
-          </h3>
-          {overdueCount > 0 && (
-            <Badge variant="destructive" className="h-5 text-[10px] gap-1 px-1.5">
-              <AlertTriangle className="h-2.5 w-2.5" />
-              {overdueCount} atrasada{overdueCount > 1 ? "s" : ""}
-            </Badge>
-          )}
-          {dueSoonCount > 0 && (
-            <Badge className="h-5 text-[10px] gap-1 px-1.5 bg-warning/15 text-warning border-warning/30 hover:bg-warning/20">
-              <Clock className="h-2.5 w-2.5" />
-              {dueSoonCount} em 24h
-            </Badge>
-          )}
-        </div>
+        <h3 className="font-display text-sm font-semibold tracking-tight">
+          Ações & Tarefas
+        </h3>
         <Button
           size="sm"
           onClick={() => setOpenNew(true)}
@@ -197,13 +219,51 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
         </Button>
       </div>
 
+      {/* Filter chips */}
+      {(counts.all > 0 || isLoading) && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {FILTERS.map((f) => {
+            const FIcon = f.icon;
+            const active = filter === f.key;
+            const count = counts[f.key];
+            const disabled = !isLoading && count === 0 && f.key !== "pending";
+            return (
+              <button
+                key={f.key}
+                type="button"
+                data-active={active}
+                disabled={disabled}
+                onClick={() => setFilter(f.key)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-[11px] font-body font-medium transition-all",
+                  "border-border bg-card text-muted-foreground hover:text-foreground hover:border-border/80",
+                  "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-muted-foreground",
+                  f.tone,
+                )}
+              >
+                <FIcon className="h-3 w-3" />
+                {f.label}
+                <span
+                  className={cn(
+                    "tabular-nums font-mono text-[10px] px-1 rounded",
+                    active ? "bg-background/40" : "bg-muted/60",
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-14 w-full" />
           ))}
         </div>
-      ) : pending.length === 0 && completed.length === 0 ? (
+      ) : counts.all === 0 ? (
         <div className="text-center py-10 border border-dashed border-border rounded-lg">
           <Circle className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
           <p className="text-xs text-muted-foreground font-body mb-3">
@@ -219,54 +279,35 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
             Criar primeira ação
           </Button>
         </div>
+      ) : visible.length === 0 ? (
+        <div className="text-center py-8 border border-dashed border-border/60 rounded-lg">
+          <p className="text-[11px] text-muted-foreground font-body">
+            Nenhuma ação neste filtro.
+          </p>
+        </div>
       ) : (
-        <>
-          {/* Pendentes */}
-          {pending.length > 0 && (
-            <ul className="space-y-2">
-              {pending.map((a) => (
-                <TaskRow
-                  key={a.id}
-                  activity={a}
-                  ownerName={getProfileName(a.owner_id ?? a.created_by)}
-                  onComplete={() => {
-                    setOutcomeId(a.id);
-                    setOutcomeText("");
-                  }}
-                  onDelete={() => setDeleteId(a.id)}
-                />
-              ))}
-            </ul>
-          )}
-
-          {/* Concluídas (colapsável) */}
-          {completed.length > 0 && (
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setShowCompleted((v) => !v)}
-                className="text-[10px] font-body uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-              >
-                <CheckCircle2 className="h-3 w-3" />
-                {completed.length} concluída{completed.length > 1 ? "s" : ""}
-                <span className="opacity-60">({showCompleted ? "ocultar" : "ver"})</span>
-              </button>
-              {showCompleted && (
-                <ul className="space-y-1.5 opacity-75">
-                  {completed.map((a) => (
-                    <TaskRow
-                      key={a.id}
-                      activity={a}
-                      ownerName={getProfileName(a.owner_id ?? a.created_by)}
-                      onReopen={() => reopen.mutate(a.id)}
-                      onDelete={() => setDeleteId(a.id)}
-                    />
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </>
+        <ul className={cn("space-y-2", filter === "completed" && "opacity-80")}>
+          {visible.map((a) => {
+            const isCompleted = !!a.completed_at;
+            return (
+              <TaskRow
+                key={a.id}
+                activity={a}
+                ownerName={getProfileName(a.owner_id ?? a.created_by)}
+                onComplete={
+                  isCompleted
+                    ? undefined
+                    : () => {
+                        setOutcomeId(a.id);
+                        setOutcomeText("");
+                      }
+                }
+                onReopen={isCompleted ? () => reopen.mutate(a.id) : undefined}
+                onDelete={() => setDeleteId(a.id)}
+              />
+            );
+          })}
+        </ul>
       )}
 
       {/* Modal: nova ação */}
