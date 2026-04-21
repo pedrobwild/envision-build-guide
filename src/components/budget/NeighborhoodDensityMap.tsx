@@ -333,7 +333,13 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         el.addEventListener("click", (e) => {
           e.stopPropagation();
           handleSelect(n.id, { userInitiated: true });
+          // Sync panel: filter by clicked bairro + scroll first card into view
+          setBairroFilter(n.name);
+          requestAnimationFrame(() => handlePinClickScroll(n.id));
         });
+
+        el.addEventListener("mouseenter", () => setHoveredBairroId(n.id));
+        el.addEventListener("mouseleave", () => setHoveredBairroId((prev) => (prev === n.id ? null : prev)));
 
         wrapper.appendChild(el);
 
