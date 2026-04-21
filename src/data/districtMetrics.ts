@@ -26,6 +26,10 @@ export type DistrictRow = {
   adrRangeLabel: string;
   listingsCount: number;
   priceSqm: number;
+  /** Valorização anual típica do m² (FipeZap 12m) — % a.a. */
+  appreciationPctYear: number;
+  /** Receita típica por mês (12 valores) — sazonalidade jan→dez (multiplicador 0.7–1.3) */
+  seasonality?: number[];
   competition: CompetitionChip;
   sourceLabel: string;
   recommendation: {
@@ -35,6 +39,11 @@ export type DistrictRow = {
     risks: string[];
   };
 };
+
+/** Sazonalidade padrão SP — alta no inverno (jun-ago: eventos, frio) e dezembro (festas) */
+export const DEFAULT_SEASONALITY = [
+  0.85, 0.78, 0.92, 1.0, 1.05, 1.15, 1.2, 1.18, 1.05, 1.0, 0.95, 1.07,
+];
 
 export const DISTRICTS_MOCK: DistrictRow[] = [
   {
