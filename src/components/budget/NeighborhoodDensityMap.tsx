@@ -813,10 +813,15 @@ interface IndividualProjectCardProps {
   project: IndividualProject;
   isHighlighted?: boolean;
   onHover?: (hovered: boolean) => void;
+  /** Roving tabindex value: 0 for the active tab stop, -1 for siblings. */
+  tabIndex?: number;
+  /** Notifies the parent when this card receives focus so it can promote
+   *  the card to the active tab stop (so future Tab presses come back here). */
+  onCardFocus?: () => void;
 }
 
 const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardProps>(
-  ({ project, isHighlighted = false, onHover }, ref) => {
+  ({ project, isHighlighted = false, onHover, tabIndex = -1, onCardFocus }, ref) => {
     const reducedMotion = useReducedMotion();
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
