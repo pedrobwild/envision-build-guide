@@ -29,7 +29,7 @@ import { MobileTestimonialInline } from "@/components/budget/MobileTestimonialIn
 import { MobileBottomBar } from "@/components/budget/MobileBottomBar";
 import { MobileInlineSummary } from "@/components/budget/MobileInlineSummary";
 
-import { BudgetFAQ } from "@/components/budget/BudgetFAQ";
+
 import { ArquitetonicoExpander } from "@/components/budget/ArquitetonicoExpander";
 import { EngenhariaExpander } from "@/components/budget/EngenhariaExpander";
 import { NextSteps } from "@/components/budget/NextSteps";
@@ -636,8 +636,12 @@ export default function PublicBudget() {
           activeSection={null}
         />
 
-        <div id="mobile-faq" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20" data-pdf-section>
-          <BudgetFAQ />
+        <div id="roi-full" className="mt-6 sm:mt-8 lg:col-span-2 scroll-mt-20" data-pdf-section>
+          <ROISimulator
+            total={total}
+            bairro={budget.bairro}
+            metragem={budget.metragem}
+          />
         </div>
 
         {budget.disclaimer && (
