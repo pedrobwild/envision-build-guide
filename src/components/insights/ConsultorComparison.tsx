@@ -16,6 +16,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import MultiBrokerWeeklySparkline from "./MultiBrokerWeeklySparkline";
+import {
+  type ConsultorInsightData,
+  type ElephantInsightsCacheRow,
+  normalizeInsightsCache,
+} from "@/types/insights";
 
 interface ConsultorUser {
   id: string;
@@ -23,14 +28,7 @@ interface ConsultorUser {
   email: string | null;
 }
 
-interface ConsultorData {
-  consultantName: string;
-  totalMeetings: number;
-  totalDurationMinutes: number;
-  positiveSentimentPct: number | null;
-  latestMeeting: string | null;
-  dashboard?: any;
-}
+type ConsultorData = ConsultorInsightData;
 
 function DeltaIndicator({ a, b, suffix = "", invert = false }: { a: number; b: number; suffix?: string; invert?: boolean }) {
   const diff = a - b;
@@ -91,14 +89,7 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
         .single();
 
       if (cached) {
-        setter({
-          consultantName: cached.consultant_name || "Consultor",
-          totalMeetings: cached.total_meetings,
-          totalDurationMinutes: cached.total_duration_minutes,
-          positiveSentimentPct: cached.positive_sentiment_pct,
-          latestMeeting: cached.latest_meeting,
-          dashboard: cached.charts_data,
-        });
+        setter(normalizeInsightsCache(cached));
       } else {
         // Fetch from API
         const { data: res, error } = await supabase.functions.invoke("elephant-insights", { body: { userId } });

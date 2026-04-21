@@ -18,17 +18,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import InsightsDashboard from "./InsightsDashboard";
 import ConsultorComparison from "./ConsultorComparison";
+import {
+  type ConsultorInsightData,
+  type ElephantInsightsCacheRow,
+  normalizeInsightsCache,
+} from "@/types/insights";
 
-interface InsightsData {
-  consultantName: string;
-  totalMeetings: number;
-  totalDurationMinutes: number;
-  positiveSentimentPct: number | null;
-  latestMeeting: string | null;
-  cached?: boolean;
-  cacheAge?: number;
-  dashboard?: any;
-}
+type InsightsData = ConsultorInsightData;
 
 interface ConsultorUser {
   id: string;
@@ -74,16 +70,10 @@ export default function ConsultorPerformance() {
           .eq("cache_key", `user_${selectedConsultor}`)
           .single();
         if (cached) {
-          const age = Math.round((Date.now() - new Date(cached.updated_at).getTime()) / 60000);
-          setData({
-            consultantName: cached.consultant_name || "Consultor",
-            totalMeetings: cached.total_meetings,
-            totalDurationMinutes: cached.total_duration_minutes,
-            positiveSentimentPct: cached.positive_sentiment_pct,
-            latestMeeting: cached.latest_meeting,
-            cached: true, cacheAge: age,
-            dashboard: cached.charts_data,
-          });
+          const age = cached.updated_at
+            ? Math.round((Date.now() - new Date(cached.updated_at).getTime()) / 60000)
+            : 0;
+          setData(normalizeInsightsCache(cached, { cached: true, cacheAge: age }));
         } else { setData(null); }
       } catch { setData(null); }
       finally { setInitialLoad(false); }

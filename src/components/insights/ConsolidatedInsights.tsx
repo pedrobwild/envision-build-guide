@@ -11,13 +11,14 @@ import { useToast } from "@/hooks/use-toast";
 import InsightsDashboard from "./InsightsDashboard";
 import QualitativeHighlights from "./QualitativeHighlights";
 import ExecutiveSummary from "./ExecutiveSummary";
+import type { ElephantInsightsCacheRow, InsightChartsData } from "@/types/insights";
 
 interface ConsolidatedData {
   totalMeetings: number;
   totalDurationMinutes: number;
   consultoresCount: number;
   latestMeeting: string | null;
-  dashboard: any;
+  dashboard: InsightChartsData | Record<string, unknown>;
   cached: boolean;
   cacheAge?: number;
   noShowCount: number;
@@ -245,7 +246,7 @@ function deduplicateByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
 }
 
 /** Merge multiple cache entries into a consolidated view */
-function mergeCacheEntries(caches: any[]): ConsolidatedData {
+function mergeCacheEntries(caches: ElephantInsightsCacheRow[]): ConsolidatedData {
   let totalMeetings = 0;
   let totalDuration = 0;
   let latestMeeting: string | null = null;
@@ -281,15 +282,15 @@ function mergeCacheEntries(caches: any[]): ConsolidatedData {
   const weeklyAgg = new Map<string, { label: string; meetings: number; scoreSum: number }>();
 
   for (const cache of caches) {
-    totalMeetings += cache.total_meetings;
-    totalDuration += cache.total_duration_minutes;
+    totalMeetings += cache.total_meetings ?? 0;
+    totalDuration += cache.total_duration_minutes ?? 0;
 
     if (cache.latest_meeting && (!latestMeeting || cache.latest_meeting > latestMeeting)) {
       latestMeeting = cache.latest_meeting;
     }
 
-    const updated = new Date(cache.updated_at);
-    if (!oldestUpdate || updated < oldestUpdate) oldestUpdate = updated;
+    const updated = cache.updated_at ? new Date(cache.updated_at) : null;
+    if (updated && (!oldestUpdate || updated < oldestUpdate)) oldestUpdate = updated;
 
     const d = cache.charts_data;
     if (!d) continue;
