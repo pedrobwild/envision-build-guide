@@ -277,7 +277,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
       el.removeEventListener("scroll", update);
       ro.disconnect();
     };
-  }, [filteredProjects.length, selectedData]);
+  }, [filteredProjects.length]);
 
   // Keyboard navigation inside the panel:
   // ↑/↓ — move focus between cards (with wrap-around)
