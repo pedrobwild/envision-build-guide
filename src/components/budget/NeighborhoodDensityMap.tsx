@@ -154,6 +154,28 @@ interface NeighborhoodDensityMapProps {
 }
 
 export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensityMapProps) {
+  // ── URL persistence ──
+  // We persist `bairro` (the active filter) and `card` (the focused project id)
+  // as query params so the user's exploration survives re-renders, deep-links
+  // and back/forward navigation. We read the URL once on mount to seed state
+  // and write back via `history.replaceState` (no extra history entries).
+  const readInitialFromUrl = () => {
+    if (typeof window === "undefined") return { bairro: null as string | null, card: null as string | null };
+    const params = new URLSearchParams(window.location.search);
+    const bairro = params.get("bairro");
+    const card = params.get("card");
+    // Validate that the bairro actually exists in our dataset; ignore stale/unknown values.
+    const validBairro =
+      bairro && CAROUSEL_BAIRROS.some((b) => normalize(b) === normalize(bairro)) ? bairro : null;
+    // Validate the card id against the filtered universe (respecting the bairro if any).
+    const universe = validBairro
+      ? ALL_INDIVIDUAL_PROJECTS.filter((p) => normalize(p.bairro) === normalize(validBairro))
+      : ALL_INDIVIDUAL_PROJECTS;
+    const validCard = card && universe.some((p) => p.id === card) ? card : null;
+    return { bairro: validBairro, card: validCard };
+  };
+  const initialUrlState = useRef(readInitialFromUrl()).current;
+
   const [hoveredBairroId, setHoveredBairroId] = useState<string | null>(null);
   const [highlightedProjectId, setHighlightedProjectId] = useState<string | null>(null);
   // Roving tabindex state: only one card is in the tab order at a time.
@@ -161,8 +183,8 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   // or when a card is highlighted via map/filter. Decoupled from
   // `highlightedProjectId` so the visual highlight (which auto-clears) doesn't
   // strip the card from the tab sequence after the flash fades.
-  const [activeCardId, setActiveCardId] = useState<string | null>(null);
-  const [bairroFilter, setBairroFilter] = useState<string | null>(null);
+  const [activeCardId, setActiveCardId] = useState<string | null>(initialUrlState.card);
+  const [bairroFilter, setBairroFilter] = useState<string | null>(initialUrlState.bairro);
   const [scrollState, setScrollState] = useState<{ top: boolean; bottom: boolean }>({ top: true, bottom: false });
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
