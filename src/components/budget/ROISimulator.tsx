@@ -249,9 +249,6 @@ export function ROISimulator({
             <h5 className="font-display font-bold text-sm text-foreground tracking-tight">
               O efeito BWild
             </h5>
-            <Badge variant="outline" className="ml-auto text-[9px] font-mono uppercase tracking-wider border-primary/30 text-primary bg-primary/5">
-              +{upliftPct}% renda
-            </Badge>
           </div>
 
           {/* Comparativo lado a lado — design refinado */}
@@ -281,12 +278,11 @@ export function ROISimulator({
 
             {/* Com sua reforma — premium */}
             <div className="relative rounded-xl bg-gradient-to-br from-primary to-primary/85 p-3.5 shadow-lg shadow-primary/20">
-              <Badge className="absolute -top-2 right-3 text-[9px] font-mono px-2 py-0 h-4 bg-background text-primary border border-primary/40 shadow-sm">
-                <Sparkles className="h-2 w-2 mr-0.5" />
-                BWild
+              <Badge className="absolute -top-2 right-3 text-[9px] font-mono px-2 py-0 h-4 bg-background text-primary border border-primary/40 shadow-sm uppercase tracking-wider">
+                +{upliftPct}% receita
               </Badge>
               <p className="text-[10px] uppercase tracking-wider text-primary-foreground/85 font-mono mb-2 font-semibold">
-                Com sua reforma
+                Projeto Bwild
               </p>
               <div className="space-y-1 mb-3">
                 <div className="flex items-baseline justify-between text-[11px] font-body">
