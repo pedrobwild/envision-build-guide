@@ -204,18 +204,44 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Optional: verify a shared secret if Elephan supports it
+  // Optional: verify a shared secret se ELEPHAN_WEBHOOK_SECRET estiver definido.
+  // Aceitamos vários formatos que diferentes provedores usam:
+  //   - x-webhook-secret: <secret>
+  //   - x-elephan-signature: <secret>
+  //   - x-api-key: <secret>
+  //   - Authorization: Bearer <secret>
+  //   - ?secret=<secret> ou ?token=<secret> na URL
   if (WEBHOOK_SECRET) {
+    const url = new URL(req.url);
+    const authHeader = req.headers.get("authorization") ?? "";
+    const bearer = authHeader.toLowerCase().startsWith("bearer ")
+      ? authHeader.slice(7).trim()
+      : "";
     const provided =
       req.headers.get("x-webhook-secret") ??
       req.headers.get("x-elephan-signature") ??
+      req.headers.get("x-api-key") ??
+      bearer ??
+      url.searchParams.get("secret") ??
+      url.searchParams.get("token") ??
       "";
+
     if (provided !== WEBHOOK_SECRET) {
-      console.warn("[elephan-webhook] Invalid webhook secret");
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Log detalhado dos headers recebidos (sem vazar o valor do secret).
+      const headerNames: string[] = [];
+      req.headers.forEach((_, k) => headerNames.push(k));
+      console.warn(
+        `[elephan-webhook] Invalid webhook secret — received_headers=${JSON.stringify(headerNames)} provided_length=${provided.length} expected_length=${WEBHOOK_SECRET.length} query_keys=${JSON.stringify([...url.searchParams.keys()])}`,
+      );
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          hint:
+            "Webhook secret ausente ou incorreto. O Elephan deve enviar o secret em um destes headers: x-webhook-secret, x-elephan-signature, x-api-key, Authorization: Bearer <secret>, ou via query ?secret=<secret>. Para desativar a validação, remova ELEPHAN_WEBHOOK_SECRET dos secrets da edge function.",
+          received_headers: headerNames,
+        }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
   }
 
