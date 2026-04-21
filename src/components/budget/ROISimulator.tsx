@@ -19,6 +19,7 @@ import {
   AVERAGE_METRICS,
   findDistrict,
   formatPct,
+  getAppreciationPctYear,
   type DistrictRow,
 } from "@/data/districtMetrics";
 
@@ -90,7 +91,12 @@ export function ROISimulator({
   const safeTotal = total > 0 ? total : 0;
   // Investimento total = compra do studio + reforma
   const totalInvestment = studioPrice + safeTotal;
+  // Valorização anual estimada do imóvel (FipeZap por bairro)
+  const appreciationPctYear = getAppreciationPctYear(district);
+  const appreciationYear = studioPrice * (appreciationPctYear / 100);
   const roiYearPct = totalInvestment > 0 ? (netYear / totalInvestment) * 100 : 0;
+  const roiTotalPct =
+    totalInvestment > 0 ? ((netYear + appreciationYear) / totalInvestment) * 100 : 0;
   const roiReformOnlyPct = safeTotal > 0 ? (netYear / safeTotal) * 100 : 0;
   const paybackMonths =
     totalInvestment > 0 && netMonth > 0 ? totalInvestment / netMonth : null;
@@ -218,6 +224,31 @@ export function ROISimulator({
           </div>
         </motion.div>
       </AnimatePresence>
+
+      {/* ROI Total — renda + valorização */}
+      <div className="rounded-lg border border-success/25 bg-gradient-to-br from-success/10 to-success/5 p-3">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <p className="text-[10px] uppercase tracking-wide text-success font-mono font-semibold">
+            ROI total (renda + valorização)
+          </p>
+          <Badge variant="outline" className="text-[9px] font-mono border-success/30 text-success bg-background/60">
+            +{formatPct(appreciationPctYear)} a.a.
+          </Badge>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <p
+            className="font-display font-bold text-2xl text-success leading-none"
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          >
+            {formatPct(roiTotalPct)}
+          </p>
+          <span className="text-[10px] text-muted-foreground font-body">por ano</span>
+        </div>
+        <p className="text-[10px] text-muted-foreground font-body mt-1.5 leading-relaxed">
+          Renda líquida ({formatBRL(netYear)}/ano) + valorização do imóvel ({formatBRL(appreciationYear)}/ano).
+          Fonte da valorização: <strong className="text-foreground">FipeZap {baseline.label}</strong>.
+        </p>
+      </div>
 
       {/* Receita líquida */}
       <div className="rounded-lg bg-gradient-to-br from-primary/5 to-transparent border border-primary/10 p-3">

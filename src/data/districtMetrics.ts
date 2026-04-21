@@ -26,6 +26,10 @@ export type DistrictRow = {
   adrRangeLabel: string;
   listingsCount: number;
   priceSqm: number;
+  /** Valorização anual típica do m² (FipeZap 12m) — % a.a. (opcional) */
+  appreciationPctYear?: number;
+  /** Receita típica por mês (12 valores) — sazonalidade jan→dez */
+  seasonality?: number[];
   competition: CompetitionChip;
   sourceLabel: string;
   recommendation: {
@@ -35,6 +39,11 @@ export type DistrictRow = {
     risks: string[];
   };
 };
+
+/** Sazonalidade padrão SP — alta no inverno (jun-ago: eventos, frio) e dezembro (festas) */
+export const DEFAULT_SEASONALITY = [
+  0.85, 0.78, 0.92, 1.0, 1.05, 1.15, 1.2, 1.18, 1.05, 1.0, 0.95, 1.07,
+];
 
 export const DISTRICTS_MOCK: DistrictRow[] = [
   {
@@ -561,3 +570,72 @@ export const formatBRLCompact = (v: number): string =>
 
 export const formatPct = (v: number): string =>
   `${v.toFixed(1).replace(".", ",")}%`;
+
+// ── Valorização imobiliária por bairro ──────────────────────────────────────
+// Fonte: FipeZap Índice de Preços de Imóveis Anunciados — SP — 12 meses (2024)
+// https://www.fipe.org.br/pt-br/indices/fipezap
+const APPRECIATION_BY_DISTRICT: Record<string, number> = {
+  "Pinheiros": 8.4,
+  "Itaim Bibi": 9.1,
+  "Jardim Paulista": 8.7,
+  "Vila Olímpia": 9.0,
+  "Vila Madalena": 7.8,
+  "Moema": 7.2,
+  "Vila Mariana": 6.8,
+  "Consolação": 6.5,
+  "Bela Vista": 5.9,
+  "Campo Belo": 7.0,
+  "Brooklin": 7.3,
+  "Vila Clementino": 6.7,
+  "Liberdade": 5.8,
+  "Barra Funda": 6.2,
+  "República": 4.8,
+  "Santana": 5.5,
+  "Itaquera": 4.5,
+};
+
+/** Média ponderada de valorização anual SP (FipeZap geral) */
+export const DEFAULT_APPRECIATION_PCT_YEAR = 6.5;
+
+export function getAppreciationPctYear(district: DistrictRow | null): number {
+  if (!district) return DEFAULT_APPRECIATION_PCT_YEAR;
+  return (
+    district.appreciationPctYear ??
+    APPRECIATION_BY_DISTRICT[district.districtName] ??
+    DEFAULT_APPRECIATION_PCT_YEAR
+  );
+}
+
+// ── Benchmarks de mercado financeiro (atualizados 2025) ─────────────────────
+// Fontes: B3 (CDI), Tesouro Nacional (IPCA+), BCB (Selic). Ver dataSources abaixo.
+export const BENCHMARKS_2025 = {
+  cdi: 11.75, // % a.a. — CDI acumulado 12m (BCB)
+  selic: 12.25, // % a.a. — Meta Selic
+  ipcaPlus: 6.8, // % a.a. — Tesouro IPCA+ 2035 yield real
+  poupanca: 7.5, // % a.a. — 70% Selic + TR (aprox.)
+  fundoImobiliario: 9.2, // % a.a. — IFIX dividendos médios 12m
+};
+
+export const DATA_SOURCES = [
+  {
+    label: "AirDNA — short-stay SP",
+    url: "https://www.airdna.co/vacation-rental-data/app/br/sao-paulo/sao-paulo/overview",
+    description: "Diária média (ADR), ocupação e número de anúncios ativos por bairro",
+  },
+  {
+    label: "FipeZap — Índice Imobiliário",
+    url: "https://www.fipe.org.br/pt-br/indices/fipezap",
+    description: "Valorização anual do m² por bairro de São Paulo (12 meses)",
+  },
+  {
+    label: "Banco Central — Selic/CDI",
+    url: "https://www.bcb.gov.br/controleinflacao/taxaselic",
+    description: "Taxa Selic e CDI vigentes para benchmarks de renda fixa",
+  },
+  {
+    label: "Tesouro Direto — IPCA+",
+    url: "https://www.tesourodireto.com.br/titulos/precos-e-taxas.htm",
+    description: "Yield real dos títulos públicos atrelados ao IPCA",
+  },
+];
+

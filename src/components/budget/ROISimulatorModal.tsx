@@ -30,8 +30,11 @@ import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 import {
   AVERAGE_METRICS,
+  BENCHMARKS_2025,
+  DATA_SOURCES,
   findDistrict,
   formatPct,
+  getAppreciationPctYear,
   type DistrictRow,
 } from "@/data/districtMetrics";
 
@@ -96,7 +99,11 @@ export function ROISimulatorModal({
   const grossYear = grossMonth * 12;
   const safeTotal = total > 0 ? total : 0;
   const totalInvestment = studioPrice + safeTotal; // compra + reforma
+  const appreciationPctYear = getAppreciationPctYear(district);
+  const appreciationYear = studioPrice * (appreciationPctYear / 100);
   const roiYearPct = totalInvestment > 0 ? (netYear / totalInvestment) * 100 : 0;
+  const roiTotalPct =
+    totalInvestment > 0 ? ((netYear + appreciationYear) / totalInvestment) * 100 : 0;
   const paybackMonths =
     totalInvestment > 0 && netMonth > 0 ? totalInvestment / netMonth : null;
 
@@ -107,8 +114,21 @@ export function ROISimulatorModal({
         ? `${Math.round(paybackMonths)} meses`
         : `${(paybackMonths / 12).toFixed(1).replace(".", ",")} anos`;
 
-  const fiveYearReturn = netYear * 5;
-  const tenYearReturn = netYear * 10;
+  // Projeção composta — renda acumulada + valorização patrimonial
+  const buildProjection = (years: number) => {
+    const rentAccum = netYear * years;
+    const propertyValueFuture = studioPrice * Math.pow(1 + appreciationPctYear / 100, years);
+    const propertyAppreciation = propertyValueFuture - studioPrice;
+    return {
+      rent: rentAccum,
+      appreciation: propertyAppreciation,
+      total: rentAccum + propertyAppreciation,
+      finalAsset: propertyValueFuture + rentAccum,
+    };
+  };
+  const projection5y = buildProjection(5);
+  const projection10y = buildProjection(10);
+  const projection1y = buildProjection(1);
 
   const isEdited =
     nightly !== baseline.nightly ||
@@ -365,55 +385,80 @@ export function ROISimulatorModal({
                 </p>
               </div>
 
-              <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <CalendarCheck2 className="h-4 w-4 text-primary" />
-                  <h4 className="font-display font-bold text-sm text-foreground">
-                    Projeção de longo prazo
-                  </h4>
+              {/* Projeção composta — renda + valorização patrimonial */}
+              <div className="rounded-lg border border-success/25 bg-success/5 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <CalendarCheck2 className="h-4 w-4 text-success" />
+                    <h4 className="font-display font-bold text-sm text-foreground">
+                      Projeção composta — renda + valorização
+                    </h4>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-mono border-success/30 text-success bg-background/60">
+                    +{formatPct(appreciationPctYear)} a.a. (FipeZap)
+                  </Badge>
                 </div>
-                <div className="grid grid-cols-3 gap-2.5">
-                  <ProjectionTile period="1 ano" value={formatBRL(netYear)} />
-                  <ProjectionTile period="5 anos" value={formatBRL(fiveYearReturn)} highlight />
-                  <ProjectionTile period="10 anos" value={formatBRL(tenYearReturn)} />
+                <div className="overflow-hidden rounded-md border border-border bg-background">
+                  <table className="w-full text-xs font-body">
+                    <thead className="bg-muted/50">
+                      <tr className="text-[10px] font-mono uppercase text-muted-foreground">
+                        <th className="text-left px-3 py-2">Período</th>
+                        <th className="text-right px-3 py-2">Renda acumulada</th>
+                        <th className="text-right px-3 py-2">Valorização imóvel</th>
+                        <th className="text-right px-3 py-2">Retorno total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      <ProjectionRow period="1 ano" data={projection1y} />
+                      <ProjectionRow period="5 anos" data={projection5y} highlight />
+                      <ProjectionRow period="10 anos" data={projection10y} />
+                    </tbody>
+                  </table>
                 </div>
-                <Separator />
                 <div className="flex items-start gap-2 text-xs font-body text-muted-foreground">
-                  <ArrowRight className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <ArrowRight className="h-3.5 w-3.5 text-success mt-0.5 flex-shrink-0" />
                   <p>
-                    Em 5 anos, o retorno acumulado representa{" "}
+                    Em 10 anos, o patrimônio total estimado (imóvel valorizado + renda acumulada)
+                    chega a{" "}
                     <span className="font-semibold text-foreground">
-                      {totalInvestment > 0 ? formatPct((fiveYearReturn / totalInvestment) * 100) : "—"}
-                    </span>{" "}
-                    do investimento total (compra + reforma) — sem considerar a valorização do
-                    imóvel.
+                      {formatBRL(projection10y.finalAsset)}
+                    </span>
+                    , partindo de um investimento de{" "}
+                    <span className="font-semibold text-foreground">
+                      {formatBRL(totalInvestment)}
+                    </span>
+                    .
                   </p>
                 </div>
               </div>
 
+              {/* Comparativo com benchmarks reais 2025 */}
               <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Percent className="h-4 w-4 text-primary" />
-                  <h4 className="font-display font-bold text-sm text-foreground">
-                    Comparativo com investimentos tradicionais
-                  </h4>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-primary" />
+                    <h4 className="font-display font-bold text-sm text-foreground">
+                      Comparativo com investimentos tradicionais
+                    </h4>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-mono bg-background">
+                    valores 2025
+                  </Badge>
                 </div>
                 <div className="space-y-1.5 text-xs font-body">
-                  <ComparisonRow label="CDI (estimado)" value="~10%" highlight={false} />
+                  <ComparisonRow label={`Poupança (~${BENCHMARKS_2025.poupanca}% a.a.)`} value={formatPct(BENCHMARKS_2025.poupanca)} />
+                  <ComparisonRow label={`Tesouro IPCA+ real (~${BENCHMARKS_2025.ipcaPlus}% a.a.)`} value={formatPct(BENCHMARKS_2025.ipcaPlus)} />
+                  <ComparisonRow label={`Fundos Imobiliários — IFIX (~${BENCHMARKS_2025.fundoImobiliario}% a.a.)`} value={formatPct(BENCHMARKS_2025.fundoImobiliario)} />
+                  <ComparisonRow label={`CDI / Selic (~${BENCHMARKS_2025.cdi}% a.a.)`} value={formatPct(BENCHMARKS_2025.cdi)} />
                   <ComparisonRow
-                    label="Tesouro IPCA+ (real)"
-                    value="~6%"
-                    highlight={false}
-                  />
-                  <ComparisonRow
-                    label="Esta reforma (ROI projetado)"
-                    value={formatPct(roiYearPct)}
+                    label="Este studio (renda + valorização)"
+                    value={formatPct(roiTotalPct)}
                     highlight
                   />
                 </div>
                 <p className="text-[10px] text-muted-foreground/80 font-body italic mt-2">
-                  Comparação ilustrativa. Investimento imobiliário possui liquidez e risco
-                  diferentes de renda fixa.
+                  Fontes: BCB (CDI/Selic), Tesouro Direto (IPCA+), B3 (IFIX), FipeZap (valorização imóvel).
+                  Investimento imobiliário possui liquidez e risco diferentes de renda fixa.
                 </p>
               </div>
             </TabsContent>
@@ -547,6 +592,33 @@ export function ROISimulatorModal({
                 sujeito a sazonalidade, gestão operacional, qualidade do anúncio e variação do
                 mercado. Não constitui promessa de retorno.
               </p>
+            </div>
+
+            {/* Fontes oficiais detalhadas */}
+            <div className="rounded-md border border-border bg-muted/20 p-2.5 space-y-1.5">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono font-semibold">
+                Fontes oficiais consultadas
+              </p>
+              <ul className="space-y-1">
+                {DATA_SOURCES.map((src) => (
+                  <li key={src.label} className="flex items-start gap-1.5">
+                    <ExternalLink className="h-2.5 w-2.5 text-primary flex-shrink-0 mt-1" />
+                    <div className="min-w-0">
+                      <a
+                        href={src.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-mono text-primary hover:underline"
+                      >
+                        {src.label}
+                      </a>
+                      <p className="text-[10px] text-muted-foreground font-body leading-snug">
+                        {src.description}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
@@ -709,6 +781,43 @@ function ProjectionTile({
         {value}
       </p>
     </div>
+  );
+}
+
+function ProjectionRow({
+  period,
+  data,
+  highlight,
+}: {
+  period: string;
+  data: { rent: number; appreciation: number; total: number; finalAsset: number };
+  highlight?: boolean;
+}) {
+  return (
+    <tr className={cn(highlight && "bg-success/10")}>
+      <td className="px-3 py-2 font-display font-bold text-foreground">{period}</td>
+      <td
+        className="px-3 py-2 text-right text-foreground"
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {formatBRL(data.rent)}
+      </td>
+      <td
+        className="px-3 py-2 text-right text-foreground"
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {formatBRL(data.appreciation)}
+      </td>
+      <td
+        className={cn(
+          "px-3 py-2 text-right font-display font-bold",
+          highlight ? "text-success" : "text-foreground",
+        )}
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {formatBRL(data.total)}
+      </td>
+    </tr>
   );
 }
 
