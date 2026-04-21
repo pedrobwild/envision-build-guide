@@ -395,23 +395,58 @@ export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Pr
       ) : counts.all === 0 ? (
         <div className="text-center py-10 border border-dashed border-border rounded-lg">
           <Circle className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-          <p className="text-xs text-muted-foreground font-body mb-3">
-            Nenhuma ação criada ainda. Comece organizando o follow-up.
-          </p>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => openWithTemplate(null)}
-            className="h-7 gap-1 text-[11px]"
-          >
-            <Plus className="h-3 w-3" />
-            Criar primeira ação
-          </Button>
+          {contextFilter && contextHidden > 0 ? (
+            <>
+              <p className="text-xs text-muted-foreground font-body mb-3">
+                Nenhuma ação relacionada a{" "}
+                <span className="font-semibold text-foreground">{contextFilter.label}</span>.
+                Há {contextHidden} ação{contextHidden === 1 ? "" : "ões"} em outros contextos.
+              </p>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                {contextFilter.onClear && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={contextFilter.onClear}
+                    className="h-7 gap-1 text-[11px]"
+                  >
+                    <X className="h-3 w-3" />
+                    Mostrar todas
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openWithTemplate(null)}
+                  className="h-7 gap-1 text-[11px]"
+                >
+                  <Plus className="h-3 w-3" />
+                  Nova ação
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground font-body mb-3">
+                Nenhuma ação criada ainda. Comece organizando o follow-up.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openWithTemplate(null)}
+                className="h-7 gap-1 text-[11px]"
+              >
+                <Plus className="h-3 w-3" />
+                Criar primeira ação
+              </Button>
+            </>
+          )}
         </div>
       ) : visible.length === 0 ? (
         <div className="text-center py-8 border border-dashed border-border/60 rounded-lg">
           <p className="text-[11px] text-muted-foreground font-body">
-            Nenhuma ação neste filtro.
+            Nenhuma ação neste filtro
+            {contextFilter ? ` para "${contextFilter.label}"` : ""}.
           </p>
         </div>
       ) : (
