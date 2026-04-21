@@ -326,10 +326,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
         el.addEventListener("click", (e) => {
           e.stopPropagation();
-          handleSelect(n.id, { userInitiated: true });
-          // Sync panel: filter by clicked bairro + scroll first card into view
-          setBairroFilter(n.name);
+          // Filter the panel + scroll first card into view + flash highlight
+          setBairroFilter((prev) => (prev === n.name ? null : n.name));
           requestAnimationFrame(() => handlePinClickScroll(n.id));
+          // Fly to the bairro for context
+          mapRef.current?.flyTo({ center: [n.lng, n.lat], zoom: 14, duration: 700 });
         });
 
         el.addEventListener("mouseenter", () => setHoveredBairroId(n.id));
