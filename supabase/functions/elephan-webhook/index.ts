@@ -1,7 +1,12 @@
 // Public webhook called by Elephan.ia when a transcription is ready.
 // Elephan sends { id: "...", event: "transcription.completed" } (or similar).
-// We then fetch GET /v1/transcribes/{id}, match the budget by phone/email,
-// and upsert into budget_meetings.
+//
+// Matching strategy (in order):
+//   1) Client e-mail (lead_email) — e-mails @bwild.com.br são IGNORADOS,
+//      pois pertencem aos consultores que participaram da reunião.
+//   2) Telefone do cliente (client_phone) — apenas como fallback.
+//
+// Depois fazemos upsert em budget_meetings (chave: provider + external_id).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -26,6 +31,22 @@ function normalizePhone(phone: string | null | undefined): string | null {
   return digits;
 }
 
+// Domínios internos da BWild — e-mails desses domínios não identificam o cliente,
+// pois são dos consultores que participaram da reunião.
+const INTERNAL_EMAIL_DOMAINS = ["bwild.com.br"];
+
+function isInternalEmail(email: string): boolean {
+  const lower = email.trim().toLowerCase();
+  return INTERNAL_EMAIL_DOMAINS.some((d) => lower.endsWith(`@${d}`));
+}
+
+function normalizeEmail(email: string | null | undefined): string | null {
+  if (!email) return null;
+  const trimmed = email.trim().toLowerCase();
+  if (!trimmed || !trimmed.includes("@")) return null;
+  return trimmed;
+}
+
 // Timeout wrapper para fetch externo (evita travar a function quando o
 // upstream do Elephan demora demais).
 async function fetchWithTimeout(
@@ -42,10 +63,26 @@ async function fetchWithTimeout(
   }
 }
 
+interface MatchResult {
+  budget_id: string;
+  matched_by: "client_email" | "client_phone";
+  matched_value: string;
+}
+
 async function findBudgetIdForMeeting(
   supabase: ReturnType<typeof createClient>,
   participants: Participant[]
-): Promise<string | null> {
+): Promise<MatchResult | null> {
+  // E-mails de CLIENTES apenas — exclui domínios internos (@bwild.com.br).
+  // Este é o identificador principal de quem é o cliente da reunião.
+  const clientEmails = [
+    ...new Set(
+      participants
+        .map((p) => normalizeEmail(p?.email))
+        .filter((e): e is string => !!e && !isInternalEmail(e)),
+    ),
+  ];
+
   const phones = [
     ...new Set(
       participants
@@ -53,37 +90,67 @@ async function findBudgetIdForMeeting(
         .filter((p): p is string => !!p),
     ),
   ];
-  const emails = [
-    ...new Set(
-      participants
-        .map((p) => p?.email?.trim().toLowerCase())
-        .filter((e): e is string => !!e),
-    ),
-  ];
 
-  // 1) Busca todos os phones em UMA query (substitui N+1)
+  console.log(
+    `[elephan-webhook] Matching — client_emails=${JSON.stringify(clientEmails)} phones=${JSON.stringify(phones)}`,
+  );
+
+  // 1) IDENTIFICADOR PRINCIPAL: e-mail do cliente (lead_email).
+  // Busca case-insensitive via lower() comparando com cada email normalizado.
+  if (clientEmails.length > 0) {
+    const { data, error } = await supabase
+      .from("budgets")
+      .select("id, lead_email, created_at")
+      .in("lead_email", clientEmails)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) console.error("[elephan-webhook] email match error:", error.message);
+    if (data && data.length > 0) {
+      return {
+        budget_id: data[0].id as string,
+        matched_by: "client_email",
+        matched_value: (data[0].lead_email as string) ?? "",
+      };
+    }
+
+    // Tentativa secundária: comparar em lower() caso o lead_email salvo tenha caixa mista.
+    // Como PostgREST não aceita lower() em .in(), fazemos uma busca por cada email em OR.
+    const orEmailFilter = clientEmails
+      .map((e) => `lead_email.ilike.${e}`)
+      .join(",");
+    const { data: fuzzy } = await supabase
+      .from("budgets")
+      .select("id, lead_email, created_at")
+      .or(orEmailFilter)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (fuzzy && fuzzy.length > 0) {
+      return {
+        budget_id: fuzzy[0].id as string,
+        matched_by: "client_email",
+        matched_value: (fuzzy[0].lead_email as string) ?? "",
+      };
+    }
+  }
+
+  // 2) FALLBACK: telefone (quando não há e-mail de cliente ou ele não bateu).
   if (phones.length > 0) {
     const orFilter = phones
       .flatMap((p) => [`client_phone.eq.${p}`, `client_phone.eq.55${p}`])
       .join(",");
     const { data } = await supabase
       .from("budgets")
-      .select("id,created_at")
+      .select("id, client_phone, created_at")
       .or(orFilter)
       .order("created_at", { ascending: false })
       .limit(1);
-    if (data && data.length > 0) return data[0].id as string;
-  }
-
-  // 2) Busca todos os emails em UMA query
-  if (emails.length > 0) {
-    const { data } = await supabase
-      .from("budgets")
-      .select("id,created_at")
-      .in("lead_email", emails)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (data && data.length > 0) return data[0].id as string;
+    if (data && data.length > 0) {
+      return {
+        budget_id: data[0].id as string,
+        matched_by: "client_phone",
+        matched_value: (data[0].client_phone as string) ?? "",
+      };
+    }
   }
 
   return null;
@@ -211,22 +278,30 @@ Deno.serve(async (req) => {
 
   const participants = (Array.isArray(t.participants) ? t.participants : []) as Participant[];
 
-  const budgetId = await findBudgetIdForMeeting(supabase, participants);
-  if (!budgetId) {
-    console.warn("[elephan-webhook] No matching budget for transcribe", transcribeId);
+  const match = await findBudgetIdForMeeting(supabase, participants);
+  if (!match) {
+    console.warn(
+      `[elephan-webhook] No matching budget for transcribe ${transcribeId} (participants=${participants.length})`,
+    );
     return new Response(
       JSON.stringify({
         success: false,
         reason: "no_matching_budget",
         transcribe_id: transcribeId,
         participants_count: participants.length,
+        hint:
+          "Nenhum participante da reunião bateu com lead_email ou client_phone de um orçamento. E-mails @bwild.com.br são ignorados (são dos consultores).",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
+  console.log(
+    `[elephan-webhook] Matched transcribe ${transcribeId} → budget ${match.budget_id} via ${match.matched_by}=${match.matched_value}`,
+  );
+
   const row = {
-    budget_id: budgetId,
+    budget_id: match.budget_id,
     provider: "elephan_ia",
     external_id: String(transcribeId),
     title: pickString(t, ["title", "name", "subject"]),
@@ -278,7 +353,9 @@ Deno.serve(async (req) => {
     JSON.stringify({
       success: true,
       transcribe_id: transcribeId,
-      budget_id: budgetId,
+      budget_id: match.budget_id,
+      matched_by: match.matched_by,
+      matched_value: match.matched_value,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
