@@ -154,7 +154,6 @@ interface NeighborhoodDensityMapProps {
 }
 
 export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensityMapProps) {
-  const [selected, setSelected] = useState<string | null>(null);
   const [hoveredBairroId, setHoveredBairroId] = useState<string | null>(null);
   const [highlightedProjectId, setHighlightedProjectId] = useState<string | null>(null);
   const [bairroFilter, setBairroFilter] = useState<string | null>(null);
@@ -166,8 +165,6 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const markersRef = useRef<Map<string, { marker: maplibregl.Marker; el: HTMLDivElement }>>(new Map());
   const panelRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const autoSelectedRef = useRef(false);
-  const userInitiatedSelectionRef = useRef(false);
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
   const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
   const styleCandidates = useMemo<(string | maplibregl.StyleSpecification)[]>(() => {
@@ -185,27 +182,23 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   }, [apiKey, isMobileViewport]);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const selectedData = NEIGHBORHOOD_DATA.find((n) => n.id === selected) || null;
 
   const filteredProjects = useMemo(() => {
     if (!bairroFilter) return ALL_INDIVIDUAL_PROJECTS;
     return ALL_INDIVIDUAL_PROJECTS.filter((p) => normalize(p.bairro) === normalize(bairroFilter));
   }, [bairroFilter]);
 
-  const handleSelect = useCallback((id: string | null, options?: { userInitiated?: boolean }) => {
-    userInitiatedSelectionRef.current = !!options?.userInitiated;
-    setSelected((prev) => (prev === id ? null : id));
-  }, []);
+  // Active bairro id is now derived purely from the filter — no separate
+  // "selected" state, so there's zero chance of opening a detail panel.
+  const activeBairroId = useMemo(
+    () => (bairroFilter ? getBairroId(bairroFilter) : null),
+    [bairroFilter]
+  );
 
   const setCardRef = useCallback((id: string) => (el: HTMLDivElement | null) => {
     if (el) cardRefs.current.set(id, el);
     else cardRefs.current.delete(id);
   }, []);
-
-  // When a pin is clicked, scroll the first matching card into view + flash highlight
-  useEffect(() => {
-    if (!selected || selectedData) return;
-  }, [selected, selectedData]);
 
   // Auto-select disabled — always show all pins on both mobile and desktop
   // to maximise perception of regional coverage.
