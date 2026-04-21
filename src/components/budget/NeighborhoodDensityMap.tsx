@@ -720,8 +720,9 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
               // not the wrapper.
               tabIndex={filteredProjects.length === 0 ? 0 : -1}
               role="listbox"
-              aria-label="Lista de empreendimentos entregues. Use as setas para navegar e Esc para limpar o filtro."
-              aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"
+              aria-label="Lista de empreendimentos entregues. Use as setas para navegar entre cards e Esc para limpar o filtro e voltar ao painel."
+              // Mobile uses ←/→ only; desktop adds ↑/↓ and Home/End.
+              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
               // Tells assistive tech which option is currently "active" inside
               // the listbox (the highlighted card) without changing real DOM
               // focus. Screen readers announce the option's accessible name.
