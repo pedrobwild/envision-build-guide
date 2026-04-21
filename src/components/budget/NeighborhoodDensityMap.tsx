@@ -603,18 +603,39 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
         </div>
 
         {/* Right panel: vertical (desktop) / horizontal snap (mobile) carousel of all projects */}
-        <div className="flex-[2] md:max-h-[600px] flex flex-col bg-card border border-border rounded-xl overflow-hidden">
+        <section
+          className="flex-[2] md:max-h-[600px] flex flex-col bg-card border border-border rounded-xl overflow-hidden"
+          aria-labelledby="neighborhood-projects-heading"
+          aria-describedby="neighborhood-projects-help"
+        >
           {/* Sticky header */}
           <div className="px-4 pt-3 pb-2 border-b border-border bg-card sticky top-0 z-10">
             <div className="flex items-baseline justify-between gap-2 mb-2">
-              <h3 className="font-display font-bold text-sm text-foreground tracking-tight">
+              <h3
+                id="neighborhood-projects-heading"
+                className="font-display font-bold text-sm text-foreground tracking-tight"
+              >
                 Empreendimentos entregues
               </h3>
-              <span className="text-xs font-mono text-muted-foreground tabular-nums">
+              <span
+                className="text-xs font-mono text-muted-foreground tabular-nums"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                <span className="sr-only">Total: </span>
                 {filteredProjects.length} {filteredProjects.length === 1 ? "unidade" : "unidades"}
               </span>
             </div>
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1 -mx-1 px-1 snap-x">
+            {/* Visually-hidden description of keyboard shortcuts for SR users */}
+            <p id="neighborhood-projects-help" className="sr-only">
+              Use as setas para navegar entre os empreendimentos. Pressione Home ou End para ir ao início ou fim da lista, e Esc para limpar o filtro de bairro.
+            </p>
+            <div
+              role="toolbar"
+              aria-label="Filtrar empreendimentos por bairro"
+              aria-orientation="horizontal"
+              className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1 -mx-1 px-1 snap-x"
+            >
               <FilterChip
                 label="Todos"
                 active={bairroFilter === null}
@@ -640,16 +661,16 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
 
           {/* Scroll area with fade gradients */}
           <div className="relative flex-1 min-h-0">
-            {/* Fade gradients */}
+            {/* Fade gradients (decorative only) */}
             <div
-              aria-hidden
+              aria-hidden="true"
               className={cn(
                 "pointer-events-none absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-card to-transparent z-[5] transition-opacity",
                 scrollState.top ? "opacity-0" : "opacity-100"
               )}
             />
             <div
-              aria-hidden
+              aria-hidden="true"
               className={cn(
                 "pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-card to-transparent z-[5] transition-opacity",
                 scrollState.bottom ? "opacity-0" : "opacity-100"
@@ -667,14 +688,15 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
                 "md:space-y-3"
               )}
               tabIndex={0}
-              role="listbox"
-              aria-label="Lista de empreendimentos entregues. Use as setas para navegar e Esc para limpar o filtro."
+              role="list"
+              aria-label={`${filteredProjects.length} ${filteredProjects.length === 1 ? "empreendimento entregue" : "empreendimentos entregues"}${bairroFilter ? ` no bairro ${bairroFilter}` : ""}`}
               aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"
             >
-              {filteredProjects.map((proj) => (
+              {filteredProjects.map((proj, idx) => (
                 <IndividualProjectCard
                   key={proj.id}
                   project={proj}
+                  positionLabel={`${idx + 1} de ${filteredProjects.length}`}
                   ref={setCardRef(proj.id)}
                   isHighlighted={highlightedProjectId === proj.id}
                   onHover={(hovered) => {
@@ -685,13 +707,13 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
                 />
               ))}
               {filteredProjects.length === 0 && (
-                <div className="text-sm text-muted-foreground font-body text-center py-8">
+                <div role="status" className="text-sm text-muted-foreground font-body text-center py-8">
                   Nenhum empreendimento neste filtro.
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
