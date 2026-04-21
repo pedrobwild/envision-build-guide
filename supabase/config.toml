@@ -7,7 +7,7 @@ file_size_limit = "500MiB"
 verify_jwt = false
 
 [functions.ai-sync-monitor]
-verify_jwt = true
+verify_jwt = false
 
 [functions.sync-supplier-outbound]
 verify_jwt = false
