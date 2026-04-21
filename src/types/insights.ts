@@ -7,36 +7,15 @@
  * trate ausências de forma segura via fallback (`?? 0` / `|| "..."`).
  */
 
-export interface InsightChartsData {
-  metrics?: {
-    noShowCount?: number;
-    scheduledCount?: number;
-    [k: string]: unknown;
-  };
-  trends?: {
-    windows?: Array<{
-      windowDays: number;
-      meetings?: number;
-      avgScore?: number;
-      positiveSentimentPct?: number;
-      topObjections?: Array<{ objection: string; count?: number }>;
-    }>;
-    delta30vs60?: {
-      meetings?: number;
-      avgScore?: number;
-      positiveSentimentPct?: number;
-    };
-  };
-  personalityProfiles?: unknown[];
-  objections?: unknown[];
-  topQuestions?: unknown[];
-  // Demais campos do dashboard são livres — mantemos como índice aberto.
-  [k: string]: unknown;
-}
+// O dashboard vem do Edge Function com formato dinâmico/evolutivo.
+// Mantemos `any` para preservar o consumo flexível dos componentes
+// sem forçar refactors profundos em campos opcionais aninhados.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type InsightChartsData = any;
 
 /**
  * Linha bruta retornada por `elephant_insights_cache`.
- * Espelha o schema esperado, mas com tudo opcional para resiliência.
+ * Espelha o schema esperado, mas com campos opcionais para resiliência.
  */
 export interface ElephantInsightsCacheRow {
   cache_key: string;
