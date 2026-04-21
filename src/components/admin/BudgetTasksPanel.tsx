@@ -78,6 +78,17 @@ const TYPE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
 interface Props {
   budgetId: string;
   getProfileName: (id: string | null) => string;
+  /**
+   * Filtro contextual baseado no módulo ativo da sidebar de demanda.
+   * Quando definido, filtra as ações por tipo e/ou palavras-chave no
+   * título/descrição. Pode ser limpo pelo usuário via botão "X".
+   */
+  contextFilter?: {
+    label: string;
+    types?: string[];
+    keywords?: string[];
+    onClear?: () => void;
+  } | null;
 }
 
 /**
