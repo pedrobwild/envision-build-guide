@@ -56,10 +56,10 @@ export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummar
           aria-hidden
         />
 
-        <div className="relative space-y-2">
-          {/* Total */}
-          <div className="space-y-0.5">
-            <p className={LABEL}>Investimento total</p>
+        <div className="relative space-y-1.5">
+          {/* Total — label e valor sem espaço extra para criar bloco coeso */}
+          <div>
+            <p className={cn(LABEL, "mb-0.5 leading-none")}>Investimento total</p>
             <CountUpValue
               value={total}
               className={cn(
