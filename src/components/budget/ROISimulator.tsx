@@ -358,8 +358,7 @@ export function ROISimulator({
                 Ganho extra mensal
               </p>
               <p className="text-[11px] text-muted-foreground font-body leading-snug">
-                Reforma paga sozinha em{" "}
-                <strong className="text-success font-semibold">{reformPaybackLabel}</strong>
+                Nosso diferencial em personalizar e projetar designs <strong className="text-success font-semibold">premium e exclusivos</strong> é o que proporciona esse resultado.
               </p>
             </div>
             <div className="text-left sm:text-right flex-shrink-0 order-1 sm:order-2">
