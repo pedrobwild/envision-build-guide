@@ -684,7 +684,8 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
               )}
               tabIndex={0}
               role="listbox"
-              aria-label="Lista de empreendimentos entregues"
+              aria-label="Lista de empreendimentos entregues. Use as setas para navegar e Esc para limpar o filtro."
+              aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"
             >
               {filteredProjects.map((proj) => (
                 <IndividualProjectCard
