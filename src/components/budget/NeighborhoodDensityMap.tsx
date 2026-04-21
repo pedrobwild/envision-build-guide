@@ -854,19 +854,49 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
           <div className="flex h-full">
             {project.fotos.map((foto, i) => {
               const isActiveSlide = i === activeSlide;
+              const isLoaded = loadedSlides.has(i);
               return (
-                <div key={i} className="flex-[0_0_100%] min-w-0 relative">
-                  {inView ? (
+                <div key={i} className="flex-[0_0_100%] min-w-0 relative bg-muted">
+                  {/* Skeleton: always rendered as the first paint frame.
+                      Sits underneath the <img> and fades out once the image
+                      reports onLoad — so the user never sees a blank slot. */}
+                  <div
+                    aria-hidden="true"
+                    className={cn(
+                      "absolute inset-0 overflow-hidden transition-opacity duration-500",
+                      isLoaded ? "opacity-0" : "opacity-100"
+                    )}
+                  >
+                    <div className="absolute inset-0 bg-muted" />
+                    {/* Shimmer sweep — pure CSS, GPU-friendly */}
+                    <div
+                      className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-foreground/[0.06] to-transparent"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Camera className="h-8 w-8 text-muted-foreground/25" />
+                    </div>
+                  </div>
+
+                  {inView && (
                     <img
                       src={foto}
                       alt={`Studio reformado de ${project.metragem}m² no ${project.bairro} — ${project.displayName}, foto ${i + 1} de ${project.fotos.length}`}
-                      className="w-full h-full object-cover"
+                      className={cn(
+                        "relative w-full h-full object-cover transition-opacity duration-500",
+                        isLoaded ? "opacity-100" : "opacity-0"
+                      )}
                       // First slide loads eagerly so it appears the instant the
                       // card enters viewport; subsequent slides stay lazy.
                       loading={isActiveSlide ? "eager" : "lazy"}
                       decoding={isActiveSlide ? "sync" : "async"}
                       // @ts-expect-error fetchpriority is valid HTML, not yet in TS lib
                       fetchpriority={isActiveSlide ? "high" : "auto"}
+                      onLoad={() => markLoaded(i)}
+                      ref={(el) => {
+                        // If the image came straight from cache, onLoad may
+                        // have already fired before React attached the listener.
+                        if (el?.complete && el.naturalWidth > 0) markLoaded(i);
+                      }}
                       onError={(e) => {
                         const el = e.target as HTMLImageElement;
                         el.style.display = "none";
@@ -875,10 +905,11 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
                           const fallback = parent.querySelector(".fallback-bg") as HTMLElement;
                           if (fallback) fallback.style.display = "flex";
                         }
+                        // Mark "loaded" so the skeleton stops shimmering and
+                        // the fallback (or empty slot) becomes the resting state.
+                        markLoaded(i);
                       }}
                     />
-                  ) : (
-                    <div className="absolute inset-0 bg-muted animate-pulse" />
                   )}
                   <div className="fallback-bg absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center hidden">
                     <Camera className="h-8 w-8 text-muted-foreground/40" />
