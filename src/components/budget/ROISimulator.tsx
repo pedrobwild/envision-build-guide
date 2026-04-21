@@ -349,6 +349,28 @@ export function ROISimulator({
           de retorno.
         </p>
       </div>
+
+      {/* CTA modal */}
+      <button
+        type="button"
+        onClick={() => setModalOpen(true)}
+        className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-body font-medium text-primary hover:text-primary-foreground bg-primary/5 hover:bg-primary border border-primary/20 hover:border-primary px-3 py-2 rounded-md transition-colors"
+      >
+        <Maximize2 className="h-3.5 w-3.5" />
+        Abrir simulação completa
+      </button>
+
+      {modalOpen && (
+        <Suspense fallback={null}>
+          <ROISimulatorModal
+            open={modalOpen}
+            onOpenChange={setModalOpen}
+            total={total}
+            bairro={bairro}
+            metragem={metragem}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
