@@ -51,19 +51,6 @@ export function PortalShowcase() {
           ))}
         </div>
 
-        <div className="rounded-lg overflow-hidden border border-border">
-          <video
-            src={PORTAL_VIDEO_URL}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            className="w-full h-auto"
-            aria-label="Portal Bwild — acompanhamento de obra em tempo real"
-          />
-        </div>
-
         <Button
           asChild
           className="w-full gap-2"
