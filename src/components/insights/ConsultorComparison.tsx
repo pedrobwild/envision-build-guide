@@ -16,11 +16,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import MultiBrokerWeeklySparkline from "./MultiBrokerWeeklySparkline";
-import {
-  type ConsultorInsightData,
-  type ElephantInsightsCacheRow,
-  normalizeInsightsCache,
-} from "@/types/insights";
+import { type ConsultorInsightData } from "@/types/insights";
+import { fetchUserInsight } from "@/lib/insights-cache";
 
 interface ConsultorUser {
   id: string;
@@ -81,15 +78,9 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
     setLoading(true);
     try {
       // Try cache first
-      const cacheKey = `user_${userId}`;
-      const { data: cached } = await (supabase as any)
-        .from("elephant_insights_cache")
-        .select("*")
-        .eq("cache_key", cacheKey)
-        .single();
-
+      const cached = await fetchUserInsight(userId);
       if (cached) {
-        setter(normalizeInsightsCache(cached));
+        setter(cached);
       } else {
         // Fetch from API
         const { data: res, error } = await supabase.functions.invoke("elephant-insights", { body: { userId } });

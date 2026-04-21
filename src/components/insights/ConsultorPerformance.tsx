@@ -18,11 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import InsightsDashboard from "./InsightsDashboard";
 import ConsultorComparison from "./ConsultorComparison";
-import {
-  type ConsultorInsightData,
-  type ElephantInsightsCacheRow,
-  normalizeInsightsCache,
-} from "@/types/insights";
+import { type ConsultorInsightData } from "@/types/insights";
+import { fetchUserInsight } from "@/lib/insights-cache";
 
 type InsightsData = ConsultorInsightData;
 
@@ -64,17 +61,8 @@ export default function ConsultorPerformance() {
     if (!selectedConsultor) { setInitialLoad(false); return; }
     const loadCache = async () => {
       try {
-        const { data: cached } = await (supabase as any)
-          .from("elephant_insights_cache")
-          .select("*")
-          .eq("cache_key", `user_${selectedConsultor}`)
-          .single();
-        if (cached) {
-          const age = cached.updated_at
-            ? Math.round((Date.now() - new Date(cached.updated_at).getTime()) / 60000)
-            : 0;
-          setData(normalizeInsightsCache(cached, { cached: true, cacheAge: age }));
-        } else { setData(null); }
+        const cached = await fetchUserInsight(selectedConsultor);
+        setData(cached);
       } catch { setData(null); }
       finally { setInitialLoad(false); }
     };

@@ -12,6 +12,7 @@ import InsightsDashboard from "./InsightsDashboard";
 import QualitativeHighlights from "./QualitativeHighlights";
 import ExecutiveSummary from "./ExecutiveSummary";
 import type { ElephantInsightsCacheRow, InsightChartsData } from "@/types/insights";
+import { listCacheEntries, getCacheAgeMinutes } from "@/lib/insights-cache";
 
 interface ConsolidatedData {
   totalMeetings: number;
@@ -38,12 +39,8 @@ export default function ConsolidatedInsights() {
 
   const loadFromCache = async () => {
     try {
-      const { data: caches, error } = await (supabase as any)
-        .from("elephant_insights_cache")
-        .select("*")
-        .like("cache_key", "user_%");
-
-      if (error || !caches?.length) {
+      const caches = await listCacheEntries("user_%");
+      if (!caches.length) {
         setData(null);
         setInitialLoad(false);
         return;
