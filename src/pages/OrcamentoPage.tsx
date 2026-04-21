@@ -104,9 +104,6 @@ export default function OrcamentoPage() {
             <motion.div id="portal-section" variants={sectionVariants} viewport={{ once: true, amount: 0.1, margin: "0px 0px -60px 0px" }} initial="hidden" whileInView="visible">
               <PortalWarrantyNextSteps portalTabs={resolvedBudget.portalTabs} />
             </motion.div>
-            <motion.div id="portal-demo-access" variants={sectionVariants} viewport={{ once: true, amount: 0.1, margin: "0px 0px -60px 0px" }} initial="hidden" whileInView="visible">
-              <PortalDemoAccessCard />
-            </motion.div>
             <div className="w-full border-t border-border/30" />
             <motion.div id="cronograma-section" variants={sectionVariants} viewport={{ once: true, amount: 0.05, margin: "0px 0px -40px 0px" }} initial="hidden" whileInView="visible">
               <ReformTimeline />
