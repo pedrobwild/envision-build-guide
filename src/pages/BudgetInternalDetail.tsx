@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { CommentQuickTemplates } from "@/components/editor/CommentQuickTemplates";
 import { Separator } from "@/components/ui/separator";
-import { ModuleCard } from "@/components/demanda/ModuleCard";
+// ModuleCard removido: a página de demanda agora usa DemandSidebarNav
 import { PipelineProgress, type PipelineStage } from "@/components/demanda/PipelineProgress";
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { useBudgetHub } from "@/hooks/useBudgetHub";
