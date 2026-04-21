@@ -939,6 +939,10 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     return (
       <div
         ref={setRefs}
+        // Stable DOM id used by the listbox's `aria-activedescendant` so
+        // screen readers announce the highlighted card without moving real
+        // focus. Must match the format used by the parent panel below.
+        id={`project-card-${project.id}`}
         data-project-card-id={project.id}
         tabIndex={0}
         role="option"
