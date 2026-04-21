@@ -372,12 +372,46 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   // ↑/↓ — move focus between cards (with wrap-around)
   // Home/End — jump to first / last
   // Esc — clear active highlight + bairro filter, return focus to panel
+  //
+  // `focusCard` is also responsible for keeping the focused card *fully
+  // visible* inside its scroll container — mobile uses a horizontal snap
+  // carousel (where the card needs to be centered on the inline axis),
+  // desktop uses a vertical stack (where it needs to be centered on the
+  // block axis). We rely on the panel's native CSS scroll-snap to lock the
+  // card in place after the smooth scroll resolves, so the visual position
+  // matches the keyboard focus state without breaking the roving tabindex
+  // (focus stays on the card via `el.focus({ preventScroll: true })`).
   const focusCard = useCallback(
     (id: string) => {
       const el = cardRefs.current.get(id);
       if (!el) return;
+      // Move keyboard focus first, but suppress the browser's default
+      // scroll-on-focus so we have full control over the animation below.
       el.focus({ preventScroll: true });
-      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+      // Detect orientation + motion preferences at call time so a single
+      // handler works after viewport resize / rotation and respects the
+      // user's reduced-motion setting without a re-render.
+      const isMobileNow =
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(max-width: 767px)").matches;
+      const prefersReduced =
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const behavior: ScrollBehavior = prefersReduced ? "auto" : "smooth";
+
+      // Prefer scrolling the card to the center of its axis so partially
+      // clipped cards become fully visible. CSS scroll-snap on the panel
+      // (`snap-x snap-mandatory` mobile / vertical scroll desktop) realigns
+      // the final resting position to the snap point, so "center" + snap
+      // produces a clean, snapped result without overshoot.
+      el.scrollIntoView({
+        behavior,
+        block: isMobileNow ? "nearest" : "center",
+        inline: isMobileNow ? "center" : "nearest",
+      });
       flashHighlight(id, 1600);
     },
     [flashHighlight]
