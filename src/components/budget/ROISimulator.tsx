@@ -574,7 +574,7 @@ export function ROISimulator({
                       ))}
                       <Badge
                         variant="outline"
-                        className={cn("text-[10px] font-body border", competitionColor)}
+                        className="text-[10px] font-body border-foreground/20 text-foreground bg-background"
                       >
                         Competição: {district.competition}
                       </Badge>
