@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MapPin, ArrowLeft, ChevronLeft, ChevronRight, Camera, Building2 } from "lucide-react";
+import { MapPin, ArrowLeft, ChevronLeft, ChevronRight, Camera, Building2, MapPinned } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,11 @@ import { getIndividualProjects, brooklinEmpreendimentos, type IndividualProject 
 const ALL_INDIVIDUAL_PROJECTS: IndividualProject[] = Array.from(
   new Set(brooklinEmpreendimentos.map((p) => p.bairro))
 ).flatMap((bairro) => getIndividualProjects(bairro));
+
+// Bairros that actually appear in the project carousel
+const CAROUSEL_BAIRROS: string[] = Array.from(
+  new Set(ALL_INDIVIDUAL_PROJECTS.map((p) => p.bairro))
+).sort();
 
 /* ── Data ── */
 type Neighborhood = {
