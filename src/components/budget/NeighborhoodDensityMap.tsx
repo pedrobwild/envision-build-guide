@@ -431,7 +431,11 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
           {selectedData ? (
             <NeighborhoodDetail data={selectedData} onBack={() => setSelected(null)} />
           ) : (
-            <SummaryPanel onSelectNeighborhood={handleSelect} />
+            <div className="space-y-3 pr-1">
+              {ALL_INDIVIDUAL_PROJECTS.map((proj) => (
+                <IndividualProjectCard key={proj.id} project={proj} />
+              ))}
+            </div>
           )}
         </div>
       </div>
