@@ -55,9 +55,6 @@ export function PortalWarrantyNextSteps({ portalTabs }: PortalWarrantyNextStepsP
             <TabsContent key={tab.id} value={tab.id} className="mt-3">
               <Card>
                 <CardContent className="pt-4 pb-3">
-                  <div className="aspect-video bg-muted/30 rounded-md border border-dashed border-border flex items-center justify-center mb-3">
-                    <p className="text-xs text-muted-foreground font-body">Screenshot do portal — {tab.label}</p>
-                  </div>
                   <ul className="space-y-1.5">
                     {tab.bullets.map((b) => (
                       <li key={b} className="flex items-start gap-2 text-sm font-body text-foreground leading-snug tracking-[-0.01em]">
