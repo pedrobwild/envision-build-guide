@@ -493,11 +493,44 @@ export function BudgetTasksPanel({ budgetId, getProfileName, contextFilter }: Pr
           )}
         </div>
       ) : visible.length === 0 ? (
-        <div className="text-center py-8 border border-dashed border-border/60 rounded-lg">
+        <div className="text-center py-8 border border-dashed border-border/60 rounded-lg space-y-2">
           <p className="text-[11px] text-muted-foreground font-body">
-            Nenhuma ação neste filtro
-            {contextFilter ? ` para "${contextFilter.label}"` : ""}.
+            Nenhuma ação combinando{" "}
+            <span className="font-semibold text-foreground">
+              {FILTERS.find((f) => f.key === filter)?.label}
+            </span>
+            {contextFilter && (
+              <>
+                {" "}com contexto{" "}
+                <span className="font-semibold text-primary">{contextFilter.label}</span>
+              </>
+            )}
+            .
           </p>
+          <div className="flex items-center justify-center gap-1.5 flex-wrap pt-1">
+            {filter !== "pending" && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setFilter("pending")}
+                className="h-6 gap-1 text-[10.5px]"
+              >
+                <X className="h-2.5 w-2.5" />
+                Limpar status
+              </Button>
+            )}
+            {contextFilter?.onClear && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={contextFilter.onClear}
+                className="h-6 gap-1 text-[10.5px]"
+              >
+                <X className="h-2.5 w-2.5" />
+                Limpar contexto
+              </Button>
+            )}
+          </div>
         </div>
       ) : (
         <ul className={cn("space-y-2", filter === "completed" && "opacity-80")}>
