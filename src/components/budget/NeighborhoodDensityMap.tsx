@@ -743,6 +743,8 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
+      aria-label={active ? `Bairro ${label} selecionado, clique para remover filtro` : `Filtrar por bairro ${label}`}
       className={cn(
         "shrink-0 snap-start px-2.5 py-1 rounded-full text-[11px] font-medium font-body whitespace-nowrap border transition-all",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
