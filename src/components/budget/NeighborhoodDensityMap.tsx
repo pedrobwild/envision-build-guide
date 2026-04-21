@@ -661,7 +661,7 @@ const IndividualProjectCard = forwardRef<HTMLDivElement, IndividualProjectCardPr
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
     const [activeSlide, setActiveSlide] = useState(0);
     const [hovering, setHovering] = useState(false);
-    const cardInnerRef = useRef<HTMLDivElement>(null);
+    const cardInnerRef = useRef<HTMLDivElement | null>(null);
     const [inView, setInView] = useState(false);
 
     // Lazy-load images: only mount <img> tags once card is near viewport
