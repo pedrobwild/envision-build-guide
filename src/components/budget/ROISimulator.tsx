@@ -383,7 +383,7 @@ export function ROISimulator({
           onClick={handleReset}
           className="text-xs text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
         >
-          Voltar para a média do bairro (ROI {formatPct(baselineRoi)})
+          Voltar para a projeção BWild padrão
         </button>
       )}
 
