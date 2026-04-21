@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, forwardRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useId, forwardRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin, ChevronLeft, ChevronRight, Camera, Building2, MapPinned } from "lucide-react";
