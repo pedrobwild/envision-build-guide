@@ -196,7 +196,7 @@ export function ROISimulator({
                 Simulador de retorno
               </h4>
               <p className="text-[11px] text-muted-foreground font-body mt-0.5 leading-snug">
-                Veja o impacto do design BWild no seu investimento
+                Veja como nosso design premium e exclusivo valoriza o seu investimento
               </p>
             </div>
           </div>
@@ -347,8 +347,8 @@ export function ROISimulator({
 
           {/* Citação técnica — benchmark de mercado */}
           <p className="mt-3 text-[10px] text-muted-foreground font-body leading-relaxed text-center px-1 sm:px-2">
-            Benchmark <strong className="text-foreground">AirDNA "Top 10%"</strong> em SP: design
-            premium gera +{upliftPctNightly}% na diária e +{BWILD_OCCUPANCY_UPLIFT}pp na ocupação.
+            Benchmark <strong className="text-foreground">AirDNA "Top 10%"</strong> em SP: nosso
+            design premium e exclusivo gera +{upliftPctNightly}% na diária e +{BWILD_OCCUPANCY_UPLIFT}pp na ocupação.
           </p>
 
           {/* Ganho extra — destaque success */}

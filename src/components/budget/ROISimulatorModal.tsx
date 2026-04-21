@@ -183,7 +183,7 @@ export function ROISimulatorModal({
                   Simulador de Retorno
                 </DialogTitle>
                 <DialogDescription className="text-[11px] sm:text-sm font-body mt-0.5 leading-snug">
-                  Análise específica para o bairro do imóvel · dados reais de mercado
+                  Como nosso design premium e exclusivo valoriza o seu investimento — análise por bairro com dados reais de mercado
                 </DialogDescription>
               </div>
             </div>
