@@ -68,7 +68,7 @@ export default function ConsultorPerformance() {
           .from("elephant_insights_cache")
           .select("*")
           .eq("cache_key", `user_${selectedConsultor}`)
-          .single<ElephantInsightsCacheRow>();
+          .single();
         if (cached) {
           const age = cached.updated_at
             ? Math.round((Date.now() - new Date(cached.updated_at).getTime()) / 60000)

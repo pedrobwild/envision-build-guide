@@ -86,7 +86,7 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
         .from("elephant_insights_cache")
         .select("*")
         .eq("cache_key", cacheKey)
-        .single<ElephantInsightsCacheRow>();
+        .single();
 
       if (cached) {
         setter(normalizeInsightsCache(cached));
