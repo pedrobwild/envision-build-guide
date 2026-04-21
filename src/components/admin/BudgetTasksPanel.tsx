@@ -49,6 +49,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ActivityDetailDrawer } from "./ActivityDetailDrawer";
 
 interface Activity {
   id: string;
@@ -91,6 +92,7 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
   const [outcomeId, setOutcomeId] = useState<string | null>(null);
   const [outcomeText, setOutcomeText] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   function openWithTemplate(values: ActivityInitialValues | null) {
     setInitialValues(values);
@@ -373,11 +375,20 @@ export function BudgetTasksPanel({ budgetId, getProfileName }: Props) {
                 }
                 onReopen={isCompleted ? () => reopen.mutate(a.id) : undefined}
                 onDelete={() => setDeleteId(a.id)}
+                onOpenDetail={() => setDetailId(a.id)}
               />
             );
           })}
         </ul>
       )}
+
+      {/* Drawer: detalhes da ação */}
+      <ActivityDetailDrawer
+        activityId={detailId}
+        open={!!detailId}
+        onOpenChange={(v) => !v && setDetailId(null)}
+        getProfileName={getProfileName}
+      />
 
       {/* Modal: nova ação */}
       <NewBudgetActivityDialog
@@ -445,12 +456,14 @@ function TaskRow({
   onComplete,
   onReopen,
   onDelete,
+  onOpenDetail,
 }: {
   activity: Activity;
   ownerName: string;
   onComplete?: () => void;
   onReopen?: () => void;
   onDelete?: () => void;
+  onOpenDetail?: () => void;
 }) {
   const Icon = TYPE_ICON[activity.type] ?? FileText;
   const completed = !!activity.completed_at;
@@ -463,12 +476,18 @@ function TaskRow({
   return (
     <li
       className={cn(
-        "group rounded-lg border bg-card p-2.5 transition-colors",
+        "group rounded-lg border bg-card p-2.5 transition-colors cursor-pointer",
         completed && "border-border/40",
         isOverdue && "border-destructive/40 bg-destructive/[0.03]",
         isDueSoon && "border-warning/40 bg-warning/[0.03]",
         !completed && !isOverdue && !isDueSoon && "border-border hover:border-border/80",
       )}
+      onClick={(e) => {
+        // Ignora cliques nos botões internos (checkbox/delete)
+        const target = e.target as HTMLElement;
+        if (target.closest("button")) return;
+        onOpenDetail?.();
+      }}
     >
       <div className="flex items-start gap-2.5">
         <button
