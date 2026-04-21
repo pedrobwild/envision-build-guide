@@ -249,9 +249,6 @@ export function ROISimulator({
             <h5 className="font-display font-bold text-sm text-foreground tracking-tight">
               O efeito BWild
             </h5>
-            <Badge variant="outline" className="ml-auto text-[9px] font-mono uppercase tracking-wider border-primary/30 text-primary bg-primary/5">
-              +{upliftPct}% renda
-            </Badge>
           </div>
 
           {/* Comparativo lado a lado — design refinado */}
