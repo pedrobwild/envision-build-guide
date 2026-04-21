@@ -61,7 +61,7 @@ export function PortalShowcase() {
             aria-label="Acessar portal de obra demo em nova aba"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            Experimentar o Portal — obra demo
+            Acessar o Portal
           </a>
         </Button>
 
