@@ -44,6 +44,7 @@ const AnalisesPage = lazy(() => import("./pages/AnalisesPage"));
 const ForecastPage = lazy(() => import("./pages/ForecastPage"));
 const AgendaPage = lazy(() => import("./pages/AgendaPage"));
 const InsightsPage = lazy(() => import("./pages/InsightsPage"));
+const ConversationsPage = lazy(() => import("./pages/ConversationsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -119,6 +120,7 @@ const App = () => (
                   <Route path="/admin/leads/regras" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><LeadRoutingRulesPage /></RoleGuard></AdminPage>} />
                   <Route path="/admin/agenda" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><AgendaPage /></RoleGuard></AdminPage>}/>
                   <Route path="/admin/insights" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><InsightsPage /></RoleGuard></AdminPage>}/>
+                  <Route path="/admin/conversas" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><ConversationsPage /></RoleGuard></AdminPage>}/>
                   <Route path="/o/:publicId" element={<PublicBudget />} />
                   <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
                   <Route path="/qa" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><QAEvaluator /></RoleGuard></AdminPage>} />
