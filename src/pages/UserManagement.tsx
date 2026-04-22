@@ -125,18 +125,39 @@ export default function UserManagement() {
         action: "invite_user",
         email: inviteEmail.trim().toLowerCase(),
         full_name: inviteName.trim(),
+        whatsapp: inviteWhatsapp.trim(),
         role: inviteRole,
       });
       toast.success(`Usuário ${inviteEmail} criado com sucesso.`);
       setInviteOpen(false);
       setInviteEmail("");
       setInviteName("");
+      setInviteWhatsapp("");
       setInviteRole("comercial");
       loadUsers();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : String(err));
     }
     setInviting(false);
+  }
+
+  async function handleSaveProfile() {
+    if (!profileUser) return;
+    setSavingProfile(true);
+    try {
+      await callAdminAPI({
+        action: "update_profile",
+        user_id: profileUser.id,
+        full_name: profileName.trim(),
+        whatsapp: profileWhatsapp.trim(),
+      });
+      toast.success("Dados do usuário atualizados.");
+      setProfileUser(null);
+      loadUsers();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    }
+    setSavingProfile(false);
   }
 
   async function handleSaveRoles() {
