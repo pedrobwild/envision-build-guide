@@ -251,7 +251,7 @@ export function CategoryAccordionItem({
                   </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
