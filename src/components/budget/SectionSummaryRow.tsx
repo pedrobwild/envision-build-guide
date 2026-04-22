@@ -69,11 +69,8 @@ export function SectionSummaryRow({
           !hasItems && "cursor-default"
         )}
       >
-        {/* Color pip */}
-        <div className={cn(
-          "w-[3px] rounded-full flex-shrink-0 self-stretch min-h-[20px]",
-          bgClass
-        )} />
+        {/* Color pip — neutralized */}
+        <div className="w-[3px] rounded-full flex-shrink-0 self-stretch min-h-[20px] bg-border" />
 
         {/* Title + item count */}
         <div className="flex-1 text-left min-w-0">
@@ -112,19 +109,7 @@ export function SectionSummaryRow({
         </span>
       </button>
 
-      {/* ── Percentage bar ── */}
-      {percentage !== undefined && percentage > 0 && (
-        <div className="px-3 pb-1">
-          <div className="h-[2px] rounded-full bg-muted/40 overflow-hidden">
-            <motion.div
-              className={cn("h-full rounded-full", bgClass)}
-              initial={{ width: 0 }}
-              animate={{ width: `${percentage}%` }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Percentage bar removed — kept neutral layout only */}
 
       {/* ── Expanded items ── */}
       <AnimatePresence initial={false}>
