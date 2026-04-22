@@ -97,9 +97,11 @@ export function SupplierComparisonTab({ catalogItemId, onAddPrice, onEditPrice }
     return (
       <div className="py-8 text-center border rounded-lg border-dashed border-border space-y-2">
         <p className="text-sm text-muted-foreground">Sem preços cadastrados.</p>
-        <Button size="sm" variant="outline" onClick={onAddPrice}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar primeiro preço
-        </Button>
+        {onAddPrice && (
+          <Button size="sm" variant="outline" onClick={onAddPrice}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar primeiro preço
+          </Button>
+        )}
       </div>
     );
   }
@@ -200,9 +202,11 @@ export function SupplierComparisonTab({ catalogItemId, onAddPrice, onEditPrice }
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => onEditPrice(p)}>
-                      Editar
-                    </Button>
+                    {onEditPrice && (
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => onEditPrice(p)}>
+                        Editar
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               );
