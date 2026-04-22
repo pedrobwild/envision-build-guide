@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     if (action === "list_users") {
       const { data: profiles } = await adminClient
         .from("profiles")
-        .select("id, full_name, is_active, created_at");
+        .select("id, full_name, whatsapp, is_active, created_at");
 
       const { data: allRoles } = await adminClient
         .from("user_roles")
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
 
     // ── INVITE USER ──
     if (action === "invite_user") {
-      const { email, full_name, role } = payload;
+      const { email, full_name, whatsapp, role } = payload;
 
       if (!email || !role) {
         return new Response(JSON.stringify({ error: "email and role are required" }), {
@@ -116,6 +116,7 @@ Deno.serve(async (req) => {
       await adminClient.from("profiles").upsert({
         id: newUser.user.id,
         full_name: full_name || "",
+        whatsapp: whatsapp || null,
       });
 
       // Assign role
@@ -131,6 +132,34 @@ Deno.serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ success: true, user_id: newUser.user.id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── UPDATE PROFILE (name + whatsapp) ──
+    if (action === "update_profile") {
+      const { user_id, full_name, whatsapp } = payload;
+
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const updates: Record<string, unknown> = {};
+      if (typeof full_name === "string") updates.full_name = full_name;
+      if (typeof whatsapp === "string" || whatsapp === null) updates.whatsapp = whatsapp || null;
+
+      const { error: updErr } = await adminClient.from("profiles").update(updates).eq("id", user_id);
+      if (updErr) {
+        return new Response(JSON.stringify({ error: updErr.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

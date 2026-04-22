@@ -42,6 +42,8 @@ import {
   UserCheck,
   Mail,
   KeyRound,
+  Phone,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ROLES, type AppRole } from "@/lib/role-constants";
@@ -50,6 +52,7 @@ interface ManagedUser {
   id: string;
   full_name: string | null;
   email: string;
+  whatsapp: string | null;
   is_active: boolean;
   created_at: string | null;
   roles: AppRole[];
@@ -67,6 +70,7 @@ export default function UserManagement() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
+  const [inviteWhatsapp, setInviteWhatsapp] = useState("");
   const [inviteRole, setInviteRole] = useState<AppRole>("comercial");
   const [inviting, setInviting] = useState(false);
 
@@ -74,6 +78,12 @@ export default function UserManagement() {
   const [editUser, setEditUser] = useState<ManagedUser | null>(null);
   const [editRoles, setEditRoles] = useState<AppRole[]>([]);
   const [savingRoles, setSavingRoles] = useState(false);
+
+  // Profile edit dialog (name + whatsapp)
+  const [profileUser, setProfileUser] = useState<ManagedUser | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profileWhatsapp, setProfileWhatsapp] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
 
   // Password reset dialog
   const [pwdUser, setPwdUser] = useState<ManagedUser | null>(null);
@@ -115,18 +125,39 @@ export default function UserManagement() {
         action: "invite_user",
         email: inviteEmail.trim().toLowerCase(),
         full_name: inviteName.trim(),
+        whatsapp: inviteWhatsapp.trim(),
         role: inviteRole,
       });
       toast.success(`Usuário ${inviteEmail} criado com sucesso.`);
       setInviteOpen(false);
       setInviteEmail("");
       setInviteName("");
+      setInviteWhatsapp("");
       setInviteRole("comercial");
       loadUsers();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : String(err));
     }
     setInviting(false);
+  }
+
+  async function handleSaveProfile() {
+    if (!profileUser) return;
+    setSavingProfile(true);
+    try {
+      await callAdminAPI({
+        action: "update_profile",
+        user_id: profileUser.id,
+        full_name: profileName.trim(),
+        whatsapp: profileWhatsapp.trim(),
+      });
+      toast.success("Dados do usuário atualizados.");
+      setProfileUser(null);
+      loadUsers();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    }
+    setSavingProfile(false);
   }
 
   async function handleSaveRoles() {
@@ -301,6 +332,12 @@ export default function UserManagement() {
                         <p className="text-xs text-muted-foreground font-body truncate mt-0.5">
                           {u.email}
                         </p>
+                        {u.whatsapp && (
+                          <p className="text-xs text-muted-foreground font-body truncate mt-0.5 flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {u.whatsapp}
+                          </p>
+                        )}
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -309,6 +346,16 @@ export default function UserManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setProfileUser(u);
+                              setProfileName(u.full_name || "");
+                              setProfileWhatsapp(u.whatsapp || "");
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5 mr-2" />
+                            Editar dados
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               setEditUser(u);
@@ -373,6 +420,7 @@ export default function UserManagement() {
                     <tr className="border-b bg-muted/30">
                       <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">Usuário</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">Email</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">WhatsApp</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">Perfis</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">Status</th>
                       <th className="text-right font-medium text-muted-foreground px-4 py-3 font-body w-12"></th>
@@ -388,6 +436,9 @@ export default function UserManagement() {
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-muted-foreground font-body">{u.email}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground font-body">{u.whatsapp || "—"}</span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5 flex-wrap">
@@ -425,6 +476,16 @@ export default function UserManagement() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setProfileUser(u);
+                                  setProfileName(u.full_name || "");
+                                  setProfileWhatsapp(u.whatsapp || "");
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5 mr-2" />
+                                Editar dados
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
                                   setEditUser(u);
@@ -499,6 +560,17 @@ export default function UserManagement() {
                 value={inviteName}
                 onChange={(e) => setInviteName(e.target.value)}
                 placeholder="Nome do colaborador"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium font-body text-foreground">WhatsApp</label>
+              <Input
+                type="tel"
+                value={inviteWhatsapp}
+                onChange={(e) => setInviteWhatsapp(e.target.value)}
+                placeholder="(11) 99999-9999"
+                maxLength={20}
                 className="mt-1"
               />
             </div>
@@ -578,7 +650,55 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Set Password Dialog */}
+      {/* Profile Edit Dialog (name + whatsapp) */}
+      <Dialog open={!!profileUser} onOpenChange={(o) => !o && setProfileUser(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base flex items-center gap-2">
+              <Pencil className="h-4 w-4 text-primary" />
+              Editar dados
+            </DialogTitle>
+            <DialogDescription className="font-body text-sm">
+              {profileUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium font-body text-foreground">Nome completo</label>
+              <Input
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                placeholder="Nome do colaborador"
+                className="mt-1"
+                maxLength={120}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium font-body text-foreground">WhatsApp</label>
+              <Input
+                type="tel"
+                value={profileWhatsapp}
+                onChange={(e) => setProfileWhatsapp(e.target.value)}
+                placeholder="(11) 99999-9999"
+                className="mt-1"
+                maxLength={20}
+              />
+              <p className="text-xs text-muted-foreground font-body mt-1">
+                Usado para contato interno da equipe.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setProfileUser(null)} disabled={savingProfile}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveProfile} disabled={savingProfile}>
+              {savingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!pwdUser} onOpenChange={(o) => { if (!o) { setPwdUser(null); setNewPassword(""); } }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
