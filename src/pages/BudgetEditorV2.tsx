@@ -27,6 +27,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import type { BudgetRow, EditorSection } from "@/types/budget-common";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
+import { sendBudgetPublishedNotification } from "@/lib/digisac-notify";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -294,6 +295,18 @@ export default function BudgetEditorV2() {
         duration: 5000,
       });
       navigator.clipboard.writeText(publicUrl);
+
+      // Disparo automático de WhatsApp para o cliente
+      void sendBudgetPublishedNotification({
+        budgetId,
+        clientName: budget.client_name,
+        clientPhone: (budget as { client_phone?: string | null }).client_phone,
+        publicId,
+      }).then((res) => {
+        if (res.success) {
+          toast.info("WhatsApp enviado ao cliente.");
+        }
+      });
     } catch (err) {
       
       toast.error("Erro ao salvar. Tente novamente.");
