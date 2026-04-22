@@ -125,6 +125,15 @@ export default function AdminDashboard() {
 
   let step = 0;
 
+  // Gate: enquanto redireciona non-admin, mostra apenas spinner para evitar flash de KPIs distorcidos.
+  if (shouldRedirectNonAdmin) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Skeleton className="h-6 w-32" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8">
       {/* ───── HEADER ───── */}
