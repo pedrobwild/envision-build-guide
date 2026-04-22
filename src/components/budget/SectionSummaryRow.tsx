@@ -69,8 +69,47 @@ export function SectionSummaryRow({
           !hasItems && "cursor-default"
         )}
       >
-        {/* Color pip — neutralized */}
-        <div className="w-[3px] rounded-full flex-shrink-0 self-stretch min-h-[20px] bg-border" />
+        {/* Premium expand indicator (replaces neutral side bar) */}
+        {hasItems && !forceExpanded ? (
+          <div
+            className={cn(
+              "relative flex items-center justify-center flex-shrink-0 rounded-full border transition-all duration-200",
+              "h-6 w-6",
+              expanded
+                ? "border-foreground/25 bg-foreground/[0.04]"
+                : "border-border/60 bg-transparent group-hover:border-foreground/30"
+            )}
+            aria-hidden
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {expanded ? (
+                <motion.span
+                  key="minus"
+                  initial={{ rotate: -90, opacity: 0, scale: 0.8 }}
+                  animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                  exit={{ rotate: 90, opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <Minus className="h-3 w-3 text-foreground" strokeWidth={2.25} />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="plus"
+                  initial={{ rotate: 90, opacity: 0, scale: 0.8 }}
+                  animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                  exit={{ rotate: -90, opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <Plus className="h-3 w-3 text-muted-foreground" strokeWidth={2.25} />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        ) : (
+          <div className="w-6 flex-shrink-0" aria-hidden />
+        )}
 
         {/* Title + item count */}
         <div className="flex-1 text-left min-w-0">
@@ -87,16 +126,6 @@ export function SectionSummaryRow({
           )}
         </div>
 
-        {/* Chevron */}
-        {hasItems && !forceExpanded && (
-          <motion.div
-            animate={{ rotate: expanded ? 180 : 0 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="flex-shrink-0"
-          >
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </motion.div>
-        )}
 
         {/* Value */}
         <span
