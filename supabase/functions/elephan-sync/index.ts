@@ -371,6 +371,9 @@ Deno.serve(async (req) => {
         email: normalizeEmail(budget.lead_email as string | null),
         phone: normalizePhone(budget.client_phone as string | null),
       };
+      console.log(
+        `[elephan-sync] budget=${body.budget_id} client.email=${client.email} client.phone_raw=${budget.client_phone} client.phone_norm=${client.phone} variants=${JSON.stringify(client.phone ? phoneVariants(client.phone) : [])}`,
+      );
     }
   }
 
