@@ -63,8 +63,13 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (user) loadData();
-  }, [user]);
+    // Não buscar dados do painel executivo para non-admins; eles serão redirecionados.
+    if (!user) return;
+    if (profileLoading) return;
+    if (profile && !isAdmin && (isComercial || isOrcamentista)) return;
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, profileLoading, profile, isAdmin, isComercial, isOrcamentista]);
 
   const loadData = async () => {
     try {
