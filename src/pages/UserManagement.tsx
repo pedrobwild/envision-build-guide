@@ -650,7 +650,55 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Set Password Dialog */}
+      {/* Profile Edit Dialog (name + whatsapp) */}
+      <Dialog open={!!profileUser} onOpenChange={(o) => !o && setProfileUser(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base flex items-center gap-2">
+              <Pencil className="h-4 w-4 text-primary" />
+              Editar dados
+            </DialogTitle>
+            <DialogDescription className="font-body text-sm">
+              {profileUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium font-body text-foreground">Nome completo</label>
+              <Input
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                placeholder="Nome do colaborador"
+                className="mt-1"
+                maxLength={120}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium font-body text-foreground">WhatsApp</label>
+              <Input
+                type="tel"
+                value={profileWhatsapp}
+                onChange={(e) => setProfileWhatsapp(e.target.value)}
+                placeholder="(11) 99999-9999"
+                className="mt-1"
+                maxLength={20}
+              />
+              <p className="text-xs text-muted-foreground font-body mt-1">
+                Usado para contato interno da equipe.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setProfileUser(null)} disabled={savingProfile}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveProfile} disabled={savingProfile}>
+              {savingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!pwdUser} onOpenChange={(o) => { if (!o) { setPwdUser(null); setNewPassword(""); } }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
