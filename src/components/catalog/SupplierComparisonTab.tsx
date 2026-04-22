@@ -25,8 +25,8 @@ function timeAgo(iso: string | null) {
 
 interface Props {
   catalogItemId: string;
-  onAddPrice: () => void;
-  onEditPrice: (price: SupplierPrice) => void;
+  onAddPrice?: () => void;
+  onEditPrice?: (price: SupplierPrice) => void;
 }
 
 export function SupplierComparisonTab({ catalogItemId, onAddPrice, onEditPrice }: Props) {
