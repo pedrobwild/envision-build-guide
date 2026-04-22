@@ -70,6 +70,7 @@ export default function UserManagement() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
+  const [inviteWhatsapp, setInviteWhatsapp] = useState("");
   const [inviteRole, setInviteRole] = useState<AppRole>("comercial");
   const [inviting, setInviting] = useState(false);
 
@@ -77,6 +78,12 @@ export default function UserManagement() {
   const [editUser, setEditUser] = useState<ManagedUser | null>(null);
   const [editRoles, setEditRoles] = useState<AppRole[]>([]);
   const [savingRoles, setSavingRoles] = useState(false);
+
+  // Profile edit dialog (name + whatsapp)
+  const [profileUser, setProfileUser] = useState<ManagedUser | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profileWhatsapp, setProfileWhatsapp] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
 
   // Password reset dialog
   const [pwdUser, setPwdUser] = useState<ManagedUser | null>(null);
