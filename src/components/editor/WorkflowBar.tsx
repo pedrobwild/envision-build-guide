@@ -58,6 +58,7 @@ import { toast } from "sonner";
 import { BlockingDialog } from "./BlockingDialog";
 import { RevisionRequestDialog } from "./RevisionRequestDialog";
 import { publishVersion, ensureVersionGroup } from "@/lib/budget-versioning";
+import { sendBudgetPublishedNotification } from "@/lib/digisac-notify";
 
 interface WorkflowBarProps {
   budget: BudgetRow;
