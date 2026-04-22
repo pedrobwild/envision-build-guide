@@ -38,12 +38,69 @@ function normalizeEmail(email: string | null | undefined): string | null {
   return trimmed;
 }
 
+/**
+ * Normaliza telefone para o formato canônico BR: DDD + número (10 ou 11 dígitos).
+ * Remove DDI 55, espaços, ramais (após "x" ou "ramal"), parênteses etc.
+ */
 function normalizePhone(phone: string | null | undefined): string | null {
   if (!phone) return null;
-  let digits = phone.replace(/[^0-9]/g, "");
+  // Remove ramais comuns: "1234 x 567", "1234 ramal 567"
+  const noExt = phone.split(/x|ramal|ext/i)[0];
+  let digits = noExt.replace(/[^0-9]/g, "");
   if (digits.length === 0) return null;
+  // Remove DDI 55 quando presente (12+ dígitos começando com 55)
   if (digits.length >= 12 && digits.startsWith("55")) digits = digits.slice(2);
+  // Remove zero à esquerda do DDD ("011 99999-9999" -> "11999999999")
+  if (digits.length >= 11 && digits.startsWith("0")) digits = digits.slice(1);
   return digits;
+}
+
+/**
+ * Gera variantes plausíveis do telefone BR para matching/busca:
+ *  - canônico (DDD + número)
+ *  - com/sem o nono dígito (celulares)
+ *  - com prefixo 55 (DDI)
+ *  - só os 8/9 dígitos finais (sem DDD)
+ *  - últimos 8 dígitos (fallback fraco, útil como search term)
+ */
+function phoneVariants(phone: string | null | undefined): string[] {
+  const canonical = normalizePhone(phone);
+  if (!canonical) return [];
+  const set = new Set<string>();
+  set.add(canonical);
+
+  // Considera DDD (2 dígitos) + número (8 ou 9)
+  if (canonical.length === 11 || canonical.length === 10) {
+    const ddd = canonical.slice(0, 2);
+    const number = canonical.slice(2);
+
+    // Variante com/sem 9 inicial em celulares
+    if (number.length === 9 && number.startsWith("9")) {
+      const without9 = number.slice(1);
+      set.add(ddd + without9);
+      set.add(without9);
+    } else if (number.length === 8) {
+      const with9 = "9" + number;
+      set.add(ddd + with9);
+      set.add(with9);
+    }
+    set.add(number);
+    set.add("55" + canonical);
+  } else {
+    set.add("55" + canonical);
+  }
+
+  // Últimos 8 dígitos como fallback de busca
+  if (canonical.length >= 8) set.add(canonical.slice(-8));
+
+  return [...set].filter((v) => v.length >= 8);
+}
+
+/** Verifica se dois telefones são equivalentes considerando variantes BR. */
+function phonesMatch(a: string | null | undefined, b: string | null | undefined): boolean {
+  const va = new Set(phoneVariants(a));
+  const vb = phoneVariants(b);
+  return vb.some((v) => va.has(v));
 }
 
 function pickArray(obj: Record<string, unknown>, keys: string[]): unknown[] {
@@ -111,10 +168,14 @@ async function searchTranscribeIds(
     queries.push(`?participant_email=${encodeURIComponent(params.email)}`);
   }
   if (params.phone) {
-    queries.push(`?search=${encodeURIComponent(params.phone)}`);
-    queries.push(`?q=${encodeURIComponent(params.phone)}`);
-    queries.push(`?phone=${encodeURIComponent(params.phone)}`);
-    queries.push(`?participant_phone=${encodeURIComponent(params.phone)}`);
+    // Tenta cada variante BR (com/sem 9, com/sem 55, só DDD+número, etc.)
+    const variants = phoneVariants(params.phone);
+    for (const v of variants) {
+      queries.push(`?search=${encodeURIComponent(v)}`);
+      queries.push(`?q=${encodeURIComponent(v)}`);
+      queries.push(`?phone=${encodeURIComponent(v)}`);
+      queries.push(`?participant_phone=${encodeURIComponent(v)}`);
+    }
   }
 
   for (const qs of queries) {
@@ -200,7 +261,7 @@ async function upsertMeetingForBudget(
         matched = true;
         break;
       }
-      if (pp && client.phone && pp === client.phone) {
+      if (client.phone && phonesMatch(p?.phone, client.phone)) {
         matched = true;
         break;
       }
