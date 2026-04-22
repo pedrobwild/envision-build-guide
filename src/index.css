@@ -207,41 +207,42 @@
      cortam contra bordas (ring-inset / ring-offset).
      ──────────────────────────────────────────────────────────────── */
   .budget-focus {
-    @apply relative outline-none transition-colors duration-150;
-    /* Ring com offset de 2px ajuda a destacar o azul sobre fundos próximos */
+    @apply relative outline-none;
+    transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
     @apply focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-inset focus-visible:z-10;
   }
   /* Variante para superfícies (linhas, accordions, navs) — light/dark */
   .budget-focus-surface {
     @apply budget-focus;
-    /* Light: leve escurecimento neutro; Dark: leve clareamento via foreground */
-    @apply hover:bg-foreground/[0.04] active:bg-foreground/[0.08];
-    @apply focus-visible:bg-[hsl(var(--primary)/0.08)];
+    @apply hover:bg-foreground/[0.05] active:bg-foreground/[0.10];
+    @apply focus-visible:bg-[hsl(var(--primary)/0.10)];
   }
   .dark .budget-focus-surface {
-    @apply hover:bg-foreground/[0.06] active:bg-foreground/[0.1];
-    @apply focus-visible:bg-[hsl(var(--primary)/0.14)];
+    @apply hover:bg-foreground/[0.08] active:bg-foreground/[0.14];
+    @apply focus-visible:bg-[hsl(var(--primary)/0.18)];
   }
   /* Variante para botões/CTAs com fundo próprio (não pinta hover, só ring) */
   .budget-focus-cta {
     @apply budget-focus;
     @apply focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))];
-    @apply active:scale-[0.98];
+    @apply active:scale-[0.97];
   }
   /* Variante para miniaturas/imagens — ring externo + halo sutil no hover */
   .budget-focus-thumb {
-    @apply relative outline-none rounded-full overflow-hidden transition-shadow duration-150;
+    @apply relative outline-none rounded-full overflow-hidden;
+    transition: box-shadow 160ms ease, transform 160ms ease;
     @apply focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))] focus-visible:z-10;
-    @apply hover:ring-1 hover:ring-foreground/20;
+    @apply hover:ring-2 hover:ring-foreground/25 hover:scale-[1.03];
+    @apply active:scale-[0.97];
   }
   .dark .budget-focus-thumb {
-    @apply hover:ring-foreground/30;
+    @apply hover:ring-foreground/40;
   }
   /* Variante para botões sobre fundo escuro (header com imagem) */
   .budget-focus-on-dark {
-    @apply relative outline-none transition-colors duration-150;
-    /* Ring branco com leve offset escuro para sempre destacar sobre o hero */
-    @apply focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 focus-visible:z-10;
+    @apply relative outline-none;
+    transition: background-color 160ms ease, box-shadow 160ms ease;
+    @apply focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 focus-visible:z-10;
   }
 }
 
