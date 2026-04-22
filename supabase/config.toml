@@ -46,3 +46,6 @@ verify_jwt = true
 
 [functions.send-digisac-message]
 verify_jwt = true
+
+[functions.digisac-test-connection]
+verify_jwt = true
