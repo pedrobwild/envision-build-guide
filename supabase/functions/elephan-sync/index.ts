@@ -9,7 +9,7 @@
 //         via webhook).
 //   3) Se body.refresh_all: refetch das últimas 50 reuniões já cadastradas.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -154,6 +154,39 @@ async function fetchWithTimeout(
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function authenticateRequest(
+  req: Request,
+  // deno-lint-ignore no-explicit-any
+  adminClient: any,
+): Promise<{ userId: string } | { error: Response }> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return {
+      error: new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }),
+    };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const {
+    data: { user },
+    error,
+  } = await adminClient.auth.getUser(token);
+
+  if (error || !user) {
+    return {
+      error: new Response(JSON.stringify({ error: "Invalid token", detail: error?.message }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }),
+    };
+  }
+
+  return { userId: user.id };
 }
 
 /**
@@ -357,6 +390,44 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const baseUrl = ELEPHAN_API_BASE_URL.replace(/\/$/, "");
+
+  const auth = await authenticateRequest(req, supabase);
+  if ("error" in auth) return auth.error;
+
+  if (body.budget_id) {
+    const { data: allowed, error: accessError } = await supabase.rpc("can_access_budget", {
+      _user_id: auth.userId,
+      _budget_id: body.budget_id,
+    });
+
+    if (accessError) {
+      return new Response(JSON.stringify({ error: accessError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: "Access denied" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  } else if (body.refresh_all || body.transcribe_id) {
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", auth.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(JSON.stringify({ error: "Admin access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
 
   // Carrega contato do cliente (email/phone) quando temos budget_id
   let client: { email: string | null; phone: string | null } | null = null;
