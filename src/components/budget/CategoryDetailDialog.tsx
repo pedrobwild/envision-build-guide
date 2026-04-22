@@ -65,9 +65,9 @@ export function CategoryDetailDialog({ open, onClose, group, budgetId, editable 
       >
         <ArrowLeft className="h-5 w-5 text-foreground" />
       </button>
-      <div className={`w-1.5 h-5 rounded-full ${group.category.bgClass}`} />
+      <div className="w-1.5 h-5 rounded-full bg-border" />
       <span className="truncate">{group.category.label}</span>
-      <span className={`ml-auto text-base budget-currency shrink-0 ${group.category.colorClass}`}>
+      <span className="ml-auto text-base budget-currency shrink-0 text-foreground">
         {formatBRL(group.subtotal)}
       </span>
     </div>
