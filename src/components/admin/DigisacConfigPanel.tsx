@@ -246,7 +246,7 @@ export default function DigisacConfigPanel() {
       <CardContent className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-start gap-3">
-          <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2.5 rounded-lg">
+          <div className="bg-muted p-2.5 rounded-lg">
             <MessageSquare className="h-5 w-5 text-foreground/70" />
           </div>
           <div className="flex-1 min-w-0">
@@ -414,7 +414,7 @@ export default function DigisacConfigPanel() {
                   >
                     {copied ? (
                       <>
-                        <Check className="h-3.5 w-3.5 text-emerald-500" /> Copiado
+                        <Check className="h-3.5 w-3.5 text-primary" /> Copiado
                       </>
                     ) : (
                       <>

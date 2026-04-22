@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import IntegrationSyncPanel from "@/components/admin/IntegrationSyncPanel";
 import AiSyncInsightsPanel from "@/components/admin/AiSyncInsightsPanel";
+import DigisacConfigPanel from "@/components/admin/DigisacConfigPanel";
 
 type SearchMode = "ux" | "references" | "benchmarking";
 
@@ -292,6 +293,9 @@ export default function SystemToolsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Digisac (WhatsApp) integration */}
+      <DigisacConfigPanel />
 
       <IntegrationSyncPanel />
 
