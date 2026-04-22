@@ -332,6 +332,12 @@ export default function UserManagement() {
                         <p className="text-xs text-muted-foreground font-body truncate mt-0.5">
                           {u.email}
                         </p>
+                        {u.whatsapp && (
+                          <p className="text-xs text-muted-foreground font-body truncate mt-0.5 flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {u.whatsapp}
+                          </p>
+                        )}
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -340,6 +346,16 @@ export default function UserManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setProfileUser(u);
+                              setProfileName(u.full_name || "");
+                              setProfileWhatsapp(u.whatsapp || "");
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5 mr-2" />
+                            Editar dados
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               setEditUser(u);
