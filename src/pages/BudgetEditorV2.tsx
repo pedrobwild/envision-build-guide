@@ -294,6 +294,18 @@ export default function BudgetEditorV2() {
         duration: 5000,
       });
       navigator.clipboard.writeText(publicUrl);
+
+      // Disparo automático de WhatsApp para o cliente
+      void sendBudgetPublishedNotification({
+        budgetId,
+        clientName: budget.client_name,
+        clientPhone: (budget as { client_phone?: string | null }).client_phone,
+        publicId,
+      }).then((res) => {
+        if (res.success) {
+          toast.info("WhatsApp enviado ao cliente.");
+        }
+      });
     } catch (err) {
       
       toast.error("Erro ao salvar. Tente novamente.");
