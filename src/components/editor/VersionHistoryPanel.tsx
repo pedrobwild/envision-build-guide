@@ -37,6 +37,32 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [importOpen, setImportOpen] = useState(false);
   const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSelection, setCompareSelection] = useState<string[]>([]);
+
+  const toggleCompareSelection = (versionId: string) => {
+    setCompareSelection((prev) => {
+      if (prev.includes(versionId)) return prev.filter((id) => id !== versionId);
+      if (prev.length >= 2) return [prev[1], versionId]; // FIFO: mantém só as duas últimas
+      return [...prev, versionId];
+    });
+  };
+
+  const exitCompareMode = () => {
+    setCompareMode(false);
+    setCompareSelection([]);
+  };
+
+  const handleCompareSelected = () => {
+    if (compareSelection.length !== 2) return;
+    // Ordena por version_number (asc) para "left = anterior, right = nova"
+    const ordered = [...compareSelection].sort((a, b) => {
+      const va = versions.find((v) => v.id === a)?.version_number ?? 0;
+      const vb = versions.find((v) => v.id === b)?.version_number ?? 0;
+      return va - vb;
+    });
+    navigate(`/admin/comparar?left=${ordered[0]}&right=${ordered[1]}`);
+  };
 
   const loadVersions = async () => {
     setLoading(true);
