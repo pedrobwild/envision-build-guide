@@ -92,7 +92,7 @@ export function ExpandableItemRow({
                 e.stopPropagation();
                 onOpenLightbox(primaryImage.url);
               }}
-              className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden group cursor-zoom-in flex-shrink-0"
+              className="budget-focus-thumb w-7 h-7 sm:w-8 sm:h-8 group cursor-zoom-in flex-shrink-0"
               type="button"
             >
               <img
