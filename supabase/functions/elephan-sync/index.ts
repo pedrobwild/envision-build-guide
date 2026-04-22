@@ -261,7 +261,7 @@ async function upsertMeetingForBudget(
         matched = true;
         break;
       }
-      if (pp && client.phone && pp === client.phone) {
+      if (client.phone && phonesMatch(p?.phone, client.phone)) {
         matched = true;
         break;
       }
