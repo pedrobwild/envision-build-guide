@@ -564,6 +564,17 @@ export default function UserManagement() {
               />
             </div>
             <div>
+              <label className="text-sm font-medium font-body text-foreground">WhatsApp</label>
+              <Input
+                type="tel"
+                value={inviteWhatsapp}
+                onChange={(e) => setInviteWhatsapp(e.target.value)}
+                placeholder="(11) 99999-9999"
+                maxLength={20}
+                className="mt-1"
+              />
+            </div>
+            <div>
               <label className="text-sm font-medium font-body text-foreground">Perfil *</label>
               <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as AppRole)}>
                 <SelectTrigger className="mt-1">
