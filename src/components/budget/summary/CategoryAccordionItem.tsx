@@ -84,20 +84,20 @@ export function CategoryAccordionItem({
               {expanded ? (
                 <motion.div
                   key="minus"
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.6 }}
-                  transition={{ duration: 0.15 }}
+                  initial={{ opacity: 0, scale: 0.6, rotate: -45 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 0.6, rotate: 45 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-foreground/70 stroke-[2.5]" />
                 </motion.div>
               ) : (
                 <motion.div
                   key="plus"
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.6 }}
-                  transition={{ duration: 0.15 }}
+                  initial={{ opacity: 0, scale: 0.6, rotate: 45 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 0.6, rotate: -45 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-foreground/60 stroke-[2.5]" />
                 </motion.div>
@@ -141,13 +141,31 @@ export function CategoryAccordionItem({
             id={regionId}
             role="region"
             aria-labelledby={triggerId}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{
+              height: "auto",
+              opacity: 1,
+              transition: {
+                height: { duration: 0.42, ease: [0.32, 0.72, 0, 1] },
+                opacity: { duration: 0.32, ease: [0.4, 0, 0.2, 1], delay: 0.08 },
+              },
+            }}
+            exit={{
+              height: 0,
+              opacity: 0,
+              transition: {
+                height: { duration: 0.36, ease: [0.32, 0.72, 0, 1], delay: 0.04 },
+                opacity: { duration: 0.18, ease: [0.4, 0, 1, 1] },
+              },
+            }}
             className="overflow-hidden"
           >
-            <div className="ml-[40px] sm:ml-[48px] mr-4 sm:mr-5 mb-4 sm:mb-5 pl-4 sm:pl-5 border-l border-border/40">
+            <motion.div
+              className="ml-[40px] sm:ml-[48px] mr-4 sm:mr-5 mb-4 sm:mb-5 pl-4 sm:pl-5 border-l border-border/40"
+              initial={{ y: -6 }}
+              animate={{ y: 0, transition: { duration: 0.38, ease: [0.16, 1, 0.3, 1], delay: 0.06 } }}
+              exit={{ y: -4, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } }}
+            >
               {data.items.map((item, idx) => {
                 const hasDesc = !!item.description?.trim();
                 const isItemExpanded = expandedItemId === item.id;
@@ -155,8 +173,8 @@ export function CategoryAccordionItem({
                 return (
                   <motion.div
                     key={item.id}
-                    initial={{ opacity: 0, x: -4 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: -3 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{
                       duration: 0.2,
                       delay: idx * 0.025,
@@ -197,10 +215,23 @@ export function CategoryAccordionItem({
                           <AnimatePresence initial={false}>
                             {isItemExpanded && hasDesc && (
                               <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{
+                                  height: "auto",
+                                  opacity: 1,
+                                  transition: {
+                                    height: { duration: 0.35, ease: [0.32, 0.72, 0, 1] },
+                                    opacity: { duration: 0.28, ease: [0.4, 0, 0.2, 1], delay: 0.06 },
+                                  },
+                                }}
+                                exit={{
+                                  height: 0,
+                                  opacity: 0,
+                                  transition: {
+                                    height: { duration: 0.28, ease: [0.32, 0.72, 0, 1], delay: 0.04 },
+                                    opacity: { duration: 0.16, ease: [0.4, 0, 1, 1] },
+                                  },
+                                }}
                                 className="overflow-hidden"
                               >
                                 <p className="mt-2 sm:mt-2.5 text-[11.5px] sm:text-[12.5px] font-body text-muted-foreground/85 leading-[1.65] whitespace-pre-line tracking-[-0.005em]">
@@ -233,7 +264,7 @@ export function CategoryAccordionItem({
                   </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
