@@ -491,30 +491,45 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: false, reason: "integration_disabled" }, 200);
   }
 
-  if (!verifySecret(req, cfg.webhookSecret)) {
-    console.warn("[digisac-webhook] webhook secret inválido ou ausente");
+  // Lê o body como texto bruto — necessário para HMAC antes de fazer o JSON.parse.
+  const rawBody = await req.text();
+
+  const auth = await verifyWebhookAuth(req, rawBody, cfg.webhookSecret);
+  if (!auth.ok) {
+    console.warn(
+      "[digisac-webhook] auth_failed",
+      JSON.stringify({
+        reason: auth.reason,
+        ...auth.details,
+        ...requestFingerprint(req),
+      }),
+    );
     return jsonResponse(
       {
         error: "Unauthorized",
+        reason: auth.reason,
         hint:
-          "Webhook secret inválido. Envie via header x-webhook-secret, x-digisac-signature, x-api-key ou Authorization: Bearer <secret>, ou via query ?secret=<secret>.",
+          "Configure o webhook do Digisac para assinar com HMAC-SHA256 e enviar em x-digisac-signature: sha256=<hex>. Como fallback, aceitamos token em x-webhook-secret, x-api-key, Authorization: Bearer ou ?secret=.",
       },
       401,
     );
   }
 
   let body: Record<string, unknown> = {};
-  try {
-    body = await req.json();
-  } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
+  if (rawBody.length > 0) {
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return jsonResponse({ error: "Invalid JSON body" }, 400);
+    }
   }
 
   const eventType = extractEventType(body).toLowerCase();
   const ids = extractIds(body);
 
   console.log(
-    `[digisac-webhook] event=${eventType} ids=${JSON.stringify(ids)}`,
+    "[digisac-webhook] event_received",
+    JSON.stringify({ event: eventType, ids, auth_mode: auth.mode }),
   );
 
   try {
