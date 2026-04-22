@@ -98,7 +98,7 @@ export function PriceHistoryPopover({
                   const newP = Number(row.new_unit_price ?? 0);
                   const variation = oldP > 0 ? ((newP - oldP) / oldP) * 100 : 0;
                   const TrendIcon = variation >= 0 ? TrendingUp : TrendingDown;
-                  const trendColor = variation > 0 ? "text-destructive" : "text-emerald-600";
+                  const trendColor = variation > 0 ? "text-destructive" : "text-primary";
                   return (
                     <div key={row.id} className="flex items-center justify-between gap-2 text-xs">
                       <span className="text-muted-foreground tabular-nums">
