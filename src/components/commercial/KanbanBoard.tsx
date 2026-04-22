@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { MobileSwipeableKanban } from "@/components/admin/MobileSwipeableKanban";
 import { CompactKanbanCard } from "@/components/admin/CompactKanbanCard";
+import { VersionBadge } from "@/components/admin/VersionBadge";
 import {
   DndContext,
   DragOverlay,
@@ -392,6 +393,7 @@ function SubSectionGroup({
                   internalStatus={b.internal_status}
                   dueAt={b.due_at}
                   versionNumber={b.version_number}
+                  isCurrentVersion={b.is_current_version}
                   sequentialCode={b.sequential_code}
                   commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                   estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
@@ -738,11 +740,8 @@ function KanbanCard({
         {typeof daysInStage === "number" && (
           <RotBadge daysInStage={daysInStage} />
         )}
-        {(b.version_number ?? 1) > 1 && (
-          <span className="text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-            V{b.version_number}
-          </span>
-        )}
+        <VersionBadge versionNumber={b.version_number} isCurrent={b.is_current_version} />
+
         {isSynced && (
           <span className="inline-flex items-center gap-0.5 text-[10px] font-medium font-body px-1.5 py-0.5 rounded-full bg-success/10 text-success" title="Sincronizado com Portal BWild">
             ✓ Portal
@@ -901,6 +900,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             internalStatus={b.internal_status}
                             dueAt={b.due_at}
                             versionNumber={b.version_number}
+                            isCurrentVersion={b.is_current_version}
                             sequentialCode={b.sequential_code}
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}

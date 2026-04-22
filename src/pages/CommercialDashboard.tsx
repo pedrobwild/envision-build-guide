@@ -40,6 +40,7 @@ import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFil
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
+import { VersionBadge } from "@/components/admin/VersionBadge";
 import { ContractUploadModal } from "@/components/commercial/ContractUploadModal";
 import { ClientForm } from "@/components/crm/ClientForm";
 import { InlineEdit } from "@/components/ui/inline-edit";
@@ -719,9 +720,8 @@ export default function CommercialDashboard() {
                   <Calendar className="h-2.5 w-2.5" />{due.label}
                 </span>
               )}
-              {(b.version_number ?? 1) > 1 && (
-                <span className="text-[9px] font-mono text-muted-foreground px-1 py-0 h-4 rounded bg-muted border border-border inline-flex items-center">V{b.version_number}</span>
-              )}
+              <VersionBadge versionNumber={b.version_number} isCurrent={b.is_current_version} />
+
               {b.budget_pdf_url && (
                 <a
                   href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/budget-pdfs/${b.budget_pdf_url}`}

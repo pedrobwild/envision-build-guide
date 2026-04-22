@@ -11,6 +11,7 @@ import { NextActionChip } from "@/components/admin/NextActionChip";
 import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-temperature";
 import type { LeadScoreResult } from "@/lib/lead-score";
 import { LeadScoreBadge } from "@/components/admin/LeadScoreBadge";
+import { VersionBadge } from "@/components/admin/VersionBadge";
 
 interface CompactKanbanCardProps {
   projectName: string;
@@ -21,6 +22,7 @@ interface CompactKanbanCardProps {
   bairro?: string | null;
   city?: string | null;
   versionNumber?: number | null;
+  isCurrentVersion?: boolean | null;
   sequentialCode?: string | null;
   commercialName?: string;
   estimatorName?: string;
@@ -96,6 +98,7 @@ export function CompactKanbanCard({
   bairro: _bairro,
   city: _city,
   versionNumber,
+  isCurrentVersion,
   sequentialCode,
   commercialName,
   estimatorName,
@@ -293,11 +296,8 @@ export function CompactKanbanCard({
             {typeof daysInStage === "number" && (
               <RotBadge daysInStage={daysInStage} />
             )}
-            {(versionNumber ?? 1) > 1 && (
-              <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground ring-1 ring-border/40">
-                V{versionNumber}
-              </span>
-            )}
+            <VersionBadge versionNumber={versionNumber} isCurrent={isCurrentVersion} />
+
             {isSynced && (
               <span
                 className="inline-flex items-center text-[9px] font-bold font-body px-1.5 py-0.5 rounded-md bg-success/10 text-success ring-1 ring-success/20"

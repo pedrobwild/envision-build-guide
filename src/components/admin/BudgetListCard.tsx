@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
+import { VersionBadge } from "@/components/admin/VersionBadge";
 
 import type { BudgetRow } from "@/types/budget-common";
 
@@ -57,11 +58,8 @@ export function BudgetListCard({
               <span className="font-semibold text-sm font-display text-foreground truncate max-w-[200px] sm:max-w-none">
                 {budget.project_name || "Sem nome"}
               </span>
-              {(budget.version_number ?? 1) > 1 && (
-                <span className="text-[10px] bg-muted border border-border rounded px-1 py-px font-body font-medium text-muted-foreground">
-                  V{budget.version_number}
-                </span>
-              )}
+              <VersionBadge versionNumber={budget.version_number} isCurrent={budget.is_current_version} />
+
               <Badge
                 variant="secondary"
                 className={cn("text-[10px] px-1.5 py-0 font-body h-[18px]", statusColor)}
