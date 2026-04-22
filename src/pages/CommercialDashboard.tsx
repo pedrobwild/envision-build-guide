@@ -308,11 +308,14 @@ export default function CommercialDashboard() {
       .select("id, client_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
       .order("created_at", { ascending: false });
     if (!isAdmin) {
-      // Inclui 'lead' (status default de novos negócios criados pelo trigger)
-      // para garantir visibilidade no pipeline comercial mesmo sem owner.
+      // Visibilidade do comercial: orçamentos atribuídos a ele OU orçamentos
+      // sem owner comercial em qualquer etapa relevante do funil
+      // (do MQL ao fechamento). Inclui estados em elaboração para que o
+      // comercial acompanhe o progresso desde a solicitação até a entrega.
       const commercialRelevantStatuses = [
         "mql", "qualificacao", "lead", "validacao_briefing",
         "novo", "requested",
+        "triage", "assigned", "in_progress", "waiting_info",
         "ready_for_review", "delivered_to_sales", "sent_to_client",
         "revision_requested", "minuta_solicitada", "contrato_fechado", "lost"
       ];
