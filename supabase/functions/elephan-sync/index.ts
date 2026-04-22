@@ -103,6 +103,20 @@ function phonesMatch(a: string | null | undefined, b: string | null | undefined)
   return vb.some((v) => va.has(v));
 }
 
+/**
+ * Igual a phonesMatch, mas retorna a variante exata que bateu (para logs).
+ */
+function phoneMatchDetail(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): { matched: boolean; matchedVariant: string | null; aVariants: string[]; bVariants: string[] } {
+  const aVariants = phoneVariants(a);
+  const bVariants = phoneVariants(b);
+  const aSet = new Set(aVariants);
+  const hit = bVariants.find((v) => aSet.has(v)) ?? null;
+  return { matched: hit !== null, matchedVariant: hit, aVariants, bVariants };
+}
+
 function pickArray(obj: Record<string, unknown>, keys: string[]): unknown[] {
   for (const k of keys) {
     const v = obj[k];
@@ -170,6 +184,9 @@ async function searchTranscribeIds(
   if (params.phone) {
     // Tenta cada variante BR (com/sem 9, com/sem 55, só DDD+número, etc.)
     const variants = phoneVariants(params.phone);
+    console.log(
+      `[elephan-sync] phone=${params.phone} -> ${variants.length} variantes geradas: ${JSON.stringify(variants)}`,
+    );
     for (const v of variants) {
       queries.push(`?search=${encodeURIComponent(v)}`);
       queries.push(`?q=${encodeURIComponent(v)}`);
@@ -254,19 +271,37 @@ async function upsertMeetingForBudget(
   let matched = true;
   if (client && (client.email || client.phone)) {
     matched = false;
+    const clientPhoneVariants = client.phone ? phoneVariants(client.phone) : [];
+    console.log(
+      `[elephan-sync] match check transcribe=${transcribe_id} client.email=${client.email} client.phone=${client.phone} client.phoneVariants=${JSON.stringify(clientPhoneVariants)} participants=${participants.length}`,
+    );
     for (const p of participants) {
       const pe = normalizeEmail(p?.email);
       const pp = normalizePhone(p?.phone);
+      const ppVariants = p?.phone ? phoneVariants(p?.phone) : [];
+      console.log(
+        `[elephan-sync]   participant email=${pe} phone_raw=${p?.phone} phone_norm=${pp} variants=${JSON.stringify(ppVariants)}`,
+      );
       if (pe && client.email && pe === client.email && !isInternalEmail(pe)) {
+        console.log(`[elephan-sync]   ✓ MATCH por email: ${pe}`);
         matched = true;
         break;
       }
-      if (client.phone && phonesMatch(p?.phone, client.phone)) {
-        matched = true;
-        break;
+      if (client.phone) {
+        const detail = phoneMatchDetail(p?.phone, client.phone);
+        if (detail.matched) {
+          console.log(
+            `[elephan-sync]   ✓ MATCH por telefone: variante="${detail.matchedVariant}" (cliente=${client.phone}, participante=${p?.phone})`,
+          );
+          matched = true;
+          break;
+        }
       }
     }
-    if (!matched) return { ok: true, matched: false, reason: "no_participant_match" };
+    if (!matched) {
+      console.log(`[elephan-sync]   ✗ no_participant_match transcribe=${transcribe_id}`);
+      return { ok: true, matched: false, reason: "no_participant_match" };
+    }
   }
 
   const row = {
@@ -336,6 +371,9 @@ Deno.serve(async (req) => {
         email: normalizeEmail(budget.lead_email as string | null),
         phone: normalizePhone(budget.client_phone as string | null),
       };
+      console.log(
+        `[elephan-sync] budget=${body.budget_id} client.email=${client.email} client.phone_raw=${budget.client_phone} client.phone_norm=${client.phone} variants=${JSON.stringify(client.phone ? phoneVariants(client.phone) : [])}`,
+      );
     }
   }
 
