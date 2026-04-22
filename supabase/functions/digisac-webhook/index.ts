@@ -291,6 +291,8 @@ async function recordEventResult(
     );
   }
 }
+
+function extractEventType(body: Record<string, unknown>): string {
   return (
     pickString(body, ["event", "type", "eventType", "event_type"]) ??
     "unknown"
