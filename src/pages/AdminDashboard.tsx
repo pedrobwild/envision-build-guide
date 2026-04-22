@@ -35,15 +35,20 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const { profile, loading: profileLoading, isAdmin, isOrcamentista, isComercial } = useUserProfile();
 
+  // Non-admin users são redirecionados para seus painéis específicos.
+  // Importante: mantemos o gate de render abaixo para evitar flash de KPIs
+  // distorcidos (a query de budgets sofre filtragem RLS para non-admin,
+  // então os totais não refletem a operação inteira).
+  const shouldRedirectNonAdmin = !profileLoading && !!profile && !isAdmin && (isOrcamentista || isComercial);
+
   useEffect(() => {
-    if (!profileLoading && profile && !isAdmin) {
-      if (isOrcamentista) {
-        navigate("/admin/producao", { replace: true });
-      } else if (isComercial) {
-        navigate("/admin/comercial", { replace: true });
-      }
+    if (!shouldRedirectNonAdmin) return;
+    if (isOrcamentista) {
+      navigate("/admin/producao", { replace: true });
+    } else if (isComercial) {
+      navigate("/admin/comercial", { replace: true });
     }
-  }, [profileLoading, profile, isOrcamentista, isComercial, isAdmin, navigate]);
+  }, [shouldRedirectNonAdmin, isOrcamentista, isComercial, navigate]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
@@ -58,8 +63,13 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (user) loadData();
-  }, [user]);
+    // Não buscar dados do painel executivo para non-admins; eles serão redirecionados.
+    if (!user) return;
+    if (profileLoading) return;
+    if (profile && !isAdmin && (isComercial || isOrcamentista)) return;
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, profileLoading, profile, isAdmin, isComercial, isOrcamentista]);
 
   const loadData = async () => {
     try {
@@ -114,6 +124,15 @@ export default function AdminDashboard() {
   }, [filteredBudgets, dateRange, profiles, deliveryTimestamps, loading]);
 
   let step = 0;
+
+  // Gate: enquanto redireciona non-admin, mostra apenas spinner para evitar flash de KPIs distorcidos.
+  if (shouldRedirectNonAdmin) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Skeleton className="h-6 w-32" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8">
