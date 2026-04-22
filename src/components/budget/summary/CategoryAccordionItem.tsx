@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
@@ -62,7 +62,7 @@ export function CategoryAccordionItem({
         aria-expanded={hasItems ? expanded : undefined}
         aria-controls={hasItems ? regionId : undefined}
         className={cn(
-          "w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-4 min-h-[56px] sm:min-h-[64px]",
+          "w-full flex items-center gap-3.5 sm:gap-4 px-4 sm:px-5 py-4 sm:py-4 min-h-[60px] sm:min-h-[64px] active:bg-foreground/[0.015] transition-colors",
           hasItems ? "budget-focus-surface cursor-pointer" : "budget-focus cursor-default"
         )}
       >
@@ -108,20 +108,21 @@ export function CategoryAccordionItem({
 
         {/* Title + count */}
         <div className="flex-1 text-left min-w-0">
-          <span className="font-display font-semibold text-foreground leading-snug block text-[13.5px] sm:text-[15px] tracking-[-0.012em]">
+          <span className="font-display font-semibold text-foreground leading-[1.3] block text-[14px] sm:text-[15px] tracking-[-0.013em]">
             {toTitleCase(data.title)}
           </span>
           {hasItems && (
-            <span className="text-[10.5px] sm:text-[11.5px] font-body text-muted-foreground/70 mt-1 block tracking-[0.01em]">
-              <span className="budget-numeric">{data.items.length}</span>{" "}
-              {data.items.length === 1 ? "item incluso" : "itens inclusos"}
+            <span className="text-[11px] sm:text-[11.5px] font-body text-muted-foreground/65 mt-[3px] block tracking-[0.005em]">
+              <span className="budget-numeric tabular-nums">{data.items.length}</span>
+              <span className="mx-1 text-muted-foreground/30">·</span>
+              <span>{data.percentage >= 1 ? `${data.percentage.toFixed(0)}% do total` : "incluso"}</span>
             </span>
           )}
         </div>
 
-        {/* Value */}
+        {/* Value — strong visual anchor */}
         <div className="flex flex-col items-end flex-shrink-0">
-          <span className="budget-currency font-semibold whitespace-nowrap text-foreground text-[13.5px] sm:text-[15px] tracking-[-0.012em]">
+          <span className="budget-currency font-semibold whitespace-nowrap text-foreground text-[14.5px] sm:text-[15.5px] tracking-[-0.018em] tabular-nums">
             {formatBRL(data.subtotal)}
           </span>
         </div>
