@@ -478,6 +478,16 @@ export default function UserManagement() {
                             <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem
                                 onClick={() => {
+                                  setProfileUser(u);
+                                  setProfileName(u.full_name || "");
+                                  setProfileWhatsapp(u.whatsapp || "");
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5 mr-2" />
+                                Editar dados
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
                                   setEditUser(u);
                                   setEditRoles([...u.roles]);
                                 }}
