@@ -184,6 +184,9 @@ async function searchTranscribeIds(
   if (params.phone) {
     // Tenta cada variante BR (com/sem 9, com/sem 55, só DDD+número, etc.)
     const variants = phoneVariants(params.phone);
+    console.log(
+      `[elephan-sync] phone=${params.phone} -> ${variants.length} variantes geradas: ${JSON.stringify(variants)}`,
+    );
     for (const v of variants) {
       queries.push(`?search=${encodeURIComponent(v)}`);
       queries.push(`?q=${encodeURIComponent(v)}`);
