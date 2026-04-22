@@ -62,7 +62,7 @@ export function CategoryAccordionItem({
         aria-expanded={hasItems ? expanded : undefined}
         aria-controls={hasItems ? regionId : undefined}
         className={cn(
-          "w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 min-h-[60px]",
+          "w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-4 transition-all duration-200 min-h-[56px] sm:min-h-[64px]",
           hasItems && "hover:bg-muted/[0.03] active:bg-muted/[0.06] cursor-pointer",
           !hasItems && "cursor-default",
           "focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]"
@@ -72,10 +72,10 @@ export function CategoryAccordionItem({
         {hasItems ? (
           <motion.div
             className={cn(
-              "flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full",
+              "flex-shrink-0 flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full",
               "border transition-all duration-200",
               expanded
-                ? "border-foreground/20 bg-foreground/[0.04]"
+                ? "border-foreground/25 bg-foreground/[0.04]"
                 : "border-border/60 group-hover/category:border-foreground/30"
             )}
             aria-hidden
@@ -89,7 +89,7 @@ export function CategoryAccordionItem({
                   exit={{ opacity: 0, scale: 0.6 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <Minus className="h-3 w-3 text-foreground/70 stroke-[2.5]" />
+                  <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-foreground/70 stroke-[2.5]" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -99,22 +99,22 @@ export function CategoryAccordionItem({
                   exit={{ opacity: 0, scale: 0.6 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <Plus className="h-3 w-3 text-foreground/60 stroke-[2.5]" />
+                  <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-foreground/60 stroke-[2.5]" />
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
         ) : (
-          <div className="w-6 h-6 flex-shrink-0" aria-hidden />
+          <div className="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0" aria-hidden />
         )}
 
         {/* Title + count */}
         <div className="flex-1 text-left min-w-0">
-          <span className="font-display font-semibold text-foreground leading-snug block text-[14px] tracking-[-0.01em]">
+          <span className="font-display font-semibold text-foreground leading-snug block text-[13.5px] sm:text-[15px] tracking-[-0.012em]">
             {toTitleCase(data.title)}
           </span>
           {hasItems && (
-            <span className="text-[11px] font-body text-muted-foreground/70 mt-1 block tracking-wide">
+            <span className="text-[10.5px] sm:text-[11.5px] font-body text-muted-foreground/70 mt-1 block tracking-[0.01em]">
               <span className="budget-numeric">{data.items.length}</span>{" "}
               {data.items.length === 1 ? "item incluso" : "itens inclusos"}
             </span>
@@ -123,11 +123,11 @@ export function CategoryAccordionItem({
 
         {/* Value */}
         <div className="flex flex-col items-end flex-shrink-0">
-          <span className="budget-currency font-semibold whitespace-nowrap text-foreground text-[14px] tracking-[-0.01em]">
+          <span className="budget-currency font-semibold whitespace-nowrap text-foreground text-[13.5px] sm:text-[15px] tracking-[-0.012em]">
             {formatBRL(data.subtotal)}
           </span>
           {data.percentage > 0 && (
-            <span className="text-[10px] font-body text-muted-foreground/50 mt-0.5 budget-numeric tracking-wider">
+            <span className="text-[10px] sm:text-[10.5px] font-body text-muted-foreground/55 mt-1 budget-numeric tracking-[0.04em]">
               {data.percentage.toFixed(0)}%
             </span>
           )}
