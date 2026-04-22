@@ -271,19 +271,37 @@ async function upsertMeetingForBudget(
   let matched = true;
   if (client && (client.email || client.phone)) {
     matched = false;
+    const clientPhoneVariants = client.phone ? phoneVariants(client.phone) : [];
+    console.log(
+      `[elephan-sync] match check transcribe=${transcribe_id} client.email=${client.email} client.phone=${client.phone} client.phoneVariants=${JSON.stringify(clientPhoneVariants)} participants=${participants.length}`,
+    );
     for (const p of participants) {
       const pe = normalizeEmail(p?.email);
       const pp = normalizePhone(p?.phone);
+      const ppVariants = p?.phone ? phoneVariants(p?.phone) : [];
+      console.log(
+        `[elephan-sync]   participant email=${pe} phone_raw=${p?.phone} phone_norm=${pp} variants=${JSON.stringify(ppVariants)}`,
+      );
       if (pe && client.email && pe === client.email && !isInternalEmail(pe)) {
+        console.log(`[elephan-sync]   ✓ MATCH por email: ${pe}`);
         matched = true;
         break;
       }
-      if (client.phone && phonesMatch(p?.phone, client.phone)) {
-        matched = true;
-        break;
+      if (client.phone) {
+        const detail = phoneMatchDetail(p?.phone, client.phone);
+        if (detail.matched) {
+          console.log(
+            `[elephan-sync]   ✓ MATCH por telefone: variante="${detail.matchedVariant}" (cliente=${client.phone}, participante=${p?.phone})`,
+          );
+          matched = true;
+          break;
+        }
       }
     }
-    if (!matched) return { ok: true, matched: false, reason: "no_participant_match" };
+    if (!matched) {
+      console.log(`[elephan-sync]   ✗ no_participant_match transcribe=${transcribe_id}`);
+      return { ok: true, matched: false, reason: "no_participant_match" };
+    }
   }
 
   const row = {
