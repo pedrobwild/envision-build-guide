@@ -232,11 +232,23 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
     // For delivered_to_sales → sent_to_client, also publish
     if (internalStatus === "delivered_to_sales" && primaryTransition.newStatus === "sent_to_client") {
       try {
+        let publishedPublicId = budget.public_id;
         if (!budget.is_published_version) {
           const groupId = await ensureVersionGroup(budget.id);
-          const publicId = budget.public_id || crypto.randomUUID().slice(0, 12);
-          await publishVersion(budget.id, groupId, publicId, user?.id);
-          onBudgetUpdate({ is_published_version: true, public_id: publicId, status: "published" });
+          publishedPublicId = budget.public_id || crypto.randomUUID().slice(0, 12);
+          await publishVersion(budget.id, groupId, publishedPublicId, user?.id);
+          onBudgetUpdate({ is_published_version: true, public_id: publishedPublicId, status: "published" });
+        }
+        // Disparo automático de WhatsApp
+        if (publishedPublicId) {
+          void sendBudgetPublishedNotification({
+            budgetId: budget.id,
+            clientName: budget.client_name,
+            clientPhone: (budget as { client_phone?: string | null }).client_phone,
+            publicId: publishedPublicId,
+          }).then((res) => {
+            if (res.success) toast.info("WhatsApp enviado ao cliente.");
+          });
         }
       } catch (err) {
         console.error("Erro ao publicar:", err);
