@@ -75,32 +75,33 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
         type="button"
         onClick={() => isMobile && setIsOpen(prev => !prev)}
         className={cn(
-          "flex items-center gap-2.5 mb-3 sm:mb-4 w-full text-left",
-          isMobile && "active:opacity-70 transition-opacity"
+          "flex items-center gap-2.5 mb-3 sm:mb-4 w-full text-left -mx-1 px-1 py-1.5 rounded-md min-h-[44px] sm:min-h-0 sm:py-0",
+          isMobile && "active:bg-foreground/[0.02] transition-colors"
         )}
+        aria-expanded={isMobile ? isOpen : undefined}
       >
-        <div className="w-1 h-5 rounded-full bg-border" />
-        <span className="text-sm sm:text-base budget-heading font-bold tracking-tight flex-1 text-foreground">
+        <div className="w-1 h-5 rounded-full bg-border flex-shrink-0" />
+        <span className="text-sm sm:text-base budget-heading font-bold tracking-[-0.01em] flex-1 text-foreground leading-tight">
           {group.category.label}
         </span>
         {/* Mobile: item count badge + chevron */}
-        <span className="flex items-center gap-1.5 sm:hidden">
-          <span className="text-xs budget-numeric text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">
-            {itemCount}
+        <span className="flex items-center gap-2 sm:hidden">
+          <span className="text-[10.5px] budget-numeric text-muted-foreground/70 bg-muted/50 px-2 py-0.5 rounded-full tabular-nums font-medium tracking-[0.01em]">
+            {itemCount} {itemCount === 1 ? "item" : "itens"}
           </span>
           <motion.svg
             xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.25"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-muted-foreground"
+            className="text-muted-foreground/60"
             animate={{ rotate: isOpen ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           >
             <path d="m6 9 6 6 6-6" />
           </motion.svg>

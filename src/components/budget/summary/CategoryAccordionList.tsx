@@ -71,18 +71,22 @@ export function CategoryAccordionList({
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Layers className="h-3.5 w-3.5 text-muted-foreground/50" aria-hidden />
+      <div className="flex items-end justify-between gap-3 px-0.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <Layers className="h-3.5 w-3.5 text-muted-foreground/45 flex-shrink-0" aria-hidden />
           <p className={LABEL}>O que está incluído</p>
         </div>
-        <span className="budget-numeric text-[10px] sm:text-[11px] text-muted-foreground/50 tracking-wide whitespace-nowrap">
-          {totalSections} {totalSections === 1 ? "categoria" : "categorias"} · {totalItems} itens
+        <span className="budget-numeric text-[10.5px] sm:text-[11px] text-muted-foreground/55 tracking-[0.02em] whitespace-nowrap tabular-nums">
+          <span className="text-foreground/70 font-medium">{totalSections}</span>
+          <span className="mx-1 text-muted-foreground/30">categorias</span>
+          <span className="text-muted-foreground/40">·</span>
+          <span className="ml-1 text-foreground/70 font-medium">{totalItems}</span>
+          <span className="ml-1 text-muted-foreground/50">itens</span>
         </span>
       </div>
 
       {/* Card container */}
-      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
+      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-[0_1px_2px_-1px_hsl(var(--foreground)/0.04),0_2px_8px_-4px_hsl(var(--foreground)/0.04)]">
         {/* Accordion rows */}
         <div className="divide-y divide-border/[0.08]">
           {items.map((item) => (
