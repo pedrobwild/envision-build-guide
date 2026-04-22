@@ -103,6 +103,20 @@ function phonesMatch(a: string | null | undefined, b: string | null | undefined)
   return vb.some((v) => va.has(v));
 }
 
+/**
+ * Igual a phonesMatch, mas retorna a variante exata que bateu (para logs).
+ */
+function phoneMatchDetail(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): { matched: boolean; matchedVariant: string | null; aVariants: string[]; bVariants: string[] } {
+  const aVariants = phoneVariants(a);
+  const bVariants = phoneVariants(b);
+  const aSet = new Set(aVariants);
+  const hit = bVariants.find((v) => aSet.has(v)) ?? null;
+  return { matched: hit !== null, matchedVariant: hit, aVariants, bVariants };
+}
+
 function pickArray(obj: Record<string, unknown>, keys: string[]): unknown[] {
   for (const k of keys) {
     const v = obj[k];
