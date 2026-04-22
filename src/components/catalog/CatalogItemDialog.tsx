@@ -834,7 +834,18 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
           {savedItemId && (
             <>
               <div className="border-t border-border" />
-              <SupplierPricesSection catalogItemId={savedItemId} suppliers={suppliers} />
+              <Tabs defaultValue="suppliers" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="suppliers">Fornecedores e Preços</TabsTrigger>
+                  <TabsTrigger value="comparison">Comparativo</TabsTrigger>
+                </TabsList>
+                <TabsContent value="suppliers" className="mt-4">
+                  <SupplierPricesSection catalogItemId={savedItemId} suppliers={suppliers} />
+                </TabsContent>
+                <TabsContent value="comparison" className="mt-4">
+                  <SupplierComparisonTab catalogItemId={savedItemId} />
+                </TabsContent>
+              </Tabs>
             </>
           )}
         </div>
