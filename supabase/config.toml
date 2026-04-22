@@ -49,3 +49,6 @@ verify_jwt = true
 
 [functions.digisac-test-connection]
 verify_jwt = true
+
+[functions.notify-status-change]
+verify_jwt = false
