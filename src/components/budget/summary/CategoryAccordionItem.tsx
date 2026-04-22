@@ -124,11 +124,6 @@ export function CategoryAccordionItem({
           <span className="budget-currency font-semibold whitespace-nowrap text-foreground text-[13.5px] sm:text-[15px] tracking-[-0.012em]">
             {formatBRL(data.subtotal)}
           </span>
-          {data.percentage > 0 && (
-            <span className="text-[10px] sm:text-[10.5px] font-body text-muted-foreground/55 mt-1 budget-numeric tracking-[0.04em]">
-              {data.percentage.toFixed(0)}%
-            </span>
-          )}
         </div>
       </button>
 
