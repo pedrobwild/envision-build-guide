@@ -62,7 +62,7 @@ export function CategoryAccordionItem({
         aria-expanded={hasItems ? expanded : undefined}
         aria-controls={hasItems ? regionId : undefined}
         className={cn(
-          "w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 min-h-[60px]",
+          "w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-4 transition-all duration-200 min-h-[56px] sm:min-h-[64px]",
           hasItems && "hover:bg-muted/[0.03] active:bg-muted/[0.06] cursor-pointer",
           !hasItems && "cursor-default",
           "focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]"
@@ -72,10 +72,10 @@ export function CategoryAccordionItem({
         {hasItems ? (
           <motion.div
             className={cn(
-              "flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full",
+              "flex-shrink-0 flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full",
               "border transition-all duration-200",
               expanded
-                ? "border-foreground/20 bg-foreground/[0.04]"
+                ? "border-foreground/25 bg-foreground/[0.04]"
                 : "border-border/60 group-hover/category:border-foreground/30"
             )}
             aria-hidden
@@ -89,7 +89,7 @@ export function CategoryAccordionItem({
                   exit={{ opacity: 0, scale: 0.6 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <Minus className="h-3 w-3 text-foreground/70 stroke-[2.5]" />
+                  <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-foreground/70 stroke-[2.5]" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -99,22 +99,22 @@ export function CategoryAccordionItem({
                   exit={{ opacity: 0, scale: 0.6 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <Plus className="h-3 w-3 text-foreground/60 stroke-[2.5]" />
+                  <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-foreground/60 stroke-[2.5]" />
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
         ) : (
-          <div className="w-6 h-6 flex-shrink-0" aria-hidden />
+          <div className="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0" aria-hidden />
         )}
 
         {/* Title + count */}
         <div className="flex-1 text-left min-w-0">
-          <span className="font-display font-semibold text-foreground leading-snug block text-[14px] tracking-[-0.01em]">
+          <span className="font-display font-semibold text-foreground leading-snug block text-[13.5px] sm:text-[15px] tracking-[-0.012em]">
             {toTitleCase(data.title)}
           </span>
           {hasItems && (
-            <span className="text-[11px] font-body text-muted-foreground/70 mt-1 block tracking-wide">
+            <span className="text-[10.5px] sm:text-[11.5px] font-body text-muted-foreground/70 mt-1 block tracking-[0.01em]">
               <span className="budget-numeric">{data.items.length}</span>{" "}
               {data.items.length === 1 ? "item incluso" : "itens inclusos"}
             </span>
@@ -123,11 +123,11 @@ export function CategoryAccordionItem({
 
         {/* Value */}
         <div className="flex flex-col items-end flex-shrink-0">
-          <span className="budget-currency font-semibold whitespace-nowrap text-foreground text-[14px] tracking-[-0.01em]">
+          <span className="budget-currency font-semibold whitespace-nowrap text-foreground text-[13.5px] sm:text-[15px] tracking-[-0.012em]">
             {formatBRL(data.subtotal)}
           </span>
           {data.percentage > 0 && (
-            <span className="text-[10px] font-body text-muted-foreground/50 mt-0.5 budget-numeric tracking-wider">
+            <span className="text-[10px] sm:text-[10.5px] font-body text-muted-foreground/55 mt-1 budget-numeric tracking-[0.04em]">
               {data.percentage.toFixed(0)}%
             </span>
           )}
@@ -147,7 +147,7 @@ export function CategoryAccordionItem({
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="ml-[44px] mr-5 mb-4 pl-5 border-l border-border/40">
+            <div className="ml-[40px] sm:ml-[48px] mr-4 sm:mr-5 mb-4 sm:mb-5 pl-4 sm:pl-5 border-l border-border/40">
               {data.items.map((item, idx) => {
                 const hasDesc = !!item.description?.trim();
                 const isItemExpanded = expandedItemId === item.id;
@@ -168,25 +168,25 @@ export function CategoryAccordionItem({
                       type="button"
                       onClick={hasDesc ? () => setExpandedItemId(isItemExpanded ? null : item.id) : undefined}
                       className={cn(
-                        "w-full flex items-start justify-between py-2.5 gap-4 text-left transition-colors",
+                        "w-full flex items-start justify-between py-2.5 sm:py-3 gap-3 sm:gap-4 text-left transition-colors",
                         hasDesc && "cursor-pointer hover:opacity-80",
                         !hasDesc && "cursor-default"
                       )}
                     >
-                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <div className="flex items-start gap-2.5 flex-1 min-w-0">
                         {/* Item bullet */}
                         <span
                           className={cn(
-                            "mt-2 w-1 h-1 rounded-full flex-shrink-0 transition-colors",
+                            "mt-[9px] w-1 h-1 rounded-full flex-shrink-0 transition-colors",
                             isItemExpanded ? "bg-foreground/60" : "bg-muted-foreground/40"
                           )}
                           aria-hidden
                         />
 
                         <div className="flex-1 min-w-0">
-                          <span className="text-[13px] font-body text-foreground/85 leading-relaxed tracking-[-0.005em]">
+                          <span className="text-[12.5px] sm:text-[13.5px] font-body text-foreground/85 leading-[1.55] tracking-[-0.005em]">
                             {item.qty && item.qty > 1 && (
-                              <span className="budget-numeric text-[11px] text-muted-foreground/70 mr-1.5">
+                              <span className="budget-numeric text-[10.5px] sm:text-[11.5px] text-muted-foreground/70 mr-1.5">
                                 {item.qty}×
                               </span>
                             )}
@@ -203,7 +203,7 @@ export function CategoryAccordionItem({
                                 transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                                 className="overflow-hidden"
                               >
-                                <p className="mt-2 text-[12px] font-body text-muted-foreground/80 leading-relaxed whitespace-pre-line tracking-[-0.005em]">
+                                <p className="mt-2 sm:mt-2.5 text-[11.5px] sm:text-[12.5px] font-body text-muted-foreground/85 leading-[1.65] whitespace-pre-line tracking-[-0.005em]">
                                   {item.description}
                                 </p>
                               </motion.div>
@@ -212,16 +212,16 @@ export function CategoryAccordionItem({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                      <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 mt-[2px]">
                         {item.unit && (
-                          <span className="budget-numeric text-[10px] text-muted-foreground/60 uppercase whitespace-nowrap tracking-[0.08em]">
+                          <span className="budget-numeric text-[9.5px] sm:text-[10px] text-muted-foreground/60 uppercase whitespace-nowrap tracking-[0.09em]">
                             {item.unit}
                           </span>
                         )}
                         {hasDesc && (
                           <span
                             className={cn(
-                              "text-[10px] font-body text-muted-foreground/50 transition-opacity",
+                              "text-[9.5px] sm:text-[10px] font-body text-muted-foreground/55 transition-opacity tracking-[0.02em]",
                               isItemExpanded ? "opacity-0" : "opacity-100"
                             )}
                           >
