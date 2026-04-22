@@ -320,15 +320,23 @@ export function CompactKanbanCard({
           <History className="h-3 w-3" />
         </button>
       )}
-      {nextAction && (
-        <div className="mt-1 px-0.5">
+      <div className="mt-1 px-0.5 min-h-[22px]">
+        {nextAction ? (
           <NextActionChip
             suggestion={nextAction}
             compact
             onClick={() => onQuickAction?.("nextAction")}
           />
-        </div>
-      )}
+        ) : (
+          <div
+            className="inline-flex items-center gap-1 rounded-md ring-1 ring-border/40 bg-muted/30 text-muted-foreground/70 text-[10px] font-body font-medium px-1.5 py-0.5 w-full justify-start"
+            title="Nenhuma ação pendente no momento"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-success/60 shrink-0" />
+            <span className="truncate">Em dia</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
