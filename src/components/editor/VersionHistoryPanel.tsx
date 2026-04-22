@@ -37,6 +37,32 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [importOpen, setImportOpen] = useState(false);
   const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSelection, setCompareSelection] = useState<string[]>([]);
+
+  const toggleCompareSelection = (versionId: string) => {
+    setCompareSelection((prev) => {
+      if (prev.includes(versionId)) return prev.filter((id) => id !== versionId);
+      if (prev.length >= 2) return [prev[1], versionId]; // FIFO: mantém só as duas últimas
+      return [...prev, versionId];
+    });
+  };
+
+  const exitCompareMode = () => {
+    setCompareMode(false);
+    setCompareSelection([]);
+  };
+
+  const handleCompareSelected = () => {
+    if (compareSelection.length !== 2) return;
+    // Ordena por version_number (asc) para "left = anterior, right = nova"
+    const ordered = [...compareSelection].sort((a, b) => {
+      const va = versions.find((v) => v.id === a)?.version_number ?? 0;
+      const vb = versions.find((v) => v.id === b)?.version_number ?? 0;
+      return va - vb;
+    });
+    navigate(`/admin/comparar?left=${ordered[0]}&right=${ordered[1]}`);
+  };
 
   const loadVersions = async () => {
     setLoading(true);
@@ -169,11 +195,74 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
               </div>
             ) : (
               <>
+                {/* Compare-mode toolbar */}
+                {versions.length >= 2 && (
+                  <div className="px-4 py-2.5 border-b border-border bg-muted/20 flex items-center justify-between gap-2 flex-wrap">
+                    {!compareMode ? (
+                      <>
+                        <p className="text-xs text-muted-foreground font-body">
+                          Compare duas versões para ver o que mudou.
+                        </p>
+                        <button
+                          onClick={() => { setCompareMode(true); setCompareSelection([]); }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-body font-medium border border-border bg-card hover:bg-muted text-foreground transition-colors"
+                        >
+                          <GitCompare className="h-3 w-3" />
+                          Comparar versões
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs font-body text-foreground">
+                          {compareSelection.length === 0 && "Selecione 2 versões para comparar."}
+                          {compareSelection.length === 1 && "Selecione mais 1 versão."}
+                          {compareSelection.length === 2 && (
+                            <>
+                              Pronto:{" "}
+                              <span className="font-semibold">
+                                {compareSelection
+                                  .map((id) => `V${versions.find((v) => v.id === id)?.version_number ?? "?"}`)
+                                  .join(" ↔ ")}
+                              </span>
+                            </>
+                          )}
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={exitCompareMode}
+                            className="px-3 py-1.5 rounded-md text-xs font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            onClick={handleCompareSelected}
+                            disabled={compareSelection.length !== 2}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-body font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <GitCompare className="h-3 w-3" />
+                            Comparar selecionadas
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 {/* Current version highlight */}
                 {currentVersion && (
                   <div className="px-4 py-3 bg-primary/5 border-b border-border">
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {compareMode && (
+                          <input
+                            type="checkbox"
+                            checked={compareSelection.includes(currentVersion.id)}
+                            onChange={() => toggleCompareSelection(currentVersion.id)}
+                            className="h-4 w-4 rounded border-border accent-primary cursor-pointer shrink-0"
+                            aria-label={`Selecionar V${currentVersion.version_number} para comparação`}
+                          />
+                        )}
+                        <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-display font-bold text-sm text-foreground">
                             V{currentVersion.version_number}
@@ -197,6 +286,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
                           )}
                           {currentVersion.change_reason && <span className="ml-1 italic">— {currentVersion.change_reason}</span>}
                         </p>
+                        </div>
                       </div>
                       <button
                         onClick={() => promptDuplicate(currentVersion.id)}
@@ -218,8 +308,18 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
                 {otherVersions.length > 0 && (
                   <div className="divide-y divide-border">
                     {otherVersions.map((v) => (
-                      <div key={v.id} className="px-4 py-2.5 flex items-center justify-between">
-                        <div>
+                      <div key={v.id} className="px-4 py-2.5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {compareMode && (
+                            <input
+                              type="checkbox"
+                              checked={compareSelection.includes(v.id)}
+                              onChange={() => toggleCompareSelection(v.id)}
+                              className="h-4 w-4 rounded border-border accent-primary cursor-pointer shrink-0"
+                              aria-label={`Selecionar V${v.version_number} para comparação`}
+                            />
+                          )}
+                          <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-display font-medium text-sm text-foreground">
                               V{v.version_number}
@@ -245,6 +345,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
                             )}
                             {v.change_reason && <span className="ml-1 italic">— {v.change_reason}</span>}
                           </p>
+                          </div>
                         </div>
                         <div className="flex items-center gap-1">
                           {!v.is_current_version && (
