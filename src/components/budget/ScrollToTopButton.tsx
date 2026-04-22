@@ -25,7 +25,7 @@ export function ScrollToTopButton() {
             if (navigator.vibrate) navigator.vibrate(10);
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          className="fixed bottom-20 left-4 lg:bottom-6 z-40 p-2.5 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60 text-muted-foreground shadow-md hover:shadow-lg transition-shadow"
+          className="budget-focus-cta fixed bottom-20 left-4 lg:bottom-6 z-40 p-2.5 rounded-full bg-muted/80 backdrop-blur-sm border border-border/60 text-muted-foreground shadow-md hover:shadow-lg hover:bg-muted active:bg-muted/90"
           aria-label="Voltar ao topo"
           data-pdf-hide
         >

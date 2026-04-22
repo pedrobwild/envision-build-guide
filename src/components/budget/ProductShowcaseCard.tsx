@@ -51,7 +51,7 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
           {primaryImage ? (
             <button
               onClick={() => openLightbox(0)}
-              className="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 overflow-hidden cursor-zoom-in bg-muted/30"
+              className="budget-focus relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 overflow-hidden cursor-zoom-in bg-muted/30 focus-visible:ring-offset-0"
               type="button"
             >
               <img

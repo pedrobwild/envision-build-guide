@@ -52,7 +52,7 @@ export function SectionNav({ sections }: SectionNavProps) {
       <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center gap-2 px-4 py-3 text-sm font-display font-bold text-foreground hover:bg-muted/50 transition-colors border-b border-border"
+          className="budget-focus-surface w-full flex items-center gap-2 px-4 py-3 text-sm font-display font-bold text-foreground border-b border-border"
         >
           <List className="h-4 w-4 text-primary" />
           <span className="flex-1 text-left">Navegação</span>
@@ -78,7 +78,7 @@ export function SectionNav({ sections }: SectionNavProps) {
                       key={s.id}
                       onClick={() => scrollTo(s.id)}
                       className={cn(
-                        "w-full flex items-center gap-2 px-4 py-2.5 text-left transition-all relative group",
+                        "budget-focus w-full flex items-center gap-2 px-4 py-2.5 text-left group active:bg-muted/40",
                         isActive
                           ? "bg-primary/[0.08] text-foreground"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/30"

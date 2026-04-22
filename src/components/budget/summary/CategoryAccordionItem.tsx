@@ -62,12 +62,8 @@ export function CategoryAccordionItem({
         aria-expanded={hasItems ? expanded : undefined}
         aria-controls={hasItems ? regionId : undefined}
         className={cn(
-          "relative w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-4 transition-colors duration-200 min-h-[56px] sm:min-h-[64px]",
-          hasItems && "cursor-pointer hover:bg-muted/[0.04] active:bg-muted/[0.08]",
-          !hasItems && "cursor-default",
-          // Identical, inset focus ring on mobile + desktop — never clips at card edges
-          "outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset focus-visible:bg-primary/[0.05]",
-          "focus-visible:z-10"
+          "w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-4 min-h-[56px] sm:min-h-[64px]",
+          hasItems ? "budget-focus-surface cursor-pointer" : "budget-focus cursor-default"
         )}
       >
         {/* Expand/Collapse indicator — premium minimal */}
@@ -189,11 +185,8 @@ export function CategoryAccordionItem({
                       onClick={hasDesc ? () => setExpandedItemId(isItemExpanded ? null : item.id) : undefined}
                       aria-expanded={hasDesc ? isItemExpanded : undefined}
                       className={cn(
-                        "relative w-full flex items-start justify-between py-2.5 sm:py-3 gap-3 sm:gap-4 text-left transition-colors duration-150 -mx-2 px-2 rounded-md",
-                        hasDesc && "cursor-pointer hover:bg-muted/[0.05] active:bg-muted/[0.1]",
-                        !hasDesc && "cursor-default",
-                        // Inset ring keeps the focus indicator inside the card, identical on touch and desktop
-                        "outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset focus-visible:bg-primary/[0.05] focus-visible:z-10"
+                        "w-full flex items-start justify-between py-2.5 sm:py-3 gap-3 sm:gap-4 text-left -mx-2 px-2 rounded-md",
+                        hasDesc ? "budget-focus-surface cursor-pointer" : "budget-focus cursor-default"
                       )}
                     >
                       <div className="flex items-start gap-2.5 flex-1 min-w-0">
