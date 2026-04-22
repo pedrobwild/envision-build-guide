@@ -24,6 +24,7 @@ import { ImagePlus, X, Loader2, Plus, Star, StarOff, Edit2, Trash2, AlertTriangl
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SupplierComparisonTab } from "@/components/catalog/SupplierComparisonTab";
+import { PriceHistoryPopover } from "@/components/catalog/PriceHistoryPopover";
 import { evaluateCatalogIssues, useCatalogAlertsConfig } from "@/hooks/useCatalogAlerts";
 
 const SUBCATEGORIAS_PRESTADORES = [
@@ -324,6 +325,11 @@ function SupplierPricesSection({ catalogItemId, suppliers }: { catalogItemId: st
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-0.5 justify-end">
+                          <PriceHistoryPopover
+                            catalogItemId={catalogItemId}
+                            supplierId={p.supplier_id}
+                            supplierName={(p.suppliers as { name?: string } | null)?.name ?? "Fornecedor"}
+                          />
                           <Button variant="ghost" size="icon" className="h-6 w-6"
                             onClick={() => { setShowForm(false); setEditingPrice(p); }}>
                             <Edit2 className="h-3 w-3" />
