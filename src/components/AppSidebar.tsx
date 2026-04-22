@@ -21,6 +21,7 @@ import {
   CalendarClock,
   Brain,
   TrendingUp,
+  MessageCircle,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, Link } from "react-router-dom";
@@ -63,6 +64,7 @@ const DASHBOARD_ITEM: NavItem = {
 
 const COMERCIAL_ITEMS: NavItem[] = [
   { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
+  { title: "Conversas", url: "/admin/conversas", icon: MessageCircle, roles: ["admin", "comercial"] },
   { title: "Agenda", url: "/admin/agenda", icon: CalendarClock, roles: ["admin", "comercial"] },
   { title: "Insights por Consultor", url: "/admin/insights", icon: Brain, roles: ["admin", "comercial"] },
   { title: "Clientes", url: "/admin/crm", icon: Users, roles: ["admin", "comercial"] },
