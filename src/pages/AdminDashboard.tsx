@@ -35,15 +35,20 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const { profile, loading: profileLoading, isAdmin, isOrcamentista, isComercial } = useUserProfile();
 
+  // Non-admin users são redirecionados para seus painéis específicos.
+  // Importante: mantemos o gate de render abaixo para evitar flash de KPIs
+  // distorcidos (a query de budgets sofre filtragem RLS para non-admin,
+  // então os totais não refletem a operação inteira).
+  const shouldRedirectNonAdmin = !profileLoading && !!profile && !isAdmin && (isOrcamentista || isComercial);
+
   useEffect(() => {
-    if (!profileLoading && profile && !isAdmin) {
-      if (isOrcamentista) {
-        navigate("/admin/producao", { replace: true });
-      } else if (isComercial) {
-        navigate("/admin/comercial", { replace: true });
-      }
+    if (!shouldRedirectNonAdmin) return;
+    if (isOrcamentista) {
+      navigate("/admin/producao", { replace: true });
+    } else if (isComercial) {
+      navigate("/admin/comercial", { replace: true });
     }
-  }, [profileLoading, profile, isOrcamentista, isComercial, isAdmin, navigate]);
+  }, [shouldRedirectNonAdmin, isOrcamentista, isComercial, navigate]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
