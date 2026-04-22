@@ -82,7 +82,10 @@ export default function AdminOperationsDashboard() {
     const [budgetsRes, profilesRes, rolesRes] = await Promise.all([
       supabase.from("budgets").select(
         "id, client_name, project_name, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, city, bairro"
-      ).order("created_at", { ascending: false }),
+      )
+        // Operações mostra apenas a versão atual de cada grupo (sem duplicar cards).
+        .or("is_current_version.eq.true,is_current_version.is.null")
+        .order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, full_name"),
       supabase.from("user_roles").select("user_id, role"),
     ]);
