@@ -34,3 +34,12 @@ verify_jwt = true
 
 [functions.elephan-sync]
 verify_jwt = false
+
+[functions.digisac-webhook]
+verify_jwt = false
+
+[functions.digisac-sync]
+verify_jwt = false
+
+[functions.digisac-send]
+verify_jwt = true
