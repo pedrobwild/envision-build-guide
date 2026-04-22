@@ -2405,6 +2405,7 @@ export type Database = {
           id: string
           is_active: boolean
           updated_at: string | null
+          whatsapp: string | null
         }
         Insert: {
           created_at?: string | null
@@ -2412,6 +2413,7 @@ export type Database = {
           id: string
           is_active?: boolean
           updated_at?: string | null
+          whatsapp?: string | null
         }
         Update: {
           created_at?: string | null
@@ -2419,6 +2421,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           updated_at?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
