@@ -11,6 +11,8 @@ import { SuppliersTab } from "@/components/catalog/SuppliersTab";
 import { CatalogItemDialog, type CatalogItem } from "@/components/catalog/CatalogItemDialog";
 import { CategoryDialog, type CatalogCategory } from "@/components/catalog/CategoryDialog";
 import { SupplierDialog, type Supplier } from "@/components/catalog/SupplierDialog";
+import { AlertsSettingsDialog } from "@/components/catalog/AlertsSettingsDialog";
+import { Bell } from "lucide-react";
 
 const PAGE_SIZE = 50;
 
@@ -21,8 +23,8 @@ function useCategories(includeInactive = false) {
     queryFn: async () => {
       let query = supabase
         .from("catalog_categories")
-        .select("id, name, category_type, is_active, description")
-        .order("category_type")
+        .select("id, name, category_type, is_active, description, sort_order")
+        .order("sort_order", { ascending: true })
         .order("name")
         .limit(300);
       if (!includeInactive) query = query.eq("is_active", true);
