@@ -171,7 +171,11 @@ export type Database = {
           direction: string | null
           external_id: string | null
           id: string
+          message_type: string | null
+          provider_data: Json
+          reply_to_external_id: string | null
           sent_at: string | null
+          status: string | null
         }
         Insert: {
           attachments?: Json
@@ -182,7 +186,11 @@ export type Database = {
           direction?: string | null
           external_id?: string | null
           id?: string
+          message_type?: string | null
+          provider_data?: Json
+          reply_to_external_id?: string | null
           sent_at?: string | null
+          status?: string | null
         }
         Update: {
           attachments?: Json
@@ -193,7 +201,11 @@ export type Database = {
           direction?: string | null
           external_id?: string | null
           id?: string
+          message_type?: string | null
+          provider_data?: Json
+          reply_to_external_id?: string | null
           sent_at?: string | null
+          status?: string | null
         }
         Relationships: [
           {
@@ -207,6 +219,8 @@ export type Database = {
       }
       budget_conversations: {
         Row: {
+          assigned_user_name: string | null
+          avatar_url: string | null
           budget_id: string
           channel: string | null
           contact_identifier: string | null
@@ -215,11 +229,16 @@ export type Database = {
           external_id: string | null
           id: string
           last_message_at: string | null
+          last_message_preview: string | null
           provider: string
+          provider_data: Json
+          status: string | null
           unread_count: number
           updated_at: string
         }
         Insert: {
+          assigned_user_name?: string | null
+          avatar_url?: string | null
           budget_id: string
           channel?: string | null
           contact_identifier?: string | null
@@ -228,11 +247,16 @@ export type Database = {
           external_id?: string | null
           id?: string
           last_message_at?: string | null
+          last_message_preview?: string | null
           provider?: string
+          provider_data?: Json
+          status?: string | null
           unread_count?: number
           updated_at?: string
         }
         Update: {
+          assigned_user_name?: string | null
+          avatar_url?: string | null
           budget_id?: string
           channel?: string | null
           contact_identifier?: string | null
@@ -241,7 +265,10 @@ export type Database = {
           external_id?: string | null
           id?: string
           last_message_at?: string | null
+          last_message_preview?: string | null
           provider?: string
+          provider_data?: Json
+          status?: string | null
           unread_count?: number
           updated_at?: string
         }
@@ -1590,6 +1617,90 @@ export type Database = {
           name?: string
           order_index?: number
           slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      digisac_config: {
+        Row: {
+          api_base_url: string
+          api_token: string | null
+          created_at: string
+          default_service_id: string | null
+          default_user_id: string | null
+          enabled: boolean
+          id: string
+          singleton: boolean
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          api_base_url?: string
+          api_token?: string | null
+          created_at?: string
+          default_service_id?: string | null
+          default_user_id?: string | null
+          enabled?: boolean
+          id?: string
+          singleton?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          api_base_url?: string
+          api_token?: string | null
+          created_at?: string
+          default_service_id?: string | null
+          default_user_id?: string | null
+          enabled?: boolean
+          id?: string
+          singleton?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
+      digisac_contacts: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          external_id: string
+          id: string
+          last_seen_at: string | null
+          name: string | null
+          phone_normalized: string | null
+          phone_raw: string | null
+          provider_data: Json
+          tags: Json
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          external_id: string
+          id?: string
+          last_seen_at?: string | null
+          name?: string | null
+          phone_normalized?: string | null
+          phone_raw?: string | null
+          provider_data?: Json
+          tags?: Json
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          external_id?: string
+          id?: string
+          last_seen_at?: string | null
+          name?: string | null
+          phone_normalized?: string | null
+          phone_raw?: string | null
+          provider_data?: Json
+          tags?: Json
           updated_at?: string
         }
         Relationships: []
