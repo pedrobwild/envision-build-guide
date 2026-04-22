@@ -1705,6 +1705,39 @@ export type Database = {
         }
         Relationships: []
       }
+      digisac_webhook_events: {
+        Row: {
+          event_key: string
+          event_type: string | null
+          external_contact_id: string | null
+          external_message_id: string | null
+          external_ticket_id: string | null
+          id: string
+          received_at: string
+          result: Json
+        }
+        Insert: {
+          event_key: string
+          event_type?: string | null
+          external_contact_id?: string | null
+          external_message_id?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          received_at?: string
+          result?: Json
+        }
+        Update: {
+          event_key?: string
+          event_type?: string | null
+          external_contact_id?: string | null
+          external_message_id?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          received_at?: string
+          result?: Json
+        }
+        Relationships: []
+      }
       elephan_sync_state: {
         Row: {
           error_message: string | null
@@ -2607,6 +2640,7 @@ export type Database = {
         Returns: boolean
       }
       check_and_create_alerts: { Args: never; Returns: number }
+      cleanup_old_digisac_webhook_events: { Args: never; Returns: number }
       cleanup_old_snapshots: { Args: never; Returns: number }
       compare_snapshots: {
         Args: { p_date_a: string; p_date_b: string }
