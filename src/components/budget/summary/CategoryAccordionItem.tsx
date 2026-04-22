@@ -215,10 +215,23 @@ export function CategoryAccordionItem({
                           <AnimatePresence initial={false}>
                             {isItemExpanded && hasDesc && (
                               <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{
+                                  height: "auto",
+                                  opacity: 1,
+                                  transition: {
+                                    height: { duration: 0.35, ease: [0.32, 0.72, 0, 1] },
+                                    opacity: { duration: 0.28, ease: [0.4, 0, 0.2, 1], delay: 0.06 },
+                                  },
+                                }}
+                                exit={{
+                                  height: 0,
+                                  opacity: 0,
+                                  transition: {
+                                    height: { duration: 0.28, ease: [0.32, 0.72, 0, 1], delay: 0.04 },
+                                    opacity: { duration: 0.16, ease: [0.4, 0, 1, 1] },
+                                  },
+                                }}
                                 className="overflow-hidden"
                               >
                                 <p className="mt-2 sm:mt-2.5 text-[11.5px] sm:text-[12.5px] font-body text-muted-foreground/85 leading-[1.65] whitespace-pre-line tracking-[-0.005em]">
