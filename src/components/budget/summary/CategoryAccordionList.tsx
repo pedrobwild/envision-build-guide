@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Layers } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { CategoryAccordionItem, type CategoryAccordionItemData } from "./CategoryAccordionItem";
 import type { CategorizedGroup } from "@/lib/scope-categories";
@@ -84,22 +83,6 @@ export function CategoryAccordionList({
 
       {/* Card container */}
       <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-        {/* Distribution bar */}
-        <div className="px-3 pt-3 pb-1" aria-hidden>
-          <div className="flex h-[3px] rounded-full overflow-hidden bg-muted/30">
-            {items.map((s) => {
-              if (s.percentage <= 0) return null;
-              return (
-                <div
-                  key={s.id}
-                  className={cn("transition-all duration-500", s.bgClass)}
-                  style={{ width: `${s.percentage}%` }}
-                />
-              );
-            })}
-          </div>
-        </div>
-
         {/* Accordion rows */}
         <div className="divide-y divide-border/[0.06]">
           {items.map((item) => (
