@@ -42,6 +42,8 @@ import {
   UserCheck,
   Mail,
   KeyRound,
+  Phone,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ROLES, type AppRole } from "@/lib/role-constants";
@@ -50,6 +52,7 @@ interface ManagedUser {
   id: string;
   full_name: string | null;
   email: string;
+  whatsapp: string | null;
   is_active: boolean;
   created_at: string | null;
   roles: AppRole[];
