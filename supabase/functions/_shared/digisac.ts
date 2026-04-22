@@ -309,6 +309,7 @@ export async function upsertConversation(
   supabase: SupabaseClient,
   input: UpsertConversationInput,
 ): Promise<{ id: string }> {
+  const nowIso = new Date().toISOString();
   const row = {
     budget_id: input.budgetId,
     provider: DIGISAC_PROVIDER,
@@ -322,32 +323,22 @@ export async function upsertConversation(
     last_message_preview: input.lastMessagePreview,
     last_message_at: input.lastMessageAt,
     provider_data: input.providerData ?? {},
-    updated_at: new Date().toISOString(),
+    updated_at: nowIso,
   };
 
-  const { data: existing } = await supabase
+  // Upsert atômico contra o índice único (provider, external_id).
+  // Garante idempotência mesmo com webhooks reentregues em paralelo.
+  const { data, error } = await supabase
     .from("budget_conversations")
-    .select("id")
-    .eq("provider", DIGISAC_PROVIDER)
-    .eq("external_id", input.externalId)
-    .maybeSingle();
-
-  if (existing?.id) {
-    const { error } = await supabase
-      .from("budget_conversations")
-      .update(row)
-      .eq("id", existing.id);
-    if (error) throw error;
-    return { id: existing.id as string };
-  }
-
-  const { data: inserted, error } = await supabase
-    .from("budget_conversations")
-    .insert({ ...row, created_at: new Date().toISOString() })
+    .upsert(
+      { ...row, created_at: nowIso },
+      { onConflict: "provider,external_id", ignoreDuplicates: false },
+    )
     .select("id")
     .single();
+
   if (error) throw error;
-  return { id: inserted.id as string };
+  return { id: data.id as string };
 }
 
 export interface UpsertMessageInput {
@@ -382,31 +373,34 @@ export async function upsertMessage(
     provider_data: input.providerData ?? {},
   };
 
-  if (input.externalId) {
-    const { data: existing } = await supabase
+  // Sem external_id não dá pra deduplicar — insere direto.
+  if (!input.externalId) {
+    const { data, error } = await supabase
       .from("budget_conversation_messages")
+      .insert(row)
       .select("id")
-      .eq("conversation_id", input.conversationId)
-      .eq("external_id", input.externalId)
-      .maybeSingle();
-
-    if (existing?.id) {
-      const { error } = await supabase
-        .from("budget_conversation_messages")
-        .update(row)
-        .eq("id", existing.id);
-      if (error) throw error;
-      return { id: existing.id as string, inserted: false };
-    }
+      .single();
+    if (error) throw error;
+    return { id: data.id as string, inserted: true };
   }
 
-  const { data: inserted, error } = await supabase
+  // Upsert atômico contra o índice (conversation_id, external_id).
+  // Detecta se foi insert ou update comparando created_at vs agora.
+  const { data, error } = await supabase
     .from("budget_conversation_messages")
-    .insert(row)
-    .select("id")
+    .upsert(row, {
+      onConflict: "conversation_id,external_id",
+      ignoreDuplicates: false,
+    })
+    .select("id, created_at")
     .single();
   if (error) throw error;
-  return { id: inserted.id as string, inserted: true };
+
+  // Se created_at foi nos últimos 2s, foi um INSERT real; caso contrário, UPDATE.
+  const createdAt = new Date(String(data.created_at)).getTime();
+  const inserted = !Number.isNaN(createdAt) && Date.now() - createdAt < 2000;
+
+  return { id: data.id as string, inserted };
 }
 
 export async function upsertDigisacContact(

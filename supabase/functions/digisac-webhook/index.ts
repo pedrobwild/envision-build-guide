@@ -197,6 +197,101 @@ async function verifyWebhookAuth(
   };
 }
 
+// ----------------------------------------------------------------------------
+// Idempotência por evento
+// ----------------------------------------------------------------------------
+// Computamos uma `event_key` estável a partir do corpo bruto + IDs principais
+// (messageId/ticketId/contactId), e tentamos INSERT em `digisac_webhook_events`.
+// Se o índice único disparar conflito, sabemos que esse evento já foi processado
+// e devolvemos o resultado anterior — sem tocar em conversas/mensagens.
+
+async function sha256Hex(input: string): Promise<string> {
+  const buf = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(input),
+  );
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function computeEventKey(
+  rawBody: string,
+  eventType: string,
+  ids: { messageId: string | null; ticketId: string | null; contactId: string | null },
+): Promise<string> {
+  // Inclui IDs no preimage para que payloads idênticos com IDs distintos
+  // não colidam (ex.: dois acks idênticos de mensagens diferentes).
+  const preimage = JSON.stringify({
+    e: eventType,
+    m: ids.messageId,
+    t: ids.ticketId,
+    c: ids.contactId,
+    b: rawBody,
+  });
+  return await sha256Hex(preimage);
+}
+
+interface WebhookEventDedupResult {
+  duplicate: boolean;
+  cachedResult?: Record<string, unknown> | null;
+}
+
+async function checkAndReserveEvent(
+  supabase: SupabaseClient,
+  eventKey: string,
+  eventType: string,
+  ids: { messageId: string | null; ticketId: string | null; contactId: string | null },
+): Promise<WebhookEventDedupResult> {
+  const { error } = await supabase.from("digisac_webhook_events").insert({
+    event_key: eventKey,
+    event_type: eventType,
+    external_message_id: ids.messageId,
+    external_ticket_id: ids.ticketId,
+    external_contact_id: ids.contactId,
+  });
+
+  if (!error) return { duplicate: false };
+
+  // 23505 = unique_violation no Postgres.
+  const code = (error as { code?: string }).code ?? "";
+  if (code === "23505") {
+    const { data } = await supabase
+      .from("digisac_webhook_events")
+      .select("result")
+      .eq("event_key", eventKey)
+      .maybeSingle();
+    return {
+      duplicate: true,
+      cachedResult: (data?.result as Record<string, unknown>) ?? null,
+    };
+  }
+
+  // Falha não relacionada a duplicidade — registra e segue (não bloqueia processamento).
+  console.warn(
+    "[digisac-webhook] failed to reserve event",
+    JSON.stringify({ code, message: (error as Error).message }),
+  );
+  return { duplicate: false };
+}
+
+async function recordEventResult(
+  supabase: SupabaseClient,
+  eventKey: string,
+  result: Record<string, unknown>,
+): Promise<void> {
+  const { error } = await supabase
+    .from("digisac_webhook_events")
+    .update({ result })
+    .eq("event_key", eventKey);
+  if (error) {
+    console.warn(
+      "[digisac-webhook] failed to record event result",
+      JSON.stringify({ message: error.message }),
+    );
+  }
+}
+
 function extractEventType(body: Record<string, unknown>): string {
   return (
     pickString(body, ["event", "type", "eventType", "event_type"]) ??
@@ -527,38 +622,72 @@ Deno.serve(async (req) => {
   const eventType = extractEventType(body).toLowerCase();
   const ids = extractIds(body);
 
-  console.log(
-    "[digisac-webhook] event_received",
-    JSON.stringify({ event: eventType, ids, auth_mode: auth.mode }),
-  );
-
-  try {
-    if (eventType.includes("message")) {
-      return await handleMessageEvent(supabase, cfg, body, ids);
-    }
-    if (eventType.includes("ticket")) {
-      return await handleTicketEvent(supabase, cfg, body, ids);
-    }
-    if (eventType.includes("contact")) {
-      return await handleContactEvent(supabase, body);
-    }
-    // Evento desconhecido → tenta inferir pelo payload
-    if (ids.messageId) {
-      return await handleMessageEvent(supabase, cfg, body, ids);
-    }
-    if (ids.ticketId) {
-      return await handleTicketEvent(supabase, cfg, body, ids);
-    }
-    if (ids.contactId) {
-      return await handleContactEvent(supabase, body);
-    }
+  // ----- Idempotência: descarta reentregas do mesmo evento -----
+  const eventKey = await computeEventKey(rawBody, eventType, ids);
+  const dedup = await checkAndReserveEvent(supabase, eventKey, eventType, ids);
+  if (dedup.duplicate) {
+    console.log(
+      "[digisac-webhook] event_duplicate_ignored",
+      JSON.stringify({ event: eventType, ids, event_key: eventKey.slice(0, 16) }),
+    );
     return jsonResponse(
-      { success: false, reason: "unknown_event", event: eventType },
+      {
+        success: true,
+        deduplicated: true,
+        event_key: eventKey,
+        previous_result: dedup.cachedResult ?? null,
+      },
       200,
     );
+  }
+
+  console.log(
+    "[digisac-webhook] event_received",
+    JSON.stringify({
+      event: eventType,
+      ids,
+      auth_mode: auth.mode,
+      event_key: eventKey.slice(0, 16),
+    }),
+  );
+
+  let response: Response;
+  try {
+    if (eventType.includes("message")) {
+      response = await handleMessageEvent(supabase, cfg, body, ids);
+    } else if (eventType.includes("ticket")) {
+      response = await handleTicketEvent(supabase, cfg, body, ids);
+    } else if (eventType.includes("contact")) {
+      response = await handleContactEvent(supabase, body);
+    } else if (ids.messageId) {
+      // Evento desconhecido → tenta inferir pelo payload
+      response = await handleMessageEvent(supabase, cfg, body, ids);
+    } else if (ids.ticketId) {
+      response = await handleTicketEvent(supabase, cfg, body, ids);
+    } else if (ids.contactId) {
+      response = await handleContactEvent(supabase, body);
+    } else {
+      response = jsonResponse(
+        { success: false, reason: "unknown_event", event: eventType },
+        200,
+      );
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[digisac-webhook] erro processando evento:", msg);
+    // Apaga reserva para que retentativas legítimas (mesma chave) possam reprocessar.
+    await supabase.from("digisac_webhook_events").delete().eq("event_key", eventKey);
     return jsonResponse({ error: msg }, 500);
   }
+
+  // Persiste o resultado para devolver em reentregas futuras.
+  try {
+    const cloned = response.clone();
+    const resultBody = (await cloned.json()) as Record<string, unknown>;
+    await recordEventResult(supabase, eventKey, resultBody);
+  } catch {
+    // Se o body não for JSON, ignora — a reserva por si só já garante idempotência.
+  }
+
+  return response;
 });
