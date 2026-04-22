@@ -181,24 +181,24 @@ export function CategoryAccordionItem({
                       onClick={hasDesc ? () => setExpandedItemId(isItemExpanded ? null : item.id) : undefined}
                       aria-expanded={hasDesc ? isItemExpanded : undefined}
                       className={cn(
-                        "w-full flex items-start justify-between py-2.5 sm:py-3 gap-3 sm:gap-4 text-left -mx-2 px-2 rounded-md",
-                        hasDesc ? "budget-focus-surface cursor-pointer" : "budget-focus cursor-default"
+                        "w-full flex items-start justify-between py-3 sm:py-3 gap-3 sm:gap-4 text-left -mx-2 px-2 rounded-md min-h-[44px]",
+                        hasDesc ? "budget-focus-surface cursor-pointer active:bg-foreground/[0.02]" : "budget-focus cursor-default"
                       )}
                     >
                       <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                        {/* Item bullet */}
+                        {/* Item bullet — quieter, smaller */}
                         <span
                           className={cn(
-                            "mt-[9px] w-1 h-1 rounded-full flex-shrink-0 transition-colors",
-                            isItemExpanded ? "bg-foreground/60" : "bg-muted-foreground/40"
+                            "mt-[10px] w-[3px] h-[3px] rounded-full flex-shrink-0 transition-colors",
+                            isItemExpanded ? "bg-foreground/55" : "bg-muted-foreground/30"
                           )}
                           aria-hidden
                         />
 
                         <div className="flex-1 min-w-0">
-                          <span className="text-[12.5px] sm:text-[13.5px] font-body text-foreground/85 leading-[1.55] tracking-[-0.005em]">
+                          <span className="text-[13px] sm:text-[13.5px] font-body text-foreground/85 leading-[1.5] tracking-[-0.005em]">
                             {item.qty && item.qty > 1 && (
-                              <span className="budget-numeric text-[10.5px] sm:text-[11.5px] text-muted-foreground/70 mr-1.5">
+                              <span className="budget-numeric text-[11px] sm:text-[11.5px] text-muted-foreground/65 mr-1.5 tabular-nums">
                                 {item.qty}×
                               </span>
                             )}
@@ -228,7 +228,7 @@ export function CategoryAccordionItem({
                                 }}
                                 className="overflow-hidden"
                               >
-                                <p className="mt-2 sm:mt-2.5 text-[11.5px] sm:text-[12.5px] font-body text-muted-foreground/85 leading-[1.65] whitespace-pre-line tracking-[-0.005em]">
+                                <p className="mt-2.5 sm:mt-2.5 text-[12px] sm:text-[12.5px] font-body text-muted-foreground/85 leading-[1.65] whitespace-pre-line tracking-[-0.003em]">
                                   {item.description}
                                 </p>
                               </motion.div>
@@ -237,21 +237,21 @@ export function CategoryAccordionItem({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 mt-[2px]">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 mt-[2px]">
                         {item.unit && (
-                          <span className="budget-numeric text-[9.5px] sm:text-[10px] text-muted-foreground/60 uppercase whitespace-nowrap tracking-[0.09em]">
+                          <span className="budget-numeric text-[9.5px] sm:text-[10px] text-muted-foreground/55 uppercase whitespace-nowrap tracking-[0.09em]">
                             {item.unit}
                           </span>
                         )}
                         {hasDesc && (
-                          <span
-                            className={cn(
-                              "text-[9.5px] sm:text-[10px] font-body text-muted-foreground/55 transition-opacity tracking-[0.02em]",
-                              isItemExpanded ? "opacity-0" : "opacity-100"
-                            )}
+                          <motion.span
+                            animate={{ rotate: isItemExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                            className="text-muted-foreground/45"
+                            aria-hidden
                           >
-                            ver mais
-                          </span>
+                            <ChevronDown className="h-3 w-3" />
+                          </motion.span>
                         )}
                       </div>
                     </button>
