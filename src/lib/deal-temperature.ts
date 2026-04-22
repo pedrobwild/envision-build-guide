@@ -156,7 +156,8 @@ export function suggestNextAction(input: NextActionInput): NextActionSuggestion 
     if (input.internalStatus === "lead" || input.internalStatus === "validacao_briefing") {
       return { label: "Iniciar contato", type: "call", urgency: "high" };
     }
-    return { label: "Registrar 1ª atividade", type: "call", urgency: "medium" };
+    // Sem atividade em outros status: não sugerir nada (evita ruído no card).
+    return null;
   }
 
   // Atividade muito antiga
