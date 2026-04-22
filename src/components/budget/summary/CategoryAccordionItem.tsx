@@ -65,7 +65,7 @@ export function CategoryAccordionItem({
           "w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-4 transition-all duration-200 min-h-[56px] sm:min-h-[64px]",
           hasItems && "hover:bg-muted/[0.03] active:bg-muted/[0.06] cursor-pointer",
           !hasItems && "cursor-default",
-          "focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]"
+          "outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset focus-visible:bg-primary/[0.04]"
         )}
       >
         {/* Expand/Collapse indicator — premium minimal */}
@@ -185,10 +185,12 @@ export function CategoryAccordionItem({
                     <button
                       type="button"
                       onClick={hasDesc ? () => setExpandedItemId(isItemExpanded ? null : item.id) : undefined}
+                      aria-expanded={hasDesc ? isItemExpanded : undefined}
                       className={cn(
-                        "w-full flex items-start justify-between py-2.5 sm:py-3 gap-3 sm:gap-4 text-left transition-colors",
+                        "w-full flex items-start justify-between py-2.5 sm:py-3 gap-3 sm:gap-4 text-left transition-colors -mx-2 px-2 rounded-md",
                         hasDesc && "cursor-pointer hover:opacity-80",
-                        !hasDesc && "cursor-default"
+                        !hasDesc && "cursor-default",
+                        "outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-card focus-visible:bg-primary/[0.04]"
                       )}
                     >
                       <div className="flex items-start gap-2.5 flex-1 min-w-0">
