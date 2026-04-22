@@ -107,8 +107,18 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
   const [tags, setTags] = useState<string[]>([]);
   const [ownerId, setOwnerId] = useState<string>("");
 
+  // Reseta o formulário apenas quando o diálogo TRANSICIONA de fechado→aberto.
+  // Evita que mudanças de referência do prop `initial` (objeto inline recriado
+  // a cada render do pai) apaguem o que o usuário já digitou.
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
+
     const c = initial as Record<string, unknown> | null | undefined;
     const get = (k: string) => (c?.[k] as string | null | undefined) ?? "";
 
