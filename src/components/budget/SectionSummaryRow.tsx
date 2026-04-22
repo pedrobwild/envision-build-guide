@@ -62,10 +62,11 @@ export function SectionSummaryRow({
       {/* ── Row trigger ── */}
       <button
         onClick={handleClick}
+        aria-expanded={hasItems && !forceExpanded ? expanded : undefined}
         className={cn(
-          "w-full flex items-center gap-3 transition-all duration-200",
+          "group w-full flex items-center gap-3 transition-all duration-200",
           compact ? "px-3 py-3" : "px-3 py-3.5",
-          hasItems && !forceExpanded && "active:bg-muted/40 cursor-pointer",
+          hasItems && !forceExpanded && "active:bg-muted/40 cursor-pointer hover:bg-muted/20",
           !hasItems && "cursor-default"
         )}
       >
