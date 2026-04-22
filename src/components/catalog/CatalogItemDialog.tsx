@@ -19,8 +19,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections, getSupplierPrices, getPrimarySupplierPrice, type SupplierPrice } from "@/lib/catalog-helpers";
-import { ImagePlus, X, Loader2, Plus, Star, StarOff, Edit2, Trash2 } from "lucide-react";
+import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections, getSupplierPrices, type SupplierPrice } from "@/lib/catalog-helpers";
+import { ImagePlus, X, Loader2, Plus, Star, StarOff, Edit2, Trash2, AlertTriangle, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SupplierComparisonTab } from "@/components/catalog/SupplierComparisonTab";
+import { evaluateCatalogIssues, useCatalogAlertsConfig } from "@/hooks/useCatalogAlerts";
 
 const SUBCATEGORIAS_PRESTADORES = [
   "Marcenaria", "Empreita", "Vidraçaria Box", "Vidraçaria Sacada",

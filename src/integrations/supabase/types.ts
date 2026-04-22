@@ -992,6 +992,36 @@ export type Database = {
           },
         ]
       }
+      catalog_alerts_config: {
+        Row: {
+          high_lead_time_days: number
+          id: string
+          max_price_increase_pct: number
+          singleton: boolean | null
+          stale_price_days: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          high_lead_time_days?: number
+          id?: string
+          max_price_increase_pct?: number
+          singleton?: boolean | null
+          stale_price_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          high_lead_time_days?: number
+          id?: string
+          max_price_increase_pct?: number
+          singleton?: boolean | null
+          stale_price_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       catalog_categories: {
         Row: {
           category_type: string
@@ -1000,6 +1030,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          sort_order: number
           updated_at: string | null
         }
         Insert: {
@@ -1009,6 +1040,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          sort_order?: number
           updated_at?: string | null
         }
         Update: {
@@ -1018,6 +1050,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          sort_order?: number
           updated_at?: string | null
         }
         Relationships: []
@@ -1168,6 +1201,57 @@ export type Database = {
           {
             foreignKeyName: "catalog_items_default_supplier_id_fkey"
             columns: ["default_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_price_history: {
+        Row: {
+          catalog_item_id: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_lead_time_days: number | null
+          new_unit_price: number | null
+          old_lead_time_days: number | null
+          old_unit_price: number | null
+          supplier_id: string
+        }
+        Insert: {
+          catalog_item_id: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_lead_time_days?: number | null
+          new_unit_price?: number | null
+          old_lead_time_days?: number | null
+          old_unit_price?: number | null
+          supplier_id: string
+        }
+        Update: {
+          catalog_item_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_lead_time_days?: number | null
+          new_unit_price?: number | null
+          old_lead_time_days?: number | null
+          old_unit_price?: number | null
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_price_history_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_price_history_supplier_id_fkey"
+            columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
             referencedColumns: ["id"]
@@ -2695,6 +2779,10 @@ export type Database = {
         }
       }
       normalize_phone: { Args: { p_phone: string }; Returns: string }
+      reorder_catalog_categories: {
+        Args: { p_ids: string[] }
+        Returns: undefined
+      }
       resolve_lead_owner: {
         Args: {
           p_campaign_id?: string
