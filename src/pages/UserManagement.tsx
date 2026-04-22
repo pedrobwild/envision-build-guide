@@ -420,6 +420,7 @@ export default function UserManagement() {
                     <tr className="border-b bg-muted/30">
                       <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">Usuário</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">Email</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">WhatsApp</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">Perfis</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-3 font-body">Status</th>
                       <th className="text-right font-medium text-muted-foreground px-4 py-3 font-body w-12"></th>
@@ -435,6 +436,9 @@ export default function UserManagement() {
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-muted-foreground font-body">{u.email}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-muted-foreground font-body">{u.whatsapp || "—"}</span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5 flex-wrap">
