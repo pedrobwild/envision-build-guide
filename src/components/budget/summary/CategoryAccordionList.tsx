@@ -4,7 +4,7 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { CategoryAccordionItem, type CategoryAccordionItemData } from "./CategoryAccordionItem";
 import type { CategorizedGroup } from "@/lib/scope-categories";
 
-const LABEL = "budget-label text-[10px] text-muted-foreground/50";
+const LABEL = "budget-label text-[10px] sm:text-[11px] text-muted-foreground/60 tracking-[0.1em] uppercase font-medium";
 
 interface CategoryAccordionListProps {
   categorizedGroups: CategorizedGroup[];
@@ -69,22 +69,22 @@ export function CategoryAccordionList({
   if (items.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 sm:space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Layers className="h-3.5 w-3.5 text-muted-foreground/40" aria-hidden />
+          <Layers className="h-3.5 w-3.5 text-muted-foreground/50" aria-hidden />
           <p className={LABEL}>O que está incluído</p>
         </div>
-        <span className="budget-numeric text-[10px] text-muted-foreground/35">
+        <span className="budget-numeric text-[10px] sm:text-[11px] text-muted-foreground/50 tracking-wide whitespace-nowrap">
           {totalSections} {totalSections === 1 ? "categoria" : "categorias"} · {totalItems} itens
         </span>
       </div>
 
       {/* Card container */}
-      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
         {/* Accordion rows */}
-        <div className="divide-y divide-border/[0.06]">
+        <div className="divide-y divide-border/[0.08]">
           {items.map((item) => (
             <CategoryAccordionItem
               key={item.id}
