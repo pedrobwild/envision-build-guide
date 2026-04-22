@@ -286,6 +286,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
                           )}
                           {currentVersion.change_reason && <span className="ml-1 italic">— {currentVersion.change_reason}</span>}
                         </p>
+                        </div>
                       </div>
                       <button
                         onClick={() => promptDuplicate(currentVersion.id)}
@@ -344,6 +345,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
                             )}
                             {v.change_reason && <span className="ml-1 italic">— {v.change_reason}</span>}
                           </p>
+                          </div>
                         </div>
                         <div className="flex items-center gap-1">
                           {!v.is_current_version && (
