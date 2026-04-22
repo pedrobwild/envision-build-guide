@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Layers } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { CategoryAccordionItem, type CategoryAccordionItemData } from "./CategoryAccordionItem";
 import type { CategorizedGroup } from "@/lib/scope-categories";
