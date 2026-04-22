@@ -11,6 +11,8 @@ import { SuppliersTab } from "@/components/catalog/SuppliersTab";
 import { CatalogItemDialog, type CatalogItem } from "@/components/catalog/CatalogItemDialog";
 import { CategoryDialog, type CatalogCategory } from "@/components/catalog/CategoryDialog";
 import { SupplierDialog, type Supplier } from "@/components/catalog/SupplierDialog";
+import { AlertsSettingsDialog } from "@/components/catalog/AlertsSettingsDialog";
+import { Bell } from "lucide-react";
 
 const PAGE_SIZE = 50;
 
@@ -21,8 +23,8 @@ function useCategories(includeInactive = false) {
     queryFn: async () => {
       let query = supabase
         .from("catalog_categories")
-        .select("id, name, category_type, is_active, description")
-        .order("category_type")
+        .select("id, name, category_type, is_active, description, sort_order")
+        .order("sort_order", { ascending: true })
         .order("name")
         .limit(300);
       if (!includeInactive) query = query.eq("is_active", true);
@@ -133,6 +135,8 @@ export default function CatalogPage() {
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
+  const [alertsConfigOpen, setAlertsConfigOpen] = useState(false);
+
   // Active-only for selects/filters; all for tab listings
   const { data: categories = [] } = useCategories();
   const { data: allCategories = [] } = useCategories(true);
@@ -157,7 +161,10 @@ export default function CatalogPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Catálogo Mestre</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">Base de produtos e serviços para orçamentos</p>
         </div>
-        <div className="grid grid-cols-3 sm:flex gap-2">
+        <div className="grid grid-cols-4 sm:flex gap-2">
+          <Button variant="outline" size="sm" className="h-10 sm:h-9" onClick={() => setAlertsConfigOpen(true)} title="Configurar alertas">
+            <Bell className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Alertas</span>
+          </Button>
           <Button variant="outline" size="sm" className="h-10 sm:h-9" onClick={() => { setEditingCategory(null); setCategoryDialogOpen(true); }}>
             <FolderOpen className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Categoria</span>
           </Button>
@@ -256,6 +263,7 @@ export default function CatalogPage() {
           onSaved={invalidateAll}
         />
       )}
+      <AlertsSettingsDialog open={alertsConfigOpen} onOpenChange={setAlertsConfigOpen} />
     </div>
   );
 }

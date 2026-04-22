@@ -18,6 +18,7 @@ export interface CatalogCategory {
   description: string | null;
   is_active: boolean;
   category_type: string;
+  sort_order?: number;
 }
 
 interface Props {
