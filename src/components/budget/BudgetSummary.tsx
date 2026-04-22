@@ -4,7 +4,7 @@ import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/fo
 import { Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { CategoryDistributionBar } from "@/components/budget/CategoryDistributionBar";
+
 import { CategoryDetailDialog } from "@/components/budget/CategoryDetailDialog";
 import { SectionSummaryRow } from "@/components/budget/SectionSummaryRow";
 import { CountUpValue } from "@/components/budget/CountUpValue";
@@ -91,13 +91,6 @@ export function BudgetSummary({
             Clique em cada tópico para visualizar o escopo detalhado
           </p>
         </div>
-
-        {/* Category distribution bar */}
-        {hasCategorized && (
-          <div className="px-5 pb-2">
-            <CategoryDistributionBar groups={categorizedGroups} total={scopeTotal} />
-          </div>
-        )}
 
         {/* Divider */}
         <div className="mx-5 border-t border-border" />
