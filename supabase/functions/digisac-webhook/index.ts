@@ -33,22 +33,168 @@ import {
 } from "../_shared/digisac.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-function verifySecret(req: Request, expected: string | null): boolean {
-  if (!expected) return true; // secret opcional
+// ----------------------------------------------------------------------------
+// Verificação de segredo do webhook
+// ----------------------------------------------------------------------------
+// Suporta DOIS modos, nesta ordem de preferência:
+//
+//  1. HMAC-SHA256 (preferencial): o Digisac assina o corpo bruto com o segredo
+//     compartilhado e envia o digest hex em um dos headers:
+//       - x-digisac-signature: sha256=<hex>     (formato Meta/GitHub-like)
+//       - x-hub-signature-256: sha256=<hex>
+//       - x-signature-256:     sha256=<hex>
+//     Validamos com `crypto.subtle` e comparação constant-time para evitar
+//     timing attacks.
+//
+//  2. Token estático (legado / fallback): se nenhum header de assinatura veio,
+//     aceitamos o segredo em claro via header (x-webhook-secret, x-api-key,
+//     Authorization: Bearer) ou query string (?secret=, ?token=). Útil enquanto
+//     o painel do Digisac não estiver configurado para assinar.
+//
+// Em qualquer falha, logamos APENAS metadados (modo tentado, header presente,
+// length do digest, IP/UA truncados) — nunca o segredo nem o body.
+
+type WebhookAuthResult =
+  | { ok: true; mode: "hmac" | "static" | "disabled" }
+  | { ok: false; reason: string; details: Record<string, unknown> };
+
+const HMAC_HEADERS = [
+  "x-digisac-signature",
+  "x-hub-signature-256",
+  "x-signature-256",
+] as const;
+
+function timingSafeEqualHex(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+function extractSignatureHeader(req: Request): { header: string; value: string } | null {
+  for (const h of HMAC_HEADERS) {
+    const v = req.headers.get(h);
+    if (v && v.length > 0) return { header: h, value: v.trim() };
+  }
+  return null;
+}
+
+function parseSignatureValue(raw: string): string {
+  // Aceita "sha256=abc...", "SHA256 abc..." ou apenas "abc..."
+  const lower = raw.toLowerCase();
+  if (lower.startsWith("sha256=")) return lower.slice(7);
+  if (lower.startsWith("sha256 ")) return lower.slice(7).trim();
+  return lower;
+}
+
+async function computeHmacSha256Hex(secret: string, body: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
+  return Array.from(new Uint8Array(sigBuf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function extractStaticSecret(req: Request): string | null {
   const url = new URL(req.url);
   const authHeader = req.headers.get("authorization") ?? "";
   const bearer = authHeader.toLowerCase().startsWith("bearer ")
     ? authHeader.slice(7).trim()
     : "";
-  const provided =
+  const candidate =
     req.headers.get("x-webhook-secret") ??
-    req.headers.get("x-digisac-signature") ??
     req.headers.get("x-api-key") ??
-    bearer ??
+    (bearer || null) ??
     url.searchParams.get("secret") ??
-    url.searchParams.get("token") ??
-    "";
-  return provided === expected;
+    url.searchParams.get("token");
+  return candidate && candidate.length > 0 ? candidate : null;
+}
+
+function requestFingerprint(req: Request): Record<string, unknown> {
+  const ua = req.headers.get("user-agent") ?? "";
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("cf-connecting-ip") ??
+    null;
+  return {
+    ip,
+    ua: ua.slice(0, 80),
+    has_auth: Boolean(req.headers.get("authorization")),
+    sig_headers_present: HMAC_HEADERS.filter((h) => req.headers.get(h)),
+  };
+}
+
+async function verifyWebhookAuth(
+  req: Request,
+  rawBody: string,
+  expected: string | null,
+): Promise<WebhookAuthResult> {
+  if (!expected) {
+    return { ok: true, mode: "disabled" };
+  }
+
+  const sigHeader = extractSignatureHeader(req);
+
+  if (sigHeader) {
+    const provided = parseSignatureValue(sigHeader.value);
+    let computed: string;
+    try {
+      computed = await computeHmacSha256Hex(expected, rawBody);
+    } catch (err) {
+      return {
+        ok: false,
+        reason: "hmac_compute_failed",
+        details: {
+          mode: "hmac",
+          header: sigHeader.header,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      };
+    }
+    if (timingSafeEqualHex(provided, computed)) {
+      return { ok: true, mode: "hmac" };
+    }
+    return {
+      ok: false,
+      reason: "hmac_mismatch",
+      details: {
+        mode: "hmac",
+        header: sigHeader.header,
+        provided_len: provided.length,
+        expected_len: computed.length,
+        body_bytes: rawBody.length,
+      },
+    };
+  }
+
+  // Fallback: token estático
+  const staticSecret = extractStaticSecret(req);
+  if (!staticSecret) {
+    return {
+      ok: false,
+      reason: "missing_signature_and_token",
+      details: { mode: "none" },
+    };
+  }
+  if (
+    staticSecret.length === expected.length &&
+    timingSafeEqualHex(staticSecret, expected)
+  ) {
+    return { ok: true, mode: "static" };
+  }
+  return {
+    ok: false,
+    reason: "static_token_mismatch",
+    details: { mode: "static", provided_len: staticSecret.length },
+  };
 }
 
 function extractEventType(body: Record<string, unknown>): string {
@@ -345,30 +491,45 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: false, reason: "integration_disabled" }, 200);
   }
 
-  if (!verifySecret(req, cfg.webhookSecret)) {
-    console.warn("[digisac-webhook] webhook secret inválido ou ausente");
+  // Lê o body como texto bruto — necessário para HMAC antes de fazer o JSON.parse.
+  const rawBody = await req.text();
+
+  const auth = await verifyWebhookAuth(req, rawBody, cfg.webhookSecret);
+  if (!auth.ok) {
+    console.warn(
+      "[digisac-webhook] auth_failed",
+      JSON.stringify({
+        reason: auth.reason,
+        ...auth.details,
+        ...requestFingerprint(req),
+      }),
+    );
     return jsonResponse(
       {
         error: "Unauthorized",
+        reason: auth.reason,
         hint:
-          "Webhook secret inválido. Envie via header x-webhook-secret, x-digisac-signature, x-api-key ou Authorization: Bearer <secret>, ou via query ?secret=<secret>.",
+          "Configure o webhook do Digisac para assinar com HMAC-SHA256 e enviar em x-digisac-signature: sha256=<hex>. Como fallback, aceitamos token em x-webhook-secret, x-api-key, Authorization: Bearer ou ?secret=.",
       },
       401,
     );
   }
 
   let body: Record<string, unknown> = {};
-  try {
-    body = await req.json();
-  } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
+  if (rawBody.length > 0) {
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return jsonResponse({ error: "Invalid JSON body" }, 400);
+    }
   }
 
   const eventType = extractEventType(body).toLowerCase();
   const ids = extractIds(body);
 
   console.log(
-    `[digisac-webhook] event=${eventType} ids=${JSON.stringify(ids)}`,
+    "[digisac-webhook] event_received",
+    JSON.stringify({ event: eventType, ids, auth_mode: auth.mode }),
   );
 
   try {
