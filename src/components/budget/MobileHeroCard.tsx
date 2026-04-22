@@ -76,7 +76,7 @@ export function MobileHeroCard({
         transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
         className="lg:hidden rounded-2xl border border-border bg-card overflow-hidden shadow-sm"
       >
-        <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-primary/20" />
+        <div className="h-px bg-border" />
 
         <div className="px-4 pt-3.5 pb-3 space-y-2.5">
           <div>

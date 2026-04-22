@@ -79,8 +79,8 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
           isMobile && "active:opacity-70 transition-opacity"
         )}
       >
-        <div className={cn("w-1 h-5 rounded-full", group.category.bgClass)} />
-        <span className={cn("text-sm sm:text-base budget-heading font-bold tracking-tight flex-1", group.category.colorClass)}>
+        <div className="w-1 h-5 rounded-full bg-border" />
+        <span className="text-sm sm:text-base budget-heading font-bold tracking-tight flex-1 text-foreground">
           {group.category.label}
         </span>
         {/* Mobile: item count badge + chevron */}
