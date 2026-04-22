@@ -93,6 +93,8 @@ export default function BudgetRequestsList() {
         .select(
           "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, commercial_owner_id, estimator_owner_id"
         )
+        // Solicitações listam apenas a versão atual de cada grupo (sem duplicar por versionamento).
+        .or("is_current_version.eq.true,is_current_version.is.null")
         .order("created_at", { ascending: false }),
       supabase.from("profiles").select("id, full_name"),
     ]);

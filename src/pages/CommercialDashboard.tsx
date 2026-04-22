@@ -306,6 +306,9 @@ export default function CommercialDashboard() {
     let budgetQuery = supabase
       .from("budgets")
       .select("id, client_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
+      // Pipeline mostra apenas a versão atual de cada grupo (uma card por orçamento).
+      // Versões anteriores ficam acessíveis via histórico interno do editor.
+      .or("is_current_version.eq.true,is_current_version.is.null")
       .order("created_at", { ascending: false });
     if (!isAdmin) {
       // Visibilidade do comercial: orçamentos atribuídos a ele OU orçamentos
