@@ -11,7 +11,7 @@ import { toast } from "sonner";
  * - G então P → Pipeline Orçamentos (Produção)
  * - G então A → Agenda
  * - G então L → Clientes (CRM)
- * - N → Novo negócio (solicitação)
+ * - G então N → Novo negócio (solicitação)
  * - ? → Mostra lista de atalhos via toast
  *
  * Cmd/Ctrl+K (paleta de comandos) é tratado em CommandPalette.
@@ -52,7 +52,7 @@ export function useGlobalShortcuts() {
         e.preventDefault();
         toast("Atalhos de teclado", {
           description:
-            "G→D Painel · G→C Comercial · G→P Produção · G→A Agenda · G→L Clientes · N Novo negócio · T Pendentes/Concluídas · ⇧T+P/C/A/H/L · ⌘K Buscar",
+            "G→D Painel · G→C Comercial · G→P Produção · G→A Agenda · G→L Clientes · G→N Novo negócio · T Pendentes/Concluídas · ⇧T+P/C/A/H/L · ⌘K Buscar",
           duration: 6000,
         });
         return;
@@ -60,11 +60,6 @@ export function useGlobalShortcuts() {
 
       // Single-key actions
       if (!waitingForSecond) {
-        if (key === "n") {
-          e.preventDefault();
-          navigate("/admin/solicitacoes/nova");
-          return;
-        }
         if (key === "g") {
           e.preventDefault();
           waitingForSecond = true;
@@ -92,6 +87,9 @@ export function useGlobalShortcuts() {
           break;
         case "l":
           navigate("/admin/crm");
+          break;
+        case "n":
+          navigate("/admin/solicitacoes/nova");
           break;
         default:
           // unknown — silent
