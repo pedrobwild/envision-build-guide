@@ -168,10 +168,14 @@ async function searchTranscribeIds(
     queries.push(`?participant_email=${encodeURIComponent(params.email)}`);
   }
   if (params.phone) {
-    queries.push(`?search=${encodeURIComponent(params.phone)}`);
-    queries.push(`?q=${encodeURIComponent(params.phone)}`);
-    queries.push(`?phone=${encodeURIComponent(params.phone)}`);
-    queries.push(`?participant_phone=${encodeURIComponent(params.phone)}`);
+    // Tenta cada variante BR (com/sem 9, com/sem 55, só DDD+número, etc.)
+    const variants = phoneVariants(params.phone);
+    for (const v of variants) {
+      queries.push(`?search=${encodeURIComponent(v)}`);
+      queries.push(`?q=${encodeURIComponent(v)}`);
+      queries.push(`?phone=${encodeURIComponent(v)}`);
+      queries.push(`?participant_phone=${encodeURIComponent(v)}`);
+    }
   }
 
   for (const qs of queries) {
