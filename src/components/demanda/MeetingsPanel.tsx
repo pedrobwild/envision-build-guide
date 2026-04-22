@@ -121,13 +121,29 @@ export function MeetingsPanel({ budgetId }: MeetingsPanelProps) {
         body: { budget_id: budgetId },
       });
       if (error) throw error;
-      return data as { pulled: number; matched: number; unmatched: number; errors?: string[] };
+      return data as {
+        pulled: number;
+        matched: number;
+        unmatched: number;
+        skipped?: number;
+        hint?: string;
+        client_email?: string | null;
+        client_phone?: string | null;
+        errors?: string[];
+      };
     },
     onSuccess: (data) => {
-      if (data?.matched > 0) {
+      if (data?.matched && data.matched > 0) {
         toast.success(`${data.matched} reunião(ões) sincronizadas`);
       } else if (data?.pulled === 0) {
-        toast.info("Nenhuma reunião nova no Elephan.ia");
+        toast.info(data?.hint ?? "Nenhuma reunião encontrada no Elephan.ia para este cliente", {
+          duration: 7000,
+        });
+      } else if (data?.skipped && data.skipped > 0) {
+        toast.info(
+          `${data.pulled} reuniões verificadas, ${data.skipped} não bateram com o e-mail/telefone do cliente`,
+          { duration: 7000 },
+        );
       } else {
         toast.info(`${data?.pulled ?? 0} reuniões puxadas, nenhuma vinculada a este orçamento`);
       }
