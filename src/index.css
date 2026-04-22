@@ -199,6 +199,39 @@
   .budget-body {
     font-family: var(--font-body);
   }
+
+  /* ────────────────────────────────────────────────────────────────
+     Estados de interação unificados para a página pública do orçamento
+     (focus-visible / hover / active). Garantem paridade total entre
+     mobile e desktop e nunca cortam contra bordas (ring-inset).
+     ──────────────────────────────────────────────────────────────── */
+  .budget-focus {
+    @apply relative outline-none transition-colors duration-150;
+    @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset focus-visible:z-10;
+  }
+  /* Variante para superfícies (linhas, accordions, navs) */
+  .budget-focus-surface {
+    @apply budget-focus;
+    @apply hover:bg-muted/[0.05] active:bg-muted/[0.1];
+    @apply focus-visible:bg-primary/[0.05];
+  }
+  /* Variante para botões/CTAs com fundo escuro/claro próprio */
+  .budget-focus-cta {
+    @apply budget-focus;
+    @apply focus-visible:ring-offset-0;
+    @apply active:scale-[0.98];
+  }
+  /* Variante para miniaturas/imagens (ring externo sutil + z para não cortar) */
+  .budget-focus-thumb {
+    @apply relative outline-none rounded-full overflow-hidden transition-shadow duration-150;
+    @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:z-10;
+    @apply hover:ring-1 hover:ring-foreground/15;
+  }
+  /* Variante para botões sobre fundo escuro (header) */
+  .budget-focus-on-dark {
+    @apply relative outline-none transition-colors duration-150;
+    @apply focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus-visible:z-10;
+  }
 }
 
 /* MapLibre popup styling */
