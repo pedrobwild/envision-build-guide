@@ -7,6 +7,10 @@ import {
   Loader2,
   AlertTriangle,
   AlertCircle,
+  Activity,
+  Lock,
+  Copy,
+  CircleDashed,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +21,9 @@ import {
   runMediaIntegrityCheck,
   acknowledgeAlert,
   resolveAlertAndRebaseline,
+  getMediaIntegritySummary,
   type MediaIntegrityAlert,
+  type MediaIntegritySummary,
 } from "@/lib/media-integrity";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -42,6 +48,28 @@ export default function MediaIntegrityPanel() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [filter, setFilter] = useState<"open" | "all">("open");
+  const [summary, setSummary] = useState<MediaIntegritySummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+
+  const handleCheckIntegrity = async () => {
+    setSummaryLoading(true);
+    try {
+      const data = await getMediaIntegritySummary();
+      setSummary({ ...data, openAlerts: alerts.filter(a => a.status === "open").length || data.openAlerts });
+      toast({
+        title: "Integridade verificada",
+        description: `${data.totalBudgets} orçamentos analisados — ${data.manualPreserved} manuais preservados.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Erro ao verificar integridade",
+        description: err instanceof Error ? err.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
 
   const load = async (status: "open" | "all" = filter) => {
     setLoading(true);
@@ -146,6 +174,20 @@ export default function MediaIntegrityPanel() {
 
         <div className="flex flex-wrap gap-2">
           <Button
+            variant="default"
+            size="sm"
+            onClick={handleCheckIntegrity}
+            disabled={summaryLoading}
+            className="gap-1.5"
+          >
+            {summaryLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Activity className="h-3.5 w-3.5" />
+            )}
+            {summaryLoading ? "Verificando…" : "Verificar integridade de mídia"}
+          </Button>
+          <Button
             variant="outline"
             size="sm"
             onClick={handleRun}
@@ -157,7 +199,7 @@ export default function MediaIntegrityPanel() {
             ) : (
               <RefreshCw className="h-3.5 w-3.5" />
             )}
-            {running ? "Verificando..." : "Rodar verificação agora"}
+            {running ? "Verificando..." : "Rodar verificação completa"}
           </Button>
           <Button
             variant={filter === "open" ? "default" : "outline"}
@@ -174,6 +216,95 @@ export default function MediaIntegrityPanel() {
             Todos
           </Button>
         </div>
+
+        {summary && (
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-display font-semibold text-foreground">
+                Resumo da verificação
+              </h3>
+              <span className="text-xs text-muted-foreground font-mono">
+                {formatDistanceToNow(new Date(summary.generatedAt), {
+                  addSuffix: true,
+                  locale: ptBR,
+                })}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="rounded-md border border-border bg-background p-3">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+                  <ShieldAlert className="h-3 w-3" /> Total
+                </div>
+                <div className="text-2xl font-display font-bold text-foreground tabular-nums mt-1">
+                  {summary.totalBudgets}
+                </div>
+              </div>
+              <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-mono">
+                  <Lock className="h-3 w-3" /> Manuais preservados
+                </div>
+                <div className="text-2xl font-display font-bold text-emerald-700 dark:text-emerald-400 tabular-nums mt-1">
+                  {summary.manualPreserved}
+                </div>
+              </div>
+              <div className="rounded-md border border-sky-500/30 bg-sky-500/5 p-3">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-sky-700 dark:text-sky-400 font-mono">
+                  <Copy className="h-3 w-3" /> Replicados
+                </div>
+                <div className="text-2xl font-display font-bold text-sky-700 dark:text-sky-400 tabular-nums mt-1">
+                  {summary.replicated}
+                </div>
+              </div>
+              <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-400 font-mono">
+                  <CircleDashed className="h-3 w-3" /> Pendentes
+                </div>
+                <div className="text-2xl font-display font-bold text-amber-700 dark:text-amber-400 tabular-nums mt-1">
+                  {summary.pending}
+                </div>
+              </div>
+            </div>
+
+            {summary.openAlerts > 0 && (
+              <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                {summary.openAlerts} alerta{summary.openAlerts > 1 ? "s" : ""} aberto
+                {summary.openAlerts > 1 ? "s" : ""} no monitor de integridade.
+              </div>
+            )}
+
+            {summary.sample.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-2">
+                  Amostra
+                </div>
+                <div className="space-y-1.5">
+                  {summary.sample.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center justify-between gap-2 text-xs rounded-md bg-background border border-border px-2.5 py-1.5"
+                    >
+                      <span className="truncate text-foreground font-body">{s.label}</span>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] shrink-0 ${
+                          s.bucket === "manual"
+                            ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                            : s.bucket === "replicado"
+                            ? "border-sky-500/40 text-sky-700 dark:text-sky-400"
+                            : "border-amber-500/40 text-amber-700 dark:text-amber-400"
+                        }`}
+                      >
+                        {s.bucket}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="space-y-2">
           {loading ? (
