@@ -408,6 +408,7 @@ function SubSectionGroup({
                   temperature={temp}
                   nextAction={next}
                   leadScore={b.client_id ? leadScoreMap?.get(b.client_id) ?? null : null}
+                  siblingCount={b.sibling_budget_ids?.length ?? 0}
                   onClick={() => onCardClick(b.id)}
                   onOpenHistory={onOpenHistory ? () => onOpenHistory(b) : undefined}
                   onQuickAction={(action) => {
