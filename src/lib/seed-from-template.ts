@@ -59,23 +59,15 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
         .limit(1)
         .maybeSingle();
 
-      const defaultMc = defaultTpl?.media_config as
-        | { video3d?: string; projeto3d?: string[]; projetoExecutivo?: string[]; fotos?: string[] }
-        | null
-        | undefined;
-      const hasDefaultMedia =
-        !!defaultMc &&
-        (
-          !!defaultMc.video3d ||
-          (Array.isArray(defaultMc.projeto3d) && defaultMc.projeto3d.length > 0) ||
-          (Array.isArray(defaultMc.projetoExecutivo) && defaultMc.projetoExecutivo.length > 0) ||
-          (Array.isArray(defaultMc.fotos) && defaultMc.fotos.length > 0)
-        );
+      const defaultMc = defaultTpl?.media_config as MediaConfigShape | null | undefined;
+      // Política: somente categorias permitidas (3D) são propagadas como padrão.
+      // Vídeo, executivo e fotos são descartados — devem ser uploads manuais.
+      const safeMc = sanitizeDefaultMedia(defaultMc);
 
-      if (hasDefaultMedia) {
+      if (safeMc) {
         await supabase
           .from("budgets")
-          .update({ media_config: defaultMc as unknown as Json })
+          .update({ media_config: safeMc as unknown as Json })
           .eq("id", budgetId);
       }
     } catch (err) {
