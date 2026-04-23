@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { sanitizeDefaultMedia, type MediaConfigShape } from "@/lib/default-media-policy";
+import { resolveDefaultMedia } from "@/lib/default-media-policy";
 
 interface TemplateSectionRow {
   id: string;
