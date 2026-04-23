@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { History, Copy, CheckCircle, Upload, FileText, FileSpreadsheet, Loader2, ChevronDown, ChevronUp, GitCompare, Clock } from "lucide-react";
+import { History, Copy, CheckCircle, Upload, FileText, FileSpreadsheet, Loader2, ChevronDown, ChevronUp, GitCompare, Clock, Trash2 } from "lucide-react";
 import { formatDate } from "@/lib/formatBRL";
-import { getVersionHistory, duplicateBudgetAsVersion, setCurrentVersion } from "@/lib/budget-versioning";
+import { getVersionHistory, duplicateBudgetAsVersion, setCurrentVersion, deleteDraftVersion } from "@/lib/budget-versioning";
 import { getVersionAuditEvents } from "@/lib/version-audit";
 import type { VersionRow, BudgetEventRow } from "@/types/budget-common";
 import { toast } from "sonner";
@@ -121,6 +121,24 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
     } catch (err: unknown) {
       toast.error("Erro ao alterar versão");
     }
+  };
+
+  const [deleteTarget, setDeleteTarget] = useState<VersionRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteVersion = async () => {
+    if (!deleteTarget || !user) return;
+    setDeleting(true);
+    try {
+      await deleteDraftVersion(deleteTarget.id, user.id);
+      toast.success(`V${deleteTarget.version_number} excluída`);
+      setDeleteTarget(null);
+      await loadVersions();
+      onVersionChange?.();
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : null) || "Erro ao excluir versão");
+    }
+    setDeleting(false);
   };
 
   const handleImportClose = async (open: boolean) => {
@@ -379,6 +397,15 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
                           >
                             Abrir
                           </button>
+                          {v.status === "draft" && !v.is_current_version && !v.is_published_version && (
+                            <button
+                              onClick={() => setDeleteTarget(v)}
+                              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                              title="Excluir rascunho"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -497,6 +524,35 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
                 className="px-4 py-1.5 rounded-md text-sm font-body font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {duplicating ? "Criando..." : "Criar versão"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete draft confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !deleting && setDeleteTarget(null)}>
+          <div className="bg-card border border-border rounded-xl shadow-lg p-5 w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-display font-bold text-foreground">Excluir rascunho V{deleteTarget.version_number}?</h3>
+            <p className="text-sm text-muted-foreground font-body">
+              Esta ação é permanente e removerá todas as seções, itens e ajustes desta versão. As demais versões do orçamento serão preservadas.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-3 py-1.5 rounded-md text-sm font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteVersion}
+                disabled={deleting}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-body font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+              >
+                {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                {deleting ? "Excluindo..." : "Excluir rascunho"}
               </button>
             </div>
           </div>
