@@ -397,6 +397,15 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
                           >
                             Abrir
                           </button>
+                          {v.status === "draft" && !v.is_current_version && !v.is_published_version && (
+                            <button
+                              onClick={() => setDeleteTarget(v)}
+                              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-body text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                              title="Excluir rascunho"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
