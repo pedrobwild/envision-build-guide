@@ -361,12 +361,8 @@ export async function deleteDraftVersion(
   const { error: delErr } = await supabase.from("budgets").delete().eq("id", budgetId);
   if (delErr) throw new Error(`Falha ao excluir versão: ${delErr.message}`);
 
-  await logVersionEvent({
-    event_type: "version_deleted",
-    budget_id: budgetId,
-    user_id: userId ?? null,
-    metadata: { version_number: target.version_number ?? "?", deleted_status: target.status },
-  });
+  // Note: no audit event is logged here because the budget row (FK target) was deleted.
+  void userId;
 }
 
 /**
