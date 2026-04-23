@@ -84,6 +84,7 @@ describe("default-media-policy", () => {
       expect(isValidDefaultMedia({ projeto3d: [] })).toBe(false);
       expect(isValidDefaultMedia({})).toBe(false);
       expect(isValidDefaultMedia(null)).toBe(false);
+    });
   });
 
   describe("getHardcodedFallbackMedia (safety net)", () => {
@@ -99,7 +100,7 @@ describe("default-media-policy", () => {
       expect(isValidDefaultMedia(getHardcodedFallbackMedia())).toBe(true);
     });
 
-    it("URLs apontam para o bucket público media com publicId estável", () => {
+    it("URLs apontam para o bucket público media com a pasta /3d/", () => {
       const fallback = getHardcodedFallbackMedia();
       fallback.projeto3d?.forEach((url) => {
         expect(url).toContain("/storage/v1/object/public/media/");
