@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye } from "lucide-react";
+import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
@@ -45,6 +45,8 @@ interface CompactKanbanCardProps {
   nextAction?: NextActionSuggestion | null;
   /** Score de qualidade do lead/cliente (Onda 5A). */
   leadScore?: LeadScoreResult | null;
+  /** Quantidade de orçamentos "irmãos" (mesmo cliente+imóvel) representados por este card. */
+  siblingCount?: number;
   onClick: () => void;
   onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink" | "nextAction") => void;
   /** Callback opcional para abrir o histórico/comunicação do negócio. */
@@ -114,6 +116,7 @@ export function CompactKanbanCard({
   temperature,
   nextAction,
   leadScore,
+  siblingCount,
   onClick,
   onQuickAction,
   onOpenHistory,
@@ -301,6 +304,17 @@ export function CompactKanbanCard({
               <RotBadge daysInStage={daysInStage} />
             )}
             <VersionBadge versionNumber={versionNumber} isCurrent={isCurrentVersion} />
+            {typeof siblingCount === "number" && siblingCount > 0 && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onOpenHistory?.(); }}
+                className="inline-flex items-center gap-1 text-[9.5px] font-bold font-body px-1.5 py-0.5 rounded-md bg-accent/20 text-accent-foreground ring-1 ring-accent/40 hover:bg-accent/30 transition-colors"
+                title={`${siblingCount} orçamento(s) anterior(es) deste cliente/imóvel`}
+              >
+                <Layers className="h-2.5 w-2.5" />
+                +{siblingCount}
+              </button>
+            )}
 
             {isSynced && (
               <span

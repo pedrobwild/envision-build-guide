@@ -173,6 +173,14 @@ interface BudgetRow {
   pipeline_id: string | null;
   client_phone: string | null;
   client_id: string | null;
+  property_id: string | null;
+  /**
+   * Quando dois ou mais orçamentos pertencem ao mesmo cliente+imóvel mas têm
+   * `version_group_id` diferentes (foram criados como orçamentos novos em vez
+   * de versões), o pipeline mostra apenas o mais recente e enumera os demais
+   * aqui para o card exibir um badge "+N versões".
+   */
+  sibling_budget_ids?: string[];
 }
 
 interface ProfileRow { id: string; full_name: string; }
@@ -305,7 +313,7 @@ export default function CommercialDashboard() {
     const isAdmin = profile?.roles.includes("admin");
     let budgetQuery = supabase
       .from("budgets")
-      .select("id, client_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
+      .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
       .order("created_at", { ascending: false });
 
     if (!isAdmin) {
@@ -389,21 +397,56 @@ export default function CommercialDashboard() {
     [profiles],
   );
 
+  /**
+   * Deduplica orçamentos do mesmo cliente+imóvel quando foram criados como
+   * orçamentos novos (version_group_id distinto) em vez de versões. Mantém
+   * apenas o mais recente (created_at desc) e expõe os ids dos demais em
+   * `sibling_budget_ids` para o card mostrar um badge "+N versões".
+   */
+  const dedupedBudgets = useMemo<BudgetRow[]>(() => {
+    const groups = new Map<string, BudgetRow[]>();
+    const ungrouped: BudgetRow[] = [];
+    for (const b of budgets) {
+      if (!b.client_id || !b.property_id) {
+        ungrouped.push(b);
+        continue;
+      }
+      const key = `${b.client_id}::${b.property_id}`;
+      const list = groups.get(key);
+      if (list) list.push(b);
+      else groups.set(key, [b]);
+    }
+    const champions: BudgetRow[] = [];
+    for (const list of groups.values()) {
+      if (list.length === 1) {
+        champions.push(list[0]);
+        continue;
+      }
+      const sorted = [...list].sort((a, b) =>
+        new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
+      );
+      const champion = sorted[0];
+      const siblings = sorted.slice(1).map((s) => s.id);
+      champions.push({ ...champion, sibling_budget_ids: siblings });
+    }
+    return [...champions, ...ungrouped];
+  }, [budgets]);
+
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const [key, sec] of Object.entries(PIPELINE_SECTIONS)) {
-      c[key] = budgets.filter(b => (sec.statuses as readonly string[]).includes(b.internal_status)).length;
+      c[key] = dedupedBudgets.filter(b => (sec.statuses as readonly string[]).includes(b.internal_status)).length;
     }
-    c.total = budgets.length;
-    c.needsAction = budgets.filter(b => b.internal_status === "delivered_to_sales").length;
-    c.overdue = budgets.filter(b =>
+    c.total = dedupedBudgets.length;
+    c.needsAction = dedupedBudgets.filter(b => b.internal_status === "delivered_to_sales").length;
+    c.overdue = dedupedBudgets.filter(b =>
       b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) && !DELIVERED_FINISHED.has(b.internal_status)
     ).length;
-    c.dueToday = budgets.filter(b =>
+    c.dueToday = dedupedBudgets.filter(b =>
       b.due_at && isToday(new Date(b.due_at)) && !DELIVERED_FINISHED.has(b.internal_status)
     ).length;
     return c;
-  }, [budgets]);
+  }, [dedupedBudgets]);
 
   const isAdmin = profile?.roles.includes("admin");
 
@@ -420,7 +463,7 @@ export default function CommercialDashboard() {
   }, [pipelineFilter, pipelines]);
 
   const filtered = useMemo(() => {
-    const result = budgets.filter(b => {
+    const result = dedupedBudgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
       const matchCommercial = commercialFilter === "all" || b.commercial_owner_id === commercialFilter;
@@ -462,18 +505,18 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [budgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId]);
+  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId]);
 
   // Counts per pipeline (for the PipelineSwitcher tabs)
   const pipelineCounts = useMemo(() => {
     const map: Record<string, number> = {};
     for (const p of pipelines) map[p.slug] = 0;
-    for (const b of budgets) {
+    for (const b of dedupedBudgets) {
       const slug = pipelines.find((p) => p.id === b.pipeline_id)?.slug;
       if (slug) map[slug] = (map[slug] ?? 0) + 1;
     }
     return map;
-  }, [budgets, pipelines]);
+  }, [dedupedBudgets, pipelines]);
 
   // Workflow groups for list view
   const isDefaultView = statusFilter === "all" && !search && dueFilter === "all" && commercialFilter === "all";

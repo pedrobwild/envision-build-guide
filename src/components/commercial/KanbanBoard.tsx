@@ -201,6 +201,8 @@ interface BudgetRow {
   is_published_version: boolean | null;
   client_phone?: string | null;
   client_id?: string | null;
+  /** Versões "irmãs" (mesmo cliente+imóvel, version_group_id distinto) representadas por este card. */
+  sibling_budget_ids?: string[];
 }
 
 export type DueFilter = "all" | "overdue" | "due_soon";
@@ -406,6 +408,7 @@ function SubSectionGroup({
                   temperature={temp}
                   nextAction={next}
                   leadScore={b.client_id ? leadScoreMap?.get(b.client_id) ?? null : null}
+                  siblingCount={b.sibling_budget_ids?.length ?? 0}
                   onClick={() => onCardClick(b.id)}
                   onOpenHistory={onOpenHistory ? () => onOpenHistory(b) : undefined}
                   onQuickAction={(action) => {
@@ -929,6 +932,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             temperature={temp}
                             nextAction={next}
                             leadScore={b.client_id ? leadScoreMap?.get(b.client_id) ?? null : null}
+                            siblingCount={b.sibling_budget_ids?.length ?? 0}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
