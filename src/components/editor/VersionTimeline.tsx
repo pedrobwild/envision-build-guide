@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Loader2, Plus, GitCompare, ExternalLink, Clock, Copy,
-  FileText, FileSpreadsheet,
+  FileText, FileSpreadsheet, RotateCcw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
