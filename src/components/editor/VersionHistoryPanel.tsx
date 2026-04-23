@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { History, Copy, CheckCircle, Upload, FileText, FileSpreadsheet, Loader2, ChevronDown, ChevronUp, GitCompare, Clock } from "lucide-react";
+import { History, Copy, CheckCircle, Upload, FileText, FileSpreadsheet, Loader2, ChevronDown, ChevronUp, GitCompare, Clock, Trash2 } from "lucide-react";
 import { formatDate } from "@/lib/formatBRL";
-import { getVersionHistory, duplicateBudgetAsVersion, setCurrentVersion } from "@/lib/budget-versioning";
+import { getVersionHistory, duplicateBudgetAsVersion, setCurrentVersion, deleteDraftVersion } from "@/lib/budget-versioning";
 import { getVersionAuditEvents } from "@/lib/version-audit";
 import type { VersionRow, BudgetEventRow } from "@/types/budget-common";
 import { toast } from "sonner";
