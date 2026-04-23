@@ -45,6 +45,8 @@ interface CompactKanbanCardProps {
   nextAction?: NextActionSuggestion | null;
   /** Score de qualidade do lead/cliente (Onda 5A). */
   leadScore?: LeadScoreResult | null;
+  /** Quantidade de orçamentos "irmãos" (mesmo cliente+imóvel) representados por este card. */
+  siblingCount?: number;
   onClick: () => void;
   onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink" | "nextAction") => void;
   /** Callback opcional para abrir o histórico/comunicação do negócio. */
