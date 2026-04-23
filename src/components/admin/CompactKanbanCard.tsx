@@ -116,6 +116,7 @@ export function CompactKanbanCard({
   temperature,
   nextAction,
   leadScore,
+  siblingCount,
   onClick,
   onQuickAction,
   onOpenHistory,
