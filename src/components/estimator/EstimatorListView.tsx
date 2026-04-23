@@ -353,6 +353,19 @@ export function EstimatorListView({
               ));
             })()}
 
+            {b.public_id && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-primary hover:bg-primary/10"
+                onClick={() => window.open(getPublicBudgetUrl(b.public_id!), "_blank", "noopener,noreferrer")}
+                title="Ver orçamento público"
+                aria-label="Ver orçamento público"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            )}
+
             <BudgetActionsMenu
               budget={b}
               onRefresh={onRefresh}
