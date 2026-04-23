@@ -201,6 +201,8 @@ interface BudgetRow {
   is_published_version: boolean | null;
   client_phone?: string | null;
   client_id?: string | null;
+  /** Versões "irmãs" (mesmo cliente+imóvel, version_group_id distinto) representadas por este card. */
+  sibling_budget_ids?: string[];
 }
 
 export type DueFilter = "all" | "overdue" | "due_soon";
