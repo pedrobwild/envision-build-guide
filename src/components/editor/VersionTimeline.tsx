@@ -239,6 +239,18 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
                         Comparar com atual
                       </Button>
                     )}
+                    {!v.is_current_version && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1 text-primary hover:text-primary hover:bg-primary/10"
+                        onClick={() => setRestoreTarget(v)}
+                        title="Tornar esta versão a atual (a versão atualmente ativa será preservada como histórico)"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        Restaurar como atual
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
