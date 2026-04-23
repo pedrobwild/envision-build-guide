@@ -365,6 +365,190 @@ export default function MediaIntegrityPanel() {
           </div>
         )}
 
+        {diffReport && (
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-2">
+                  <FileDiff className="h-4 w-4" />
+                  Relatório de diffs — manuais preservados
+                </h3>
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  Gerado{" "}
+                  {formatDistanceToNow(new Date(diffReport.generatedAt), {
+                    addSuffix: true,
+                    locale: ptBR,
+                  })}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadReport}
+                className="gap-1.5"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Baixar JSON
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="rounded-md border border-border bg-background p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+                  Total manuais
+                </div>
+                <div className="text-2xl font-display font-bold text-foreground tabular-nums mt-1">
+                  {diffReport.totalManualBudgets}
+                </div>
+              </div>
+              <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-mono">
+                  Sem alterações
+                </div>
+                <div className="text-2xl font-display font-bold text-emerald-700 dark:text-emerald-400 tabular-nums mt-1">
+                  {diffReport.unchangedCount}
+                </div>
+              </div>
+              <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-400 font-mono">
+                  Com alterações
+                </div>
+                <div className="text-2xl font-display font-bold text-amber-700 dark:text-amber-400 tabular-nums mt-1">
+                  {diffReport.changedCount}
+                </div>
+              </div>
+              <div className="rounded-md border border-border bg-background p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+                  Sem baseline
+                </div>
+                <div className="text-2xl font-display font-bold text-foreground tabular-nums mt-1">
+                  {diffReport.withoutBaseline}
+                </div>
+              </div>
+            </div>
+
+            {diffReport.bucketsAccessed.length > 0 && (
+              <div className="rounded-md border border-border bg-background p-3">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-2">
+                  <Database className="h-3 w-3" /> Storages acessados
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {diffReport.bucketsAccessed.map((bk) => (
+                    <Badge
+                      key={bk}
+                      variant="outline"
+                      className="text-[10px] font-mono"
+                    >
+                      {bk}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {diffReport.budgets.length > 0 && (
+              <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
+                {diffReport.budgets.map((bg) => (
+                  <div
+                    key={bg.budgetId}
+                    className="rounded-md border border-border bg-background p-3 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-medium text-foreground font-body truncate">
+                          {bg.label}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate">
+                          {bg.publicId ?? "—"}
+                          {bg.baselineCapturedAt && (
+                            <>
+                              {" · baseline "}
+                              {formatDistanceToNow(
+                                new Date(bg.baselineCapturedAt),
+                                { addSuffix: true, locale: ptBR }
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] shrink-0 ${
+                          bg.hasChanges
+                            ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
+                            : !bg.baselineCapturedAt
+                            ? "border-muted-foreground/30 text-muted-foreground"
+                            : "border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                        }`}
+                      >
+                        {bg.hasChanges
+                          ? "alterado"
+                          : !bg.baselineCapturedAt
+                          ? "sem baseline"
+                          : "intacto"}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      {bg.fields.map((f) => {
+                        const changed = f.added.length + f.removed.length > 0;
+                        return (
+                          <div
+                            key={f.field}
+                            className={`rounded border px-2 py-1.5 text-[10px] font-mono ${
+                              changed
+                                ? "border-amber-500/40 bg-amber-500/5"
+                                : "border-border bg-muted/20"
+                            }`}
+                          >
+                            <div className="text-muted-foreground uppercase tracking-wider">
+                              {f.field}
+                            </div>
+                            <div className="text-foreground tabular-nums">
+                              {f.beforeCount} → {f.afterCount}
+                            </div>
+                            {changed && (
+                              <div className="flex gap-2 mt-0.5">
+                                {f.added.length > 0 && (
+                                  <span className="text-emerald-700 dark:text-emerald-400 flex items-center gap-0.5">
+                                    <ArrowUpFromLine className="h-2.5 w-2.5" />
+                                    {f.added.length}
+                                  </span>
+                                )}
+                                {f.removed.length > 0 && (
+                                  <span className="text-destructive flex items-center gap-0.5">
+                                    <ArrowDownToLine className="h-2.5 w-2.5" />
+                                    {f.removed.length}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {bg.bucketsAccessed.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Database className="h-3 w-3 text-muted-foreground" />
+                        {bg.bucketsAccessed.map((bk) => (
+                          <Badge
+                            key={bk}
+                            variant="outline"
+                            className="text-[10px] font-mono"
+                          >
+                            {bk}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="space-y-2">
           {loading ? (
             <div className="flex items-center justify-center py-8 text-muted-foreground">
