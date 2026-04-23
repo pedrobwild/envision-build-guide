@@ -100,6 +100,26 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
     setCreating(false);
   };
 
+  const handleRestoreVersion = async () => {
+    if (!restoreTarget || !groupId || !user) return;
+    setRestoring(true);
+    try {
+      await setCurrentVersion(restoreTarget.id, groupId, user.id);
+      toast.success(`v${restoreTarget.version_number} restaurada como versão atual`);
+      setRestoreTarget(null);
+      // Navigate to the restored version so the editor reflects it
+      if (restoreTarget.id !== budgetId) {
+        navigate(`/admin/budget/${restoreTarget.id}`);
+      } else {
+        await loadData();
+        onVersionChange?.();
+      }
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : null) || "Erro ao restaurar versão");
+    }
+    setRestoring(false);
+  };
+
   const currentVersionId = versions.find(v => v.is_current_version)?.id;
 
   const statusBadge = (v: VersionRow) => {
