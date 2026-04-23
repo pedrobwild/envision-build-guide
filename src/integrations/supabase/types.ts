@@ -2254,6 +2254,48 @@ export type Database = {
         }
         Relationships: []
       }
+      media_migration_audit: {
+        Row: {
+          action: string
+          batch_name: string
+          budget_id: string | null
+          budget_label: string | null
+          created_at: string
+          id: string
+          media_after: Json | null
+          media_before: Json | null
+          reason: string | null
+          source_budget_id: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          action: string
+          batch_name: string
+          budget_id?: string | null
+          budget_label?: string | null
+          created_at?: string
+          id?: string
+          media_after?: Json | null
+          media_before?: Json | null
+          reason?: string | null
+          source_budget_id?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          action?: string
+          batch_name?: string
+          budget_id?: string | null
+          budget_label?: string | null
+          created_at?: string
+          id?: string
+          media_after?: Json | null
+          media_before?: Json | null
+          reason?: string | null
+          source_budget_id?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           budget_id: string | null
