@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History } from "lucide-react";
+import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,6 +29,8 @@ interface CompactKanbanCardProps {
   estimatorName?: string;
   highPriority?: boolean;
   isSynced?: boolean;
+  /** Identificador público do orçamento — habilita o botão direto "Ver pública". */
+  publicId?: string | null;
   /** Data de criação do negócio. */
   createdAt?: string | null;
   /** Data de última atualização. */
@@ -103,6 +106,7 @@ export function CompactKanbanCard({
   commercialName,
   estimatorName,
   isSynced,
+  publicId,
   createdAt,
   updatedAt,
   mode = "commercial",
@@ -309,17 +313,34 @@ export function CompactKanbanCard({
           </div>
         </div>
       </motion.div>
-      {onOpenHistory && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onOpenHistory(); }}
-          className="absolute top-1.5 right-1.5 z-10 h-5 w-5 rounded-full bg-card/80 border border-border/60 text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Ver histórico e comunicação"
-          aria-label="Histórico"
-        >
-          <History className="h-3 w-3" />
-        </button>
-      )}
+      {/* Botões persistentes no canto superior direito */}
+      <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1">
+        {publicId && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(getPublicBudgetUrl(publicId), "_blank", "noopener,noreferrer");
+            }}
+            className="h-5 w-5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50 flex items-center justify-center transition-colors"
+            title="Ver orçamento público"
+            aria-label="Ver orçamento público"
+          >
+            <Eye className="h-3 w-3" />
+          </button>
+        )}
+        {onOpenHistory && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onOpenHistory(); }}
+            className="h-5 w-5 rounded-full bg-card/80 border border-border/60 text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Ver histórico e comunicação"
+            aria-label="Histórico"
+          >
+            <History className="h-3 w-3" />
+          </button>
+        )}
+      </div>
       <div className="mt-1 px-0.5 min-h-[22px]">
         {nextAction ? (
           <NextActionChip

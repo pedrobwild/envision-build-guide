@@ -110,26 +110,32 @@ export function BudgetListCard({
               {formatBRL(total)}
             </span>
 
-            {/* Desktop action icons */}
+            {/* Public page button — sempre visível quando há link público (mobile + desktop) */}
+            {budget.public_id && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-primary hover:bg-primary/10"
+                onClick={(e) => { e.stopPropagation(); window.open(getPublicBudgetUrl(budget.public_id!), "_blank"); }}
+                title="Ver orçamento público"
+                aria-label="Ver orçamento público"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </Button>
+            )}
+
+            {/* Desktop edit icon (hover) */}
             <div className="hidden sm:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
                 onClick={(e) => { e.stopPropagation(); navigate(`/admin/budget/${budget.id}`); }}
+                title="Editar"
+                aria-label="Editar"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
-              {budget.public_id && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={(e) => { e.stopPropagation(); window.open(getPublicBudgetUrl(budget.public_id!), "_blank"); }}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                </Button>
-              )}
             </div>
 
             {/* Shared actions menu */}

@@ -398,6 +398,7 @@ function SubSectionGroup({
                   commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                   estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                   isSynced={syncedBudgetIds.has(b.id)}
+                  publicId={b.public_id}
                   createdAt={b.created_at}
                   updatedAt={b.updated_at}
                   mode="commercial"
@@ -692,6 +693,21 @@ function KanbanCard({
             {prio.label}
           </Badge>
         )}
+        {b.public_id && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(getPublicBudgetUrl(b.public_id!), "_blank", "noopener,noreferrer");
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="h-5 w-5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50 flex items-center justify-center transition-colors shrink-0"
+            title="Ver orçamento público"
+            aria-label="Ver orçamento público"
+          >
+            <Eye className="h-3 w-3" />
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-body mb-1.5 flex-wrap">
@@ -905,6 +921,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             isSynced={syncedBudgetIds.has(b.id)}
+                            publicId={b.public_id}
                             createdAt={b.created_at}
                             updatedAt={b.updated_at}
                             mode="commercial"
