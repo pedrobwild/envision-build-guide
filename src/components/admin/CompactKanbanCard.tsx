@@ -29,7 +29,8 @@ interface CompactKanbanCardProps {
   estimatorName?: string;
   highPriority?: boolean;
   isSynced?: boolean;
-  /** Data de criação do negócio. */
+  /** Identificador público do orçamento — habilita o botão direto "Ver pública". */
+  publicId?: string | null;
   createdAt?: string | null;
   /** Data de última atualização. */
   updatedAt?: string | null;
