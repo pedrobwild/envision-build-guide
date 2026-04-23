@@ -304,6 +304,17 @@ export function CompactKanbanCard({
               <RotBadge daysInStage={daysInStage} />
             )}
             <VersionBadge versionNumber={versionNumber} isCurrent={isCurrentVersion} />
+            {typeof siblingCount === "number" && siblingCount > 0 && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onOpenHistory?.(); }}
+                className="inline-flex items-center gap-1 text-[9.5px] font-bold font-body px-1.5 py-0.5 rounded-md bg-accent/20 text-accent-foreground ring-1 ring-accent/40 hover:bg-accent/30 transition-colors"
+                title={`${siblingCount} orçamento(s) anterior(es) deste cliente/imóvel`}
+              >
+                <Layers className="h-2.5 w-2.5" />
+                +{siblingCount}
+              </button>
+            )}
 
             {isSynced && (
               <span
