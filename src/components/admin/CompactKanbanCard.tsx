@@ -106,6 +106,7 @@ export function CompactKanbanCard({
   commercialName,
   estimatorName,
   isSynced,
+  publicId,
   createdAt,
   updatedAt,
   mode = "commercial",
