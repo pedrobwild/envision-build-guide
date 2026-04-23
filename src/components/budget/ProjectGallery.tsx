@@ -176,13 +176,34 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
 
   const defaultTab = availableTabs.find(t => t.id === "fotos3d")?.id ?? availableTabs[0]?.id ?? "video3d";
   const [activeTab, setActiveTab] = useState<GalleryTab>(defaultTab);
+  // Marca se o usuário já interagiu manualmente com as abas — assim que ele
+  // escolhe uma aba, paramos de "auto-corrigir" para Fotos 3D.
+  const userPickedTabRef = useRef(false);
 
-  // Sync activeTab when available tabs change (e.g. after async media load)
+  // Sync activeTab quando as abas disponíveis mudam (carga assíncrona da mídia).
+  // Regra: se o usuário ainda não escolheu manualmente, sempre priorizamos
+  // a aba "Fotos 3D" assim que ela ficar disponível, garantindo que a
+  // galeria abra na posição correta independente da ordem de carregamento.
   useEffect(() => {
-    if (availableTabs.length > 0 && !availableTabs.some(t => t.id === activeTab)) {
+    if (availableTabs.length === 0) return;
+
+    const stillExists = availableTabs.some(t => t.id === activeTab);
+    const fotos3dAvailable = availableTabs.some(t => t.id === "fotos3d");
+
+    if (!stillExists) {
       setActiveTab(defaultTab);
+      return;
     }
-  }, [availableTabs.length, defaultTab]);
+
+    if (!userPickedTabRef.current && fotos3dAvailable && activeTab !== "fotos3d") {
+      setActiveTab("fotos3d");
+    }
+  }, [availableTabs.length, defaultTab, activeTab]);
+
+  const handleTabClick = useCallback((tabId: GalleryTab) => {
+    userPickedTabRef.current = true;
+    setActiveTab(tabId);
+  }, []);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
@@ -234,7 +255,7 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
               {availableTabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabClick(tab.id)}
                   className={`relative px-3 py-1.5 rounded-md text-xs font-display font-semibold transition-colors ${
                     activeTab === tab.id
                       ? "bg-primary text-primary-foreground"
