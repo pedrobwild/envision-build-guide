@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import IntegrationSyncPanel from "@/components/admin/IntegrationSyncPanel";
 import AiSyncInsightsPanel from "@/components/admin/AiSyncInsightsPanel";
+import MediaIntegrityPanel from "@/components/admin/MediaIntegrityPanel";
 import DigisacConfigPanel from "@/components/admin/DigisacConfigPanel";
 
 type SearchMode = "ux" | "references" | "benchmarking";
@@ -301,6 +302,9 @@ export default function SystemToolsPage() {
 
       {/* AI Sync Monitor */}
       <AiSyncInsightsPanel />
+
+      {/* Media Integrity Monitor */}
+      <MediaIntegrityPanel />
 
       {/* Remaining cards */}
       <div className="space-y-3">
