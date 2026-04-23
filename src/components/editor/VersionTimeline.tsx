@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/lib/formatBRL";
-import { getVersionHistory, duplicateBudgetAsVersion } from "@/lib/budget-versioning";
+import { getVersionHistory, duplicateBudgetAsVersion, setCurrentVersion } from "@/lib/budget-versioning";
 import { getVersionAuditEvents } from "@/lib/version-audit";
 import type { VersionRow, BudgetEventRow } from "@/types/budget-common";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Loader2, Plus, GitCompare, ExternalLink, Clock, Copy,
-  FileText, FileSpreadsheet,
+  FileText, FileSpreadsheet, RotateCcw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,10 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newVersionReason, setNewVersionReason] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // Restore version dialog
+  const [restoreTarget, setRestoreTarget] = useState<VersionRow | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   // Import
   const [importOpen, setImportOpen] = useState(false);
@@ -94,6 +98,26 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
       toast.error((err instanceof Error ? err.message : null) || "Erro ao criar versão");
     }
     setCreating(false);
+  };
+
+  const handleRestoreVersion = async () => {
+    if (!restoreTarget || !groupId || !user) return;
+    setRestoring(true);
+    try {
+      await setCurrentVersion(restoreTarget.id, groupId, user.id);
+      toast.success(`v${restoreTarget.version_number} restaurada como versão atual`);
+      setRestoreTarget(null);
+      // Navigate to the restored version so the editor reflects it
+      if (restoreTarget.id !== budgetId) {
+        navigate(`/admin/budget/${restoreTarget.id}`);
+      } else {
+        await loadData();
+        onVersionChange?.();
+      }
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : null) || "Erro ao restaurar versão");
+    }
+    setRestoring(false);
   };
 
   const currentVersionId = versions.find(v => v.is_current_version)?.id;
@@ -215,6 +239,18 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
                         Comparar com atual
                       </Button>
                     )}
+                    {!v.is_current_version && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1 text-primary hover:text-primary hover:bg-primary/10"
+                        onClick={() => setRestoreTarget(v)}
+                        title="Tornar esta versão a atual (a versão atualmente ativa será preservada como histórico)"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        Restaurar como atual
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -311,6 +347,44 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
             >
               {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
               Criar versão
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restore version confirmation dialog */}
+      <Dialog open={!!restoreTarget} onOpenChange={(open) => !open && setRestoreTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <RotateCcw className="h-4 w-4 text-primary" />
+              Restaurar v{restoreTarget?.version_number} como atual?
+            </DialogTitle>
+            <DialogDescription className="text-sm font-body text-muted-foreground space-y-2 pt-2">
+              <span className="block">
+                A versão <strong className="text-foreground">v{restoreTarget?.version_number}</strong>
+                {restoreTarget?.created_by_name && restoreTarget.created_by_name !== "—" && (
+                  <> (criada por {restoreTarget.created_by_name})</>
+                )}
+                {" "}passará a ser a versão <strong className="text-foreground">ATUAL</strong> deste orçamento.
+              </span>
+              <span className="block">
+                Nenhuma versão é apagada — a versão hoje atual continuará disponível no histórico e
+                pode ser restaurada novamente a qualquer momento.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setRestoreTarget(null)} disabled={restoring}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleRestoreVersion} disabled={restoring}>
+              {restoring ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+              ) : (
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Restaurar como atual
             </Button>
           </DialogFooter>
         </DialogContent>
