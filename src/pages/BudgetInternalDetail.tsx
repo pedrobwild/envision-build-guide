@@ -1187,7 +1187,7 @@ export default function BudgetInternalDetail() {
                     />
                   )}
 
-                  {activeModule === "versions" && <VersionHistoryPanel budgetId={budget.id} />}
+                  {activeModule === "versions" && <VersionHistoryPanel budgetId={budget.id} defaultExpanded />}
 
                   {activeModule === "lost" && (
                     <LostPanel
