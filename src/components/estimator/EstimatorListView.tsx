@@ -28,7 +28,9 @@ import {
   ChevronRight,
   Ruler,
   MapPin,
+  Eye,
 } from "lucide-react";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
