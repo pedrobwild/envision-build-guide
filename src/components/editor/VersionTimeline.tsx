@@ -38,6 +38,10 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
   const [newVersionReason, setNewVersionReason] = useState("");
   const [creating, setCreating] = useState(false);
 
+  // Restore version dialog
+  const [restoreTarget, setRestoreTarget] = useState<VersionRow | null>(null);
+  const [restoring, setRestoring] = useState(false);
+
   // Import
   const [importOpen, setImportOpen] = useState(false);
   const [importType, setImportType] = useState<"pdf" | "excel">("pdf");
