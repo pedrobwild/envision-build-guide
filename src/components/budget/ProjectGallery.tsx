@@ -255,7 +255,7 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
               {availableTabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabClick(tab.id)}
                   className={`relative px-3 py-1.5 rounded-md text-xs font-display font-semibold transition-colors ${
                     activeTab === tab.id
                       ? "bg-primary text-primary-foreground"
