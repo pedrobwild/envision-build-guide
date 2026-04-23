@@ -530,6 +530,35 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
         </div>
       )}
 
+      {/* Delete draft confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !deleting && setDeleteTarget(null)}>
+          <div className="bg-card border border-border rounded-xl shadow-lg p-5 w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-display font-bold text-foreground">Excluir rascunho V{deleteTarget.version_number}?</h3>
+            <p className="text-sm text-muted-foreground font-body">
+              Esta ação é permanente e removerá todas as seções, itens e ajustes desta versão. As demais versões do orçamento serão preservadas.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-3 py-1.5 rounded-md text-sm font-body text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteVersion}
+                disabled={deleting}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-body font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+              >
+                {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                {deleting ? "Excluindo..." : "Excluir rascunho"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ImportExcelModal
         open={importOpen}
         onOpenChange={handleImportClose}
