@@ -69,29 +69,21 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     return seedDefaultSections(budgetId);
   }
 
-  // Load template sections with their items + media_config
-  const { data: templateRow, error: tplErr } = await supabase
-    .from("budget_templates")
-    .select("media_config")
-    .eq("id", templateId)
-    .maybeSingle();
-
-  if (tplErr) {
-    console.warn("Falha ao carregar template (media_config):", tplErr.message);
-  }
-
-  // Política: aplica só categorias permitidas (3D) como padrão herdado do template.
-  // Vídeo/executivo/fotos no template são descartados aqui — devem ser uploads manuais.
-  const safeMc = sanitizeDefaultMedia(templateRow?.media_config as MediaConfigShape | null | undefined);
-
-  if (safeMc) {
+  // Aplica mídia padrão em camadas: template selecionado → primeiro template
+  // ativo → snapshot hard-coded. Garante galeria sempre presente.
+  try {
+    const { media: safeMc, source } = await resolveDefaultMedia(templateId);
     const { error: mediaErr } = await supabase
       .from("budgets")
       .update({ media_config: safeMc as unknown as Json })
       .eq("id", budgetId);
     if (mediaErr) {
       console.warn("Falha ao copiar media_config do template:", mediaErr.message);
+    } else if (source === "hardcoded_fallback") {
+      console.info("[seed] Mídia padrão aplicada via fallback hard-coded (template sem mídia válida).");
     }
+  } catch (err) {
+    console.warn("Falha ao resolver mídia padrão para o orçamento:", err);
   }
 
   const { data: templateSections, error: secErr } = await supabase
