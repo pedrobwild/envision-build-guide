@@ -84,6 +84,34 @@ describe("default-media-policy", () => {
       expect(isValidDefaultMedia({ projeto3d: [] })).toBe(false);
       expect(isValidDefaultMedia({})).toBe(false);
       expect(isValidDefaultMedia(null)).toBe(false);
+  });
+
+  describe("getHardcodedFallbackMedia (safety net)", () => {
+    it("retorna sempre uma config válida com 15 imagens 3D", () => {
+      const fallback = getHardcodedFallbackMedia();
+      expect(fallback.projeto3d).toHaveLength(15);
+      expect(fallback.projetoExecutivo).toEqual([]);
+      expect(fallback.fotos).toEqual([]);
+      expect(fallback.video3d).toBeUndefined();
+    });
+
+    it("respeita a política padrão (passa em isValidDefaultMedia)", () => {
+      expect(isValidDefaultMedia(getHardcodedFallbackMedia())).toBe(true);
+    });
+
+    it("URLs apontam para o bucket público media com publicId estável", () => {
+      const fallback = getHardcodedFallbackMedia();
+      fallback.projeto3d?.forEach((url) => {
+        expect(url).toContain("/storage/v1/object/public/media/");
+        expect(url).toContain("/3d/");
+        expect(url).toMatch(/\.png$/);
+      });
+    });
+
+    it("é estável entre chamadas (mesmo conjunto de URLs)", () => {
+      const a = getHardcodedFallbackMedia();
+      const b = getHardcodedFallbackMedia();
+      expect(a.projeto3d).toEqual(b.projeto3d);
     });
   });
 });
