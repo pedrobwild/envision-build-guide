@@ -190,6 +190,7 @@ interface BudgetRow {
   version_number: number | null;
   version_group_id: string | null;
   is_current_version: boolean | null;
+  public_id: string | null;
 }
 
 interface EstimatorKanbanProps {
