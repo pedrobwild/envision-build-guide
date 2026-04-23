@@ -306,6 +306,70 @@ export async function duplicateBudgetAsVersion(
 }
 
 /**
+ * Delete a DRAFT version from a group.
+ * Safety: refuses to delete the current version, the published version,
+ * any version not in 'draft' status, or the last remaining version.
+ * Cleans up dependent rows (sections/items/images, adjustments, rooms, tours).
+ */
+export async function deleteDraftVersion(
+  budgetId: string,
+  userId?: string
+): Promise<void> {
+  const { data: target, error: loadErr } = await supabase
+    .from("budgets")
+    .select("id, status, is_current_version, is_published_version, version_group_id, version_number, public_id")
+    .eq("id", budgetId)
+    .single();
+
+  if (loadErr || !target) throw new Error("Versão não encontrada");
+  if (target.status !== "draft") throw new Error("Apenas versões em rascunho podem ser excluídas");
+  if (target.is_current_version) throw new Error("Não é possível excluir a versão atual");
+  if (target.is_published_version) throw new Error("Não é possível excluir uma versão publicada");
+
+  if (target.version_group_id) {
+    const { count } = await supabase
+      .from("budgets")
+      .select("id", { count: "exact", head: true })
+      .eq("version_group_id", target.version_group_id);
+    if ((count ?? 0) <= 1) throw new Error("Não é possível excluir a única versão do grupo");
+  }
+
+  // Cascade clean-up: items/images via sections, adjustments, rooms, tours.
+  const { data: sectionRows } = await supabase
+    .from("sections")
+    .select("id")
+    .eq("budget_id", budgetId);
+
+  const sectionIds = (sectionRows || []).map((s) => s.id);
+  if (sectionIds.length > 0) {
+    const { data: itemRows } = await supabase
+      .from("items")
+      .select("id")
+      .in("section_id", sectionIds);
+    const itemIds = (itemRows || []).map((i) => i.id);
+    if (itemIds.length > 0) {
+      await supabase.from("item_images").delete().in("item_id", itemIds);
+      await supabase.from("items").delete().in("id", itemIds);
+    }
+    await supabase.from("sections").delete().in("id", sectionIds);
+  }
+
+  await supabase.from("adjustments").delete().eq("budget_id", budgetId);
+  await supabase.from("rooms").delete().eq("budget_id", budgetId);
+  await supabase.from("budget_tours").delete().eq("budget_id", budgetId);
+
+  const { error: delErr } = await supabase.from("budgets").delete().eq("id", budgetId);
+  if (delErr) throw new Error(`Falha ao excluir versão: ${delErr.message}`);
+
+  await logVersionEvent({
+    event_type: "version_deleted",
+    budget_id: budgetId,
+    user_id: userId ?? null,
+    metadata: { version_number: target.version_number ?? "?", deleted_status: target.status },
+  });
+}
+
+/**
  * Set a specific version as the current one.
  * Demotes all others in the group.
  */
