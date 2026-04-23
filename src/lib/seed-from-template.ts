@@ -48,27 +48,18 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
   if (secDelErr) throw new Error(`Falha ao limpar seções existentes: ${secDelErr.message}`);
 
   if (!templateId) {
-    // Fallback: ainda copia a mídia padrão (do primeiro template ativo)
-    // para que orçamentos criados sem template já tenham a galeria padrão.
+    // Fallback em camadas: template selecionado → primeiro template ativo →
+    // snapshot hard-coded (Lek). Nunca retorna vazio.
     try {
-      const { data: defaultTpl } = await supabase
-        .from("budget_templates")
-        .select("media_config")
-        .eq("is_active", true)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      const defaultMc = defaultTpl?.media_config as MediaConfigShape | null | undefined;
-      // Política: somente categorias permitidas (3D) são propagadas como padrão.
-      // Vídeo, executivo e fotos são descartados — devem ser uploads manuais.
-      const safeMc = sanitizeDefaultMedia(defaultMc);
-
-      if (safeMc) {
-        await supabase
-          .from("budgets")
-          .update({ media_config: safeMc as unknown as Json })
-          .eq("id", budgetId);
+      const { media: safeMc, source } = await resolveDefaultMedia(null);
+      const { error: mediaErr } = await supabase
+        .from("budgets")
+        .update({ media_config: safeMc as unknown as Json })
+        .eq("id", budgetId);
+      if (mediaErr) {
+        console.warn("Falha ao aplicar mídia padrão (sem template):", mediaErr.message);
+      } else if (source === "hardcoded_fallback") {
+        console.info("[seed] Mídia padrão aplicada via fallback hard-coded (sem template ativo).");
       }
     } catch (err) {
       console.warn("Falha ao aplicar mídia padrão (sem template):", err);
