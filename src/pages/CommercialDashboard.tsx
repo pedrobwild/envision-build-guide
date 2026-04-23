@@ -306,15 +306,14 @@ export default function CommercialDashboard() {
     let budgetQuery = supabase
       .from("budgets")
       .select("id, client_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
-      // Pipeline mostra apenas a versão atual de cada grupo (uma card por orçamento).
-      // Versões anteriores ficam acessíveis via histórico interno do editor.
-      .or("is_current_version.eq.true,is_current_version.is.null")
       .order("created_at", { ascending: false });
+
     if (!isAdmin) {
       // Visibilidade do comercial: orçamentos atribuídos a ele OU orçamentos
       // sem owner comercial em qualquer etapa relevante do funil
-      // (do MQL ao fechamento). Inclui estados em elaboração para que o
-      // comercial acompanhe o progresso desde a solicitação até a entrega.
+      // (do MQL ao fechamento). Combinamos o filtro de versão atual com o de
+      // visibilidade num único .or() — encadear .or() duas vezes faz o
+      // PostgREST sobrescrever o primeiro filtro, derrubando a query.
       const commercialRelevantStatuses = [
         "mql", "qualificacao", "lead", "validacao_briefing",
         "novo", "requested",
@@ -322,9 +321,14 @@ export default function CommercialDashboard() {
         "ready_for_review", "delivered_to_sales", "sent_to_client",
         "revision_requested", "minuta_solicitada", "contrato_fechado", "lost"
       ];
-      budgetQuery = budgetQuery.or(
-        `commercial_owner_id.eq.${user!.id},and(commercial_owner_id.is.null,internal_status.in.(${commercialRelevantStatuses.join(",")}))`
-      );
+      budgetQuery = budgetQuery
+        .or("is_current_version.eq.true,is_current_version.is.null")
+        .or(
+          `commercial_owner_id.eq.${user!.id},and(commercial_owner_id.is.null,internal_status.in.(${commercialRelevantStatuses.join(",")}))`,
+        );
+    } else {
+      // Admin vê todos, mas só a versão atual de cada grupo.
+      budgetQuery = budgetQuery.or("is_current_version.eq.true,is_current_version.is.null");
     }
     const [budgetsRes, profilesRes, syncRes] = await Promise.all([
       budgetQuery,
