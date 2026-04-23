@@ -2224,6 +2224,99 @@ export type Database = {
           },
         ]
       }
+      media_integrity_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          baseline_snapshot: Json | null
+          budget_id: string
+          budget_label: string | null
+          created_at: string
+          current_snapshot: Json | null
+          details: Json
+          id: string
+          resolved_at: string | null
+          severity: string
+          status: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          baseline_snapshot?: Json | null
+          budget_id: string
+          budget_label?: string | null
+          created_at?: string
+          current_snapshot?: Json | null
+          details?: Json
+          id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          baseline_snapshot?: Json | null
+          budget_id?: string
+          budget_label?: string | null
+          created_at?: string
+          current_snapshot?: Json | null
+          details?: Json
+          id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      media_integrity_baseline: {
+        Row: {
+          budget_id: string
+          captured_by: string | null
+          config_hash: string
+          created_at: string
+          fotos_count: number
+          id: string
+          media_config: Json
+          projeto_executivo_count: number
+          projeto3d_count: number
+          reason: string | null
+          updated_at: string
+          video3d_count: number
+        }
+        Insert: {
+          budget_id: string
+          captured_by?: string | null
+          config_hash: string
+          created_at?: string
+          fotos_count?: number
+          id?: string
+          media_config: Json
+          projeto_executivo_count?: number
+          projeto3d_count?: number
+          reason?: string | null
+          updated_at?: string
+          video3d_count?: number
+        }
+        Update: {
+          budget_id?: string
+          captured_by?: string | null
+          config_hash?: string
+          created_at?: string
+          fotos_count?: number
+          id?: string
+          media_config?: Json
+          projeto_executivo_count?: number
+          projeto3d_count?: number
+          reason?: string | null
+          updated_at?: string
+          video3d_count?: number
+        }
+        Relationships: []
+      }
       media_library: {
         Row: {
           created_at: string | null
@@ -2822,6 +2915,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      mark_budget_as_manual_baseline: {
+        Args: { p_budget_id: string; p_reason?: string }
+        Returns: string
       }
       normalize_phone: { Args: { p_phone: string }; Returns: string }
       reorder_catalog_categories: {
