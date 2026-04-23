@@ -932,6 +932,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             temperature={temp}
                             nextAction={next}
                             leadScore={b.client_id ? leadScoreMap?.get(b.client_id) ?? null : null}
+                            siblingCount={b.sibling_budget_ids?.length ?? 0}
                             onClick={() => onCardClick(b.id)}
                             onQuickAction={(action) => {
                               if (action === "open") onCardClick(b.id);
