@@ -73,10 +73,18 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
+      // Apenas colunas usadas por computeDashboardMetrics — evita timeout do Postgres
+      // ao materializar JSON pesado (header_config, descrições, etc.) de centenas de budgets.
+      const BUDGET_COLUMNS_FOR_METRICS = [
+        "id", "client_name", "project_name", "status", "internal_status",
+        "created_at", "updated_at", "closed_at", "due_at", "generated_at",
+        "estimator_owner_id", "commercial_owner_id", "internal_cost", "view_count",
+      ].join(", ");
       const [budgetsRes, profilesRes, eventsRes] = await Promise.all([
         supabase
           .from("budgets")
-          .select("*, sections(id, title, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)")
+          .select(`${BUDGET_COLUMNS_FOR_METRICS}, sections(id, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)`)
+          .gte("created_at", "2026-04-15") // OPERATIONS_START_DATE — mesmo filtro aplicado no front
           .order("created_at", { ascending: false }),
         supabase.from("profiles").select("id, full_name"),
         supabase
