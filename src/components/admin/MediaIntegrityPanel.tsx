@@ -247,6 +247,20 @@ export default function MediaIntegrityPanel() {
             {running ? "Verificando..." : "Rodar verificação completa"}
           </Button>
           <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateDiffReport}
+            disabled={diffLoading}
+            className="gap-1.5"
+          >
+            {diffLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FileDiff className="h-3.5 w-3.5" />
+            )}
+            {diffLoading ? "Gerando…" : "Gerar relatório de diffs"}
+          </Button>
+          <Button
             variant={filter === "open" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("open")}
