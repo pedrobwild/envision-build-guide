@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeDefaultMedia, isValidDefaultMedia } from "./default-media-policy";
+import {
+  sanitizeDefaultMedia,
+  isValidDefaultMedia,
+  getHardcodedFallbackMedia,
+} from "./default-media-policy";
 
 describe("default-media-policy", () => {
   describe("sanitizeDefaultMedia", () => {
