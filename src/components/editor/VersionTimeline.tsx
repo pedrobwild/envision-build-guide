@@ -352,6 +352,44 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
         </DialogContent>
       </Dialog>
 
+      {/* Restore version confirmation dialog */}
+      <Dialog open={!!restoreTarget} onOpenChange={(open) => !open && setRestoreTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <RotateCcw className="h-4 w-4 text-primary" />
+              Restaurar v{restoreTarget?.version_number} como atual?
+            </DialogTitle>
+            <DialogDescription className="text-sm font-body text-muted-foreground space-y-2 pt-2">
+              <span className="block">
+                A versão <strong className="text-foreground">v{restoreTarget?.version_number}</strong>
+                {restoreTarget?.created_by_name && restoreTarget.created_by_name !== "—" && (
+                  <> (criada por {restoreTarget.created_by_name})</>
+                )}
+                {" "}passará a ser a versão <strong className="text-foreground">ATUAL</strong> deste orçamento.
+              </span>
+              <span className="block">
+                Nenhuma versão é apagada — a versão hoje atual continuará disponível no histórico e
+                pode ser restaurada novamente a qualquer momento.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setRestoreTarget(null)} disabled={restoring}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleRestoreVersion} disabled={restoring}>
+              {restoring ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+              ) : (
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Restaurar como atual
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Import modal */}
       <ImportExcelModal
         open={importOpen}
