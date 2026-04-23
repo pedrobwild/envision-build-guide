@@ -462,45 +462,6 @@ export default function CommercialDashboard() {
     return pipelines.find((p) => p.slug === pipelineFilter)?.id ?? null;
   }, [pipelineFilter, pipelines]);
 
-  /**
-   * Deduplica orçamentos do mesmo cliente+imóvel quando foram criados como
-   * orçamentos novos (version_group_id distinto) em vez de versões. Mantém
-   * apenas o mais recente (created_at desc) e expõe os ids dos demais em
-   * `sibling_budget_ids` para o card mostrar um badge "+N versões".
-   */
-  const dedupedBudgets = useMemo<BudgetRow[]>(() => {
-    const groups = new Map<string, BudgetRow[]>();
-    const ungrouped: BudgetRow[] = [];
-    for (const b of budgets) {
-      // Sem client_id ou property_id não há como inferir duplicidade segura.
-      if (!b.client_id || !b.property_id) {
-        ungrouped.push(b);
-        continue;
-      }
-      const key = `${b.client_id}::${b.property_id}`;
-      const list = groups.get(key);
-      if (list) list.push(b);
-      else groups.set(key, [b]);
-    }
-    const champions: BudgetRow[] = [];
-    for (const list of groups.values()) {
-      if (list.length === 1) {
-        champions.push(list[0]);
-        continue;
-      }
-      // Mais recente vence; orçamentos vinculados como versões reais (mesmo
-      // version_group_id) já vieram únicos do backend (is_current_version),
-      // então aqui só agrupamos cards de version_group_id distintos.
-      const sorted = [...list].sort((a, b) =>
-        new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
-      );
-      const champion = sorted[0];
-      const siblings = sorted.slice(1).map((s) => s.id);
-      champions.push({ ...champion, sibling_budget_ids: siblings });
-    }
-    return [...champions, ...ungrouped];
-  }, [budgets]);
-
   const filtered = useMemo(() => {
     const result = dedupedBudgets.filter(b => {
       const q = search.toLowerCase();
