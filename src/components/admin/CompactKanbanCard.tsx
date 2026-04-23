@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History } from "lucide-react";
+import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
