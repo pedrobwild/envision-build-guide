@@ -397,21 +397,56 @@ export default function CommercialDashboard() {
     [profiles],
   );
 
+  /**
+   * Deduplica orçamentos do mesmo cliente+imóvel quando foram criados como
+   * orçamentos novos (version_group_id distinto) em vez de versões. Mantém
+   * apenas o mais recente (created_at desc) e expõe os ids dos demais em
+   * `sibling_budget_ids` para o card mostrar um badge "+N versões".
+   */
+  const dedupedBudgets = useMemo<BudgetRow[]>(() => {
+    const groups = new Map<string, BudgetRow[]>();
+    const ungrouped: BudgetRow[] = [];
+    for (const b of budgets) {
+      if (!b.client_id || !b.property_id) {
+        ungrouped.push(b);
+        continue;
+      }
+      const key = `${b.client_id}::${b.property_id}`;
+      const list = groups.get(key);
+      if (list) list.push(b);
+      else groups.set(key, [b]);
+    }
+    const champions: BudgetRow[] = [];
+    for (const list of groups.values()) {
+      if (list.length === 1) {
+        champions.push(list[0]);
+        continue;
+      }
+      const sorted = [...list].sort((a, b) =>
+        new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
+      );
+      const champion = sorted[0];
+      const siblings = sorted.slice(1).map((s) => s.id);
+      champions.push({ ...champion, sibling_budget_ids: siblings });
+    }
+    return [...champions, ...ungrouped];
+  }, [budgets]);
+
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const [key, sec] of Object.entries(PIPELINE_SECTIONS)) {
-      c[key] = budgets.filter(b => (sec.statuses as readonly string[]).includes(b.internal_status)).length;
+      c[key] = dedupedBudgets.filter(b => (sec.statuses as readonly string[]).includes(b.internal_status)).length;
     }
-    c.total = budgets.length;
-    c.needsAction = budgets.filter(b => b.internal_status === "delivered_to_sales").length;
-    c.overdue = budgets.filter(b =>
+    c.total = dedupedBudgets.length;
+    c.needsAction = dedupedBudgets.filter(b => b.internal_status === "delivered_to_sales").length;
+    c.overdue = dedupedBudgets.filter(b =>
       b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) && !DELIVERED_FINISHED.has(b.internal_status)
     ).length;
-    c.dueToday = budgets.filter(b =>
+    c.dueToday = dedupedBudgets.filter(b =>
       b.due_at && isToday(new Date(b.due_at)) && !DELIVERED_FINISHED.has(b.internal_status)
     ).length;
     return c;
-  }, [budgets]);
+  }, [dedupedBudgets]);
 
   const isAdmin = profile?.roles.includes("admin");
 
