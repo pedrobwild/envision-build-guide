@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
+import { sanitizeDefaultMedia, type MediaConfigShape } from "@/lib/default-media-policy";
 
 interface TemplateSectionRow {
   id: string;
@@ -58,23 +59,15 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
         .limit(1)
         .maybeSingle();
 
-      const defaultMc = defaultTpl?.media_config as
-        | { video3d?: string; projeto3d?: string[]; projetoExecutivo?: string[]; fotos?: string[] }
-        | null
-        | undefined;
-      const hasDefaultMedia =
-        !!defaultMc &&
-        (
-          !!defaultMc.video3d ||
-          (Array.isArray(defaultMc.projeto3d) && defaultMc.projeto3d.length > 0) ||
-          (Array.isArray(defaultMc.projetoExecutivo) && defaultMc.projetoExecutivo.length > 0) ||
-          (Array.isArray(defaultMc.fotos) && defaultMc.fotos.length > 0)
-        );
+      const defaultMc = defaultTpl?.media_config as MediaConfigShape | null | undefined;
+      // Política: somente categorias permitidas (3D) são propagadas como padrão.
+      // Vídeo, executivo e fotos são descartados — devem ser uploads manuais.
+      const safeMc = sanitizeDefaultMedia(defaultMc);
 
-      if (hasDefaultMedia) {
+      if (safeMc) {
         await supabase
           .from("budgets")
-          .update({ media_config: defaultMc as unknown as Json })
+          .update({ media_config: safeMc as unknown as Json })
           .eq("id", budgetId);
       }
     } catch (err) {
@@ -96,24 +89,14 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     console.warn("Falha ao carregar template (media_config):", tplErr.message);
   }
 
-  // Copy media_config from template to budget — only if it has actual content
-  const mc = templateRow?.media_config as
-    | { video3d?: string; projeto3d?: string[]; projetoExecutivo?: string[]; fotos?: string[] }
-    | null
-    | undefined;
-  const hasMediaContent =
-    !!mc &&
-    (
-      !!mc.video3d ||
-      (Array.isArray(mc.projeto3d) && mc.projeto3d.length > 0) ||
-      (Array.isArray(mc.projetoExecutivo) && mc.projetoExecutivo.length > 0) ||
-      (Array.isArray(mc.fotos) && mc.fotos.length > 0)
-    );
+  // Política: aplica só categorias permitidas (3D) como padrão herdado do template.
+  // Vídeo/executivo/fotos no template são descartados aqui — devem ser uploads manuais.
+  const safeMc = sanitizeDefaultMedia(templateRow?.media_config as MediaConfigShape | null | undefined);
 
-  if (hasMediaContent) {
+  if (safeMc) {
     const { error: mediaErr } = await supabase
       .from("budgets")
-      .update({ media_config: mc as unknown as Json })
+      .update({ media_config: safeMc as unknown as Json })
       .eq("id", budgetId);
     if (mediaErr) {
       console.warn("Falha ao copiar media_config do template:", mediaErr.message);
