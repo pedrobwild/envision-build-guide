@@ -11,6 +11,11 @@ import {
   Lock,
   Copy,
   CircleDashed,
+  FileDiff,
+  Download,
+  Database,
+  ArrowDownToLine,
+  ArrowUpFromLine,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +30,11 @@ import {
   type MediaIntegrityAlert,
   type MediaIntegritySummary,
 } from "@/lib/media-integrity";
+import {
+  generateManualDiffReport,
+  reportToJsonBlob,
+  type ManualDiffReport,
+} from "@/lib/media-manual-diff-report";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 
