@@ -123,6 +123,24 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
     }
   };
 
+  const [deleteTarget, setDeleteTarget] = useState<VersionRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteVersion = async () => {
+    if (!deleteTarget || !user) return;
+    setDeleting(true);
+    try {
+      await deleteDraftVersion(deleteTarget.id, user.id);
+      toast.success(`V${deleteTarget.version_number} excluída`);
+      setDeleteTarget(null);
+      await loadVersions();
+      onVersionChange?.();
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : null) || "Erro ao excluir versão");
+    }
+    setDeleting(false);
+  };
+
   const handleImportClose = async (open: boolean) => {
     setImportOpen(open);
     if (!open) {
