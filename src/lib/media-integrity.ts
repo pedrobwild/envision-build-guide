@@ -101,7 +101,7 @@ export async function resolveAlertAndRebaseline(
 export async function captureManualBaseline(budgetId: string, reason?: string) {
   const { error } = await supabase.rpc("mark_budget_as_manual_baseline", {
     p_budget_id: budgetId,
-    p_reason: reason ?? null,
+    p_reason: reason ?? undefined,
   });
   if (error) throw error;
 }
