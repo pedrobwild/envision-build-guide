@@ -47,7 +47,40 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
   if (secDelErr) throw new Error(`Falha ao limpar seções existentes: ${secDelErr.message}`);
 
   if (!templateId) {
-    // Fallback to legacy default sections
+    // Fallback: ainda copia a mídia padrão (do primeiro template ativo)
+    // para que orçamentos criados sem template já tenham a galeria padrão.
+    try {
+      const { data: defaultTpl } = await supabase
+        .from("budget_templates")
+        .select("media_config")
+        .eq("is_active", true)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      const defaultMc = defaultTpl?.media_config as
+        | { video3d?: string; projeto3d?: string[]; projetoExecutivo?: string[]; fotos?: string[] }
+        | null
+        | undefined;
+      const hasDefaultMedia =
+        !!defaultMc &&
+        (
+          !!defaultMc.video3d ||
+          (Array.isArray(defaultMc.projeto3d) && defaultMc.projeto3d.length > 0) ||
+          (Array.isArray(defaultMc.projetoExecutivo) && defaultMc.projetoExecutivo.length > 0) ||
+          (Array.isArray(defaultMc.fotos) && defaultMc.fotos.length > 0)
+        );
+
+      if (hasDefaultMedia) {
+        await supabase
+          .from("budgets")
+          .update({ media_config: defaultMc as unknown as Json })
+          .eq("id", budgetId);
+      }
+    } catch (err) {
+      console.warn("Falha ao aplicar mídia padrão (sem template):", err);
+    }
+
     const { seedDefaultSections } = await import("@/lib/default-budget-sections");
     return seedDefaultSections(budgetId);
   }
