@@ -509,18 +509,18 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [budgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId]);
+  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId]);
 
   // Counts per pipeline (for the PipelineSwitcher tabs)
   const pipelineCounts = useMemo(() => {
     const map: Record<string, number> = {};
     for (const p of pipelines) map[p.slug] = 0;
-    for (const b of budgets) {
+    for (const b of dedupedBudgets) {
       const slug = pipelines.find((p) => p.id === b.pipeline_id)?.slug;
       if (slug) map[slug] = (map[slug] ?? 0) + 1;
     }
     return map;
-  }, [budgets, pipelines]);
+  }, [dedupedBudgets, pipelines]);
 
   // Workflow groups for list view
   const isDefaultView = statusFilter === "all" && !search && dueFilter === "all" && commercialFilter === "all";
