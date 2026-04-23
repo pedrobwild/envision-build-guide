@@ -173,6 +173,14 @@ interface BudgetRow {
   pipeline_id: string | null;
   client_phone: string | null;
   client_id: string | null;
+  property_id: string | null;
+  /**
+   * Quando dois ou mais orçamentos pertencem ao mesmo cliente+imóvel mas têm
+   * `version_group_id` diferentes (foram criados como orçamentos novos em vez
+   * de versões), o pipeline mostra apenas o mais recente e enumera os demais
+   * aqui para o card exibir um badge "+N versões".
+   */
+  sibling_budget_ids?: string[];
 }
 
 interface ProfileRow { id: string; full_name: string; }
