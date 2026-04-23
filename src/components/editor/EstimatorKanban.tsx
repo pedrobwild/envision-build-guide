@@ -307,6 +307,7 @@ function SubSectionGroup({
                 sequentialCode={b.sequential_code}
                 commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                 estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                publicId={b.public_id}
                 createdAt={b.created_at}
                 updatedAt={b.updated_at}
                 mode="estimator"
@@ -737,6 +738,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
                             sequentialCode={b.sequential_code}
                             commercialName={b.commercial_owner_id ? getProfileName(b.commercial_owner_id) : undefined}
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
+                            publicId={b.public_id}
                             createdAt={b.created_at}
                             updatedAt={b.updated_at}
                             mode="estimator"
