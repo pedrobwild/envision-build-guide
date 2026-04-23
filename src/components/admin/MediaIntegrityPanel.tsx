@@ -60,6 +60,41 @@ export default function MediaIntegrityPanel() {
   const [filter, setFilter] = useState<"open" | "all">("open");
   const [summary, setSummary] = useState<MediaIntegritySummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [diffReport, setDiffReport] = useState<ManualDiffReport | null>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
+
+  const handleGenerateDiffReport = async () => {
+    setDiffLoading(true);
+    try {
+      const report = await generateManualDiffReport();
+      setDiffReport(report);
+      toast({
+        title: "Relatório gerado",
+        description: `${report.totalManualBudgets} manuais — ${report.changedCount} com alterações, ${report.unchangedCount} preservados intactos.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Erro ao gerar relatório",
+        description: err instanceof Error ? err.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    } finally {
+      setDiffLoading(false);
+    }
+  };
+
+  const handleDownloadReport = () => {
+    if (!diffReport) return;
+    const blob = reportToJsonBlob(diffReport);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `media-manual-diff-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const handleCheckIntegrity = async () => {
     setSummaryLoading(true);
