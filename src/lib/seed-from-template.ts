@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { resolveDefaultMedia } from "@/lib/default-media-policy";
+import { applyDefaultMediaWithGuardrail } from "@/lib/apply-default-media";
 
 interface TemplateSectionRow {
   id: string;
@@ -48,18 +48,15 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
   if (secDelErr) throw new Error(`Falha ao limpar seções existentes: ${secDelErr.message}`);
 
   if (!templateId) {
-    // Fallback em camadas: template selecionado → primeiro template ativo →
-    // snapshot hard-coded (Lek). Nunca retorna vazio.
+    // Guardrail: nunca sobrescreve upload manual. Aplica padrão em camadas
+    // (template selecionado → primeiro ativo → hardcoded) somente se o
+    // orçamento ainda não tiver mídia.
     try {
-      const { media: safeMc, source } = await resolveDefaultMedia(null);
-      const { error: mediaErr } = await supabase
-        .from("budgets")
-        .update({ media_config: safeMc as unknown as Json })
-        .eq("id", budgetId);
-      if (mediaErr) {
-        console.warn("Falha ao aplicar mídia padrão (sem template):", mediaErr.message);
-      } else if (source === "hardcoded_fallback") {
+      const result = await applyDefaultMediaWithGuardrail(budgetId, null);
+      if (result.applied && result.source === "hardcoded_fallback") {
         console.info("[seed] Mídia padrão aplicada via fallback hard-coded (sem template ativo).");
+      } else if (!result.applied && result.reason === "manual_media_present") {
+        console.info("[seed] Orçamento já possui mídia manual — preservada.");
       }
     } catch (err) {
       console.warn("Falha ao aplicar mídia padrão (sem template):", err);
@@ -69,18 +66,14 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     return seedDefaultSections(budgetId);
   }
 
-  // Aplica mídia padrão em camadas: template selecionado → primeiro template
-  // ativo → snapshot hard-coded. Garante galeria sempre presente.
+  // Guardrail: replicação de mídia padrão (com template) também respeita
+  // upload manual e nunca sobrescreve.
   try {
-    const { media: safeMc, source } = await resolveDefaultMedia(templateId);
-    const { error: mediaErr } = await supabase
-      .from("budgets")
-      .update({ media_config: safeMc as unknown as Json })
-      .eq("id", budgetId);
-    if (mediaErr) {
-      console.warn("Falha ao copiar media_config do template:", mediaErr.message);
-    } else if (source === "hardcoded_fallback") {
+    const result = await applyDefaultMediaWithGuardrail(budgetId, templateId);
+    if (result.applied && result.source === "hardcoded_fallback") {
       console.info("[seed] Mídia padrão aplicada via fallback hard-coded (template sem mídia válida).");
+    } else if (!result.applied && result.reason === "manual_media_present") {
+      console.info("[seed] Orçamento já possui mídia manual — preservada.");
     }
   } catch (err) {
     console.warn("Falha ao resolver mídia padrão para o orçamento:", err);
