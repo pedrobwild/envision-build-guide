@@ -7,6 +7,10 @@ import {
   Loader2,
   AlertTriangle,
   AlertCircle,
+  Activity,
+  Lock,
+  Copy,
+  CircleDashed,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +21,9 @@ import {
   runMediaIntegrityCheck,
   acknowledgeAlert,
   resolveAlertAndRebaseline,
+  getMediaIntegritySummary,
   type MediaIntegrityAlert,
+  type MediaIntegritySummary,
 } from "@/lib/media-integrity";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -42,6 +48,28 @@ export default function MediaIntegrityPanel() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [filter, setFilter] = useState<"open" | "all">("open");
+  const [summary, setSummary] = useState<MediaIntegritySummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+
+  const handleCheckIntegrity = async () => {
+    setSummaryLoading(true);
+    try {
+      const data = await getMediaIntegritySummary();
+      setSummary({ ...data, openAlerts: alerts.filter(a => a.status === "open").length || data.openAlerts });
+      toast({
+        title: "Integridade verificada",
+        description: `${data.totalBudgets} orçamentos analisados — ${data.manualPreserved} manuais preservados.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Erro ao verificar integridade",
+        description: err instanceof Error ? err.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
 
   const load = async (status: "open" | "all" = filter) => {
     setLoading(true);
