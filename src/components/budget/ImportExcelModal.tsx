@@ -606,6 +606,15 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         if (itemsErr) throw itemsErr;
       }
 
+      // Aplica mídia padrão (galeria 3D) respeitando o guardrail:
+      // só preenche se o orçamento ainda não tiver upload manual.
+      try {
+        const { applyDefaultMediaWithGuardrail } = await import("@/lib/apply-default-media");
+        await applyDefaultMediaWithGuardrail(budget.id, null);
+      } catch (mediaErr) {
+        console.warn("[Import] Falha ao aplicar mídia padrão (não-crítico):", mediaErr);
+      }
+
       // Auto-match images and descriptions from existing items in mobiliário/eletro/marcenaria
       try {
         const result = await matchAndCopyItemMedia(budget.id, createdSections);
