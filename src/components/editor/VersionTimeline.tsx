@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/lib/formatBRL";
-import { getVersionHistory, duplicateBudgetAsVersion } from "@/lib/budget-versioning";
+import { getVersionHistory, duplicateBudgetAsVersion, setCurrentVersion } from "@/lib/budget-versioning";
 import { getVersionAuditEvents } from "@/lib/version-audit";
 import type { VersionRow, BudgetEventRow } from "@/types/budget-common";
 import { useAuth } from "@/hooks/useAuth";
