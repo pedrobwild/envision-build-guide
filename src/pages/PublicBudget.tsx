@@ -16,7 +16,7 @@ import { PublicBudgetSkeleton } from "@/components/budget/PublicBudgetSkeleton";
 import { demoBudget } from "@/lib/demo-budget-data";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { WhatsAppButton } from "@/components/budget/WhatsAppButton";
+
 import { ScrollToTopButton } from "@/components/budget/ScrollToTopButton";
 import { ApprovalCTA } from "@/components/budget/ApprovalCTA";
 import { InstallmentSimulator } from "@/components/budget/InstallmentSimulator";
