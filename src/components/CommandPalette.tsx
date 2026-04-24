@@ -86,6 +86,7 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const [budgets, setBudgets] = useState<BudgetHit[]>([]);
   const [clients, setClients] = useState<ClientHit[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { profile } = useUserProfile();
   const userRoles = profile?.roles ?? [];
@@ -106,6 +107,23 @@ export function CommandPalette() {
       window.removeEventListener("command-palette:open", openHandler);
     };
   }, []);
+
+  // Ao reabrir, devolver foco e posicionar o cursor no fim da query preservada.
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      const len = el.value.length;
+      try {
+        el.setSelectionRange(len, len);
+      } catch {
+        /* alguns inputs não suportam setSelectionRange */
+      }
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [open]);
 
   // Debounced search
   useEffect(() => {
