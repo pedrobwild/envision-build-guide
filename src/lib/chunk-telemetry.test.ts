@@ -7,13 +7,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock do supabase client antes de importar o módulo testado.
-const insertMock = vi.fn(async () => ({ error: null }));
-const fromMock = vi.fn(() => ({ insert: insertMock }));
+const insertMock = vi.fn(async (_payload: Record<string, unknown>) => ({
+  error: null,
+}));
+const fromMock = vi.fn((_table: string) => ({ insert: insertMock }));
 const getSessionMock = vi.fn(async () => ({ data: { session: null } }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: (...args: unknown[]) => fromMock(...(args as [])),
+    from: (table: string) => fromMock(table),
     auth: { getSession: () => getSessionMock() },
   },
 }));
