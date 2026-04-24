@@ -42,6 +42,7 @@ export function ImageWithRetry({
   fallbackLabel = "Imagem indisponível",
   autoRetries = 1,
   loading = "lazy",
+  showRetryButton = true,
   imgProps,
 }: ImageWithRetryProps) {
   const [attempt, setAttempt] = useState(0);
