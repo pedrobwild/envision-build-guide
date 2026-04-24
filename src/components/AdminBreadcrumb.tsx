@@ -36,8 +36,10 @@ export function AdminBreadcrumb() {
 
   const crumbs: Crumb[] = [];
 
-  // Budget detail route
+  // Budget editor route: /admin/budget/:id
   const budgetMatch = pathname.match(/^\/admin\/budget\/([^/]+)/);
+  // Budget internal detail (commercial pipeline): /admin/demanda/:id
+  const demandaMatch = pathname.match(/^\/admin\/demanda\/([^/]+)/);
 
   if (budgetMatch) {
     crumbs.push({ label: "Início", href: "/admin" });
@@ -50,6 +52,11 @@ export function AdminBreadcrumb() {
     }
 
     crumbs.push({ label: "Orçamento" });
+  } else if (demandaMatch) {
+    // Detalhe interno do negócio (origem comercial)
+    crumbs.push({ label: "Início", href: "/admin" });
+    crumbs.push({ label: "Pipeline Comercial", href: "/admin/comercial" });
+    crumbs.push({ label: "Detalhe do negócio" });
   } else if (ROUTE_LABELS[pathname]) {
     // Build crumbs from path segments
     if (pathname === "/admin") {
