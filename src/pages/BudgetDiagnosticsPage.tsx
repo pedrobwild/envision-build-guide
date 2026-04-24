@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Helmet } from "react-helmet-async";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,6 +108,9 @@ function statusBadge(status: StepStatus) {
 }
 
 export default function BudgetDiagnosticsPage() {
+  useEffect(() => {
+    document.title = "Diagnóstico do Orçamento · BWild";
+  }, []);
   const [input, setInput] = useState("");
   const [steps, setSteps] = useState<StepResult[]>(INITIAL_STEPS);
   const [running, setRunning] = useState(false);
@@ -341,11 +343,6 @@ export default function BudgetDiagnosticsPage() {
 
   return (
     <div className="container max-w-4xl py-6 space-y-6">
-      <Helmet>
-        <title>Diagnóstico do Orçamento · BWild</title>
-        <meta name="description" content="Diagnóstico passo a passo de orçamentos públicos: existência, RPC, seções, itens, frontend e assets." />
-      </Helmet>
-
       <header className="space-y-1">
         <div className="flex items-center gap-2">
           <Stethoscope className="h-5 w-5 text-primary" />
