@@ -124,10 +124,17 @@ describe("CommandPalette — busca mobile (regressão Roberto Rocha)", () => {
     fireEvent.change(input, { target: { value: "Roberto" } });
 
     await waitFor(() => {
-      // Resultado de orçamento aparece (vem do mock do Supabase, sem filtro de data).
-      expect(screen.getByText("Apartamento Roberto Rocha")).toBeInTheDocument();
-      // Cliente correlato também aparece.
-      expect(screen.getAllByText(/Roberto Rocha/).length).toBeGreaterThan(0);
+      // O texto vem fragmentado por <mark> (highlight). Use matcher por nó com textContent.
+      const matches = screen.getAllByText(
+        (_, node) => node?.textContent?.includes("Apartamento Roberto Rocha") ?? false
+      );
+      expect(matches.length).toBeGreaterThan(0);
+
+      // Há ao menos um trecho destacado com a query "Roberto".
+      const highlighted = document.querySelectorAll("mark");
+      expect(
+        Array.from(highlighted).some((el) => /roberto/i.test(el.textContent ?? ""))
+      ).toBe(true);
     });
   });
 
