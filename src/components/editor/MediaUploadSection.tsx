@@ -919,6 +919,8 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                         selectionMode={selectionMode}
                         selected={selected.has(f.name)}
                         onToggleSelect={toggleSelect}
+                        isPrimary={primary[activeTab as StorageTab] === f.url}
+                        onTogglePrimary={togglePrimary}
                       />
                     ))}
                   </div>
