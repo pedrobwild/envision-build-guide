@@ -156,8 +156,8 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
               className={cn(
                 "p-1.5 rounded-full transition-colors",
                 isPrimary
-                  ? "bg-amber-400 text-amber-950 hover:bg-amber-300"
-                  : "bg-white/20 hover:bg-amber-400 hover:text-amber-950 text-white"
+                  ? "bg-gold text-charcoal hover:bg-gold/80"
+                  : "bg-cream/20 hover:bg-gold hover:text-charcoal text-cream"
               )}
               title={isPrimary ? "Remover como principal" : "Definir como principal (capa)"}
             >
@@ -165,7 +165,7 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(tab, file.name); }}
-              className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
+              className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-destructive-foreground transition-colors"
               title="Remover"
             >
               <Trash2 className="h-3.5 w-3.5" />
