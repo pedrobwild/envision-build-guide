@@ -313,15 +313,43 @@ export default function BudgetEditorV2() {
     setSaving(true);
 
     try {
-      const groupId = await ensureVersionGroup(budgetId);
-      const publicId = budget.public_id || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-      const { data: { session } } = await supabase.auth.getSession();
-      await publishVersion(budgetId, groupId, publicId, session?.user?.id);
+      // Garante o flush do auto-save pendente antes de publicar
+      if (autoSaveTimer.current) {
+        clearTimeout(autoSaveTimer.current);
+        autoSaveTimer.current = null;
+        if (lastSavePayload.current && !PROTECTED_FIELDS.current.has(lastSavePayload.current.field)) {
+          await supabase
+            .from("budgets")
+            .update({ [lastSavePayload.current.field]: lastSavePayload.current.value } as Record<string, unknown>)
+            .eq("id", budgetId);
+        }
+      }
 
-      setBudget({ ...budget, status: "published", public_id: publicId, is_published_version: true });
-      const publicUrl = getPublicBudgetUrl(publicId);
+      const groupId = await ensureVersionGroup(budgetId);
+      // Fallback de public_id caso seja a primeira publicação do grupo.
+      const fallbackPublicId = budget.public_id || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // publishVersion herda automaticamente o public_id da versão anteriormente
+      // publicada (se existir), substituindo-a — assim o link do cliente continua válido
+      // e passa a apontar para o conteúdo novo.
+      const { publicId: finalPublicId } = await publishVersion(
+        budgetId,
+        groupId,
+        fallbackPublicId,
+        session?.user?.id,
+      );
+
+      setBudget({
+        ...budget,
+        status: "published",
+        public_id: finalPublicId,
+        is_published_version: true,
+        is_current_version: true,
+      });
+      const publicUrl = getPublicBudgetUrl(finalPublicId);
       toast.success("Orçamento publicado com sucesso!", {
-        description: "O link público foi copiado para a área de transferência.",
+        description: "A versão anterior foi substituída e o link foi copiado para a área de transferência.",
         duration: 5000,
       });
       navigator.clipboard.writeText(publicUrl);
@@ -331,7 +359,7 @@ export default function BudgetEditorV2() {
         budgetId,
         clientName: budget.client_name,
         clientPhone: (budget as { client_phone?: string | null }).client_phone,
-        publicId,
+        publicId: finalPublicId,
       }).then((res) => {
         if (res.success) {
           toast.info("WhatsApp enviado ao cliente.");
