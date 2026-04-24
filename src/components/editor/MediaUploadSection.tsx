@@ -63,14 +63,21 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
   tab: StorageTab;
   onDelete: (tab: StorageTab, name: string) => void;
   reordering: boolean;
+  selectionMode: boolean;
+  selected: boolean;
+  onToggleSelect: (name: string) => void;
 }>(function SortableMediaItem({
   file,
   tab,
   onDelete,
   reordering,
+  selectionMode,
+  selected,
+  onToggleSelect,
 }, _ref) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: file.name,
+    disabled: selectionMode,
   });
 
   const style = {
@@ -80,24 +87,45 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
     opacity: isDragging ? 0.6 : 1,
   };
 
+  const handleClick = () => {
+    if (selectionMode) onToggleSelect(file.name);
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
+      onClick={handleClick}
       className={cn(
-        "group relative rounded-lg overflow-hidden border border-border bg-muted aspect-square",
+        "group relative rounded-lg overflow-hidden border bg-muted aspect-square transition-all",
+        selectionMode && "cursor-pointer",
+        selected ? "border-primary ring-2 ring-primary" : "border-border",
         isDragging && "ring-2 ring-primary shadow-lg"
       )}
     >
-      {/* Drag handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="absolute top-1 left-1 z-20 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-        title="Arrastar para reordenar"
-      >
-        <GripVertical className="h-3.5 w-3.5" />
-      </button>
+      {/* Selection checkbox */}
+      {selectionMode && (
+        <div className="absolute top-1.5 left-1.5 z-30 bg-background/90 rounded p-0.5 shadow-sm">
+          <Checkbox
+            checked={selected}
+            onCheckedChange={() => onToggleSelect(file.name)}
+            onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4"
+          />
+        </div>
+      )}
+
+      {/* Drag handle (hidden in selection mode) */}
+      {!selectionMode && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="absolute top-1 left-1 z-20 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          title="Arrastar para reordenar"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+      )}
 
       {tab === "video" ? (
         <video src={file.url} className="w-full h-full object-cover" muted />
@@ -105,18 +133,24 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
         <img src={file.url} alt={file.name} className="w-full h-full object-cover" loading="lazy" />
       )}
 
-      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-        <button
-          onClick={() => onDelete(tab, file.name)}
-          className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
-          title="Remover"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-        <span className="text-xs text-white/80 font-body px-2 text-center truncate max-w-full">
-          {file.name}
-        </span>
-      </div>
+      {!selectionMode && (
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+          <button
+            onClick={() => onDelete(tab, file.name)}
+            className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
+            title="Remover"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+          <span className="text-xs text-white/80 font-body px-2 text-center truncate max-w-full">
+            {file.name}
+          </span>
+        </div>
+      )}
+
+      {selected && selectionMode && (
+        <div className="absolute inset-0 bg-primary/20 pointer-events-none" />
+      )}
 
       {reordering && (
         <div className="absolute inset-0 bg-background/30 flex items-center justify-center pointer-events-none">
