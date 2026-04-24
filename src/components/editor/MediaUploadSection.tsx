@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save, Upload, CheckSquare, Square, X } from "lucide-react";
+import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save, Upload, CheckSquare, Square, X, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -66,6 +66,8 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
   selectionMode: boolean;
   selected: boolean;
   onToggleSelect: (name: string) => void;
+  isPrimary: boolean;
+  onTogglePrimary: (tab: StorageTab, url: string) => void;
 }>(function SortableMediaItem({
   file,
   tab,
@@ -74,6 +76,8 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
   selectionMode,
   selected,
   onToggleSelect,
+  isPrimary,
+  onTogglePrimary,
 }, _ref) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: file.name,
@@ -99,7 +103,7 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
       className={cn(
         "group relative rounded-lg overflow-hidden border bg-muted aspect-square transition-all",
         selectionMode && "cursor-pointer",
-        selected ? "border-primary ring-2 ring-primary" : "border-border",
+        selected ? "border-primary ring-2 ring-primary" : isPrimary ? "border-gold ring-2 ring-gold/60" : "border-border",
         isDragging && "ring-2 ring-primary shadow-lg"
       )}
     >
@@ -120,11 +124,22 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
         <button
           {...attributes}
           {...listeners}
-          className="absolute top-1 left-1 z-20 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          className="absolute top-1 left-1 z-20 p-1 rounded bg-charcoal/60 text-cream opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
           title="Arrastar para reordenar"
         >
           <GripVertical className="h-3.5 w-3.5" />
         </button>
+      )}
+
+      {/* Primary badge (always visible when primary) */}
+      {isPrimary && !selectionMode && (
+        <div
+          className="absolute top-1 right-1 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold text-charcoal text-[10px] font-display font-bold shadow"
+          title="Mídia principal — aparece primeiro na galeria pública"
+        >
+          <Star className="h-2.5 w-2.5 fill-current" />
+          Capa
+        </div>
       )}
 
       {tab === "video" ? (
@@ -134,14 +149,28 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
       )}
 
       {!selectionMode && (
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-          <button
-            onClick={() => onDelete(tab, file.name)}
-            className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
-            title="Remover"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); onTogglePrimary(tab, file.url); }}
+              className={cn(
+                "p-1.5 rounded-full transition-colors",
+                isPrimary
+                  ? "bg-gold text-charcoal hover:bg-gold/80"
+                  : "bg-cream/20 hover:bg-gold hover:text-charcoal text-cream"
+              )}
+              title={isPrimary ? "Remover como principal" : "Definir como principal (capa)"}
+            >
+              <Star className={cn("h-3.5 w-3.5", isPrimary && "fill-current")} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(tab, file.name); }}
+              className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-destructive-foreground transition-colors"
+              title="Remover"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <span className="text-xs text-white/80 font-body px-2 text-center truncate max-w-full">
             {file.name}
           </span>
@@ -174,9 +203,20 @@ function addPrefix(index: number, name: string) {
   return `${prefix}-${bare}`;
 }
 
+type PrimaryByTab = Partial<Record<StorageTab, string>>;
+
+// Map tab → media_config primary key
+const TAB_TO_PRIMARY_KEY: Record<StorageTab, "projeto3d" | "fotos" | "projetoExecutivo" | "video3d"> = {
+  "3d": "projeto3d",
+  fotos: "fotos",
+  exec: "projetoExecutivo",
+  video: "video3d",
+};
+
 export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionProps) {
   const [activeTab, setActiveTab] = useState<MediaTab>("3d");
   const [files, setFiles] = useState<Record<StorageTab, MediaFile[]>>({ "3d": [], fotos: [], exec: [], video: [] });
+  const [primary, setPrimary] = useState<PrimaryByTab>({});
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reordering, setReordering] = useState(false);
@@ -212,13 +252,30 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   ];
 
   // Sync Storage state → budget.media_config so useBudgetMedia picks it up
-  const syncMediaConfig = useCallback(async (storageFiles: Record<StorageTab, MediaFile[]>) => {
+  const syncMediaConfig = useCallback(async (
+    storageFiles: Record<StorageTab, MediaFile[]>,
+    primaryByTab: PrimaryByTab,
+  ) => {
     const isVideo = (url: string) => /\.(mp4|webm|mov)$/i.test(url);
+    const projeto3d = storageFiles["3d"].filter(f => !isVideo(f.url)).map(f => f.url);
+    const projetoExecutivo = storageFiles.exec.filter(f => !isVideo(f.url)).map(f => f.url);
+    const fotos = storageFiles.fotos.filter(f => !isVideo(f.url)).map(f => f.url);
+    const video3d = storageFiles.video.find(f => isVideo(f.url))?.url ?? storageFiles["3d"].find(f => isVideo(f.url))?.url;
+
+    // Validate primary URLs still exist; drop stale ones
+    const safePrimary = {
+      projeto3d: primaryByTab["3d"] && projeto3d.includes(primaryByTab["3d"]) ? primaryByTab["3d"] : undefined,
+      fotos: primaryByTab.fotos && fotos.includes(primaryByTab.fotos) ? primaryByTab.fotos : undefined,
+      projetoExecutivo: primaryByTab.exec && projetoExecutivo.includes(primaryByTab.exec) ? primaryByTab.exec : undefined,
+      video3d: primaryByTab.video,
+    };
+
     const mediaConfig = {
-      video3d: storageFiles.video.find(f => isVideo(f.url))?.url ?? storageFiles["3d"].find(f => isVideo(f.url))?.url,
-      projeto3d: storageFiles["3d"].filter(f => !isVideo(f.url)).map(f => f.url),
-      projetoExecutivo: storageFiles.exec.filter(f => !isVideo(f.url)).map(f => f.url),
-      fotos: storageFiles.fotos.filter(f => !isVideo(f.url)).map(f => f.url),
+      video3d,
+      projeto3d,
+      projetoExecutivo,
+      fotos,
+      primary: safePrimary,
     };
     await supabase
       .from("budgets")
@@ -231,14 +288,17 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     const result: Record<StorageTab, MediaFile[]> = { "3d": [], fotos: [], exec: [], video: [] };
 
     try {
-      // Parallel listing of all folders
+      // Parallel listing of all folders + media_config primary
       const tabs = Object.keys(folderMap) as StorageTab[];
-      const listings = await Promise.all(
-        tabs.map(tab =>
-          supabase.storage.from("media").list(folderMap[tab], { limit: 100, sortBy: { column: "name", order: "asc" } })
-            .then(({ data, error }) => ({ tab, data, error }))
-        )
-      );
+      const [listings, configRes] = await Promise.all([
+        Promise.all(
+          tabs.map(tab =>
+            supabase.storage.from("media").list(folderMap[tab], { limit: 100, sortBy: { column: "name", order: "asc" } })
+              .then(({ data, error }) => ({ tab, data, error }))
+          )
+        ),
+        supabase.from("budgets").select("media_config").eq("id", budgetId).maybeSingle(),
+      ]);
 
       for (const { tab, data, error } of listings) {
         if (error) {
@@ -256,17 +316,39 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       }
       setFiles(result);
 
+      // Hydrate primary from DB
+      const mc = (configRes.data?.media_config ?? {}) as { primary?: { projeto3d?: string; fotos?: string; projetoExecutivo?: string; video3d?: string } };
+      const loadedPrimary: PrimaryByTab = {
+        "3d": mc.primary?.projeto3d,
+        fotos: mc.primary?.fotos,
+        exec: mc.primary?.projetoExecutivo,
+        video: mc.primary?.video3d,
+      };
+      setPrimary(loadedPrimary);
+
       if (syncToDb) {
-        syncMediaConfig(result);
+        syncMediaConfig(result, loadedPrimary);
       }
     } catch (err) {
       console.error("loadFiles error:", err);
     } finally {
       setLoading(false);
     }
-  }, [folderMap, syncMediaConfig]);
+  }, [folderMap, syncMediaConfig, budgetId]);
 
   useEffect(() => { loadFiles(); }, [loadFiles]);
+
+  const togglePrimary = useCallback(async (tab: StorageTab, url: string) => {
+    const next: PrimaryByTab = { ...primary };
+    if (next[tab] === url) {
+      delete next[tab];
+    } else {
+      next[tab] = url;
+    }
+    setPrimary(next);
+    await syncMediaConfig(files, next);
+    toast.success(next[tab] ? "Mídia principal definida (capa)" : "Marcação de capa removida");
+  }, [primary, files, syncMediaConfig]);
 
   const sanitizeFileName = (name: string) => {
     return name
@@ -837,6 +919,8 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                         selectionMode={selectionMode}
                         selected={selected.has(f.name)}
                         onToggleSelect={toggleSelect}
+                        isPrimary={primary[activeTab as StorageTab] === f.url}
+                        onTogglePrimary={togglePrimary}
                       />
                     ))}
                   </div>
@@ -845,7 +929,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
             )}
 
             <p className="text-xs text-muted-foreground font-body">
-              ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública do orçamento. Arraste os thumbnails para definir a ordem de exibição.
+              ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública. Arraste para reordenar e clique na <Star className="inline h-3 w-3 -mt-0.5 text-gold fill-gold" /> para definir uma <strong className="text-foreground">capa principal</strong> por aba (aparece primeiro no público).
             </p>
           </>
         )}
