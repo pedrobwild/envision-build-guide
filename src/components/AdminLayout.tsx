@@ -4,6 +4,7 @@ import { AdminBreadcrumb } from "@/components/AdminBreadcrumb";
 import { GlobalLoadingBar } from "@/components/GlobalLoadingBar";
 import { AdminBottomNav } from "@/components/admin/AdminBottomNav";
 import { CommandPalette, CommandPaletteTrigger } from "@/components/CommandPalette";
+import { BugReporter } from "@/components/BugReporter";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 
 function ShortcutsBridge() {
@@ -32,6 +33,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <AdminBottomNav />
+      <BugReporter />
     </SidebarProvider>
   );
 }
