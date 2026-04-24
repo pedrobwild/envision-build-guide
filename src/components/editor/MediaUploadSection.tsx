@@ -203,9 +203,20 @@ function addPrefix(index: number, name: string) {
   return `${prefix}-${bare}`;
 }
 
+type PrimaryByTab = Partial<Record<StorageTab, string>>;
+
+// Map tab → media_config primary key
+const TAB_TO_PRIMARY_KEY: Record<StorageTab, "projeto3d" | "fotos" | "projetoExecutivo" | "video3d"> = {
+  "3d": "projeto3d",
+  fotos: "fotos",
+  exec: "projetoExecutivo",
+  video: "video3d",
+};
+
 export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionProps) {
   const [activeTab, setActiveTab] = useState<MediaTab>("3d");
   const [files, setFiles] = useState<Record<StorageTab, MediaFile[]>>({ "3d": [], fotos: [], exec: [], video: [] });
+  const [primary, setPrimary] = useState<PrimaryByTab>({});
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reordering, setReordering] = useState(false);
@@ -241,13 +252,30 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   ];
 
   // Sync Storage state → budget.media_config so useBudgetMedia picks it up
-  const syncMediaConfig = useCallback(async (storageFiles: Record<StorageTab, MediaFile[]>) => {
+  const syncMediaConfig = useCallback(async (
+    storageFiles: Record<StorageTab, MediaFile[]>,
+    primaryByTab: PrimaryByTab,
+  ) => {
     const isVideo = (url: string) => /\.(mp4|webm|mov)$/i.test(url);
+    const projeto3d = storageFiles["3d"].filter(f => !isVideo(f.url)).map(f => f.url);
+    const projetoExecutivo = storageFiles.exec.filter(f => !isVideo(f.url)).map(f => f.url);
+    const fotos = storageFiles.fotos.filter(f => !isVideo(f.url)).map(f => f.url);
+    const video3d = storageFiles.video.find(f => isVideo(f.url))?.url ?? storageFiles["3d"].find(f => isVideo(f.url))?.url;
+
+    // Validate primary URLs still exist; drop stale ones
+    const safePrimary = {
+      projeto3d: primaryByTab["3d"] && projeto3d.includes(primaryByTab["3d"]) ? primaryByTab["3d"] : undefined,
+      fotos: primaryByTab.fotos && fotos.includes(primaryByTab.fotos) ? primaryByTab.fotos : undefined,
+      projetoExecutivo: primaryByTab.exec && projetoExecutivo.includes(primaryByTab.exec) ? primaryByTab.exec : undefined,
+      video3d: primaryByTab.video,
+    };
+
     const mediaConfig = {
-      video3d: storageFiles.video.find(f => isVideo(f.url))?.url ?? storageFiles["3d"].find(f => isVideo(f.url))?.url,
-      projeto3d: storageFiles["3d"].filter(f => !isVideo(f.url)).map(f => f.url),
-      projetoExecutivo: storageFiles.exec.filter(f => !isVideo(f.url)).map(f => f.url),
-      fotos: storageFiles.fotos.filter(f => !isVideo(f.url)).map(f => f.url),
+      video3d,
+      projeto3d,
+      projetoExecutivo,
+      fotos,
+      primary: safePrimary,
     };
     await supabase
       .from("budgets")
