@@ -136,6 +136,7 @@ export default function BudgetDiagnosticsPage() {
     const publicId = extractPublicId(input);
     setSteps(INITIAL_STEPS.map((s) => ({ ...s, status: "idle", detail: undefined, data: undefined, durationMs: undefined })));
     setResolvedId(publicId);
+    setRlsReport(null);
 
     if (!publicId) {
       toast.error("Informe um public_id ou URL do orçamento.");
