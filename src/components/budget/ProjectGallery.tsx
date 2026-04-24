@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ZoomIn, ChevronLeft, ChevronRight, Play, Camera, Loader2 } from "lucide-react";
+import { ZoomIn, ChevronLeft, ChevronRight, Play, Loader2 } from "lucide-react";
 import { Lightbox } from "@/components/budget/Lightbox";
 import useEmblaCarousel from "embla-carousel-react";
 import { motion } from "framer-motion";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { useBudgetTours } from "@/hooks/useBudgetTours";
 import { Tour3DViewer } from "@/components/budget/Tour3DViewer";
+import { ImageWithRetry } from "@/components/budget/ImageWithRetry";
 
 type GalleryTab = "video3d" | "fotos3d" | "fotos" | "tour3d";
 
@@ -28,26 +29,9 @@ const defaultGallery: { video3d: MediaItem[]; fotos3d: MediaItem[]; fotos: Media
   ],
 };
 
-function ImageWithFallback({ src, alt, className }: { src: string; alt: string; className?: string }) {
-  const [error, setError] = useState(false);
-  if (error) {
-    return (
-      <div className={`bg-muted rounded-lg flex flex-col items-center justify-center gap-2 ${className}`}>
-        <Camera className="h-8 w-8 text-muted-foreground/50" />
-        <span className="text-xs text-muted-foreground font-body">Imagem indisponível</span>
-      </div>
-    );
-  }
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      loading="lazy"
-      onError={() => setError(true)}
-    />
-  );
-}
+// `ImageWithFallback` foi substituído pelo `ImageWithRetry` compartilhado,
+// que oferece o mesmo placeholder visual + um botão "Tentar novamente"
+// para casos em que o asset falha (ex.: bucket privado, CDN purgada).
 /** Native video player with auto-fullscreen on play */
 function VideoPlayer({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -293,11 +277,19 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
                           }}
                           className="group relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
                         >
-                          <ImageWithFallback
+                          <ImageWithRetry
                             src={img.src}
                             alt={img.alt}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            // Sem botão de retry interno: estamos dentro de um <button> e
+                            // não podemos aninhar botões. O auto-retry (1 tentativa com
+                            // cache-busting) já cobre a maioria dos casos transitórios.
+                            showRetryButton={false}
+                            className="w-full h-full transition-transform duration-500 group-hover:scale-105"
+                            imgProps={{ decoding: "async" }}
                           />
+                          {/** O fallback do placeholder dentro do botão permanece clicável,
+                           * mas só abre o Lightbox de imagens válidas; em erro o lightbox
+                           * é aberto vazio e o usuário pode fechar — a página segue acessível. */}
                           <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
                             <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                           </div>

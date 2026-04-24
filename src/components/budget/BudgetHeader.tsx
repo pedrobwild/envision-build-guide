@@ -1,4 +1,5 @@
-import { Download, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Download, Loader2, RefreshCw } from "lucide-react";
 import { TestimonialVideoPreview } from "./TestimonialVideoModal";
 import { motion } from "framer-motion";
 import logoWhite from "@/assets/logo-bwild-white.png";
@@ -106,11 +107,45 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const timelineMeta: { label: string; value: string; mono?: boolean }[] = [];
   if (budget.prazo_dias_uteis) timelineMeta.push({ label: "Execução", value: `${budget.prazo_dias_uteis} dias úteis`, mono: true });
 
+  // Pré-carrega o background hero. Se falhar, exibe um gradient elegante
+  // como fallback e oferece um botão "tentar novamente" no canto da nav,
+  // sem nunca bloquear a renderização do conteúdo do orçamento.
+  const [heroBgStatus, setHeroBgStatus] = useState<"loading" | "ok" | "error">("loading");
+  const [heroAttempt, setHeroAttempt] = useState(0);
+
+  useEffect(() => {
+    const url = heroAttempt === 0 ? headerBg : `${headerBg}?retry=${heroAttempt}`;
+    const img = new Image();
+    img.onload = () => setHeroBgStatus("ok");
+    img.onerror = () => setHeroBgStatus("error");
+    img.src = url;
+    setHeroBgStatus("loading");
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [heroAttempt]);
+
+  const heroBgUrl = heroAttempt === 0 ? headerBg : `${headerBg}?retry=${heroAttempt}`;
+  const heroLoaded = heroBgStatus === "ok";
+
   return (
     <header className="relative">
       <div className="relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${headerBg})` }} />
+        {/* Background — quando a imagem falha, mantemos um gradient sólido elegante
+            para que o cabeçalho continue legível e a página não fique "quebrada". */}
+        {heroLoaded ? (
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroBgUrl})` }}
+            aria-hidden
+          />
+        ) : (
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-foreground via-foreground/90 to-foreground"
+            aria-hidden
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/70 lg:from-black/50 lg:via-black/30 lg:to-black/65" />
         <div
           className="absolute inset-0 hidden lg:block opacity-[0.012] pointer-events-none"
@@ -128,6 +163,19 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         >
           <img src={logoWhite} alt="Bwild" className="h-10 sm:h-12 lg:h-11" />
           <div className="flex items-center gap-2 sm:gap-3">
+            {heroBgStatus === "error" && (
+              <button
+                type="button"
+                onClick={() => setHeroAttempt((n) => n + 1)}
+                aria-label="Tentar carregar a imagem de capa novamente"
+                title="Recarregar imagem de capa"
+                className="budget-focus-on-dark flex items-center gap-1.5 px-2.5 py-1.5 sm:py-2 rounded-lg bg-white/12 text-white hover:bg-white/20 backdrop-blur-md text-xs font-body font-medium border border-white/10 tracking-[-0.01em]"
+                data-pdf-hide
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Recarregar capa</span>
+              </button>
+            )}
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
