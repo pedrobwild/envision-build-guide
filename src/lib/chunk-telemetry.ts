@@ -12,6 +12,17 @@
  *
  * O envio é "fire and forget" e silencioso: se a telemetria falhar,
  * não atrapalha a UX de recuperação (botão Atualizar).
+ *
+ * Estratégia de controle de volume (evitar inundar a tabela):
+ *   1. **Dedup por chave composta** `(public_id, route, deploy_version,
+ *      chunk_url)` em janela de 60s — o mesmo chunk falhando várias vezes
+ *      em sequência conta como um único evento.
+ *   2. **Dedup persistente por sessão** — a mesma chave reportada uma vez
+ *      na sessão não é reenviada (a info já está no banco; basta um
+ *      heartbeat para confirmar persistência).
+ *   3. **Amostragem adaptativa por sessão** — se a mesma sessão já enviou
+ *      muitos eventos, aplica uma taxa amostral decrescente para preservar
+ *      o sinal sem floodar.
  */
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,6 +36,25 @@ export interface ChunkTelemetryPayload {
 /** Versão do build atual; preenchida em build time pelo Vite. */
 const DEPLOY_VERSION =
   (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "unknown";
+
+/** Janela de dedup em memória (rajadas curtas do mesmo erro). */
+const DEDUPE_WINDOW_MS = 60_000;
+
+/** Limites de amostragem por sessão (eventos enviados de fato). */
+const SAMPLING_TIERS: Array<{ threshold: number; rate: number }> = [
+  { threshold: 5, rate: 1 }, // primeiros 5 eventos: 100%
+  { threshold: 20, rate: 0.5 }, // 6º ao 20º: 50%
+  { threshold: 50, rate: 0.2 }, // 21º ao 50º: 20%
+  { threshold: Infinity, rate: 0.05 }, // a partir do 51º: 5%
+];
+
+/** Chave usada no sessionStorage para o set persistente de dedup. */
+const SESSION_DEDUPE_KEY = "__chunk_tlm_seen";
+/** Chave usada no sessionStorage para o contador de envios da sessão. */
+const SESSION_COUNTER_KEY = "__chunk_tlm_count";
+
+/** Cache em memória da janela curta. Map<key, timestamp_ms>. */
+const recentReports = new Map<string, number>();
 
 /**
  * Tenta extrair um identificador público da URL atual. Cobre as duas rotas
@@ -48,30 +78,136 @@ function extractChunkUrlFromMessage(message: string | undefined): string | null 
   return match ? match[0] : null;
 }
 
-let lastReportKey: string | null = null;
-let lastReportAt = 0;
-const DEDUPE_WINDOW_MS = 5_000;
+/** Normaliza a URL do chunk removendo querystring de cache-busting (?v=, ?t=, ?retry=). */
+function normalizeChunkUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url, window.location.origin);
+    return u.origin + u.pathname; // ignora search/hash
+  } catch {
+    return url.split("?")[0] || url;
+  }
+}
+
+/**
+ * Constrói a chave composta de dedup: (public_id, route, deploy_version, chunk_url).
+ * Rotas com query string são reduzidas ao pathname para que `?utm=...` não
+ * gere chaves diferentes para o mesmo problema.
+ */
+function buildDedupKey(
+  publicId: string | null,
+  pathname: string,
+  chunkUrl: string | null,
+): string {
+  return [
+    publicId ?? "-",
+    pathname,
+    DEPLOY_VERSION,
+    normalizeChunkUrl(chunkUrl) ?? "-",
+  ].join("|");
+}
+
+/** Lê o set persistente da sessão (chaves já reportadas nesta aba). */
+function getSessionSeen(): Set<string> {
+  try {
+    const raw = sessionStorage.getItem(SESSION_DEDUPE_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? new Set(arr) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function persistSessionSeen(set: Set<string>) {
+  try {
+    // Limita o tamanho do set (LRU simples por inserção) para não estourar quota.
+    const arr = Array.from(set).slice(-100);
+    sessionStorage.setItem(SESSION_DEDUPE_KEY, JSON.stringify(arr));
+  } catch {
+    // sessionStorage indisponível (modo privado, iframe sem permissão): ignora.
+  }
+}
+
+function getSessionCount(): number {
+  try {
+    const raw = sessionStorage.getItem(SESSION_COUNTER_KEY);
+    return raw ? Number(raw) || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function bumpSessionCount(): number {
+  const next = getSessionCount() + 1;
+  try {
+    sessionStorage.setItem(SESSION_COUNTER_KEY, String(next));
+  } catch {
+    /* noop */
+  }
+  return next;
+}
+
+/**
+ * Decide se este evento deve ser amostrado (enviado) com base no número
+ * de eventos já enviados nesta sessão. Quanto mais alto o volume, menor
+ * a probabilidade — preservando o sinal sem inundar a tabela.
+ */
+function shouldSample(currentCount: number): boolean {
+  for (const tier of SAMPLING_TIERS) {
+    if (currentCount < tier.threshold) {
+      if (tier.rate >= 1) return true;
+      if (tier.rate <= 0) return false;
+      return Math.random() < tier.rate;
+    }
+  }
+  return false;
+}
 
 export async function reportChunkLoadError(
-  payload: ChunkTelemetryPayload
+  payload: ChunkTelemetryPayload,
 ): Promise<void> {
   if (typeof window === "undefined") return;
 
-  // Deduplicação simples para não floodar a tabela quando o mesmo erro
-  // dispara múltiplas vezes em sequência (ex.: várias retentativas do React).
-  const key = `${payload.errorName ?? ""}::${payload.errorMessage ?? ""}`;
+  const pathname = window.location.pathname;
+  const publicId = extractPublicIdFromPath(pathname);
+  const chunkUrl =
+    payload.chunkUrl ?? extractChunkUrlFromMessage(payload.errorMessage);
+  const dedupKey = buildDedupKey(publicId, pathname, chunkUrl);
   const now = Date.now();
-  if (key === lastReportKey && now - lastReportAt < DEDUPE_WINDOW_MS) {
+
+  // 1) Dedup em memória — rajadas curtas (mesmo chunk falhando várias vezes
+  //    em sequência por causa de retentativa do React/Vite).
+  const lastSeenAt = recentReports.get(dedupKey);
+  if (lastSeenAt !== undefined && now - lastSeenAt < DEDUPE_WINDOW_MS) {
     return;
   }
-  lastReportKey = key;
-  lastReportAt = now;
+  recentReports.set(dedupKey, now);
+  // Limpeza preguiçosa: remove entradas antigas para evitar crescimento ilimitado.
+  if (recentReports.size > 50) {
+    for (const [k, ts] of recentReports) {
+      if (now - ts >= DEDUPE_WINDOW_MS) recentReports.delete(k);
+    }
+  }
+
+  // 2) Dedup persistente por sessão — a mesma combinação já foi registrada
+  //    nesta aba; o servidor já tem o evento, não precisamos repetir.
+  const seen = getSessionSeen();
+  if (seen.has(dedupKey)) {
+    return;
+  }
+
+  // 3) Amostragem adaptativa — preserva o sinal sem flood.
+  const currentCount = getSessionCount();
+  if (!shouldSample(currentCount)) {
+    // Mesmo amostrado fora, marcamos como visto para não retentar imediatamente.
+    seen.add(dedupKey);
+    persistSessionSeen(seen);
+    return;
+  }
 
   try {
-    const route = window.location.pathname + window.location.search;
-    const publicId = extractPublicIdFromPath(window.location.pathname);
-    const chunkUrl =
-      payload.chunkUrl ?? extractChunkUrlFromMessage(payload.errorMessage);
+    const route = pathname + window.location.search;
 
     let reporterId: string | null = null;
     try {
@@ -81,13 +217,13 @@ export async function reportChunkLoadError(
       reporterId = null;
     }
 
-    await supabase.from("chunk_load_errors").insert({
+    const { error } = await supabase.from("chunk_load_errors").insert({
       public_id: publicId,
       route,
       deploy_version: DEPLOY_VERSION,
       error_name: payload.errorName ?? null,
       error_message: payload.errorMessage?.slice(0, 1000) ?? null,
-      chunk_url: chunkUrl,
+      chunk_url: normalizeChunkUrl(chunkUrl),
       user_agent: navigator.userAgent.slice(0, 500),
       viewport_width: window.innerWidth,
       viewport_height: window.innerHeight,
@@ -95,14 +231,26 @@ export async function reportChunkLoadError(
       reporter_id: reporterId,
       metadata: {
         referrer: document.referrer || null,
-        deviceMemory: (navigator as Navigator & { deviceMemory?: number })
-          .deviceMemory ?? null,
+        deviceMemory:
+          (navigator as Navigator & { deviceMemory?: number }).deviceMemory ??
+          null,
         connection:
           (navigator as Navigator & { connection?: { effectiveType?: string } })
             .connection?.effectiveType ?? null,
+        sessionEventIndex: currentCount + 1,
+        sampledFromTier:
+          SAMPLING_TIERS.find((t) => currentCount < t.threshold)?.rate ?? null,
         ...payload.extraMetadata,
       },
     });
+
+    // Só marcamos como visto/contado quando o insert foi aceito — caso
+    // contrário a próxima ocorrência ainda terá chance de reportar.
+    if (!error) {
+      seen.add(dedupKey);
+      persistSessionSeen(seen);
+      bumpSessionCount();
+    }
   } catch {
     // Silencioso por design — telemetria nunca pode quebrar a UX.
   }
