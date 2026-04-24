@@ -285,9 +285,17 @@ export function CommandPalette() {
                 >
                   <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-sm truncate">{b.project_name}</span>
+                    <span className="text-sm truncate">
+                      <Highlight text={b.project_name} query={query} />
+                    </span>
                     <span className="text-xs text-muted-foreground truncate">
-                      {b.sequential_code ? `${b.sequential_code} · ` : ""}{b.client_name}
+                      {b.sequential_code ? (
+                        <>
+                          <Highlight text={b.sequential_code} query={query} />
+                          {" · "}
+                        </>
+                      ) : null}
+                      <Highlight text={b.client_name} query={query} />
                     </span>
                   </div>
                   {b.public_id && (
