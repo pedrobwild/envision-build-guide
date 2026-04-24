@@ -4,8 +4,19 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save, Upload } from "lucide-react";
+import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save, Upload, CheckSquare, Square, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DndContext,
   closestCenter,
@@ -52,14 +63,21 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
   tab: StorageTab;
   onDelete: (tab: StorageTab, name: string) => void;
   reordering: boolean;
+  selectionMode: boolean;
+  selected: boolean;
+  onToggleSelect: (name: string) => void;
 }>(function SortableMediaItem({
   file,
   tab,
   onDelete,
   reordering,
+  selectionMode,
+  selected,
+  onToggleSelect,
 }, _ref) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: file.name,
+    disabled: selectionMode,
   });
 
   const style = {
@@ -69,24 +87,45 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
     opacity: isDragging ? 0.6 : 1,
   };
 
+  const handleClick = () => {
+    if (selectionMode) onToggleSelect(file.name);
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
+      onClick={handleClick}
       className={cn(
-        "group relative rounded-lg overflow-hidden border border-border bg-muted aspect-square",
+        "group relative rounded-lg overflow-hidden border bg-muted aspect-square transition-all",
+        selectionMode && "cursor-pointer",
+        selected ? "border-primary ring-2 ring-primary" : "border-border",
         isDragging && "ring-2 ring-primary shadow-lg"
       )}
     >
-      {/* Drag handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="absolute top-1 left-1 z-20 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-        title="Arrastar para reordenar"
-      >
-        <GripVertical className="h-3.5 w-3.5" />
-      </button>
+      {/* Selection checkbox */}
+      {selectionMode && (
+        <div className="absolute top-1.5 left-1.5 z-30 bg-background/90 rounded p-0.5 shadow-sm">
+          <Checkbox
+            checked={selected}
+            onCheckedChange={() => onToggleSelect(file.name)}
+            onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4"
+          />
+        </div>
+      )}
+
+      {/* Drag handle (hidden in selection mode) */}
+      {!selectionMode && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="absolute top-1 left-1 z-20 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          title="Arrastar para reordenar"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+      )}
 
       {tab === "video" ? (
         <video src={file.url} className="w-full h-full object-cover" muted />
@@ -94,18 +133,24 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
         <img src={file.url} alt={file.name} className="w-full h-full object-cover" loading="lazy" />
       )}
 
-      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-        <button
-          onClick={() => onDelete(tab, file.name)}
-          className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
-          title="Remover"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-        <span className="text-xs text-white/80 font-body px-2 text-center truncate max-w-full">
-          {file.name}
-        </span>
-      </div>
+      {!selectionMode && (
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+          <button
+            onClick={() => onDelete(tab, file.name)}
+            className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
+            title="Remover"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+          <span className="text-xs text-white/80 font-body px-2 text-center truncate max-w-full">
+            {file.name}
+          </span>
+        </div>
+      )}
+
+      {selected && selectionMode && (
+        <div className="absolute inset-0 bg-primary/20 pointer-events-none" />
+      )}
 
       {reordering && (
         <div className="absolute inset-0 bg-background/30 flex items-center justify-center pointer-events-none">
@@ -135,6 +180,10 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reordering, setReordering] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<null | { kind: "selected" | "all-tab" | "all"; count: number }>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Tour 3D state
@@ -309,6 +358,87 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       toast.error("Erro ao remover arquivo.");
     }
   };
+
+  /* ── Selection helpers ── */
+  const toggleSelect = useCallback((name: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }, []);
+
+  const exitSelectionMode = useCallback(() => {
+    setSelectionMode(false);
+    setSelected(new Set());
+  }, []);
+
+  // Reset selection when changing tab
+  useEffect(() => {
+    setSelected(new Set());
+    setSelectionMode(false);
+  }, [activeTab]);
+
+  const selectAllInTab = useCallback(() => {
+    if (activeTab === "tour3d") return;
+    const all = files[activeTab as StorageTab].map(f => f.name);
+    setSelected(new Set(all));
+  }, [activeTab, files]);
+
+  /* ── Bulk delete ── */
+  const performBulkDelete = useCallback(async (paths: string[], successMsg: string) => {
+    if (paths.length === 0) return;
+    setBulkDeleting(true);
+    try {
+      // Storage allows up to 1000 paths per remove call, but we batch to be safe
+      const BATCH = 100;
+      for (let i = 0; i < paths.length; i += BATCH) {
+        const slice = paths.slice(i, i + BATCH);
+        const { error } = await supabase.storage.from("media").remove(slice);
+        if (error) throw error;
+      }
+      toast.success(successMsg);
+      exitSelectionMode();
+      await loadFiles(true);
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      toast.error("Erro ao apagar arquivos. Tente novamente.");
+    } finally {
+      setBulkDeleting(false);
+      setConfirmDialog(null);
+    }
+  }, [exitSelectionMode, loadFiles]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!confirmDialog) return;
+
+    if (confirmDialog.kind === "selected") {
+      if (activeTab === "tour3d") return;
+      const folder = folderMap[activeTab as StorageTab];
+      const paths = Array.from(selected).map(name => `${folder}/${name}`);
+      await performBulkDelete(paths, `${paths.length} arquivo(s) removido(s).`);
+      return;
+    }
+
+    if (confirmDialog.kind === "all-tab") {
+      if (activeTab === "tour3d") return;
+      const folder = folderMap[activeTab as StorageTab];
+      const paths = files[activeTab as StorageTab].map(f => `${folder}/${f.name}`);
+      await performBulkDelete(paths, `Aba "${activeTab}" limpa (${paths.length} arquivo(s)).`);
+      return;
+    }
+
+    if (confirmDialog.kind === "all") {
+      const allPaths: string[] = [];
+      (Object.keys(folderMap) as StorageTab[]).forEach(tab => {
+        files[tab].forEach(f => allPaths.push(`${folderMap[tab]}/${f.name}`));
+      });
+      await performBulkDelete(allPaths, `Todas as mídias apagadas (${allPaths.length} arquivo(s)).`);
+    }
+  }, [confirmDialog, activeTab, folderMap, selected, files, performBulkDelete]);
+
+  const totalAllTabs = Object.values(files).reduce((sum, arr) => sum + arr.length, 0);
 
   /* ── Drag-and-drop reorder ── */
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
@@ -556,21 +686,115 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
           </div>
         ) : (
           <>
-            {/* Upload button */}
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => inputRef.current?.click()}
-                disabled={uploading || reordering}
-                className="gap-2"
-              >
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                {uploading ? "Enviando..." : "Adicionar arquivos"}
-              </Button>
-              <span className="text-xs text-muted-foreground font-body">
-                Pasta: <code className="bg-muted px-1 py-0.5 rounded text-xs">{folderMap[activeTab as StorageTab]}</code>
-              </span>
+            {/* Action toolbar */}
+            <div className="flex flex-wrap items-center gap-2">
+              {!selectionMode ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => inputRef.current?.click()}
+                    disabled={uploading || reordering || bulkDeleting}
+                    className="gap-2"
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                    {uploading ? "Enviando..." : "Adicionar arquivos"}
+                  </Button>
+
+                  {currentFiles.length > 0 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectionMode(true)}
+                        disabled={uploading || reordering || bulkDeleting}
+                        className="gap-2"
+                      >
+                        <CheckSquare className="h-4 w-4" />
+                        Selecionar
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmDialog({ kind: "all-tab", count: currentFiles.length })}
+                        disabled={uploading || reordering || bulkDeleting}
+                        className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Limpar aba
+                      </Button>
+                    </>
+                  )}
+
+                  {totalAllTabs > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setConfirmDialog({ kind: "all", count: totalAllTabs })}
+                      disabled={uploading || reordering || bulkDeleting}
+                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Apagar todas as mídias
+                    </Button>
+                  )}
+
+                  <span className="text-xs text-muted-foreground font-body w-full sm:w-auto sm:ml-auto">
+                    Pasta: <code className="bg-muted px-1 py-0.5 rounded text-xs">{folderMap[activeTab as StorageTab]}</code>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm font-display font-semibold text-foreground">
+                    {selected.size} de {currentFiles.length} selecionada(s)
+                  </span>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllInTab}
+                    disabled={bulkDeleting}
+                    className="gap-2"
+                  >
+                    <CheckSquare className="h-4 w-4" />
+                    Selecionar tudo
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelected(new Set())}
+                    disabled={bulkDeleting || selected.size === 0}
+                    className="gap-2"
+                  >
+                    <Square className="h-4 w-4" />
+                    Limpar seleção
+                  </Button>
+
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setConfirmDialog({ kind: "selected", count: selected.size })}
+                    disabled={bulkDeleting || selected.size === 0}
+                    className="gap-2"
+                  >
+                    {bulkDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    Apagar selecionadas ({selected.size})
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={exitSelectionMode}
+                    disabled={bulkDeleting}
+                    className="gap-2 ml-auto"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancelar
+                  </Button>
+                </>
+              )}
             </div>
 
             <input
@@ -610,6 +834,9 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                         tab={activeTab as StorageTab}
                         onDelete={handleDelete}
                         reordering={reordering}
+                        selectionMode={selectionMode}
+                        selected={selected.has(f.name)}
+                        onToggleSelect={toggleSelect}
                       />
                     ))}
                   </div>
@@ -622,6 +849,38 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
             </p>
           </>
         )}
+
+        {/* Confirmation dialog for bulk delete */}
+        <AlertDialog open={!!confirmDialog} onOpenChange={(open) => !open && !bulkDeleting && setConfirmDialog(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {confirmDialog?.kind === "selected" && "Apagar mídias selecionadas?"}
+                {confirmDialog?.kind === "all-tab" && `Limpar a aba "${currentTab.label}"?`}
+                {confirmDialog?.kind === "all" && "Apagar todas as mídias do orçamento?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmDialog?.kind === "selected" && `Você está prestes a apagar ${confirmDialog.count} arquivo(s). Esta ação é permanente e não pode ser desfeita.`}
+                {confirmDialog?.kind === "all-tab" && `Você está prestes a apagar todos os ${confirmDialog.count} arquivo(s) desta aba. Esta ação é permanente e não pode ser desfeita.`}
+                {confirmDialog?.kind === "all" && `Você está prestes a apagar TODAS as ${confirmDialog.count} mídias deste orçamento (renders 3D, fotos, projeto executivo e vídeo). Esta ação é permanente e não pode ser desfeita.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleConfirmDelete(); }}
+                disabled={bulkDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {bulkDeleting ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Apagando...</>
+                ) : (
+                  "Apagar"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
