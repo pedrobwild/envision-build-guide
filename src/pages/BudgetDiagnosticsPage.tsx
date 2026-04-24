@@ -14,10 +14,14 @@ import {
   ExternalLink,
   Stethoscope,
   Copy,
+  ShieldAlert,
+  ShieldCheck,
+  Info,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { toast } from "sonner";
+import { diagnoseBudgetRls, type RlsDiagnosticReport } from "@/lib/rls-diagnostics";
 
 type StepStatus = "idle" | "running" | "ok" | "warn" | "fail" | "skipped";
 
