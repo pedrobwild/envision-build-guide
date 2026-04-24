@@ -99,29 +99,31 @@ export function BugReporter({ showFab = true }: BugReporterProps) {
     setStep("submitting");
     try {
       const ctx = collectContext();
-      const { error } = await supabase.from("bug_reports").insert({
-        title: title.trim(),
-        description: description.trim(),
-        severity,
-        steps_to_reproduce: stepsToReproduce.trim() || null,
-        expected_behavior: expected.trim() || null,
-        actual_behavior: actual.trim() || null,
-        reporter_id: user?.id ?? null,
-        reporter_name: profile?.full_name ?? null,
-        reporter_email: user?.email ?? null,
-        user_role: ctx.userRole,
-        route: ctx.route,
-        device_type: ctx.deviceType,
-        os_name: ctx.osName,
-        browser_name: ctx.browserName,
-        browser_version: ctx.browserVersion,
-        viewport_width: ctx.viewportWidth,
-        viewport_height: ctx.viewportHeight,
-        device_pixel_ratio: ctx.devicePixelRatio,
-        user_agent: ctx.userAgent,
-        active_filters: ctx.activeFilters,
-        console_errors: ctx.consoleErrors,
-      });
+      const { error } = await supabase.from("bug_reports").insert([
+        {
+          title: title.trim(),
+          description: description.trim(),
+          severity,
+          steps_to_reproduce: stepsToReproduce.trim() || null,
+          expected_behavior: expected.trim() || null,
+          actual_behavior: actual.trim() || null,
+          reporter_id: user?.id ?? null,
+          reporter_name: profile?.full_name ?? null,
+          reporter_email: user?.email ?? null,
+          user_role: ctx.userRole,
+          route: ctx.route,
+          device_type: ctx.deviceType,
+          os_name: ctx.osName,
+          browser_name: ctx.browserName,
+          browser_version: ctx.browserVersion,
+          viewport_width: ctx.viewportWidth,
+          viewport_height: ctx.viewportHeight,
+          device_pixel_ratio: ctx.devicePixelRatio,
+          user_agent: ctx.userAgent,
+          active_filters: ctx.activeFilters as never,
+          console_errors: ctx.consoleErrors as never,
+        },
+      ]);
       if (error) throw error;
       setStep("done");
       toast.success("Bug reportado", { description: "Obrigado! O time vai analisar." });
