@@ -182,23 +182,44 @@ export function CommandPalette() {
     [userRoles]
   );
 
+  // Ao escolher um resultado: fecha mas preserva a query digitada para retomada.
   const run = useCallback(
     (fn: () => void) => {
       setOpen(false);
-      setQuery("");
       // Defer to allow dialog close animation
       setTimeout(fn, 0);
     },
     []
   );
 
+  const clearQuery = useCallback(() => {
+    setQuery("");
+    setBudgets([]);
+    setClients([]);
+    inputRef.current?.focus();
+  }, []);
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput
-        placeholder="Buscar orçamentos, clientes ou ações..."
-        value={query}
-        onValueChange={setQuery}
-      />
+      <div className="relative">
+        <CommandInput
+          ref={inputRef}
+          placeholder="Buscar orçamentos, clientes ou ações..."
+          value={query}
+          onValueChange={setQuery}
+          autoFocus
+        />
+        {query.length > 0 && (
+          <button
+            type="button"
+            onClick={clearQuery}
+            aria-label="Limpar busca"
+            className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
       <CommandList>
         <CommandEmpty>
           {query.trim().length < 2
