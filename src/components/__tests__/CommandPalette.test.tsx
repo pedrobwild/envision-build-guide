@@ -3,6 +3,15 @@ import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom";
 import { CommandPalette, CommandPaletteTrigger } from "../CommandPalette";
 
+// jsdom não traz ResizeObserver — cmdk depende dele.
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+// @ts-expect-error - polyfill apenas para o ambiente de teste
+globalThis.ResizeObserver = globalThis.ResizeObserver ?? ResizeObserverMock;
+
 // ---- Mocks ----------------------------------------------------------------
 
 vi.mock("@/hooks/useUserProfile", () => ({
