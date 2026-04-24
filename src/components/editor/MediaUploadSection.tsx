@@ -288,14 +288,17 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     const result: Record<StorageTab, MediaFile[]> = { "3d": [], fotos: [], exec: [], video: [] };
 
     try {
-      // Parallel listing of all folders
+      // Parallel listing of all folders + media_config primary
       const tabs = Object.keys(folderMap) as StorageTab[];
-      const listings = await Promise.all(
-        tabs.map(tab =>
-          supabase.storage.from("media").list(folderMap[tab], { limit: 100, sortBy: { column: "name", order: "asc" } })
-            .then(({ data, error }) => ({ tab, data, error }))
-        )
-      );
+      const [listings, configRes] = await Promise.all([
+        Promise.all(
+          tabs.map(tab =>
+            supabase.storage.from("media").list(folderMap[tab], { limit: 100, sortBy: { column: "name", order: "asc" } })
+              .then(({ data, error }) => ({ tab, data, error }))
+          )
+        ),
+        supabase.from("budgets").select("media_config").eq("id", budgetId).maybeSingle(),
+      ]);
 
       for (const { tab, data, error } of listings) {
         if (error) {
@@ -313,17 +316,39 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       }
       setFiles(result);
 
+      // Hydrate primary from DB
+      const mc = (configRes.data?.media_config ?? {}) as { primary?: { projeto3d?: string; fotos?: string; projetoExecutivo?: string; video3d?: string } };
+      const loadedPrimary: PrimaryByTab = {
+        "3d": mc.primary?.projeto3d,
+        fotos: mc.primary?.fotos,
+        exec: mc.primary?.projetoExecutivo,
+        video: mc.primary?.video3d,
+      };
+      setPrimary(loadedPrimary);
+
       if (syncToDb) {
-        syncMediaConfig(result);
+        syncMediaConfig(result, loadedPrimary);
       }
     } catch (err) {
       console.error("loadFiles error:", err);
     } finally {
       setLoading(false);
     }
-  }, [folderMap, syncMediaConfig]);
+  }, [folderMap, syncMediaConfig, budgetId]);
 
   useEffect(() => { loadFiles(); }, [loadFiles]);
+
+  const togglePrimary = useCallback(async (tab: StorageTab, url: string) => {
+    const next: PrimaryByTab = { ...primary };
+    if (next[tab] === url) {
+      delete next[tab];
+    } else {
+      next[tab] = url;
+    }
+    setPrimary(next);
+    await syncMediaConfig(files, next);
+    toast.success(next[tab] ? "Mídia principal definida (capa)" : "Marcação de capa removida");
+  }, [primary, files, syncMediaConfig]);
 
   const sanitizeFileName = (name: string) => {
     return name
