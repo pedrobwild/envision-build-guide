@@ -359,6 +359,87 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
   };
 
+  /* ── Selection helpers ── */
+  const toggleSelect = useCallback((name: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }, []);
+
+  const exitSelectionMode = useCallback(() => {
+    setSelectionMode(false);
+    setSelected(new Set());
+  }, []);
+
+  // Reset selection when changing tab
+  useEffect(() => {
+    setSelected(new Set());
+    setSelectionMode(false);
+  }, [activeTab]);
+
+  const selectAllInTab = useCallback(() => {
+    if (activeTab === "tour3d") return;
+    const all = files[activeTab as StorageTab].map(f => f.name);
+    setSelected(new Set(all));
+  }, [activeTab, files]);
+
+  /* ── Bulk delete ── */
+  const performBulkDelete = useCallback(async (paths: string[], successMsg: string) => {
+    if (paths.length === 0) return;
+    setBulkDeleting(true);
+    try {
+      // Storage allows up to 1000 paths per remove call, but we batch to be safe
+      const BATCH = 100;
+      for (let i = 0; i < paths.length; i += BATCH) {
+        const slice = paths.slice(i, i + BATCH);
+        const { error } = await supabase.storage.from("media").remove(slice);
+        if (error) throw error;
+      }
+      toast.success(successMsg);
+      exitSelectionMode();
+      await loadFiles(true);
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      toast.error("Erro ao apagar arquivos. Tente novamente.");
+    } finally {
+      setBulkDeleting(false);
+      setConfirmDialog(null);
+    }
+  }, [exitSelectionMode, loadFiles]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!confirmDialog) return;
+
+    if (confirmDialog.kind === "selected") {
+      if (activeTab === "tour3d") return;
+      const folder = folderMap[activeTab as StorageTab];
+      const paths = Array.from(selected).map(name => `${folder}/${name}`);
+      await performBulkDelete(paths, `${paths.length} arquivo(s) removido(s).`);
+      return;
+    }
+
+    if (confirmDialog.kind === "all-tab") {
+      if (activeTab === "tour3d") return;
+      const folder = folderMap[activeTab as StorageTab];
+      const paths = files[activeTab as StorageTab].map(f => `${folder}/${f.name}`);
+      await performBulkDelete(paths, `Aba "${activeTab}" limpa (${paths.length} arquivo(s)).`);
+      return;
+    }
+
+    if (confirmDialog.kind === "all") {
+      const allPaths: string[] = [];
+      (Object.keys(folderMap) as StorageTab[]).forEach(tab => {
+        files[tab].forEach(f => allPaths.push(`${folderMap[tab]}/${f.name}`));
+      });
+      await performBulkDelete(allPaths, `Todas as mídias apagadas (${allPaths.length} arquivo(s)).`);
+    }
+  }, [confirmDialog, activeTab, folderMap, selected, files, performBulkDelete]);
+
+  const totalAllTabs = Object.values(files).reduce((sum, arr) => sum + arr.length, 0);
+
   /* ── Drag-and-drop reorder ── */
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
