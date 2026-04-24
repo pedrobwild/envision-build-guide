@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save, Upload, CheckSquare, Square, X } from "lucide-react";
+import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save, Upload, CheckSquare, Square, X, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -66,6 +66,8 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
   selectionMode: boolean;
   selected: boolean;
   onToggleSelect: (name: string) => void;
+  isPrimary: boolean;
+  onTogglePrimary: (tab: StorageTab, url: string) => void;
 }>(function SortableMediaItem({
   file,
   tab,
@@ -74,6 +76,8 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
   selectionMode,
   selected,
   onToggleSelect,
+  isPrimary,
+  onTogglePrimary,
 }, _ref) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: file.name,
@@ -99,7 +103,7 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
       className={cn(
         "group relative rounded-lg overflow-hidden border bg-muted aspect-square transition-all",
         selectionMode && "cursor-pointer",
-        selected ? "border-primary ring-2 ring-primary" : "border-border",
+        selected ? "border-primary ring-2 ring-primary" : isPrimary ? "border-amber-400 ring-2 ring-amber-400/60" : "border-border",
         isDragging && "ring-2 ring-primary shadow-lg"
       )}
     >
@@ -127,6 +131,17 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
         </button>
       )}
 
+      {/* Primary badge (always visible when primary) */}
+      {isPrimary && !selectionMode && (
+        <div
+          className="absolute top-1 right-1 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-400 text-amber-950 text-[10px] font-display font-bold shadow"
+          title="Mídia principal — aparece primeiro na galeria pública"
+        >
+          <Star className="h-2.5 w-2.5 fill-current" />
+          Capa
+        </div>
+      )}
+
       {tab === "video" ? (
         <video src={file.url} className="w-full h-full object-cover" muted />
       ) : (
@@ -134,14 +149,28 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
       )}
 
       {!selectionMode && (
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-          <button
-            onClick={() => onDelete(tab, file.name)}
-            className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
-            title="Remover"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); onTogglePrimary(tab, file.url); }}
+              className={cn(
+                "p-1.5 rounded-full transition-colors",
+                isPrimary
+                  ? "bg-amber-400 text-amber-950 hover:bg-amber-300"
+                  : "bg-white/20 hover:bg-amber-400 hover:text-amber-950 text-white"
+              )}
+              title={isPrimary ? "Remover como principal" : "Definir como principal (capa)"}
+            >
+              <Star className={cn("h-3.5 w-3.5", isPrimary && "fill-current")} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(tab, file.name); }}
+              className="p-1.5 rounded-full bg-destructive/80 hover:bg-destructive text-white transition-colors"
+              title="Remover"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <span className="text-xs text-white/80 font-body px-2 text-center truncate max-w-full">
             {file.name}
           </span>
