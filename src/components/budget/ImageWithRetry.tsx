@@ -12,6 +12,13 @@ interface ImageWithRetryProps {
   autoRetries?: number;
   /** loading attribute do <img>. Default: "lazy". */
   loading?: "lazy" | "eager";
+  /**
+   * Exibe o botão "Tentar novamente" no estado de erro. Default: `true`.
+   * Defina como `false` quando o componente for renderizado dentro de outro
+   * `<button>` (HTML inválido aninhar botões), ou quando o retry deva ser
+   * provido externamente.
+   */
+  showRetryButton?: boolean;
   /** Atributos extras para o <img> (decoding, sizes, etc.). */
   imgProps?: Omit<
     React.ImgHTMLAttributes<HTMLImageElement>,
