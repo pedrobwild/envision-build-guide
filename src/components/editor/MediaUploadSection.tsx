@@ -180,6 +180,10 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reordering, setReordering] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<null | { kind: "selected" | "all-tab" | "all"; count: number }>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Tour 3D state
