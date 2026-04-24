@@ -58,6 +58,7 @@ interface SectionRow {
   excluded_bullets?: string[] | null;
   notes?: string | null;
   is_optional?: boolean;
+  addendum_action?: "add" | "remove" | null;
 }
 
 interface ItemRow {
@@ -74,6 +75,7 @@ interface ItemRow {
   internal_total?: number | null;
   internal_unit_price?: number | null;
   bdi_percentage?: number | null;
+  addendum_action?: "add" | "remove" | null;
 }
 
 interface ItemImageRow {
@@ -188,6 +190,7 @@ interface SectionLike {
   items?: ItemLike[];
   qty?: number | null;
   section_price?: number | null;
+  addendum_action?: "add" | "remove" | null;
 }
 
 interface ItemLike {
@@ -195,6 +198,7 @@ interface ItemLike {
   internal_unit_price?: number | null;
   qty?: number | null;
   bdi_percentage?: number | null;
+  addendum_action?: "add" | "remove" | null;
 }
 
 interface AdjustmentLike {
@@ -202,31 +206,30 @@ interface AdjustmentLike {
   amount: number;
 }
 
+/** Raw subtotal of a section (sum of items × qty), ignoring addendum_action sign. */
 export function calculateSectionSubtotal(section: SectionLike): number {
   const items = section.items || [];
   const qty = section.qty || 1;
 
   if (items.length > 0) {
-    const itemsSum = items.reduce(
-      (sum: number, item: ItemLike) => {
-        const unitPrice = Number(item.internal_unit_price) || 0;
-        const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
-        const bdi = Number(item.bdi_percentage) || 0;
+    const itemsSum = items.reduce((sum: number, item: ItemLike) => {
+      // Skip items removed by addendum from raw subtotal — they're handled
+      // explicitly by calculateBudgetTotal as a NEGATIVE.
+      if (item.addendum_action === "remove") return sum;
+      const unitPrice = Number(item.internal_unit_price) || 0;
+      const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
+      const bdi = Number(item.bdi_percentage) || 0;
 
-        // Match calcItemSaleTotal: always use unit_price * (1 + bdi%) * qty
-        if (unitPrice > 0) {
-          return sum + unitPrice * (1 + bdi / 100) * itemQty;
-        }
-        // Fallback to internal_total — apply BDI and qty
-        const cost = Number(item.internal_total) || 0;
-        if (cost > 0) {
-          const fallbackQty = Number(item.qty) || 1;
-          return sum + cost * (1 + bdi / 100) * fallbackQty;
-        }
-        return sum;
-      },
-      0
-    );
+      if (unitPrice > 0) {
+        return sum + unitPrice * (1 + bdi / 100) * itemQty;
+      }
+      const cost = Number(item.internal_total) || 0;
+      if (cost > 0) {
+        const fallbackQty = Number(item.qty) || 1;
+        return sum + cost * (1 + bdi / 100) * fallbackQty;
+      }
+      return sum;
+    }, 0);
     if (itemsSum > 0) return itemsSum * qty;
   }
 
@@ -236,14 +239,99 @@ export function calculateSectionSubtotal(section: SectionLike): number {
   return 0;
 }
 
-export function calculateBudgetTotal(sections: SectionLike[], adjustments: AdjustmentLike[] | null | undefined): number {
+/** Sum of values that the addendum REMOVES (always positive number; subtract it). */
+function calculateRemovedTotal(section: SectionLike): number {
+  const items = section.items || [];
+  const qty = section.qty || 1;
+  if (section.addendum_action === "remove") {
+    // Whole section removed — original value (without filter) is the negative
+    const itemsSum = items.reduce((sum, item) => {
+      const unitPrice = Number(item.internal_unit_price) || 0;
+      const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
+      const bdi = Number(item.bdi_percentage) || 0;
+      if (unitPrice > 0) return sum + unitPrice * (1 + bdi / 100) * itemQty;
+      const cost = Number(item.internal_total) || 0;
+      if (cost > 0) {
+        const fallbackQty = Number(item.qty) || 1;
+        return sum + cost * (1 + bdi / 100) * fallbackQty;
+      }
+      return sum;
+    }, 0);
+    if (itemsSum > 0) return itemsSum * qty;
+    if (section.section_price != null) return Number(section.section_price) * qty;
+    return 0;
+  }
+
+  // Section kept — subtract individually-removed items
+  return items.reduce((sum, item) => {
+    if (item.addendum_action !== "remove") return sum;
+    const unitPrice = Number(item.internal_unit_price) || 0;
+    const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
+    const bdi = Number(item.bdi_percentage) || 0;
+    if (unitPrice > 0) return sum + unitPrice * (1 + bdi / 100) * itemQty;
+    const cost = Number(item.internal_total) || 0;
+    if (cost > 0) {
+      const fallbackQty = Number(item.qty) || 1;
+      return sum + cost * (1 + bdi / 100) * fallbackQty;
+    }
+    return sum;
+  }, 0) * qty;
+}
+
+export function calculateBudgetTotal(
+  sections: SectionLike[],
+  adjustments: AdjustmentLike[] | null | undefined
+): number {
   const sectionsTotal = sections.reduce(
     (sum, s) => sum + calculateSectionSubtotal(s),
     0
   );
-  const adjustmentsTotal = (adjustments || []).reduce(
-    (sum: number, adj: AdjustmentLike) => sum + (adj.sign * Number(adj.amount)),
+  const removedTotal = sections.reduce(
+    (sum, s) => sum + calculateRemovedTotal(s),
     0
   );
-  return sectionsTotal + adjustmentsTotal;
+  const adjustmentsTotal = (adjustments || []).reduce(
+    (sum: number, adj: AdjustmentLike) => sum + adj.sign * Number(adj.amount),
+    0
+  );
+  return sectionsTotal - removedTotal + adjustmentsTotal;
+}
+
+/** Net delta of an addendum: (added items + new sections) − (removed items + sections). */
+export function calculateAddendumDelta(sections: SectionLike[]): {
+  added: number;
+  removed: number;
+  net: number;
+} {
+  let added = 0;
+  let removed = 0;
+  sections.forEach((s) => {
+    if (s.addendum_action === "add") {
+      added += calculateSectionSubtotal(s);
+    } else if (s.addendum_action === "remove") {
+      removed += calculateRemovedTotal(s);
+    } else {
+      // Section kept — only flag-level item changes matter
+      (s.items || []).forEach((item) => {
+        if (item.addendum_action === "add") {
+          const unitPrice = Number(item.internal_unit_price) || 0;
+          const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
+          const bdi = Number(item.bdi_percentage) || 0;
+          const sectionQty = Number(s.qty) || 1;
+          if (unitPrice > 0) {
+            added += unitPrice * (1 + bdi / 100) * itemQty * sectionQty;
+          } else {
+            const cost = Number(item.internal_total) || 0;
+            if (cost > 0) {
+              const fallbackQty = Number(item.qty) || 1;
+              added += cost * (1 + bdi / 100) * fallbackQty * sectionQty;
+            }
+          }
+        } else if (item.addendum_action === "remove") {
+          removed += calculateRemovedTotal({ ...s, items: [item], addendum_action: null });
+        }
+      });
+    }
+  });
+  return { added, removed, net: added - removed };
 }
