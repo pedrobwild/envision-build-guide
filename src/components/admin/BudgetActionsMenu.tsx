@@ -27,9 +27,12 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Pencil, Eye, MoreHorizontal, Copy, Handshake,
-  ShoppingBag, Archive, Trash2, GitCompare, Loader2, Layers, Check,
+  ShoppingBag, Archive, Trash2, GitCompare, Loader2, Layers, Check, FilePlus2,
 } from "lucide-react";
 import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useAuth } from "@/hooks/useAuth";
+import { createAddendumFromBudget } from "@/lib/budget-addendum";
 
 interface BudgetActionsMenuProps {
   budget: {
@@ -68,7 +71,26 @@ export function BudgetActionsMenu({
   const [deleting, setDeleting] = useState(false);
   const [closingContract, setClosingContract] = useState(false);
   const [contractModalOpen, setContractModalOpen] = useState(false);
+  const [creatingAddendum, setCreatingAddendum] = useState(false);
   const { data: pipelines = [] } = useDealPipelines();
+  const { isAdmin, isOrcamentista } = useUserProfile();
+  const { user } = useAuth();
+  const canCreateAddendum = (isAdmin || isOrcamentista)
+    && ["sent_to_client", "minuta_solicitada", "contrato_fechado"].includes(budget.internal_status || "");
+
+  const handleCreateAddendum = async () => {
+    if (!user) { toast.error("Sessão expirada"); return; }
+    setCreatingAddendum(true);
+    try {
+      const newId = await createAddendumFromBudget(budget.id, user.id);
+      toast.success("Aditivo criado — marque itens para remover ou adicione novos");
+      navigate(`/admin/budget/${newId}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao criar aditivo");
+    } finally {
+      setCreatingAddendum(false);
+    }
+  };
 
   const movePipeline = async (pipelineId: string | null) => {
     try {
@@ -353,6 +375,15 @@ export function BudgetActionsMenu({
           <DropdownMenuItem onClick={duplicateAsNew}>
             <Copy className="h-4 w-4 mr-2" /> Duplicar como novo
           </DropdownMenuItem>
+
+          {canCreateAddendum && (
+            <DropdownMenuItem onClick={handleCreateAddendum} disabled={creatingAddendum}>
+              {creatingAddendum
+                ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                : <FilePlus2 className="h-4 w-4 mr-2 text-primary" />}
+              Criar Aditivo
+            </DropdownMenuItem>
+          )}
 
           {/* Version compare */}
           {budget.version_group_id && (budget.version_number ?? 1) > 1 && (
