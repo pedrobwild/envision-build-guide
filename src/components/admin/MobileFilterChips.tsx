@@ -18,6 +18,10 @@ interface MobileFilterChipsProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
+  /** Quantidade de itens após aplicar busca + filtros. */
+  resultCount?: number;
+  /** Total bruto antes dos filtros (denominador do contador). */
+  totalCount?: number;
 }
 
 export function MobileFilterChips({
