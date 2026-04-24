@@ -88,14 +88,16 @@ export function ImageWithRetry({
       >
         <Camera className="h-7 w-7 text-muted-foreground/50" aria-hidden />
         <span className="text-xs text-muted-foreground font-body">{fallbackLabel}</span>
-        <button
-          type="button"
-          onClick={handleManualRetry}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-background border border-border text-[11px] font-body text-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <RefreshCw className="h-3 w-3" aria-hidden />
-          Tentar novamente
-        </button>
+        {showRetryButton && (
+          <button
+            type="button"
+            onClick={handleManualRetry}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-background border border-border text-[11px] font-body text-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <RefreshCw className="h-3 w-3" aria-hidden />
+            Tentar novamente
+          </button>
+        )}
       </div>
     );
   }
