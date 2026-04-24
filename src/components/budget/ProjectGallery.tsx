@@ -29,26 +29,9 @@ const defaultGallery: { video3d: MediaItem[]; fotos3d: MediaItem[]; fotos: Media
   ],
 };
 
-function ImageWithFallback({ src, alt, className }: { src: string; alt: string; className?: string }) {
-  const [error, setError] = useState(false);
-  if (error) {
-    return (
-      <div className={`bg-muted rounded-lg flex flex-col items-center justify-center gap-2 ${className}`}>
-        <Camera className="h-8 w-8 text-muted-foreground/50" />
-        <span className="text-xs text-muted-foreground font-body">Imagem indisponível</span>
-      </div>
-    );
-  }
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      loading="lazy"
-      onError={() => setError(true)}
-    />
-  );
-}
+// `ImageWithFallback` foi substituído pelo `ImageWithRetry` compartilhado,
+// que oferece o mesmo placeholder visual + um botão "Tentar novamente"
+// para casos em que o asset falha (ex.: bucket privado, CDN purgada).
 /** Native video player with auto-fullscreen on play */
 function VideoPlayer({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
