@@ -213,14 +213,44 @@ export default function BudgetEditorV2() {
     "is_current_version", "version_group_id", "version_number",
   ]));
 
-  const isPublishedVersion = budget?.status === "published" && budget?.is_published_version === true;
+  const isPublishedVersion = budget?.is_published_version === true;
+  const forkInProgress = useRef(false);
+
+  // Quando o usuário edita uma versão publicada, criamos automaticamente uma nova
+  // versão (rascunho) para que as alterações não fiquem visíveis ao cliente até
+  // que ele clique em "Salvar e Publicar".
+  const forkPublishedThenEdit = useCallback(async (field: string, value: unknown) => {
+    if (!budgetId || !user || forkInProgress.current) return;
+    forkInProgress.current = true;
+    setSaveStatus("saving");
+    try {
+      const newId = await duplicateBudgetAsVersion(budgetId, user.id, "Edição pós-publicação (rascunho automático)");
+      // Aplica a edição diretamente na nova versão antes de navegar para evitar perda do valor.
+      await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", newId);
+      toast.success("Rascunho criado para esta edição.", {
+        description: "A versão pública continua online. Use 'Salvar e Publicar' para publicar.",
+        duration: 5000,
+      });
+      navigate(`/admin/budget/${newId}`);
+    } catch (err) {
+      forkInProgress.current = false;
+      setSaveStatus("error");
+      toast.error(err instanceof Error ? err.message : "Não foi possível criar rascunho para edição.");
+    }
+  }, [budgetId, user, navigate]);
 
   const autoSaveBudgetField = useCallback((field: string, value: unknown) => {
     if (!budgetId) return;
     if (PROTECTED_FIELDS.current.has(field)) {
       return;
     }
-    // Edição liberada inclusive em versões publicadas — ajustes rápidos persistem via auto-save.
+    // Se este orçamento já está publicado (visível ao cliente), faz fork automático
+    // em rascunho para que a edição não vá ao ar imediatamente.
+    if (isPublishedVersion) {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      void forkPublishedThenEdit(field, value);
+      return;
+    }
     lastSavePayload.current = { field, value };
     setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -397,12 +427,12 @@ export default function BudgetEditorV2() {
           {/* ── Versioning context banners (priority: A > B > C) ── */}
           {/* Only show published-version warning if the budget was actually sent to the client */}
           {budget.is_published_version ? (
-            /* Scenario A — Editing published version (read-only) */
+            /* Scenario A — Editing published version (auto-fork on edit) */
             <Alert className="mt-4 border-warning/30 bg-warning/5">
               <AlertTriangle className="h-4 w-4 text-warning" />
               <AlertDescription className="flex items-center justify-between gap-4">
                 <span className="text-sm font-body text-foreground">
-                  ⚠️ Esta é a versão publicada (somente leitura). O cliente pode visualizá-la a qualquer momento. Crie uma nova versão (rascunho) para fazer alterações com segurança.
+                  ⚠️ Esta é a versão publicada (visível ao cliente). Itens e valores estão protegidos. Ao editar metadados será criado um rascunho automaticamente — ou crie agora uma nova versão para editar tudo.
                 </span>
                 <Button
                   variant="outline"
@@ -528,7 +558,7 @@ export default function BudgetEditorV2() {
                     sections={sections}
                     onSectionsChange={setSections}
                     loading={sectionsLoading}
-                    readOnly={false}
+                    readOnly={isPublishedVersion}
                   />
                 </div>
 
