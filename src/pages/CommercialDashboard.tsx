@@ -245,10 +245,29 @@ export default function CommercialDashboard() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [syncedBudgetIds, setSyncedBudgetIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("recente");
-  const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
+  // Persistimos busca/filtros/visualização em sessionStorage para que o usuário
+  // não perca o contexto ao alternar Kanban/Lista, trocar status ou recarregar
+  // a página dentro da mesma sessão. Chave única do dashboard comercial.
+  const PERSIST_KEY = "commercialDashboard:filters:v1";
+  type PersistedFilters = {
+    search?: string;
+    statusFilter?: string;
+    sortBy?: SortOption;
+    viewMode?: "list" | "kanban";
+  };
+  const persisted = (() => {
+    if (typeof window === "undefined") return {} as PersistedFilters;
+    try {
+      const raw = window.sessionStorage.getItem(PERSIST_KEY);
+      return raw ? (JSON.parse(raw) as PersistedFilters) : {};
+    } catch {
+      return {} as PersistedFilters;
+    }
+  })();
+  const [search, setSearch] = useState<string>(persisted.search ?? "");
+  const [statusFilter, setStatusFilter] = useState<string>(persisted.statusFilter ?? "all");
+  const [sortBy, setSortBy] = useState<SortOption>(persisted.sortBy ?? "recente");
+  const [viewMode, setViewMode] = useState<"list" | "kanban">(persisted.viewMode ?? "kanban");
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
   const [pipelineFilter, setPipelineFilter] = useState<string>("all");
@@ -260,6 +279,19 @@ export default function CommercialDashboard() {
   const [nextActionBudgetId, setNextActionBudgetId] = useState<string | null>(null);
   const [nextActionPreset, setNextActionPreset] = useState<{ type: string; title: string } | null>(null);
   const [historyBudget, setHistoryBudget] = useState<BudgetRow | null>(null);
+
+  // Persiste busca + filtros básicos + visualização sempre que mudarem.
+  // Usamos sessionStorage para não atravessar abas ou reinícios do navegador,
+  // mantendo a experiência limpa em novas sessões.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const payload: PersistedFilters = { search, statusFilter, sortBy, viewMode };
+      window.sessionStorage.setItem(PERSIST_KEY, JSON.stringify(payload));
+    } catch {
+      // storage cheio/bloqueado: silenciosamente ignora — não é crítico.
+    }
+  }, [search, statusFilter, sortBy, viewMode]);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
