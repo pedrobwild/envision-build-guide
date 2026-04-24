@@ -447,13 +447,17 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     .eq("is_published_version", true)
     .neq("id", budgetId);
 
-  // Audit: superseded
+  // Audit: superseded (registra que o link foi transferido para a nova versão)
   if (prevPublished && prevPublished.id !== budgetId) {
     await logVersionEvent({
       event_type: "version_superseded",
       budget_id: prevPublished.id,
       user_id: userId ?? null,
-      metadata: { version_number: prevPublished.version_number, replaced_by: budgetId },
+      metadata: {
+        version_number: prevPublished.version_number,
+        replaced_by: budgetId,
+        public_id_transferred: finalPublicId,
+      },
     });
   }
 
@@ -462,8 +466,14 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     event_type: "version_published",
     budget_id: budgetId,
     user_id: userId ?? null,
-    metadata: { version_number: published?.version_number ?? "?", public_id: publicId },
+    metadata: {
+      version_number: published?.version_number ?? "?",
+      public_id: finalPublicId,
+      inherited_public_id: Boolean(prevPublished?.public_id),
+    },
   });
+
+  return { publicId: finalPublicId };
 }
 
 /**
