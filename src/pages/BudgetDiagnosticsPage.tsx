@@ -322,6 +322,37 @@ export default function BudgetDiagnosticsPage() {
       });
     }
 
+    // 8. RLS — sempre roda; útil tanto em sucesso quanto em falha,
+    // mas o card de recomendações destaca apenas quando há divergência.
+    updateStep("rls", { status: "running" });
+    const t7 = performance.now();
+    try {
+      const report = await diagnoseBudgetRls(publicId);
+      const dur = Math.round(performance.now() - t7);
+      setRlsReport(report);
+      const blockedAnon = report.checks.some(
+        (c) => c.role === "anon" && (c.status === "blocked" || c.status === "error")
+      );
+      const criticalRecs = report.recommendations.filter((r) => r.severity === "critical").length;
+      updateStep("rls", {
+        status: criticalRecs > 0 ? "fail" : blockedAnon ? "warn" : "ok",
+        detail:
+          criticalRecs > 0
+            ? `${criticalRecs} ajuste(s) crítico(s) recomendado(s) — veja "Recomendações de RLS" abaixo.`
+            : blockedAnon
+            ? "Há diferenças entre acesso anônimo e autenticado — veja recomendações."
+            : "Permissões consistentes entre anônimo e autenticado.",
+        durationMs: dur,
+      });
+    } catch (err) {
+      const dur = Math.round(performance.now() - t7);
+      updateStep("rls", {
+        status: "fail",
+        detail: `Falha ao executar diagnóstico de RLS: ${(err as Error).message}`,
+        durationMs: dur,
+      });
+    }
+
     setRunning(false);
   }
 
