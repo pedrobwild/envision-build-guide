@@ -107,11 +107,45 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
   const timelineMeta: { label: string; value: string; mono?: boolean }[] = [];
   if (budget.prazo_dias_uteis) timelineMeta.push({ label: "Execução", value: `${budget.prazo_dias_uteis} dias úteis`, mono: true });
 
+  // Pré-carrega o background hero. Se falhar, exibe um gradient elegante
+  // como fallback e oferece um botão "tentar novamente" no canto da nav,
+  // sem nunca bloquear a renderização do conteúdo do orçamento.
+  const [heroBgStatus, setHeroBgStatus] = useState<"loading" | "ok" | "error">("loading");
+  const [heroAttempt, setHeroAttempt] = useState(0);
+
+  useEffect(() => {
+    const url = heroAttempt === 0 ? headerBg : `${headerBg}?retry=${heroAttempt}`;
+    const img = new Image();
+    img.onload = () => setHeroBgStatus("ok");
+    img.onerror = () => setHeroBgStatus("error");
+    img.src = url;
+    setHeroBgStatus("loading");
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [heroAttempt]);
+
+  const heroBgUrl = heroAttempt === 0 ? headerBg : `${headerBg}?retry=${heroAttempt}`;
+  const heroLoaded = heroBgStatus === "ok";
+
   return (
     <header className="relative">
       <div className="relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${headerBg})` }} />
+        {/* Background — quando a imagem falha, mantemos um gradient sólido elegante
+            para que o cabeçalho continue legível e a página não fique "quebrada". */}
+        {heroLoaded ? (
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroBgUrl})` }}
+            aria-hidden
+          />
+        ) : (
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950"
+            aria-hidden
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/70 lg:from-black/50 lg:via-black/30 lg:to-black/65" />
         <div
           className="absolute inset-0 hidden lg:block opacity-[0.012] pointer-events-none"
