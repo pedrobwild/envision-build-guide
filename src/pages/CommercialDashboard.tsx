@@ -245,10 +245,29 @@ export default function CommercialDashboard() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [syncedBudgetIds, setSyncedBudgetIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("recente");
-  const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
+  // Persistimos busca/filtros/visualização em sessionStorage para que o usuário
+  // não perca o contexto ao alternar Kanban/Lista, trocar status ou recarregar
+  // a página dentro da mesma sessão. Chave única do dashboard comercial.
+  const PERSIST_KEY = "commercialDashboard:filters:v1";
+  type PersistedFilters = {
+    search?: string;
+    statusFilter?: string;
+    sortBy?: SortOption;
+    viewMode?: "list" | "kanban";
+  };
+  const persisted = (() => {
+    if (typeof window === "undefined") return {} as PersistedFilters;
+    try {
+      const raw = window.sessionStorage.getItem(PERSIST_KEY);
+      return raw ? (JSON.parse(raw) as PersistedFilters) : {};
+    } catch {
+      return {} as PersistedFilters;
+    }
+  })();
+  const [search, setSearch] = useState<string>(persisted.search ?? "");
+  const [statusFilter, setStatusFilter] = useState<string>(persisted.statusFilter ?? "all");
+  const [sortBy, setSortBy] = useState<SortOption>(persisted.sortBy ?? "recente");
+  const [viewMode, setViewMode] = useState<"list" | "kanban">(persisted.viewMode ?? "kanban");
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
   const [pipelineFilter, setPipelineFilter] = useState<string>("all");
