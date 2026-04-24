@@ -126,6 +126,7 @@ export default function BudgetDiagnosticsPage() {
   const [steps, setSteps] = useState<StepResult[]>(INITIAL_STEPS);
   const [running, setRunning] = useState(false);
   const [resolvedId, setResolvedId] = useState<string>("");
+  const [rlsReport, setRlsReport] = useState<RlsDiagnosticReport | null>(null);
 
   function updateStep(id: string, patch: Partial<StepResult>) {
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
