@@ -928,37 +928,42 @@ export default function CommercialDashboard() {
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="border-b border-border bg-card sticky top-0 z-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div>
-                <h1 className="text-lg font-semibold font-display text-foreground">Meus Negócios</h1>
-                <p className="text-sm text-muted-foreground font-body">
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg font-semibold font-display text-foreground truncate">Meus Negócios</h1>
+                <p className="text-[11px] sm:text-sm text-muted-foreground font-body truncate">
                   {profile?.full_name || "Comercial"} · {counts.total} negócio{counts.total !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => setNewDealOpen(true)}>
-                <Plus className="h-4 w-4 mr-1.5" />
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button size="sm" onClick={() => setNewDealOpen(true)} className="h-8 px-2.5 sm:h-9 sm:px-3">
+                <Plus className="h-4 w-4 sm:mr-1.5" />
                 <span className="hidden sm:inline">Criar Negócio</span>
+                <span className="sr-only sm:hidden">Criar negócio</span>
               </Button>
               <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
                 <Button
                   variant={viewMode === "list" ? "secondary" : "ghost"}
-                  size="sm" className="h-7 px-2.5 gap-1.5 text-xs"
+                  size="sm" className="h-7 px-2 sm:px-2.5 gap-1 sm:gap-1.5 text-xs"
                   onClick={() => setViewMode("list")}
+                  aria-label="Visualização em lista"
                 >
-                  <LayoutList className="h-3.5 w-3.5" />Lista
+                  <LayoutList className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Lista</span>
                 </Button>
                 <Button
                   variant={viewMode === "kanban" ? "secondary" : "ghost"}
-                  size="sm" className="h-7 px-2.5 gap-1.5 text-xs"
+                  size="sm" className="h-7 px-2 sm:px-2.5 gap-1 sm:gap-1.5 text-xs"
                   onClick={() => setViewMode("kanban")}
+                  aria-label="Visualização kanban"
                 >
-                  <Columns3 className="h-3.5 w-3.5" />Kanban
+                  <Columns3 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Kanban</span>
                 </Button>
               </div>
             </div>
