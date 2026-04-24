@@ -782,8 +782,11 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
+  // Distance maior (12px) reduz drags acidentais quando o usuário só quer
+  // clicar — qualquer movimento involuntário até 12px ainda conta como click,
+  // garantindo que o navigate(/admin/demanda/:id) dispare consistentemente.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 12 } })
   );
 
   const activeBudget = activeId ? budgets.find((b) => b.id === activeId) : null;
