@@ -929,7 +929,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
             )}
 
             <p className="text-xs text-muted-foreground font-body">
-              ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública do orçamento. Arraste os thumbnails para definir a ordem de exibição.
+              ✅ Os arquivos enviados aqui aparecem automaticamente na galeria pública. Arraste para reordenar e clique na <Star className="inline h-3 w-3 -mt-0.5 text-gold fill-gold" /> para definir uma <strong className="text-foreground">capa principal</strong> por aba (aparece primeiro no público).
             </p>
           </>
         )}
