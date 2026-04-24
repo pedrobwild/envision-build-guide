@@ -42,6 +42,11 @@ interface RpcBudgetRow {
   header_config?: Record<string, unknown> | null;
   budget_pdf_url?: string | null;
   manual_total?: number | null;
+  is_addendum?: boolean | null;
+  addendum_number?: number | null;
+  addendum_summary?: string | null;
+  addendum_approved_at?: string | null;
+  addendum_approved_by_name?: string | null;
 }
 
 interface SectionRow {

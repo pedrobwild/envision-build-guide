@@ -11,6 +11,8 @@ export interface BudgetSection {
   excluded_bullets?: string[] | null;
   notes?: string | null;
   is_optional?: boolean;
+  /** Addendum: marks if this section was added or removed by the addendum */
+  addendum_action?: "add" | "remove" | null;
   items: BudgetItem[];
 }
 
@@ -27,6 +29,8 @@ export interface BudgetItem {
   internal_total?: number | null;
   internal_unit_price?: number | null;
   bdi_percentage?: number | null;
+  /** Addendum: marks if this item was added or removed by the addendum */
+  addendum_action?: "add" | "remove" | null;
   images?: BudgetItemImage[];
 }
 
