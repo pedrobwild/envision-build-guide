@@ -280,6 +280,19 @@ export default function CommercialDashboard() {
   const [nextActionPreset, setNextActionPreset] = useState<{ type: string; title: string } | null>(null);
   const [historyBudget, setHistoryBudget] = useState<BudgetRow | null>(null);
 
+  // Persiste busca + filtros básicos + visualização sempre que mudarem.
+  // Usamos sessionStorage para não atravessar abas ou reinícios do navegador,
+  // mantendo a experiência limpa em novas sessões.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const payload: PersistedFilters = { search, statusFilter, sortBy, viewMode };
+      window.sessionStorage.setItem(PERSIST_KEY, JSON.stringify(payload));
+    } catch {
+      // storage cheio/bloqueado: silenciosamente ignora — não é crítico.
+    }
+  }, [search, statusFilter, sortBy, viewMode]);
+
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
   const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
