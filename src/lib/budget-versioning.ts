@@ -393,32 +393,53 @@ export async function setCurrentVersion(budgetId: string, groupId: string, userI
 /**
  * Publish a specific version — marks it as the published one.
  * Only one version per group can be published at a time.
+ *
+ * IMPORTANTE: Se já existir uma versão publicada no grupo, o `public_id` dela é
+ * **transferido** para a nova versão para que o link compartilhado com o cliente
+ * (ex.: /o/<publicId>) continue funcionando e passe a apontar para o conteúdo
+ * mais recente. O `publicId` informado é usado apenas como fallback quando não
+ * há versão publicada anterior (primeira publicação do grupo).
  */
 export async function publishVersion(budgetId: string, groupId: string, publicId: string, userId?: string) {
-  // Find previously published version for audit
+  // Find previously published version (we'll transfer its public_id)
   const { data: prevPublished } = await supabase
     .from("budgets")
-    .select("id, version_number")
+    .select("id, version_number, public_id")
     .eq("version_group_id", groupId)
     .eq("is_published_version", true)
+    .neq("id", budgetId)
     .limit(1)
     .maybeSingle();
 
-  // Step 1: Publish the new version FIRST (avoids window where no version is published)
+  // Decide qual public_id usar: o da versão anteriormente publicada (preserva o link)
+  // ou o fornecido (primeira publicação do grupo).
+  const finalPublicId = prevPublished?.public_id || publicId;
+
+  // Step 1: Se há versão publicada anterior, libera o public_id dela ANTES (UNIQUE constraint)
+  // e marca como superseded. Pequena janela onde o link 404 — aceita por simplicidade
+  // (alternativa exigiria swap em transação RPC).
+  if (prevPublished?.id) {
+    await supabase
+      .from("budgets")
+      .update({ is_published_version: false, status: "superseded", public_id: null })
+      .eq("id", prevPublished.id);
+  }
+
+  // Step 2: Publica a nova versão herdando o public_id antigo (ou usando o novo)
   const { data: published, error: pubErr } = await supabase
     .from("budgets")
     .update({
       is_published_version: true,
       status: "published",
-      public_id: publicId,
+      public_id: finalPublicId,
     })
     .eq("id", budgetId)
-    .select("version_number")
+    .select("version_number, public_id")
     .single();
 
   if (pubErr) throw pubErr;
 
-  // Step 2: THEN supersede old versions (excluding the one just published)
+  // Step 3: Demote QUALQUER outra versão publicada residual (defesa em profundidade)
   await supabase
     .from("budgets")
     .update({ is_published_version: false, status: "superseded" })
