@@ -13,6 +13,7 @@ import { MobileStepBreadcrumb } from "@/components/budget/MobileStepBreadcrumb";
 import { AnimatedSection } from "@/components/budget/AnimatedSection";
 import { CollapsingSectionHeader } from "@/components/budget/CollapsingSectionHeader";
 import { PublicBudgetSkeleton } from "@/components/budget/PublicBudgetSkeleton";
+import { PublicBudgetErrorBoundary } from "@/components/budget/PublicBudgetErrorBoundary";
 import { demoBudget } from "@/lib/demo-budget-data";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -330,6 +331,7 @@ export default function PublicBudget() {
   const activeRoomData = rooms.find((r) => r.id === activeRoom);
 
   return (
+    <PublicBudgetErrorBoundary budget={budget}>
     <div className="min-h-screen bg-background" style={{ scrollSnapType: 'y proximity' }}>
       {/* Skip to content — keyboard/screen reader */}
       <a
@@ -668,5 +670,6 @@ export default function PublicBudget() {
 
       <ScrollToTopButton />
     </div>
+    </PublicBudgetErrorBoundary>
   );
 }
