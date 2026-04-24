@@ -1,5 +1,4 @@
 import React from "react";
-import { hardReloadWithCacheBust, wasJustCacheBusted } from "@/lib/cache-bust";
 
 interface ChunkErrorBoundaryProps {
   children: React.ReactNode;
@@ -7,16 +6,20 @@ interface ChunkErrorBoundaryProps {
 
 interface ChunkErrorBoundaryState {
   hasError: boolean;
-  reloading: boolean;
 }
 
+/**
+ * Captura falhas de chunk (módulos dinâmicos não encontrados após deploy) e
+ * oferece um botão manual para recarregar. Não dispara reload automático para
+ * evitar loops e telas de "Atualizando..." que confundem o cliente.
+ */
 export class ChunkErrorBoundary extends React.Component<
   ChunkErrorBoundaryProps,
   ChunkErrorBoundaryState
 > {
   constructor(props: ChunkErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, reloading: false };
+    this.state = { hasError: false };
   }
 
   static isChunkError(error: Error) {
@@ -30,34 +33,15 @@ export class ChunkErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error): Partial<ChunkErrorBoundaryState> {
-    return { hasError: ChunkErrorBoundary.isChunkError(error) };
-  }
-
-  componentDidMount() {
-    window.addEventListener("chunk-load-error", this.handleChunkError);
-
-    // Auto-recovery: se o boundary já caiu (ex.: chunk 404 após deploy) e
-    // ainda não tentamos um reload com cache-bust, tenta automaticamente.
-    if (this.state.hasError && !wasJustCacheBusted()) {
-      this.triggerHardReload();
+    if (ChunkErrorBoundary.isChunkError(error)) {
+      return { hasError: true };
     }
+    // Não captura outros erros — deixa propagar para boundaries de página
+    throw error;
   }
 
-  componentWillUnmount() {
-    window.removeEventListener("chunk-load-error", this.handleChunkError);
-  }
-
-  handleChunkError = () => {
-    this.setState({ hasError: true });
-    if (!wasJustCacheBusted()) {
-      this.triggerHardReload();
-    }
-  };
-
-  triggerHardReload = () => {
-    if (this.state.reloading) return;
-    this.setState({ reloading: true });
-    void hardReloadWithCacheBust();
+  handleReload = () => {
+    window.location.reload();
   };
 
   render() {
@@ -65,23 +49,17 @@ export class ChunkErrorBoundary extends React.Component<
       return (
         <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background text-foreground p-8">
           <p className="text-lg font-medium text-center">
-            {this.state.reloading
-              ? "Atualizando para a versão mais recente..."
-              : "Uma nova versão do sistema está disponível."}
+            Uma nova versão do sistema está disponível.
           </p>
-          <p className="text-sm text-muted-foreground text-center">
-            {this.state.reloading
-              ? "Aguarde só um instante."
-              : "Clique abaixo para atualizar sem perder sua sessão."}
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
+            Clique abaixo para atualizar e continuar.
           </p>
-          {!this.state.reloading && (
-            <button
-              onClick={this.triggerHardReload}
-              className="px-6 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Atualizar agora
-            </button>
-          )}
+          <button
+            onClick={this.handleReload}
+            className="px-6 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Atualizar
+          </button>
         </div>
       );
     }
