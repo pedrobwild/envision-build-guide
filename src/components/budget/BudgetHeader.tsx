@@ -142,7 +142,7 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
           />
         ) : (
           <div
-            className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950"
+            className="absolute inset-0 bg-gradient-to-br from-foreground via-foreground/90 to-foreground"
             aria-hidden
           />
         )}
