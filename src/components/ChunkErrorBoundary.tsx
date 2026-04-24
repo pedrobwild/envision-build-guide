@@ -1,4 +1,5 @@
 import React from "react";
+import { reportChunkLoadError } from "@/lib/chunk-telemetry";
 
 interface ChunkErrorBoundaryProps {
   children: React.ReactNode;
