@@ -43,8 +43,8 @@ export function PublicBudgetFallback({ budget, errorMessage }: PublicBudgetFallb
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-xl space-y-6">
         {/* Aviso */}
-        <div className="flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
-          <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4">
+          <AlertTriangle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
           <div className="space-y-1">
             <p className="text-sm font-body font-semibold text-foreground">
               Exibindo resumo simplificado
