@@ -686,21 +686,115 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
           </div>
         ) : (
           <>
-            {/* Upload button */}
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => inputRef.current?.click()}
-                disabled={uploading || reordering}
-                className="gap-2"
-              >
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                {uploading ? "Enviando..." : "Adicionar arquivos"}
-              </Button>
-              <span className="text-xs text-muted-foreground font-body">
-                Pasta: <code className="bg-muted px-1 py-0.5 rounded text-xs">{folderMap[activeTab as StorageTab]}</code>
-              </span>
+            {/* Action toolbar */}
+            <div className="flex flex-wrap items-center gap-2">
+              {!selectionMode ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => inputRef.current?.click()}
+                    disabled={uploading || reordering || bulkDeleting}
+                    className="gap-2"
+                  >
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                    {uploading ? "Enviando..." : "Adicionar arquivos"}
+                  </Button>
+
+                  {currentFiles.length > 0 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectionMode(true)}
+                        disabled={uploading || reordering || bulkDeleting}
+                        className="gap-2"
+                      >
+                        <CheckSquare className="h-4 w-4" />
+                        Selecionar
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmDialog({ kind: "all-tab", count: currentFiles.length })}
+                        disabled={uploading || reordering || bulkDeleting}
+                        className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Limpar aba
+                      </Button>
+                    </>
+                  )}
+
+                  {totalAllTabs > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setConfirmDialog({ kind: "all", count: totalAllTabs })}
+                      disabled={uploading || reordering || bulkDeleting}
+                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Apagar todas as mídias
+                    </Button>
+                  )}
+
+                  <span className="text-xs text-muted-foreground font-body w-full sm:w-auto sm:ml-auto">
+                    Pasta: <code className="bg-muted px-1 py-0.5 rounded text-xs">{folderMap[activeTab as StorageTab]}</code>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm font-display font-semibold text-foreground">
+                    {selected.size} de {currentFiles.length} selecionada(s)
+                  </span>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllInTab}
+                    disabled={bulkDeleting}
+                    className="gap-2"
+                  >
+                    <CheckSquare className="h-4 w-4" />
+                    Selecionar tudo
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelected(new Set())}
+                    disabled={bulkDeleting || selected.size === 0}
+                    className="gap-2"
+                  >
+                    <Square className="h-4 w-4" />
+                    Limpar seleção
+                  </Button>
+
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setConfirmDialog({ kind: "selected", count: selected.size })}
+                    disabled={bulkDeleting || selected.size === 0}
+                    className="gap-2"
+                  >
+                    {bulkDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    Apagar selecionadas ({selected.size})
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={exitSelectionMode}
+                    disabled={bulkDeleting}
+                    className="gap-2 ml-auto"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancelar
+                  </Button>
+                </>
+              )}
             </div>
 
             <input
@@ -740,6 +834,9 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                         tab={activeTab as StorageTab}
                         onDelete={handleDelete}
                         reordering={reordering}
+                        selectionMode={selectionMode}
+                        selected={selected.has(f.name)}
+                        onToggleSelect={toggleSelect}
                       />
                     ))}
                   </div>
@@ -752,6 +849,38 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
             </p>
           </>
         )}
+
+        {/* Confirmation dialog for bulk delete */}
+        <AlertDialog open={!!confirmDialog} onOpenChange={(open) => !open && !bulkDeleting && setConfirmDialog(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {confirmDialog?.kind === "selected" && "Apagar mídias selecionadas?"}
+                {confirmDialog?.kind === "all-tab" && `Limpar a aba "${currentTab.label}"?`}
+                {confirmDialog?.kind === "all" && "Apagar todas as mídias do orçamento?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmDialog?.kind === "selected" && `Você está prestes a apagar ${confirmDialog.count} arquivo(s). Esta ação é permanente e não pode ser desfeita.`}
+                {confirmDialog?.kind === "all-tab" && `Você está prestes a apagar todos os ${confirmDialog.count} arquivo(s) desta aba. Esta ação é permanente e não pode ser desfeita.`}
+                {confirmDialog?.kind === "all" && `Você está prestes a apagar TODAS as ${confirmDialog.count} mídias deste orçamento (renders 3D, fotos, projeto executivo e vídeo). Esta ação é permanente e não pode ser desfeita.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleConfirmDelete(); }}
+                disabled={bulkDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {bulkDeleting ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Apagando...</>
+                ) : (
+                  "Apagar"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
