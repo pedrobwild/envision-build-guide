@@ -22,6 +22,7 @@ import {
   Brain,
   TrendingUp,
   MessageCircle,
+  Stethoscope,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, Link } from "react-router-dom";
@@ -93,6 +94,7 @@ const FERRAMENTAS_ITEMS: NavItem[] = [
   { title: "Regras de Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
   { title: "Digisac", url: "/admin/digisac", icon: MessageCircle, roles: ["admin"] },
   { title: "Avaliação QA", url: "/qa", icon: Shield, roles: ["admin"] },
+  { title: "Diagnóstico de Orçamento", url: "/admin/diagnostico", icon: Stethoscope, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Sistema", url: "/admin/sistema", icon: Wrench, roles: ["admin"] },
 ];
 
