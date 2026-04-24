@@ -89,7 +89,7 @@ export function CommandPalette() {
   const { profile } = useUserProfile();
   const userRoles = profile?.roles ?? [];
 
-  // Global shortcut Cmd/Ctrl + K
+  // Global shortcut Cmd/Ctrl + K + custom event para mobile
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
@@ -97,8 +97,13 @@ export function CommandPalette() {
         setOpen((o) => !o);
       }
     };
+    const openHandler = () => setOpen(true);
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("command-palette:open", openHandler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      window.removeEventListener("command-palette:open", openHandler);
+    };
   }, []);
 
   // Debounced search
@@ -285,12 +290,13 @@ export function CommandPalette() {
  */
 export function CommandPaletteTrigger({ className }: { className?: string }) {
   const dispatch = () => {
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, ctrlKey: true }));
+    window.dispatchEvent(new CustomEvent("command-palette:open"));
   };
   return (
     <button
       type="button"
       onClick={dispatch}
+      aria-label="Buscar"
       className={
         className ??
         "inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
