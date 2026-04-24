@@ -45,6 +45,7 @@ const ForecastPage = lazy(() => import("./pages/ForecastPage"));
 const AgendaPage = lazy(() => import("./pages/AgendaPage"));
 const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 const DigisacPage = lazy(() => import("./pages/DigisacPage"));
+const AssistantPage = lazy(() => import("./pages/AssistantPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -121,6 +122,7 @@ const App = () => (
                   <Route path="/admin/agenda" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><AgendaPage /></RoleGuard></AdminPage>}/>
                   <Route path="/admin/insights" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><InsightsPage /></RoleGuard></AdminPage>}/>
                   <Route path="/admin/digisac" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><DigisacPage /></RoleGuard></AdminPage>}/>
+                  <Route path="/admin/assistente" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><AssistantPage /></RoleGuard></AdminPage>}/>
                   <Route path="/o/:publicId" element={<PublicBudget />} />
                   <Route path="/obra/:projectId/orcamento" element={<OrcamentoPage />} />
                   <Route path="/qa" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><QAEvaluator /></RoleGuard></AdminPage>} />

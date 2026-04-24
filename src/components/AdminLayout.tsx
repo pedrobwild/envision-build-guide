@@ -5,6 +5,7 @@ import { GlobalLoadingBar } from "@/components/GlobalLoadingBar";
 import { AdminBottomNav } from "@/components/admin/AdminBottomNav";
 import { CommandPalette, CommandPaletteTrigger } from "@/components/CommandPalette";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
+import { AssistantLauncher } from "@/components/ai/AssistantLauncher";
 
 function ShortcutsBridge() {
   useGlobalShortcuts();
@@ -32,6 +33,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <AdminBottomNav />
+      <AssistantLauncher />
     </SidebarProvider>
   );
 }
