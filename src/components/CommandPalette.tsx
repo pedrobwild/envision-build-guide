@@ -81,6 +81,53 @@ interface ClientHit {
   phone: string | null;
 }
 
+// Normaliza string removendo acentos para casamento case/diacritic-insensitive.
+function stripDiacritics(input: string): string {
+  return input.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// Quebra `text` em fragmentos, destacando trechos que casam com `query`.
+// Comparação ignora maiúsculas/minúsculas e acentos, mas a renderização
+// preserva os caracteres originais do texto.
+function Highlight({ text, query }: { text: string; query: string }) {
+  const trimmed = query.trim();
+  if (!trimmed || !text) return <>{text}</>;
+
+  const haystack = stripDiacritics(text).toLowerCase();
+  const needle = stripDiacritics(trimmed).toLowerCase();
+  if (!needle) return <>{text}</>;
+
+  const parts: Array<{ value: string; match: boolean }> = [];
+  let cursor = 0;
+  while (cursor < text.length) {
+    const idx = haystack.indexOf(needle, cursor);
+    if (idx === -1) {
+      parts.push({ value: text.slice(cursor), match: false });
+      break;
+    }
+    if (idx > cursor) parts.push({ value: text.slice(cursor, idx), match: false });
+    parts.push({ value: text.slice(idx, idx + needle.length), match: true });
+    cursor = idx + needle.length;
+  }
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.match ? (
+          <mark
+            key={i}
+            className="rounded-sm bg-primary/20 px-0.5 text-foreground font-medium"
+          >
+            {part.value}
+          </mark>
+        ) : (
+          <span key={i}>{part.value}</span>
+        )
+      )}
+    </>
+  );
+}
+
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -238,9 +285,17 @@ export function CommandPalette() {
                 >
                   <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-sm truncate">{b.project_name}</span>
+                    <span className="text-sm truncate">
+                      <Highlight text={b.project_name} query={query} />
+                    </span>
                     <span className="text-xs text-muted-foreground truncate">
-                      {b.sequential_code ? `${b.sequential_code} · ` : ""}{b.client_name}
+                      {b.sequential_code ? (
+                        <>
+                          <Highlight text={b.sequential_code} query={query} />
+                          {" · "}
+                        </>
+                      ) : null}
+                      <Highlight text={b.client_name} query={query} />
                     </span>
                   </div>
                   {b.public_id && (
@@ -274,10 +329,12 @@ export function CommandPalette() {
                 >
                   <Users className="mr-2 h-4 w-4 text-muted-foreground" />
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-sm truncate">{c.name}</span>
+                    <span className="text-sm truncate">
+                      <Highlight text={c.name} query={query} />
+                    </span>
                     {(c.email || c.phone) && (
                       <span className="text-xs text-muted-foreground truncate">
-                        {c.email || c.phone}
+                        <Highlight text={c.email || c.phone || ""} query={query} />
                       </span>
                     )}
                   </div>
