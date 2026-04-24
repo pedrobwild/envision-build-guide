@@ -123,11 +123,6 @@ describe("CommandPalette — busca mobile (regressão Roberto Rocha)", () => {
     // Digita a query do cliente histórico.
     fireEvent.change(input, { target: { value: "Roberto" } });
 
-    // Avança o debounce (220ms) e flushes pendentes.
-    await act(async () => {
-      vi.advanceTimersByTime(300);
-    });
-
     await waitFor(() => {
       // Resultado de orçamento aparece (vem do mock do Supabase, sem filtro de data).
       expect(screen.getByText("Apartamento Roberto Rocha")).toBeInTheDocument();
