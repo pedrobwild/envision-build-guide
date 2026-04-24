@@ -89,7 +89,7 @@ export function CommandPalette() {
   const { profile } = useUserProfile();
   const userRoles = profile?.roles ?? [];
 
-  // Global shortcut Cmd/Ctrl + K
+  // Global shortcut Cmd/Ctrl + K + custom event para mobile
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
@@ -97,8 +97,13 @@ export function CommandPalette() {
         setOpen((o) => !o);
       }
     };
+    const openHandler = () => setOpen(true);
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("command-palette:open", openHandler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      window.removeEventListener("command-palette:open", openHandler);
+    };
   }, []);
 
   // Debounced search
