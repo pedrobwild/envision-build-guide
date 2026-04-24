@@ -103,7 +103,7 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
       className={cn(
         "group relative rounded-lg overflow-hidden border bg-muted aspect-square transition-all",
         selectionMode && "cursor-pointer",
-        selected ? "border-primary ring-2 ring-primary" : isPrimary ? "border-amber-400 ring-2 ring-amber-400/60" : "border-border",
+        selected ? "border-primary ring-2 ring-primary" : isPrimary ? "border-gold ring-2 ring-gold/60" : "border-border",
         isDragging && "ring-2 ring-primary shadow-lg"
       )}
     >
@@ -124,7 +124,7 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
         <button
           {...attributes}
           {...listeners}
-          className="absolute top-1 left-1 z-20 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          className="absolute top-1 left-1 z-20 p-1 rounded bg-charcoal/60 text-cream opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
           title="Arrastar para reordenar"
         >
           <GripVertical className="h-3.5 w-3.5" />
@@ -134,7 +134,7 @@ const SortableMediaItem = forwardRef<HTMLDivElement, {
       {/* Primary badge (always visible when primary) */}
       {isPrimary && !selectionMode && (
         <div
-          className="absolute top-1 right-1 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-400 text-amber-950 text-[10px] font-display font-bold shadow"
+          className="absolute top-1 right-1 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold text-charcoal text-[10px] font-display font-bold shadow"
           title="Mídia principal — aparece primeiro na galeria pública"
         >
           <Star className="h-2.5 w-2.5 fill-current" />
