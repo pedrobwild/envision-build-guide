@@ -110,7 +110,7 @@ export default function AdminDashboard() {
         const n = Number(row.total);
         if (Number.isFinite(n)) totalsMap.set(row.id, n);
       });
-      const rawBudgets = (Array.isArray(budgetsRes.data) ? budgetsRes.data : []) as Array<Record<string, unknown> & { id: string }>;
+      const rawBudgets = (Array.isArray(budgetsRes.data) ? budgetsRes.data : []) as unknown as Array<Record<string, unknown> & { id: string }>;
       const enriched = rawBudgets.map((b) => ({
         ...b,
         // `computed_total` é consumido por `getBudgetTotal` em useDashboardMetrics
