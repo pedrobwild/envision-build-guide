@@ -2,11 +2,6 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; media-src 'self' blob: https:; frame-src 'self' https:; worker-src 'self' blob:;" />
-    <!-- Cache-busting: o HTML é sempre revalidado; chunks JS/CSS já têm hash via Vite -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#004c7f" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1a2332" media="(prefers-color-scheme: dark)" />
@@ -32,22 +27,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      window.__chunkLoadFailed = false;
-
-      window.addEventListener('error', function(e) {
-        if (
-          e.message &&
-          (e.message.includes('Failed to fetch dynamically imported module') ||
-            e.message.includes('Importing a module script failed') ||
-            e.message.includes('Unable to preload CSS'))
-        ) {
-          if (!window.__chunkLoadFailed) {
-            window.__chunkLoadFailed = true;
-            window.dispatchEvent(new CustomEvent('chunk-load-error'));
-          }
-        }
-      });
-    </script>
   </body>
 </html>
