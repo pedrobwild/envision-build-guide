@@ -36,6 +36,12 @@ export const PUBLIC_BUDGET_COLUMNS = [
   "header_config",
   "budget_pdf_url",
   "manual_total",
+  // Addendum-related (visible publicly so client sees badge + summary + delta)
+  "is_addendum",
+  "addendum_number",
+  "addendum_summary",
+  "addendum_approved_at",
+  "addendum_approved_by_name",
 ] as const;
 
 export const PUBLIC_BUDGET_SELECT = PUBLIC_BUDGET_COLUMNS.join(", ");
@@ -61,6 +67,7 @@ export const PUBLIC_SECTION_COLUMNS = [
   "excluded_bullets",
   "notes",
   "is_optional",
+  "addendum_action",
 ] as const;
 
 export const PUBLIC_SECTION_SELECT = PUBLIC_SECTION_COLUMNS.join(", ");
@@ -81,6 +88,7 @@ export const PUBLIC_ITEM_COLUMNS = [
   "internal_unit_price",
   "internal_total",
   "bdi_percentage",
+  "addendum_action",
 ] as const;
 
 export const PUBLIC_ITEM_SELECT = PUBLIC_ITEM_COLUMNS.join(", ");

@@ -9,7 +9,9 @@ export type VersionEventType =
   | "version_compared"
   | "version_activated"
   | "change_reason_updated"
-  | "revision_requested";
+  | "revision_requested"
+  | "addendum_created"
+  | "addendum_approved";
 
 interface VersionEventPayload {
   event_type: VersionEventType;

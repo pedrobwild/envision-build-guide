@@ -11,6 +11,8 @@ export interface BudgetSection {
   excluded_bullets?: string[] | null;
   notes?: string | null;
   is_optional?: boolean;
+  /** Addendum: marks if this section was added or removed by the addendum */
+  addendum_action?: "add" | "remove" | null;
   items: BudgetItem[];
 }
 
@@ -27,6 +29,8 @@ export interface BudgetItem {
   internal_total?: number | null;
   internal_unit_price?: number | null;
   bdi_percentage?: number | null;
+  /** Addendum: marks if this item was added or removed by the addendum */
+  addendum_action?: "add" | "remove" | null;
   images?: BudgetItemImage[];
 }
 
@@ -86,6 +90,12 @@ export interface BudgetData {
   approved_by_name?: string | null;
   lead_email?: string | null;
   lead_name?: string | null;
+  /** Addendum metadata (set when this budget IS an addendum) */
+  is_addendum?: boolean | null;
+  addendum_number?: number | null;
+  addendum_summary?: string | null;
+  addendum_approved_at?: string | null;
+  addendum_approved_by_name?: string | null;
   sections: BudgetSection[];
   adjustments: BudgetAdjustment[];
   rooms: BudgetRoom[];
