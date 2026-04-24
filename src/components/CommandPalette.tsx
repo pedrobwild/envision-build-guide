@@ -329,10 +329,12 @@ export function CommandPalette() {
                 >
                   <Users className="mr-2 h-4 w-4 text-muted-foreground" />
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-sm truncate">{c.name}</span>
+                    <span className="text-sm truncate">
+                      <Highlight text={c.name} query={query} />
+                    </span>
                     {(c.email || c.phone) && (
                       <span className="text-xs text-muted-foreground truncate">
-                        {c.email || c.phone}
+                        <Highlight text={c.email || c.phone || ""} query={query} />
                       </span>
                     )}
                   </div>
