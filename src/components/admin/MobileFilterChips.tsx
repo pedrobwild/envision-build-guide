@@ -28,18 +28,32 @@ export function MobileFilterChips({
   onSearchChange,
   searchPlaceholder = "Buscar...",
 }: MobileFilterChipsProps) {
-  const [searchOpen, setSearchOpen] = useState(false);
+  // Mantém a barra de busca aberta sempre que houver termo digitado, para
+  // o usuário não "perder" a busca ao colapsar acidentalmente em mobile.
+  const [searchOpen, setSearchOpen] = useState(() => Boolean(searchValue));
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Sincroniza estado quando a busca for setada externamente (ex.: visões salvas).
   useEffect(() => {
-    if (searchOpen && inputRef.current) {
+    if (searchValue && !searchOpen) setSearchOpen(true);
+  }, [searchValue, searchOpen]);
+
+  useEffect(() => {
+    if (searchOpen && inputRef.current && !searchValue) {
+      // Foca apenas quando o usuário acabou de abrir manualmente
       inputRef.current.focus();
     }
-  }, [searchOpen]);
+  }, [searchOpen, searchValue]);
 
-  const handleCloseSearch = () => {
-    setSearchOpen(false);
+  const handleClearSearch = () => {
     onSearchChange("");
+    inputRef.current?.focus();
+  };
+
+  const handleCollapseSearch = () => {
+    // Só permite colapsar quando o termo está vazio — assim a busca não
+    // some sem aviso e o usuário sempre vê o que filtrou.
+    if (!searchValue) setSearchOpen(false);
   };
 
   return (
@@ -63,10 +77,16 @@ export function MobileFilterChips({
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder={searchPlaceholder}
                 className="w-full h-9 pl-9 pr-9 rounded-lg border border-border bg-card text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                inputMode="search"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
               />
               <button
-                onClick={handleCloseSearch}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-muted flex items-center justify-center"
+                onClick={searchValue ? handleClearSearch : handleCollapseSearch}
+                aria-label={searchValue ? "Limpar busca" : "Fechar busca"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20"
               >
                 <X className="h-3 w-3 text-muted-foreground" />
               </button>
@@ -77,7 +97,7 @@ export function MobileFilterChips({
 
       {/* Chips row */}
       <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5">
-        {/* Search toggle chip */}
+        {/* Search toggle chip — sempre disponível, mostra o termo ativo quando colapsado */}
         {!searchOpen && (
           <button
             onClick={() => setSearchOpen(true)}
