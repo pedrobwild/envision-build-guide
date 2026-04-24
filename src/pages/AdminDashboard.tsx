@@ -84,7 +84,9 @@ export default function AdminDashboard() {
         supabase
           .from("budgets")
           .select(`${BUDGET_COLUMNS_FOR_METRICS}, sections(id, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)`)
-          .gte("created_at", "2026-04-15") // OPERATIONS_START_DATE — mesmo filtro aplicado no front
+          // Sem filtro por data: o painel de busca precisa enxergar TODOS os orçamentos
+          // (incluindo anteriores ao OPERATIONS_START_DATE). As métricas continuam recortadas
+          // a partir desse marco via `filteredBudgets` abaixo.
           .order("created_at", { ascending: false }),
         supabase.from("profiles").select("id, full_name"),
         supabase
