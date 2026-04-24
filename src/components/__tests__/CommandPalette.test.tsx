@@ -72,12 +72,7 @@ vi.mock("@/integrations/supabase/client", () => {
 });
 
 // cmdk filtra resultados via fuzzy matching; o mock garante que tudo passa.
-beforeEach(() => {
-  vi.useFakeTimers();
-});
-
 afterEach(() => {
-  vi.useRealTimers();
   vi.clearAllMocks();
 });
 
