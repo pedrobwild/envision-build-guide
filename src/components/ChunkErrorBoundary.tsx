@@ -41,6 +41,16 @@ export class ChunkErrorBoundary extends React.Component<
     throw error;
   }
 
+  componentDidCatch(error: Error) {
+    if (ChunkErrorBoundary.isChunkError(error)) {
+      void reportChunkLoadError({
+        errorName: error.name,
+        errorMessage: error.message,
+        extraMetadata: { source: "ChunkErrorBoundary" },
+      });
+    }
+  }
+
   handleReload = () => {
     window.location.reload();
   };
