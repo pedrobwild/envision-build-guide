@@ -709,6 +709,11 @@ export type Database = {
         Row: {
           ad_id: string | null
           ad_name: string | null
+          addendum_approved_at: string | null
+          addendum_approved_by_name: string | null
+          addendum_base_budget_id: string | null
+          addendum_number: number | null
+          addendum_summary: string | null
           adset_id: string | null
           adset_name: string | null
           approved_at: string | null
@@ -749,6 +754,7 @@ export type Database = {
           internal_cost: number | null
           internal_notes: string | null
           internal_status: string
+          is_addendum: boolean
           is_current_version: boolean | null
           is_published_version: boolean | null
           last_viewed_at: string | null
@@ -794,6 +800,11 @@ export type Database = {
         Insert: {
           ad_id?: string | null
           ad_name?: string | null
+          addendum_approved_at?: string | null
+          addendum_approved_by_name?: string | null
+          addendum_base_budget_id?: string | null
+          addendum_number?: number | null
+          addendum_summary?: string | null
           adset_id?: string | null
           adset_name?: string | null
           approved_at?: string | null
@@ -834,6 +845,7 @@ export type Database = {
           internal_cost?: number | null
           internal_notes?: string | null
           internal_status?: string
+          is_addendum?: boolean
           is_current_version?: boolean | null
           is_published_version?: boolean | null
           last_viewed_at?: string | null
@@ -879,6 +891,11 @@ export type Database = {
         Update: {
           ad_id?: string | null
           ad_name?: string | null
+          addendum_approved_at?: string | null
+          addendum_approved_by_name?: string | null
+          addendum_base_budget_id?: string | null
+          addendum_number?: number | null
+          addendum_summary?: string | null
           adset_id?: string | null
           adset_name?: string | null
           approved_at?: string | null
@@ -919,6 +936,7 @@ export type Database = {
           internal_cost?: number | null
           internal_notes?: string | null
           internal_status?: string
+          is_addendum?: boolean
           is_current_version?: boolean | null
           is_published_version?: boolean | null
           last_viewed_at?: string | null
@@ -962,6 +980,20 @@ export type Database = {
           win_probability?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "budgets_addendum_base_budget_id_fkey"
+            columns: ["addendum_base_budget_id"]
+            isOneToOne: false
+            referencedRelation: "budget_pipeline_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_addendum_base_budget_id_fkey"
+            columns: ["addendum_base_budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "budgets_client_id_fkey"
             columns: ["client_id"]
@@ -2150,6 +2182,7 @@ export type Database = {
       }
       items: {
         Row: {
+          addendum_action: string | null
           bdi_percentage: number | null
           catalog_item_id: string | null
           catalog_snapshot: Json | null
@@ -2170,6 +2203,7 @@ export type Database = {
           unit: string | null
         }
         Insert: {
+          addendum_action?: string | null
           bdi_percentage?: number | null
           catalog_item_id?: string | null
           catalog_snapshot?: Json | null
@@ -2190,6 +2224,7 @@ export type Database = {
           unit?: string | null
         }
         Update: {
+          addendum_action?: string | null
           bdi_percentage?: number | null
           catalog_item_id?: string | null
           catalog_snapshot?: Json | null
@@ -2751,6 +2786,7 @@ export type Database = {
       }
       sections: {
         Row: {
+          addendum_action: string | null
           budget_id: string
           cover_image_url: string | null
           created_at: string | null
@@ -2767,6 +2803,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          addendum_action?: string | null
           budget_id: string
           cover_image_url?: string | null
           created_at?: string | null
@@ -2783,6 +2820,7 @@ export type Database = {
           title?: string
         }
         Update: {
+          addendum_action?: string | null
           budget_id?: string
           cover_image_url?: string | null
           created_at?: string | null
@@ -2984,6 +3022,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_addendum: {
+        Args: { p_approved_by_name: string; p_public_id: string }
+        Returns: boolean
+      }
       archive_old_lead_payloads: { Args: never; Returns: number }
       budget_days_in_stage: { Args: { p_budget_id: string }; Returns: number }
       calc_lead_time_from_events: {
