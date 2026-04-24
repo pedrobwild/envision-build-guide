@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ZoomIn, ChevronLeft, ChevronRight, Play, Camera, Loader2 } from "lucide-react";
+import { ZoomIn, ChevronLeft, ChevronRight, Play, Loader2 } from "lucide-react";
 import { Lightbox } from "@/components/budget/Lightbox";
 import useEmblaCarousel from "embla-carousel-react";
 import { motion } from "framer-motion";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { useBudgetTours } from "@/hooks/useBudgetTours";
 import { Tour3DViewer } from "@/components/budget/Tour3DViewer";
+import { ImageWithRetry } from "@/components/budget/ImageWithRetry";
 
 type GalleryTab = "video3d" | "fotos3d" | "fotos" | "tour3d";
 
