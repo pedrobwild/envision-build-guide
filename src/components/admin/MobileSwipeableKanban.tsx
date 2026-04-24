@@ -76,10 +76,10 @@ export function MobileSwipeableKanban({
                   : "bg-muted/50 text-muted-foreground hover:bg-muted/80"
               )}
             >
-              <Icon className="h-3 w-3" />
-              <span className="hidden xs:inline">{col.label}</span>
+              <Icon className="h-3 w-3 shrink-0" />
+              <span className="truncate max-w-[110px]">{col.label}</span>
               <span className={cn(
-                "text-[10px] rounded-full px-1.5 min-w-[18px] text-center",
+                "text-[10px] rounded-full px-1.5 min-w-[18px] text-center shrink-0",
                 isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background/60"
               )}>
                 {col.count}

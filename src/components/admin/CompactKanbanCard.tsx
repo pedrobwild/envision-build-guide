@@ -327,8 +327,9 @@ export function CompactKanbanCard({
           </div>
         </div>
       </motion.div>
-      {/* Botões persistentes no canto superior direito */}
-      <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1">
+      {/* Botões persistentes — canto superior esquerdo (acima do avatar)
+          para não sobrepor a coluna de badges no canto direito */}
+      <div className="absolute top-1.5 left-1.5 z-10 flex items-center gap-1">
         {publicId && (
           <button
             type="button"
@@ -347,7 +348,7 @@ export function CompactKanbanCard({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onOpenHistory(); }}
-            className="h-5 w-5 rounded-full bg-card/80 border border-border/60 text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-5 w-5 rounded-full bg-card/80 border border-border/60 text-muted-foreground hover:text-primary hover:border-primary/40 flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 transition-opacity"
             title="Ver histórico e comunicação"
             aria-label="Histórico"
           >
