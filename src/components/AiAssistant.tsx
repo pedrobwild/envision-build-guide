@@ -1,5 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, X, Send, Loader2, Trash2 } from "lucide-react";
+import {
+  Sparkles,
+  X,
+  Send,
+  Loader2,
+  Trash2,
+  Paperclip,
+  FileText,
+  Image as ImageIcon,
+  FileSpreadsheet,
+  FileAudio,
+  File as FileIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -8,10 +20,61 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Attachment = {
+  name: string;
+  mimeType: string;
+  size: number;
+  /** image data URL (used for preview AND vision payload) */
+  dataUrl?: string;
+  /** base64 (no prefix) for non-image files */
+  base64?: string;
+};
 
-const STORAGE_KEY = "ai-assistant-history-v1";
+type Msg = {
+  role: "user" | "assistant";
+  content: string;
+  attachments?: Attachment[];
+};
+
+const STORAGE_KEY = "ai-assistant-history-v2";
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant-chat`;
+
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB
+const MAX_FILES = 5;
+
+const ACCEPTED_MIME = [
+  "image/*",
+  "application/pdf",
+  ".pdf,.png,.jpg,.jpeg,.webp,.gif",
+  ".xlsx,.xls,.csv",
+  ".docx,.txt,.md,.json",
+  "audio/*",
+  ".mp3,.wav,.m4a,.ogg",
+].join(",");
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function fileIconFor(mime: string, name: string) {
+  if (mime.startsWith("image/")) return ImageIcon;
+  if (mime.startsWith("audio/")) return FileAudio;
+  if (mime === "application/pdf" || /\.pdf$/i.test(name)) return FileText;
+  if (/\.(xlsx|xls|csv)$/i.test(name)) return FileSpreadsheet;
+  if (/\.(docx|txt|md|json)$/i.test(name)) return FileText;
+  return FileIcon;
+}
 
 export function AiAssistant() {
   const [open, setOpen] = useState(false);
@@ -24,13 +87,25 @@ export function AiAssistant() {
     }
   });
   const [input, setInput] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-30)));
+      // Strip attachments from persisted history to avoid bloating localStorage
+      const slim = messages.slice(-30).map((m) => ({
+        role: m.role,
+        content: m.content,
+        attachments: m.attachments?.map((a) => ({
+          name: a.name,
+          mimeType: a.mimeType,
+          size: a.size,
+        })) as Attachment[] | undefined,
+      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
     } catch {
       /* ignore quota */
     }
@@ -42,14 +117,74 @@ export function AiAssistant() {
     }
   }, [messages, open, loading]);
 
+  const handleFilesSelected = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const remaining = MAX_FILES - pendingFiles.length;
+    if (remaining <= 0) {
+      toast({
+        title: "Limite de anexos",
+        description: `Máximo de ${MAX_FILES} arquivos por mensagem.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    const incoming = Array.from(files).slice(0, remaining);
+    const next: Attachment[] = [];
+
+    for (const file of incoming) {
+      if (file.size > MAX_FILE_BYTES) {
+        toast({
+          title: "Arquivo muito grande",
+          description: `${file.name} excede 20MB.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        const mime = file.type || "application/octet-stream";
+        const isImage = mime.startsWith("image/");
+        const base64 = dataUrl.split(",")[1] ?? "";
+        next.push({
+          name: file.name,
+          mimeType: mime,
+          size: file.size,
+          dataUrl: isImage ? dataUrl : undefined,
+          base64: isImage ? undefined : base64,
+        });
+      } catch {
+        toast({
+          title: "Falha ao ler arquivo",
+          description: file.name,
+          variant: "destructive",
+        });
+      }
+    }
+
+    if (next.length > 0) {
+      setPendingFiles((prev) => [...prev, ...next]);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePending = (index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const sendMessage = async () => {
     const trimmed = input.trim();
-    if (!trimmed || loading) return;
+    if ((!trimmed && pendingFiles.length === 0) || loading) return;
 
-    const userMsg: Msg = { role: "user", content: trimmed };
+    const userMsg: Msg = {
+      role: "user",
+      content: trimmed || (pendingFiles.length > 0 ? "Analise os arquivos anexados." : ""),
+      attachments: pendingFiles.length > 0 ? pendingFiles : undefined,
+    };
+
     const next = [...messages, userMsg];
     setMessages(next);
     setInput("");
+    setPendingFiles([]);
     setLoading(true);
 
     let assistantSoFar = "";
@@ -140,6 +275,7 @@ export function AiAssistant() {
 
   const clearHistory = () => {
     setMessages([]);
+    setPendingFiles([]);
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -213,14 +349,14 @@ export function AiAssistant() {
                       Olá! Como posso ajudar?
                     </p>
                     <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto font-body">
-                      Pergunte sobre o sistema, peça sugestões de copy, analise métricas ou tire dúvidas operacionais.
+                      Pergunte ou anexe um arquivo (PDF, imagem, planilha, áudio, Word) para análise.
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 max-w-xs mx-auto pt-2">
                     {[
                       "Como melhorar a taxa de conversão do pipeline?",
+                      "Resuma este orçamento e gere um checklist",
                       "Escreva uma mensagem de follow-up para WhatsApp",
-                      "Explique o status 'aguardando_info'",
                     ].map((s) => (
                       <button
                         key={s}
@@ -250,12 +386,41 @@ export function AiAssistant() {
                         : "bg-muted text-foreground rounded-bl-sm",
                     )}
                   >
+                    {m.attachments && m.attachments.length > 0 && (
+                      <div className="mb-2 space-y-1.5">
+                        {m.attachments.map((att, idx) => {
+                          const Icon = fileIconFor(att.mimeType, att.name);
+                          return att.dataUrl ? (
+                            <img
+                              key={idx}
+                              src={att.dataUrl}
+                              alt={att.name}
+                              className="max-h-40 w-full object-cover rounded-lg border border-border/40"
+                            />
+                          ) : (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "flex items-center gap-2 px-2 py-1.5 rounded-md text-xs",
+                                m.role === "user"
+                                  ? "bg-primary-foreground/15"
+                                  : "bg-background/60 border border-border/50",
+                              )}
+                            >
+                              <Icon className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate flex-1">{att.name}</span>
+                              <span className="opacity-70 shrink-0">{formatBytes(att.size)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                     {m.role === "assistant" ? (
                       <div className="prose prose-sm dark:prose-invert max-w-none font-body prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-pre:my-2 prose-headings:mb-1 prose-headings:mt-2">
                         <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap font-body">{m.content}</p>
+                      m.content && <p className="whitespace-pre-wrap font-body">{m.content}</p>
                     )}
                   </div>
                 </div>
@@ -271,20 +436,70 @@ export function AiAssistant() {
             </div>
           </ScrollArea>
 
-          <div className="border-t border-border/60 p-3 shrink-0">
+          <div className="border-t border-border/60 p-3 shrink-0 space-y-2">
+            {pendingFiles.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {pendingFiles.map((att, idx) => {
+                  const Icon = fileIconFor(att.mimeType, att.name);
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md bg-muted text-xs max-w-[200px]"
+                    >
+                      <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      <span className="truncate font-body">{att.name}</span>
+                      <span className="text-muted-foreground shrink-0">
+                        {formatBytes(att.size)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removePending(idx)}
+                        className="ml-0.5 p-0.5 rounded hover:bg-background/80 text-muted-foreground hover:text-foreground"
+                        aria-label={`Remover ${att.name}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             <div className="flex items-end gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept={ACCEPTED_MIME}
+                onChange={(e) => handleFilesSelected(e.target.files)}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading || pendingFiles.length >= MAX_FILES}
+                title="Anexar arquivos (PDF, imagem, planilha, áudio, Word)"
+                className="shrink-0 h-10 w-10"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Pergunte alguma coisa..."
+                placeholder={
+                  pendingFiles.length > 0
+                    ? "O que você quer saber sobre esses arquivos?"
+                    : "Pergunte alguma coisa..."
+                }
                 rows={1}
                 className="resize-none min-h-[40px] max-h-32 text-sm font-body"
                 disabled={loading}
               />
               <Button
                 onClick={sendMessage}
-                disabled={loading || !input.trim()}
+                disabled={loading || (!input.trim() && pendingFiles.length === 0)}
                 size="icon"
                 className="shrink-0 h-10 w-10"
               >
@@ -295,8 +510,8 @@ export function AiAssistant() {
                 )}
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1.5 text-center font-body">
-              Enter para enviar · Shift+Enter para nova linha
+            <p className="text-[10px] text-muted-foreground text-center font-body">
+              Enter envia · Shift+Enter quebra linha · até {MAX_FILES} arquivos de 20MB
             </p>
           </div>
         </SheetContent>
