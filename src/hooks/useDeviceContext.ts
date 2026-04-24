@@ -92,7 +92,7 @@ export function useDeviceContext(): () => DeviceContext {
     return {
       route: location.pathname,
       searchParams,
-      userRole: profile?.role ?? null,
+      userRole: profile?.roles?.[0] ?? null,
       deviceType: detectDeviceType(width, ua),
       osName: detectOS(ua),
       browserName: browser.name,
