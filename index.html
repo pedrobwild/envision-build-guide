@@ -27,22 +27,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      window.__chunkLoadFailed = false;
-
-      window.addEventListener('error', function(e) {
-        if (
-          e.message &&
-          (e.message.includes('Failed to fetch dynamically imported module') ||
-            e.message.includes('Importing a module script failed') ||
-            e.message.includes('Unable to preload CSS'))
-        ) {
-          if (!window.__chunkLoadFailed) {
-            window.__chunkLoadFailed = true;
-            window.dispatchEvent(new CustomEvent('chunk-load-error'));
-          }
-        }
-      });
-    </script>
   </body>
 </html>
