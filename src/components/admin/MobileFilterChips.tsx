@@ -18,6 +18,10 @@ interface MobileFilterChipsProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
+  /** Quantidade de itens após aplicar busca + filtros. */
+  resultCount?: number;
+  /** Total bruto antes dos filtros (denominador do contador). */
+  totalCount?: number;
 }
 
 export function MobileFilterChips({
@@ -27,7 +31,13 @@ export function MobileFilterChips({
   searchValue,
   onSearchChange,
   searchPlaceholder = "Buscar...",
+  resultCount,
+  totalCount,
 }: MobileFilterChipsProps) {
+  const showCounter =
+    typeof resultCount === "number" &&
+    typeof totalCount === "number" &&
+    (Boolean(searchValue) || (activeChipId !== "all" && resultCount !== totalCount));
   // Mantém a barra de busca aberta sempre que houver termo digitado, para
   // o usuário não "perder" a busca ao colapsar acidentalmente em mobile.
   const [searchOpen, setSearchOpen] = useState(() => Boolean(searchValue));
@@ -95,9 +105,20 @@ export function MobileFilterChips({
         )}
       </AnimatePresence>
 
+      {/* Contador de resultados — só aparece quando há busca ou filtro ativo */}
+      {showCounter && (
+        <div
+          className="flex items-center gap-1 text-[11px] font-mono tabular-nums text-muted-foreground px-1"
+          aria-live="polite"
+        >
+          <span className="font-semibold text-foreground">{resultCount}</span>
+          <span>de {totalCount} resultado{totalCount === 1 ? "" : "s"}</span>
+        </div>
+      )}
+
       {/* Chips row */}
       <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5">
-        {/* Search toggle chip — sempre disponível, mostra o termo ativo quando colapsado */}
+
         {!searchOpen && (
           <button
             onClick={() => setSearchOpen(true)}
