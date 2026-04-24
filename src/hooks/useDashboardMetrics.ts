@@ -205,7 +205,14 @@ function isInRange(dateStr: string | null | undefined, range: DateRange): boolea
   return d >= range.from && d <= range.to;
 }
 
-function getBudgetTotal(b: BudgetWithSections): number {
+function getBudgetTotal(b: BudgetWithSections & { computed_total?: number | null }): number {
+  // Prioriza total pré-computado pelo servidor (RPC `get_budget_totals`).
+  // Evita hidratar sections/items no cliente — o que gerava respostas JSON
+  // gigantescas (>1MB) que eram truncadas por proxies, causando o erro
+  // "JSON Parse error: Unterminated string" no AdminDashboard.
+  if (typeof b.computed_total === "number" && Number.isFinite(b.computed_total)) {
+    return b.computed_total;
+  }
   const sectionsTotal = (b.sections || []).reduce(
     (sum: number, s: SectionWithItems) => sum + calculateSectionSubtotal(s),
     0
