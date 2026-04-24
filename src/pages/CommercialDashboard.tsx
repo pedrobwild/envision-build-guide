@@ -976,6 +976,8 @@ export default function CommercialDashboard() {
             searchValue={search}
             onSearchChange={setSearch}
             searchPlaceholder="Buscar cliente, projeto..."
+            resultCount={filtered.length}
+            totalCount={dedupedBudgets.length}
           />
 
           {/* Compact filter bar — desktop */}
@@ -990,6 +992,17 @@ export default function CommercialDashboard() {
                   </button>
                 )}
               </div>
+
+              {hasActiveFilters && (
+                <Badge
+                  variant="secondary"
+                  className="h-7 px-2 text-[11px] font-mono tabular-nums whitespace-nowrap"
+                  aria-live="polite"
+                  title="Resultados após aplicar busca e filtros"
+                >
+                  {filtered.length} de {dedupedBudgets.length}
+                </Badge>
+              )}
 
               <div className="h-5 w-px bg-border" />
 
