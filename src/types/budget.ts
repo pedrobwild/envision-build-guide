@@ -90,6 +90,12 @@ export interface BudgetData {
   approved_by_name?: string | null;
   lead_email?: string | null;
   lead_name?: string | null;
+  /** Addendum metadata (set when this budget IS an addendum) */
+  is_addendum?: boolean | null;
+  addendum_number?: number | null;
+  addendum_summary?: string | null;
+  addendum_approved_at?: string | null;
+  addendum_approved_by_name?: string | null;
   sections: BudgetSection[];
   adjustments: BudgetAdjustment[];
   rooms: BudgetRoom[];
