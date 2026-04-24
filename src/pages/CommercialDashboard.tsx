@@ -970,7 +970,7 @@ export default function CommercialDashboard() {
           </div>
         </header>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-5">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-5 pb-24 lg:pb-6">
           {/* Compact summary strip — desktop */}
           <div className="hidden lg:flex items-center gap-4 px-3 py-2 rounded-lg bg-muted/30 border border-border/50 text-xs font-body text-muted-foreground">
             {counts.needsAction > 0 && (
@@ -1142,21 +1142,28 @@ export default function CommercialDashboard() {
 
           {/* Empty state */}
           {!loading && filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center px-4">
               <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
                 <Inbox className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h2 className="text-lg font-semibold font-display text-foreground mb-1">
-                {search || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum orçamento ainda"}
+              <h2 className="text-base sm:text-lg font-semibold font-display text-foreground mb-1">
+                {hasActiveFilters ? "Nenhum resultado" : "Nenhum orçamento ainda"}
               </h2>
               <p className="text-sm text-muted-foreground font-body max-w-sm">
-                {search || statusFilter !== "all" ? "Ajuste os filtros para encontrar o que procura." : "Crie uma nova solicitação de orçamento para começar."}
+                {hasActiveFilters ? "Ajuste os filtros para encontrar o que procura." : "Crie uma nova solicitação de orçamento para começar."}
               </p>
-              {!search && statusFilter === "all" && (
-                <Button className="mt-4" onClick={() => setNewDealOpen(true)}>
-                  <Plus className="h-4 w-4 mr-1.5" />Criar Negócio
-                </Button>
-              )}
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                {hasActiveFilters && (
+                  <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                    <X className="h-4 w-4 mr-1.5" />Limpar filtros
+                  </Button>
+                )}
+                {!hasActiveFilters && (
+                  <Button onClick={() => setNewDealOpen(true)}>
+                    <Plus className="h-4 w-4 mr-1.5" />Criar Negócio
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
