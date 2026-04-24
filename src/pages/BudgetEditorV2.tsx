@@ -558,7 +558,7 @@ export default function BudgetEditorV2() {
                     sections={sections}
                     onSectionsChange={setSections}
                     loading={sectionsLoading}
-                    readOnly={false}
+                    readOnly={isPublishedVersion}
                   />
                 </div>
 
