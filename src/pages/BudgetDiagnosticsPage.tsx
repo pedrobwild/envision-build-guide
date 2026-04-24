@@ -78,6 +78,13 @@ const INITIAL_STEPS: StepResult[] = [
     description: "Confirma que /index.html está acessível (sem erro de cache/CDN).",
     status: "idle",
   },
+  {
+    id: "rls",
+    label: "Permissões de RLS (anônimo vs. você)",
+    description:
+      "Compara o que o cliente final (anônimo) enxerga com o que você enxerga logado. Recomendado quando a RPC/fetch falha.",
+    status: "idle",
+  },
 ];
 
 function extractPublicId(input: string): string {
