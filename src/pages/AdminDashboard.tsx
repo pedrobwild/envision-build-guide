@@ -80,10 +80,14 @@ export default function AdminDashboard() {
         "created_at", "updated_at", "closed_at", "due_at", "generated_at",
         "estimator_owner_id", "commercial_owner_id", "internal_cost", "view_count",
       ].join(", ");
-      const [budgetsRes, profilesRes, eventsRes] = await Promise.all([
+      // Buscamos os totais via RPC dedicada (`get_budget_totals`) ao invés de
+      // hidratar sections/items no cliente. Antes, esse join trazia >11k itens
+      // numa única resposta JSON e estourava o limite do proxy, causando
+      // "JSON Parse error: Unterminated string" intermitente.
+      const [budgetsRes, profilesRes, eventsRes, totalsRes] = await Promise.all([
         supabase
           .from("budgets")
-          .select(`${BUDGET_COLUMNS_FOR_METRICS}, sections(id, section_price, qty, items(id, internal_total, internal_unit_price, qty, bdi_percentage)), adjustments(id, sign, amount)`)
+          .select(BUDGET_COLUMNS_FOR_METRICS)
           // Sem filtro por data: o painel de busca precisa enxergar TODOS os orçamentos
           // (incluindo anteriores ao OPERATIONS_START_DATE). As métricas continuam recortadas
           // a partir desse marco via `filteredBudgets` abaixo.
@@ -95,11 +99,26 @@ export default function AdminDashboard() {
           .eq("event_type", "status_change")
           .in("to_status", ["sent_to_client", "minuta_solicitada", "contrato_fechado"])
           .order("created_at", { ascending: true }),
+        supabase.rpc("get_budget_totals"),
       ]);
       if (budgetsRes.error) {
         toast.error("Erro ao carregar orçamentos: " + budgetsRes.error.message);
       }
-      setBudgets(budgetsRes.data || []);
+      // Indexa totais por id para enriquecer cada budget sem precisar de join.
+      const totalsMap = new Map<string, number>();
+      (totalsRes.data || []).forEach((row: { id: string; total: number | string | null }) => {
+        const n = Number(row.total);
+        if (Number.isFinite(n)) totalsMap.set(row.id, n);
+      });
+      const rawBudgets = (Array.isArray(budgetsRes.data) ? budgetsRes.data : []) as unknown as Array<Record<string, unknown> & { id: string }>;
+      const enriched = rawBudgets.map((b) => ({
+        ...b,
+        // `computed_total` é consumido por `getBudgetTotal` em useDashboardMetrics
+        // como atalho preferencial, mantendo total compatibilidade com o
+        // cálculo legado (sections/items) quando ele estiver presente.
+        computed_total: totalsMap.get(b.id) ?? null,
+      }));
+      setBudgets(enriched);
       const profileMap: Record<string, string> = {};
       (profilesRes.data || []).forEach((p: { id: string; full_name: string | null }) => {
         profileMap[p.id] = p.full_name || "";

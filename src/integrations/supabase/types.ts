@@ -2873,6 +2873,13 @@ export type Database = {
         Args: { _internal_status: string }
         Returns: string
       }
+      get_budget_totals: {
+        Args: never
+        Returns: {
+          id: string
+          total: number
+        }[]
+      }
       get_dashboard_summary: { Args: never; Returns: Json }
       get_public_budget: { Args: { p_public_id: string }; Returns: Json }
       has_role: {
