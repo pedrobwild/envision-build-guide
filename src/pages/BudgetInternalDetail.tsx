@@ -574,7 +574,7 @@ export default function BudgetInternalDetail() {
                 Comercial
               </button>
               <ChevronRight className="h-3 w-3 shrink-0" />
-              <button onClick={() => navigate("/admin/demandas")} className="hover:text-foreground transition-colors">
+              <button onClick={() => navigate("/admin/comercial")} className="hover:text-foreground transition-colors">
                 Pipeline
               </button>
               <ChevronRight className="h-3 w-3 shrink-0" />
