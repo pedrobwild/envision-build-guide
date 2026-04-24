@@ -163,6 +163,19 @@ export function BudgetHeader({ budget, onExportPdf, exporting }: BudgetHeaderPro
         >
           <img src={logoWhite} alt="Bwild" className="h-10 sm:h-12 lg:h-11" />
           <div className="flex items-center gap-2 sm:gap-3">
+            {heroBgStatus === "error" && (
+              <button
+                type="button"
+                onClick={() => setHeroAttempt((n) => n + 1)}
+                aria-label="Tentar carregar a imagem de capa novamente"
+                title="Recarregar imagem de capa"
+                className="budget-focus-on-dark flex items-center gap-1.5 px-2.5 py-1.5 sm:py-2 rounded-lg bg-white/12 text-white hover:bg-white/20 backdrop-blur-md text-xs font-body font-medium border border-white/10 tracking-[-0.01em]"
+                data-pdf-hide
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Recarregar capa</span>
+              </button>
+            )}
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
