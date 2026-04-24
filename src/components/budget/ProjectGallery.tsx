@@ -277,11 +277,19 @@ export function ProjectGallery({ publicId }: ProjectGalleryProps) {
                           }}
                           className="group relative w-full rounded-lg overflow-hidden border border-border bg-muted aspect-[16/10] focus:outline-none focus:ring-2 focus:ring-primary active:scale-[0.98] transition-transform"
                         >
-                          <ImageWithFallback
+                          <ImageWithRetry
                             src={img.src}
                             alt={img.alt}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            // Sem botão de retry interno: estamos dentro de um <button> e
+                            // não podemos aninhar botões. O auto-retry (1 tentativa com
+                            // cache-busting) já cobre a maioria dos casos transitórios.
+                            showRetryButton={false}
+                            className="w-full h-full transition-transform duration-500 group-hover:scale-105"
+                            imgProps={{ decoding: "async" }}
                           />
+                          {/** O fallback do placeholder dentro do botão permanece clicável,
+                           * mas só abre o Lightbox de imagens válidas; em erro o lightbox
+                           * é aberto vazio e o usuário pode fechar — a página segue acessível. */}
                           <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
                             <ZoomIn className="h-5 w-5 sm:h-6 sm:w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                           </div>
