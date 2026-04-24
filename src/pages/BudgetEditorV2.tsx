@@ -427,12 +427,12 @@ export default function BudgetEditorV2() {
           {/* ── Versioning context banners (priority: A > B > C) ── */}
           {/* Only show published-version warning if the budget was actually sent to the client */}
           {budget.is_published_version ? (
-            /* Scenario A — Editing published version (read-only) */
+            /* Scenario A — Editing published version (auto-fork on edit) */
             <Alert className="mt-4 border-warning/30 bg-warning/5">
               <AlertTriangle className="h-4 w-4 text-warning" />
               <AlertDescription className="flex items-center justify-between gap-4">
                 <span className="text-sm font-body text-foreground">
-                  ⚠️ Esta é a versão publicada (somente leitura). O cliente pode visualizá-la a qualquer momento. Crie uma nova versão (rascunho) para fazer alterações com segurança.
+                  ⚠️ Esta é a versão publicada (visível ao cliente). Itens e valores estão protegidos. Ao editar metadados será criado um rascunho automaticamente — ou crie agora uma nova versão para editar tudo.
                 </span>
                 <Button
                   variant="outline"
