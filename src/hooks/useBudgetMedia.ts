@@ -90,15 +90,16 @@ export function useBudgetMedia(publicId: string | undefined, budgetId?: string |
           const { data } = await query.maybeSingle();
 
           if (!cancelled && data?.media_config) {
-            const mc = data.media_config as unknown as DynamicBudgetMedia;
+            const mc = data.media_config as unknown as DynamicBudgetMedia & { primary?: PrimaryMap };
             const hasContent = mc.video3d || mc.projeto3d?.length || mc.projetoExecutivo?.length || mc.fotos?.length;
             if (hasContent) {
-              setMedia({
+              const base: DynamicBudgetMedia = {
                 video3d: mc.video3d,
                 projeto3d: mc.projeto3d ?? [],
                 projetoExecutivo: mc.projetoExecutivo ?? [],
                 fotos: mc.fotos ?? [],
-              });
+              };
+              setMedia(applyPrimary(base, mc.primary));
               setLoading(false);
               return;
             }
