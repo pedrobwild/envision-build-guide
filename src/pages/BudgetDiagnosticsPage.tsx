@@ -14,10 +14,14 @@ import {
   ExternalLink,
   Stethoscope,
   Copy,
+  ShieldAlert,
+  ShieldCheck,
+  Info,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { toast } from "sonner";
+import { diagnoseBudgetRls, type RlsDiagnosticReport } from "@/lib/rls-diagnostics";
 
 type StepStatus = "idle" | "running" | "ok" | "warn" | "fail" | "skipped";
 
@@ -74,6 +78,13 @@ const INITIAL_STEPS: StepResult[] = [
     description: "Confirma que /index.html está acessível (sem erro de cache/CDN).",
     status: "idle",
   },
+  {
+    id: "rls",
+    label: "Permissões de RLS (anônimo vs. você)",
+    description:
+      "Compara o que o cliente final (anônimo) enxerga com o que você enxerga logado. Recomendado quando a RPC/fetch falha.",
+    status: "idle",
+  },
 ];
 
 function extractPublicId(input: string): string {
@@ -115,6 +126,7 @@ export default function BudgetDiagnosticsPage() {
   const [steps, setSteps] = useState<StepResult[]>(INITIAL_STEPS);
   const [running, setRunning] = useState(false);
   const [resolvedId, setResolvedId] = useState<string>("");
+  const [rlsReport, setRlsReport] = useState<RlsDiagnosticReport | null>(null);
 
   function updateStep(id: string, patch: Partial<StepResult>) {
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
@@ -124,6 +136,7 @@ export default function BudgetDiagnosticsPage() {
     const publicId = extractPublicId(input);
     setSteps(INITIAL_STEPS.map((s) => ({ ...s, status: "idle", detail: undefined, data: undefined, durationMs: undefined })));
     setResolvedId(publicId);
+    setRlsReport(null);
 
     if (!publicId) {
       toast.error("Informe um public_id ou URL do orçamento.");
@@ -309,6 +322,37 @@ export default function BudgetDiagnosticsPage() {
       });
     }
 
+    // 8. RLS — sempre roda; útil tanto em sucesso quanto em falha,
+    // mas o card de recomendações destaca apenas quando há divergência.
+    updateStep("rls", { status: "running" });
+    const t7 = performance.now();
+    try {
+      const report = await diagnoseBudgetRls(publicId);
+      const dur = Math.round(performance.now() - t7);
+      setRlsReport(report);
+      const blockedAnon = report.checks.some(
+        (c) => c.role === "anon" && (c.status === "blocked" || c.status === "error")
+      );
+      const criticalRecs = report.recommendations.filter((r) => r.severity === "critical").length;
+      updateStep("rls", {
+        status: criticalRecs > 0 ? "fail" : blockedAnon ? "warn" : "ok",
+        detail:
+          criticalRecs > 0
+            ? `${criticalRecs} ajuste(s) crítico(s) recomendado(s) — veja "Recomendações de RLS" abaixo.`
+            : blockedAnon
+            ? "Há diferenças entre acesso anônimo e autenticado — veja recomendações."
+            : "Permissões consistentes entre anônimo e autenticado.",
+        durationMs: dur,
+      });
+    } catch (err) {
+      const dur = Math.round(performance.now() - t7);
+      updateStep("rls", {
+        status: "fail",
+        detail: `Falha ao executar diagnóstico de RLS: ${(err as Error).message}`,
+        durationMs: dur,
+      });
+    }
+
     setRunning(false);
   }
 
@@ -471,6 +515,106 @@ export default function BudgetDiagnosticsPage() {
           ))}
         </CardContent>
       </Card>
+
+      {rlsReport && (
+        <Card className="border-primary/30">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-primary" />
+              Diagnóstico de RLS
+            </CardTitle>
+            <CardDescription>
+              Compara o que o cliente final (anônimo) enxerga vs. você ({rlsReport.authenticatedUserEmail ?? "não autenticado"}
+              {rlsReport.authenticatedRoles.length > 0 ? ` · ${rlsReport.authenticatedRoles.join(", ")}` : ""}).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              {rlsReport.checks.map((c) => (
+                <div key={c.id} className="flex items-start gap-3 text-sm">
+                  <div className="mt-0.5">
+                    {c.status === "ok" ? (
+                      <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    ) : c.status === "skipped" ? (
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ShieldAlert className="h-4 w-4 text-destructive" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <p className="font-medium">{c.label}</p>
+                      <Badge
+                        variant={
+                          c.status === "ok"
+                            ? "default"
+                            : c.status === "skipped"
+                            ? "outline"
+                            : "destructive"
+                        }
+                        className="text-[10px]"
+                      >
+                        {c.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground break-words">{c.message}</p>
+                    {c.serverError && (
+                      <p className="text-[10px] text-destructive/80 mt-1 break-words">
+                        Servidor: {c.serverError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {rlsReport.recommendations.length > 0 && (
+              <div className="space-y-3 pt-2 border-t">
+                <p className="text-sm font-semibold">Recomendações</p>
+                {rlsReport.recommendations.map((rec, i) => (
+                  <div
+                    key={i}
+                    className={
+                      rec.severity === "critical"
+                        ? "rounded-md border border-destructive/40 bg-destructive/5 p-3"
+                        : rec.severity === "warning"
+                        ? "rounded-md border border-amber-500/40 bg-amber-500/5 p-3"
+                        : "rounded-md border border-border bg-muted/30 p-3"
+                    }
+                  >
+                    <p className="text-sm font-medium">{rec.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{rec.body}</p>
+                    {rec.sql && (
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            SQL sugerido (executar como admin)
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 gap-1 text-[10px]"
+                            onClick={() => {
+                              navigator.clipboard.writeText(rec.sql!);
+                              toast.success("SQL copiado");
+                            }}
+                          >
+                            <Copy className="h-3 w-3" />
+                            Copiar
+                          </Button>
+                        </div>
+                        <pre className="text-[10px] bg-muted p-2 rounded overflow-x-auto whitespace-pre">
+                          {rec.sql}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
