@@ -33,7 +33,8 @@ export function PublicBudgetFallback({ budget, errorMessage }: PublicBudgetFallb
     }
   };
 
-  const phoneDigits = (budget.client_phone || "").replace(/\D/g, "");
+  const rawPhone = (budget as { client_phone?: string | null }).client_phone || "";
+  const phoneDigits = rawPhone.replace(/\D/g, "");
   const whatsappUrl = phoneDigits
     ? `https://wa.me/${phoneDigits.startsWith("55") ? phoneDigits : `55${phoneDigits}`}`
     : "https://wa.me/5511999999999";
