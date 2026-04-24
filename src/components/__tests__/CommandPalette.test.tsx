@@ -9,8 +9,8 @@ class ResizeObserverMock {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error - polyfill apenas para o ambiente de teste
-globalThis.ResizeObserver = globalThis.ResizeObserver ?? ResizeObserverMock;
+(globalThis as unknown as { ResizeObserver?: typeof ResizeObserverMock }).ResizeObserver ??=
+  ResizeObserverMock;
 
 // ---- Mocks ----------------------------------------------------------------
 
