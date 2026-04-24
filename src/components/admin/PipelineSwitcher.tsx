@@ -35,7 +35,7 @@ export function PipelineSwitcher({
   const totalAll = Object.values(counts).reduce((acc, n) => acc + n, 0);
 
   return (
-    <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/40 border border-border/60 overflow-x-auto">
+    <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-muted/40 border border-border/60">
       <Tab
         active={activeSlug === "all"}
         onClick={() => onChange("all")}
