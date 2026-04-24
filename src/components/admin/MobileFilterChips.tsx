@@ -105,9 +105,20 @@ export function MobileFilterChips({
         )}
       </AnimatePresence>
 
+      {/* Contador de resultados — só aparece quando há busca ou filtro ativo */}
+      {showCounter && (
+        <div
+          className="flex items-center gap-1 text-[11px] font-mono tabular-nums text-muted-foreground px-1"
+          aria-live="polite"
+        >
+          <span className="font-semibold text-foreground">{resultCount}</span>
+          <span>de {totalCount} resultado{totalCount === 1 ? "" : "s"}</span>
+        </div>
+      )}
+
       {/* Chips row */}
       <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-0.5">
-        {/* Search toggle chip — sempre disponível, mostra o termo ativo quando colapsado */}
+
         {!searchOpen && (
           <button
             onClick={() => setSearchOpen(true)}
