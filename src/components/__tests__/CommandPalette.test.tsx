@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom";
 import { CommandPalette, CommandPaletteTrigger } from "../CommandPalette";
 
-// jsdom não traz ResizeObserver — cmdk depende dele.
+// jsdom não traz APIs de layout — cmdk depende delas.
 class ResizeObserverMock {
   observe() {}
   unobserve() {}
@@ -11,6 +11,9 @@ class ResizeObserverMock {
 }
 (globalThis as unknown as { ResizeObserver?: typeof ResizeObserverMock }).ResizeObserver ??=
   ResizeObserverMock;
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = function scrollIntoView() {};
+}
 
 // ---- Mocks ----------------------------------------------------------------
 
