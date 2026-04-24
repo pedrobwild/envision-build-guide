@@ -290,12 +290,13 @@ export function CommandPalette() {
  */
 export function CommandPaletteTrigger({ className }: { className?: string }) {
   const dispatch = () => {
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, ctrlKey: true }));
+    window.dispatchEvent(new CustomEvent("command-palette:open"));
   };
   return (
     <button
       type="button"
       onClick={dispatch}
+      aria-label="Buscar"
       className={
         className ??
         "inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
