@@ -1,4 +1,5 @@
 import React from "react";
+import { reportChunkLoadError } from "@/lib/chunk-telemetry";
 
 interface ChunkErrorBoundaryProps {
   children: React.ReactNode;
@@ -38,6 +39,16 @@ export class ChunkErrorBoundary extends React.Component<
     }
     // Não captura outros erros — deixa propagar para boundaries de página
     throw error;
+  }
+
+  componentDidCatch(error: Error) {
+    if (ChunkErrorBoundary.isChunkError(error)) {
+      void reportChunkLoadError({
+        errorName: error.name,
+        errorMessage: error.message,
+        extraMetadata: { source: "ChunkErrorBoundary" },
+      });
+    }
   }
 
   handleReload = () => {

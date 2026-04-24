@@ -3,13 +3,21 @@ import { ThemeProvider } from "next-themes";
 import App from "./App.tsx";
 import "./index.css";
 import { installConsoleErrorBuffer } from "./lib/console-error-buffer";
+import { installChunkErrorTelemetry } from "./lib/chunk-telemetry";
 
 // Captura erros de runtime numa janela rolante para o BugReporter anexar
 // contexto técnico mesmo em mobile (sem precisar abrir o DevTools).
 installConsoleErrorBuffer();
+
+// Telemetria silenciosa de falhas de carregamento de chunks (lazy imports).
+// Captura tanto erros que escapam para `unhandledrejection`/`window.error`
+// quanto os capturados pelo `ChunkErrorBoundary`. Correlaciona com
+// `public_id` (rota pública) e `VITE_APP_VERSION` (versão do deploy).
+installChunkErrorTelemetry();
 
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
     <App />
   </ThemeProvider>
 );
+

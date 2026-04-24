@@ -1354,6 +1354,57 @@ export type Database = {
           },
         ]
       }
+      chunk_load_errors: {
+        Row: {
+          chunk_url: string | null
+          deploy_version: string | null
+          error_message: string | null
+          error_name: string | null
+          id: string
+          metadata: Json
+          occurred_at: string
+          online: boolean | null
+          public_id: string | null
+          reporter_id: string | null
+          route: string | null
+          user_agent: string | null
+          viewport_height: number | null
+          viewport_width: number | null
+        }
+        Insert: {
+          chunk_url?: string | null
+          deploy_version?: string | null
+          error_message?: string | null
+          error_name?: string | null
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          online?: boolean | null
+          public_id?: string | null
+          reporter_id?: string | null
+          route?: string | null
+          user_agent?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+        }
+        Update: {
+          chunk_url?: string | null
+          deploy_version?: string | null
+          error_message?: string | null
+          error_name?: string | null
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          online?: boolean | null
+          public_id?: string | null
+          reporter_id?: string | null
+          route?: string | null
+          user_agent?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+        }
+        Relationships: []
+      }
       client_properties: {
         Row: {
           address: string | null
