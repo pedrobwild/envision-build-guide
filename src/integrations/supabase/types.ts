@@ -992,6 +992,102 @@ export type Database = {
           },
         ]
       }
+      bug_reports: {
+        Row: {
+          active_filters: Json | null
+          actual_behavior: string | null
+          attachments: Json | null
+          browser_name: string | null
+          browser_version: string | null
+          console_errors: Json | null
+          created_at: string
+          description: string
+          device_pixel_ratio: number | null
+          device_type: string | null
+          expected_behavior: string | null
+          id: string
+          os_name: string | null
+          reporter_email: string | null
+          reporter_id: string | null
+          reporter_name: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          route: string | null
+          severity: string
+          status: string
+          steps_to_reproduce: string | null
+          title: string
+          updated_at: string
+          user_agent: string | null
+          user_role: string | null
+          viewport_height: number | null
+          viewport_width: number | null
+        }
+        Insert: {
+          active_filters?: Json | null
+          actual_behavior?: string | null
+          attachments?: Json | null
+          browser_name?: string | null
+          browser_version?: string | null
+          console_errors?: Json | null
+          created_at?: string
+          description: string
+          device_pixel_ratio?: number | null
+          device_type?: string | null
+          expected_behavior?: string | null
+          id?: string
+          os_name?: string | null
+          reporter_email?: string | null
+          reporter_id?: string | null
+          reporter_name?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route?: string | null
+          severity?: string
+          status?: string
+          steps_to_reproduce?: string | null
+          title: string
+          updated_at?: string
+          user_agent?: string | null
+          user_role?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+        }
+        Update: {
+          active_filters?: Json | null
+          actual_behavior?: string | null
+          attachments?: Json | null
+          browser_name?: string | null
+          browser_version?: string | null
+          console_errors?: Json | null
+          created_at?: string
+          description?: string
+          device_pixel_ratio?: number | null
+          device_type?: string | null
+          expected_behavior?: string | null
+          id?: string
+          os_name?: string | null
+          reporter_email?: string | null
+          reporter_id?: string | null
+          reporter_name?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route?: string | null
+          severity?: string
+          status?: string
+          steps_to_reproduce?: string | null
+          title?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_role?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+        }
+        Relationships: []
+      }
       catalog_alerts_config: {
         Row: {
           high_lead_time_days: number
