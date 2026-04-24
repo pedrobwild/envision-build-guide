@@ -8,6 +8,32 @@ export type DynamicBudgetMedia = {
   fotos: string[];
 };
 
+type PrimaryMap = {
+  video3d?: string;
+  projeto3d?: string;
+  projetoExecutivo?: string;
+  fotos?: string;
+};
+
+/** Move a marked-primary URL to the front of its list */
+function applyPrimary<T extends DynamicBudgetMedia>(media: T, primary?: PrimaryMap): T {
+  if (!primary) return media;
+  const reorder = (list: string[], pri?: string) => {
+    if (!pri || !list.length) return list;
+    const idx = list.indexOf(pri);
+    if (idx <= 0) return list;
+    return [pri, ...list.slice(0, idx), ...list.slice(idx + 1)];
+  };
+  return {
+    ...media,
+    projeto3d: reorder(media.projeto3d, primary.projeto3d),
+    projetoExecutivo: reorder(media.projetoExecutivo, primary.projetoExecutivo),
+    fotos: reorder(media.fotos, primary.fotos),
+    // video3d is single — primary acts as override if exists in storage list
+    video3d: primary.video3d ?? media.video3d,
+  };
+}
+
 const BUCKET = "media";
 
 async function listPublicUrls(folder: string): Promise<string[]> {
