@@ -31,7 +31,13 @@ export function MobileFilterChips({
   searchValue,
   onSearchChange,
   searchPlaceholder = "Buscar...",
+  resultCount,
+  totalCount,
 }: MobileFilterChipsProps) {
+  const showCounter =
+    typeof resultCount === "number" &&
+    typeof totalCount === "number" &&
+    (Boolean(searchValue) || (activeChipId !== "all" && resultCount !== totalCount));
   // Mantém a barra de busca aberta sempre que houver termo digitado, para
   // o usuário não "perder" a busca ao colapsar acidentalmente em mobile.
   const [searchOpen, setSearchOpen] = useState(() => Boolean(searchValue));
