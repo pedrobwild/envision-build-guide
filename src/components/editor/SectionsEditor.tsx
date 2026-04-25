@@ -258,6 +258,8 @@ function SortableItemRow({
   onPromoteToCatalog,
   disableImages,
   disableCatalog,
+  isAddendum,
+  sectionAddendumAction,
 }: {
   item: ItemData;
   sectionId: string;
@@ -273,6 +275,8 @@ function SortableItemRow({
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
   disableImages?: boolean;
   disableCatalog?: boolean;
+  isAddendum?: boolean;
+  sectionAddendumAction?: "add" | "remove" | null;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
