@@ -312,8 +312,18 @@ export default function PublicBudget() {
   const total = calculateBudgetTotal(sections, adjustments);
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
-  const categorizedGroups = categorizeSections(sections);
-  const scopeTotal = sections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
+  // Visible sections: filter out items/sections removed by an addendum.
+  // The financial total already accounts for removals via `calculateBudgetTotal`,
+  // so the client should not see the removed entries in the visual breakdown.
+  const visibleSections: BudgetSection[] = sections
+    .filter((s) => s.addendum_action !== "remove")
+    .map((s) => ({
+      ...s,
+      items: (s.items || []).filter((i) => i.addendum_action !== "remove"),
+    }));
+
+  const categorizedGroups = categorizeSections(visibleSections);
+  const scopeTotal = visibleSections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
 
   // Meta for mobile hero
   const heroNeighborhood = budget.bairro || budget.condominio || "";
