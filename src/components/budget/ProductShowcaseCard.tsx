@@ -75,9 +75,16 @@ export function ProductShowcaseCard({ item, budgetId, editable = false, showGall
           )}
 
           <div className="flex-1 min-w-0 p-3 sm:p-4 flex flex-col justify-center">
-            <h4 className="text-sm sm:text-[15px] font-body font-semibold text-foreground leading-snug">
-              {item.title}
-            </h4>
+            <div className="flex items-start gap-2">
+              <h4 className="text-sm sm:text-[15px] font-body font-semibold text-foreground leading-snug flex-1 min-w-0">
+                {item.title}
+              </h4>
+              {item.addendum_action === "add" && (
+                <span className="shrink-0 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold tracking-wider bg-success/10 text-success border border-success/20 uppercase">
+                  Novo
+                </span>
+              )}
+            </div>
             {item.qty && (
               <p className="text-xs text-muted-foreground font-body mt-0.5">
                 Qtd: {item.qty} {item.unit || "un"}

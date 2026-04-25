@@ -30,6 +30,8 @@ export interface SectionWithItems {
   notes?: string | null;
   is_optional?: boolean;
   budget_id?: string;
+  /** Addendum: marks if this section was added or removed by the addendum */
+  addendum_action?: "add" | "remove" | null;
   items: ItemWithImages[];
 }
 
@@ -52,6 +54,8 @@ export interface ItemWithImages {
   catalog_item_id?: string | null;
   catalog_snapshot?: Json | Record<string, unknown> | null;
   notes?: string | null;
+  /** Addendum: marks if this item was added or removed by the addendum */
+  addendum_action?: "add" | "remove" | null;
   images?: ItemImageRow[];
   item_images?: ItemImageRow[];
 }
