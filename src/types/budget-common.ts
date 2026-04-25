@@ -30,6 +30,8 @@ export interface SectionWithItems {
   notes?: string | null;
   is_optional?: boolean;
   budget_id?: string;
+  /** Addendum: marks if this section was added or removed by the addendum */
+  addendum_action?: "add" | "remove" | null;
   items: ItemWithImages[];
 }
 
