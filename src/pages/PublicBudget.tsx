@@ -376,6 +376,29 @@ export default function PublicBudget() {
 
       <main id="budget-content" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
+        {/* ═══ ADITIVO BANNER — só aparece quando o orçamento é um aditivo ═══ */}
+        {budget.is_addendum && (
+          <div className="mb-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 flex items-start gap-3">
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider bg-primary text-primary-foreground uppercase shrink-0 mt-0.5">
+              Aditivo Nº {budget.addendum_number ?? 1}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-body font-semibold text-foreground leading-snug">
+                Esta proposta inclui alterações contratuais
+              </p>
+              {budget.addendum_summary ? (
+                <p className="text-xs text-muted-foreground font-body mt-0.5 leading-relaxed">
+                  {budget.addendum_summary}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground font-body mt-0.5 leading-relaxed">
+                  Itens novos aparecem com selo <span className="font-semibold text-success">NOVO</span>. Itens removidos do escopo já não constam mais nesta versão e o investimento foi atualizado.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ═══ MOBILE HERO CARD — price + validity + CTA above the fold ═══ */}
 
       {/* PDF download banner for imported budgets */}
