@@ -147,6 +147,8 @@ interface SectionsEditorProps {
   tableConfig?: TableConfig;
   loading?: boolean;
   readOnly?: boolean;
+  /** When true, shows addendum controls (mark item/section as add/remove) */
+  isAddendum?: boolean;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
