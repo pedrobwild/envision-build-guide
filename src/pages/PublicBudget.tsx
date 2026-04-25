@@ -497,7 +497,7 @@ export default function PublicBudget() {
             {/* ─── Escopo técnico detalhado — only items with photos, no values ─── */}
             {!DEMO_PORTFOLIO_IDS.includes(publicId || "") && (
               <div id="mobile-scope" className="scroll-mt-20 mt-4 sm:mt-6">
-                {sections.length > 0 && (() => {
+                {visibleSections.length > 0 && (() => {
                   // Filter ALL categories to only show items with images
                   const photoGroups = categorizedGroups
                     .map(group => ({
