@@ -387,6 +387,14 @@ function SortableItemRow({
               {isOptional && (
                 <span className="ml-0.5 text-[9px] font-body bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
               )}
+              {isAddendum && isItemRemoved && (
+                <span className="ml-0.5 text-[9px] font-bold font-body bg-destructive/15 text-destructive rounded px-1 flex-shrink-0 uppercase tracking-wide">
+                  {sectionAddendumAction === "remove" ? "REM·SEÇÃO" : "REMOVER"}
+                </span>
+              )}
+              {isAddendum && isItemAdded && (
+                <span className="ml-0.5 text-[9px] font-bold font-body bg-success/15 text-success rounded px-1 flex-shrink-0 uppercase tracking-wide">NOVO</span>
+              )}
               {hasBdiWarning && (
                 <AlertTriangle className="ml-0.5 h-3 w-3 text-warning inline flex-shrink-0" />
               )}
