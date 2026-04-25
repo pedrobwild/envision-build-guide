@@ -1499,6 +1499,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                                       onPromoteToCatalog={promoteToCatalog}
                                       disableImages={cfg.disableImages}
                                       disableCatalog={cfg.disableCatalog}
+                                      isAddendum={isAddendum}
+                                      sectionAddendumAction={section.addendum_action ?? null}
                                     />
                                   ))
                                 )}
