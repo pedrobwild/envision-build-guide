@@ -305,6 +305,12 @@ function SortableItemRow({
   const isOptional = !!(item as ItemData & { is_optional?: boolean }).is_optional;
   const hasBdiWarning = (Number(item.bdi_percentage) || 0) > 150;
 
+  // Effective addendum action: if section is removed, item inherits "remove"
+  const effectiveAddendumAction =
+    sectionAddendumAction === "remove" ? "remove" : item.addendum_action ?? null;
+  const isItemRemoved = effectiveAddendumAction === "remove";
+  const isItemAdded = effectiveAddendumAction === "add";
+
   return (
     <div
       ref={setNodeRef}
@@ -315,7 +321,9 @@ function SortableItemRow({
         compact && !rowExpanded ? "h-11" : "",
         isOptional && "border-l-2 border-dashed border-muted-foreground/30",
         searchMatch && "bg-primary/5 hover:bg-primary/8",
-        isDragging && "bg-muted/40 shadow-lg rounded border-b-0"
+        isDragging && "bg-muted/40 shadow-lg rounded border-b-0",
+        isAddendum && isItemRemoved && "bg-destructive/5 border-l-2 border-destructive/40",
+        isAddendum && isItemAdded && "bg-success/5 border-l-2 border-success/40",
       )}
     >
       {/* ── Compact inline row ── */}
