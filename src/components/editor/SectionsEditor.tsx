@@ -56,6 +56,8 @@ interface SectionData {
   qty?: number | null;
   section_price?: number | null;
   is_optional?: boolean;
+  /** Addendum: marks section as added/removed by addendum (only used in addendum mode) */
+  addendum_action?: "add" | "remove" | null;
   items: ItemData[];
 }
 
@@ -73,6 +75,8 @@ interface ItemData {
   catalog_item_id?: string | null;
   catalog_snapshot?: Record<string, unknown> | Json | null;
   notes?: string | null;
+  /** Addendum: marks item as added/removed by addendum (only used in addendum mode) */
+  addendum_action?: "add" | "remove" | null;
   images?: { id?: string; url: string; is_primary?: boolean | null }[];
 }
 
