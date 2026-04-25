@@ -452,6 +452,16 @@ export default function BudgetEditorV2() {
           {/* Pipeline Progress — always visible */}
           <PipelineProgress internalStatus={budget.internal_status ?? "requested"} />
 
+          {/* Addendum banner */}
+          {budget.is_addendum && (
+            <Alert className="mt-4 border-primary/40 bg-primary/5">
+              <Info className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-sm font-body text-foreground">
+                <strong>Aditivo Nº {budget.addendum_number ?? "?"}</strong> · Marque itens com o botão <span className="font-mono px-1 rounded bg-destructive/10 text-destructive">−</span> para REMOVER (subtrai do total). Adicione novos itens — eles serão somados ao total. Ao publicar, o cliente verá o orçamento atualizado.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* ── Versioning context banners (priority: A > B > C) ── */}
           {/* Only show published-version warning if the budget was actually sent to the client */}
           {budget.is_published_version ? (
@@ -587,6 +597,7 @@ export default function BudgetEditorV2() {
                     onSectionsChange={setSections}
                     loading={sectionsLoading}
                     readOnly={isPublishedVersion}
+                    isAddendum={budget.is_addendum === true}
                   />
                 </div>
 

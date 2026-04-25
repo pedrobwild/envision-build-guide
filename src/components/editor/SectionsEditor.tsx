@@ -56,6 +56,8 @@ interface SectionData {
   qty?: number | null;
   section_price?: number | null;
   is_optional?: boolean;
+  /** Addendum: marks section as added/removed by addendum (only used in addendum mode) */
+  addendum_action?: "add" | "remove" | null;
   items: ItemData[];
 }
 
@@ -73,6 +75,8 @@ interface ItemData {
   catalog_item_id?: string | null;
   catalog_snapshot?: Record<string, unknown> | Json | null;
   notes?: string | null;
+  /** Addendum: marks item as added/removed by addendum (only used in addendum mode) */
+  addendum_action?: "add" | "remove" | null;
   images?: { id?: string; url: string; is_primary?: boolean | null }[];
 }
 
@@ -143,6 +147,8 @@ interface SectionsEditorProps {
   tableConfig?: TableConfig;
   loading?: boolean;
   readOnly?: boolean;
+  /** When true, shows addendum controls (mark item/section as add/remove) */
+  isAddendum?: boolean;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
@@ -252,6 +258,8 @@ function SortableItemRow({
   onPromoteToCatalog,
   disableImages,
   disableCatalog,
+  isAddendum,
+  sectionAddendumAction,
 }: {
   item: ItemData;
   sectionId: string;
@@ -267,6 +275,8 @@ function SortableItemRow({
   onPromoteToCatalog: (sectionId: string, item: ItemData, sectionTitle: string) => void;
   disableImages?: boolean;
   disableCatalog?: boolean;
+  isAddendum?: boolean;
+  sectionAddendumAction?: "add" | "remove" | null;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
@@ -295,6 +305,12 @@ function SortableItemRow({
   const isOptional = !!(item as ItemData & { is_optional?: boolean }).is_optional;
   const hasBdiWarning = (Number(item.bdi_percentage) || 0) > 150;
 
+  // Effective addendum action: if section is removed, item inherits "remove"
+  const effectiveAddendumAction =
+    sectionAddendumAction === "remove" ? "remove" : item.addendum_action ?? null;
+  const isItemRemoved = effectiveAddendumAction === "remove";
+  const isItemAdded = effectiveAddendumAction === "add";
+
   return (
     <div
       ref={setNodeRef}
@@ -305,7 +321,9 @@ function SortableItemRow({
         compact && !rowExpanded ? "h-11" : "",
         isOptional && "border-l-2 border-dashed border-muted-foreground/30",
         searchMatch && "bg-primary/5 hover:bg-primary/8",
-        isDragging && "bg-muted/40 shadow-lg rounded border-b-0"
+        isDragging && "bg-muted/40 shadow-lg rounded border-b-0",
+        isAddendum && isItemRemoved && "bg-destructive/5 border-l-2 border-destructive/40",
+        isAddendum && isItemAdded && "bg-success/5 border-l-2 border-success/40",
       )}
     >
       {/* ── Compact inline row ── */}
@@ -368,6 +386,14 @@ function SortableItemRow({
               )}
               {isOptional && (
                 <span className="ml-0.5 text-[9px] font-body bg-muted text-muted-foreground rounded px-1 flex-shrink-0">OPT</span>
+              )}
+              {isAddendum && isItemRemoved && (
+                <span className="ml-0.5 text-[9px] font-bold font-body bg-destructive/15 text-destructive rounded px-1 flex-shrink-0 uppercase tracking-wide">
+                  {sectionAddendumAction === "remove" ? "REM·SEÇÃO" : "REMOVER"}
+                </span>
+              )}
+              {isAddendum && isItemAdded && (
+                <span className="ml-0.5 text-[9px] font-bold font-body bg-success/15 text-success rounded px-1 flex-shrink-0 uppercase tracking-wide">NOVO</span>
               )}
               {hasBdiWarning && (
                 <AlertTriangle className="ml-0.5 h-3 w-3 text-warning inline flex-shrink-0" />
@@ -447,6 +473,28 @@ function SortableItemRow({
             {formatBRL(calcItemSaleTotal(item))}
           </div>
         </div>
+
+        {/* [Aditivo] toggle (apenas em modo aditivo) */}
+        {isAddendum && sectionAddendumAction !== "remove" && (
+          <div className="flex-shrink-0 flex items-center pr-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const next = item.addendum_action === "remove" ? null : "remove";
+                onUpdate(sectionId, item.id, "addendum_action", next);
+              }}
+              title={item.addendum_action === "remove" ? "Cancelar remoção" : "Marcar para remoção (subtrai do total)"}
+              className={cn(
+                "h-6 px-1.5 rounded text-[10px] font-bold font-body uppercase border transition-colors",
+                item.addendum_action === "remove"
+                  ? "bg-destructive text-destructive-foreground border-destructive"
+                  : "bg-muted/40 text-muted-foreground border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40"
+              )}
+            >
+              {item.addendum_action === "remove" ? "✓ REM" : "−"}
+            </button>
+          </div>
+        )}
 
         {/* [⋮ ações] — 24px mobile, 32px desktop */}
         <div className="w-6 sm:w-8 flex-shrink-0 flex items-center justify-center">
@@ -641,7 +689,7 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, readOnly = false }: SectionsEditorProps) {
+export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, readOnly = false, isAddendum = false }: SectionsEditorProps) {
   const cfg = tableConfig ?? DEFAULT_TABLE_CONFIG;
   const storageKey = `budget-sections-state-${budgetId}`;
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
@@ -1451,6 +1499,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                                       onPromoteToCatalog={promoteToCatalog}
                                       disableImages={cfg.disableImages}
                                       disableCatalog={cfg.disableCatalog}
+                                      isAddendum={isAddendum}
+                                      sectionAddendumAction={section.addendum_action ?? null}
                                     />
                                   ))
                                 )}
