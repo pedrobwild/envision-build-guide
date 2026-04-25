@@ -587,6 +587,7 @@ export default function BudgetEditorV2() {
                     onSectionsChange={setSections}
                     loading={sectionsLoading}
                     readOnly={isPublishedVersion}
+                    isAddendum={budget.is_addendum === true}
                   />
                 </div>
 
