@@ -624,7 +624,7 @@ export default function PublicBudget() {
               {budget.show_optional_items && (
                 <OptionalItemsSimulator
                   budgetId={budget.id}
-                  sections={sections}
+                  sections={visibleSections}
                   baseTotal={total}
                   clientName={budget.client_name}
                   projectName={budget.project_name}
