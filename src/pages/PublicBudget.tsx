@@ -368,7 +368,7 @@ export default function PublicBudget() {
               setActiveRoom(null);
             }}
             roomName={activeRoomData.name}
-            sections={sections}
+            sections={visibleSections}
             roomId={activeRoom}
           />
         </Suspense>
