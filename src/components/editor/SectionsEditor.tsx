@@ -474,6 +474,28 @@ function SortableItemRow({
           </div>
         </div>
 
+        {/* [Aditivo] toggle (apenas em modo aditivo) */}
+        {isAddendum && sectionAddendumAction !== "remove" && (
+          <div className="flex-shrink-0 flex items-center pr-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const next = item.addendum_action === "remove" ? null : "remove";
+                onUpdate(sectionId, item.id, "addendum_action", next);
+              }}
+              title={item.addendum_action === "remove" ? "Cancelar remoção" : "Marcar para remoção (subtrai do total)"}
+              className={cn(
+                "h-6 px-1.5 rounded text-[10px] font-bold font-body uppercase border transition-colors",
+                item.addendum_action === "remove"
+                  ? "bg-destructive text-destructive-foreground border-destructive"
+                  : "bg-muted/40 text-muted-foreground border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40"
+              )}
+            >
+              {item.addendum_action === "remove" ? "✓ REM" : "−"}
+            </button>
+          </div>
+        )}
+
         {/* [⋮ ações] — 24px mobile, 32px desktop */}
         <div className="w-6 sm:w-8 flex-shrink-0 flex items-center justify-center">
           {isItemSaving ? (
