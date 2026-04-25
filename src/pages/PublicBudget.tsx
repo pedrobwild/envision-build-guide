@@ -415,7 +415,7 @@ export default function PublicBudget() {
               <div data-pdf-section>
                 <AnimatedSection id="budget-summary-section" index={0}>
                   <BudgetSummary
-                    sections={sections}
+                    sections={visibleSections}
                     adjustments={adjustments}
                     total={total}
                     generatedAt={budget.generated_at || ""}
