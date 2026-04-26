@@ -681,7 +681,13 @@ serve(async (req) => {
         throw normalized;
       }
 
-      return jsonResponse({ ok: true, operation_id: opId, applied_count: applied });
+      return jsonResponse({
+        ok: true,
+        operation_id: opId,
+        applied_count: applied,
+        partial_failures: updateErrors.length,
+        ...(updateErrors.length > 0 ? { failure_sample: updateErrors.slice(0, 3) } : {}),
+      });
     }
 
     // ---------- REVERT ----------
