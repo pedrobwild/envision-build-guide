@@ -123,7 +123,7 @@ function errCtx(...parts: unknown[]) {
 const IN_CHUNK_SIZE = 200;
 async function selectInChunks<T>(
   values: string[],
-  runChunk: (chunk: string[]) => Promise<{ data: T[] | null; error: unknown }>,
+  runChunk: (chunk: string[]) => PromiseLike<{ data: T[] | null; error: unknown }>,
   label: string,
 ): Promise<T[]> {
   if (values.length === 0) return [];
