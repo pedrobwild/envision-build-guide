@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { BulkOperationPlan, BulkOpStatus, BulkPlanRow } from "./types";
 import { fmtBRL } from "./utils";
@@ -24,6 +25,7 @@ interface Props {
   partialFailures?: number;
   error?: string;
   busy?: boolean;
+  progress?: { processed: number; total: number; estimated: boolean };
   onConfirm: () => void;
   onCancel: () => void;
   onRevert: () => void;
