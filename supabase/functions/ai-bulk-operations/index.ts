@@ -836,7 +836,7 @@ serve(async (req) => {
     if (!headerReqId && typeof body?.request_id === "string" && body.request_id.length > 0 && body.request_id.length <= 64) {
       setRequestId(body.request_id);
     }
-    const action = body?.action as "plan" | "apply" | "revert" | undefined;
+    const action = body?.action as "plan" | "apply" | "revert" | "status" | undefined;
     logCtx(`action=${action} user=${userId}${body?.operation_id ? ` op=${body.operation_id}` : ""}`);
     if (!action) return errorResponse("Campo 'action' obrigatório.");
 
