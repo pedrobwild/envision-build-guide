@@ -552,39 +552,94 @@ serve(async (req) => {
 
       // ---- Apply ----
       let applied = 0;
+      const updateErrors: Array<{ id: string; error: string }> = [];
+      // Helper: run promises in chunks to avoid exhausting connections.
+      async function runInChunks<T>(arr: T[], chunkSize: number, worker: (item: T) => Promise<void>) {
+        for (let i = 0; i < arr.length; i += chunkSize) {
+          const slice = arr.slice(i, i + chunkSize);
+          await Promise.all(slice.map(worker));
+        }
+      }
+
       try {
         if (op.action_type === "financial_adjustment") {
           const factor = (op.params as { factor: number }).factor;
-          const { data: secs } = await admin.from("sections").select("id, budget_id, section_price").in("budget_id", ids);
-          const secIds = (secs ?? []).map((s) => s.id);
-          const { data: itemsRaw } = secIds.length
-            ? await admin.from("items").select("id, section_id, internal_unit_price, internal_total").in("section_id", secIds)
-            : { data: [] };
-          const items = (itemsRaw ?? []) as Array<{ id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null }>;
-
-          for (const it of items) {
-            if (it.internal_unit_price && it.internal_unit_price > 0) {
-              await admin.from("items").update({ internal_unit_price: Number(it.internal_unit_price) * factor }).eq("id", it.id);
-              applied++;
-            } else if (it.internal_total && it.internal_total > 0) {
-              await admin.from("items").update({ internal_total: Number(it.internal_total) * factor }).eq("id", it.id);
-              applied++;
-            }
+          if (typeof factor !== "number" || !isFinite(factor) || factor <= 0) {
+            throw new Error(`Fator inválido no plano: ${factor}`);
           }
-          // Also adjust lump-sum sections (no items)
-          const sectionsWithItems = new Set(items.map((i) => i.section_id));
-          for (const s of (secs ?? []) as Array<{ id: string; section_price: number | null }>) {
-            if (!sectionsWithItems.has(s.id) && s.section_price) {
-              await admin.from("sections").update({ section_price: Number(s.section_price) * factor }).eq("id", s.id);
+
+          const { data: secs, error: secsErr } = await admin
+            .from("sections").select("id, budget_id, section_price").in("budget_id", ids);
+          if (secsErr) throw toError(secsErr, "sections-read");
+          const secIds = (secs ?? []).map((s) => s.id);
+
+          let items: Array<{ id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null }> = [];
+          if (secIds.length) {
+            const { data: itemsRaw, error: itemsErr } = await admin
+              .from("items")
+              .select("id, section_id, internal_unit_price, internal_total")
+              .in("section_id", secIds);
+            if (itemsErr) throw toError(itemsErr, "items-read");
+            items = (itemsRaw ?? []) as typeof items;
+          }
+
+          logCtx(`apply-financial: ${items.length} items, ${secs?.length ?? 0} sections, factor=${factor}`);
+
+          // Update items in parallel chunks (24 in flight at a time).
+          await runInChunks(items, 24, async (it) => {
+            try {
+              if (it.internal_unit_price && it.internal_unit_price > 0) {
+                const { error } = await admin
+                  .from("items")
+                  .update({ internal_unit_price: Number(it.internal_unit_price) * factor })
+                  .eq("id", it.id);
+                if (error) {
+                  updateErrors.push({ id: it.id, error: toError(error).message });
+                  return;
+                }
+                applied++;
+              } else if (it.internal_total && it.internal_total > 0) {
+                const { error } = await admin
+                  .from("items")
+                  .update({ internal_total: Number(it.internal_total) * factor })
+                  .eq("id", it.id);
+                if (error) {
+                  updateErrors.push({ id: it.id, error: toError(error).message });
+                  return;
+                }
+                applied++;
+              }
+            } catch (e) {
+              updateErrors.push({ id: it.id, error: toError(e).message });
             }
+          });
+
+          // Adjust lump-sum sections (no items) — also chunked.
+          const sectionsWithItems = new Set(items.map((i) => i.section_id));
+          const lumpSections = ((secs ?? []) as Array<{ id: string; section_price: number | null }>).filter(
+            (s) => !sectionsWithItems.has(s.id) && s.section_price && Number(s.section_price) > 0
+          );
+          await runInChunks(lumpSections, 24, async (s) => {
+            try {
+              const { error } = await admin
+                .from("sections")
+                .update({ section_price: Number(s.section_price) * factor })
+                .eq("id", s.id);
+              if (error) updateErrors.push({ id: s.id, error: toError(error).message });
+            } catch (e) {
+              updateErrors.push({ id: s.id, error: toError(e).message });
+            }
+          });
+
+          if (updateErrors.length > 0) {
+            errCtx(`apply-financial: ${updateErrors.length} updates falharam`, updateErrors.slice(0, 5));
           }
         } else if (op.action_type === "status_change") {
           const newStatus = (op.params as { new_status: string }).new_status;
           const { error } = await admin
             .from("budgets")
             .update({ internal_status: newStatus })
-            .in("id", ids)
-            .not("internal_status", "in", `(${PROTECTED_STATUSES.map((s) => `"${s}"`).join(",")})`);
+            .in("id", ids);
           if (error) throw toError(error, "status_change");
           applied = ids.length;
         } else if (op.action_type === "assign_owner") {
@@ -626,7 +681,13 @@ serve(async (req) => {
         throw normalized;
       }
 
-      return jsonResponse({ ok: true, operation_id: opId, applied_count: applied });
+      return jsonResponse({
+        ok: true,
+        operation_id: opId,
+        applied_count: applied,
+        partial_failures: updateErrors.length,
+        ...(updateErrors.length > 0 ? { failure_sample: updateErrors.slice(0, 3) } : {}),
+      });
     }
 
     // ---------- REVERT ----------

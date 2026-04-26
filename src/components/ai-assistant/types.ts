@@ -48,6 +48,8 @@ export type Msg = {
     plan?: BulkOperationPlan;
     status: BulkOpStatus;
     appliedCount?: number;
+    /** Number of individual updates that failed during apply (0 = full success). */
+    partialFailures?: number;
     error?: string;
   };
 };

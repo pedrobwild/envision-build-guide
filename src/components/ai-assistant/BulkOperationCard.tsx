@@ -21,6 +21,7 @@ interface Props {
   plan?: BulkOperationPlan;
   status: BulkOpStatus;
   appliedCount?: number;
+  partialFailures?: number;
   error?: string;
   busy?: boolean;
   onConfirm: () => void;
@@ -82,6 +83,7 @@ export function BulkOperationCard({
   plan,
   status,
   appliedCount,
+  partialFailures,
   error,
   busy,
   onConfirm,
@@ -354,7 +356,13 @@ export function BulkOperationCard({
         {status === "applied" && (
           <>
             <span className="text-[11px] text-muted-foreground mr-auto">
-              {appliedCount ?? plan.applicable_count} orçamentos atualizados
+              {appliedCount ?? plan.applicable_count} {plan.action_type === "financial_adjustment" ? "itens" : "orçamentos"} atualizados
+              {partialFailures && partialFailures > 0 ? (
+                <span className="ml-1.5 inline-flex items-center gap-1 text-destructive">
+                  <AlertTriangle className="h-3 w-3" />
+                  {partialFailures} falha{partialFailures > 1 ? "s" : ""} parcial{partialFailures > 1 ? "is" : ""}
+                </span>
+              ) : null}
             </span>
             <Button
               type="button"
