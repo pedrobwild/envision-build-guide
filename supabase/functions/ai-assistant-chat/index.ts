@@ -482,7 +482,8 @@ async function resolveUserAndRole(
   authHeader: string | null,
   supabaseUrl: string,
   serviceKey: string,
-): Promise<{ userId: string | null; isAdmin: boolean; admin: ReturnType<typeof createClient> }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<{ userId: string | null; isAdmin: boolean; admin: any }> {
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
