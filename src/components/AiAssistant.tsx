@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  File as FileIcon,
   Loader2,
   Paperclip,
   Send,
