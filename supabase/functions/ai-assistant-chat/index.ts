@@ -136,17 +136,44 @@ const ANALYTICS_TOOL = {
 };
 
 // =============== Helpers ===============
-function dateRangeFromArgs(args: Record<string, unknown>): { from: string | null; to: string | null } {
-  const days = typeof args.days === "number" ? args.days : null;
+function dateRangeFromArgs(
+  args: Record<string, unknown>,
+): { from: string | null; to: string | null; days: number | null } {
+  const days = typeof args.days === "number" && args.days > 0 ? args.days : null;
   const dateFrom = typeof args.date_from === "string" ? args.date_from : null;
   const dateTo = typeof args.date_to === "string" ? args.date_to : null;
-  if (dateFrom || dateTo) return { from: dateFrom, to: dateTo };
-  if (days && days > 0) {
+  if (dateFrom || dateTo) {
+    let computedDays: number | null = null;
+    if (dateFrom && dateTo) {
+      const ms = new Date(`${dateTo}T23:59:59Z`).getTime() - new Date(`${dateFrom}T00:00:00Z`).getTime();
+      if (Number.isFinite(ms) && ms > 0) computedDays = Math.max(1, Math.round(ms / 86400_000));
+    }
+    return { from: dateFrom, to: dateTo, days: computedDays };
+  }
+  if (days) {
     const to = new Date();
     const from = new Date(Date.now() - days * 86400_000);
-    return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+    return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10), days };
   }
-  return { from: null, to: null };
+  return { from: null, to: null, days: null };
+}
+
+function formatBrDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
+function buildPeriodLabel(from: string | null, to: string | null, days: number | null): string {
+  if (!from && !to) return "Sem filtro de período (todos os dados disponíveis)";
+  const fromBr = formatBrDate(from);
+  const toBr = formatBrDate(to);
+  if (days && from && to) return `Últimos ${days} dias (${fromBr} a ${toBr})`;
+  if (from && to) return `De ${fromBr} a ${toBr}`;
+  if (from) return `A partir de ${fromBr}`;
+  if (to) return `Até ${toBr}`;
+  return "Período não especificado";
 }
 
 async function runAnalytics(
