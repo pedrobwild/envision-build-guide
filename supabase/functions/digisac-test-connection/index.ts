@@ -1,6 +1,7 @@
 // Testa a conexão com Digisac chamando GET /me/tokens (ou /me como fallback).
 // Auth: verify_jwt = true.
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   CORS_HEADERS,
   digisacFetch,
@@ -8,13 +9,26 @@ import {
   loadDigisacConfig,
   makeServiceClient,
 } from "../_shared/digisac.ts";
-import { authorizeRequest } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
 
-  const auth = await authorizeRequest(req, { corsHeaders: CORS_HEADERS });
-  if (!auth.ok) return auth.response;
+  const authHeader = req.headers.get("authorization") ?? "";
+  if (!authHeader.toLowerCase().startsWith("bearer ")) {
+    return jsonResponse({ ok: false, error: "Unauthorized" }, 401);
+  }
+  const jwt = authHeader.slice(7).trim();
+
+  const authClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+  void jwt;
+  const { data: userData, error: authErr } = await authClient.auth.getUser();
+  if (authErr || !userData?.user) {
+    return jsonResponse({ ok: false, error: "Unauthorized" }, 401);
+  }
 
   const supabase = makeServiceClient();
   const cfg = await loadDigisacConfig(supabase);

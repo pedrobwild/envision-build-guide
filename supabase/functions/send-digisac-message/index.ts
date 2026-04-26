@@ -11,6 +11,7 @@
 //
 // Auth: verify_jwt = true (apenas usuários autenticados).
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   CORS_HEADERS,
   digisacFetch,
@@ -24,7 +25,6 @@ import {
   upsertConversation,
   upsertMessage,
 } from "../_shared/digisac.ts";
-import { authorizeRequest } from "../_shared/auth.ts";
 
 interface Body {
   phone?: string;
@@ -43,8 +43,22 @@ Deno.serve(async (req) => {
   }
 
   // Auth
-  const auth = await authorizeRequest(req, { corsHeaders: CORS_HEADERS });
-  if (!auth.ok) return auth.response;
+  const authHeader = req.headers.get("authorization") ?? "";
+  if (!authHeader.toLowerCase().startsWith("bearer ")) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+  const jwt = authHeader.slice(7).trim();
+
+  const authClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+  void jwt;
+  const { data: userData, error: authErr } = await authClient.auth.getUser();
+  if (authErr || !userData?.user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
 
   // Parse body
   let payload: Body;
