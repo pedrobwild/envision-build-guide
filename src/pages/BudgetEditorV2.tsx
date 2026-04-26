@@ -58,6 +58,22 @@ export default function BudgetEditorV2() {
   const [creatingVersionFromBanner, setCreatingVersionFromBanner] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
 
+  // Query base budget identification for addendum banner
+  const { data: addendumBaseBudget } = useQuery({
+    queryKey: ["addendum-base-budget", budget?.addendum_base_budget_id],
+    queryFn: async () => {
+      if (!budget?.addendum_base_budget_id) return null;
+      const { data, error } = await supabase
+        .from("budgets")
+        .select("id, sequential_code, project_name, versao, version_number")
+        .eq("id", budget.addendum_base_budget_id)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!budget?.is_addendum && !!budget?.addendum_base_budget_id,
+  });
+
   // Query current version id for "go to current" banner
   const { data: currentVersionId } = useQuery({
     queryKey: ["current-version", budget?.version_group_id],
