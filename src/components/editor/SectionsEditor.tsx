@@ -1463,6 +1463,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                             onRename={(name) => updateSection(section.id, "title", name)}
                             onDuplicate={() => duplicateSection(section.id)}
                             onDelete={() => deleteSection(section.id)}
+                            isAddendum={isAddendum}
+                            onToggleAddendumRemove={() => {
+                              const next = section.addendum_action === "remove" ? null : "remove";
+                              updateSection(section.id, "addendum_action", next);
+                            }}
                           />
                         </div>
                       </div>
