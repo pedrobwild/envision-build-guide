@@ -88,6 +88,7 @@ export function BulkOperationCard({
   partialFailures,
   error,
   busy,
+  progress,
   onConfirm,
   onCancel,
   onRevert,
