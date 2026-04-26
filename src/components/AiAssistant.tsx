@@ -235,6 +235,34 @@ export function AiAssistant() {
     const opId = m.bulkOp?.plan?.operation_id;
     if (!opId) return;
 
+    // Defense in depth: validate the factor returned by the edge function
+    // before applying. Catches malformed/poisoned plans (NaN, <=0, >10x) and
+    // surfaces a clear message instead of letting the server reject silently.
+    const factorCheck = validatePlanFactor(m.bulkOp?.plan?.params);
+    if (!factorCheck.ok) {
+      setMessages((prev) =>
+        prev.map((it, i) =>
+          i === msgIndex && it.bulkOp
+            ? {
+                ...it,
+                bulkOp: {
+                  ...it.bulkOp,
+                  status: "failed",
+                  error: factorCheck.reason,
+                  progress: undefined,
+                },
+              }
+            : it,
+        ),
+      );
+      toast({
+        title: "Plano inválido",
+        description: factorCheck.reason,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Estimate total work units. For financial adjustments the server iterates
     // over items (~60–80 per budget on average); for other action types it's
     // 1 unit per budget. We over-estimate slightly to avoid hitting 100% early.
