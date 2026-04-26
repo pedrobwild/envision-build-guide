@@ -56,6 +56,63 @@ export type Database = {
           },
         ]
       }
+      ai_bulk_operations: {
+        Row: {
+          action_type: string
+          admin_id: string
+          affected_count: number
+          applied_at: string | null
+          command: string
+          created_at: string
+          error_message: string | null
+          filters: Json
+          id: string
+          params: Json
+          plan: Json
+          reverted_at: string | null
+          reverted_by: string | null
+          snapshot: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          affected_count?: number
+          applied_at?: string | null
+          command: string
+          created_at?: string
+          error_message?: string | null
+          filters?: Json
+          id?: string
+          params?: Json
+          plan?: Json
+          reverted_at?: string | null
+          reverted_by?: string | null
+          snapshot?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          affected_count?: number
+          applied_at?: string | null
+          command?: string
+          created_at?: string
+          error_message?: string | null
+          filters?: Json
+          id?: string
+          params?: Json
+          plan?: Json
+          reverted_at?: string | null
+          reverted_by?: string | null
+          snapshot?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       budget_activities: {
         Row: {
           budget_id: string
