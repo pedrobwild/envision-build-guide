@@ -638,8 +638,19 @@ serve(async (req) => {
 
     return errorResponse("Ação inválida.");
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("ai-bulk-operations error:", msg);
+    let msg: string;
+    if (err instanceof Error) {
+      msg = err.message;
+    } else if (err && typeof err === "object") {
+      try {
+        msg = JSON.stringify(err);
+      } catch {
+        msg = String(err);
+      }
+    } else {
+      msg = String(err);
+    }
+    console.error("ai-bulk-operations error:", msg, err instanceof Error ? err.stack : "");
     return jsonResponse({ error: msg }, 500);
   }
 });
