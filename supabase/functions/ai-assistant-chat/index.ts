@@ -145,7 +145,8 @@ function dateRangeFromArgs(args: Record<string, unknown>): { from: string | null
 
 async function runAnalytics(
   args: Record<string, unknown>,
-  admin: ReturnType<typeof createClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
 ): Promise<{ ok: boolean; result?: unknown; error?: string }> {
   const metric = String(args.metric ?? "count");
   const groupBy = String(args.group_by ?? "none");
