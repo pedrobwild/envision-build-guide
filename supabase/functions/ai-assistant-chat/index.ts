@@ -170,6 +170,127 @@ const ANALYTICS_TOOL = {
   },
 };
 
+const KPI_TREND_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "get_kpi_trend",
+    description:
+      "Retorna série diária de um KPI já calculado em daily_metrics_snapshot. MUITO mais rápido que recalcular. Use para SLA, lead time, conversão, ticket médio, backlog, receita.",
+    parameters: {
+      type: "object",
+      properties: {
+        kpi: {
+          type: "string",
+          enum: [
+            "received_count","backlog_count","overdue_count","closed_count",
+            "in_analysis_count","delivered_to_sales_count","published_count",
+            "sla_on_time_pct","sla_at_risk_count","sla_breach_48h_count",
+            "avg_lead_time_days","median_lead_time_days",
+            "avg_time_in_analysis_days","avg_time_in_review_days","avg_time_to_publish_days",
+            "conversion_rate_pct","portfolio_value_brl","revenue_brl","avg_ticket_brl",
+          ],
+          description: "KPI desejado (mesmas colunas de daily_metrics_snapshot).",
+        },
+        days: { type: "number", description: "Janela em dias (padrão 30, máx 365)." },
+      },
+      required: ["kpi"],
+    },
+  },
+};
+
+const TOP_ENTITIES_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "top_entities",
+    description:
+      "Ranking pronto. Ex.: top clientes por receita, top fornecedores por nº de itens, top campanhas por leads.",
+    parameters: {
+      type: "object",
+      properties: {
+        kind: {
+          type: "string",
+          enum: ["clients_by_revenue","clients_by_budget_count","suppliers_by_item_count","campaigns_by_leads","lost_reasons"],
+          description: "Tipo de ranking.",
+        },
+        days: { type: "number", description: "Janela em dias (padrão 90)." },
+        limit: { type: "number", description: "Top N (padrão 10, máx 50)." },
+      },
+      required: ["kind"],
+    },
+  },
+};
+
+const WEB_RESEARCH_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "web_market_research",
+    description:
+      "Pesquisa web em tempo real (Perplexity sonar-pro) sobre mercado, concorrência, tendências e UX/UI no setor de gestão de obras e reformas.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Pergunta natural sobre mercado/concorrência/UX." },
+        mode: {
+          type: "string",
+          enum: ["benchmarking","references","ux","general"],
+          description: "benchmarking = concorrentes; references = tendências; ux = UX/UI; general = pesquisa geral.",
+        },
+      },
+      required: ["query"],
+    },
+  },
+};
+
+const SUBMIT_BUG_REPORT_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "submit_bug_report",
+    description:
+      "Cria um bug report estruturado e envia para triagem por IA (severidade + área + duplicatas). Use quando o usuário descrever um problema na plataforma. COLETE no chat antes de chamar: título, descrição, passos, expected, actual. NUNCA invente os campos.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Título curto do bug (5-200 chars)." },
+        description: { type: "string", description: "Descrição completa do problema." },
+        steps_to_reproduce: { type: "string", description: "Passos para reproduzir." },
+        expected_behavior: { type: "string", description: "Comportamento esperado." },
+        actual_behavior: { type: "string", description: "Comportamento atual." },
+        severity: {
+          type: "string",
+          enum: ["low","medium","high","critical"],
+          description: "Severidade percebida. Se omitido, a IA classifica.",
+        },
+        route: { type: "string", description: "Rota/URL onde ocorreu (ex.: /admin/budgets/123)." },
+      },
+      required: ["title","description","steps_to_reproduce","expected_behavior","actual_behavior"],
+    },
+  },
+};
+
+const QUERY_BUG_REPORTS_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "query_bug_reports",
+    description:
+      "Lista bug reports com filtros. Apenas admin. Útil para 'quais bugs críticos abertos?' ou 'top áreas com mais bugs'.",
+    parameters: {
+      type: "object",
+      properties: {
+        status: { type: "array", items: { type: "string", enum: ["open","triaging","resolved","dismissed"] } },
+        severity: { type: "array", items: { type: "string", enum: ["low","medium","high","critical"] } },
+        area: {
+          type: "array",
+          items: { type: "string" },
+          description: "Áreas: auth, dashboard, comercial, budget-editor, public-budget, catalog, crm, lead-sources, agenda, ai-assistant, templates, users, system, other.",
+        },
+        days: { type: "number", description: "Janela em dias (padrão 30)." },
+        group_by: { type: "string", enum: ["none","area","severity","status","day","week"] },
+        limit: { type: "number", description: "Limite (padrão 25, máx 100)." },
+      },
+    },
+  },
+};
+
 // =============== Helpers ===============
 function dateRangeFromArgs(
   args: Record<string, unknown>,
