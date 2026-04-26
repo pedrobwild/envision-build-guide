@@ -831,6 +831,65 @@ serve(async (req) => {
         extra.owner_id = result.ownerId;
         extra.owner_label = result.ownerLabel;
         extra.role = p.role;
+      } else if (parsed.action_type === "priority_change") {
+        const raw = String(parsed.params?.new_priority ?? "").toLowerCase().trim();
+        const normalized = PRIORITY_ALIASES[raw];
+        if (!normalized || !PRIORITY_VALUES.has(normalized)) {
+          return errorResponse("Prioridade inválida (use baixa, normal, alta ou urgente).");
+        }
+        rows = plainPlan(budgets, () => `Prioridade → ${normalized}`);
+        extra.new_priority = normalized;
+      } else if (parsed.action_type === "validity_change") {
+        const days = Number(parsed.params?.validity_days);
+        if (!Number.isFinite(days) || days < 1 || days > 365) {
+          return errorResponse("validity_days deve ser inteiro entre 1 e 365.");
+        }
+        const intDays = Math.round(days);
+        rows = plainPlan(budgets, () => `Validade → ${intDays} dias`);
+        extra.validity_days = intDays;
+      } else if (parsed.action_type === "due_date_change") {
+        const p = parsed.params as { due_date?: string; due_in_days?: number };
+        let dueIso: string | null = null;
+        let label = "";
+        if (p.due_date) {
+          dueIso = isoDateOrNull(p.due_date);
+          if (!dueIso) return errorResponse("due_date inválida (use YYYY-MM-DD).");
+          label = `Prazo → ${p.due_date}`;
+        } else if (typeof p.due_in_days === "number" && Number.isFinite(p.due_in_days)) {
+          if (p.due_in_days < 0 || p.due_in_days > 365) {
+            return errorResponse("due_in_days deve estar entre 0 e 365.");
+          }
+          dueIso = dueInDaysToISO(p.due_in_days);
+          label = `Prazo → hoje + ${Math.round(p.due_in_days)} dias`;
+        } else {
+          return errorResponse("Informe due_date ou due_in_days.");
+        }
+        rows = plainPlan(budgets, () => label);
+        extra.due_at = dueIso;
+      } else if (parsed.action_type === "pipeline_change") {
+        const name = String(parsed.params?.pipeline_name ?? "").trim();
+        if (!name) return errorResponse("pipeline_name obrigatório.");
+        const { data: pipes, error: pErr } = await admin
+          .from("deal_pipelines")
+          .select("id, name, slug")
+          .ilike("name", `%${name}%`)
+          .limit(2);
+        if (pErr) return errorResponse(`Falha ao buscar pipelines: ${pErr.message}`, 500);
+        if (!pipes || pipes.length === 0) return errorResponse(`Nenhum pipeline encontrado com o nome "${name}".`);
+        if (pipes.length > 1) return errorResponse(`Mais de um pipeline corresponde a "${name}". Seja mais específico.`);
+        const pipeline = pipes[0] as { id: string; name: string };
+        rows = plainPlan(budgets, () => `Pipeline → ${pipeline.name}`);
+        extra.pipeline_id = pipeline.id;
+        extra.pipeline_label = pipeline.name;
+      } else if (parsed.action_type === "pipeline_stage_change") {
+        const stage = String(parsed.params?.new_stage ?? "").toLowerCase().trim();
+        if (!STAGE_VALUES.has(stage)) {
+          return errorResponse("new_stage inválido (use lead, briefing, visita, proposta ou negociacao).");
+        }
+        rows = plainPlan(budgets, () => `Etapa → ${stage}`);
+        extra.new_stage = stage;
+      } else if (parsed.action_type === "archive") {
+        rows = plainPlan(budgets, (b) => `${b.internal_status} → archived`);
       }
 
       const applicableCount = rows.filter((r) => !r.protected).length;
