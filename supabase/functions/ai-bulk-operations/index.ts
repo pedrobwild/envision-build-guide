@@ -827,7 +827,8 @@ serve(async (req) => {
 
           await runInChunks(ids, 4, async (sourceId) => {
             try {
-              const result = await cloneBudgetAsNewVersion(admin, sourceId, userId, changeReason);
+              const expectedStatus = planStatusById.get(sourceId);
+              const result = await cloneBudgetAsNewVersion(admin, sourceId, userId, changeReason, expectedStatus);
               clones.push(result);
             } catch (e) {
               const msg = toError(e).message;
@@ -848,6 +849,7 @@ serve(async (req) => {
             new_budget_id: c.new_budget_id,
             old_was_current: c.old_was_current,
             old_internal_status: c.old_internal_status,
+            new_version_number: c.new_version_number,
           }));
           if (cloneFailures.length > 0) {
             updateErrors.push(...cloneFailures);
