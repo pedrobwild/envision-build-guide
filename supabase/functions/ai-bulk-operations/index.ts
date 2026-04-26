@@ -97,6 +97,19 @@ function errorResponse(message: string, status = 400) {
   return jsonResponse({ error: message }, status);
 }
 
+/** Normalize any thrown value (PostgrestError, plain object, string) to an Error. */
+function toError(e: unknown, prefix = ""): Error {
+  if (e instanceof Error) return prefix ? new Error(`${prefix}: ${e.message}`) : e;
+  if (e && typeof e === "object") {
+    const obj = e as { message?: string; details?: string; hint?: string; code?: string };
+    const parts = [obj.message, obj.details, obj.hint && `hint: ${obj.hint}`, obj.code && `code: ${obj.code}`]
+      .filter(Boolean)
+      .join(" · ");
+    return new Error(prefix ? `${prefix}: ${parts || JSON.stringify(e)}` : parts || JSON.stringify(e));
+  }
+  return new Error(prefix ? `${prefix}: ${String(e)}` : String(e));
+}
+
 async function callAIPlanner(command: string, today: string) {
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
@@ -178,7 +191,7 @@ async function buildFinancialPlan(
     .from("sections")
     .select("id, budget_id, qty, section_price")
     .in("budget_id", ids);
-  if (secErr) throw secErr;
+  if (secErr) throw toError(secErr, "sections");
   type Section = { id: string; budget_id: string; qty: number | null; section_price: number | null };
   const sections = (sectionsRaw ?? []) as Section[];
 
@@ -197,7 +210,7 @@ async function buildFinancialPlan(
       .from("items")
       .select("id, section_id, qty, internal_unit_price, internal_total, bdi_percentage")
       .in("section_id", sectionIds);
-    if (itemsErr) throw itemsErr;
+    if (itemsErr) throw toError(itemsErr, "items");
     items = (itemsRaw ?? []) as Item[];
   }
 
@@ -294,7 +307,7 @@ async function buildAssignPlan(
     .select("id, full_name")
     .ilike("full_name", `%${ownerName}%`)
     .limit(2);
-  if (error) throw error;
+  if (error) throw toError(error, "profiles");
   if (!members || members.length === 0) throw new Error(`Nenhum membro encontrado com o nome "${ownerName}".`);
   if (members.length > 1) throw new Error(`Mais de um membro corresponde a "${ownerName}". Seja mais específico.`);
 
@@ -541,7 +554,7 @@ serve(async (req) => {
             .update({ internal_status: newStatus })
             .in("id", ids)
             .not("internal_status", "in", `(${PROTECTED_STATUSES.map((s) => `"${s}"`).join(",")})`);
-          if (error) throw error;
+          if (error) throw toError(error, "status_change");
           applied = ids.length;
         } else if (op.action_type === "assign_owner") {
           const ownerId = (op.params as { owner_id: string }).owner_id;
@@ -551,7 +564,7 @@ serve(async (req) => {
             .from("budgets")
             .update({ [field]: ownerId })
             .in("id", ids);
-          if (error) throw error;
+          if (error) throw toError(error, "assign_owner");
           applied = ids.length;
         }
 
@@ -574,12 +587,12 @@ serve(async (req) => {
           })
           .eq("id", opId);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
+        const normalized = toError(e);
         await admin
           .from("ai_bulk_operations")
-          .update({ status: "failed", error_message: msg })
+          .update({ status: "failed", error_message: normalized.message })
           .eq("id", opId);
-        throw e;
+        throw normalized;
       }
 
       return jsonResponse({ ok: true, operation_id: opId, applied_count: applied });
@@ -638,8 +651,19 @@ serve(async (req) => {
 
     return errorResponse("Ação inválida.");
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("ai-bulk-operations error:", msg);
+    let msg: string;
+    if (err instanceof Error) {
+      msg = err.message;
+    } else if (err && typeof err === "object") {
+      try {
+        msg = JSON.stringify(err);
+      } catch {
+        msg = String(err);
+      }
+    } else {
+      msg = String(err);
+    }
+    console.error("ai-bulk-operations error:", msg, err instanceof Error ? err.stack : "");
     return jsonResponse({ error: msg }, 500);
   }
 });
