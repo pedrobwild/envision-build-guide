@@ -1,246 +1,278 @@
-// Edge function: bug-report-triage
-// Classifica um bug report usando Lovable AI (severidade, área, resumo, tags)
-// e detecta possíveis duplicatas via similaridade de título.
+// supabase/functions/bug-report-triage/index.ts
 //
-// POST { bug_id: uuid }
-// Resposta: { ok: true, triage: {...} } | { error: string }
+// Triagem de bug reports por IA.
+//
+// 1. Modo "estender" (PATCH style): recebe um bug_id já criado pelo
+//    componente BugReporter e enriquece com severity_ai, area_ai,
+//    triage_summary, triage_tags, duplicate_of. Marca como triaged.
+//
+// 2. Modo "criar" (compat com a tool submit_bug_report do chat): recebe
+//    os campos crus, cria o registro na tabela e em seguida triage.
+//
+// POST /functions/v1/bug-report-triage
+// Body para modo "estender": { bug_id }
+// Body para modo "criar":    { title, description, steps_to_reproduce, expected_behavior, actual_behavior, severity?, route?, ... }
+//
+// Resposta: { ok: true, bug_report: {...}, triage: {...}, duplicate_of }
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "authorization, x-client-info, apikey, content-type",
 };
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+const ALLOWED_AREAS = [
+  "auth", "dashboard", "comercial", "budget-editor", "public-budget",
+  "catalog", "crm", "lead-sources", "agenda", "ai-assistant",
+  "templates", "users", "system", "other",
+] as const;
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+// ─── Triagem por IA ───────────────────────────────────────────────────────
 
-const TRIAGE_TOOL = {
-  type: "function",
-  function: {
-    name: "submit_triage",
-    description: "Classifica o bug com severidade, área, resumo e tags.",
-    parameters: {
-      type: "object",
-      properties: {
-        severity_ai: {
-          type: "string",
-          enum: ["low", "medium", "high", "critical"],
-          description:
-            "Severidade. critical = bloqueia uso/derruba dados; high = funcionalidade importante quebrada; medium = problema com workaround; low = cosmético/menor.",
-        },
-        area_ai: {
-          type: "string",
-          description:
-            "Área afetada em snake-case curto: ex. budget-editor, comercial, ai-assistant, dashboard, public-budget, integracoes, auth, mobile.",
-        },
-        triage_summary: {
-          type: "string",
-          description: "Resumo neutro de 1-2 frases (PT-BR) do problema relatado.",
-        },
-        triage_tags: {
-          type: "array",
-          items: { type: "string" },
-          description: "3-6 tags em snake_case (ex.: pdf_export, regression, ios_safari, performance).",
-        },
-      },
-      required: ["severity_ai", "area_ai", "triage_summary", "triage_tags"],
-      additionalProperties: false,
-    },
-  },
-} as const;
+const TRIAGE_SYSTEM = `Você é um engenheiro de QA do envision-build-guide (BWild Engine).
+Receberá um bug report estruturado em pt-BR e deve devolver, em JSON estrito, a triagem.
 
-interface BugRow {
-  id: string;
-  title: string;
-  description: string | null;
-  steps_to_reproduce: string | null;
-  expected_behavior: string | null;
-  actual_behavior: string | null;
-  severity: string | null;
-  route: string | null;
-  user_role: string | null;
-  device_type: string | null;
-  os_name: string | null;
-  browser_name: string | null;
-  console_errors: unknown;
-}
+Áreas válidas (escolha exatamente uma): ${ALLOWED_AREAS.join(", ")}.
+Severidades válidas: low, medium, high, critical.
 
-async function callTriage(bug: BugRow) {
-  const userPayload = {
-    title: bug.title,
-    description: bug.description,
-    steps: bug.steps_to_reproduce,
-    expected: bug.expected_behavior,
-    actual: bug.actual_behavior,
-    user_severity: bug.severity,
-    context: {
-      route: bug.route,
-      role: bug.user_role,
-      device: bug.device_type,
-      os: bug.os_name,
-      browser: bug.browser_name,
-    },
-    console_errors_sample: Array.isArray(bug.console_errors)
-      ? (bug.console_errors as unknown[]).slice(0, 5)
-      : null,
-  };
+Critérios de severidade:
+- critical: bloqueia trabalho, perda/corrupção de dados, falha de auth/permissão, erro em produção monetário
+- high: impacta múltiplos usuários, fluxo crítico quebrado, sem workaround simples
+- medium: funcionalidade secundária quebrada ou UX confusa em fluxo importante
+- low: cosmético, edge case, microcopy, melhoria de UX
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+Devolva APENAS este JSON (sem markdown, sem comentário):
+{
+  "severity": "low|medium|high|critical",
+  "area": "<uma das áreas>",
+  "summary": "<1-2 frases em pt-BR resumindo o bug>",
+  "tags": ["<tag1>", "<tag2>", "..."]
+}`;
+
+// deno-lint-ignore no-explicit-any
+async function callTriageLLM(bug: any, openaiKey: string) {
+  const userMsg = [
+    `Título: ${bug.title}`,
+    `Descrição: ${bug.description}`,
+    bug.steps_to_reproduce ? `Passos:\n${bug.steps_to_reproduce}` : "",
+    bug.expected_behavior ? `Esperado: ${bug.expected_behavior}` : "",
+    bug.actual_behavior ? `Atual: ${bug.actual_behavior}` : "",
+    bug.severity ? `Severidade declarada pelo usuário: ${bug.severity}` : "",
+    bug.route ? `Rota: ${bug.route}` : "",
+    bug.device_type ? `Device: ${bug.device_type} (${bug.os_name ?? ""} ${bug.browser_name ?? ""})` : "",
+  ].filter(Boolean).join("\n");
+
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
+      model: "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content:
-            "Você é um engenheiro de QA triando bugs de uma plataforma SaaS de gestão de orçamentos de obras (BWild). " +
-            "Classifique objetivamente. Áreas comuns: budget-editor, comercial, ai-assistant, dashboard, public-budget, " +
-            "integracoes, auth, mobile, catalog, crm. Sempre responda chamando a tool submit_triage.",
-        },
-        {
-          role: "user",
-          content:
-            "Classifique este bug:\n\n```json\n" + JSON.stringify(userPayload, null, 2) + "\n```",
-        },
+        { role: "system", content: TRIAGE_SYSTEM },
+        { role: "user", content: userMsg },
       ],
-      tools: [TRIAGE_TOOL],
-      tool_choice: { type: "function", function: { name: "submit_triage" } },
+      temperature: 0.1,
+      response_format: { type: "json_object" },
     }),
   });
-
-  if (resp.status === 429) throw new Error("rate_limited");
-  if (resp.status === 402) throw new Error("payment_required");
   if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`ai_gateway_error_${resp.status}: ${text.slice(0, 200)}`);
+    console.error("triage llm error", resp.status, await resp.text().catch(() => ""));
+    return null;
   }
-
   const data = await resp.json();
-  const call = data?.choices?.[0]?.message?.tool_calls?.[0];
-  if (!call?.function?.arguments) throw new Error("ai_no_tool_call");
-
-  const parsed = JSON.parse(call.function.arguments);
-  // Saneamento defensivo
-  const allowed = new Set(["low", "medium", "high", "critical"]);
-  if (!allowed.has(parsed.severity_ai)) parsed.severity_ai = "medium";
-  if (!Array.isArray(parsed.triage_tags)) parsed.triage_tags = [];
-  parsed.triage_tags = parsed.triage_tags
-    .filter((t: unknown) => typeof t === "string")
-    .map((t: string) =>
-      t
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "")
-        .slice(0, 40),
-    )
-    .filter(Boolean)
-    .slice(0, 8);
-  parsed.area_ai = String(parsed.area_ai || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "-")
-    .slice(0, 40) || "unknown";
-  parsed.triage_summary = String(parsed.triage_summary || "").slice(0, 500);
-  return parsed as {
-    severity_ai: "low" | "medium" | "high" | "critical";
-    area_ai: string;
-    triage_summary: string;
-    triage_tags: string[];
-  };
+  const raw = data.choices?.[0]?.message?.content ?? "{}";
+  try {
+    const parsed = JSON.parse(raw);
+    const severity = ["low","medium","high","critical"].includes(parsed.severity) ? parsed.severity : "medium";
+    const area = (ALLOWED_AREAS as readonly string[]).includes(parsed.area) ? parsed.area : "other";
+    const summary = typeof parsed.summary === "string" ? parsed.summary.slice(0, 400) : (bug.title ?? "");
+    const tags = Array.isArray(parsed.tags)
+      ? parsed.tags
+          .filter((t: unknown): t is string => typeof t === "string")
+          .map((t: string) => t.trim().toLowerCase().replace(/\s+/g, "_"))
+          .filter(Boolean).slice(0, 5)
+      : [];
+    return { severity, area, summary, tags };
+  } catch (e) {
+    console.error("triage llm parse error", e);
+    return null;
+  }
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-  if (!LOVABLE_API_KEY) return json({ error: "missing_lovable_api_key" }, 500);
+// ─── Anti-duplicata ───────────────────────────────────────────────────────
 
-  let body: { bug_id?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return json({ error: "invalid_json" }, 400);
-  }
-  const bugId = body?.bug_id;
-  if (!bugId || typeof bugId !== "string") {
-    return json({ error: "missing_bug_id" }, 400);
-  }
-
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-
-  const { data: bug, error: bugErr } = await admin
+async function findPossibleDuplicate(
+  excludeId: string | null,
+  title: string,
+  // deno-lint-ignore no-explicit-any
+  admin: any,
+): Promise<string | null> {
+  const keywords = title.split(/\s+/).filter((w) => w.length > 3).slice(0, 3).join(" ");
+  if (!keywords) return null;
+  let q = admin
     .from("bug_reports")
-    .select(
-      "id,title,description,steps_to_reproduce,expected_behavior,actual_behavior,severity,route,user_role,device_type,os_name,browser_name,console_errors",
-    )
-    .eq("id", bugId)
-    .maybeSingle();
+    .select("id, title")
+    .ilike("title", `%${keywords}%`)
+    .neq("status", "dismissed")
+    .order("created_at", { ascending: false })
+    .limit(5);
+  if (excludeId) q = q.neq("id", excludeId);
+  // deno-lint-ignore no-explicit-any
+  const { data, error } = (await q) as any;
+  if (error || !data || data.length === 0) return null;
+  return data[0]?.id ?? null;
+}
 
-  if (bugErr) return json({ error: "fetch_failed", detail: bugErr.message }, 500);
-  if (!bug) return json({ error: "bug_not_found" }, 404);
+// ─── Auth ─────────────────────────────────────────────────────────────────
 
-  let triage;
-  try {
-    triage = await callTriage(bug as BugRow);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    const status =
-      msg === "rate_limited" ? 429 : msg === "payment_required" ? 402 : 500;
-    return json({ error: msg }, status);
-  }
-
-  // Detecção de duplicata: títulos similares (pg_trgm) entre bugs abertos recentes,
-  // exceto este. Usa similaridade >= 0.5.
-  let duplicateOf: string | null = null;
-  const { data: dupRows } = await admin
-    .rpc("execute_sql_safe_dedup_search", { p_id: bugId, p_title: bug.title })
-    .maybeSingle()
-    .then((r) => r)
-    .catch(() => ({ data: null }));
-
-  if (dupRows && typeof dupRows === "object" && "duplicate_of" in dupRows) {
-    duplicateOf = (dupRows as { duplicate_of: string | null }).duplicate_of;
-  } else {
-    // Fallback: query direta via PostgREST com filtro ilike (sem pg_trgm)
-    const { data: candidates } = await admin
-      .from("bug_reports")
-      .select("id,title")
-      .neq("id", bugId)
-      .neq("status", "resolved")
-      .ilike("title", `%${bug.title.split(/\s+/).slice(0, 3).join(" ")}%`)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (candidates && candidates.length > 0) duplicateOf = candidates[0].id;
-  }
-
-  const { error: updErr } = await admin
-    .from("bug_reports")
-    .update({
-      severity_ai: triage.severity_ai,
-      area_ai: triage.area_ai,
-      triage_summary: triage.triage_summary,
-      triage_tags: triage.triage_tags,
-      duplicate_of: duplicateOf,
-      triaged_at: new Date().toISOString(),
-    })
-    .eq("id", bugId);
-
-  if (updErr) return json({ error: "update_failed", detail: updErr.message }, 500);
-
-  return json({
-    ok: true,
-    triage: { ...triage, duplicate_of: duplicateOf },
+async function resolveUser(
+  authHeader: string | null, supabaseUrl: string, serviceKey: string,
+) {
+  const admin = createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
   });
+  if (!authHeader?.startsWith("Bearer ")) return { userId: null as string | null, admin };
+  const token = authHeader.slice("Bearer ".length).trim();
+  // deno-lint-ignore no-explicit-any
+  const { data: { user } } = (await admin.auth.getUser(token)) as any;
+  return { userId: (user?.id ?? null) as string | null, admin };
+}
+
+// ─── Server ───────────────────────────────────────────────────────────────
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+
+    const { userId, admin } = await resolveUser(req.headers.get("authorization"), supabaseUrl, serviceKey);
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "Não autenticado" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json().catch(() => ({}));
+
+    // Modo estender: usuário já criou o bug via componente BugReporter
+    let bugId: string | null = typeof body?.bug_id === "string" ? body.bug_id : null;
+
+    // Modo criar: chamada vinda da tool submit_bug_report do chat
+    if (!bugId) {
+      const title = String(body.title ?? body.summary ?? "").trim();
+      const description = String(body.description ?? body.summary ?? "").trim();
+      const stepsToReproduce = String(body.steps_to_reproduce ?? body.steps ?? "").trim();
+      const expected = String(body.expected_behavior ?? body.expected ?? "").trim();
+      const actual = String(body.actual_behavior ?? body.actual ?? "").trim();
+      if (title.length < 5 || description.length < 5) {
+        return new Response(JSON.stringify({ error: "title e description (mín. 5 chars) obrigatórios" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const severityIn = String(body.severity ?? "medium");
+      const severity = ["low","medium","high","critical"].includes(severityIn) ? severityIn : "medium";
+
+      // deno-lint-ignore no-explicit-any
+      const { data: ins, error: insErr } = (await admin
+        .from("bug_reports")
+        .insert({
+          reporter_id: userId,
+          reporter_name: typeof body.reporter_name === "string" ? body.reporter_name : null,
+          reporter_email: typeof body.reporter_email === "string" ? body.reporter_email : null,
+          title,
+          description,
+          steps_to_reproduce: stepsToReproduce || null,
+          expected_behavior: expected || null,
+          actual_behavior: actual || null,
+          severity,
+          status: "open",
+          route: typeof body.route === "string" ? body.route : (typeof body.current_url === "string" ? body.current_url : null),
+          user_role: typeof body.user_role === "string" ? body.user_role : null,
+          device_type: typeof body.device_type === "string" ? body.device_type : null,
+          os_name: typeof body.os_name === "string" ? body.os_name : (typeof body.os === "string" ? body.os : null),
+          browser_name: typeof body.browser_name === "string" ? body.browser_name : null,
+          browser_version: typeof body.browser_version === "string" ? body.browser_version : null,
+          viewport_width: Number.isFinite(body.viewport_width) ? body.viewport_width : null,
+          viewport_height: Number.isFinite(body.viewport_height) ? body.viewport_height : null,
+          device_pixel_ratio: Number.isFinite(body.device_pixel_ratio) ? body.device_pixel_ratio : null,
+          user_agent: typeof body.user_agent === "string" ? body.user_agent : (req.headers.get("user-agent") ?? null),
+          attachments: Array.isArray(body.attachments) ? body.attachments : [],
+          active_filters: typeof body.active_filters === "object" && body.active_filters ? body.active_filters : {},
+          console_errors: Array.isArray(body.console_errors) ? body.console_errors : [],
+        })
+        .select("*")
+        .single()) as any;
+      if (insErr) {
+        console.error("insert bug_report error", insErr);
+        return new Response(JSON.stringify({ error: insErr.message }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      bugId = ins.id;
+    }
+
+    // Carrega o bug
+    // deno-lint-ignore no-explicit-any
+    const { data: bug, error: getErr } = (await admin
+      .from("bug_reports")
+      .select("*")
+      .eq("id", bugId!)
+      .maybeSingle()) as any;
+    if (getErr || !bug) {
+      return new Response(JSON.stringify({ error: getErr?.message ?? "bug não encontrado" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Triagem por IA
+    let triage = null;
+    if (openaiKey) triage = await callTriageLLM(bug, openaiKey);
+    const duplicateOf = await findPossibleDuplicate(bug.id, bug.title ?? "", admin);
+
+    // Update
+    // deno-lint-ignore no-explicit-any
+    const { data: updated, error: upErr } = (await admin
+      .from("bug_reports")
+      .update({
+        severity_ai: triage?.severity ?? null,
+        area_ai: triage?.area ?? null,
+        triage_summary: triage?.summary ?? null,
+        triage_tags: triage?.tags ?? [],
+        duplicate_of: duplicateOf,
+        triaged_at: new Date().toISOString(),
+        status: bug.status === "open" && triage ? "triaging" : bug.status,
+      })
+      .eq("id", bug.id)
+      .select("*")
+      .single()) as any;
+
+    if (upErr) {
+      console.error("update bug_report error", upErr);
+      return new Response(JSON.stringify({ error: upErr.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(
+      JSON.stringify({ ok: true, bug_report: updated, triage, duplicate_of: duplicateOf }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (err) {
+    console.error("bug-report-triage error", err);
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "Erro desconhecido" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
 });
