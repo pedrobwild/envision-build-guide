@@ -115,6 +115,28 @@ function errCtx(...parts: unknown[]) {
   console.error(`[ai-bulk-operations][req=${_currentRequestId}]`, ...parts);
 }
 
+/**
+ * PostgREST rejects very long URLs (status 400 "Bad Request" with no body details)
+ * when an `.in("col", values)` filter contains thousands of UUIDs. We chunk the
+ * IN-list and merge the results to stay safely under the URL length limit.
+ */
+const IN_CHUNK_SIZE = 200;
+async function selectInChunks<T>(
+  values: string[],
+  runChunk: (chunk: string[]) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  label: string,
+): Promise<T[]> {
+  if (values.length === 0) return [];
+  const out: T[] = [];
+  for (let i = 0; i < values.length; i += IN_CHUNK_SIZE) {
+    const chunk = values.slice(i, i + IN_CHUNK_SIZE);
+    const { data, error } = await runChunk(chunk);
+    if (error) throw toError(error, label);
+    if (data && data.length) out.push(...data);
+  }
+  return out;
+}
+
 /** Normalize any thrown value (PostgrestError, plain object, string) to an Error. */
 function toError(e: unknown, prefix = ""): Error {
   if (e instanceof Error) return prefix ? new Error(`${prefix}: ${e.message}`) : e;
@@ -205,13 +227,15 @@ async function buildFinancialPlan(
   const rows: PlanRow[] = [];
   const ids = budgets.map((b) => b.id);
 
-  const { data: sectionsRaw, error: secErr } = await admin
-    .from("sections")
-    .select("id, budget_id, qty, section_price")
-    .in("budget_id", ids);
-  if (secErr) throw toError(secErr, "sections");
   type Section = { id: string; budget_id: string; qty: number | null; section_price: number | null };
-  const sections = (sectionsRaw ?? []) as Section[];
+  const sections = await selectInChunks<Section>(
+    ids,
+    (chunk) => admin
+      .from("sections")
+      .select("id, budget_id, qty, section_price")
+      .in("budget_id", chunk),
+    "sections",
+  );
 
   const sectionsByBudget = new Map<string, Section[]>();
   for (const s of sections) {
@@ -222,15 +246,14 @@ async function buildFinancialPlan(
 
   const sectionIds = sections.map((s) => s.id);
   type Item = { id: string; section_id: string; qty: number | null; internal_unit_price: number | null; internal_total: number | null; bdi_percentage: number | null };
-  let items: Item[] = [];
-  if (sectionIds.length) {
-    const { data: itemsRaw, error: itemsErr } = await admin
+  const items = await selectInChunks<Item>(
+    sectionIds,
+    (chunk) => admin
       .from("items")
       .select("id, section_id, qty, internal_unit_price, internal_total, bdi_percentage")
-      .in("section_id", sectionIds);
-    if (itemsErr) throw toError(itemsErr, "items");
-    items = (itemsRaw ?? []) as Item[];
-  }
+      .in("section_id", chunk),
+    "items",
+  );
 
   const itemsBySection = new Map<string, Item[]>();
   for (const it of items) {
@@ -858,24 +881,28 @@ serve(async (req) => {
           // ---- 2) Apply the factor on the NEW versions only ----
           const newBudgetIds = clones.map((c) => c.new_budget_id);
 
-          const { data: newSecs, error: newSecsErr } = await admin
-            .from("sections")
-            .select("id, budget_id, section_price")
-            .in("budget_id", newBudgetIds);
-          if (newSecsErr) throw toError(newSecsErr, "new-sections-read");
-          const newSecIds = (newSecs ?? []).map((s: { id: string }) => s.id);
+          type NewSec = { id: string; budget_id: string; section_price: number | null };
+          const newSecs = await selectInChunks<NewSec>(
+            newBudgetIds,
+            (chunk) => admin
+              .from("sections")
+              .select("id, budget_id, section_price")
+              .in("budget_id", chunk),
+            "new-sections-read",
+          );
+          const newSecIds = newSecs.map((s) => s.id);
 
-          let newItems: Array<{ id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null }> = [];
-          if (newSecIds.length) {
-            const { data: itemsRaw, error: itemsErr } = await admin
+          type NewItem = { id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null };
+          const newItems = await selectInChunks<NewItem>(
+            newSecIds,
+            (chunk) => admin
               .from("items")
               .select("id, section_id, internal_unit_price, internal_total")
-              .in("section_id", newSecIds);
-            if (itemsErr) throw toError(itemsErr, "new-items-read");
-            newItems = (itemsRaw ?? []) as typeof newItems;
-          }
+              .in("section_id", chunk),
+            "new-items-read",
+          );
 
-          logCtx(`apply-financial: cloned ${clones.length} budgets · ${newItems.length} new items · ${newSecs?.length ?? 0} new sections · factor=${factor}`);
+          logCtx(`apply-financial: cloned ${clones.length} budgets · ${newItems.length} new items · ${newSecs.length} new sections · factor=${factor}`);
 
           await runInChunks(newItems, 24, async (it) => {
             try {
