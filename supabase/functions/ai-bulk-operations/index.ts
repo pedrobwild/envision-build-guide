@@ -593,7 +593,11 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
     new_budget_id: newBudgetId,
     old_budget_id: sourceBudgetId,
     old_was_current: Boolean((source as { is_current_version?: boolean }).is_current_version),
-    old_internal_status: String((source as { internal_status?: string }).internal_status ?? ""),
+    // Usa o status REAL no momento do clone (currentStatus), não o do plan,
+    // garantindo que o revert restaure o estado de fato preservado.
+    old_internal_status: currentStatus,
+    old_version_number: Number((source as { version_number?: number }).version_number ?? 1),
+    new_version_number: nextVersion,
     section_id_map: sectionIdMap,
     item_id_map: itemIdMap,
   };
