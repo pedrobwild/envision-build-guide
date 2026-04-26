@@ -157,7 +157,7 @@ export function BulkOperationCard({
               </div>
               <div className="text-right shrink-0">
                 {r.protected ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-600">
+                  <span className="inline-flex items-center gap-1 text-[10px] text-warning">
                     <ShieldAlert className="h-3 w-3" /> Protegido
                   </span>
                 ) : hasFinancial ? (
