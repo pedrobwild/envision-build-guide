@@ -944,17 +944,62 @@ serve(async (req) => {
         items?: Array<{ id: string; internal_unit_price: number | null; internal_total: number | null }>;
         section_prices?: Array<{ id: string; section_price: number | null }>;
         budgets?: Array<{ id: string; internal_status?: string; commercial_owner_id?: string | null; estimator_owner_id?: string | null }>;
+        clones?: Array<{ old_budget_id: string; new_budget_id: string; old_was_current: boolean; old_internal_status: string }>;
       };
 
       if (op.action_type === "financial_adjustment") {
-        for (const it of snap.items ?? []) {
-          await admin.from("items").update({
-            internal_unit_price: it.internal_unit_price,
-            internal_total: it.internal_total,
-          }).eq("id", it.id);
-        }
-        for (const s of snap.section_prices ?? []) {
-          await admin.from("sections").update({ section_price: s.section_price }).eq("id", s.id);
+        // New revert path: delete the cloned versions and restore the old
+        // versions as current. Falls back to the legacy in-place revert (for
+        // operations applied before this change) when no clone map is present.
+        if (snap.clones && snap.clones.length > 0) {
+          const newIds = snap.clones.map((c) => c.new_budget_id);
+
+          // Cascade delete dependents of the cloned budgets, in dependency order.
+          const { data: cloneSecs } = await admin
+            .from("sections")
+            .select("id")
+            .in("budget_id", newIds);
+          const cloneSecIds = (cloneSecs ?? []).map((s: { id: string }) => s.id);
+          if (cloneSecIds.length > 0) {
+            const { data: cloneItems } = await admin
+              .from("items")
+              .select("id")
+              .in("section_id", cloneSecIds);
+            const cloneItemIds = (cloneItems ?? []).map((i: { id: string }) => i.id);
+            if (cloneItemIds.length > 0) {
+              try { await admin.from("item_images").delete().in("item_id", cloneItemIds); } catch { /* ignore */ }
+              await admin.from("items").delete().in("id", cloneItemIds);
+            }
+            await admin.from("sections").delete().in("id", cloneSecIds);
+          }
+          try { await admin.from("adjustments").delete().in("budget_id", newIds); } catch { /* ignore */ }
+          try { await admin.from("rooms").delete().in("budget_id", newIds); } catch { /* ignore */ }
+          try { await admin.from("budget_tours").delete().in("budget_id", newIds); } catch { /* ignore */ }
+          try { await admin.from("budget_events").delete().in("budget_id", newIds); } catch { /* ignore */ }
+          await admin.from("budgets").delete().in("id", newIds);
+
+          // Restore the old versions as current and reset their internal_status
+          // to whatever it was before the bulk operation.
+          for (const c of snap.clones) {
+            await admin
+              .from("budgets")
+              .update({
+                is_current_version: c.old_was_current,
+                internal_status: c.old_internal_status || "novo",
+              })
+              .eq("id", c.old_budget_id);
+          }
+        } else {
+          // Legacy fallback (operations applied before clone-based versioning).
+          for (const it of snap.items ?? []) {
+            await admin.from("items").update({
+              internal_unit_price: it.internal_unit_price,
+              internal_total: it.internal_total,
+            }).eq("id", it.id);
+          }
+          for (const s of snap.section_prices ?? []) {
+            await admin.from("sections").update({ section_price: s.section_price }).eq("id", s.id);
+          }
         }
       } else if (op.action_type === "status_change") {
         for (const b of snap.budgets ?? []) {
