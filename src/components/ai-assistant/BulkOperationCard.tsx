@@ -21,6 +21,7 @@ interface Props {
   plan?: BulkOperationPlan;
   status: BulkOpStatus;
   appliedCount?: number;
+  partialFailures?: number;
   error?: string;
   busy?: boolean;
   onConfirm: () => void;
