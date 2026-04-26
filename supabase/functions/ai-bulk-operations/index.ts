@@ -513,11 +513,12 @@ serve(async (req) => {
           const factor = (op.params as { factor: number }).factor;
           const { data: secs } = await admin.from("sections").select("id, budget_id, section_price").in("budget_id", ids);
           const secIds = (secs ?? []).map((s) => s.id);
-          const { data: items } = secIds.length
-            ? await admin.from("items").select("id, internal_unit_price, internal_total").in("section_id", secIds)
+          const { data: itemsRaw } = secIds.length
+            ? await admin.from("items").select("id, section_id, internal_unit_price, internal_total").in("section_id", secIds)
             : { data: [] };
+          const items = (itemsRaw ?? []) as Array<{ id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null }>;
 
-          for (const it of items ?? []) {
+          for (const it of items) {
             if (it.internal_unit_price && it.internal_unit_price > 0) {
               await admin.from("items").update({ internal_unit_price: Number(it.internal_unit_price) * factor }).eq("id", it.id);
               applied++;
@@ -527,8 +528,8 @@ serve(async (req) => {
             }
           }
           // Also adjust lump-sum sections (no items)
-          const sectionsWithItems = new Set((items ?? []).map((i) => i.section_id));
-          for (const s of secs ?? []) {
+          const sectionsWithItems = new Set(items.map((i) => i.section_id));
+          for (const s of (secs ?? []) as Array<{ id: string; section_price: number | null }>) {
             if (!sectionsWithItems.has(s.id) && s.section_price) {
               await admin.from("sections").update({ section_price: Number(s.section_price) * factor }).eq("id", s.id);
             }
