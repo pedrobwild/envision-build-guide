@@ -1240,7 +1240,18 @@ serve(async (req) => {
       const snap = op.snapshot as {
         items?: Array<{ id: string; internal_unit_price: number | null; internal_total: number | null }>;
         section_prices?: Array<{ id: string; section_price: number | null }>;
-        budgets?: Array<{ id: string; internal_status?: string; commercial_owner_id?: string | null; estimator_owner_id?: string | null }>;
+        budgets?: Array<{
+          id: string;
+          internal_status?: string;
+          commercial_owner_id?: string | null;
+          estimator_owner_id?: string | null;
+          priority?: string;
+          validity_days?: number | null;
+          due_at?: string | null;
+          pipeline_id?: string | null;
+          pipeline_stage?: string | null;
+          win_probability?: number | null;
+        }>;
         clones?: Array<{ old_budget_id: string; new_budget_id: string; old_was_current: boolean; old_internal_status: string; new_version_number?: number }>;
       };
 
@@ -1371,6 +1382,45 @@ serve(async (req) => {
           if ("commercial_owner_id" in b) patch.commercial_owner_id = b.commercial_owner_id ?? null;
           if ("estimator_owner_id" in b) patch.estimator_owner_id = b.estimator_owner_id ?? null;
           await admin.from("budgets").update(patch).eq("id", b.id);
+        }
+      } else if (op.action_type === "priority_change") {
+        for (const b of snap.budgets ?? []) {
+          if (b.priority !== undefined) {
+            await admin.from("budgets").update({ priority: b.priority }).eq("id", b.id);
+          }
+        }
+      } else if (op.action_type === "validity_change") {
+        for (const b of snap.budgets ?? []) {
+          if (b.validity_days !== undefined) {
+            await admin.from("budgets").update({ validity_days: b.validity_days }).eq("id", b.id);
+          }
+        }
+      } else if (op.action_type === "due_date_change") {
+        for (const b of snap.budgets ?? []) {
+          if ("due_at" in b) {
+            await admin.from("budgets").update({ due_at: b.due_at ?? null }).eq("id", b.id);
+          }
+        }
+      } else if (op.action_type === "pipeline_change") {
+        for (const b of snap.budgets ?? []) {
+          if ("pipeline_id" in b) {
+            await admin.from("budgets").update({ pipeline_id: b.pipeline_id ?? null }).eq("id", b.id);
+          }
+        }
+      } else if (op.action_type === "pipeline_stage_change") {
+        for (const b of snap.budgets ?? []) {
+          const patch: Record<string, unknown> = {};
+          if ("pipeline_stage" in b) patch.pipeline_stage = b.pipeline_stage ?? null;
+          if ("win_probability" in b) patch.win_probability = b.win_probability ?? null;
+          if (Object.keys(patch).length > 0) {
+            await admin.from("budgets").update(patch).eq("id", b.id);
+          }
+        }
+      } else if (op.action_type === "archive") {
+        for (const b of snap.budgets ?? []) {
+          if (b.internal_status) {
+            await admin.from("budgets").update({ internal_status: b.internal_status }).eq("id", b.id);
+          }
         }
       }
 
