@@ -185,7 +185,8 @@ async function runAnalytics(
   const groupBy = String(args.group_by ?? "none");
   const dateField = String(args.date_field ?? "created_at");
   const limit = Math.min(Number(args.limit ?? 30) || 30, 100);
-  const { from, to } = dateRangeFromArgs(args);
+  const { from, to, days } = dateRangeFromArgs(args);
+  const periodLabel = buildPeriodLabel(from, to, days);
   const internalStatuses = Array.isArray(args.internal_statuses) ? args.internal_statuses : null;
   const pipelineStages = Array.isArray(args.pipeline_stages) ? args.pipeline_stages : null;
 
