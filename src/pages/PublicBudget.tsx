@@ -379,25 +379,39 @@ export default function PublicBudget() {
 
         {/* ═══ ADITIVO BANNER — só aparece quando o orçamento é um aditivo ═══ */}
         {budget.is_addendum && (
-          <div className="mb-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 flex items-start gap-3">
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider bg-primary text-primary-foreground uppercase shrink-0 mt-0.5">
-              Aditivo Nº {budget.addendum_number ?? 1}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-body font-semibold text-foreground leading-snug">
-                Esta proposta inclui alterações contratuais
-              </p>
-              {budget.addendum_summary ? (
-                <p className="text-xs text-muted-foreground font-body mt-0.5 leading-relaxed">
-                  {budget.addendum_summary}
+          <>
+            <div className="mb-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 flex items-start gap-3">
+              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider bg-primary text-primary-foreground uppercase shrink-0 mt-0.5">
+                Aditivo Nº {budget.addendum_number ?? 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-body font-semibold text-foreground leading-snug">
+                  Esta proposta inclui alterações contratuais
                 </p>
-              ) : (
-                <p className="text-xs text-muted-foreground font-body mt-0.5 leading-relaxed">
-                  Itens novos aparecem com selo <span className="font-semibold text-success">NOVO</span>. Itens removidos do escopo já não constam mais nesta versão e o investimento foi atualizado.
-                </p>
-              )}
+                {budget.addendum_summary ? (
+                  <p className="text-xs text-muted-foreground font-body mt-0.5 leading-relaxed">
+                    {budget.addendum_summary}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground font-body mt-0.5 leading-relaxed">
+                    Itens novos aparecem com selo <span className="font-semibold text-success">NOVO</span>. Itens removidos do escopo já não constam mais nesta versão e o investimento foi atualizado.
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+
+            {/* Card de delta financeiro do aditivo */}
+            {(() => {
+              const delta = calculateAddendumDelta(sections);
+              return (
+                <AddendumDeltaCard
+                  added={delta.added}
+                  removed={delta.removed}
+                  net={delta.net}
+                />
+              );
+            })()}
+          </>
         )}
 
         {/* ═══ MOBILE HERO CARD — price + validity + CTA above the fold ═══ */}
