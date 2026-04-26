@@ -357,6 +357,203 @@ async function buildAssignPlan(
   return { rows, ownerId, ownerLabel };
 }
 
+// =====================================================================
+// Versioning helpers (financial_adjustment): clone the budget, copy all
+// dependent rows, then apply the factor to the NEW version and reset its
+// internal_status to 'delivered_to_sales' so the commercial team can re-send
+// the link to the client. The OLD version stays intact (snapshot points to
+// it for revert).
+// =====================================================================
+
+const POST_REDUCTION_STATUS = "delivered_to_sales";
+
+interface VersionCloneResult {
+  new_budget_id: string;
+  old_budget_id: string;
+  old_was_current: boolean;
+  old_internal_status: string;
+  section_id_map: Record<string, string>;
+  item_id_map: Record<string, string>;
+}
+
+// deno-lint-ignore no-explicit-any
+async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userId: string, changeReason: string): Promise<VersionCloneResult> {
+  const { data: source, error: srcErr } = await admin
+    .from("budgets")
+    .select("*")
+    .eq("id", sourceBudgetId)
+    .single();
+  if (srcErr || !source) throw toError(srcErr ?? new Error("source-not-found"), `clone:${sourceBudgetId}`);
+
+  let groupId = source.version_group_id as string | null;
+  if (!groupId) {
+    groupId = sourceBudgetId;
+    const { error: ensureErr } = await admin
+      .from("budgets")
+      .update({ version_group_id: groupId, version_number: 1, is_current_version: true })
+      .eq("id", sourceBudgetId);
+    if (ensureErr) throw toError(ensureErr, `ensure-group:${sourceBudgetId}`);
+  }
+
+  const { data: maxRow } = await admin
+    .from("budgets")
+    .select("version_number")
+    .eq("version_group_id", groupId)
+    .order("version_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const nextVersion = ((maxRow?.version_number as number | null) ?? 0) + 1;
+
+  // Strip unique / lifecycle fields so the clone gets a fresh identity.
+  const {
+    id: _id, created_at: _ca, updated_at: _ua, public_id: _pid, public_token_hash: _pth,
+    view_count: _vc, last_viewed_at: _lva, approved_at: _aa, approved_by_name: _aby,
+    generated_at: _ga, is_published_version: _ipv, sequential_code: _sc,
+    closed_at: _cl, contract_file_url: _cfu, budget_pdf_url: _bpu,
+    version_group_id: _vg, version_number: _vn, is_current_version: _icv,
+    parent_budget_id: _pbid, change_reason: _cr, status: _st, created_by: _cb,
+    internal_status: _is,
+    ...meta
+  } = source;
+
+  const { data: newBudget, error: insErr } = await admin
+    .from("budgets")
+    .insert({
+      ...meta,
+      version_group_id: groupId,
+      version_number: nextVersion,
+      is_current_version: false,
+      is_published_version: false,
+      parent_budget_id: sourceBudgetId,
+      change_reason: changeReason,
+      versao: `${nextVersion}`,
+      status: "draft",
+      created_by: userId,
+      view_count: 0,
+      // Per product decision: post-reduction state is always "delivered_to_sales".
+      internal_status: POST_REDUCTION_STATUS,
+    })
+    .select("id")
+    .single();
+  if (insErr || !newBudget) throw toError(insErr ?? new Error("insert-failed"), `clone-insert:${sourceBudgetId}`);
+  const newBudgetId = newBudget.id as string;
+
+  await admin
+    .from("budgets")
+    .update({ is_current_version: false })
+    .eq("version_group_id", groupId)
+    .neq("id", newBudgetId);
+  await admin
+    .from("budgets")
+    .update({ is_current_version: true })
+    .eq("id", newBudgetId);
+
+  const { data: oldSections } = await admin
+    .from("sections")
+    .select("*")
+    .eq("budget_id", sourceBudgetId)
+    .order("order_index");
+
+  const sectionIdMap: Record<string, string> = {};
+  const itemIdMap: Record<string, string> = {};
+
+  if (oldSections && oldSections.length > 0) {
+    const sectionInserts = oldSections.map(({ id: _sid, created_at: _sca, budget_id: _sbid, ...rest }: Record<string, unknown>) => ({
+      ...rest,
+      budget_id: newBudgetId,
+    }));
+    const { data: newSections, error: secInsErr } = await admin
+      .from("sections")
+      .insert(sectionInserts)
+      .select("id");
+    if (secInsErr) throw toError(secInsErr, `clone-sections:${sourceBudgetId}`);
+    (newSections ?? []).forEach((ns: { id: string }, i: number) => {
+      const old = oldSections[i];
+      if (old?.id && ns?.id) sectionIdMap[old.id as string] = ns.id;
+    });
+
+    const oldSectionIds = oldSections.map((s: { id: string }) => s.id);
+    const { data: oldItems } = await admin
+      .from("items")
+      .select("*")
+      .in("section_id", oldSectionIds)
+      .order("order_index");
+    if (oldItems && oldItems.length > 0) {
+      const itemInserts = oldItems.map(({ id: _iid, created_at: _ica, section_id: sid, ...rest }: Record<string, unknown>) => ({
+        ...rest,
+        section_id: sectionIdMap[sid as string] ?? sid,
+      }));
+      const { data: newItems, error: itemInsErr } = await admin
+        .from("items")
+        .insert(itemInserts)
+        .select("id");
+      if (itemInsErr) throw toError(itemInsErr, `clone-items:${sourceBudgetId}`);
+      (newItems ?? []).forEach((ni: { id: string }, i: number) => {
+        const old = oldItems[i];
+        if (old?.id && ni?.id) itemIdMap[old.id as string] = ni.id;
+      });
+
+      // Best-effort copy of item images
+      try {
+        const oldItemIds = oldItems.map((it: { id: string }) => it.id);
+        const { data: oldImages } = await admin
+          .from("item_images")
+          .select("*")
+          .in("item_id", oldItemIds);
+        if (oldImages && oldImages.length > 0) {
+          const imageInserts = oldImages.map(({ id: _imgid, created_at: _imgca, item_id: iid, ...rest }: Record<string, unknown>) => ({
+            ...rest,
+            item_id: itemIdMap[iid as string] ?? iid,
+          }));
+          await admin.from("item_images").insert(imageInserts);
+        }
+      } catch (e) {
+        errCtx(`clone-item-images skipped for ${sourceBudgetId}: ${toError(e).message}`);
+      }
+    }
+  }
+
+  // Best-effort clone of adjustments
+  try {
+    const { data: adj } = await admin.from("adjustments").select("*").eq("budget_id", sourceBudgetId);
+    if (adj && adj.length > 0) {
+      await admin.from("adjustments").insert(
+        adj.map(({ id: _aid, created_at: _aca, budget_id: _abid, ...rest }: Record<string, unknown>) => ({
+          ...rest,
+          budget_id: newBudgetId,
+        })),
+      );
+    }
+  } catch (e) {
+    errCtx(`clone-adjustments skipped for ${sourceBudgetId}: ${toError(e).message}`);
+  }
+
+  try {
+    await admin.from("budget_events").insert({
+      budget_id: newBudgetId,
+      event_type: "version_created",
+      note: changeReason,
+      metadata: {
+        source: "ai_bulk_operation",
+        source_budget_id: sourceBudgetId,
+        version_number: nextVersion,
+      },
+      user_id: userId,
+    });
+  } catch {
+    /* non-fatal */
+  }
+
+  return {
+    new_budget_id: newBudgetId,
+    old_budget_id: sourceBudgetId,
+    old_was_current: Boolean((source as { is_current_version?: boolean }).is_current_version),
+    old_internal_status: String((source as { internal_status?: string }).internal_status ?? ""),
+    section_id_map: sectionIdMap,
+    item_id_map: itemIdMap,
+  };
+}
+
 serve(async (req) => {
   // Correlation ID: use header from client, body field, or generate one.
   const headerReqId = req.headers.get("x-request-id") ?? "";
@@ -533,15 +730,15 @@ serve(async (req) => {
       const snapshot: Record<string, unknown> = { taken_at: new Date().toISOString() };
 
       if (op.action_type === "financial_adjustment") {
-        // Snapshot items (only those that contribute to sale)
-        const { data: secs } = await admin.from("sections").select("id, budget_id").in("budget_id", ids);
-        const secIds = (secs ?? []).map((s) => s.id);
-        const { data: items } = secIds.length
-          ? await admin.from("items").select("id, internal_unit_price, internal_total").in("section_id", secIds)
-          : { data: [] };
-        const { data: sectionPrices } = await admin.from("sections").select("id, section_price").in("id", secIds);
-        snapshot.items = items ?? [];
-        snapshot.section_prices = sectionPrices ?? [];
+        // For financial reductions we clone each budget into a NEW version
+        // (so the snapshot/revert just needs to know which clones to delete
+        // and which old versions to restore as current). The old budget rows
+        // stay untouched, so we don't snapshot their items/sections anymore.
+        const { data: snap } = await admin
+          .from("budgets")
+          .select("id, internal_status, is_current_version, version_group_id")
+          .in("id", ids);
+        snapshot.budgets = snap ?? [];
       } else if (op.action_type === "status_change") {
         const { data: snap } = await admin.from("budgets").select("id, internal_status").in("id", ids);
         snapshot.budgets = snap ?? [];
@@ -568,25 +765,65 @@ serve(async (req) => {
             throw new Error(`Fator inválido no plano: ${factor}`);
           }
 
-          const { data: secs, error: secsErr } = await admin
-            .from("sections").select("id, budget_id, section_price").in("budget_id", ids);
-          if (secsErr) throw toError(secsErr, "sections-read");
-          const secIds = (secs ?? []).map((s) => s.id);
+          // ---- 1) Clone each source budget into a new version ----
+          // Sequential pacing inside each chunk avoids overwhelming the DB
+          // pool when there are dozens of nested inserts (sections + items +
+          // images + adjustments per budget). 4 in flight is conservative.
+          const clones: VersionCloneResult[] = [];
+          const cloneFailures: Array<{ id: string; error: string }> = [];
+          const changeReason = `Redução em lote · ${op.command.slice(0, 180)}`;
 
-          let items: Array<{ id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null }> = [];
-          if (secIds.length) {
+          await runInChunks(ids, 4, async (sourceId) => {
+            try {
+              const result = await cloneBudgetAsNewVersion(admin, sourceId, userId, changeReason);
+              clones.push(result);
+            } catch (e) {
+              const msg = toError(e).message;
+              cloneFailures.push({ id: sourceId, error: msg });
+              errCtx(`clone failed for ${sourceId}: ${msg}`);
+            }
+          });
+
+          if (clones.length === 0) {
+            throw new Error(
+              `Nenhuma versão pôde ser criada (${cloneFailures.length} falhas). ${cloneFailures[0]?.error ?? ""}`,
+            );
+          }
+
+          // Persist clone mapping in the snapshot for revert.
+          (snapshot as Record<string, unknown>).clones = clones.map((c) => ({
+            old_budget_id: c.old_budget_id,
+            new_budget_id: c.new_budget_id,
+            old_was_current: c.old_was_current,
+            old_internal_status: c.old_internal_status,
+          }));
+          if (cloneFailures.length > 0) {
+            updateErrors.push(...cloneFailures);
+          }
+
+          // ---- 2) Apply the factor on the NEW versions only ----
+          const newBudgetIds = clones.map((c) => c.new_budget_id);
+
+          const { data: newSecs, error: newSecsErr } = await admin
+            .from("sections")
+            .select("id, budget_id, section_price")
+            .in("budget_id", newBudgetIds);
+          if (newSecsErr) throw toError(newSecsErr, "new-sections-read");
+          const newSecIds = (newSecs ?? []).map((s: { id: string }) => s.id);
+
+          let newItems: Array<{ id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null }> = [];
+          if (newSecIds.length) {
             const { data: itemsRaw, error: itemsErr } = await admin
               .from("items")
               .select("id, section_id, internal_unit_price, internal_total")
-              .in("section_id", secIds);
-            if (itemsErr) throw toError(itemsErr, "items-read");
-            items = (itemsRaw ?? []) as typeof items;
+              .in("section_id", newSecIds);
+            if (itemsErr) throw toError(itemsErr, "new-items-read");
+            newItems = (itemsRaw ?? []) as typeof newItems;
           }
 
-          logCtx(`apply-financial: ${items.length} items, ${secs?.length ?? 0} sections, factor=${factor}`);
+          logCtx(`apply-financial: cloned ${clones.length} budgets · ${newItems.length} new items · ${newSecs?.length ?? 0} new sections · factor=${factor}`);
 
-          // Update items in parallel chunks (24 in flight at a time).
-          await runInChunks(items, 24, async (it) => {
+          await runInChunks(newItems, 24, async (it) => {
             try {
               if (it.internal_unit_price && it.internal_unit_price > 0) {
                 const { error } = await admin
@@ -614,9 +851,8 @@ serve(async (req) => {
             }
           });
 
-          // Adjust lump-sum sections (no items) — also chunked.
-          const sectionsWithItems = new Set(items.map((i) => i.section_id));
-          const lumpSections = ((secs ?? []) as Array<{ id: string; section_price: number | null }>).filter(
+          const sectionsWithItems = new Set(newItems.map((i) => i.section_id));
+          const lumpSections = ((newSecs ?? []) as Array<{ id: string; section_price: number | null }>).filter(
             (s) => !sectionsWithItems.has(s.id) && s.section_price && Number(s.section_price) > 0
           );
           await runInChunks(lumpSections, 24, async (s) => {
@@ -708,17 +944,62 @@ serve(async (req) => {
         items?: Array<{ id: string; internal_unit_price: number | null; internal_total: number | null }>;
         section_prices?: Array<{ id: string; section_price: number | null }>;
         budgets?: Array<{ id: string; internal_status?: string; commercial_owner_id?: string | null; estimator_owner_id?: string | null }>;
+        clones?: Array<{ old_budget_id: string; new_budget_id: string; old_was_current: boolean; old_internal_status: string }>;
       };
 
       if (op.action_type === "financial_adjustment") {
-        for (const it of snap.items ?? []) {
-          await admin.from("items").update({
-            internal_unit_price: it.internal_unit_price,
-            internal_total: it.internal_total,
-          }).eq("id", it.id);
-        }
-        for (const s of snap.section_prices ?? []) {
-          await admin.from("sections").update({ section_price: s.section_price }).eq("id", s.id);
+        // New revert path: delete the cloned versions and restore the old
+        // versions as current. Falls back to the legacy in-place revert (for
+        // operations applied before this change) when no clone map is present.
+        if (snap.clones && snap.clones.length > 0) {
+          const newIds = snap.clones.map((c) => c.new_budget_id);
+
+          // Cascade delete dependents of the cloned budgets, in dependency order.
+          const { data: cloneSecs } = await admin
+            .from("sections")
+            .select("id")
+            .in("budget_id", newIds);
+          const cloneSecIds = (cloneSecs ?? []).map((s: { id: string }) => s.id);
+          if (cloneSecIds.length > 0) {
+            const { data: cloneItems } = await admin
+              .from("items")
+              .select("id")
+              .in("section_id", cloneSecIds);
+            const cloneItemIds = (cloneItems ?? []).map((i: { id: string }) => i.id);
+            if (cloneItemIds.length > 0) {
+              try { await admin.from("item_images").delete().in("item_id", cloneItemIds); } catch { /* ignore */ }
+              await admin.from("items").delete().in("id", cloneItemIds);
+            }
+            await admin.from("sections").delete().in("id", cloneSecIds);
+          }
+          try { await admin.from("adjustments").delete().in("budget_id", newIds); } catch { /* ignore */ }
+          try { await admin.from("rooms").delete().in("budget_id", newIds); } catch { /* ignore */ }
+          try { await admin.from("budget_tours").delete().in("budget_id", newIds); } catch { /* ignore */ }
+          try { await admin.from("budget_events").delete().in("budget_id", newIds); } catch { /* ignore */ }
+          await admin.from("budgets").delete().in("id", newIds);
+
+          // Restore the old versions as current and reset their internal_status
+          // to whatever it was before the bulk operation.
+          for (const c of snap.clones) {
+            await admin
+              .from("budgets")
+              .update({
+                is_current_version: c.old_was_current,
+                internal_status: c.old_internal_status || "novo",
+              })
+              .eq("id", c.old_budget_id);
+          }
+        } else {
+          // Legacy fallback (operations applied before clone-based versioning).
+          for (const it of snap.items ?? []) {
+            await admin.from("items").update({
+              internal_unit_price: it.internal_unit_price,
+              internal_total: it.internal_total,
+            }).eq("id", it.id);
+          }
+          for (const s of snap.section_prices ?? []) {
+            await admin.from("sections").update({ section_price: s.section_price }).eq("id", s.id);
+          }
         }
       } else if (op.action_type === "status_change") {
         for (const b of snap.budgets ?? []) {
