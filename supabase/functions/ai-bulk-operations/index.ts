@@ -881,24 +881,28 @@ serve(async (req) => {
           // ---- 2) Apply the factor on the NEW versions only ----
           const newBudgetIds = clones.map((c) => c.new_budget_id);
 
-          const { data: newSecs, error: newSecsErr } = await admin
-            .from("sections")
-            .select("id, budget_id, section_price")
-            .in("budget_id", newBudgetIds);
-          if (newSecsErr) throw toError(newSecsErr, "new-sections-read");
-          const newSecIds = (newSecs ?? []).map((s: { id: string }) => s.id);
+          type NewSec = { id: string; budget_id: string; section_price: number | null };
+          const newSecs = await selectInChunks<NewSec>(
+            newBudgetIds,
+            (chunk) => admin
+              .from("sections")
+              .select("id, budget_id, section_price")
+              .in("budget_id", chunk),
+            "new-sections-read",
+          );
+          const newSecIds = newSecs.map((s) => s.id);
 
-          let newItems: Array<{ id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null }> = [];
-          if (newSecIds.length) {
-            const { data: itemsRaw, error: itemsErr } = await admin
+          type NewItem = { id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null };
+          const newItems = await selectInChunks<NewItem>(
+            newSecIds,
+            (chunk) => admin
               .from("items")
               .select("id, section_id, internal_unit_price, internal_total")
-              .in("section_id", newSecIds);
-            if (itemsErr) throw toError(itemsErr, "new-items-read");
-            newItems = (itemsRaw ?? []) as typeof newItems;
-          }
+              .in("section_id", chunk),
+            "new-items-read",
+          );
 
-          logCtx(`apply-financial: cloned ${clones.length} budgets · ${newItems.length} new items · ${newSecs?.length ?? 0} new sections · factor=${factor}`);
+          logCtx(`apply-financial: cloned ${clones.length} budgets · ${newItems.length} new items · ${newSecs.length} new sections · factor=${factor}`);
 
           await runInChunks(newItems, 24, async (it) => {
             try {
