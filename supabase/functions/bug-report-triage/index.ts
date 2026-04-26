@@ -236,7 +236,7 @@ serve(async (req) => {
 
     // Triagem por IA
     let triage = null;
-    if (openaiKey) triage = await callTriageLLM(bug, openaiKey);
+    if (lovableApiKey) triage = await callTriageLLM(bug, lovableApiKey);
     const duplicateOf = await findPossibleDuplicate(bug.id, bug.title ?? "", admin);
 
     // Update
