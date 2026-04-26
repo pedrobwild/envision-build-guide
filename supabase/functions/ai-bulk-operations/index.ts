@@ -379,14 +379,13 @@ serve(async (req) => {
       }
 
       const createdFrom = validateDate(parsed.filters?.created_from);
-      if (!createdFrom) return errorResponse("Filtro de data inicial obrigatório (YYYY-MM-DD).");
       const createdTo = validateDate(parsed.filters?.created_to);
 
-      // Fetch matching budgets
+      // Fetch matching budgets (date filters are optional — when absent, scan all)
       let q = admin
         .from("budgets")
-        .select("id, sequential_code, client_name, project_name, internal_status, commercial_owner_id, estimator_owner_id")
-        .gte("created_at", `${createdFrom}T00:00:00Z`);
+        .select("id, sequential_code, client_name, project_name, internal_status, commercial_owner_id, estimator_owner_id");
+      if (createdFrom) q = q.gte("created_at", `${createdFrom}T00:00:00Z`);
       if (createdTo) q = q.lte("created_at", `${createdTo}T23:59:59Z`);
       const { data: budgets, error: bErr } = await q.order("created_at", { ascending: false }).limit(MAX_AFFECTED + 1);
       if (bErr) return errorResponse(`Falha ao buscar orçamentos: ${bErr.message}`, 500);
