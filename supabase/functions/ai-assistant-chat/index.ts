@@ -104,7 +104,8 @@ async function extractXlsxText(bytes: Uint8Array): Promise<string> {
 
 async function extractDocxText(bytes: Uint8Array): Promise<string> {
   const mammoth = await import("https://esm.sh/mammoth@1.8.0");
-  const result = await mammoth.extractRawText({ arrayBuffer: bytes.buffer });
+  const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  const result = await mammoth.extractRawText({ arrayBuffer: ab });
   return result.value || "";
 }
 
@@ -115,7 +116,7 @@ async function transcribeAudio(
   apiKey: string,
 ): Promise<string> {
   const form = new FormData();
-  form.append("file", new Blob([bytes], { type: mimeType }), filename);
+  form.append("file", new Blob([bytes as BlobPart], { type: mimeType }), filename);
   form.append("model", "whisper-1");
   form.append("language", "pt");
   const resp = await fetch("https://api.openai.com/v1/audio/transcriptions", {

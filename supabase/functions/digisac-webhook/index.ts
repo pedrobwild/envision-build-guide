@@ -270,7 +270,7 @@ async function checkAndReserveEvent(
   // Falha não relacionada a duplicidade — registra e segue (não bloqueia processamento).
   console.warn(
     "[digisac-webhook] failed to reserve event",
-    JSON.stringify({ code, message: (error as Error).message }),
+    JSON.stringify({ code, message: (error as { message?: string }).message ?? String(error) }),
   );
   return { duplicate: false };
 }
