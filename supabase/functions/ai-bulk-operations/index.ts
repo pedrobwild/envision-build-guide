@@ -8,8 +8,33 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const MAX_AFFECTED = 500;
+const MAX_AFFECTED = 1000;
+const BACKGROUND_THRESHOLD = 50;
 const PROTECTED_STATUSES = ["contrato_fechado", "perdido", "lost", "archived"];
+
+const PIPELINE_STAGES = [
+  "lead",
+  "briefing",
+  "visita",
+  "proposta",
+  "negociacao",
+] as const;
+
+const STAGE_SYNONYMS: Record<string, string> = {
+  "negociação": "negociacao",
+  "negociacao": "negociacao",
+  "negociando": "negociacao",
+  "em negociação": "negociacao",
+  "em negociacao": "negociacao",
+  "proposta": "proposta",
+  "propostas": "proposta",
+  "em proposta": "proposta",
+  "lead": "lead",
+  "leads": "lead",
+  "briefing": "briefing",
+  "visita": "visita",
+  "visitas": "visita",
+};
 
 const SYSTEM_PROMPT = `Você é o orquestrador de **operações em lote** do sistema BWild. Sua única função é converter um comando em linguagem natural do administrador em uma chamada estruturada da função \`plan_bulk_operation\`.
 
@@ -811,7 +836,7 @@ serve(async (req) => {
     if (!headerReqId && typeof body?.request_id === "string" && body.request_id.length > 0 && body.request_id.length <= 64) {
       setRequestId(body.request_id);
     }
-    const action = body?.action as "plan" | "apply" | "revert" | undefined;
+    const action = body?.action as "plan" | "apply" | "revert" | "status" | undefined;
     logCtx(`action=${action} user=${userId}${body?.operation_id ? ` op=${body.operation_id}` : ""}`);
     if (!action) return errorResponse("Campo 'action' obrigatório.");
 

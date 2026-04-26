@@ -61,14 +61,18 @@ export type Database = {
           action_type: string
           admin_id: string
           affected_count: number
+          applicable_count: number
           applied_at: string | null
           command: string
           created_at: string
           error_message: string | null
           filters: Json
+          heartbeat_at: string | null
           id: string
           params: Json
           plan: Json
+          processed_count: number
+          progress_phase: string | null
           reverted_at: string | null
           reverted_by: string | null
           snapshot: Json | null
@@ -79,14 +83,18 @@ export type Database = {
           action_type: string
           admin_id: string
           affected_count?: number
+          applicable_count?: number
           applied_at?: string | null
           command: string
           created_at?: string
           error_message?: string | null
           filters?: Json
+          heartbeat_at?: string | null
           id?: string
           params?: Json
           plan?: Json
+          processed_count?: number
+          progress_phase?: string | null
           reverted_at?: string | null
           reverted_by?: string | null
           snapshot?: Json | null
@@ -97,14 +105,18 @@ export type Database = {
           action_type?: string
           admin_id?: string
           affected_count?: number
+          applicable_count?: number
           applied_at?: string | null
           command?: string
           created_at?: string
           error_message?: string | null
           filters?: Json
+          heartbeat_at?: string | null
           id?: string
           params?: Json
           plan?: Json
+          processed_count?: number
+          progress_phase?: string | null
           reverted_at?: string | null
           reverted_by?: string | null
           snapshot?: Json | null
@@ -3085,6 +3097,14 @@ export type Database = {
       }
       archive_old_lead_payloads: { Args: never; Returns: number }
       budget_days_in_stage: { Args: { p_budget_id: string }; Returns: number }
+      bulk_apply_factor_to_items: {
+        Args: { p_budget_ids: string[]; p_factor: number }
+        Returns: {
+          budgets_updated: number
+          items_updated: number
+          sections_updated: number
+        }[]
+      }
       calc_lead_time_from_events: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -3113,6 +3133,16 @@ export type Database = {
       compare_snapshots: {
         Args: { p_date_a: string; p_date_b: string }
         Returns: Json
+      }
+      count_eligible_budgets: {
+        Args: {
+          p_created_from?: string
+          p_created_to?: string
+          p_internal_statuses?: string[]
+          p_only_current?: boolean
+          p_pipeline_stages?: string[]
+        }
+        Returns: number
       }
       default_win_probability: { Args: { _stage: string }; Returns: number }
       derive_pipeline_stage: {
