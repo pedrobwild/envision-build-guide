@@ -765,25 +765,65 @@ serve(async (req) => {
             throw new Error(`Fator inválido no plano: ${factor}`);
           }
 
-          const { data: secs, error: secsErr } = await admin
-            .from("sections").select("id, budget_id, section_price").in("budget_id", ids);
-          if (secsErr) throw toError(secsErr, "sections-read");
-          const secIds = (secs ?? []).map((s) => s.id);
+          // ---- 1) Clone each source budget into a new version ----
+          // Sequential pacing inside each chunk avoids overwhelming the DB
+          // pool when there are dozens of nested inserts (sections + items +
+          // images + adjustments per budget). 4 in flight is conservative.
+          const clones: VersionCloneResult[] = [];
+          const cloneFailures: Array<{ id: string; error: string }> = [];
+          const changeReason = `Redução em lote · ${op.command.slice(0, 180)}`;
 
-          let items: Array<{ id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null }> = [];
-          if (secIds.length) {
+          await runInChunks(ids, 4, async (sourceId) => {
+            try {
+              const result = await cloneBudgetAsNewVersion(admin, sourceId, userId, changeReason);
+              clones.push(result);
+            } catch (e) {
+              const msg = toError(e).message;
+              cloneFailures.push({ id: sourceId, error: msg });
+              errCtx(`clone failed for ${sourceId}: ${msg}`);
+            }
+          });
+
+          if (clones.length === 0) {
+            throw new Error(
+              `Nenhuma versão pôde ser criada (${cloneFailures.length} falhas). ${cloneFailures[0]?.error ?? ""}`,
+            );
+          }
+
+          // Persist clone mapping in the snapshot for revert.
+          (snapshot as Record<string, unknown>).clones = clones.map((c) => ({
+            old_budget_id: c.old_budget_id,
+            new_budget_id: c.new_budget_id,
+            old_was_current: c.old_was_current,
+            old_internal_status: c.old_internal_status,
+          }));
+          if (cloneFailures.length > 0) {
+            updateErrors.push(...cloneFailures);
+          }
+
+          // ---- 2) Apply the factor on the NEW versions only ----
+          const newBudgetIds = clones.map((c) => c.new_budget_id);
+
+          const { data: newSecs, error: newSecsErr } = await admin
+            .from("sections")
+            .select("id, budget_id, section_price")
+            .in("budget_id", newBudgetIds);
+          if (newSecsErr) throw toError(newSecsErr, "new-sections-read");
+          const newSecIds = (newSecs ?? []).map((s: { id: string }) => s.id);
+
+          let newItems: Array<{ id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null }> = [];
+          if (newSecIds.length) {
             const { data: itemsRaw, error: itemsErr } = await admin
               .from("items")
               .select("id, section_id, internal_unit_price, internal_total")
-              .in("section_id", secIds);
-            if (itemsErr) throw toError(itemsErr, "items-read");
-            items = (itemsRaw ?? []) as typeof items;
+              .in("section_id", newSecIds);
+            if (itemsErr) throw toError(itemsErr, "new-items-read");
+            newItems = (itemsRaw ?? []) as typeof newItems;
           }
 
-          logCtx(`apply-financial: ${items.length} items, ${secs?.length ?? 0} sections, factor=${factor}`);
+          logCtx(`apply-financial: cloned ${clones.length} budgets · ${newItems.length} new items · ${newSecs?.length ?? 0} new sections · factor=${factor}`);
 
-          // Update items in parallel chunks (24 in flight at a time).
-          await runInChunks(items, 24, async (it) => {
+          await runInChunks(newItems, 24, async (it) => {
             try {
               if (it.internal_unit_price && it.internal_unit_price > 0) {
                 const { error } = await admin
@@ -811,9 +851,8 @@ serve(async (req) => {
             }
           });
 
-          // Adjust lump-sum sections (no items) — also chunked.
-          const sectionsWithItems = new Set(items.map((i) => i.section_id));
-          const lumpSections = ((secs ?? []) as Array<{ id: string; section_price: number | null }>).filter(
+          const sectionsWithItems = new Set(newItems.map((i) => i.section_id));
+          const lumpSections = ((newSecs ?? []) as Array<{ id: string; section_price: number | null }>).filter(
             (s) => !sectionsWithItems.has(s.id) && s.section_price && Number(s.section_price) > 0
           );
           await runInChunks(lumpSections, 24, async (s) => {
