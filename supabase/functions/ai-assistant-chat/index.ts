@@ -105,7 +105,13 @@ const ANALYTICS_TOOL = {
         date_field: {
           type: "string",
           enum: ["created_at", "approved_at", "closed_at", "due_at"],
-          description: "Campo de data usado nos filtros e agrupamentos temporais. Padrão: created_at.",
+          description:
+            "Campo de data usado nos filtros e agrupamentos temporais. Mapeamento semântico: " +
+            "'novas solicitações' / 'leads recebidos' / 'criados' → created_at; " +
+            "'aprovados' / 'fechados' / 'ganhos' / 'contratos assinados' → approved_at (ou closed_at se contexto for encerramento geral, incluindo perdas); " +
+            "'perdidos' / 'encerrados' (sem distinção win/loss) → closed_at; " +
+            "'vencendo' / 'prazo' / 'a vencer' / 'atrasados' → due_at. " +
+            "Padrão quando ambíguo: created_at.",
         },
         days: {
           type: "number",
