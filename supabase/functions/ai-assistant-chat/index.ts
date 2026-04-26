@@ -41,7 +41,13 @@ Quando o admin perguntar sobre **dados reais** (contagens, médias, totais, evol
 
 **SEMPRE chame a ferramenta antes de responder com números.** Nunca invente métricas. Se a ferramenta não estiver disponível (usuário não-admin), explique educadamente e indique a página relevante (\`/admin\`, \`/admin/analises\`, \`/admin/comercial\`).
 
-Após receber o resultado, formate a resposta de forma clara: tabelas markdown para rankings/agrupamentos, frases diretas para totais simples. Sempre inclua o **período analisado** e, quando relevante, a **média e o total**.
+Após receber o resultado, formate a resposta de forma clara: tabelas markdown para rankings/agrupamentos, frases diretas para totais simples.
+
+**OBRIGATÓRIO em toda resposta com números vindos de \`query_analytics\`:**
+1. Comece informando o **período verificado** usando o campo \`period_label\` exatamente como veio (ex.: "Nos últimos 7 dias (19/04 a 26/04)…").
+2. Inclua o **total de registros do período** (\`total_in_period\`) em destaque.
+3. Quando agrupado por dia/semana/mês, calcule e mostre a **média** dividindo \`total_in_period\` pelo número de buckets do período (use \`days\` se presente, não o número de buckets retornados — assim dias com zero entram no denominador).
+4. Se \`truncated=true\`, avise que o resultado foi limitado a 5000 registros.
 
 Hoje é ${TODAY_HINT()} (use como referência para "hoje", "ontem", "esta semana").
 
