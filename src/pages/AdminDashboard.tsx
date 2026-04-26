@@ -21,6 +21,7 @@ import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 
 import { BudgetSearchPanel } from "@/components/dashboard/BudgetSearchPanel";
+import { DailyRequestsWidget } from "@/components/dashboard/DailyRequestsWidget";
 import { computeDashboardMetrics, OPERATIONS_START_DATE, type DateRange } from "@/hooks/useDashboardMetrics";
 
 const SECTION_DELAY = 0.05;
@@ -276,6 +277,11 @@ export default function AdminDashboard() {
             onClick={() => navigate("/admin/financeiro")}
           />
         </div>
+      </motion.div>
+
+      {/* ───── DAILY REQUESTS WIDGET ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <DailyRequestsWidget />
       </motion.div>
 
       {/* ───── DUAL FUNNEL ───── */}
