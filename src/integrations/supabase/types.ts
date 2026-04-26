@@ -1097,6 +1097,7 @@ export type Database = {
         Row: {
           active_filters: Json | null
           actual_behavior: string | null
+          area_ai: string | null
           attachments: Json | null
           browser_name: string | null
           browser_version: string | null
@@ -1105,6 +1106,7 @@ export type Database = {
           description: string
           device_pixel_ratio: number | null
           device_type: string | null
+          duplicate_of: string | null
           expected_behavior: string | null
           id: string
           os_name: string | null
@@ -1116,9 +1118,13 @@ export type Database = {
           resolved_by: string | null
           route: string | null
           severity: string
+          severity_ai: string | null
           status: string
           steps_to_reproduce: string | null
           title: string
+          triage_summary: string | null
+          triage_tags: string[]
+          triaged_at: string | null
           updated_at: string
           user_agent: string | null
           user_role: string | null
@@ -1128,6 +1134,7 @@ export type Database = {
         Insert: {
           active_filters?: Json | null
           actual_behavior?: string | null
+          area_ai?: string | null
           attachments?: Json | null
           browser_name?: string | null
           browser_version?: string | null
@@ -1136,6 +1143,7 @@ export type Database = {
           description: string
           device_pixel_ratio?: number | null
           device_type?: string | null
+          duplicate_of?: string | null
           expected_behavior?: string | null
           id?: string
           os_name?: string | null
@@ -1147,9 +1155,13 @@ export type Database = {
           resolved_by?: string | null
           route?: string | null
           severity?: string
+          severity_ai?: string | null
           status?: string
           steps_to_reproduce?: string | null
           title: string
+          triage_summary?: string | null
+          triage_tags?: string[]
+          triaged_at?: string | null
           updated_at?: string
           user_agent?: string | null
           user_role?: string | null
@@ -1159,6 +1171,7 @@ export type Database = {
         Update: {
           active_filters?: Json | null
           actual_behavior?: string | null
+          area_ai?: string | null
           attachments?: Json | null
           browser_name?: string | null
           browser_version?: string | null
@@ -1167,6 +1180,7 @@ export type Database = {
           description?: string
           device_pixel_ratio?: number | null
           device_type?: string | null
+          duplicate_of?: string | null
           expected_behavior?: string | null
           id?: string
           os_name?: string | null
@@ -1178,16 +1192,35 @@ export type Database = {
           resolved_by?: string | null
           route?: string | null
           severity?: string
+          severity_ai?: string | null
           status?: string
           steps_to_reproduce?: string | null
           title?: string
+          triage_summary?: string | null
+          triage_tags?: string[]
+          triaged_at?: string | null
           updated_at?: string
           user_agent?: string | null
           user_role?: string | null
           viewport_height?: number | null
           viewport_width?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bug_reports_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "bug_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bug_reports_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "v_bug_reports_admin"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       catalog_alerts_config: {
         Row: {
@@ -3089,6 +3122,114 @@ export type Database = {
         }
         Relationships: []
       }
+      v_bug_reports_admin: {
+        Row: {
+          actual_behavior: string | null
+          area_ai: string | null
+          attachments: Json | null
+          browser_name: string | null
+          console_errors: Json | null
+          created_at: string | null
+          description: string | null
+          device_type: string | null
+          duplicate_of: string | null
+          expected_behavior: string | null
+          id: string | null
+          os_name: string | null
+          reporter_email: string | null
+          reporter_id: string | null
+          reporter_name: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          route: string | null
+          severity: string | null
+          severity_ai: string | null
+          status: string | null
+          steps_to_reproduce: string | null
+          title: string | null
+          triage_summary: string | null
+          triage_tags: string[] | null
+          triaged_at: string | null
+          updated_at: string | null
+          user_role: string | null
+        }
+        Insert: {
+          actual_behavior?: string | null
+          area_ai?: string | null
+          attachments?: Json | null
+          browser_name?: string | null
+          console_errors?: Json | null
+          created_at?: string | null
+          description?: string | null
+          device_type?: string | null
+          duplicate_of?: string | null
+          expected_behavior?: string | null
+          id?: string | null
+          os_name?: string | null
+          reporter_email?: string | null
+          reporter_id?: string | null
+          reporter_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route?: string | null
+          severity?: string | null
+          severity_ai?: string | null
+          status?: string | null
+          steps_to_reproduce?: string | null
+          title?: string | null
+          triage_summary?: string | null
+          triage_tags?: string[] | null
+          triaged_at?: string | null
+          updated_at?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          actual_behavior?: string | null
+          area_ai?: string | null
+          attachments?: Json | null
+          browser_name?: string | null
+          console_errors?: Json | null
+          created_at?: string | null
+          description?: string | null
+          device_type?: string | null
+          duplicate_of?: string | null
+          expected_behavior?: string | null
+          id?: string | null
+          os_name?: string | null
+          reporter_email?: string | null
+          reporter_id?: string | null
+          reporter_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route?: string | null
+          severity?: string | null
+          severity_ai?: string | null
+          status?: string | null
+          steps_to_reproduce?: string | null
+          title?: string | null
+          triage_summary?: string | null
+          triage_tags?: string[] | null
+          triaged_at?: string | null
+          updated_at?: string | null
+          user_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_reports_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "bug_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bug_reports_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "v_bug_reports_admin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       approve_addendum: {
@@ -3229,6 +3370,8 @@ export type Database = {
         Args: { p_catalog_item_id: string; p_price_id: string }
         Returns: undefined
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "comercial" | "orcamentista"
