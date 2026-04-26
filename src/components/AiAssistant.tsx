@@ -212,17 +212,34 @@ export function AiAssistant() {
     if (!opId) return;
     try {
       const res = await applyBulk(opId);
+      const partial = res.partial_failures ?? 0;
       setMessages((prev) =>
         prev.map((it, i) =>
           i === msgIndex && it.bulkOp
-            ? { ...it, bulkOp: { ...it.bulkOp, status: "applied", appliedCount: res.applied_count } }
+            ? {
+                ...it,
+                bulkOp: {
+                  ...it.bulkOp,
+                  status: "applied",
+                  appliedCount: res.applied_count,
+                  partialFailures: partial,
+                },
+              }
             : it,
         ),
       );
-      toast({
-        title: "Operação aplicada",
-        description: `${res.applied_count} orçamentos atualizados.`,
-      });
+      if (partial > 0) {
+        toast({
+          title: "Operação aplicada com avisos",
+          description: `${res.applied_count} aplicadas · ${partial} falhas individuais. Verifique os logs.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Operação aplicada",
+          description: `${res.applied_count} itens atualizados.`,
+        });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao aplicar";
       setMessages((prev) =>
