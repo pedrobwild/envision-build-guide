@@ -58,6 +58,22 @@ export default function BudgetEditorV2() {
   const [creatingVersionFromBanner, setCreatingVersionFromBanner] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
 
+  // Query base budget identification for addendum banner
+  const { data: addendumBaseBudget } = useQuery({
+    queryKey: ["addendum-base-budget", budget?.addendum_base_budget_id],
+    queryFn: async () => {
+      if (!budget?.addendum_base_budget_id) return null;
+      const { data, error } = await supabase
+        .from("budgets")
+        .select("id, sequential_code, project_name, versao, version_number")
+        .eq("id", budget.addendum_base_budget_id)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!budget?.is_addendum && !!budget?.addendum_base_budget_id,
+  });
+
   // Query current version id for "go to current" banner
   const { data: currentVersionId } = useQuery({
     queryKey: ["current-version", budget?.version_group_id],
@@ -456,8 +472,27 @@ export default function BudgetEditorV2() {
           {budget.is_addendum && (
             <Alert className="mt-4 border-primary/40 bg-primary/5">
               <Info className="h-4 w-4 text-primary" />
-              <AlertDescription className="text-sm font-body text-foreground">
-                <strong>Aditivo Nº {budget.addendum_number ?? "?"}</strong> · Marque itens com o botão <span className="font-mono px-1 rounded bg-destructive/10 text-destructive">−</span> para REMOVER (subtrai do total). Adicione novos itens — eles serão somados ao total. Ao publicar, o cliente verá o orçamento atualizado.
+              <AlertDescription className="text-sm font-body text-foreground space-y-1">
+                <div>
+                  <strong>Aditivo Nº {budget.addendum_number ?? "?"}</strong>
+                  {addendumBaseBudget && (
+                    <span className="text-muted-foreground">
+                      {" "}· Emendando o orçamento{" "}
+                      <span className="font-medium text-foreground">
+                        {addendumBaseBudget.sequential_code ?? "—"}
+                      </span>
+                      {addendumBaseBudget.project_name && (
+                        <> — “{addendumBaseBudget.project_name}”</>
+                      )}
+                      {addendumBaseBudget.versao && (
+                        <> (v{addendumBaseBudget.versao})</>
+                      )}
+                    </span>
+                  )}
+                </div>
+                <div className="text-muted-foreground">
+                  Marque itens com o botão <span className="font-mono px-1 rounded bg-destructive/10 text-destructive">−</span> para REMOVER (subtrai do total). Adicione novos itens — eles serão somados ao total. Ao publicar, o cliente verá o orçamento atualizado.
+                </div>
               </AlertDescription>
             </Alert>
           )}
