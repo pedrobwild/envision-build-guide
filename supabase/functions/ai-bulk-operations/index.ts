@@ -1136,6 +1136,55 @@ serve(async (req) => {
             .in("id", ids);
           if (error) throw toError(error, "assign_owner");
           applied = ids.length;
+        } else if (op.action_type === "priority_change") {
+          const newPriority = (op.params as { new_priority: string }).new_priority;
+          const { error } = await admin
+            .from("budgets")
+            .update({ priority: newPriority })
+            .in("id", ids);
+          if (error) throw toError(error, "priority_change");
+          applied = ids.length;
+        } else if (op.action_type === "validity_change") {
+          const validityDays = (op.params as { validity_days: number }).validity_days;
+          const { error } = await admin
+            .from("budgets")
+            .update({ validity_days: validityDays })
+            .in("id", ids);
+          if (error) throw toError(error, "validity_change");
+          applied = ids.length;
+        } else if (op.action_type === "due_date_change") {
+          const dueAt = (op.params as { due_at: string }).due_at;
+          const { error } = await admin
+            .from("budgets")
+            .update({ due_at: dueAt })
+            .in("id", ids);
+          if (error) throw toError(error, "due_date_change");
+          applied = ids.length;
+        } else if (op.action_type === "pipeline_change") {
+          const pipelineId = (op.params as { pipeline_id: string }).pipeline_id;
+          const { error } = await admin
+            .from("budgets")
+            .update({ pipeline_id: pipelineId })
+            .in("id", ids);
+          if (error) throw toError(error, "pipeline_change");
+          applied = ids.length;
+        } else if (op.action_type === "pipeline_stage_change") {
+          const newStage = (op.params as { new_stage: string }).new_stage;
+          // Update pipeline_stage directly; the existing trigger only re-derives
+          // it when internal_status changes, so manual stage moves are honored.
+          const { error } = await admin
+            .from("budgets")
+            .update({ pipeline_stage: newStage })
+            .in("id", ids);
+          if (error) throw toError(error, "pipeline_stage_change");
+          applied = ids.length;
+        } else if (op.action_type === "archive") {
+          const { error } = await admin
+            .from("budgets")
+            .update({ internal_status: "archived" })
+            .in("id", ids);
+          if (error) throw toError(error, "archive");
+          applied = ids.length;
         }
 
         // Log event per budget
