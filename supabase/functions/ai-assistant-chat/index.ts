@@ -176,6 +176,53 @@ function buildPeriodLabel(from: string | null, to: string | null, days: number |
   return "Período não especificado";
 }
 
+// ─── Short-term in-memory cache for analytics ──────────────────────────────
+// Per-isolate cache: reduces latency and OpenAI tool-call cost when the same
+// admin (or different admins) repeats the same analytics question within the
+// TTL window. Edge Function isolates are reused for many invocations, so this
+// is effective in practice without any external store.
+const ANALYTICS_CACHE_TTL_MS = 60_000; // 60s
+const ANALYTICS_CACHE_MAX = 64;
+type AnalyticsCacheEntry = { value: unknown; expiresAt: number };
+const analyticsCache = new Map<string, AnalyticsCacheEntry>();
+
+function buildAnalyticsCacheKey(normalized: Record<string, unknown>): string {
+  // Stable stringify (sort keys + sort arrays) so semantically equal args hit
+  // the same cache entry regardless of property/argument order.
+  const stable = (v: unknown): unknown => {
+    if (Array.isArray(v)) return [...v].map(stable).sort((a, b) => String(a).localeCompare(String(b)));
+    if (v && typeof v === "object") {
+      return Object.keys(v as Record<string, unknown>)
+        .sort()
+        .reduce<Record<string, unknown>>((acc, k) => {
+          acc[k] = stable((v as Record<string, unknown>)[k]);
+          return acc;
+        }, {});
+    }
+    return v;
+  };
+  return JSON.stringify(stable(normalized));
+}
+
+function getAnalyticsCache(key: string): unknown | null {
+  const hit = analyticsCache.get(key);
+  if (!hit) return null;
+  if (hit.expiresAt < Date.now()) {
+    analyticsCache.delete(key);
+    return null;
+  }
+  return hit.value;
+}
+
+function setAnalyticsCache(key: string, value: unknown): void {
+  // Simple LRU-ish eviction: drop oldest insertion when above cap.
+  if (analyticsCache.size >= ANALYTICS_CACHE_MAX) {
+    const oldestKey = analyticsCache.keys().next().value;
+    if (oldestKey !== undefined) analyticsCache.delete(oldestKey);
+  }
+  analyticsCache.set(key, { value, expiresAt: Date.now() + ANALYTICS_CACHE_TTL_MS });
+}
+
 async function runAnalytics(
   args: Record<string, unknown>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -189,6 +236,25 @@ async function runAnalytics(
   const periodLabel = buildPeriodLabel(from, to, days);
   const internalStatuses = Array.isArray(args.internal_statuses) ? args.internal_statuses : null;
   const pipelineStages = Array.isArray(args.pipeline_stages) ? args.pipeline_stages : null;
+
+  // Cache lookup with the *resolved* args (so days→from/to is included and
+  // queries within the same minute hit the same entry).
+  const cacheKey = buildAnalyticsCacheKey({
+    metric,
+    groupBy,
+    dateField,
+    limit,
+    from,
+    to,
+    days,
+    internalStatuses,
+    pipelineStages,
+  });
+  const cached = getAnalyticsCache(cacheKey);
+  if (cached) {
+    return { ok: true, result: { ...(cached as Record<string, unknown>), cache: "hit" } };
+  }
+
 
   const selectFields = [
     "id",
