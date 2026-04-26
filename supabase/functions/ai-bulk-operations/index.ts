@@ -307,7 +307,7 @@ async function buildAssignPlan(
     .select("id, full_name")
     .ilike("full_name", `%${ownerName}%`)
     .limit(2);
-  if (error) throw error;
+  if (error) throw toError(error, "profiles");
   if (!members || members.length === 0) throw new Error(`Nenhum membro encontrado com o nome "${ownerName}".`);
   if (members.length > 1) throw new Error(`Mais de um membro corresponde a "${ownerName}". Seja mais específico.`);
 
