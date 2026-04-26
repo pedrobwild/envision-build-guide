@@ -357,6 +357,203 @@ async function buildAssignPlan(
   return { rows, ownerId, ownerLabel };
 }
 
+// =====================================================================
+// Versioning helpers (financial_adjustment): clone the budget, copy all
+// dependent rows, then apply the factor to the NEW version and reset its
+// internal_status to 'delivered_to_sales' so the commercial team can re-send
+// the link to the client. The OLD version stays intact (snapshot points to
+// it for revert).
+// =====================================================================
+
+const POST_REDUCTION_STATUS = "delivered_to_sales";
+
+interface VersionCloneResult {
+  new_budget_id: string;
+  old_budget_id: string;
+  old_was_current: boolean;
+  old_internal_status: string;
+  section_id_map: Record<string, string>;
+  item_id_map: Record<string, string>;
+}
+
+// deno-lint-ignore no-explicit-any
+async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userId: string, changeReason: string): Promise<VersionCloneResult> {
+  const { data: source, error: srcErr } = await admin
+    .from("budgets")
+    .select("*")
+    .eq("id", sourceBudgetId)
+    .single();
+  if (srcErr || !source) throw toError(srcErr ?? new Error("source-not-found"), `clone:${sourceBudgetId}`);
+
+  let groupId = source.version_group_id as string | null;
+  if (!groupId) {
+    groupId = sourceBudgetId;
+    const { error: ensureErr } = await admin
+      .from("budgets")
+      .update({ version_group_id: groupId, version_number: 1, is_current_version: true })
+      .eq("id", sourceBudgetId);
+    if (ensureErr) throw toError(ensureErr, `ensure-group:${sourceBudgetId}`);
+  }
+
+  const { data: maxRow } = await admin
+    .from("budgets")
+    .select("version_number")
+    .eq("version_group_id", groupId)
+    .order("version_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const nextVersion = ((maxRow?.version_number as number | null) ?? 0) + 1;
+
+  // Strip unique / lifecycle fields so the clone gets a fresh identity.
+  const {
+    id: _id, created_at: _ca, updated_at: _ua, public_id: _pid, public_token_hash: _pth,
+    view_count: _vc, last_viewed_at: _lva, approved_at: _aa, approved_by_name: _aby,
+    generated_at: _ga, is_published_version: _ipv, sequential_code: _sc,
+    closed_at: _cl, contract_file_url: _cfu, budget_pdf_url: _bpu,
+    version_group_id: _vg, version_number: _vn, is_current_version: _icv,
+    parent_budget_id: _pbid, change_reason: _cr, status: _st, created_by: _cb,
+    internal_status: _is,
+    ...meta
+  } = source;
+
+  const { data: newBudget, error: insErr } = await admin
+    .from("budgets")
+    .insert({
+      ...meta,
+      version_group_id: groupId,
+      version_number: nextVersion,
+      is_current_version: false,
+      is_published_version: false,
+      parent_budget_id: sourceBudgetId,
+      change_reason: changeReason,
+      versao: `${nextVersion}`,
+      status: "draft",
+      created_by: userId,
+      view_count: 0,
+      // Per product decision: post-reduction state is always "delivered_to_sales".
+      internal_status: POST_REDUCTION_STATUS,
+    })
+    .select("id")
+    .single();
+  if (insErr || !newBudget) throw toError(insErr ?? new Error("insert-failed"), `clone-insert:${sourceBudgetId}`);
+  const newBudgetId = newBudget.id as string;
+
+  await admin
+    .from("budgets")
+    .update({ is_current_version: false })
+    .eq("version_group_id", groupId)
+    .neq("id", newBudgetId);
+  await admin
+    .from("budgets")
+    .update({ is_current_version: true })
+    .eq("id", newBudgetId);
+
+  const { data: oldSections } = await admin
+    .from("sections")
+    .select("*")
+    .eq("budget_id", sourceBudgetId)
+    .order("order_index");
+
+  const sectionIdMap: Record<string, string> = {};
+  const itemIdMap: Record<string, string> = {};
+
+  if (oldSections && oldSections.length > 0) {
+    const sectionInserts = oldSections.map(({ id: _sid, created_at: _sca, budget_id: _sbid, ...rest }: Record<string, unknown>) => ({
+      ...rest,
+      budget_id: newBudgetId,
+    }));
+    const { data: newSections, error: secInsErr } = await admin
+      .from("sections")
+      .insert(sectionInserts)
+      .select("id");
+    if (secInsErr) throw toError(secInsErr, `clone-sections:${sourceBudgetId}`);
+    (newSections ?? []).forEach((ns: { id: string }, i: number) => {
+      const old = oldSections[i];
+      if (old?.id && ns?.id) sectionIdMap[old.id as string] = ns.id;
+    });
+
+    const oldSectionIds = oldSections.map((s: { id: string }) => s.id);
+    const { data: oldItems } = await admin
+      .from("items")
+      .select("*")
+      .in("section_id", oldSectionIds)
+      .order("order_index");
+    if (oldItems && oldItems.length > 0) {
+      const itemInserts = oldItems.map(({ id: _iid, created_at: _ica, section_id: sid, ...rest }: Record<string, unknown>) => ({
+        ...rest,
+        section_id: sectionIdMap[sid as string] ?? sid,
+      }));
+      const { data: newItems, error: itemInsErr } = await admin
+        .from("items")
+        .insert(itemInserts)
+        .select("id");
+      if (itemInsErr) throw toError(itemInsErr, `clone-items:${sourceBudgetId}`);
+      (newItems ?? []).forEach((ni: { id: string }, i: number) => {
+        const old = oldItems[i];
+        if (old?.id && ni?.id) itemIdMap[old.id as string] = ni.id;
+      });
+
+      // Best-effort copy of item images
+      try {
+        const oldItemIds = oldItems.map((it: { id: string }) => it.id);
+        const { data: oldImages } = await admin
+          .from("item_images")
+          .select("*")
+          .in("item_id", oldItemIds);
+        if (oldImages && oldImages.length > 0) {
+          const imageInserts = oldImages.map(({ id: _imgid, created_at: _imgca, item_id: iid, ...rest }: Record<string, unknown>) => ({
+            ...rest,
+            item_id: itemIdMap[iid as string] ?? iid,
+          }));
+          await admin.from("item_images").insert(imageInserts);
+        }
+      } catch (e) {
+        errCtx(`clone-item-images skipped for ${sourceBudgetId}: ${toError(e).message}`);
+      }
+    }
+  }
+
+  // Best-effort clone of adjustments
+  try {
+    const { data: adj } = await admin.from("adjustments").select("*").eq("budget_id", sourceBudgetId);
+    if (adj && adj.length > 0) {
+      await admin.from("adjustments").insert(
+        adj.map(({ id: _aid, created_at: _aca, budget_id: _abid, ...rest }: Record<string, unknown>) => ({
+          ...rest,
+          budget_id: newBudgetId,
+        })),
+      );
+    }
+  } catch (e) {
+    errCtx(`clone-adjustments skipped for ${sourceBudgetId}: ${toError(e).message}`);
+  }
+
+  try {
+    await admin.from("budget_events").insert({
+      budget_id: newBudgetId,
+      event_type: "version_created",
+      note: changeReason,
+      metadata: {
+        source: "ai_bulk_operation",
+        source_budget_id: sourceBudgetId,
+        version_number: nextVersion,
+      },
+      user_id: userId,
+    });
+  } catch {
+    /* non-fatal */
+  }
+
+  return {
+    new_budget_id: newBudgetId,
+    old_budget_id: sourceBudgetId,
+    old_was_current: Boolean((source as { is_current_version?: boolean }).is_current_version),
+    old_internal_status: String((source as { internal_status?: string }).internal_status ?? ""),
+    section_id_map: sectionIdMap,
+    item_id_map: itemIdMap,
+  };
+}
+
 serve(async (req) => {
   // Correlation ID: use header from client, body field, or generate one.
   const headerReqId = req.headers.get("x-request-id") ?? "";
