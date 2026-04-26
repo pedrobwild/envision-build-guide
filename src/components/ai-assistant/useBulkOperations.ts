@@ -55,7 +55,7 @@ export function useBulkOperations() {
         protected_count?: number;
         total_before?: number;
         total_after?: number;
-      }>({ action: "plan", command });
+      }>({ action: "plan", command }, "plan");
 
       if (res.unsupported) {
         return { unsupported: true, summary: res.summary ?? "", reasoning: res.reasoning };
