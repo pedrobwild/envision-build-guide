@@ -98,7 +98,7 @@ export function useBulkOperations() {
       return await callFn<{ ok: boolean }>({
         action: "revert",
         operation_id: operationId,
-      });
+      }, "revert");
     } finally {
       setBusyId(null);
     }
