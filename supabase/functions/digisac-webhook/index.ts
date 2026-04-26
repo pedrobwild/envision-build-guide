@@ -32,6 +32,7 @@ import {
   type DigisacTicket,
 } from "../_shared/digisac.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { toErrorPayload } from "../_shared/errors.ts";
 
 // ----------------------------------------------------------------------------
 // Verificação de segredo do webhook
