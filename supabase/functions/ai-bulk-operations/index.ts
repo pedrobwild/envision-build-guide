@@ -86,15 +86,33 @@ interface PlanRow {
   protected: boolean;
 }
 
+// Per-request correlation context (set inside the handler before any response).
+let _currentRequestId = "";
+function setRequestId(id: string) { _currentRequestId = id; }
+
 function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  const payload = body && typeof body === "object" && !Array.isArray(body)
+    ? { request_id: _currentRequestId, ...(body as Record<string, unknown>) }
+    : body;
+  return new Response(JSON.stringify(payload), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+      "x-request-id": _currentRequestId,
+    },
   });
 }
 
 function errorResponse(message: string, status = 400) {
   return jsonResponse({ error: message }, status);
+}
+
+function logCtx(...parts: unknown[]) {
+  console.log(`[ai-bulk-operations][req=${_currentRequestId}]`, ...parts);
+}
+function errCtx(...parts: unknown[]) {
+  console.error(`[ai-bulk-operations][req=${_currentRequestId}]`, ...parts);
 }
 
 /** Normalize any thrown value (PostgrestError, plain object, string) to an Error. */
@@ -340,7 +358,15 @@ async function buildAssignPlan(
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  // Correlation ID: use header from client, body field, or generate one.
+  const headerReqId = req.headers.get("x-request-id") ?? "";
+  const reqId = headerReqId || crypto.randomUUID();
+  setRequestId(reqId);
+
+  if (req.method === "OPTIONS") return new Response("ok", { headers: { ...corsHeaders, "x-request-id": reqId } });
+
+  const startedAt = Date.now();
+  logCtx(`→ ${req.method} ${new URL(req.url).pathname}`);
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -370,7 +396,12 @@ serve(async (req) => {
     if (!isAdmin) return errorResponse("Apenas administradores podem executar operações em lote.", 403);
 
     const body = await req.json();
+    // If client provided request_id in body and we generated one ourselves, prefer the client's.
+    if (!headerReqId && typeof body?.request_id === "string" && body.request_id.length > 0 && body.request_id.length <= 64) {
+      setRequestId(body.request_id);
+    }
     const action = body?.action as "plan" | "apply" | "revert" | undefined;
+    logCtx(`action=${action} user=${userId}${body?.operation_id ? ` op=${body.operation_id}` : ""}`);
     if (!action) return errorResponse("Campo 'action' obrigatório.");
 
     // ---------- PLAN ----------
@@ -663,7 +694,9 @@ serve(async (req) => {
     } else {
       msg = String(err);
     }
-    console.error("ai-bulk-operations error:", msg, err instanceof Error ? err.stack : "");
+    errCtx(`✗ FAILED in ${Date.now() - startedAt}ms — ${msg}`, err instanceof Error ? err.stack : "");
     return jsonResponse({ error: msg }, 500);
+  } finally {
+    logCtx(`← done in ${Date.now() - startedAt}ms`);
   }
 });

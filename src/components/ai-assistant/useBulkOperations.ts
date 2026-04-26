@@ -4,19 +4,33 @@ import type { BulkOperationPlan } from "./types";
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-bulk-operations`;
 
-async function callFn<T>(body: Record<string, unknown>): Promise<T> {
+function newRequestId(prefix: string): string {
+  const rand =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+  return `${prefix}-${Date.now().toString(36)}-${rand.slice(0, 8)}`;
+}
+
+async function callFn<T>(body: Record<string, unknown>, prefix = "bulk"): Promise<T> {
+  const requestId = newRequestId(prefix);
   const { data: { session } } = await supabase.auth.getSession();
   const resp = await fetch(FN_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "x-request-id": requestId,
       Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, request_id: requestId }),
   });
-  const json = await resp.json().catch(() => ({}));
-  if (!resp.ok || json?.error) {
-    throw new Error(json?.error ?? `HTTP ${resp.status}`);
+  const json = await resp.json().catch(() => ({} as Record<string, unknown>));
+  const echoedId = (json as { request_id?: string })?.request_id ?? resp.headers.get("x-request-id") ?? requestId;
+  if (!resp.ok || (json as { error?: string })?.error) {
+    const baseMsg = (json as { error?: string })?.error ?? `HTTP ${resp.status}`;
+    const err = new Error(`${baseMsg} (req_id: ${echoedId})`);
+    (err as Error & { requestId?: string }).requestId = echoedId;
+    throw err;
   }
   return json as T;
 }
@@ -41,7 +55,7 @@ export function useBulkOperations() {
         protected_count?: number;
         total_before?: number;
         total_after?: number;
-      }>({ action: "plan", command });
+      }>({ action: "plan", command }, "plan");
 
       if (res.unsupported) {
         return { unsupported: true, summary: res.summary ?? "", reasoning: res.reasoning };
@@ -72,7 +86,7 @@ export function useBulkOperations() {
       return await callFn<{ ok: boolean; applied_count: number }>({
         action: "apply",
         operation_id: operationId,
-      });
+      }, "apply");
     } finally {
       setBusyId(null);
     }
@@ -84,7 +98,7 @@ export function useBulkOperations() {
       return await callFn<{ ok: boolean }>({
         action: "revert",
         operation_id: operationId,
-      });
+      }, "revert");
     } finally {
       setBusyId(null);
     }
