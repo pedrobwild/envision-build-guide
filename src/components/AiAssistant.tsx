@@ -574,6 +574,7 @@ export function AiAssistant() {
                           partialFailures={m.bulkOp.partialFailures}
                           error={m.bulkOp.error}
                           busy={busyId === m.bulkOp.plan?.operation_id}
+                          progress={m.bulkOp.progress}
                           onConfirm={() => handleBulkConfirm(i)}
                           onCancel={() => handleBulkCancel(i)}
                           onRevert={() => handleBulkRevert(i)}
