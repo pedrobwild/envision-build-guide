@@ -729,19 +729,21 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) return errorResponse("Não autenticado.", 401);
 
-    // Identify the user — verify JWT claims directly to avoid stale session lookups
+    // Identify the user — validate bearer token server-side using the same compatible pattern
     const token = authHeader.slice("Bearer ".length).trim();
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
+    const admin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
     });
-    const { data: claimsData, error: userErr } = await userClient.auth.getClaims(token);
-    const userId = claimsData?.claims?.sub;
+    const {
+      data: { user },
+      error: userErr,
+    } = await admin.auth.getUser(token);
+    const userId = user?.id;
     if (userErr || !userId) {
       return errorResponse(`Sessão inválida.${userErr?.message ? ` (${userErr.message})` : ""}`, 401);
     }
 
     // Service-role client for admin checks + writes
-    const admin = createClient(supabaseUrl, serviceKey);
 
     // Admin check
     const { data: isAdmin, error: roleErr } = await admin.rpc("has_role", {
