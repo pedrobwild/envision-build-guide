@@ -415,6 +415,56 @@ async function buildAssignPlan(
 }
 
 // =====================================================================
+// Plain-field bulk builders (priority, validity, due_at, archive,
+// pipeline_id, pipeline_stage). All write the new value into a single
+// scalar column; revert restores the previous per-row value from snapshot.
+// =====================================================================
+
+const PRIORITY_VALUES = new Set(["baixa", "normal", "alta", "urgente"]);
+const PRIORITY_ALIASES: Record<string, string> = {
+  low: "baixa", baixa: "baixa",
+  medium: "normal", normal: "normal",
+  high: "alta", alta: "alta",
+  urgent: "urgente", urgente: "urgente",
+};
+const STAGE_VALUES = new Set(["lead", "briefing", "visita", "proposta", "negociacao"]);
+
+function plainPlan(
+  budgets: Array<{ id: string; sequential_code: string | null; client_name: string; project_name: string; internal_status: string }>,
+  changeLabel: (b: { internal_status: string }) => string,
+): PlanRow[] {
+  return budgets.map((b) => {
+    const protectedStatus = PROTECTED_STATUSES.includes(b.internal_status);
+    return {
+      budget_id: b.id,
+      sequential_code: b.sequential_code,
+      client_name: b.client_name,
+      project_name: b.project_name,
+      current_status: b.internal_status,
+      before_total: 0,
+      after_total: 0,
+      delta: 0,
+      changes_summary: protectedStatus ? "Bloqueado (status protegido)" : changeLabel(b),
+      protected: protectedStatus,
+    };
+  });
+}
+
+function isoDateOrNull(s: string | undefined): string | null {
+  if (!s) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const d = new Date(`${s}T12:00:00Z`);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function dueInDaysToISO(n: number): string {
+  const d = new Date();
+  d.setUTCHours(23, 59, 59, 0);
+  d.setUTCDate(d.getUTCDate() + Math.round(n));
+  return d.toISOString();
+}
+
+// =====================================================================
 // Versioning helpers (financial_adjustment): clone the budget, copy all
 // dependent rows, then apply the factor to the NEW version. The new version
 // is forced to internal_status = 'delivered_to_sales' ("Entregue ao Comercial")
