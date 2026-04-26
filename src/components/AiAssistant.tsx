@@ -1,80 +1,39 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Sparkles,
-  X,
-  Send,
   Loader2,
-  Trash2,
   Paperclip,
-  FileText,
-  Image as ImageIcon,
-  FileSpreadsheet,
-  FileAudio,
-  File as FileIcon,
+  Send,
+  Sparkles,
+  Trash2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  ACCEPTED_MIME,
+  MAX_FILES,
+  MAX_FILE_BYTES,
+  STORAGE_KEY,
+  type Attachment,
+  type Msg,
+} from "./ai-assistant/types";
+import {
+  fileIconFor,
+  formatBytes,
+  looksLikeBulkCommand,
+  readFileAsDataUrl,
+} from "./ai-assistant/utils";
+import { BulkOperationCard } from "./ai-assistant/BulkOperationCard";
+import { useBulkOperations } from "./ai-assistant/useBulkOperations";
 
-type Attachment = {
-  name: string;
-  mimeType: string;
-  size: number;
-  /** image data URL (used for preview AND vision payload) */
-  dataUrl?: string;
-  /** base64 (no prefix) for non-image files */
-  base64?: string;
-};
-
-type Msg = {
-  role: "user" | "assistant";
-  content: string;
-  attachments?: Attachment[];
-};
-
-const STORAGE_KEY = "ai-assistant-history-v2";
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant-chat`;
-
-const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB
-const MAX_FILES = 5;
-
-const ACCEPTED_MIME = [
-  "image/*",
-  "application/pdf",
-  ".pdf,.png,.jpg,.jpeg,.webp,.gif",
-  ".xlsx,.xls,.csv",
-  ".docx,.txt,.md,.json",
-  "audio/*",
-  ".mp3,.wav,.m4a,.ogg",
-].join(",");
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
-
-function formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function fileIconFor(mime: string, name: string) {
-  if (mime.startsWith("image/")) return ImageIcon;
-  if (mime.startsWith("audio/")) return FileAudio;
-  if (mime === "application/pdf" || /\.pdf$/i.test(name)) return FileText;
-  if (/\.(xlsx|xls|csv)$/i.test(name)) return FileSpreadsheet;
-  if (/\.(docx|txt|md|json)$/i.test(name)) return FileText;
-  return FileIcon;
-}
 
 export function AiAssistant() {
   const [open, setOpen] = useState(false);
@@ -92,10 +51,12 @@ export function AiAssistant() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { isAdmin } = useUserProfile();
+  const { plan: planBulk, apply: applyBulk, revert: revertBulk, busyId } = useBulkOperations();
 
+  // Persist slim history (no attachment payloads)
   useEffect(() => {
     try {
-      // Strip attachments from persisted history to avoid bloating localStorage
       const slim = messages.slice(-30).map((m) => ({
         role: m.role,
         content: m.content,
@@ -104,6 +65,7 @@ export function AiAssistant() {
           mimeType: a.mimeType,
           size: a.size,
         })) as Attachment[] | undefined,
+        bulkOp: m.bulkOp,
       }));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
     } catch {
@@ -161,9 +123,7 @@ export function AiAssistant() {
       }
     }
 
-    if (next.length > 0) {
-      setPendingFiles((prev) => [...prev, ...next]);
-    }
+    if (next.length > 0) setPendingFiles((prev) => [...prev, ...next]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -171,9 +131,124 @@ export function AiAssistant() {
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // ---------- Bulk operations flow ----------
+  const handleBulkCommand = async (command: string) => {
+    const userMsg: Msg = { role: "user", content: command };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setLoading(true);
+    try {
+      const res = await planBulk(command);
+      if ("unsupported" in res) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              `Não consegui estruturar este comando.\n\n**${res.summary}**${res.reasoning ? `\n\n${res.reasoning}` : ""}`,
+          },
+        ]);
+        return;
+      }
+      if ("empty" in res) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Nenhum orçamento foi encontrado para este filtro.\n\n_${res.summary}_`,
+          },
+        ]);
+        return;
+      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "",
+          bulkOp: { plan: res, status: "pending" },
+        },
+      ]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao planejar";
+      toast({ title: "Erro no plano", description: msg, variant: "destructive" });
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: `❌ ${msg}` },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkConfirm = async (msgIndex: number) => {
+    const m = messages[msgIndex];
+    const opId = m.bulkOp?.plan?.operation_id;
+    if (!opId) return;
+    try {
+      const res = await applyBulk(opId);
+      setMessages((prev) =>
+        prev.map((it, i) =>
+          i === msgIndex && it.bulkOp
+            ? { ...it, bulkOp: { ...it.bulkOp, status: "applied", appliedCount: res.applied_count } }
+            : it,
+        ),
+      );
+      toast({
+        title: "Operação aplicada",
+        description: `${res.applied_count} orçamentos atualizados.`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao aplicar";
+      setMessages((prev) =>
+        prev.map((it, i) =>
+          i === msgIndex && it.bulkOp
+            ? { ...it, bulkOp: { ...it.bulkOp, status: "failed", error: msg } }
+            : it,
+        ),
+      );
+      toast({ title: "Erro ao aplicar", description: msg, variant: "destructive" });
+    }
+  };
+
+  const handleBulkRevert = async (msgIndex: number) => {
+    const m = messages[msgIndex];
+    const opId = m.bulkOp?.plan?.operation_id;
+    if (!opId) return;
+    try {
+      await revertBulk(opId);
+      setMessages((prev) =>
+        prev.map((it, i) =>
+          i === msgIndex && it.bulkOp
+            ? { ...it, bulkOp: { ...it.bulkOp, status: "reverted" } }
+            : it,
+        ),
+      );
+      toast({ title: "Operação revertida", description: "Estado anterior restaurado." });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao reverter";
+      toast({ title: "Erro ao reverter", description: msg, variant: "destructive" });
+    }
+  };
+
+  const handleBulkCancel = (msgIndex: number) => {
+    setMessages((prev) => prev.filter((_, i) => i !== msgIndex));
+  };
+
+  // ---------- Standard chat flow ----------
   const sendMessage = async () => {
     const trimmed = input.trim();
     if ((!trimmed && pendingFiles.length === 0) || loading) return;
+
+    // Detect admin-only batch commands
+    if (
+      isAdmin &&
+      pendingFiles.length === 0 &&
+      trimmed &&
+      looksLikeBulkCommand(trimmed)
+    ) {
+      await handleBulkCommand(trimmed);
+      return;
+    }
 
     const userMsg: Msg = {
       role: "user",
@@ -192,7 +267,7 @@ export function AiAssistant() {
       assistantSoFar += chunk;
       setMessages((prev) => {
         const last = prev[prev.length - 1];
-        if (last?.role === "assistant") {
+        if (last?.role === "assistant" && !last.bulkOp) {
           return prev.map((m, i) =>
             i === prev.length - 1 ? { ...m, content: assistantSoFar } : m,
           );
@@ -202,10 +277,7 @@ export function AiAssistant() {
     };
 
     try {
-      const { data: { session } } = await import("@/integrations/supabase/client").then(
-        (m) => m.supabase.auth.getSession(),
-      );
-
+      const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -256,7 +328,7 @@ export function AiAssistant() {
       toast({ title: "Erro no assistente", description: message, variant: "destructive" });
       setMessages((prev) => {
         const last = prev[prev.length - 1];
-        if (last?.role === "assistant" && !last.content) {
+        if (last?.role === "assistant" && !last.content && !last.bulkOp) {
           return prev.slice(0, -1);
         }
         return prev;
@@ -283,9 +355,20 @@ export function AiAssistant() {
     }
   };
 
+  const suggestions = isAdmin
+    ? [
+        "Reduzir 5% nos orçamentos criados a partir de 01/01/2026",
+        "Mover para 'aguardando' os orçamentos criados desde 01/03/2026",
+        "Atribuir o orçamentista João aos orçamentos criados desde 15/04/2026",
+      ]
+    : [
+        "Como melhorar a taxa de conversão do pipeline?",
+        "Resuma este orçamento e gere um checklist",
+        "Escreva uma mensagem de follow-up para WhatsApp",
+      ];
+
   return (
     <>
-      {/* Floating Action Button */}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -349,15 +432,13 @@ export function AiAssistant() {
                       Olá! Como posso ajudar?
                     </p>
                     <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto font-body">
-                      Pergunte ou anexe um arquivo (PDF, imagem, planilha, áudio, Word) para análise.
+                      {isAdmin
+                        ? "Pergunte, anexe um arquivo ou peça uma operação em lote (ex.: reduzir 10% em orçamentos a partir de DD/MM)."
+                        : "Pergunte ou anexe um arquivo (PDF, imagem, planilha, áudio, Word) para análise."}
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 max-w-xs mx-auto pt-2">
-                    {[
-                      "Como melhorar a taxa de conversão do pipeline?",
-                      "Resuma este orçamento e gere um checklist",
-                      "Escreva uma mensagem de follow-up para WhatsApp",
-                    ].map((s) => (
+                    {suggestions.map((s) => (
                       <button
                         key={s}
                         onClick={() => setInput(s)}
@@ -370,63 +451,81 @@ export function AiAssistant() {
                 </div>
               )}
 
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "flex",
-                    m.role === "user" ? "justify-end" : "justify-start",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm",
-                      m.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-br-sm"
-                        : "bg-muted text-foreground rounded-bl-sm",
-                    )}
-                  >
-                    {m.attachments && m.attachments.length > 0 && (
-                      <div className="mb-2 space-y-1.5">
-                        {m.attachments.map((att, idx) => {
-                          const Icon = fileIconFor(att.mimeType, att.name);
-                          return att.dataUrl ? (
-                            <img
-                              key={idx}
-                              src={att.dataUrl}
-                              alt={att.name}
-                              className="max-h-40 w-full object-cover rounded-lg border border-border/40"
-                            />
-                          ) : (
-                            <div
-                              key={idx}
-                              className={cn(
-                                "flex items-center gap-2 px-2 py-1.5 rounded-md text-xs",
-                                m.role === "user"
-                                  ? "bg-primary-foreground/15"
-                                  : "bg-background/60 border border-border/50",
-                              )}
-                            >
-                              <Icon className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate flex-1">{att.name}</span>
-                              <span className="opacity-70 shrink-0">{formatBytes(att.size)}</span>
-                            </div>
-                          );
-                        })}
+              {messages.map((m, i) => {
+                if (m.bulkOp) {
+                  return (
+                    <div key={i} className="flex justify-start">
+                      <div className="w-full max-w-[95%]">
+                        <BulkOperationCard
+                          plan={m.bulkOp.plan}
+                          status={m.bulkOp.status}
+                          appliedCount={m.bulkOp.appliedCount}
+                          error={m.bulkOp.error}
+                          busy={busyId === m.bulkOp.plan?.operation_id}
+                          onConfirm={() => handleBulkConfirm(i)}
+                          onCancel={() => handleBulkCancel(i)}
+                          onRevert={() => handleBulkRevert(i)}
+                        />
                       </div>
-                    )}
-                    {m.role === "assistant" ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none font-body prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-pre:my-2 prose-headings:mb-1 prose-headings:mt-2">
-                        <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
-                      </div>
-                    ) : (
-                      m.content && <p className="whitespace-pre-wrap font-body">{m.content}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                    </div>
+                  );
+                }
 
-              {loading && messages[messages.length - 1]?.role === "user" && (
+                return (
+                  <div
+                    key={i}
+                    className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
+                  >
+                    <div
+                      className={cn(
+                        "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm",
+                        m.role === "user"
+                          ? "bg-primary text-primary-foreground rounded-br-sm"
+                          : "bg-muted text-foreground rounded-bl-sm",
+                      )}
+                    >
+                      {m.attachments && m.attachments.length > 0 && (
+                        <div className="mb-2 space-y-1.5">
+                          {m.attachments.map((att, idx) => {
+                            const Icon = fileIconFor(att.mimeType, att.name);
+                            return att.dataUrl ? (
+                              <img
+                                key={idx}
+                                src={att.dataUrl}
+                                alt={att.name}
+                                className="max-h-40 w-full object-cover rounded-lg border border-border/40"
+                              />
+                            ) : (
+                              <div
+                                key={idx}
+                                className={cn(
+                                  "flex items-center gap-2 px-2 py-1.5 rounded-md text-xs",
+                                  m.role === "user"
+                                    ? "bg-primary-foreground/15"
+                                    : "bg-background/60 border border-border/50",
+                                )}
+                              >
+                                <Icon className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate flex-1">{att.name}</span>
+                                <span className="opacity-70 shrink-0">{formatBytes(att.size)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {m.role === "assistant" ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none font-body prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-pre:my-2 prose-headings:mb-1 prose-headings:mt-2">
+                          <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        m.content && <p className="whitespace-pre-wrap font-body">{m.content}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {loading && (
                 <div className="flex justify-start">
                   <div className="bg-muted rounded-2xl rounded-bl-sm px-3.5 py-2.5">
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -491,7 +590,9 @@ export function AiAssistant() {
                 placeholder={
                   pendingFiles.length > 0
                     ? "O que você quer saber sobre esses arquivos?"
-                    : "Pergunte alguma coisa..."
+                    : isAdmin
+                      ? "Pergunte ou peça uma operação em lote..."
+                      : "Pergunte alguma coisa..."
                 }
                 rows={1}
                 className="resize-none min-h-[40px] max-h-32 text-sm font-body"
@@ -512,6 +613,7 @@ export function AiAssistant() {
             </div>
             <p className="text-[10px] text-muted-foreground text-center font-body">
               Enter envia · Shift+Enter quebra linha · até {MAX_FILES} arquivos de 20MB
+              {isAdmin && " · Comandos em lote ativos"}
             </p>
           </div>
         </SheetContent>
