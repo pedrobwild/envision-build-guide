@@ -55,3 +55,6 @@ verify_jwt = false
 
 [functions.ai-assistant-chat]
 verify_jwt = true
+
+[functions.ai-bulk-operations]
+verify_jwt = true
