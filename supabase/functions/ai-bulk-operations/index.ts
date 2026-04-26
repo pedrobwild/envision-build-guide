@@ -210,7 +210,7 @@ async function buildFinancialPlan(
       .from("items")
       .select("id, section_id, qty, internal_unit_price, internal_total, bdi_percentage")
       .in("section_id", sectionIds);
-    if (itemsErr) throw itemsErr;
+    if (itemsErr) throw toError(itemsErr, "items");
     items = (itemsRaw ?? []) as Item[];
   }
 
