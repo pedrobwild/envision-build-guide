@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { History, TrendingDown, TrendingUp } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 import {
@@ -24,7 +26,8 @@ export function PriceHistoryPopover({
   supplierId: string;
   supplierName: string;
 }) {
-  const { data = [], isLoading } = useQuery<PriceHistoryRow[]>({
+  const [open, setOpen] = useState(false);
+  const { data = [], isLoading, isError, refetch, isFetching } = useQuery<PriceHistoryRow[]>({
     queryKey: ["catalog_price_history", catalogItemId, supplierId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -37,8 +40,8 @@ export function PriceHistoryPopover({
       if (error) throw error;
       return (data ?? []) as PriceHistoryRow[];
     },
-    enabled: false,
-    refetchOnMount: true,
+    enabled: open,
+    retry: false,
   });
 
   const chartData = [...data].reverse().map((row) => ({
@@ -50,20 +53,46 @@ export function PriceHistoryPopover({
   }));
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7" title="Histórico de preço">
-          <History className="h-3.5 w-3.5" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          aria-label={`Ver histórico de preço de ${supplierName}`}
+          aria-haspopup="dialog"
+        >
+          <History className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80" align="end">
-        <div className="space-y-2">
+        <div className="space-y-2" aria-live="polite" aria-busy={isLoading || isFetching}>
           <div>
             <p className="text-xs font-semibold text-foreground">Histórico de preço</p>
             <p className="text-[11px] text-muted-foreground">{supplierName}</p>
           </div>
           {isLoading ? (
-            <p className="text-xs text-muted-foreground py-3 text-center">Carregando...</p>
+            <div className="py-2 space-y-1.5" role="status" aria-label="Carregando histórico de preço">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-5/6" />
+              <Skeleton className="h-3 w-2/3" />
+              <span className="sr-only">Carregando histórico de preço…</span>
+            </div>
+          ) : isError ? (
+            <div role="alert" className="py-3 space-y-2 text-center">
+              <p className="text-xs text-destructive">
+                Não consegui carregar o histórico — verifique sua conexão.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => refetch()}
+                disabled={isFetching}
+              >
+                {isFetching ? "Tentando…" : "Tentar novamente"}
+              </Button>
+            </div>
           ) : data.length === 0 ? (
             <p className="text-xs text-muted-foreground py-3 text-center">
               Sem alterações registradas.

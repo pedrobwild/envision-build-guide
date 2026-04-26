@@ -87,25 +87,39 @@ function SortableRow({ cat, onEdit, onDelete, onToggleActive, draggable }: Sorta
       <TableCell className="text-sm text-muted-foreground">{cat.description ?? "—"}</TableCell>
       <TableCell>
         <button
+          type="button"
           onClick={onToggleActive}
           className="group flex items-center gap-1.5"
-          title={cat.is_active ? "Desativar" : "Ativar"}
+          aria-label={cat.is_active ? `Desativar categoria ${cat.name}` : `Ativar categoria ${cat.name}`}
+          aria-pressed={cat.is_active}
         >
           {cat.is_active ? (
-            <ToggleRight className="h-5 w-5 text-primary group-hover:text-primary/70 transition-colors" />
+            <ToggleRight className="h-5 w-5 text-primary group-hover:text-primary/70 transition-colors" aria-hidden="true" />
           ) : (
-            <ToggleLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            <ToggleLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden="true" />
           )}
           <span className="text-xs">{cat.is_active ? "Ativo" : "Inativo"}</span>
         </button>
       </TableCell>
       <TableCell className="text-right">
         <div className="flex gap-0.5 justify-end">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}>
-            <Edit2 className="h-3.5 w-3.5" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={onEdit}
+            aria-label={`Editar categoria ${cat.name}`}
+          >
+            <Edit2 className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}>
-            <Trash2 className="h-3.5 w-3.5" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive"
+            onClick={onDelete}
+            aria-label={`Excluir categoria ${cat.name}`}
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </div>
       </TableCell>

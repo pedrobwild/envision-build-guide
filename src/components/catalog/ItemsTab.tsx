@@ -502,8 +502,13 @@ export function ItemsTab({
                   </button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7">
-                        <MoreVertical className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        aria-label={`Mais ações para ${item.name}`}
+                      >
+                        <MoreVertical className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -584,27 +589,43 @@ export function ItemsTab({
                     </TableCell>
                     <TableCell>
                       <button
+                        type="button"
                         onClick={() => handleToggleActive(item)}
                         className="group flex items-center gap-1.5"
-                        title={item.is_active ? "Clique para desativar" : "Clique para ativar"}
+                        aria-label={
+                          item.is_active
+                            ? `Desativar item ${item.name}`
+                            : `Ativar item ${item.name}`
+                        }
+                        aria-pressed={item.is_active}
                       >
                         {item.is_active ? (
-                          <ToggleRight className="h-5 w-5 text-primary group-hover:text-primary/70 transition-colors" />
+                          <ToggleRight className="h-5 w-5 text-primary group-hover:text-primary/70 transition-colors" aria-hidden="true" />
                         ) : (
-                          <ToggleLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                          <ToggleLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden="true" />
                         )}
                         <span className="text-xs">{item.is_active ? "Ativo" : "Inativo"}</span>
                       </button>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-0.5 justify-end">
-                        <Button variant="ghost" size="icon" className="h-8 w-8"
-                          onClick={() => onEditItem(item)}>
-                          <Edit2 className="h-3.5 w-3.5" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => onEditItem(item)}
+                          aria-label={`Editar item ${item.name}`}
+                        >
+                          <Edit2 className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => setDeleteId(item.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteId(item.id)}
+                          aria-label={`Excluir item ${item.name}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>
                       </div>
                     </TableCell>
