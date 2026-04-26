@@ -360,10 +360,13 @@ async function buildAssignPlan(
 // =====================================================================
 // Versioning helpers (financial_adjustment): clone the budget, copy all
 // dependent rows, then apply the factor to the NEW version. The new version
-// inherits the SAME internal_status as the source budget so each item returns
-// to the exact kanban stage it was in before the batch reduction. The OLD
-// version stays intact (snapshot points to it for revert).
+// is forced to internal_status = 'delivered_to_sales' ("Entregue ao Comercial")
+// so the commercial team can immediately reshare the public link with clients.
+// The OLD version stays intact (snapshot points to it for revert).
 // =====================================================================
+
+// Status pós-redução: estado padrão "pronto para reenviar o link ao cliente".
+const POST_REDUCTION_STATUS = "delivered_to_sales";
 
 interface VersionCloneResult {
   new_budget_id: string;
@@ -428,9 +431,8 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
       status: "draft",
       created_by: userId,
       view_count: 0,
-      // Preserve the source's kanban stage so each budget returns to the same
-      // place after the batch reduction completes.
-      internal_status: (source as { internal_status?: string }).internal_status ?? "novo",
+      // Coloca a nova versão em "Entregue ao Comercial" para reenvio do link.
+      internal_status: POST_REDUCTION_STATUS,
     })
     .select("id")
     .single();
