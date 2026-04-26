@@ -778,16 +778,19 @@ serve(async (req) => {
       // ---- Snapshot (always) ----
       const snapshot: Record<string, unknown> = { taken_at: new Date().toISOString() };
 
+      // Snapshot do estado ATUAL (re-leitura no momento do apply, não confiando
+      // no plan que pode estar stale se houve drift). Mapeia por id para que o
+      // clone receba o estado expected vs current e o revert possa preservar.
+      const planStatusById = new Map<string, string>();
       if (op.action_type === "financial_adjustment") {
-        // For financial reductions we clone each budget into a NEW version
-        // (so the snapshot/revert just needs to know which clones to delete
-        // and which old versions to restore as current). The old budget rows
-        // stay untouched, so we don't snapshot their items/sections anymore.
         const { data: snap } = await admin
           .from("budgets")
           .select("id, internal_status, is_current_version, version_group_id")
           .in("id", ids);
         snapshot.budgets = snap ?? [];
+        (snap ?? []).forEach((b: { id: string; internal_status: string }) => {
+          planStatusById.set(b.id, b.internal_status);
+        });
       } else if (op.action_type === "status_change") {
         const { data: snap } = await admin.from("budgets").select("id, internal_status").in("id", ids);
         snapshot.budgets = snap ?? [];
