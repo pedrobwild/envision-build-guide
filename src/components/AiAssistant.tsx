@@ -29,6 +29,8 @@ import {
   formatBytes,
   looksLikeBulkCommand,
   readFileAsDataUrl,
+  validateFinancialCommandFactor,
+  validatePlanFactor,
 } from "./ai-assistant/utils";
 import { BulkOperationCard } from "./ai-assistant/BulkOperationCard";
 import { useBulkOperations } from "./ai-assistant/useBulkOperations";
