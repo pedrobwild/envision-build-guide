@@ -53,7 +53,7 @@ export function BulkOperationCard({
   const statusBadge = (() => {
     if (status === "applied")
       return (
-        <Badge className="gap-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15">
+        <Badge className="gap-1 bg-success/15 text-success hover:bg-success/15">
           <CheckCircle2 className="h-3 w-3" /> Aplicado
         </Badge>
       );
@@ -118,8 +118,8 @@ export function BulkOperationCard({
           <p
             className={cn(
               "text-sm font-semibold tabular-nums",
-              hasFinancial && deltaTotal < 0 && "text-amber-600",
-              hasFinancial && deltaTotal > 0 && "text-emerald-600",
+              hasFinancial && deltaTotal < 0 && "text-warning",
+              hasFinancial && deltaTotal > 0 && "text-success",
             )}
           >
             {hasFinancial
