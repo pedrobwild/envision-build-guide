@@ -97,6 +97,19 @@ function errorResponse(message: string, status = 400) {
   return jsonResponse({ error: message }, status);
 }
 
+/** Normalize any thrown value (PostgrestError, plain object, string) to an Error. */
+function toError(e: unknown, prefix = ""): Error {
+  if (e instanceof Error) return prefix ? new Error(`${prefix}: ${e.message}`) : e;
+  if (e && typeof e === "object") {
+    const obj = e as { message?: string; details?: string; hint?: string; code?: string };
+    const parts = [obj.message, obj.details, obj.hint && `hint: ${obj.hint}`, obj.code && `code: ${obj.code}`]
+      .filter(Boolean)
+      .join(" · ");
+    return new Error(prefix ? `${prefix}: ${parts || JSON.stringify(e)}` : parts || JSON.stringify(e));
+  }
+  return new Error(prefix ? `${prefix}: ${String(e)}` : String(e));
+}
+
 async function callAIPlanner(command: string, today: string) {
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
