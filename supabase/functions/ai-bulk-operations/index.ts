@@ -554,7 +554,7 @@ serve(async (req) => {
             .update({ internal_status: newStatus })
             .in("id", ids)
             .not("internal_status", "in", `(${PROTECTED_STATUSES.map((s) => `"${s}"`).join(",")})`);
-          if (error) throw error;
+          if (error) throw toError(error, "status_change");
           applied = ids.length;
         } else if (op.action_type === "assign_owner") {
           const ownerId = (op.params as { owner_id: string }).owner_id;
@@ -564,7 +564,7 @@ serve(async (req) => {
             .from("budgets")
             .update({ [field]: ownerId })
             .in("id", ids);
-          if (error) throw error;
+          if (error) throw toError(error, "assign_owner");
           applied = ids.length;
         }
 
@@ -587,12 +587,12 @@ serve(async (req) => {
           })
           .eq("id", opId);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
+        const normalized = toError(e);
         await admin
           .from("ai_bulk_operations")
-          .update({ status: "failed", error_message: msg })
+          .update({ status: "failed", error_message: normalized.message })
           .eq("id", opId);
-        throw e;
+        throw normalized;
       }
 
       return jsonResponse({ ok: true, operation_id: opId, applied_count: applied });
