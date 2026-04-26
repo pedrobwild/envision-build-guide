@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  Globe2,
   Layers,
   Loader2,
   ShieldAlert,
