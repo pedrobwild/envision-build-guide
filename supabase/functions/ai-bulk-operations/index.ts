@@ -358,7 +358,15 @@ async function buildAssignPlan(
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  // Correlation ID: use header from client, body field, or generate one.
+  const headerReqId = req.headers.get("x-request-id") ?? "";
+  const reqId = headerReqId || crypto.randomUUID();
+  setRequestId(reqId);
+
+  if (req.method === "OPTIONS") return new Response("ok", { headers: { ...corsHeaders, "x-request-id": reqId } });
+
+  const startedAt = Date.now();
+  logCtx(`→ ${req.method} ${new URL(req.url).pathname}`);
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
