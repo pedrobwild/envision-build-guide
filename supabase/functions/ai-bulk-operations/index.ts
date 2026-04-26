@@ -283,16 +283,16 @@ async function buildAssignPlan(
   ownerName: string,
 ): Promise<{ rows: PlanRow[]; ownerId: string; ownerLabel: string }> {
   const { data: members, error } = await admin
-    .from("team_members")
-    .select("user_id, full_name")
+    .from("profiles")
+    .select("id, full_name")
     .ilike("full_name", `%${ownerName}%`)
     .limit(2);
   if (error) throw error;
   if (!members || members.length === 0) throw new Error(`Nenhum membro encontrado com o nome "${ownerName}".`);
   if (members.length > 1) throw new Error(`Mais de um membro corresponde a "${ownerName}". Seja mais específico.`);
 
-  const ownerId = members[0].user_id as string;
-  const ownerLabel = members[0].full_name as string;
+  const ownerId = members[0].id as string;
+  const ownerLabel = (members[0].full_name as string) ?? ownerName;
   const field = role === "commercial" ? "commercial_owner_id" : "estimator_owner_id";
 
   const rows = budgets.map((b) => {
