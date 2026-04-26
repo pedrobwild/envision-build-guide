@@ -694,7 +694,9 @@ serve(async (req) => {
     } else {
       msg = String(err);
     }
-    console.error("ai-bulk-operations error:", msg, err instanceof Error ? err.stack : "");
+    errCtx(`✗ FAILED in ${Date.now() - startedAt}ms — ${msg}`, err instanceof Error ? err.stack : "");
     return jsonResponse({ error: msg }, 500);
+  } finally {
+    logCtx(`← done in ${Date.now() - startedAt}ms`);
   }
 });
