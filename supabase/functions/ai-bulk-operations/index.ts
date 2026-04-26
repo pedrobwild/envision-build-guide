@@ -694,10 +694,16 @@ serve(async (req) => {
       const createdFrom = validateDate(parsed.filters?.created_from);
       const createdTo = validateDate(parsed.filters?.created_to);
 
-      // Fetch matching budgets (date filters are optional — when absent, scan all)
+      // Fetch matching budgets (date filters are optional — when absent, scan all).
+      // CRÍTICO: filtra apenas a versão ATUAL de cada grupo (`is_current_version`
+      // != false, incluindo NULL para orçamentos legados sem versionamento).
+      // Sem este filtro, um clone em batch pode receber duas versões do mesmo
+      // grupo em paralelo e disparar falso-positivo na guarda anti-colisão de
+      // `cloneBudgetAsNewVersion`.
       let q = admin
         .from("budgets")
-        .select("id, sequential_code, client_name, project_name, internal_status, commercial_owner_id, estimator_owner_id");
+        .select("id, sequential_code, client_name, project_name, internal_status, commercial_owner_id, estimator_owner_id, is_current_version")
+        .or("is_current_version.is.null,is_current_version.eq.true");
       if (createdFrom) q = q.gte("created_at", `${createdFrom}T00:00:00Z`);
       if (createdTo) q = q.lte("created_at", `${createdTo}T23:59:59Z`);
       const { data: budgets, error: bErr } = await q.order("created_at", { ascending: false }).limit(MAX_AFFECTED + 1);
