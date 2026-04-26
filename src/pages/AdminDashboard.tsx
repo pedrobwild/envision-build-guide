@@ -279,6 +279,11 @@ export default function AdminDashboard() {
         </div>
       </motion.div>
 
+      {/* ───── DAILY REQUESTS WIDGET ───── */}
+      <motion.div {...anim(step++ * SECTION_DELAY)}>
+        <DailyRequestsWidget />
+      </motion.div>
+
       {/* ───── DUAL FUNNEL ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-4">
