@@ -21,7 +21,16 @@ export type BulkPlanRow = {
   protected: boolean;
 };
 
-export type BulkActionType = "financial_adjustment" | "status_change" | "assign_owner";
+export type BulkActionType =
+  | "financial_adjustment"
+  | "status_change"
+  | "assign_owner"
+  | "priority_change"
+  | "validity_change"
+  | "due_date_change"
+  | "pipeline_change"
+  | "pipeline_stage_change"
+  | "archive";
 
 export type BulkOperationPlan = {
   operation_id: string;
