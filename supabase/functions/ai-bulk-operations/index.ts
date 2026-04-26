@@ -8,8 +8,39 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const MAX_AFFECTED = 500;
+// Limite duro por operação. Acima disso o `plan` retorna 400 pedindo refino.
+// Mantido em 1000 conforme docs/ai-bulk-operations.md (suporta 200+ com folga).
+const MAX_AFFECTED = 1000;
+
+// A partir de quantos orçamentos o `apply` roda em background (EdgeRuntime.waitUntil)
+// devolvendo a resposta imediatamente para o cliente fazer polling em /status.
+const BACKGROUND_THRESHOLD = 50;
+
 const PROTECTED_STATUSES = ["contrato_fechado", "perdido", "lost", "archived"];
+
+// Estágios canônicos do pipeline (mantém paridade com o enum exposto à IA e ao DB).
+const PIPELINE_STAGES = ["lead", "briefing", "visita", "proposta", "negociacao"] as const;
+
+// Mapa defensivo de sinônimos que a IA pode emitir → valor canônico.
+// O system prompt já orienta a IA a emitir o canônico, mas se vier algo
+// como "negociação" (com acento) ou "negotiation" (en), normalizamos aqui.
+const STAGE_SYNONYMS: Record<string, string> = {
+  // EN
+  negotiation: "negociacao",
+  negotiating: "negociacao",
+  proposal: "proposta",
+  proposals: "proposta",
+  visit: "visita",
+  visits: "visita",
+  leads: "lead",
+  briefings: "briefing",
+  // PT-BR variantes / acentos
+  "negociação": "negociacao",
+  "negociacão": "negociacao",
+  negociando: "negociacao",
+  propostas: "proposta",
+  visitas: "visita",
+};
 
 const SYSTEM_PROMPT = `Você é o orquestrador de **operações em lote** do sistema BWild. Sua única função é converter um comando em linguagem natural do administrador em uma chamada estruturada da função \`plan_bulk_operation\`.
 
@@ -480,7 +511,7 @@ const PRIORITY_ALIASES: Record<string, string> = {
   high: "alta", alta: "alta",
   urgent: "urgente", urgente: "urgente",
 };
-const STAGE_VALUES = new Set(["lead", "briefing", "visita", "proposta", "negociacao"]);
+const STAGE_VALUES = new Set<string>(PIPELINE_STAGES);
 
 function plainPlan(
   budgets: Array<{ id: string; sequential_code: string | null; client_name: string; project_name: string; internal_status: string }>,
