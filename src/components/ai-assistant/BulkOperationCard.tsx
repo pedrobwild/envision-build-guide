@@ -358,7 +358,7 @@ export function BulkOperationCard({
             <span className="text-[11px] text-muted-foreground mr-auto">
               {appliedCount ?? plan.applicable_count} {plan.action_type === "financial_adjustment" ? "itens" : "orçamentos"} atualizados
               {partialFailures && partialFailures > 0 ? (
-                <span className="ml-1.5 inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                <span className="ml-1.5 inline-flex items-center gap-1 text-destructive">
                   <AlertTriangle className="h-3 w-3" />
                   {partialFailures} falha{partialFailures > 1 ? "s" : ""} parcial{partialFailures > 1 ? "is" : ""}
                 </span>
