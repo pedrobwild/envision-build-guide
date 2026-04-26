@@ -428,8 +428,9 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
       status: "draft",
       created_by: userId,
       view_count: 0,
-      // Per product decision: post-reduction state is always "delivered_to_sales".
-      internal_status: POST_REDUCTION_STATUS,
+      // Preserve the source's kanban stage so each budget returns to the same
+      // place after the batch reduction completes.
+      internal_status: (source as { internal_status?: string }).internal_status ?? "novo",
     })
     .select("id")
     .single();
