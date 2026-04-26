@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { BulkOperationPlan, BulkOpStatus, BulkPlanRow } from "./types";
 import { fmtBRL } from "./utils";
@@ -24,6 +25,7 @@ interface Props {
   partialFailures?: number;
   error?: string;
   busy?: boolean;
+  progress?: { processed: number; total: number; estimated: boolean };
   onConfirm: () => void;
   onCancel: () => void;
   onRevert: () => void;
@@ -86,6 +88,7 @@ export function BulkOperationCard({
   partialFailures,
   error,
   busy,
+  progress,
   onConfirm,
   onCancel,
   onRevert,
@@ -321,6 +324,31 @@ export function BulkOperationCard({
             ? `Recolher (mostrar ${DETAIL_LIMIT} principais)`
             : `Ver todos os ${groups.length} grupos (${plan.rows.length} orçamentos)`}
         </button>
+      )}
+
+      {/* Live progress while applying */}
+      {busy && status === "pending" && progress && progress.total > 0 && (
+        <div className="border-t border-border/60 px-3 py-2.5 bg-muted/10 space-y-1.5">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Atualizando {progress.processed.toLocaleString("pt-BR")} / {progress.total.toLocaleString("pt-BR")} itens
+            </span>
+            <span className="tabular-nums text-muted-foreground">
+              {Math.min(99, Math.round((progress.processed / progress.total) * 100))}%
+              {progress.estimated && (
+                <span className="ml-1 text-[10px] opacity-70">(estimativa)</span>
+              )}
+            </span>
+          </div>
+          <Progress
+            value={Math.min(99, (progress.processed / progress.total) * 100)}
+            className="h-1.5"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Pode levar alguns segundos para grandes volumes. Não feche esta janela.
+          </p>
+        </div>
       )}
 
       {/* Actions */}

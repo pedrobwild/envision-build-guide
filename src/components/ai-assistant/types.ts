@@ -51,6 +51,13 @@ export type Msg = {
     /** Number of individual updates that failed during apply (0 = full success). */
     partialFailures?: number;
     error?: string;
+    /** Live progress estimate while apply is in flight. */
+    progress?: {
+      processed: number;
+      total: number;
+      /** True while we're estimating client-side (real total only known after apply returns). */
+      estimated: boolean;
+    };
   };
 };
 

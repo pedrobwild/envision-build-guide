@@ -210,6 +210,56 @@ export function AiAssistant() {
     const m = messages[msgIndex];
     const opId = m.bulkOp?.plan?.operation_id;
     if (!opId) return;
+
+    // Estimate total work units. For financial adjustments the server iterates
+    // over items (~60–80 per budget on average); for other action types it's
+    // 1 unit per budget. We over-estimate slightly to avoid hitting 100% early.
+    const applicableBudgets = m.bulkOp?.plan?.applicable_count ?? 0;
+    const isFinancial = m.bulkOp?.plan?.action_type === "financial_adjustment";
+    const estimatedTotal = Math.max(
+      1,
+      isFinancial ? applicableBudgets * 60 : applicableBudgets,
+    );
+
+    // Tuned to the server's parallel chunk size (24) and average chunk latency
+    // (~350ms). Yields ~70 units/sec — capped at 95% until the apply resolves.
+    const ratePerSecond = isFinancial ? 70 : 8;
+    const startedAt = Date.now();
+
+    setMessages((prev) =>
+      prev.map((it, i) =>
+        i === msgIndex && it.bulkOp
+          ? {
+              ...it,
+              bulkOp: {
+                ...it.bulkOp,
+                progress: { processed: 0, total: estimatedTotal, estimated: true },
+              },
+            }
+          : it,
+      ),
+    );
+
+    const tick = () => {
+      const elapsedSec = (Date.now() - startedAt) / 1000;
+      const projected = Math.floor(elapsedSec * ratePerSecond);
+      const capped = Math.min(projected, Math.floor(estimatedTotal * 0.95));
+      setMessages((prev) =>
+        prev.map((it, i) =>
+          i === msgIndex && it.bulkOp && it.bulkOp.status === "pending"
+            ? {
+                ...it,
+                bulkOp: {
+                  ...it.bulkOp,
+                  progress: { processed: capped, total: estimatedTotal, estimated: true },
+                },
+              }
+            : it,
+        ),
+      );
+    };
+    const interval = window.setInterval(tick, 400);
+
     try {
       const res = await applyBulk(opId);
       const partial = res.partial_failures ?? 0;
@@ -223,6 +273,7 @@ export function AiAssistant() {
                   status: "applied",
                   appliedCount: res.applied_count,
                   partialFailures: partial,
+                  progress: undefined,
                 },
               }
             : it,
@@ -245,11 +296,13 @@ export function AiAssistant() {
       setMessages((prev) =>
         prev.map((it, i) =>
           i === msgIndex && it.bulkOp
-            ? { ...it, bulkOp: { ...it.bulkOp, status: "failed", error: msg } }
+            ? { ...it, bulkOp: { ...it.bulkOp, status: "failed", error: msg, progress: undefined } }
             : it,
         ),
       );
       toast({ title: "Erro ao aplicar", description: msg, variant: "destructive" });
+    } finally {
+      window.clearInterval(interval);
     }
   };
 
@@ -521,6 +574,7 @@ export function AiAssistant() {
                           partialFailures={m.bulkOp.partialFailures}
                           error={m.bulkOp.error}
                           busy={busyId === m.bulkOp.plan?.operation_id}
+                          progress={m.bulkOp.progress}
                           onConfirm={() => handleBulkConfirm(i)}
                           onCancel={() => handleBulkCancel(i)}
                           onRevert={() => handleBulkRevert(i)}
