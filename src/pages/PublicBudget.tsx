@@ -661,6 +661,10 @@ export default function PublicBudget() {
                 projectName={budget.project_name}
                 clientName={budget.client_name}
                 total={total}
+                isAddendum={budget.is_addendum === true}
+                addendumNumber={budget.addendum_number ?? null}
+                addendumApprovedAt={budget.addendum_approved_at ?? null}
+                addendumApprovedByName={budget.addendum_approved_by_name ?? null}
               />
             </div>
           </div>

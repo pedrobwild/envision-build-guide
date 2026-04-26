@@ -157,14 +157,19 @@ function SectionContextMenu({
   onRename,
   onDuplicate,
   onDelete,
+  isAddendum = false,
+  onToggleAddendumRemove,
 }: {
   section: SectionData;
   onRename: (name: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  isAddendum?: boolean;
+  onToggleAddendumRemove?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(section.title);
+  const isMarkedRemove = section.addendum_action === "remove";
 
   return (
     <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) setName(section.title); }}>
@@ -177,7 +182,7 @@ function SectionContextMenu({
           <MoreVertical className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2.5 space-y-1" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+      <PopoverContent className="w-60 p-2.5 space-y-1" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <div className="space-y-1 pb-1.5 border-b border-border/40">
           <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Nome da seção</label>
           <input
@@ -193,6 +198,21 @@ function SectionContextMenu({
         >
           <Package className="h-3 w-3" /> Duplicar seção
         </button>
+        {isAddendum && onToggleAddendumRemove && (
+          <button
+            onClick={() => { onToggleAddendumRemove(); setOpen(false); }}
+            className={cn(
+              "flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs transition-colors border",
+              isMarkedRemove
+                ? "bg-destructive text-destructive-foreground border-destructive hover:opacity-90"
+                : "text-destructive hover:bg-destructive/10 border-transparent"
+            )}
+            title="Marca a seção inteira para remoção do orçamento (subtrai do total)"
+          >
+            <Trash2 className="h-3 w-3" />
+            {isMarkedRemove ? "Cancelar remoção do aditivo" : "Remover seção (aditivo)"}
+          </button>
+        )}
         <button
           onClick={() => {
             if (confirm("Excluir esta seção e todos os seus itens?")) {
@@ -1334,7 +1354,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
               return (
                 <SortableSectionCard key={section.id} section={section}>
                   {(dragListeners: Record<string, unknown> | undefined) => (
-                    <div className={cn("group/section", isSearchActive && !sectionHasMatch && "opacity-40")}>
+                    <div className={cn(
+                      "group/section",
+                      isSearchActive && !sectionHasMatch && "opacity-40",
+                      isAddendum && section.addendum_action === "remove" && "bg-destructive/5 border-l-2 border-destructive/40",
+                    )}>
                       {/* Section header — 48px fixed, Linear pattern */}
                       <div
                         className={cn(
@@ -1361,7 +1385,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                         </div>
 
                         {/* [Nome da Seção] — auto, truncate */}
-                        <span className="text-xs sm:text-sm font-semibold font-display text-foreground truncate min-w-0">
+                        <span className={cn(
+                          "text-xs sm:text-sm font-semibold font-display truncate min-w-0",
+                          isAddendum && section.addendum_action === "remove"
+                            ? "text-destructive line-through"
+                            : "text-foreground"
+                        )}>
                           {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                         </span>
 
@@ -1369,6 +1398,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                         {section.is_optional && (
                           <span className="ml-1 px-1 py-0.5 text-[9px] sm:text-[10px] font-medium rounded bg-muted text-muted-foreground flex-shrink-0">
                             OPT
+                          </span>
+                        )}
+                        {isAddendum && section.addendum_action === "remove" && (
+                          <span className="ml-1.5 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold rounded bg-destructive text-destructive-foreground flex-shrink-0 uppercase tracking-wider">
+                            Removida
+                          </span>
+                        )}
+                        {isAddendum && section.addendum_action === "add" && (
+                          <span className="ml-1.5 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold rounded bg-success text-success-foreground flex-shrink-0 uppercase tracking-wider">
+                            Nova
                           </span>
                         )}
 
@@ -1424,6 +1463,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                             onRename={(name) => updateSection(section.id, "title", name)}
                             onDuplicate={() => duplicateSection(section.id)}
                             onDelete={() => deleteSection(section.id)}
+                            isAddendum={isAddendum}
+                            onToggleAddendumRemove={() => {
+                              const next = section.addendum_action === "remove" ? null : "remove";
+                              updateSection(section.id, "addendum_action", next);
+                            }}
                           />
                         </div>
                       </div>
