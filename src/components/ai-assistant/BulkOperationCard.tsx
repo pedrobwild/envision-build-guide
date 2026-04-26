@@ -83,6 +83,7 @@ export function BulkOperationCard({
   plan,
   status,
   appliedCount,
+  partialFailures,
   error,
   busy,
   onConfirm,
