@@ -373,18 +373,44 @@ interface VersionCloneResult {
   old_budget_id: string;
   old_was_current: boolean;
   old_internal_status: string;
+  old_version_number: number;
+  new_version_number: number;
   section_id_map: Record<string, string>;
   item_id_map: Record<string, string>;
 }
 
+// Estados em que o orçamento NÃO pode receber redução em lote — protege
+// fluxos finalizados ou em fase contratual avançada contra mutações concorrentes.
+const CLONE_PROTECTED_STATUSES = new Set([
+  "lost",
+  "archived",
+  "contrato_fechado",
+  "minuta_solicitada",
+]);
+
 // deno-lint-ignore no-explicit-any
-async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userId: string, changeReason: string): Promise<VersionCloneResult> {
+async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userId: string, changeReason: string, expectedStatus?: string): Promise<VersionCloneResult> {
   const { data: source, error: srcErr } = await admin
     .from("budgets")
     .select("*")
     .eq("id", sourceBudgetId)
     .single();
   if (srcErr || !source) throw toError(srcErr ?? new Error("source-not-found"), `clone:${sourceBudgetId}`);
+
+  const currentStatus = String((source as { internal_status?: string }).internal_status ?? "");
+
+  // Guard 1: estado protegido (mudou para final entre o plan e o apply)
+  if (CLONE_PROTECTED_STATUSES.has(currentStatus)) {
+    throw new Error(`Orçamento ${sourceBudgetId} está em estado protegido '${currentStatus}' — pulado para evitar conflito.`);
+  }
+
+  // Guard 2: divergência entre o estado capturado no plan e o estado atual
+  // (alguém moveu o orçamento no kanban entre o plan e o apply). Permitimos
+  // mas registramos no result para que o revert preserve fielmente o estado
+  // que de fato existia imediatamente antes do clone.
+  if (expectedStatus && expectedStatus !== currentStatus) {
+    logCtx(`clone:${sourceBudgetId} status drift: plan='${expectedStatus}' actual='${currentStatus}' — usando atual`);
+  }
 
   let groupId = source.version_group_id as string | null;
   if (!groupId) {
@@ -438,6 +464,24 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
     .single();
   if (insErr || !newBudget) throw toError(insErr ?? new Error("insert-failed"), `clone-insert:${sourceBudgetId}`);
   const newBudgetId = newBudget.id as string;
+
+  // Guard 3: race com publicação/clone concorrente. Se entre nossa leitura de
+  // maxRow e o insert alguém publicou outra versão (que herdou nextVersion ou
+  // pulou para nextVersion+1), abortamos: deletamos nosso clone e erramos.
+  const { data: postInsertMax } = await admin
+    .from("budgets")
+    .select("id, version_number")
+    .eq("version_group_id", groupId)
+    .order("version_number", { ascending: false })
+    .limit(2);
+  const top = (postInsertMax ?? []) as Array<{ id: string; version_number: number }>;
+  // Se houver outra linha com version_number >= nextVersion que não seja a nossa, há colisão.
+  const collision = top.find((r) => r.id !== newBudgetId && r.version_number >= nextVersion);
+  if (collision) {
+    errCtx(`clone:${sourceBudgetId} colisão de versão detectada (v${collision.version_number} já existe) — abortando`);
+    try { await admin.from("budgets").delete().eq("id", newBudgetId); } catch { /* ignore */ }
+    throw new Error(`Conflito de versão no grupo ${groupId} — outra operação criou v${collision.version_number} simultaneamente.`);
+  }
 
   await admin
     .from("budgets")
@@ -549,7 +593,11 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
     new_budget_id: newBudgetId,
     old_budget_id: sourceBudgetId,
     old_was_current: Boolean((source as { is_current_version?: boolean }).is_current_version),
-    old_internal_status: String((source as { internal_status?: string }).internal_status ?? ""),
+    // Usa o status REAL no momento do clone (currentStatus), não o do plan,
+    // garantindo que o revert restaure o estado de fato preservado.
+    old_internal_status: currentStatus,
+    old_version_number: Number((source as { version_number?: number }).version_number ?? 1),
+    new_version_number: nextVersion,
     section_id_map: sectionIdMap,
     item_id_map: itemIdMap,
   };
@@ -730,16 +778,19 @@ serve(async (req) => {
       // ---- Snapshot (always) ----
       const snapshot: Record<string, unknown> = { taken_at: new Date().toISOString() };
 
+      // Snapshot do estado ATUAL (re-leitura no momento do apply, não confiando
+      // no plan que pode estar stale se houve drift). Mapeia por id para que o
+      // clone receba o estado expected vs current e o revert possa preservar.
+      const planStatusById = new Map<string, string>();
       if (op.action_type === "financial_adjustment") {
-        // For financial reductions we clone each budget into a NEW version
-        // (so the snapshot/revert just needs to know which clones to delete
-        // and which old versions to restore as current). The old budget rows
-        // stay untouched, so we don't snapshot their items/sections anymore.
         const { data: snap } = await admin
           .from("budgets")
           .select("id, internal_status, is_current_version, version_group_id")
           .in("id", ids);
         snapshot.budgets = snap ?? [];
+        (snap ?? []).forEach((b: { id: string; internal_status: string }) => {
+          planStatusById.set(b.id, b.internal_status);
+        });
       } else if (op.action_type === "status_change") {
         const { data: snap } = await admin.from("budgets").select("id, internal_status").in("id", ids);
         snapshot.budgets = snap ?? [];
@@ -776,7 +827,8 @@ serve(async (req) => {
 
           await runInChunks(ids, 4, async (sourceId) => {
             try {
-              const result = await cloneBudgetAsNewVersion(admin, sourceId, userId, changeReason);
+              const expectedStatus = planStatusById.get(sourceId);
+              const result = await cloneBudgetAsNewVersion(admin, sourceId, userId, changeReason, expectedStatus);
               clones.push(result);
             } catch (e) {
               const msg = toError(e).message;
@@ -797,6 +849,7 @@ serve(async (req) => {
             new_budget_id: c.new_budget_id,
             old_was_current: c.old_was_current,
             old_internal_status: c.old_internal_status,
+            new_version_number: c.new_version_number,
           }));
           if (cloneFailures.length > 0) {
             updateErrors.push(...cloneFailures);
@@ -945,8 +998,10 @@ serve(async (req) => {
         items?: Array<{ id: string; internal_unit_price: number | null; internal_total: number | null }>;
         section_prices?: Array<{ id: string; section_price: number | null }>;
         budgets?: Array<{ id: string; internal_status?: string; commercial_owner_id?: string | null; estimator_owner_id?: string | null }>;
-        clones?: Array<{ old_budget_id: string; new_budget_id: string; old_was_current: boolean; old_internal_status: string }>;
+        clones?: Array<{ old_budget_id: string; new_budget_id: string; old_was_current: boolean; old_internal_status: string; new_version_number?: number }>;
       };
+
+      const revertSkipped: Array<{ id: string; reason: string }> = [];
 
       if (op.action_type === "financial_adjustment") {
         // New revert path: delete the cloned versions and restore the old
@@ -955,40 +1010,101 @@ serve(async (req) => {
         if (snap.clones && snap.clones.length > 0) {
           const newIds = snap.clones.map((c) => c.new_budget_id);
 
-          // Cascade delete dependents of the cloned budgets, in dependency order.
-          const { data: cloneSecs } = await admin
-            .from("sections")
-            .select("id")
-            .in("budget_id", newIds);
-          const cloneSecIds = (cloneSecs ?? []).map((s: { id: string }) => s.id);
-          if (cloneSecIds.length > 0) {
-            const { data: cloneItems } = await admin
-              .from("items")
-              .select("id")
-              .in("section_id", cloneSecIds);
-            const cloneItemIds = (cloneItems ?? []).map((i: { id: string }) => i.id);
-            if (cloneItemIds.length > 0) {
-              try { await admin.from("item_images").delete().in("item_id", cloneItemIds); } catch { /* ignore */ }
-              await admin.from("items").delete().in("id", cloneItemIds);
-            }
-            await admin.from("sections").delete().in("id", cloneSecIds);
-          }
-          try { await admin.from("adjustments").delete().in("budget_id", newIds); } catch { /* ignore */ }
-          try { await admin.from("rooms").delete().in("budget_id", newIds); } catch { /* ignore */ }
-          try { await admin.from("budget_tours").delete().in("budget_id", newIds); } catch { /* ignore */ }
-          try { await admin.from("budget_events").delete().in("budget_id", newIds); } catch { /* ignore */ }
-          await admin.from("budgets").delete().in("id", newIds);
+          // Concurrency guard: re-leitura do estado atual das versões clonadas.
+          // Se alguma foi PUBLICADA, MOVIDA do estado pós-redução, ou já não
+          // existe, NÃO devemos deletá-la nem sobrescrever manualmente — pulamos.
+          const { data: cloneNow } = await admin
+            .from("budgets")
+            .select("id, is_published_version, internal_status, status")
+            .in("id", newIds);
+          const cloneNowById = new Map<string, { is_published_version: boolean; internal_status: string; status: string }>();
+          (cloneNow ?? []).forEach((b: { id: string; is_published_version: boolean; internal_status: string; status: string }) => {
+            cloneNowById.set(b.id, b);
+          });
 
-          // Restore the old versions as current and reset their internal_status
-          // to whatever it was before the bulk operation.
+          const safeClones: typeof snap.clones = [];
           for (const c of snap.clones) {
-            await admin
+            const cur = cloneNowById.get(c.new_budget_id);
+            if (!cur) {
+              revertSkipped.push({ id: c.new_budget_id, reason: "versão clonada já não existe" });
+              continue;
+            }
+            if (cur.is_published_version) {
+              revertSkipped.push({ id: c.new_budget_id, reason: "versão clonada foi publicada após o apply" });
+              continue;
+            }
+            if (cur.internal_status !== POST_REDUCTION_STATUS) {
+              revertSkipped.push({ id: c.new_budget_id, reason: `versão clonada foi movida para '${cur.internal_status}' após o apply` });
+              continue;
+            }
+            safeClones.push(c);
+          }
+
+          const safeNewIds = safeClones.map((c) => c.new_budget_id);
+
+          if (safeNewIds.length > 0) {
+            // Cascade delete dependents of the cloned budgets, in dependency order.
+            const { data: cloneSecs } = await admin
+              .from("sections")
+              .select("id")
+              .in("budget_id", safeNewIds);
+            const cloneSecIds = (cloneSecs ?? []).map((s: { id: string }) => s.id);
+            if (cloneSecIds.length > 0) {
+              const { data: cloneItems } = await admin
+                .from("items")
+                .select("id")
+                .in("section_id", cloneSecIds);
+              const cloneItemIds = (cloneItems ?? []).map((i: { id: string }) => i.id);
+              if (cloneItemIds.length > 0) {
+                try { await admin.from("item_images").delete().in("item_id", cloneItemIds); } catch { /* ignore */ }
+                await admin.from("items").delete().in("id", cloneItemIds);
+              }
+              await admin.from("sections").delete().in("id", cloneSecIds);
+            }
+            try { await admin.from("adjustments").delete().in("budget_id", safeNewIds); } catch { /* ignore */ }
+            try { await admin.from("rooms").delete().in("budget_id", safeNewIds); } catch { /* ignore */ }
+            try { await admin.from("budget_tours").delete().in("budget_id", safeNewIds); } catch { /* ignore */ }
+            try { await admin.from("budget_events").delete().in("budget_id", safeNewIds); } catch { /* ignore */ }
+            await admin.from("budgets").delete().in("id", safeNewIds);
+          }
+
+          // Restore each old version individually — só restaura is_current_version
+          // se NENHUMA versão posterior tomou o lugar (ex.: nova publicação manual).
+          for (const c of safeClones) {
+            const { data: oldNow } = await admin
               .from("budgets")
-              .update({
-                is_current_version: c.old_was_current,
-                internal_status: c.old_internal_status || "novo",
-              })
-              .eq("id", c.old_budget_id);
+              .select("id, version_group_id, internal_status")
+              .eq("id", c.old_budget_id)
+              .maybeSingle();
+            if (!oldNow) {
+              revertSkipped.push({ id: c.old_budget_id, reason: "versão original não encontrada" });
+              continue;
+            }
+
+            // Verifica se ainda há outra versão current no grupo (ex.: alguém
+            // publicou uma nova versão entre o apply e o revert). Nesse caso,
+            // só restauramos o internal_status, NUNCA forçamos current.
+            let restoreCurrent = c.old_was_current;
+            if (restoreCurrent && oldNow.version_group_id) {
+              const { data: otherCurrent } = await admin
+                .from("budgets")
+                .select("id")
+                .eq("version_group_id", oldNow.version_group_id)
+                .eq("is_current_version", true)
+                .neq("id", c.old_budget_id)
+                .limit(1);
+              if (otherCurrent && otherCurrent.length > 0) {
+                restoreCurrent = false;
+                revertSkipped.push({ id: c.old_budget_id, reason: "outra versão já é a current — preservada" });
+              }
+            }
+
+            const patch: Record<string, unknown> = {
+              internal_status: c.old_internal_status || "novo",
+            };
+            if (restoreCurrent) patch.is_current_version = true;
+
+            await admin.from("budgets").update(patch).eq("id", c.old_budget_id);
           }
         } else {
           // Legacy fallback (operations applied before clone-based versioning).
@@ -1020,7 +1136,11 @@ serve(async (req) => {
         .update({ status: "reverted", reverted_at: new Date().toISOString(), reverted_by: userId })
         .eq("id", opId);
 
-      return jsonResponse({ ok: true, operation_id: opId });
+      return jsonResponse({
+        ok: true,
+        operation_id: opId,
+        ...(revertSkipped.length > 0 ? { skipped: revertSkipped, skipped_count: revertSkipped.length } : {}),
+      });
     }
 
     return errorResponse("Ação inválida.");
