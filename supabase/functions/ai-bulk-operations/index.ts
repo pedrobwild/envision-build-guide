@@ -969,6 +969,24 @@ serve(async (req) => {
       } else if (op.action_type === "assign_owner") {
         const { data: snap } = await admin.from("budgets").select("id, commercial_owner_id, estimator_owner_id").in("id", ids);
         snapshot.budgets = snap ?? [];
+      } else if (op.action_type === "priority_change") {
+        const { data: snap } = await admin.from("budgets").select("id, priority").in("id", ids);
+        snapshot.budgets = snap ?? [];
+      } else if (op.action_type === "validity_change") {
+        const { data: snap } = await admin.from("budgets").select("id, validity_days").in("id", ids);
+        snapshot.budgets = snap ?? [];
+      } else if (op.action_type === "due_date_change") {
+        const { data: snap } = await admin.from("budgets").select("id, due_at").in("id", ids);
+        snapshot.budgets = snap ?? [];
+      } else if (op.action_type === "pipeline_change") {
+        const { data: snap } = await admin.from("budgets").select("id, pipeline_id").in("id", ids);
+        snapshot.budgets = snap ?? [];
+      } else if (op.action_type === "pipeline_stage_change") {
+        const { data: snap } = await admin.from("budgets").select("id, pipeline_stage, win_probability").in("id", ids);
+        snapshot.budgets = snap ?? [];
+      } else if (op.action_type === "archive") {
+        const { data: snap } = await admin.from("budgets").select("id, internal_status").in("id", ids);
+        snapshot.budgets = snap ?? [];
       }
 
       // ---- Apply ----
