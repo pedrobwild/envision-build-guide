@@ -86,7 +86,7 @@ export function useBulkOperations() {
       return await callFn<{ ok: boolean; applied_count: number }>({
         action: "apply",
         operation_id: operationId,
-      });
+      }, "apply");
     } finally {
       setBusyId(null);
     }
