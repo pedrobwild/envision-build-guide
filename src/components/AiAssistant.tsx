@@ -266,12 +266,27 @@ export function AiAssistant() {
     if ((!trimmed && pendingFiles.length === 0) || loading) return;
 
     // Detect admin-only batch commands
-    if (
-      isAdmin &&
-      pendingFiles.length === 0 &&
-      trimmed &&
-      looksLikeBulkCommand(trimmed)
-    ) {
+    if (pendingFiles.length === 0 && trimmed && looksLikeBulkCommand(trimmed)) {
+      if (!isAdmin) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "user", content: trimmed },
+          {
+            role: "assistant",
+            content:
+              "🔒 **Operação restrita a administradores.**\n\n" +
+              "Esse comando parece ser uma operação em lote (alterar valor, status, responsável de vários orçamentos). Apenas usuários com papel **admin** podem executá-las.\n\n" +
+              "Se precisar dessa ação, peça a um administrador ou solicite elevação do seu acesso.",
+          },
+        ]);
+        toast({
+          title: "Sem permissão",
+          description: "Apenas administradores podem executar operações em lote.",
+          variant: "destructive",
+        });
+        setInput("");
+        return;
+      }
       await handleBulkCommand(trimmed);
       return;
     }
