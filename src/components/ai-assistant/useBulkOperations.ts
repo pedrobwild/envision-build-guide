@@ -83,7 +83,12 @@ export function useBulkOperations() {
   const apply = useCallback(async (operationId: string) => {
     setBusyId(operationId);
     try {
-      return await callFn<{ ok: boolean; applied_count: number }>({
+      return await callFn<{
+        ok: boolean;
+        applied_count: number;
+        partial_failures?: number;
+        failure_sample?: Array<{ id: string; error: string }>;
+      }>({
         action: "apply",
         operation_id: operationId,
       }, "apply");
