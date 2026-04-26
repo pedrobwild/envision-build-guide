@@ -35,12 +35,29 @@ const BULK_TRIGGERS = [
   /\b(mover|mude|alter(ar|e))\b.+?\b(status|etapa|pipeline)\b/i,
   /\batribu(ir|a)\b.+?(comercial|or[çc]amentista|respons[áa]vel)/i,
   /\b(em lote|todos os or[çc]amentos|nos or[çc]amentos)\b/i,
+  /\b(todo o sistema|sistema inteiro|geral(mente)?|de forma geral)\b/i,
+];
+
+/** Patterns that signal "scan everything" — no date filter required. */
+const ALL_SCOPE_PATTERNS = [
+  /\btodos( os)?( or[çc]amentos)?\b/i,
+  /\btodo o sistema\b/i,
+  /\bsistema inteiro\b/i,
+  /\bno sistema\b/i,
+  /\bgeral(mente)?\b/i,
+  /\bsem (filtro|data)\b/i,
 ];
 
 export function looksLikeBulkCommand(text: string): boolean {
   const t = text.trim();
   if (t.length < 12) return false;
   return BULK_TRIGGERS.some((rx) => rx.test(t));
+}
+
+/** Returns true when the command explicitly targets "all eligible budgets". */
+export function isAllScopeCommand(text: string): boolean {
+  const t = text.trim();
+  return ALL_SCOPE_PATTERNS.some((rx) => rx.test(t));
 }
 
 export function fmtBRL(n: number): string {
