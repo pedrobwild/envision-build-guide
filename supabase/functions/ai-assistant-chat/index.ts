@@ -1131,11 +1131,13 @@ serve(async (req) => {
     // Vision-capable model when needed; gpt-4o for tools (better at structured calls)
     const model = hasAttachments || isAdmin ? "gpt-4o" : "gpt-4o-mini";
 
-    // ===== Tool-calling loop (max 3 rounds) =====
+    // ===== Tool-calling loop (max 4 rounds) =====
     const conversation = [...baseMessages];
-    const tools = isAdmin ? [ANALYTICS_TOOL] : undefined;
+    const tools = isAdmin
+      ? [ANALYTICS_TOOL, KPI_TREND_TOOL, TOP_ENTITIES_TOOL, WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL, QUERY_BUG_REPORTS_TOOL]
+      : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
-    for (let round = 0; round < 3; round++) {
+    for (let round = 0; round < 4; round++) {
       const planResp = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -1147,7 +1149,7 @@ serve(async (req) => {
           messages: conversation,
           temperature: 0.3,
           tools,
-          tool_choice: tools ? "auto" : undefined,
+          tool_choice: tools.length ? "auto" : undefined,
           stream: false,
         }),
       });
@@ -1172,30 +1174,37 @@ serve(async (req) => {
       const toolCalls = choice?.message?.tool_calls;
 
       if (!toolCalls || toolCalls.length === 0) {
-        // No tools needed — stream the final answer
         break;
       }
 
-      // Push the assistant turn that requested the tools
       conversation.push(choice.message);
 
-      // Execute each tool
       for (const call of toolCalls) {
         const name = call.function?.name;
         let argsObj: Record<string, unknown> = {};
-        try {
-          argsObj = JSON.parse(call.function?.arguments ?? "{}");
-        } catch {
-          argsObj = {};
-        }
+        try { argsObj = JSON.parse(call.function?.arguments ?? "{}"); } catch { argsObj = {}; }
 
         let toolOutput: unknown;
         if (name === "query_analytics") {
-          if (!isAdmin) {
-            toolOutput = { ok: false, error: "Apenas administradores podem consultar analytics." };
-          } else {
-            toolOutput = await runAnalytics(argsObj, admin);
-          }
+          toolOutput = isAdmin
+            ? await runAnalytics(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem consultar analytics." };
+        } else if (name === "get_kpi_trend") {
+          toolOutput = isAdmin
+            ? await runKpiTrend(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem consultar KPIs." };
+        } else if (name === "top_entities") {
+          toolOutput = isAdmin
+            ? await runTopEntities(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem consultar rankings." };
+        } else if (name === "web_market_research") {
+          toolOutput = await runWebResearch(argsObj);
+        } else if (name === "submit_bug_report") {
+          toolOutput = await runSubmitBugReport(argsObj, req.headers.get("authorization"));
+        } else if (name === "query_bug_reports") {
+          toolOutput = isAdmin
+            ? await runQueryBugReports(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem consultar bug reports." };
         } else {
           toolOutput = { ok: false, error: `Ferramenta desconhecida: ${name}` };
         }
