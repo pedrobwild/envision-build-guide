@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { toArrayBuffer } from "../_shared/bytes.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,8 +105,7 @@ async function extractXlsxText(bytes: Uint8Array): Promise<string> {
 
 async function extractDocxText(bytes: Uint8Array): Promise<string> {
   const mammoth = await import("https://esm.sh/mammoth@1.8.0");
-  const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-  const result = await mammoth.extractRawText({ arrayBuffer: ab });
+  const result = await mammoth.extractRawText({ arrayBuffer: toArrayBuffer(bytes) });
   return result.value || "";
 }
 
