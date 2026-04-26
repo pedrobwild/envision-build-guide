@@ -303,19 +303,36 @@ async function runAnalytics(
   const grandSum = rows.reduce((acc, r) => acc + valueOf(r), 0);
   const totalRows = rows.length;
 
+  // For temporal groupings, compute average using the requested period length
+  // (so days with zero entries are counted in the denominator, not just buckets returned).
+  const denominator =
+    groupBy === "day" && days
+      ? days
+      : groupBy === "week" && days
+        ? Math.max(1, Math.round(days / 7))
+        : groupBy === "month" && days
+          ? Math.max(1, Math.round(days / 30))
+          : series.length || 1;
+  const avgPerPeriodUnit =
+    Math.round(((finalize(grandSum, totalRows) as number) / denominator) * 100) / 100;
+
   return {
     ok: true,
     result: {
       metric,
       group_by: groupBy,
       date_field: dateField,
+      period_label: periodLabel,
+      days,
       filters: { from, to, internal_statuses: internalStatuses, pipeline_stages: pipelineStages },
       total_rows_matched: totalRows,
+      total_in_period: finalize(grandSum, totalRows),
       grand_total: finalize(grandSum, totalRows),
       avg_per_bucket:
         series.length > 0
           ? Math.round((series.reduce((a, b) => a + b.value, 0) / series.length) * 100) / 100
           : 0,
+      avg_per_period_unit: avgPerPeriodUnit,
       series,
       truncated: totalRows >= 5000,
     },
