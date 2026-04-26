@@ -29,6 +29,8 @@ import {
   formatBytes,
   looksLikeBulkCommand,
   readFileAsDataUrl,
+  validateFinancialCommandFactor,
+  validatePlanFactor,
 } from "./ai-assistant/utils";
 import { BulkOperationCard } from "./ai-assistant/BulkOperationCard";
 import { useBulkOperations } from "./ai-assistant/useBulkOperations";
@@ -160,6 +162,28 @@ export function AiAssistant() {
       return;
     }
 
+    // Pre-flight: if the command looks like a percentage adjustment, validate
+    // the numeric factor BEFORE spending an LLM call. Catches "0%", "-5%",
+    // ">100%" and missing/garbled numbers with a friendly inline message.
+    const factorCheck = validateFinancialCommandFactor(command);
+    if (factorCheck.kind === "invalid") {
+      setMessages((prev) => [
+        ...prev,
+        userMsg,
+        {
+          role: "assistant",
+          content: `⚠️ **Não consegui validar o percentual.**\n\n${factorCheck.reason}`,
+        },
+      ]);
+      toast({
+        title: "Percentual inválido",
+        description: factorCheck.reason,
+        variant: "destructive",
+      });
+      setInput("");
+      return;
+    }
+
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
@@ -210,6 +234,34 @@ export function AiAssistant() {
     const m = messages[msgIndex];
     const opId = m.bulkOp?.plan?.operation_id;
     if (!opId) return;
+
+    // Defense in depth: validate the factor returned by the edge function
+    // before applying. Catches malformed/poisoned plans (NaN, <=0, >10x) and
+    // surfaces a clear message instead of letting the server reject silently.
+    const factorCheck = validatePlanFactor(m.bulkOp?.plan?.params);
+    if (!factorCheck.ok) {
+      setMessages((prev) =>
+        prev.map((it, i) =>
+          i === msgIndex && it.bulkOp
+            ? {
+                ...it,
+                bulkOp: {
+                  ...it.bulkOp,
+                  status: "failed",
+                  error: factorCheck.reason,
+                  progress: undefined,
+                },
+              }
+            : it,
+        ),
+      );
+      toast({
+        title: "Plano inválido",
+        description: factorCheck.reason,
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Estimate total work units. For financial adjustments the server iterates
     // over items (~60–80 per budget on average); for other action types it's
