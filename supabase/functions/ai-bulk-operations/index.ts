@@ -396,7 +396,12 @@ serve(async (req) => {
     if (!isAdmin) return errorResponse("Apenas administradores podem executar operações em lote.", 403);
 
     const body = await req.json();
+    // If client provided request_id in body and we generated one ourselves, prefer the client's.
+    if (!headerReqId && typeof body?.request_id === "string" && body.request_id.length > 0 && body.request_id.length <= 64) {
+      setRequestId(body.request_id);
+    }
     const action = body?.action as "plan" | "apply" | "revert" | undefined;
+    logCtx(`action=${action} user=${userId}${body?.operation_id ? ` op=${body.operation_id}` : ""}`);
     if (!action) return errorResponse("Campo 'action' obrigatório.");
 
     // ---------- PLAN ----------
