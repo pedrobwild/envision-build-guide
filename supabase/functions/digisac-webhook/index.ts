@@ -32,6 +32,7 @@ import {
   type DigisacTicket,
 } from "../_shared/digisac.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { toErrorPayload } from "../_shared/errors.ts";
 
 // ----------------------------------------------------------------------------
 // Verificação de segredo do webhook
@@ -270,7 +271,7 @@ async function checkAndReserveEvent(
   // Falha não relacionada a duplicidade — registra e segue (não bloqueia processamento).
   console.warn(
     "[digisac-webhook] failed to reserve event",
-    JSON.stringify({ code, message: (error as { message?: string }).message ?? String(error) }),
+    JSON.stringify({ ...toErrorPayload(error), pgCode: code }),
   );
   return { duplicate: false };
 }
