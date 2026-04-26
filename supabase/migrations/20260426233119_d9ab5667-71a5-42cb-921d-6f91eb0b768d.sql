@@ -1,0 +1,1 @@
+ALTER VIEW public.v_bug_reports_admin SET (security_invoker = true);
