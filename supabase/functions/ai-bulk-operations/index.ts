@@ -159,7 +159,8 @@ function calcItemSale(item: { qty: number | null; internal_unit_price: number | 
 }
 
 async function buildFinancialPlan(
-  admin: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  admin: any,
   budgets: Array<{ id: string; sequential_code: string | null; client_name: string; project_name: string; internal_status: string }>,
   params: { mode: Mode; value: number; direction: "increase" | "decrease" },
 ) {
@@ -172,31 +173,35 @@ async function buildFinancialPlan(
   const rows: PlanRow[] = [];
   const ids = budgets.map((b) => b.id);
 
-  // Fetch sections + items grouped by budget
-  const { data: sections, error: secErr } = await admin
+  const { data: sectionsRaw, error: secErr } = await admin
     .from("sections")
     .select("id, budget_id, qty, section_price")
     .in("budget_id", ids);
   if (secErr) throw secErr;
+  type Section = { id: string; budget_id: string; qty: number | null; section_price: number | null };
+  const sections = (sectionsRaw ?? []) as Section[];
 
-  const sectionsByBudget = new Map<string, Array<{ id: string; qty: number | null; section_price: number | null }>>();
-  for (const s of sections ?? []) {
+  const sectionsByBudget = new Map<string, Section[]>();
+  for (const s of sections) {
     const arr = sectionsByBudget.get(s.budget_id) ?? [];
     arr.push(s);
     sectionsByBudget.set(s.budget_id, arr);
   }
 
-  const sectionIds = (sections ?? []).map((s) => s.id);
-  const { data: items, error: itemsErr } = sectionIds.length
-    ? await admin
+  const sectionIds = sections.map((s) => s.id);
+  type Item = { id: string; section_id: string; qty: number | null; internal_unit_price: number | null; internal_total: number | null; bdi_percentage: number | null };
+  let items: Item[] = [];
+  if (sectionIds.length) {
+    const { data: itemsRaw, error: itemsErr } = await admin
       .from("items")
       .select("id, section_id, qty, internal_unit_price, internal_total, bdi_percentage")
-      .in("section_id", sectionIds)
-    : { data: [], error: null };
-  if (itemsErr) throw itemsErr;
+      .in("section_id", sectionIds);
+    if (itemsErr) throw itemsErr;
+    items = (itemsRaw ?? []) as Item[];
+  }
 
-  const itemsBySection = new Map<string, typeof items>();
-  for (const it of items ?? []) {
+  const itemsBySection = new Map<string, Item[]>();
+  for (const it of items) {
     const arr = itemsBySection.get(it.section_id) ?? [];
     arr.push(it);
     itemsBySection.set(it.section_id, arr);
