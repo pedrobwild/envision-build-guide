@@ -282,7 +282,8 @@ function buildStatusPlan(
 }
 
 async function buildAssignPlan(
-  admin: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  admin: any,
   budgets: Array<{ id: string; sequential_code: string | null; client_name: string; project_name: string; internal_status: string; commercial_owner_id: string | null; estimator_owner_id: string | null }>,
   role: "commercial" | "estimator",
   ownerName: string,
