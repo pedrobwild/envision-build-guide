@@ -730,15 +730,15 @@ serve(async (req) => {
       const snapshot: Record<string, unknown> = { taken_at: new Date().toISOString() };
 
       if (op.action_type === "financial_adjustment") {
-        // Snapshot items (only those that contribute to sale)
-        const { data: secs } = await admin.from("sections").select("id, budget_id").in("budget_id", ids);
-        const secIds = (secs ?? []).map((s) => s.id);
-        const { data: items } = secIds.length
-          ? await admin.from("items").select("id, internal_unit_price, internal_total").in("section_id", secIds)
-          : { data: [] };
-        const { data: sectionPrices } = await admin.from("sections").select("id, section_price").in("id", secIds);
-        snapshot.items = items ?? [];
-        snapshot.section_prices = sectionPrices ?? [];
+        // For financial reductions we clone each budget into a NEW version
+        // (so the snapshot/revert just needs to know which clones to delete
+        // and which old versions to restore as current). The old budget rows
+        // stay untouched, so we don't snapshot their items/sections anymore.
+        const { data: snap } = await admin
+          .from("budgets")
+          .select("id, internal_status, is_current_version, version_group_id")
+          .in("id", ids);
+        snapshot.budgets = snap ?? [];
       } else if (op.action_type === "status_change") {
         const { data: snap } = await admin.from("budgets").select("id, internal_status").in("id", ids);
         snapshot.budgets = snap ?? [];
