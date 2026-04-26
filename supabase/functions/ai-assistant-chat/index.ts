@@ -41,7 +41,13 @@ Quando o admin perguntar sobre **dados reais** (contagens, médias, totais, evol
 
 **SEMPRE chame a ferramenta antes de responder com números.** Nunca invente métricas. Se a ferramenta não estiver disponível (usuário não-admin), explique educadamente e indique a página relevante (\`/admin\`, \`/admin/analises\`, \`/admin/comercial\`).
 
-Após receber o resultado, formate a resposta de forma clara: tabelas markdown para rankings/agrupamentos, frases diretas para totais simples. Sempre inclua o **período analisado** e, quando relevante, a **média e o total**.
+Após receber o resultado, formate a resposta de forma clara: tabelas markdown para rankings/agrupamentos, frases diretas para totais simples.
+
+**OBRIGATÓRIO em toda resposta com números vindos de \`query_analytics\`:**
+1. Comece informando o **período verificado** usando o campo \`period_label\` exatamente como veio (ex.: "Nos últimos 7 dias (19/04 a 26/04)…").
+2. Inclua o **total de registros do período** (\`total_in_period\`) em destaque.
+3. Quando agrupado por dia/semana/mês, calcule e mostre a **média** dividindo \`total_in_period\` pelo número de buckets do período (use \`days\` se presente, não o número de buckets retornados — assim dias com zero entram no denominador).
+4. Se \`truncated=true\`, avise que o resultado foi limitado a 5000 registros.
 
 Hoje é ${TODAY_HINT()} (use como referência para "hoje", "ontem", "esta semana").
 
@@ -130,17 +136,44 @@ const ANALYTICS_TOOL = {
 };
 
 // =============== Helpers ===============
-function dateRangeFromArgs(args: Record<string, unknown>): { from: string | null; to: string | null } {
-  const days = typeof args.days === "number" ? args.days : null;
+function dateRangeFromArgs(
+  args: Record<string, unknown>,
+): { from: string | null; to: string | null; days: number | null } {
+  const days = typeof args.days === "number" && args.days > 0 ? args.days : null;
   const dateFrom = typeof args.date_from === "string" ? args.date_from : null;
   const dateTo = typeof args.date_to === "string" ? args.date_to : null;
-  if (dateFrom || dateTo) return { from: dateFrom, to: dateTo };
-  if (days && days > 0) {
+  if (dateFrom || dateTo) {
+    let computedDays: number | null = null;
+    if (dateFrom && dateTo) {
+      const ms = new Date(`${dateTo}T23:59:59Z`).getTime() - new Date(`${dateFrom}T00:00:00Z`).getTime();
+      if (Number.isFinite(ms) && ms > 0) computedDays = Math.max(1, Math.round(ms / 86400_000));
+    }
+    return { from: dateFrom, to: dateTo, days: computedDays };
+  }
+  if (days) {
     const to = new Date();
     const from = new Date(Date.now() - days * 86400_000);
-    return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+    return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10), days };
   }
-  return { from: null, to: null };
+  return { from: null, to: null, days: null };
+}
+
+function formatBrDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
+function buildPeriodLabel(from: string | null, to: string | null, days: number | null): string {
+  if (!from && !to) return "Sem filtro de período (todos os dados disponíveis)";
+  const fromBr = formatBrDate(from);
+  const toBr = formatBrDate(to);
+  if (days && from && to) return `Últimos ${days} dias (${fromBr} a ${toBr})`;
+  if (from && to) return `De ${fromBr} a ${toBr}`;
+  if (from) return `A partir de ${fromBr}`;
+  if (to) return `Até ${toBr}`;
+  return "Período não especificado";
 }
 
 async function runAnalytics(
@@ -152,7 +185,8 @@ async function runAnalytics(
   const groupBy = String(args.group_by ?? "none");
   const dateField = String(args.date_field ?? "created_at");
   const limit = Math.min(Number(args.limit ?? 30) || 30, 100);
-  const { from, to } = dateRangeFromArgs(args);
+  const { from, to, days } = dateRangeFromArgs(args);
+  const periodLabel = buildPeriodLabel(from, to, days);
   const internalStatuses = Array.isArray(args.internal_statuses) ? args.internal_statuses : null;
   const pipelineStages = Array.isArray(args.pipeline_stages) ? args.pipeline_stages : null;
 
@@ -269,19 +303,36 @@ async function runAnalytics(
   const grandSum = rows.reduce((acc, r) => acc + valueOf(r), 0);
   const totalRows = rows.length;
 
+  // For temporal groupings, compute average using the requested period length
+  // (so days with zero entries are counted in the denominator, not just buckets returned).
+  const denominator =
+    groupBy === "day" && days
+      ? days
+      : groupBy === "week" && days
+        ? Math.max(1, Math.round(days / 7))
+        : groupBy === "month" && days
+          ? Math.max(1, Math.round(days / 30))
+          : series.length || 1;
+  const avgPerPeriodUnit =
+    Math.round(((finalize(grandSum, totalRows) as number) / denominator) * 100) / 100;
+
   return {
     ok: true,
     result: {
       metric,
       group_by: groupBy,
       date_field: dateField,
+      period_label: periodLabel,
+      days,
       filters: { from, to, internal_statuses: internalStatuses, pipeline_stages: pipelineStages },
       total_rows_matched: totalRows,
+      total_in_period: finalize(grandSum, totalRows),
       grand_total: finalize(grandSum, totalRows),
       avg_per_bucket:
         series.length > 0
           ? Math.round((series.reduce((a, b) => a + b.value, 0) / series.length) * 100) / 100
           : 0,
+      avg_per_period_unit: avgPerPeriodUnit,
       series,
       truncated: totalRows >= 5000,
     },
