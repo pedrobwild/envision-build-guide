@@ -67,3 +67,78 @@ export function fmtBRL(n: number): string {
     maximumFractionDigits: 0,
   }).format(n);
 }
+
+/**
+ * Detects whether a bulk command looks like a financial percentage adjustment
+ * (e.g. "reduzir 10% nos orçamentos…") and validates the numeric portion.
+ */
+export type CommandFactorCheck =
+  | { kind: "not-financial" }
+  | { kind: "valid"; percent: number }
+  | { kind: "invalid"; reason: string };
+
+const FINANCIAL_KEYWORDS = /\b(reduz(ir|a)|aument(ar|a)|desconto|aplique|aplicar)\b/i;
+
+export function validateFinancialCommandFactor(text: string): CommandFactorCheck {
+  const t = text.trim();
+  if (!FINANCIAL_KEYWORDS.test(t)) return { kind: "not-financial" };
+
+  const match = t.match(/(-?\d+(?:[.,]\d+)?)\s*%/);
+  if (!match) {
+    return {
+      kind: "invalid",
+      reason:
+        "Não consegui identificar o percentual. Use por exemplo: \"reduzir 10% nos orçamentos…\".",
+    };
+  }
+
+  const raw = match[1].replace(",", ".");
+  const value = Number(raw);
+
+  if (!Number.isFinite(value)) {
+    return { kind: "invalid", reason: "O percentual informado não é um número válido." };
+  }
+  if (value <= 0) {
+    return {
+      kind: "invalid",
+      reason:
+        "O percentual precisa ser maior que zero. Para anular um desconto, peça um aumento equivalente.",
+    };
+  }
+  if (value > 100) {
+    return {
+      kind: "invalid",
+      reason: `O percentual ${value}% é maior que 100% e zeraria os valores. Use um valor entre 0,1% e 100%.`,
+    };
+  }
+  return { kind: "valid", percent: value };
+}
+
+/**
+ * Validates the `factor` returned by the edge function inside `plan.params`
+ * before triggering the apply step. Defends against malformed payloads.
+ */
+export function validatePlanFactor(params: Record<string, unknown> | undefined): {
+  ok: boolean;
+  reason?: string;
+} {
+  if (!params) return { ok: true };
+  if (!("factor" in params)) return { ok: true };
+  const factor = (params as { factor?: unknown }).factor;
+  if (typeof factor !== "number" || !Number.isFinite(factor)) {
+    return { ok: false, reason: "O fator de ajuste retornado é inválido (não é um número finito)." };
+  }
+  if (factor <= 0) {
+    return {
+      ok: false,
+      reason: `O fator de ajuste retornado (${factor}) precisa ser maior que zero. Operação cancelada por segurança.`,
+    };
+  }
+  if (factor > 10) {
+    return {
+      ok: false,
+      reason: `O fator de ajuste retornado (${factor}) parece exagerado (>10x). Reformule o comando para evitar mudanças catastróficas.`,
+    };
+  }
+  return { ok: true };
+}
