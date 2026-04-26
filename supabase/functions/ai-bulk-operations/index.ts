@@ -22,6 +22,13 @@ REGRAS CRÍTICAS:
      Ex.: "reduzir 10% em todos" → mode=percent, value=10, direction=decrease.
   2. **status_change**: muda \`internal_status\`. Params: \`new_status\`.
   3. **assign_owner**: atribui responsável. Params: \`role\` ('commercial'|'estimator'), \`owner_name\` (nome aproximado do usuário).
+   4. **priority_change**: muda a prioridade. Params: \`new_priority\` ('baixa'|'normal'|'alta'|'urgente'). Aceite sinônimos: 'low'='baixa', 'medium'='normal', 'high'='alta', 'urgent'='urgente'.
+   5. **validity_change**: muda o prazo de validade da proposta em dias. Params: \`validity_days\` (inteiro positivo, máx 365).
+      Ex.: "estender validade para 60 dias em todos" → validity_days=60.
+   6. **due_date_change**: define/altera o prazo interno (\`due_at\`). Params: \`due_date\` (ISO YYYY-MM-DD) OU \`due_in_days\` (inteiro: hoje + N dias). Use \`due_date\` quando o usuário mencionar uma data específica; \`due_in_days\` para "em 7 dias", "para próxima sexta" (calcule).
+   7. **pipeline_change**: move para outro pipeline (funil). Params: \`pipeline_name\` (nome aproximado, ex. "Comercial", "Re-engajamento").
+   8. **pipeline_stage_change**: move para uma etapa do pipeline atual. Params: \`new_stage\` (uma de: 'lead','briefing','visita','proposta','negociacao'). NÃO use 'fechado' nem 'perdido' aqui (use status_change).
+   9. **archive**: arquiva os orçamentos (move para \`internal_status='archived'\`). Sem params adicionais. Use quando o admin disser "arquivar", "remover do funil", "tirar do kanban".
 - Nunca altere orçamentos com status \`contrato_fechado\` ou \`perdido\` (o backend já bloqueia, mas avise no \`reasoning\`).
 - Se o pedido não puder ser estruturado (faltam dados, fora de escopo), use mode=null e explique no campo \`reasoning\`.
 `;
@@ -36,7 +43,18 @@ const TOOL_DEFINITION = {
       properties: {
         action_type: {
           type: "string",
-          enum: ["financial_adjustment", "status_change", "assign_owner", "unsupported"],
+          enum: [
+            "financial_adjustment",
+            "status_change",
+            "assign_owner",
+            "priority_change",
+            "validity_change",
+            "due_date_change",
+            "pipeline_change",
+            "pipeline_stage_change",
+            "archive",
+            "unsupported",
+          ],
         },
         filters: {
           type: "object",
@@ -54,6 +72,12 @@ const TOOL_DEFINITION = {
             new_status: { type: "string" },
             role: { type: "string", enum: ["commercial", "estimator"] },
             owner_name: { type: "string" },
+            new_priority: { type: "string", enum: ["baixa", "normal", "alta", "urgente"] },
+            validity_days: { type: "number", description: "Inteiro entre 1 e 365" },
+            due_date: { type: "string", description: "Data ISO YYYY-MM-DD" },
+            due_in_days: { type: "number", description: "Inteiro: hoje + N dias" },
+            pipeline_name: { type: "string", description: "Nome aproximado do pipeline destino" },
+            new_stage: { type: "string", enum: ["lead", "briefing", "visita", "proposta", "negociacao"] },
           },
         },
         summary: {
@@ -71,7 +95,16 @@ const TOOL_DEFINITION = {
   },
 };
 
-type ActionType = "financial_adjustment" | "status_change" | "assign_owner";
+type ActionType =
+  | "financial_adjustment"
+  | "status_change"
+  | "assign_owner"
+  | "priority_change"
+  | "validity_change"
+  | "due_date_change"
+  | "pipeline_change"
+  | "pipeline_stage_change"
+  | "archive";
 type Mode = "percent" | "amount";
 
 interface PlanRow {
