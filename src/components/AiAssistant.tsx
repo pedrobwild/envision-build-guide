@@ -134,6 +134,32 @@ export function AiAssistant() {
   // ---------- Bulk operations flow ----------
   const handleBulkCommand = async (command: string) => {
     const userMsg: Msg = { role: "user", content: command };
+
+    // Defense in depth: re-check admin role before invoking the edge function.
+    // The UI already gates entry to this flow via isAdmin, but we guarantee a
+    // clear, friendly message even if state is stale or this path is reached
+    // through a different entry point.
+    if (!isAdmin) {
+      setMessages((prev) => [
+        ...prev,
+        userMsg,
+        {
+          role: "assistant",
+          content:
+            "🔒 **Operação restrita a administradores.**\n\n" +
+            "Operações em lote (alterar valor, status, responsável de vários orçamentos de uma vez) só estão disponíveis para usuários com o papel **admin**.\n\n" +
+            "Se você precisa executar essa ação, peça a um administrador ou solicite a elevação do seu acesso.",
+        },
+      ]);
+      toast({
+        title: "Sem permissão",
+        description: "Apenas administradores podem executar operações em lote.",
+        variant: "destructive",
+      });
+      setInput("");
+      return;
+    }
+
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
@@ -240,12 +266,27 @@ export function AiAssistant() {
     if ((!trimmed && pendingFiles.length === 0) || loading) return;
 
     // Detect admin-only batch commands
-    if (
-      isAdmin &&
-      pendingFiles.length === 0 &&
-      trimmed &&
-      looksLikeBulkCommand(trimmed)
-    ) {
+    if (pendingFiles.length === 0 && trimmed && looksLikeBulkCommand(trimmed)) {
+      if (!isAdmin) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "user", content: trimmed },
+          {
+            role: "assistant",
+            content:
+              "🔒 **Operação restrita a administradores.**\n\n" +
+              "Esse comando parece ser uma operação em lote (alterar valor, status, responsável de vários orçamentos). Apenas usuários com papel **admin** podem executá-las.\n\n" +
+              "Se precisar dessa ação, peça a um administrador ou solicite elevação do seu acesso.",
+          },
+        ]);
+        toast({
+          title: "Sem permissão",
+          description: "Apenas administradores podem executar operações em lote.",
+          variant: "destructive",
+        });
+        setInput("");
+        return;
+      }
       await handleBulkCommand(trimmed);
       return;
     }
