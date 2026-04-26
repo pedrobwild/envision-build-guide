@@ -139,3 +139,38 @@ Adicione uma entrada em `TABLE_CONFIG` com:
 - `numericFieldByMetric` — mapa de qual coluna usar para cada métrica
 
 Adicione o nome ao `enum` da propriedade `table` da tool.
+
+## Bug Reports (pipeline integrado)
+
+O assistente está conectado ao pipeline de bug reports da plataforma. Os usuários podem reportar bugs de duas formas:
+
+1. **Componente `BugReporter`** (drawer flutuante, já existente em `src/components/BugReporter.tsx`) — wizard de 3 passos. Cria registro em `public.bug_reports`. A trigger pode invocar a edge function `bug-report-triage` em modo `extend` (recebe `{ bug_id }`) para enriquecer com IA.
+2. **Chat do assistente** — quando o usuário descreve um problema em linguagem natural, o modelo coleta os campos e chama a tool `submit_bug_report`. Esta tool delega para a edge function `bug-report-triage` em modo `create` (recebe os campos crus, cria o registro e em seguida triage).
+
+### Triagem por IA
+
+A edge function `bug-report-triage` chama `gpt-4o-mini` (response_format JSON) e popula:
+- `severity_ai` (`low | medium | high | critical`)
+- `area_ai` (uma de `auth | dashboard | comercial | budget-editor | public-budget | catalog | crm | lead-sources | agenda | ai-assistant | templates | users | system | other`)
+- `triage_summary` (resumo objetivo em pt-BR)
+- `triage_tags[]` (categorias do template comet-bug-report)
+- `duplicate_of` (UUID, se encontrar bug similar via trigram no título)
+- `triaged_at` (timestamp)
+
+Bugs marcados como `severity_ai = 'critical'` disparam um trigger de auditoria (`audit_log`).
+
+### Tools disponíveis no chat
+
+- `submit_bug_report` (todos os usuários) — cria + triage. Campos obrigatórios: `title`, `description`, `steps_to_reproduce`, `expected_behavior`, `actual_behavior`. Opcionais: `severity`, `route`, `categories[]`, `frequency`, `suggestion`. Ao criar, retorna `{ id, severity_ai, area_ai, duplicate_of }`.
+- `query_bug_reports` (apenas admin) — lista com filtros e agrupamentos. Filtros: `status[]`, `severity[]`, `area[]`, `days`, `group_by` (`none | area | severity | status | day | week`), `limit`. Lê da view `v_bug_reports_admin`.
+
+### Página admin
+
+- `/admin/bug-reports` — lista + KPIs + filtros (acesso: admin, comercial, orcamentista).
+- `/admin/bug-reports/:bugId` — detalhe com botão “Retriagem IA” (re-executa `bug-report-triage` em modo `extend`).
+
+### Exemplos de uso
+
+- “To com um bug: quando clico em duplicar orçamento o botão não faz nada” → chat coleta campos e chama `submit_bug_report`.
+- “Quais bugs críticos abertos?” → `query_bug_reports({ status: ['open','triaging'], severity: ['critical'] })`.
+- “Top 5 áreas com mais bugs nos últimos 7 dias” → `query_bug_reports({ days: 7, group_by: 'area', limit: 5 })`.
