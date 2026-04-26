@@ -1354,7 +1354,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
               return (
                 <SortableSectionCard key={section.id} section={section}>
                   {(dragListeners: Record<string, unknown> | undefined) => (
-                    <div className={cn("group/section", isSearchActive && !sectionHasMatch && "opacity-40")}>
+                    <div className={cn(
+                      "group/section",
+                      isSearchActive && !sectionHasMatch && "opacity-40",
+                      isAddendum && section.addendum_action === "remove" && "bg-destructive/5 border-l-2 border-destructive/40",
+                    )}>
                       {/* Section header — 48px fixed, Linear pattern */}
                       <div
                         className={cn(
@@ -1381,7 +1385,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                         </div>
 
                         {/* [Nome da Seção] — auto, truncate */}
-                        <span className="text-xs sm:text-sm font-semibold font-display text-foreground truncate min-w-0">
+                        <span className={cn(
+                          "text-xs sm:text-sm font-semibold font-display truncate min-w-0",
+                          isAddendum && section.addendum_action === "remove"
+                            ? "text-destructive line-through"
+                            : "text-foreground"
+                        )}>
                           {isSearchActive ? highlightText(section.title || "Sem título") : (section.title || "Sem título")}
                         </span>
 
@@ -1389,6 +1398,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                         {section.is_optional && (
                           <span className="ml-1 px-1 py-0.5 text-[9px] sm:text-[10px] font-medium rounded bg-muted text-muted-foreground flex-shrink-0">
                             OPT
+                          </span>
+                        )}
+                        {isAddendum && section.addendum_action === "remove" && (
+                          <span className="ml-1.5 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold rounded bg-destructive text-destructive-foreground flex-shrink-0 uppercase tracking-wider">
+                            Removida
+                          </span>
+                        )}
+                        {isAddendum && section.addendum_action === "add" && (
+                          <span className="ml-1.5 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold rounded bg-success text-success-foreground flex-shrink-0 uppercase tracking-wider">
+                            Nova
                           </span>
                         )}
 
