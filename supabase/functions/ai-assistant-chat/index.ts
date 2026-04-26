@@ -382,27 +382,28 @@ async function runAnalytics(
   const avgPerPeriodUnit =
     Math.round(((finalize(grandSum, totalRows) as number) / denominator) * 100) / 100;
 
-  return {
-    ok: true,
-    result: {
-      metric,
-      group_by: groupBy,
-      date_field: dateField,
-      period_label: periodLabel,
-      days,
-      filters: { from, to, internal_statuses: internalStatuses, pipeline_stages: pipelineStages },
-      total_rows_matched: totalRows,
-      total_in_period: finalize(grandSum, totalRows),
-      grand_total: finalize(grandSum, totalRows),
-      avg_per_bucket:
-        series.length > 0
-          ? Math.round((series.reduce((a, b) => a + b.value, 0) / series.length) * 100) / 100
-          : 0,
-      avg_per_period_unit: avgPerPeriodUnit,
-      series,
-      truncated: totalRows >= 5000,
-    },
+  const result = {
+    metric,
+    group_by: groupBy,
+    date_field: dateField,
+    period_label: periodLabel,
+    days,
+    filters: { from, to, internal_statuses: internalStatuses, pipeline_stages: pipelineStages },
+    total_rows_matched: totalRows,
+    total_in_period: finalize(grandSum, totalRows),
+    grand_total: finalize(grandSum, totalRows),
+    avg_per_bucket:
+      series.length > 0
+        ? Math.round((series.reduce((a, b) => a + b.value, 0) / series.length) * 100) / 100
+        : 0,
+    avg_per_period_unit: avgPerPeriodUnit,
+    series,
+    truncated: totalRows >= 5000,
   };
+
+  setAnalyticsCache(cacheKey, result);
+
+  return { ok: true, result: { ...result, cache: "miss" } };
 }
 
 // =============== Attachment processing (unchanged) ===============
