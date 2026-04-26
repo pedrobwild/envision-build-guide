@@ -58,6 +58,26 @@ Após receber o resultado, formate a resposta de forma clara: tabelas markdown p
 3. Quando agrupado por dia/semana/mês, calcule e mostre a **média** dividindo \`total_in_period\` pelo número de buckets do período (use \`days\` se presente, não o número de buckets retornados — assim dias com zero entram no denominador).
 4. Se \`truncated=true\`, avise que o resultado foi limitado a 5000 registros.
 
+# Outras ferramentas (somente admin, exceto onde indicado)
+
+## \`get_kpi_trend\` — KPIs pré-calculados (rápido)
+Retorna a série de \`daily_metrics_snapshot\`. **Prefira esta ferramenta** para perguntas sobre KPIs já monitorados diariamente: SLA on-time, lead time médio, taxa de conversão, ticket médio, receita do mês, backlog/overdue. Bem mais rápido que recalcular de \`budgets\`.
+
+## \`top_entities\` — rankings prontos
+Top N por uma métrica. \`kind\`: \`clients_by_revenue\`, \`clients_by_budget_count\`, \`suppliers_by_item_count\`, \`campaigns_by_leads\`, \`lost_reasons\`.
+
+## \`web_market_research\` — mercado e concorrência (todos os papéis)
+Pesquisa web em tempo real (Perplexity sonar-pro). Use para "como o Houzz monetiza?", "tendências de gestão de obras 2026", comparativos com Buildertrend, CoConstruct, Procore, Sienge, Obra Prima. Use \`mode='benchmarking'\` para concorrência, \`'references'\` para tendências, \`'ux'\` para UX/UI. **Sempre cite as fontes (\`citations\`) com links clicáveis.**
+
+## \`submit_bug_report\` — registrar problema (todos os papéis)
+Cria um bug report e dispara triagem por IA. Antes de chamar, COLETE no chat: título curto, descrição, passos reproducíveis, expected, actual. NUNCA invente os campos — pergunte ao usuário.
+
+## \`query_bug_reports\` — listar bugs
+Filtra por status, severidade, área e período. Útil para "quais bugs críticos abertos?" ou "top áreas com mais bugs".
+
+# Regras de uso combinado
+- **Pergunta híbrida** ("nossa taxa de conversão está abaixo do mercado?") → chame \`get_kpi_trend\` E \`web_market_research\` em sequência, depois sintetize com comparativo.
+
 Hoje é ${TODAY_HINT()} (use como referência para "hoje", "ontem", "esta semana").
 
 # Análise de arquivos
@@ -146,6 +166,127 @@ const ANALYTICS_TOOL = {
         },
       },
       required: ["metric", "group_by"],
+    },
+  },
+};
+
+const KPI_TREND_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "get_kpi_trend",
+    description:
+      "Retorna série diária de um KPI já calculado em daily_metrics_snapshot. MUITO mais rápido que recalcular. Use para SLA, lead time, conversão, ticket médio, backlog, receita.",
+    parameters: {
+      type: "object",
+      properties: {
+        kpi: {
+          type: "string",
+          enum: [
+            "received_count","backlog_count","overdue_count","closed_count",
+            "in_analysis_count","delivered_to_sales_count","published_count",
+            "sla_on_time_pct","sla_at_risk_count","sla_breach_48h_count",
+            "avg_lead_time_days","median_lead_time_days",
+            "avg_time_in_analysis_days","avg_time_in_review_days","avg_time_to_publish_days",
+            "conversion_rate_pct","portfolio_value_brl","revenue_brl","avg_ticket_brl",
+          ],
+          description: "KPI desejado (mesmas colunas de daily_metrics_snapshot).",
+        },
+        days: { type: "number", description: "Janela em dias (padrão 30, máx 365)." },
+      },
+      required: ["kpi"],
+    },
+  },
+};
+
+const TOP_ENTITIES_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "top_entities",
+    description:
+      "Ranking pronto. Ex.: top clientes por receita, top fornecedores por nº de itens, top campanhas por leads.",
+    parameters: {
+      type: "object",
+      properties: {
+        kind: {
+          type: "string",
+          enum: ["clients_by_revenue","clients_by_budget_count","suppliers_by_item_count","campaigns_by_leads","lost_reasons"],
+          description: "Tipo de ranking.",
+        },
+        days: { type: "number", description: "Janela em dias (padrão 90)." },
+        limit: { type: "number", description: "Top N (padrão 10, máx 50)." },
+      },
+      required: ["kind"],
+    },
+  },
+};
+
+const WEB_RESEARCH_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "web_market_research",
+    description:
+      "Pesquisa web em tempo real (Perplexity sonar-pro) sobre mercado, concorrência, tendências e UX/UI no setor de gestão de obras e reformas.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Pergunta natural sobre mercado/concorrência/UX." },
+        mode: {
+          type: "string",
+          enum: ["benchmarking","references","ux","general"],
+          description: "benchmarking = concorrentes; references = tendências; ux = UX/UI; general = pesquisa geral.",
+        },
+      },
+      required: ["query"],
+    },
+  },
+};
+
+const SUBMIT_BUG_REPORT_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "submit_bug_report",
+    description:
+      "Cria um bug report estruturado e envia para triagem por IA (severidade + área + duplicatas). Use quando o usuário descrever um problema na plataforma. COLETE no chat antes de chamar: título, descrição, passos, expected, actual. NUNCA invente os campos.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Título curto do bug (5-200 chars)." },
+        description: { type: "string", description: "Descrição completa do problema." },
+        steps_to_reproduce: { type: "string", description: "Passos para reproduzir." },
+        expected_behavior: { type: "string", description: "Comportamento esperado." },
+        actual_behavior: { type: "string", description: "Comportamento atual." },
+        severity: {
+          type: "string",
+          enum: ["low","medium","high","critical"],
+          description: "Severidade percebida. Se omitido, a IA classifica.",
+        },
+        route: { type: "string", description: "Rota/URL onde ocorreu (ex.: /admin/budgets/123)." },
+      },
+      required: ["title","description","steps_to_reproduce","expected_behavior","actual_behavior"],
+    },
+  },
+};
+
+const QUERY_BUG_REPORTS_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "query_bug_reports",
+    description:
+      "Lista bug reports com filtros. Apenas admin. Útil para 'quais bugs críticos abertos?' ou 'top áreas com mais bugs'.",
+    parameters: {
+      type: "object",
+      properties: {
+        status: { type: "array", items: { type: "string", enum: ["open","triaging","resolved","dismissed"] } },
+        severity: { type: "array", items: { type: "string", enum: ["low","medium","high","critical"] } },
+        area: {
+          type: "array",
+          items: { type: "string" },
+          description: "Áreas: auth, dashboard, comercial, budget-editor, public-budget, catalog, crm, lead-sources, agenda, ai-assistant, templates, users, system, other.",
+        },
+        days: { type: "number", description: "Janela em dias (padrão 30)." },
+        group_by: { type: "string", enum: ["none","area","severity","status","day","week"] },
+        limit: { type: "number", description: "Limite (padrão 25, máx 100)." },
+      },
     },
   },
 };
@@ -421,6 +562,324 @@ async function runAnalytics(
   return { ok: true, result: { ...result, cache: "miss" } };
 }
 
+// =============== Tool: get_kpi_trend ===============
+async function runKpiTrend(
+  args: Record<string, unknown>,
+  // deno-lint-ignore no-explicit-any
+  admin: any,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const kpi = String(args.kpi ?? "");
+  if (!kpi) return { ok: false, error: "kpi é obrigatório" };
+  const days = Math.min(Math.max(Number(args.days ?? 30) || 30, 1), 365);
+  const from = new Date(Date.now() - days * 86400_000).toISOString().slice(0, 10);
+  // deno-lint-ignore no-explicit-any
+  const { data, error } = (await admin
+    .from("daily_metrics_snapshot")
+    .select(`snapshot_date, ${kpi}`)
+    .gte("snapshot_date", from)
+    .order("snapshot_date", { ascending: true })) as any;
+  if (error) return { ok: false, error: error.message };
+  // deno-lint-ignore no-explicit-any
+  const rows = (data ?? []) as any[];
+  const series = rows.map((r) => ({ key: r.snapshot_date, value: Number(r[kpi] ?? 0) }));
+  const values = series.map((s) => s.value).filter((v) => Number.isFinite(v));
+  const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  const last = series[series.length - 1]?.value ?? null;
+  const first = series[0]?.value ?? null;
+  const delta = last !== null && first !== null ? Math.round((last - first) * 100) / 100 : null;
+  return {
+    ok: true,
+    result: {
+      kpi,
+      period_label: `Últimos ${days} dias (${formatBrDate(from)} a ${formatBrDate(TODAY_HINT())})`,
+      days, points: series.length,
+      latest: last, first, delta_from_first: delta,
+      avg: Math.round(avg * 100) / 100,
+      min: values.length ? Math.min(...values) : null,
+      max: values.length ? Math.max(...values) : null,
+      series,
+    },
+  };
+}
+
+// =============== Tool: top_entities ===============
+async function runTopEntities(
+  args: Record<string, unknown>,
+  // deno-lint-ignore no-explicit-any
+  admin: any,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const kind = String(args.kind ?? "");
+  const days = Math.min(Math.max(Number(args.days ?? 90) || 90, 1), 730);
+  const limit = Math.min(Math.max(Number(args.limit ?? 10) || 10, 1), 50);
+  const from = new Date(Date.now() - days * 86400_000).toISOString();
+  const periodLabel = `Últimos ${days} dias`;
+
+  if (kind === "clients_by_revenue" || kind === "clients_by_budget_count") {
+    // deno-lint-ignore no-explicit-any
+    const { data, error } = (await admin
+      .from("budgets")
+      .select("client_id, manual_total, internal_cost, internal_status, approved_at")
+      .gte("approved_at", from)
+      .in("internal_status", ["contrato_fechado", "minuta_solicitada"])) as any;
+    if (error) return { ok: false, error: error.message };
+    const agg = new Map<string, { count: number; revenue: number }>();
+    for (const r of data ?? []) {
+      if (!r.client_id) continue;
+      const acc = agg.get(r.client_id) ?? { count: 0, revenue: 0 };
+      acc.count += 1;
+      acc.revenue += Number(r.manual_total ?? r.internal_cost ?? 0);
+      agg.set(r.client_id, acc);
+    }
+    const ids = Array.from(agg.keys()).slice(0, 200);
+    // deno-lint-ignore no-explicit-any
+    const { data: clients } = ids.length
+      ? ((await admin.from("clients").select("id, name").in("id", ids)) as any)
+      : { data: [] };
+    const nameMap = Object.fromEntries((clients ?? []).map((c: { id: string; name: string }) => [c.id, c.name]));
+    const sorted = Array.from(agg.entries())
+      .map(([id, v]) => ({ id, name: nameMap[id] ?? "—", count: v.count, revenue: Math.round(v.revenue * 100) / 100 }))
+      .sort((a, b) => (kind === "clients_by_revenue" ? b.revenue - a.revenue : b.count - a.count))
+      .slice(0, limit);
+    return { ok: true, result: { kind, period_label: periodLabel, days, top: sorted } };
+  }
+
+  if (kind === "campaigns_by_leads") {
+    // deno-lint-ignore no-explicit-any
+    const { data, error } = (await admin
+      .from("lead_sources")
+      .select("campaign_name, source")
+      .gte("received_at", from)) as any;
+    if (error) return { ok: false, error: error.message };
+    const agg = new Map<string, number>();
+    for (const r of data ?? []) {
+      const k = `${r.source ?? "—"} · ${r.campaign_name ?? "—"}`;
+      agg.set(k, (agg.get(k) ?? 0) + 1);
+    }
+    const top = Array.from(agg.entries())
+      .map(([key, count]) => ({ key, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+    return { ok: true, result: { kind, period_label: periodLabel, days, top } };
+  }
+
+  if (kind === "lost_reasons") {
+    // deno-lint-ignore no-explicit-any
+    const { data, error } = (await admin
+      .from("budget_lost_reasons")
+      .select("reason_category")
+      .gte("lost_at", from)) as any;
+    if (error) return { ok: false, error: error.message };
+    const agg = new Map<string, number>();
+    for (const r of data ?? []) agg.set(r.reason_category ?? "—", (agg.get(r.reason_category ?? "—") ?? 0) + 1);
+    const top = Array.from(agg.entries())
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+    return { ok: true, result: { kind, period_label: periodLabel, days, top } };
+  }
+
+  if (kind === "suppliers_by_item_count") {
+    // deno-lint-ignore no-explicit-any
+    const { data, error } = (await admin
+      .from("catalog_item_supplier_prices")
+      .select("supplier_id")) as any;
+    if (error) return { ok: false, error: error.message };
+    const agg = new Map<string, number>();
+    for (const r of data ?? []) agg.set(r.supplier_id, (agg.get(r.supplier_id) ?? 0) + 1);
+    const ids = Array.from(agg.keys()).slice(0, 200);
+    // deno-lint-ignore no-explicit-any
+    const { data: sups } = ids.length
+      ? ((await admin.from("suppliers").select("id, name").in("id", ids)) as any)
+      : { data: [] };
+    const nameMap = Object.fromEntries((sups ?? []).map((s: { id: string; name: string }) => [s.id, s.name]));
+    const top = Array.from(agg.entries())
+      .map(([id, count]) => ({ id, name: nameMap[id] ?? "—", count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+    return { ok: true, result: { kind, period_label: "Total acumulado", top } };
+  }
+
+  return { ok: false, error: `Tipo de ranking não suportado: ${kind}` };
+}
+
+// =============== Tool: web_market_research (Perplexity) ===============
+async function runWebResearch(
+  args: Record<string, unknown>,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const query = String(args.query ?? "").trim();
+  if (!query) return { ok: false, error: "query é obrigatório" };
+  const mode = String(args.mode ?? "general");
+  const apiKey = Deno.env.get("PERPLEXITY_API_KEY");
+  if (!apiKey) return { ok: false, error: "PERPLEXITY_API_KEY não configurada" };
+
+  let systemPrompt =
+    "Você é um analista de mercado especializado em softwares de gestão de obras e reformas residenciais no Brasil. Responda em português brasileiro de forma objetiva, com bullets e dados concretos quando disponíveis.";
+  if (mode === "benchmarking") {
+    systemPrompt = `Você é um analista de produto especializado em benchmarking de softwares de gestão de obras e reformas residenciais. Compare concorrentes como Houzz, Buildertrend, CoConstruct, Procore, Sienge, Obra Prima, Veja Obra. Identifique funcionalidades inovadoras, modelos de pricing, tendências e oportunidades de diferenciação. Responda em português brasileiro com sugestões concretas e acionáveis, organizando por categorias.`;
+  } else if (mode === "references") {
+    systemPrompt = `Você é um pesquisador especializado em tecnologia para construção civil e reformas residenciais. Pesquise funcionalidades, tendências e melhores práticas. Cite fontes sempre que possível.`;
+  } else if (mode === "ux") {
+    systemPrompt = `Você é especialista em UX/UI para aplicações de gestão de obras. Analise hierarquia de informação, copy, fluxos e sugestões de melhoria. Priorize as recomendações.`;
+  }
+
+  const resp = await fetch("https://api.perplexity.ai/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "sonar-pro",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: query },
+      ],
+      search_recency_filter: "month",
+    }),
+  });
+  if (!resp.ok) {
+    const errText = await resp.text().catch(() => "");
+    return { ok: false, error: `Perplexity ${resp.status}: ${errText.slice(0, 300)}` };
+  }
+  const data = await resp.json();
+  return {
+    ok: true,
+    result: {
+      query, mode,
+      content: data.choices?.[0]?.message?.content ?? "",
+      citations: data.citations ?? [],
+      generated_at: new Date().toISOString(),
+    },
+  };
+}
+
+// =============== Tool: submit_bug_report (delega para edge function) ===============
+async function runSubmitBugReport(
+  args: Record<string, unknown>,
+  authHeader: string | null,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  if (!authHeader) return { ok: false, error: "Sessão expirada — faça login novamente." };
+
+  const title = String(args.title ?? "").trim();
+  const description = String(args.description ?? "").trim();
+  const steps = String(args.steps_to_reproduce ?? "").trim();
+  const expected = String(args.expected_behavior ?? "").trim();
+  const actual = String(args.actual_behavior ?? "").trim();
+  if (!title || !description || !steps || !expected || !actual) {
+    return { ok: false, error: "title, description, steps_to_reproduce, expected_behavior e actual_behavior são obrigatórios." };
+  }
+
+  try {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/bug-report-triage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: authHeader },
+      body: JSON.stringify({
+        mode: "create",
+        title, description,
+        steps_to_reproduce: steps,
+        expected_behavior: expected,
+        actual_behavior: actual,
+        severity: args.severity,
+        route: args.route,
+      }),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) return { ok: false, error: data?.error ?? `bug-report-triage ${resp.status}` };
+    const bug = data.bug_report ?? data;
+    return {
+      ok: true,
+      result: {
+        bug_id: bug?.id,
+        severity: bug?.severity_ai ?? bug?.severity,
+        area: bug?.area_ai,
+        triage_summary: bug?.triage_summary,
+        duplicate_of: data.duplicate_of ?? bug?.duplicate_of,
+        message: (data.duplicate_of ?? bug?.duplicate_of)
+          ? "Bug registrado e marcado como possível duplicata de um bug existente."
+          : "Bug registrado e triado pela IA.",
+      },
+    };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Falha ao enviar bug report." };
+  }
+}
+
+// =============== Tool: query_bug_reports ===============
+async function runQueryBugReports(
+  args: Record<string, unknown>,
+  // deno-lint-ignore no-explicit-any
+  admin: any,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const days = Math.min(Math.max(Number(args.days ?? 30) || 30, 1), 365);
+  const limit = Math.min(Math.max(Number(args.limit ?? 25) || 25, 1), 100);
+  const groupBy = String(args.group_by ?? "none");
+  const fromIso = new Date(Date.now() - days * 86400_000).toISOString();
+
+  let q = admin
+    .from("bug_reports")
+    .select("id, title, severity, severity_ai, area_ai, status, user_role, created_at, route, triage_tags, triage_summary")
+    .gte("created_at", fromIso)
+    .order("created_at", { ascending: false })
+    .limit(2000);
+
+  if (Array.isArray(args.status) && args.status.length) q = q.in("status", args.status as string[]);
+  if (Array.isArray(args.severity) && args.severity.length) q = q.in("severity_ai", args.severity as string[]);
+  if (Array.isArray(args.area) && args.area.length) q = q.in("area_ai", args.area as string[]);
+
+  // deno-lint-ignore no-explicit-any
+  const { data, error } = (await q) as any;
+  if (error) return { ok: false, error: error.message };
+  // deno-lint-ignore no-explicit-any
+  const rows = (data ?? []) as any[];
+
+  if (groupBy === "none") {
+    return {
+      ok: true,
+      result: {
+        period_label: `Últimos ${days} dias`,
+        total: rows.length,
+        items: rows.slice(0, limit),
+      },
+    };
+  }
+
+  // deno-lint-ignore no-explicit-any
+  const keyOf = (r: any): string => {
+    if (groupBy === "area") return r.area_ai ?? "(não triado)";
+    if (groupBy === "severity") return r.severity_ai ?? "(não triado)";
+    if (groupBy === "status") return r.status ?? "—";
+    const d = new Date(r.created_at);
+    if (groupBy === "day") return d.toISOString().slice(0, 10);
+    if (groupBy === "week") {
+      const dt = new Date(d);
+      const day = (dt.getUTCDay() + 6) % 7;
+      dt.setUTCDate(dt.getUTCDate() - day);
+      return dt.toISOString().slice(0, 10);
+    }
+    return "—";
+  };
+
+  const buckets = new Map<string, number>();
+  for (const r of rows) {
+    const k = keyOf(r);
+    buckets.set(k, (buckets.get(k) ?? 0) + 1);
+  }
+  const series = Array.from(buckets.entries())
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) =>
+      ["day", "week"].includes(groupBy) ? a.key.localeCompare(b.key) : b.count - a.count,
+    )
+    .slice(0, limit);
+
+  return {
+    ok: true,
+    result: {
+      period_label: `Últimos ${days} dias`,
+      group_by: groupBy,
+      total: rows.length,
+      series,
+    },
+  };
+}
+
 // =============== Attachment processing (unchanged) ===============
 type Attachment = {
   name: string;
@@ -672,11 +1131,13 @@ serve(async (req) => {
     // Vision-capable model when needed; gpt-4o for tools (better at structured calls)
     const model = hasAttachments || isAdmin ? "gpt-4o" : "gpt-4o-mini";
 
-    // ===== Tool-calling loop (max 3 rounds) =====
+    // ===== Tool-calling loop (max 4 rounds) =====
     const conversation = [...baseMessages];
-    const tools = isAdmin ? [ANALYTICS_TOOL] : undefined;
+    const tools = isAdmin
+      ? [ANALYTICS_TOOL, KPI_TREND_TOOL, TOP_ENTITIES_TOOL, WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL, QUERY_BUG_REPORTS_TOOL]
+      : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
-    for (let round = 0; round < 3; round++) {
+    for (let round = 0; round < 4; round++) {
       const planResp = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -688,7 +1149,7 @@ serve(async (req) => {
           messages: conversation,
           temperature: 0.3,
           tools,
-          tool_choice: tools ? "auto" : undefined,
+          tool_choice: tools.length ? "auto" : undefined,
           stream: false,
         }),
       });
@@ -713,30 +1174,37 @@ serve(async (req) => {
       const toolCalls = choice?.message?.tool_calls;
 
       if (!toolCalls || toolCalls.length === 0) {
-        // No tools needed — stream the final answer
         break;
       }
 
-      // Push the assistant turn that requested the tools
       conversation.push(choice.message);
 
-      // Execute each tool
       for (const call of toolCalls) {
         const name = call.function?.name;
         let argsObj: Record<string, unknown> = {};
-        try {
-          argsObj = JSON.parse(call.function?.arguments ?? "{}");
-        } catch {
-          argsObj = {};
-        }
+        try { argsObj = JSON.parse(call.function?.arguments ?? "{}"); } catch { argsObj = {}; }
 
         let toolOutput: unknown;
         if (name === "query_analytics") {
-          if (!isAdmin) {
-            toolOutput = { ok: false, error: "Apenas administradores podem consultar analytics." };
-          } else {
-            toolOutput = await runAnalytics(argsObj, admin);
-          }
+          toolOutput = isAdmin
+            ? await runAnalytics(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem consultar analytics." };
+        } else if (name === "get_kpi_trend") {
+          toolOutput = isAdmin
+            ? await runKpiTrend(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem consultar KPIs." };
+        } else if (name === "top_entities") {
+          toolOutput = isAdmin
+            ? await runTopEntities(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem consultar rankings." };
+        } else if (name === "web_market_research") {
+          toolOutput = await runWebResearch(argsObj);
+        } else if (name === "submit_bug_report") {
+          toolOutput = await runSubmitBugReport(argsObj, req.headers.get("authorization"));
+        } else if (name === "query_bug_reports") {
+          toolOutput = isAdmin
+            ? await runQueryBugReports(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem consultar bug reports." };
         } else {
           toolOutput = { ok: false, error: `Ferramenta desconhecida: ${name}` };
         }
