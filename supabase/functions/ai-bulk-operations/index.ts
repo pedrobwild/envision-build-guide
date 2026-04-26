@@ -191,7 +191,7 @@ async function buildFinancialPlan(
     .from("sections")
     .select("id, budget_id, qty, section_price")
     .in("budget_id", ids);
-  if (secErr) throw secErr;
+  if (secErr) throw toError(secErr, "sections");
   type Section = { id: string; budget_id: string; qty: number | null; section_price: number | null };
   const sections = (sectionsRaw ?? []) as Section[];
 
