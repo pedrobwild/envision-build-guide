@@ -165,6 +165,13 @@ export function BulkOperationCard({
             {plan.reasoning}
           </p>
         )}
+
+        {!plan.filters?.created_from && !plan.filters?.created_to && (
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary">
+            <Globe2 className="h-3 w-3" />
+            Escopo: todos os orçamentos elegíveis (sem filtro de data)
+          </div>
+        )}
       </div>
 
       {/* Stats */}
