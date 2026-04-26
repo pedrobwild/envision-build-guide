@@ -373,18 +373,44 @@ interface VersionCloneResult {
   old_budget_id: string;
   old_was_current: boolean;
   old_internal_status: string;
+  old_version_number: number;
+  new_version_number: number;
   section_id_map: Record<string, string>;
   item_id_map: Record<string, string>;
 }
 
+// Estados em que o orçamento NÃO pode receber redução em lote — protege
+// fluxos finalizados ou em fase contratual avançada contra mutações concorrentes.
+const CLONE_PROTECTED_STATUSES = new Set([
+  "lost",
+  "archived",
+  "contrato_fechado",
+  "minuta_solicitada",
+]);
+
 // deno-lint-ignore no-explicit-any
-async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userId: string, changeReason: string): Promise<VersionCloneResult> {
+async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userId: string, changeReason: string, expectedStatus?: string): Promise<VersionCloneResult> {
   const { data: source, error: srcErr } = await admin
     .from("budgets")
     .select("*")
     .eq("id", sourceBudgetId)
     .single();
   if (srcErr || !source) throw toError(srcErr ?? new Error("source-not-found"), `clone:${sourceBudgetId}`);
+
+  const currentStatus = String((source as { internal_status?: string }).internal_status ?? "");
+
+  // Guard 1: estado protegido (mudou para final entre o plan e o apply)
+  if (CLONE_PROTECTED_STATUSES.has(currentStatus)) {
+    throw new Error(`Orçamento ${sourceBudgetId} está em estado protegido '${currentStatus}' — pulado para evitar conflito.`);
+  }
+
+  // Guard 2: divergência entre o estado capturado no plan e o estado atual
+  // (alguém moveu o orçamento no kanban entre o plan e o apply). Permitimos
+  // mas registramos no result para que o revert preserve fielmente o estado
+  // que de fato existia imediatamente antes do clone.
+  if (expectedStatus && expectedStatus !== currentStatus) {
+    logCtx(`clone:${sourceBudgetId} status drift: plan='${expectedStatus}' actual='${currentStatus}' — usando atual`);
+  }
 
   let groupId = source.version_group_id as string | null;
   if (!groupId) {
@@ -438,6 +464,24 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
     .single();
   if (insErr || !newBudget) throw toError(insErr ?? new Error("insert-failed"), `clone-insert:${sourceBudgetId}`);
   const newBudgetId = newBudget.id as string;
+
+  // Guard 3: race com publicação/clone concorrente. Se entre nossa leitura de
+  // maxRow e o insert alguém publicou outra versão (que herdou nextVersion ou
+  // pulou para nextVersion+1), abortamos: deletamos nosso clone e erramos.
+  const { data: postInsertMax } = await admin
+    .from("budgets")
+    .select("id, version_number")
+    .eq("version_group_id", groupId)
+    .order("version_number", { ascending: false })
+    .limit(2);
+  const top = (postInsertMax ?? []) as Array<{ id: string; version_number: number }>;
+  // Se houver outra linha com version_number >= nextVersion que não seja a nossa, há colisão.
+  const collision = top.find((r) => r.id !== newBudgetId && r.version_number >= nextVersion);
+  if (collision) {
+    errCtx(`clone:${sourceBudgetId} colisão de versão detectada (v${collision.version_number} já existe) — abortando`);
+    try { await admin.from("budgets").delete().eq("id", newBudgetId); } catch { /* ignore */ }
+    throw new Error(`Conflito de versão no grupo ${groupId} — outra operação criou v${collision.version_number} simultaneamente.`);
+  }
 
   await admin
     .from("budgets")
