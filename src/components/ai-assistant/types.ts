@@ -32,18 +32,28 @@ export type BulkActionType =
   | "pipeline_stage_change"
   | "archive";
 
+export type BulkFilters = {
+  created_from: string | null;
+  created_to: string | null;
+  pipeline_stages?: string[] | null;
+  internal_statuses?: string[] | null;
+};
+
 export type BulkOperationPlan = {
   operation_id: string;
   action_type: BulkActionType;
   summary: string;
   reasoning?: string;
-  filters: { created_from: string; created_to?: string };
+  filters: BulkFilters;
   params: Record<string, unknown>;
   rows: BulkPlanRow[];
   applicable_count: number;
   protected_count: number;
   total_before: number;
   total_after: number;
+  /** True se o backend rodará o apply em background (operations > 50 orçamentos). */
+  will_run_in_background?: boolean;
+  background_threshold?: number;
 };
 
 export type BulkOpStatus = "pending" | "applied" | "failed" | "reverted";
