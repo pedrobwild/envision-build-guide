@@ -162,6 +162,28 @@ export function AiAssistant() {
       return;
     }
 
+    // Pre-flight: if the command looks like a percentage adjustment, validate
+    // the numeric factor BEFORE spending an LLM call. Catches "0%", "-5%",
+    // ">100%" and missing/garbled numbers with a friendly inline message.
+    const factorCheck = validateFinancialCommandFactor(command);
+    if (factorCheck.kind === "invalid") {
+      setMessages((prev) => [
+        ...prev,
+        userMsg,
+        {
+          role: "assistant",
+          content: `⚠️ **Não consegui validar o percentual.**\n\n${factorCheck.reason}`,
+        },
+      ]);
+      toast({
+        title: "Percentual inválido",
+        description: factorCheck.reason,
+        variant: "destructive",
+      });
+      setInput("");
+      return;
+    }
+
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
