@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { BulkOperationPlan } from "./types";
 
@@ -35,11 +35,34 @@ async function callFn<T>(body: Record<string, unknown>, prefix = "bulk"): Promis
   return json as T;
 }
 
+export type BulkApplyProgress = {
+  done: number;
+  total: number;
+  phase: string | null;
+  heartbeat_at: string | null;
+  started_at: string | null;
+};
+
+export type BulkApplyResult = {
+  ok: boolean;
+  applied_count: number;
+  partial_failures?: number;
+  failure_sample?: Array<{ id: string; error: string }>;
+  background?: boolean;
+};
+
 export function useBulkOperations() {
   const [busyId, setBusyId] = useState<string | null>(null);
+  const cancelRef = useRef<{ [opId: string]: boolean }>({});
 
   const plan = useCallback(
-    async (command: string): Promise<BulkOperationPlan | { unsupported: true; summary: string; reasoning?: string } | { empty: true; summary: string }> => {
+    async (
+      command: string,
+    ): Promise<
+      | (BulkOperationPlan & { will_run_in_background?: boolean; background_threshold?: number })
+      | { unsupported: true; summary: string; reasoning?: string }
+      | { empty: true; summary: string }
+    > => {
       const res = await callFn<{
         ok: boolean;
         unsupported?: boolean;
@@ -55,6 +78,8 @@ export function useBulkOperations() {
         protected_count?: number;
         total_before?: number;
         total_after?: number;
+        will_run_in_background?: boolean;
+        background_threshold?: number;
       }>({ action: "plan", command }, "plan");
 
       if (res.unsupported) {
@@ -75,26 +100,93 @@ export function useBulkOperations() {
         protected_count: res.protected_count ?? 0,
         total_before: res.total_before ?? 0,
         total_after: res.total_after ?? 0,
+        will_run_in_background: res.will_run_in_background,
+        background_threshold: res.background_threshold,
       };
     },
     [],
   );
 
-  const apply = useCallback(async (operationId: string) => {
-    setBusyId(operationId);
-    try {
-      return await callFn<{
-        ok: boolean;
-        applied_count: number;
-        partial_failures?: number;
-        failure_sample?: Array<{ id: string; error: string }>;
-      }>({
-        action: "apply",
-        operation_id: operationId,
-      }, "apply");
-    } finally {
-      setBusyId(null);
-    }
+  /**
+   * Aplica a operação. Se o backend executar em background (operações com 50+
+   * orçamentos), automaticamente faz polling de status até concluir, chamando
+   * onProgress com o progresso atualizado.
+   *
+   * Retorna o resultado final agregado.
+   */
+  const apply = useCallback(
+    async (
+      operationId: string,
+      onProgress?: (p: BulkApplyProgress & { status: string }) => void,
+    ): Promise<BulkApplyResult> => {
+      setBusyId(operationId);
+      cancelRef.current[operationId] = false;
+      try {
+        const initial = await callFn<{
+          ok: boolean;
+          background?: boolean;
+          applied_count?: number;
+          partial_failures?: number;
+          failure_sample?: Array<{ id: string; error: string }>;
+          poll_interval_ms?: number;
+        }>({ action: "apply", operation_id: operationId }, "apply");
+
+        // Se foi síncrono, terminamos.
+        if (!initial.background) {
+          return {
+            ok: initial.ok,
+            applied_count: initial.applied_count ?? 0,
+            partial_failures: initial.partial_failures,
+            failure_sample: initial.failure_sample,
+            background: false,
+          };
+        }
+
+        // Modo background: faz polling até "applied" | "failed".
+        const interval = Math.max(1500, initial.poll_interval_ms ?? 2000);
+        const maxWaitMs = 15 * 60 * 1000; // 15 min de teto
+        const start = Date.now();
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          if (cancelRef.current[operationId]) {
+            throw new Error("Polling cancelado pelo usuário.");
+          }
+          if (Date.now() - start > maxWaitMs) {
+            throw new Error("Tempo limite de espera atingido (15 min). A operação pode continuar em background — verifique o histórico.");
+          }
+          await new Promise((r) => setTimeout(r, interval));
+          const status = await callFn<{
+            ok: boolean;
+            status: "pending" | "running" | "applied" | "failed" | "reverted";
+            progress: BulkApplyProgress;
+            error_message?: string;
+          }>({ action: "status", operation_id: operationId }, "status");
+
+          onProgress?.({ ...status.progress, status: status.status });
+
+          if (status.status === "applied") {
+            return {
+              ok: true,
+              applied_count: status.progress.done,
+              partial_failures: 0,
+              background: true,
+            };
+          }
+          if (status.status === "failed") {
+            throw new Error(status.error_message ?? "Operação falhou em background.");
+          }
+        }
+      } finally {
+        setBusyId(null);
+        delete cancelRef.current[operationId];
+      }
+    },
+    [],
+  );
+
+  const cancelPolling = useCallback((operationId: string) => {
+    cancelRef.current[operationId] = true;
   }, []);
 
   const revert = useCallback(async (operationId: string) => {
@@ -109,5 +201,5 @@ export function useBulkOperations() {
     }
   }, []);
 
-  return { plan, apply, revert, busyId };
+  return { plan, apply, revert, cancelPolling, busyId };
 }

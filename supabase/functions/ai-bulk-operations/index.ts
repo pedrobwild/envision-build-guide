@@ -17,6 +17,17 @@ REGRAS CRÍTICAS:
 - Datas devem estar em ISO 8601 (YYYY-MM-DD). Se o usuário disser "hoje", use a data atual; "ontem" = data atual − 1 dia; "esta semana" = últimos 7 dias.
 - O filtro de data (\`created_from\` / \`created_to\`) é **opcional**. Se o admin não mencionar data, deixe ambos vazios — o sistema vai considerar TODOS os orçamentos elegíveis, respeitando os status protegidos automaticamente.
 - Se o admin disser "todos", "todos os orçamentos", "no sistema", "geral", NÃO invente data: deixe \`filters\` vazio.
+- **FILTROS ESTRUTURADOS** (use SEMPRE que o admin mencionar):
+  - \`pipeline_stages\`: array com uma ou mais de ['lead','briefing','visita','proposta','negociacao'].
+    - "em negociação" / "negociando" / "em negociacao" → ['negociacao']
+    - "propostas em aberto" / "orçamentos em proposta" → ['proposta']
+    - "funil comercial" / "em andamento" → ['proposta','negociacao']
+  - \`internal_statuses\`: array com um ou mais de ['novo','em_analise','waiting_info','em_revisao','revision_requested','delivered_to_sales','published','minuta_solicitada'].
+    - NUNCA inclua 'contrato_fechado','perdido','lost','archived' (são protegidos).
+    - "aguardando informação" → ['waiting_info']
+    - "em revisão" → ['em_revisao']
+    - "em análise" → ['em_analise']
+  - Pode combinar: "reduzir 10% em todos os orçamentos em negociação criados este mês" → pipeline_stages=['negociacao'], created_from=YYYY-MM-01, created_to=hoje.
 - Tipos de ação suportados:
   1. **financial_adjustment**: ajusta o valor dos itens proporcionalmente. Params: \`mode\` ('percent'|'amount'), \`value\` (número, negativo = redução), \`direction\` ('increase'|'decrease').
      Ex.: "reduzir 10% em todos" → mode=percent, value=10, direction=decrease.
@@ -61,6 +72,16 @@ const TOOL_DEFINITION = {
           properties: {
             created_from: { type: "string", description: "Data ISO YYYY-MM-DD inclusive" },
             created_to: { type: "string", description: "Data ISO YYYY-MM-DD inclusive (opcional)" },
+            pipeline_stages: {
+              type: "array",
+              description: "Estágios do pipeline a filtrar (lead, briefing, visita, proposta, negociacao). Use ['negociacao'] para 'em negociação'.",
+              items: { type: "string", enum: ["lead", "briefing", "visita", "proposta", "negociacao"] },
+            },
+            internal_statuses: {
+              type: "array",
+              description: "Status internos a filtrar (novo, em_analise, waiting_info, em_revisao, revision_requested, delivered_to_sales, published, minuta_solicitada). Nunca inclua status protegidos.",
+              items: { type: "string" },
+            },
           },
         },
         params: {
@@ -218,7 +239,12 @@ async function callAIPlanner(command: string, today: string) {
   try {
     return JSON.parse(call.function.arguments) as {
       action_type: ActionType | "unsupported";
-      filters?: { created_from?: string; created_to?: string };
+      filters?: {
+        created_from?: string;
+        created_to?: string;
+        pipeline_stages?: string[];
+        internal_statuses?: string[];
+      };
       params?: Record<string, unknown>;
       summary: string;
       reasoning?: string;
@@ -233,6 +259,33 @@ function validateDate(s: string | undefined): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : s;
+}
+
+/** Sanitize / canonicalize the LLM-supplied filter arrays. */
+function sanitizePipelineStages(input: unknown): string[] | null {
+  if (!Array.isArray(input) || input.length === 0) return null;
+  const allowed = new Set<string>(PIPELINE_STAGES as readonly string[]);
+  const out = new Set<string>();
+  for (const raw of input) {
+    if (typeof raw !== "string") continue;
+    const trimmed = raw.trim().toLowerCase();
+    const canonical = STAGE_SYNONYMS[trimmed] ?? trimmed;
+    if (allowed.has(canonical)) out.add(canonical);
+  }
+  return out.size > 0 ? [...out] : null;
+}
+
+function sanitizeInternalStatuses(input: unknown): string[] | null {
+  if (!Array.isArray(input) || input.length === 0) return null;
+  const out: string[] = [];
+  for (const raw of input) {
+    if (typeof raw !== "string") continue;
+    const v = raw.trim();
+    if (!v) continue;
+    if (PROTECTED_STATUSES.includes(v)) continue; // never let LLM target protected
+    out.push(v);
+  }
+  return out.length > 0 ? [...new Set(out)] : null;
 }
 
 function calcItemSale(item: { qty: number | null; internal_unit_price: number | null; internal_total: number | null; bdi_percentage: number | null }): number {
@@ -782,8 +835,10 @@ serve(async (req) => {
 
       const createdFrom = validateDate(parsed.filters?.created_from);
       const createdTo = validateDate(parsed.filters?.created_to);
+      const pipelineStages = sanitizePipelineStages(parsed.filters?.pipeline_stages);
+      const internalStatuses = sanitizeInternalStatuses(parsed.filters?.internal_statuses);
 
-      // Fetch matching budgets (date filters are optional — when absent, scan all).
+      // Fetch matching budgets (filtros opcionais — quando ausentes, scan all).
       // CRÍTICO: filtra apenas a versão ATUAL de cada grupo (`is_current_version`
       // != false, incluindo NULL para orçamentos legados sem versionamento).
       // Sem este filtro, um clone em batch pode receber duas versões do mesmo
@@ -791,23 +846,38 @@ serve(async (req) => {
       // `cloneBudgetAsNewVersion`.
       let q = admin
         .from("budgets")
-        .select("id, sequential_code, client_name, project_name, internal_status, commercial_owner_id, estimator_owner_id, is_current_version")
+        .select("id, sequential_code, client_name, project_name, internal_status, pipeline_stage, commercial_owner_id, estimator_owner_id, is_current_version")
         .or("is_current_version.is.null,is_current_version.eq.true");
       if (createdFrom) q = q.gte("created_at", `${createdFrom}T00:00:00Z`);
       if (createdTo) q = q.lte("created_at", `${createdTo}T23:59:59Z`);
+      if (pipelineStages) q = q.in("pipeline_stage", pipelineStages);
+      if (internalStatuses) q = q.in("internal_status", internalStatuses);
+      // Sempre excluí status protegidos da consulta (segurança em profundidade).
+      q = q.not("internal_status", "in", `(${PROTECTED_STATUSES.map((s) => `"${s}"`).join(",")})`);
+
       const { data: budgets, error: bErr } = await q.order("created_at", { ascending: false }).limit(MAX_AFFECTED + 1);
       if (bErr) return errorResponse(`Falha ao buscar orçamentos: ${bErr.message}`, 500);
+
+      const filtersOut = {
+        created_from: createdFrom,
+        created_to: createdTo,
+        pipeline_stages: pipelineStages,
+        internal_statuses: internalStatuses,
+      };
 
       if (!budgets || budgets.length === 0) {
         return jsonResponse({
           ok: false,
           empty: true,
           summary: parsed.summary,
-          filters: { created_from: createdFrom, created_to: createdTo },
+          filters: filtersOut,
         });
       }
       if (budgets.length > MAX_AFFECTED) {
-        return errorResponse(`O comando afetaria mais de ${MAX_AFFECTED} orçamentos (limite por operação). Refine o filtro.`, 400);
+        return errorResponse(
+          `O comando afetaria mais de ${MAX_AFFECTED} orçamentos (limite por operação). Refine o filtro — ex.: por estágio (em negociação) ou período.`,
+          400,
+        );
       }
 
       let rows: PlanRow[] = [];
@@ -907,7 +977,7 @@ serve(async (req) => {
           admin_id: userId,
           command,
           action_type: parsed.action_type,
-          filters: { created_from: createdFrom, created_to: createdTo },
+          filters: filtersOut,
           params: { ...(parsed.params ?? {}), ...extra },
           plan: rows,
           affected_count: applicableCount,
@@ -923,13 +993,42 @@ serve(async (req) => {
         action_type: parsed.action_type,
         summary: parsed.summary,
         reasoning: parsed.reasoning ?? "",
-        filters: { created_from: createdFrom, created_to: createdTo },
+        filters: filtersOut,
         params: { ...(parsed.params ?? {}), ...extra },
         rows,
         applicable_count: applicableCount,
         protected_count: protectedCount,
         total_before: rows.reduce((s, r) => s + r.before_total, 0),
         total_after: rows.reduce((s, r) => s + r.after_total, 0),
+        // Sinaliza ao cliente que apply > BACKGROUND_THRESHOLD será assíncrono.
+        will_run_in_background: applicableCount > BACKGROUND_THRESHOLD,
+        background_threshold: BACKGROUND_THRESHOLD,
+      });
+    }
+
+    // ---------- STATUS (polling) ----------
+    if (action === "status") {
+      const opId = String(body?.operation_id ?? "");
+      if (!opId) return errorResponse("operation_id obrigatório.");
+      const { data: op, error: opErr } = await admin
+        .from("ai_bulk_operations")
+        .select("id, status, progress_done, progress_total, progress_phase, heartbeat_at, started_at, applied_at, error_message, affected_count")
+        .eq("id", opId)
+        .single();
+      if (opErr || !op) return errorResponse("Operação não encontrada.", 404);
+      return jsonResponse({
+        ok: true,
+        operation_id: opId,
+        status: op.status,
+        progress: {
+          done: op.progress_done ?? 0,
+          total: op.progress_total ?? op.affected_count ?? 0,
+          phase: op.progress_phase ?? null,
+          heartbeat_at: op.heartbeat_at,
+          started_at: op.started_at,
+        },
+        applied_at: op.applied_at,
+        error_message: op.error_message,
       });
     }
 
@@ -951,6 +1050,37 @@ serve(async (req) => {
       if (rows.length === 0) return errorResponse("Nada a aplicar (todos os orçamentos estão protegidos).");
 
       const ids = rows.map((r) => r.budget_id);
+      const runInBackground = ids.length > BACKGROUND_THRESHOLD;
+
+      // Marca como running e zera progresso
+      await admin
+        .from("ai_bulk_operations")
+        .update({
+          status: "running",
+          started_at: new Date().toISOString(),
+          heartbeat_at: new Date().toISOString(),
+          progress_done: 0,
+          progress_total: ids.length,
+          progress_phase: op.action_type === "financial_adjustment" ? "cloning" : "applying",
+        })
+        .eq("id", opId);
+
+      // Helper de atualização de progresso (chamado de dentro do worker).
+      // Usa a service role para não depender de RLS quando rodando em background.
+      async function updateProgress(done: number, phase: string) {
+        try {
+          await admin
+            .from("ai_bulk_operations")
+            .update({
+              progress_done: done,
+              progress_phase: phase,
+              heartbeat_at: new Date().toISOString(),
+            })
+            .eq("id", opId);
+        } catch (e) {
+          errCtx(`progress update failed: ${toError(e).message}`);
+        }
+      }
 
       // ---- Snapshot (always) ----
       const snapshot: Record<string, unknown> = { taken_at: new Date().toISOString() };
@@ -1005,6 +1135,10 @@ serve(async (req) => {
         }
       }
 
+      // O bloco abaixo executa a operação de fato. Quando runInBackground=true,
+      // nós o envolvemos em uma Promise e devolvemos o controle ao cliente,
+      // usando EdgeRuntime.waitUntil para manter o worker vivo até terminar.
+      const doApply = async () => {
       try {
         if (op.action_type === "financial_adjustment") {
           const factor = (op.params as { factor: number }).factor;
@@ -1020,6 +1154,7 @@ serve(async (req) => {
           const cloneFailures: Array<{ id: string; error: string }> = [];
           const changeReason = `Redução em lote · ${op.command.slice(0, 180)}`;
 
+          let cloneProgress = 0;
           await runInChunks(ids, 4, async (sourceId) => {
             try {
               const expectedStatus = planStatusById.get(sourceId);
@@ -1029,6 +1164,12 @@ serve(async (req) => {
               const msg = toError(e).message;
               cloneFailures.push({ id: sourceId, error: msg });
               errCtx(`clone failed for ${sourceId}: ${msg}`);
+            } finally {
+              cloneProgress++;
+              // Atualiza heartbeat a cada 10 clones (evita flood de updates).
+              if (cloneProgress % 10 === 0 || cloneProgress === ids.length) {
+                await updateProgress(cloneProgress, "cloning");
+              }
             }
           });
 
@@ -1050,75 +1191,65 @@ serve(async (req) => {
             updateErrors.push(...cloneFailures);
           }
 
-          // ---- 2) Apply the factor on the NEW versions only ----
+          await updateProgress(clones.length, "applying_factor");
+
+          // ---- 2) Apply the factor on the NEW versions via RPC SQL massiva ----
+          // A RPC bulk_apply_factor_to_items roda em uma única transação no
+          // Postgres e atualiza milhares de items + sections em milissegundos
+          // (substitui dezenas/centenas de updates row-a-row do código antigo).
           const newBudgetIds = clones.map((c) => c.new_budget_id);
-
-          type NewSec = { id: string; budget_id: string; section_price: number | null };
-          const newSecs = await selectInChunks<NewSec>(
-            newBudgetIds,
-            (chunk) => admin
-              .from("sections")
-              .select("id, budget_id, section_price")
-              .in("budget_id", chunk),
-            "new-sections-read",
-          );
-          const newSecIds = newSecs.map((s) => s.id);
-
-          type NewItem = { id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null };
-          const newItems = await selectInChunks<NewItem>(
-            newSecIds,
-            (chunk) => admin
-              .from("items")
-              .select("id, section_id, internal_unit_price, internal_total")
-              .in("section_id", chunk),
-            "new-items-read",
-          );
-
-          logCtx(`apply-financial: cloned ${clones.length} budgets · ${newItems.length} new items · ${newSecs.length} new sections · factor=${factor}`);
-
-          await runInChunks(newItems, 24, async (it) => {
-            try {
-              if (it.internal_unit_price && it.internal_unit_price > 0) {
-                const { error } = await admin
-                  .from("items")
-                  .update({ internal_unit_price: Number(it.internal_unit_price) * factor })
-                  .eq("id", it.id);
-                if (error) {
-                  updateErrors.push({ id: it.id, error: toError(error).message });
-                  return;
-                }
-                applied++;
-              } else if (it.internal_total && it.internal_total > 0) {
-                const { error } = await admin
-                  .from("items")
-                  .update({ internal_total: Number(it.internal_total) * factor })
-                  .eq("id", it.id);
-                if (error) {
-                  updateErrors.push({ id: it.id, error: toError(error).message });
-                  return;
-                }
-                applied++;
-              }
-            } catch (e) {
-              updateErrors.push({ id: it.id, error: toError(e).message });
-            }
+          const { data: rpcRes, error: rpcErr } = await admin.rpc("bulk_apply_factor_to_items", {
+            _budget_ids: newBudgetIds,
+            _factor: factor,
           });
-
-          const sectionsWithItems = new Set(newItems.map((i) => i.section_id));
-          const lumpSections = ((newSecs ?? []) as Array<{ id: string; section_price: number | null }>).filter(
-            (s) => !sectionsWithItems.has(s.id) && s.section_price && Number(s.section_price) > 0
-          );
-          await runInChunks(lumpSections, 24, async (s) => {
-            try {
-              const { error } = await admin
-                .from("sections")
-                .update({ section_price: Number(s.section_price) * factor })
-                .eq("id", s.id);
-              if (error) updateErrors.push({ id: s.id, error: toError(error).message });
-            } catch (e) {
-              updateErrors.push({ id: s.id, error: toError(e).message });
-            }
-          });
+          if (rpcErr) {
+            // Fallback para updates row-a-row se a RPC não existir (deploy anterior
+            // à migration). Isso garante backwards-compat durante rollout.
+            errCtx(`bulk_apply_factor_to_items RPC falhou (${rpcErr.message}) — fallback para updates por linha`);
+            type NewSec = { id: string; budget_id: string; section_price: number | null };
+            const newSecs = await selectInChunks<NewSec>(
+              newBudgetIds,
+              (chunk) => admin.from("sections").select("id, budget_id, section_price").in("budget_id", chunk),
+              "new-sections-read",
+            );
+            const newSecIds = newSecs.map((s) => s.id);
+            type NewItem = { id: string; section_id: string; internal_unit_price: number | null; internal_total: number | null };
+            const newItems = await selectInChunks<NewItem>(
+              newSecIds,
+              (chunk) => admin.from("items").select("id, section_id, internal_unit_price, internal_total").in("section_id", chunk),
+              "new-items-read",
+            );
+            await runInChunks(newItems, 24, async (it) => {
+              try {
+                if (it.internal_unit_price && it.internal_unit_price > 0) {
+                  const { error } = await admin.from("items").update({ internal_unit_price: Number(it.internal_unit_price) * factor }).eq("id", it.id);
+                  if (error) updateErrors.push({ id: it.id, error: toError(error).message });
+                  else applied++;
+                } else if (it.internal_total && it.internal_total > 0) {
+                  const { error } = await admin.from("items").update({ internal_total: Number(it.internal_total) * factor }).eq("id", it.id);
+                  if (error) updateErrors.push({ id: it.id, error: toError(error).message });
+                  else applied++;
+                }
+              } catch (e) { updateErrors.push({ id: it.id, error: toError(e).message }); }
+            });
+            const sectionsWithItems = new Set(newItems.map((i) => i.section_id));
+            const lumpSections = ((newSecs ?? []) as Array<{ id: string; section_price: number | null }>).filter(
+              (s) => !sectionsWithItems.has(s.id) && s.section_price && Number(s.section_price) > 0
+            );
+            await runInChunks(lumpSections, 24, async (s) => {
+              try {
+                const { error } = await admin.from("sections").update({ section_price: Number(s.section_price) * factor }).eq("id", s.id);
+                if (error) updateErrors.push({ id: s.id, error: toError(error).message });
+              } catch (e) { updateErrors.push({ id: s.id, error: toError(e).message }); }
+            });
+          } else {
+            const r = (Array.isArray(rpcRes) ? rpcRes[0] : rpcRes) as { items_updated?: number; lump_sections_updated?: number } | null;
+            const itemsUpdated = Number(r?.items_updated ?? 0);
+            const lumpUpdated = Number(r?.lump_sections_updated ?? 0);
+            applied = clones.length;
+            logCtx(`apply-financial: cloned=${clones.length} items_updated=${itemsUpdated} lump_updated=${lumpUpdated} factor=${factor}`);
+          }
+          await updateProgress(clones.length, "events");
 
           if (updateErrors.length > 0) {
             errCtx(`apply-financial: ${updateErrors.length} updates falharam`, updateErrors.slice(0, 5));
@@ -1208,23 +1339,49 @@ serve(async (req) => {
             status: "applied",
             snapshot,
             applied_at: new Date().toISOString(),
+            progress_done: ids.length,
+            progress_phase: "done",
+            heartbeat_at: new Date().toISOString(),
           })
           .eq("id", opId);
       } catch (e) {
         const normalized = toError(e);
         await admin
           .from("ai_bulk_operations")
-          .update({ status: "failed", error_message: normalized.message })
+          .update({ status: "failed", error_message: normalized.message, progress_phase: "failed", heartbeat_at: new Date().toISOString() })
           .eq("id", opId);
-        throw normalized;
+        if (!runInBackground) throw normalized;
+        // Em modo background não relançamos: o cliente lê o erro via /status.
+        errCtx(`background apply failed: ${normalized.message}`);
       }
+      return { applied, updateErrors };
+      };
+
+      // Modo background: devolve imediatamente; cliente faz polling em /status.
+      if (runInBackground) {
+        // @ts-ignore EdgeRuntime existe no runtime Deno do Supabase
+        const ert = (globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } }).EdgeRuntime;
+        const work = doApply();
+        if (ert?.waitUntil) ert.waitUntil(work); else void work;
+        return jsonResponse({
+          ok: true,
+          operation_id: opId,
+          background: true,
+          message: `Operação iniciada em background (${ids.length} orçamentos). Acompanhe pelo polling de status.`,
+          poll_interval_ms: 2000,
+        });
+      }
+
+      // Modo síncrono (≤ BACKGROUND_THRESHOLD)
+      const result = await doApply();
+      applied = result.applied;
 
       return jsonResponse({
         ok: true,
         operation_id: opId,
         applied_count: applied,
-        partial_failures: updateErrors.length,
-        ...(updateErrors.length > 0 ? { failure_sample: updateErrors.slice(0, 3) } : {}),
+        partial_failures: result.updateErrors.length,
+        ...(result.updateErrors.length > 0 ? { failure_sample: result.updateErrors.slice(0, 3) } : {}),
       });
     }
 

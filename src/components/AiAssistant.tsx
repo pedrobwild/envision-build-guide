@@ -313,7 +313,32 @@ export function AiAssistant() {
     const interval = window.setInterval(tick, 400);
 
     try {
-      const res = await applyBulk(opId);
+      // Quando o backend rodar em background, recebemos progresso real via
+      // polling em onProgress — nesse caso o tick estimativo é desligado.
+      let realProgressActive = false;
+      const res = await applyBulk(opId, (p) => {
+        if (!realProgressActive) {
+          realProgressActive = true;
+          window.clearInterval(interval);
+        }
+        setMessages((prev) =>
+          prev.map((it, i) =>
+            i === msgIndex && it.bulkOp && it.bulkOp.status === "pending"
+              ? {
+                  ...it,
+                  bulkOp: {
+                    ...it.bulkOp,
+                    progress: {
+                      processed: p.done,
+                      total: p.total || estimatedTotal,
+                      estimated: false,
+                    },
+                  },
+                }
+              : it,
+          ),
+        );
+      });
       const partial = res.partial_failures ?? 0;
       setMessages((prev) =>
         prev.map((it, i) =>
