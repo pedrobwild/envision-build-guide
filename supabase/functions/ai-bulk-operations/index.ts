@@ -227,13 +227,15 @@ async function buildFinancialPlan(
   const rows: PlanRow[] = [];
   const ids = budgets.map((b) => b.id);
 
-  const { data: sectionsRaw, error: secErr } = await admin
-    .from("sections")
-    .select("id, budget_id, qty, section_price")
-    .in("budget_id", ids);
-  if (secErr) throw toError(secErr, "sections");
   type Section = { id: string; budget_id: string; qty: number | null; section_price: number | null };
-  const sections = (sectionsRaw ?? []) as Section[];
+  const sections = await selectInChunks<Section>(
+    ids,
+    (chunk) => admin
+      .from("sections")
+      .select("id, budget_id, qty, section_price")
+      .in("budget_id", chunk),
+    "sections",
+  );
 
   const sectionsByBudget = new Map<string, Section[]>();
   for (const s of sections) {
@@ -244,15 +246,14 @@ async function buildFinancialPlan(
 
   const sectionIds = sections.map((s) => s.id);
   type Item = { id: string; section_id: string; qty: number | null; internal_unit_price: number | null; internal_total: number | null; bdi_percentage: number | null };
-  let items: Item[] = [];
-  if (sectionIds.length) {
-    const { data: itemsRaw, error: itemsErr } = await admin
+  const items = await selectInChunks<Item>(
+    sectionIds,
+    (chunk) => admin
       .from("items")
       .select("id, section_id, qty, internal_unit_price, internal_total, bdi_percentage")
-      .in("section_id", sectionIds);
-    if (itemsErr) throw toError(itemsErr, "items");
-    items = (itemsRaw ?? []) as Item[];
-  }
+      .in("section_id", chunk),
+    "items",
+  );
 
   const itemsBySection = new Map<string, Item[]>();
   for (const it of items) {
