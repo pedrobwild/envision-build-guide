@@ -86,15 +86,33 @@ interface PlanRow {
   protected: boolean;
 }
 
+// Per-request correlation context (set inside the handler before any response).
+let _currentRequestId = "";
+function setRequestId(id: string) { _currentRequestId = id; }
+
 function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  const payload = body && typeof body === "object" && !Array.isArray(body)
+    ? { request_id: _currentRequestId, ...(body as Record<string, unknown>) }
+    : body;
+  return new Response(JSON.stringify(payload), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+      "x-request-id": _currentRequestId,
+    },
   });
 }
 
 function errorResponse(message: string, status = 400) {
   return jsonResponse({ error: message }, status);
+}
+
+function logCtx(...parts: unknown[]) {
+  console.log(`[ai-bulk-operations][req=${_currentRequestId}]`, ...parts);
+}
+function errCtx(...parts: unknown[]) {
+  console.error(`[ai-bulk-operations][req=${_currentRequestId}]`, ...parts);
 }
 
 /** Normalize any thrown value (PostgrestError, plain object, string) to an Error. */
