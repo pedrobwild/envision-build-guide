@@ -38,6 +38,15 @@ Quando o admin perguntar sobre **dados reais** (contagens, médias, totais, evol
 - "quantos orçamentos por status este mês" → metric=\`count\`, group_by=\`internal_status\`, days=30.
 - "valor total fechado em abril" → metric=\`sum_internal_cost\` ou \`sum_manual_total\`, internal_statuses=[contrato_fechado], date range.
 - "ranking de comercial por orçamentos publicados" → metric=\`count\`, group_by=\`commercial_owner\`, internal_statuses=[published, minuta_solicitada, contrato_fechado].
+- "contratos assinados na semana" → metric=\`count\`, date_field=\`approved_at\`, internal_statuses=[contrato_fechado], days=7.
+- "orçamentos vencendo nos próximos 7 dias" → metric=\`count\`, date_field=\`due_at\`, days=7 (com from=hoje).
+
+**Escolha do \`date_field\`** (crítico para precisão):
+- "novas solicitações", "leads recebidos", "criados", "entraram" → \`created_at\`
+- "aprovados", "fechados", "ganhos", "contratos assinados" → \`approved_at\`
+- "perdidos", "encerrados" (sem distinção) → \`closed_at\`
+- "vencendo", "prazo", "atrasados", "a vencer" → \`due_at\`
+- Quando ambíguo → \`created_at\`.
 
 **SEMPRE chame a ferramenta antes de responder com números.** Nunca invente métricas. Se a ferramenta não estiver disponível (usuário não-admin), explique educadamente e indique a página relevante (\`/admin\`, \`/admin/analises\`, \`/admin/comercial\`).
 
@@ -105,7 +114,13 @@ const ANALYTICS_TOOL = {
         date_field: {
           type: "string",
           enum: ["created_at", "approved_at", "closed_at", "due_at"],
-          description: "Campo de data usado nos filtros e agrupamentos temporais. Padrão: created_at.",
+          description:
+            "Campo de data usado nos filtros e agrupamentos temporais. Mapeamento semântico: " +
+            "'novas solicitações' / 'leads recebidos' / 'criados' → created_at; " +
+            "'aprovados' / 'fechados' / 'ganhos' / 'contratos assinados' → approved_at (ou closed_at se contexto for encerramento geral, incluindo perdas); " +
+            "'perdidos' / 'encerrados' (sem distinção win/loss) → closed_at; " +
+            "'vencendo' / 'prazo' / 'a vencer' / 'atrasados' → due_at. " +
+            "Padrão quando ambíguo: created_at.",
         },
         days: {
           type: "number",
