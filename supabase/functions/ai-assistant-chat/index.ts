@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { toArrayBuffer } from "../_shared/bytes.ts";
 
 const corsHeaders = {
@@ -6,6 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const TODAY_HINT = () => new Date().toISOString().slice(0, 10);
 
 const SYSTEM_PROMPT = `Você é o **Assistente BWild**, especialista no projeto **orcamento-bwild** — plataforma da BWild Engine para gestão de orçamentos de reformas residenciais de alto padrão em São Paulo.
 
@@ -19,19 +22,28 @@ Responda **SEMPRE em português brasileiro (pt-BR)**, mesmo que a pergunta venha
 - **Dashboard Admin**: KPIs por internal_status, funil duplo, backlog aging, alertas operacionais, forecast.
 - **Catálogo**: produtos e prestadores, fornecedores, histórico de preços, alertas de variação.
 - **CRM de Clientes**: múltiplos imóveis (client_properties), visões salvas, ações em massa, inline edit com undo.
-- **Workspace de Produção**: orçamentista gerencia backlog, briefing, plantas, mídias.
 
 # Status internos (internal_status)
 \`novo\`, \`em_analise\`, \`waiting_info\` (Aguardando), \`em_revisao\`, \`revision_requested\`, \`delivered_to_sales\` (Entregue), \`published\`, \`minuta_solicitada\`, \`contrato_fechado\`, \`perdido\`.
 
+# Etapas de pipeline (pipeline_stage)
+\`lead\`, \`briefing\`, \`visita\`, \`proposta\`, \`negociacao\`.
+
 # Papéis (RBAC)
 \`admin\` (visão global), \`comercial\` (carteira + leads sem dono), \`orcamentista\` (produção).
 
-# Integrações
-Digisac (WhatsApp), HubSpot (deals), Meta Ads (lead webhook), Elephan (reuniões), Lovable Cloud (Supabase).
+# Consultas analíticas (somente admin)
+Quando o admin perguntar sobre **dados reais** (contagens, médias, totais, evolução, ranking, comparativos), use a ferramenta \`query_analytics\`. Exemplos do que ela responde:
+- "média diária de novas solicitações nos últimos 7 dias" → metric=\`count\`, group_by=\`day\`, date_field=\`created_at\`, days=7 (depois calcule média = total/dias).
+- "quantos orçamentos por status este mês" → metric=\`count\`, group_by=\`internal_status\`, days=30.
+- "valor total fechado em abril" → metric=\`sum_internal_cost\` ou \`sum_manual_total\`, internal_statuses=[contrato_fechado], date range.
+- "ranking de comercial por orçamentos publicados" → metric=\`count\`, group_by=\`commercial_owner\`, internal_statuses=[published, minuta_solicitada, contrato_fechado].
 
-# Stack técnico
-React 18 + Vite + TypeScript + Tailwind + shadcn/ui + Supabase (RLS + Edge Functions Deno) + React Query + Framer Motion.
+**SEMPRE chame a ferramenta antes de responder com números.** Nunca invente métricas. Se a ferramenta não estiver disponível (usuário não-admin), explique educadamente e indique a página relevante (\`/admin\`, \`/admin/analises\`, \`/admin/comercial\`).
+
+Após receber o resultado, formate a resposta de forma clara: tabelas markdown para rankings/agrupamentos, frases diretas para totais simples. Sempre inclua o **período analisado** e, quando relevante, a **média e o total**.
+
+Hoje é ${TODAY_HINT()} (use como referência para "hoje", "ontem", "esta semana").
 
 # Análise de arquivos
 Quando o usuário enviar arquivos (PDFs, imagens, planilhas, documentos, áudios), você recebe:
@@ -41,7 +53,7 @@ Quando o usuário enviar arquivos (PDFs, imagens, planilhas, documentos, áudios
 Ao receber arquivos, faça nesta ordem:
 1. **Resuma em 1-2 linhas** o que é o arquivo.
 2. **Responda à pergunta do usuário** com base no conteúdo. Se não houver pergunta, ofereça insights úteis (valores totais, escopo, divergências, riscos).
-3. **Sugira 3-5 próximas ações** específicas do contexto BWild (ex.: "criar orçamento com esses itens", "abrir cliente X no CRM", "comparar com template Y", "marcar como aguardando_info").
+3. **Sugira 3-5 próximas ações** específicas do contexto BWild.
 4. Use markdown (listas, tabelas, \`código\`) para clareza.
 
 # Diretrizes gerais
@@ -49,14 +61,236 @@ Ao receber arquivos, faça nesta ordem:
 2. **Markdown** para listas, código (\`\`\`tsx), tabelas e ênfase.
 3. **Seja específico**: cite páginas reais (\`/admin/comercial\`), componentes (\`BudgetEditorV2\`), tabelas (\`budgets\`) quando relevante.
 4. **Respostas curtas por padrão**; expanda apenas se pedirem detalhes.
-5. **Não invente** rotas, tabelas ou features. Se não souber, diga.
-6. **Copy para clientes**: tom premium, claro, sem jargão técnico.
-7. **Privacidade**: nunca exponha custos internos, BDI ou margem em textos voltados ao cliente final.`;
+5. **Não invente** rotas, tabelas, features ou números. Se não souber, diga.
+6. **Privacidade**: nunca exponha custos internos, BDI ou margem em textos voltados ao cliente final.`;
 
+// =============== Tool definition (analytics) ===============
+const ANALYTICS_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "query_analytics",
+    description:
+      "Consulta agregada da tabela 'budgets'. Use sempre que o admin perguntar sobre números reais (contagens, médias, totais, agrupamentos). Aplica RLS automaticamente — só admin pode usar.",
+    parameters: {
+      type: "object",
+      properties: {
+        metric: {
+          type: "string",
+          enum: ["count", "sum_internal_cost", "sum_manual_total", "avg_internal_cost"],
+          description:
+            "count = contagem de orçamentos. sum_* / avg_* = somatório/média do campo numérico.",
+        },
+        group_by: {
+          type: "string",
+          enum: [
+            "none",
+            "day",
+            "week",
+            "month",
+            "internal_status",
+            "pipeline_stage",
+            "commercial_owner",
+            "estimator_owner",
+            "lead_source",
+          ],
+          description:
+            "Agrupamento. 'none' = total único. 'day'/'week'/'month' = série temporal por data. 'commercial_owner'/'estimator_owner' retornam nome do responsável.",
+        },
+        date_field: {
+          type: "string",
+          enum: ["created_at", "approved_at", "closed_at", "due_at"],
+          description: "Campo de data usado nos filtros e agrupamentos temporais. Padrão: created_at.",
+        },
+        days: {
+          type: "number",
+          description:
+            "Janela em dias contados a partir de hoje (ex.: 7 = últimos 7 dias). Use isto OU date_from/date_to.",
+        },
+        date_from: { type: "string", description: "Data ISO YYYY-MM-DD inclusive." },
+        date_to: { type: "string", description: "Data ISO YYYY-MM-DD inclusive." },
+        internal_statuses: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Filtra por status interno. Ex.: ['contrato_fechado'], ['published','minuta_solicitada'].",
+        },
+        pipeline_stages: {
+          type: "array",
+          items: { type: "string" },
+          description: "Filtra por etapa do pipeline. Ex.: ['negociacao','proposta'].",
+        },
+        limit: {
+          type: "number",
+          description: "Limite de linhas para agrupamentos (padrão 30, máx 100).",
+        },
+      },
+      required: ["metric", "group_by"],
+    },
+  },
+};
+
+// =============== Helpers ===============
+function dateRangeFromArgs(args: Record<string, unknown>): { from: string | null; to: string | null } {
+  const days = typeof args.days === "number" ? args.days : null;
+  const dateFrom = typeof args.date_from === "string" ? args.date_from : null;
+  const dateTo = typeof args.date_to === "string" ? args.date_to : null;
+  if (dateFrom || dateTo) return { from: dateFrom, to: dateTo };
+  if (days && days > 0) {
+    const to = new Date();
+    const from = new Date(Date.now() - days * 86400_000);
+    return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+  }
+  return { from: null, to: null };
+}
+
+async function runAnalytics(
+  args: Record<string, unknown>,
+  admin: ReturnType<typeof createClient>,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const metric = String(args.metric ?? "count");
+  const groupBy = String(args.group_by ?? "none");
+  const dateField = String(args.date_field ?? "created_at");
+  const limit = Math.min(Number(args.limit ?? 30) || 30, 100);
+  const { from, to } = dateRangeFromArgs(args);
+  const internalStatuses = Array.isArray(args.internal_statuses) ? args.internal_statuses : null;
+  const pipelineStages = Array.isArray(args.pipeline_stages) ? args.pipeline_stages : null;
+
+  const selectFields = [
+    "id",
+    "created_at",
+    "approved_at",
+    "closed_at",
+    "due_at",
+    "internal_status",
+    "pipeline_stage",
+    "commercial_owner_id",
+    "estimator_owner_id",
+    "lead_source",
+    "internal_cost",
+    "manual_total",
+  ].join(",");
+
+  let q = admin.from("budgets").select(selectFields, { count: "exact" });
+
+  if (from) q = q.gte(dateField, `${from}T00:00:00Z`);
+  if (to) q = q.lte(dateField, `${to}T23:59:59Z`);
+  if (internalStatuses && internalStatuses.length > 0) q = q.in("internal_status", internalStatuses as string[]);
+  if (pipelineStages && pipelineStages.length > 0) q = q.in("pipeline_stage", pipelineStages as string[]);
+
+  // Apply a hard cap on rows we pull (covers worst case)
+  q = q.limit(5000);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await q as any;
+  if (error) return { ok: false, error: error.message };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = (data ?? []) as any[];
+
+  // Resolve owner names if needed
+  let nameMap: Record<string, string> = {};
+  if (groupBy === "commercial_owner" || groupBy === "estimator_owner") {
+    const ids = Array.from(
+      new Set(
+        rows
+          .map((r) => (groupBy === "commercial_owner" ? r.commercial_owner_id : r.estimator_owner_id))
+          .filter(Boolean),
+      ),
+    );
+    if (ids.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: profs } = await (admin.from("profiles").select("id, full_name").in("id", ids) as any);
+      nameMap = Object.fromEntries((profs ?? []).map((p: { id: string; full_name: string | null }) => [p.id, p.full_name || "—"]));
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const valueOf = (r: any): number => {
+    if (metric === "count") return 1;
+    if (metric === "sum_internal_cost" || metric === "avg_internal_cost") return Number(r.internal_cost ?? 0);
+    if (metric === "sum_manual_total") return Number(r.manual_total ?? 0);
+    return 0;
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const keyOf = (r: any): string => {
+    if (groupBy === "none") return "total";
+    if (groupBy === "internal_status") return r.internal_status ?? "—";
+    if (groupBy === "pipeline_stage") return r.pipeline_stage ?? "—";
+    if (groupBy === "lead_source") return r.lead_source ?? "—";
+    if (groupBy === "commercial_owner") return nameMap[r.commercial_owner_id] ?? "Sem responsável";
+    if (groupBy === "estimator_owner") return nameMap[r.estimator_owner_id] ?? "Sem responsável";
+    const raw = r[dateField];
+    if (!raw) return "—";
+    const d = new Date(raw);
+    if (groupBy === "day") return d.toISOString().slice(0, 10);
+    if (groupBy === "month") return d.toISOString().slice(0, 7);
+    if (groupBy === "week") {
+      // ISO week start (Monday)
+      const dt = new Date(d);
+      const day = (dt.getUTCDay() + 6) % 7;
+      dt.setUTCDate(dt.getUTCDate() - day);
+      return dt.toISOString().slice(0, 10);
+    }
+    return "—";
+  };
+
+  // Aggregate
+  const buckets = new Map<string, { sum: number; n: number }>();
+  for (const r of rows) {
+    const k = keyOf(r);
+    const v = valueOf(r);
+    const b = buckets.get(k) ?? { sum: 0, n: 0 };
+    b.sum += v;
+    b.n += 1;
+    buckets.set(k, b);
+  }
+
+  const finalize = (sum: number, n: number) => {
+    if (metric === "count") return n;
+    if (metric === "avg_internal_cost") return n > 0 ? Math.round((sum / n) * 100) / 100 : 0;
+    return Math.round(sum * 100) / 100;
+  };
+
+  let series = Array.from(buckets.entries()).map(([key, { sum, n }]) => ({
+    key,
+    value: finalize(sum, n),
+    rows: n,
+  }));
+
+  // Order: temporal asc, otherwise value desc
+  if (["day", "week", "month"].includes(groupBy)) {
+    series.sort((a, b) => a.key.localeCompare(b.key));
+  } else {
+    series.sort((a, b) => b.value - a.value);
+  }
+  series = series.slice(0, limit);
+
+  const grandSum = rows.reduce((acc, r) => acc + valueOf(r), 0);
+  const totalRows = rows.length;
+
+  return {
+    ok: true,
+    result: {
+      metric,
+      group_by: groupBy,
+      date_field: dateField,
+      filters: { from, to, internal_statuses: internalStatuses, pipeline_stages: pipelineStages },
+      total_rows_matched: totalRows,
+      grand_total: finalize(grandSum, totalRows),
+      avg_per_bucket:
+        series.length > 0
+          ? Math.round((series.reduce((a, b) => a + b.value, 0) / series.length) * 100) / 100
+          : 0,
+      series,
+      truncated: totalRows >= 5000,
+    },
+  };
+}
+
+// =============== Attachment processing (unchanged) ===============
 type Attachment = {
   name: string;
   mimeType: string;
-  // Either dataUrl (for images, sent as-is) or base64 (for files we need to extract)
   dataUrl?: string;
   base64?: string;
 };
@@ -67,9 +301,9 @@ type IncomingMessage = {
   attachments?: Attachment[];
 };
 
-const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB
-const MAX_TOTAL_BYTES = 40 * 1024 * 1024; // 40MB total per request
-const MAX_EXTRACTED_CHARS = 60_000; // ~15k tokens cap per file
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 40 * 1024 * 1024;
+const MAX_EXTRACTED_CHARS = 60_000;
 
 function base64ToBytes(b64: string): Uint8Array {
   const bin = atob(b64);
@@ -84,7 +318,6 @@ function truncate(text: string, max = MAX_EXTRACTED_CHARS): string {
 }
 
 async function extractPdfText(bytes: Uint8Array): Promise<string> {
-  // unpdf works in Deno without native deps
   const { extractText, getDocumentProxy } = await import("https://esm.sh/unpdf@0.12.1");
   const pdf = await getDocumentProxy(bytes);
   const { text } = await extractText(pdf, { mergePages: true });
@@ -138,7 +371,6 @@ async function processAttachment(
 ): Promise<{ kind: "image"; dataUrl: string } | { kind: "text"; text: string }> {
   const mime = att.mimeType.toLowerCase();
 
-  // Images → multimodal vision input
   if (mime.startsWith("image/")) {
     const dataUrl = att.dataUrl ?? `data:${mime};base64,${att.base64}`;
     return { kind: "image", dataUrl };
@@ -150,10 +382,7 @@ async function processAttachment(
 
   const bytes = base64ToBytes(att.base64);
   if (bytes.length > MAX_FILE_BYTES) {
-    return {
-      kind: "text",
-      text: `[Arquivo: ${att.name}] (excede 20MB — não foi processado)`,
-    };
+    return { kind: "text", text: `[Arquivo: ${att.name}] (excede 20MB — não foi processado)` };
   }
 
   try {
@@ -181,10 +410,7 @@ async function processAttachment(
     } else if (mime.startsWith("text/") || /\.(txt|md|json|csv|log)$/i.test(att.name)) {
       extracted = new TextDecoder().decode(bytes);
     } else {
-      return {
-        kind: "text",
-        text: `[Arquivo: ${att.name}] (tipo não suportado: ${mime})`,
-      };
+      return { kind: "text", text: `[Arquivo: ${att.name}] (tipo não suportado: ${mime})` };
     }
 
     extracted = (extracted || "").trim();
@@ -216,7 +442,6 @@ async function buildOpenAIMessages(messages: IncomingMessage[], apiKey: string) 
       continue;
     }
 
-    // Validate total size
     const totalBytes = msg.attachments.reduce((acc, a) => {
       const b64len = (a.base64 ?? a.dataUrl?.split(",")[1] ?? "").length;
       return acc + Math.floor((b64len * 3) / 4);
@@ -232,9 +457,7 @@ async function buildOpenAIMessages(messages: IncomingMessage[], apiKey: string) 
     }
 
     const parts: Array<Record<string, unknown>> = [];
-    if (msg.content?.trim()) {
-      parts.push({ type: "text", text: msg.content });
-    }
+    if (msg.content?.trim()) parts.push({ type: "text", text: msg.content });
 
     for (const att of msg.attachments) {
       const processed = await processAttachment(att, apiKey);
@@ -245,9 +468,7 @@ async function buildOpenAIMessages(messages: IncomingMessage[], apiKey: string) 
       }
     }
 
-    if (parts.length === 0) {
-      parts.push({ type: "text", text: "(mensagem vazia com anexos)" });
-    }
+    if (parts.length === 0) parts.push({ type: "text", text: "(mensagem vazia com anexos)" });
 
     out.push({ role: msg.role, content: parts });
   }
@@ -255,6 +476,30 @@ async function buildOpenAIMessages(messages: IncomingMessage[], apiKey: string) 
   return out;
 }
 
+// =============== Auth helper ===============
+async function resolveUserAndRole(
+  authHeader: string | null,
+  supabaseUrl: string,
+  serviceKey: string,
+): Promise<{ userId: string | null; isAdmin: boolean; admin: ReturnType<typeof createClient> }> {
+  const admin = createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  if (!authHeader?.startsWith("Bearer ")) return { userId: null, isAdmin: false, admin };
+  const token = authHeader.slice("Bearer ".length).trim();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: { user } } = await (admin.auth.getUser(token) as any);
+  if (!user) return { userId: null, isAdmin: false, admin };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: roles } = await (admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id) as any);
+  const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+  return { userId: user.id, isAdmin, admin };
+}
+
+// =============== Server ===============
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -262,6 +507,9 @@ serve(async (req) => {
 
   try {
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
     if (!OPENAI_API_KEY) {
       return new Response(
         JSON.stringify({ error: "OPENAI_API_KEY not configured" }),
@@ -277,13 +525,98 @@ serve(async (req) => {
       );
     }
 
+    const { isAdmin, admin } = await resolveUserAndRole(
+      req.headers.get("authorization"),
+      supabaseUrl,
+      serviceKey,
+    );
+
     const hasAttachments = messages.some((m) => m.attachments && m.attachments.length > 0);
-    const openaiMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY);
+    const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY);
 
-    // Use a vision-capable model when attachments are present
-    const model = hasAttachments ? "gpt-4o" : "gpt-4o-mini";
+    // Vision-capable model when needed; gpt-4o for tools (better at structured calls)
+    const model = hasAttachments || isAdmin ? "gpt-4o" : "gpt-4o-mini";
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // ===== Tool-calling loop (max 3 rounds) =====
+    const conversation = [...baseMessages];
+    const tools = isAdmin ? [ANALYTICS_TOOL] : undefined;
+
+    for (let round = 0; round < 3; round++) {
+      const planResp = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: conversation,
+          temperature: 0.3,
+          tools,
+          tool_choice: tools ? "auto" : undefined,
+          stream: false,
+        }),
+      });
+
+      if (!planResp.ok) {
+        const errText = await planResp.text();
+        console.error("OpenAI error (plan):", planResp.status, errText);
+        const userMsg =
+          planResp.status === 429
+            ? "Rate limit excedido. Tente novamente em alguns instantes."
+            : planResp.status === 401
+              ? "Chave OpenAI inválida ou expirada."
+              : "Falha ao chamar OpenAI";
+        return new Response(JSON.stringify({ error: userMsg }), {
+          status: planResp.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const planJson = await planResp.json();
+      const choice = planJson.choices?.[0];
+      const toolCalls = choice?.message?.tool_calls;
+
+      if (!toolCalls || toolCalls.length === 0) {
+        // No tools needed — stream the final answer
+        break;
+      }
+
+      // Push the assistant turn that requested the tools
+      conversation.push(choice.message);
+
+      // Execute each tool
+      for (const call of toolCalls) {
+        const name = call.function?.name;
+        let argsObj: Record<string, unknown> = {};
+        try {
+          argsObj = JSON.parse(call.function?.arguments ?? "{}");
+        } catch {
+          argsObj = {};
+        }
+
+        let toolOutput: unknown;
+        if (name === "query_analytics") {
+          if (!isAdmin) {
+            toolOutput = { ok: false, error: "Apenas administradores podem consultar analytics." };
+          } else {
+            toolOutput = await runAnalytics(argsObj, admin);
+          }
+        } else {
+          toolOutput = { ok: false, error: `Ferramenta desconhecida: ${name}` };
+        }
+
+        conversation.push({
+          role: "tool",
+          tool_call_id: call.id,
+          content: JSON.stringify(toolOutput),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
+      }
+    }
+
+    // ===== Final streamed response =====
+    const finalResp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
@@ -291,34 +624,22 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model,
-        messages: openaiMessages,
-        stream: true,
+        messages: conversation,
         temperature: 0.4,
+        stream: true,
       }),
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("OpenAI error:", response.status, errText);
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit excedido. Tente novamente em alguns instantes." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      if (response.status === 401) {
-        return new Response(
-          JSON.stringify({ error: "Chave OpenAI inválida ou expirada." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
+    if (!finalResp.ok) {
+      const errText = await finalResp.text();
+      console.error("OpenAI error (final):", finalResp.status, errText);
       return new Response(
-        JSON.stringify({ error: "Falha ao chamar OpenAI" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({ error: "Falha ao gerar resposta final" }),
+        { status: finalResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    return new Response(response.body, {
+    return new Response(finalResp.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (err) {
