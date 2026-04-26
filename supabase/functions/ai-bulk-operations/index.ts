@@ -1136,7 +1136,11 @@ serve(async (req) => {
         .update({ status: "reverted", reverted_at: new Date().toISOString(), reverted_by: userId })
         .eq("id", opId);
 
-      return jsonResponse({ ok: true, operation_id: opId });
+      return jsonResponse({
+        ok: true,
+        operation_id: opId,
+        ...(revertSkipped.length > 0 ? { skipped: revertSkipped, skipped_count: revertSkipped.length } : {}),
+      });
     }
 
     return errorResponse("Ação inválida.");
