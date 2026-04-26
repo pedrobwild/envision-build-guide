@@ -115,6 +115,28 @@ function errCtx(...parts: unknown[]) {
   console.error(`[ai-bulk-operations][req=${_currentRequestId}]`, ...parts);
 }
 
+/**
+ * PostgREST rejects very long URLs (status 400 "Bad Request" with no body details)
+ * when an `.in("col", values)` filter contains thousands of UUIDs. We chunk the
+ * IN-list and merge the results to stay safely under the URL length limit.
+ */
+const IN_CHUNK_SIZE = 200;
+async function selectInChunks<T>(
+  values: string[],
+  runChunk: (chunk: string[]) => Promise<{ data: T[] | null; error: unknown }>,
+  label: string,
+): Promise<T[]> {
+  if (values.length === 0) return [];
+  const out: T[] = [];
+  for (let i = 0; i < values.length; i += IN_CHUNK_SIZE) {
+    const chunk = values.slice(i, i + IN_CHUNK_SIZE);
+    const { data, error } = await runChunk(chunk);
+    if (error) throw toError(error, label);
+    if (data && data.length) out.push(...data);
+  }
+  return out;
+}
+
 /** Normalize any thrown value (PostgrestError, plain object, string) to an Error. */
 function toError(e: unknown, prefix = ""): Error {
   if (e instanceof Error) return prefix ? new Error(`${prefix}: ${e.message}`) : e;
