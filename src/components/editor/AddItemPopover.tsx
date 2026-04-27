@@ -41,6 +41,13 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
   const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [selecting, setSelecting] = useState<string | null>(null);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [promptSuggestion, setPromptSuggestion] = useState<{
+    title: string;
+    description: string | null;
+    unit: string | null;
+    internal_unit_price: number | null;
+  } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
