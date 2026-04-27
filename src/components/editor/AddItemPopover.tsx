@@ -32,10 +32,12 @@ interface AddItemResult {
 
 interface Props {
   sectionTitle: string;
-  onAddItem: (item: AddItemResult) => void;
+  onAddItem: (item: AddItemResult) => Promise<string | null> | string | null | void;
+  /** Called after the catalog prompt creates a catalog item. Lets the editor link the just-inserted budget row. */
+  onLinkCatalog?: (insertedRowId: string, catalogItemId: string) => void | Promise<void>;
 }
 
-export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
+export function AddItemPopover({ sectionTitle, onAddItem, onLinkCatalog }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([]);
@@ -49,6 +51,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
     internal_unit_price: number | null;
   } | null>(null);
   const [manualPrice, setManualPrice] = useState("");
+  const [pendingRowId, setPendingRowId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
@@ -142,21 +145,24 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
     setSelecting(null);
   };
 
-  const handleAddManual = () => {
+  const handleAddManual = async () => {
     const title = search.trim() || "Novo Item";
     const parsedPrice = parseFloat(manualPrice.replace(",", "."));
     const priceVal = !Number.isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : null;
 
-    onAddItem({
-      title,
-      description: null,
-      unit: null,
-      qty: priceVal != null ? 1 : null,
-      internal_unit_price: priceVal,
-      internal_total: priceVal,
-      catalog_item_id: null,
-      catalog_snapshot: null,
-    });
+    const insertedId = await Promise.resolve(
+      onAddItem({
+        title,
+        description: null,
+        unit: null,
+        qty: priceVal != null ? 1 : null,
+        internal_unit_price: priceVal,
+        internal_total: priceVal,
+        catalog_item_id: null,
+        catalog_snapshot: null,
+      }),
+    );
+    setPendingRowId(typeof insertedId === "string" ? insertedId : null);
     setOpen(false);
 
     // Offer to add this manual item to the global catalog for reuse
@@ -289,9 +295,17 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
     </Popover>
     <AddToCatalogPromptDialog
       open={promptOpen}
-      onOpenChange={setPromptOpen}
+      onOpenChange={(next) => {
+        setPromptOpen(next);
+        if (!next) setPendingRowId(null);
+      }}
       suggested={promptSuggestion}
       sectionTitle={sectionTitle}
+      onCreated={(catalogItemId) => {
+        if (pendingRowId && onLinkCatalog) {
+          void onLinkCatalog(pendingRowId, catalogItemId);
+        }
+      }}
     />
     </>
   );

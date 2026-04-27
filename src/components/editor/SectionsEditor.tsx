@@ -998,8 +998,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     internal_total: number | null;
     catalog_item_id: string | null;
     catalog_snapshot: Record<string, unknown> | null;
-  }) => {
-    if (readOnly) return;
+  }): Promise<string | null> => {
+    if (readOnly) return null;
     const section = sections.find(s => s.id === sectionId);
     const order = section?.items.length || 0;
 
@@ -1026,7 +1026,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       .single();
     if (insertError) {
       toast.error(`Erro ao adicionar item: ${insertError.message}`);
-      return;
+      return null;
     }
     if (data) {
       let itemImages: { id?: string; url: string; is_primary: boolean | null }[] = [];
@@ -1056,7 +1056,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       onSectionsChange(updated);
       const origin = itemData?.catalog_item_id ? "Item do catálogo adicionado" : "Item manual adicionado";
       toast.success(origin);
+      return data.id as string;
     }
+    return null;
   };
 
   const deleteItem = async (sectionId: string, itemId: string) => {
@@ -1572,6 +1574,26 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                             <AddItemPopover
                               sectionTitle={section.title}
                               onAddItem={(itemData) => addItem(section.id, itemData)}
+                              onLinkCatalog={async (rowId, catalogItemId) => {
+                                if (cfg.disableCatalog || !rowId) return;
+                                await dbFrom(cfg.itemTable)
+                                  .update({ catalog_item_id: catalogItemId })
+                                  .eq("id", rowId);
+                                onSectionsChange(
+                                  sections.map((s) =>
+                                    s.id !== section.id
+                                      ? s
+                                      : {
+                                          ...s,
+                                          items: s.items.map((it) =>
+                                            it.id === rowId
+                                              ? ({ ...it, catalog_item_id: catalogItemId } as ItemData)
+                                              : it,
+                                          ),
+                                        },
+                                  ),
+                                );
+                              }}
                             />
                           </div>
                         </div>
