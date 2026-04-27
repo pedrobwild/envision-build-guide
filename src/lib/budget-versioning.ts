@@ -401,29 +401,37 @@ export async function setCurrentVersion(budgetId: string, groupId: string, userI
  * há versão publicada anterior (primeira publicação do grupo).
  */
 export async function publishVersion(budgetId: string, groupId: string, publicId: string, userId?: string) {
-  // Find previously published version (we'll transfer its public_id)
-  const { data: prevPublished } = await supabase
+  // Encontra QUALQUER versão do grupo que ainda detenha um public_id
+  // (não apenas as marcadas com is_published_version=true), para herdar o link
+  // e liberar o UNIQUE constraint de public_id antes de publicar a nova versão.
+  // Isso cobre cenários onde versões antigas ficaram "órfãs" com status='published'
+  // mas is_published_version=false (resíduo de migrações anteriores).
+  const { data: prevWithPublicId } = await supabase
     .from("budgets")
-    .select("id, version_number, public_id")
+    .select("id, version_number, public_id, is_published_version")
     .eq("version_group_id", groupId)
-    .eq("is_published_version", true)
     .neq("id", budgetId)
-    .limit(1)
-    .maybeSingle();
+    .not("public_id", "is", null);
+
+  // O "principal" anterior é a versão marcada como published, ou (fallback) a
+  // primeira encontrada com public_id.
+  const prevPublished =
+    (prevWithPublicId || []).find((p) => p.is_published_version) ||
+    (prevWithPublicId || [])[0] ||
+    null;
 
   // Decide qual public_id usar: o da versão anteriormente publicada (preserva o link)
   // ou o fornecido (primeira publicação do grupo).
   const finalPublicId = prevPublished?.public_id || publicId;
 
-  // Step 1: Se há versão publicada anterior, libera o public_id dela ANTES (UNIQUE constraint)
-  // e marca como arquivada. Pequena janela onde o link 404 — aceita por simplicidade
-  // (alternativa exigiria swap em transação RPC).
-  // Nota: usamos 'archived' porque o CHECK constraint de `status` não permite 'superseded'.
-  if (prevPublished?.id) {
+  // Step 1: Libera public_id de TODAS as versões antigas do grupo (defesa em profundidade)
+  // para evitar conflito do UNIQUE constraint. Marca como arquivadas.
+  if (prevWithPublicId && prevWithPublicId.length > 0) {
+    const idsToDemote = prevWithPublicId.map((p) => p.id);
     const { error: demoteErr } = await supabase
       .from("budgets")
       .update({ is_published_version: false, status: "archived", public_id: null })
-      .eq("id", prevPublished.id);
+      .in("id", idsToDemote);
     if (demoteErr) throw demoteErr;
   }
 
@@ -440,15 +448,6 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     .single();
 
   if (pubErr) throw pubErr;
-
-  // Step 3: Demote QUALQUER outra versão publicada residual (defesa em profundidade)
-  // Também libera public_id residual para evitar duplicidade do UNIQUE.
-  await supabase
-    .from("budgets")
-    .update({ is_published_version: false, status: "archived", public_id: null })
-    .eq("version_group_id", groupId)
-    .eq("is_published_version", true)
-    .neq("id", budgetId);
 
   // Audit: superseded (registra que o link foi transferido para a nova versão)
   if (prevPublished && prevPublished.id !== budgetId) {
