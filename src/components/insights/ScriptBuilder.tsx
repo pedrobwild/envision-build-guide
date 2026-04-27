@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -45,12 +46,17 @@ export default function ScriptBuilder({ profiles, dashboardData }: ScriptBuilder
     abortRef.current = controller;
 
     try {
+      // Usa a sessão autenticada — o gateway exige JWT válido.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-script`;
       const resp = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
           profileType: profile.type,
@@ -69,7 +75,13 @@ export default function ScriptBuilder({ profiles, dashboardData }: ScriptBuilder
 
       if (!resp.ok || !resp.body) {
         const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.error || `Erro ${resp.status}`);
+        const friendly =
+          resp.status === 429
+            ? "Muitas solicitações. Aguarde alguns instantes e tente novamente."
+            : resp.status === 402
+              ? "Sem créditos suficientes para gerar o roteiro. Adicione créditos em Configurações."
+              : errData.error || `Erro ${resp.status}`;
+        throw new Error(friendly);
       }
 
       const reader = resp.body.getReader();

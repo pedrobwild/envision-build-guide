@@ -144,6 +144,9 @@ export default function Login() {
         }
         return;
       }
+      // Sucesso: navega; o redirect desmonta o componente, mas garantimos
+      // limpeza do loading caso a navegação seja interceptada.
+      setLoading(false);
       navigate("/admin");
     } catch {
       setLoading(false);

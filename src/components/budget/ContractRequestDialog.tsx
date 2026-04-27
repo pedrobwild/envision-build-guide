@@ -237,7 +237,7 @@ function ContractForm({
       ].filter(Boolean).join("\n");
 
       const whatsappUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(msg)}`;
-      window.open(whatsappUrl, "_blank");
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
 
       toast.success("Solicitação enviada! Redirecionando para o WhatsApp...");
       onOpenChange(false);
