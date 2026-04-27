@@ -1133,8 +1133,97 @@ serve(async (req) => {
     // Use OPENAI_API_KEY for Whisper if available; otherwise audio attachments are skipped.
     const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY ?? "");
 
-    // Lovable AI Gateway models (OpenAI-compatible API)
-    const model = "google/gemini-2.5-flash";
+    // ===== Configuração de cadeia de modelos e retry (via env vars) =====
+    // AI_MODEL_CHAIN: lista de modelos separados por vírgula (primeiro = preferido).
+    // AI_RETRYABLE_STATUSES: lista de status HTTP separados por vírgula que devem
+    //   acionar fallback para o próximo modelo (sem precisar redeployar).
+    // 429 e 402 são EXCLUÍDOS do default — são limites de workspace, não de modelo.
+    const DEFAULT_MODEL_CHAIN = [
+      "google/gemini-2.5-flash",
+      "google/gemini-3-flash-preview",
+      "google/gemini-2.5-flash-lite",
+      "openai/gpt-5-mini",
+    ];
+    const DEFAULT_RETRYABLE_STATUSES = [408, 425, 500, 502, 503, 504];
+
+    const parseList = (raw: string | undefined): string[] =>
+      (raw ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+    const modelChain = (() => {
+      const list = parseList(Deno.env.get("AI_MODEL_CHAIN"));
+      return list.length > 0 ? list : DEFAULT_MODEL_CHAIN;
+    })();
+
+    const retryableStatuses = (() => {
+      const list = parseList(Deno.env.get("AI_RETRYABLE_STATUSES"))
+        .map((n) => Number.parseInt(n, 10))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      return list.length > 0 ? list : DEFAULT_RETRYABLE_STATUSES;
+    })();
+
+    const isRetryableStatus = (status: number): boolean => {
+      // Nunca retry para limites de workspace
+      if (status === 429 || status === 402) return false;
+      return retryableStatuses.includes(status);
+    };
+
+    /**
+     * Chama o gateway tentando cada modelo da cadeia em sequência.
+     * Faz fallback apenas para status retryable (configurável) ou erros de rede.
+     */
+    const callGatewayWithFallback = async (
+      body: Record<string, unknown>,
+    ): Promise<{ resp: Response; modelUsed: string }> => {
+      let lastResp: Response | null = null;
+      let lastErr: unknown = null;
+
+      for (let i = 0; i < modelChain.length; i++) {
+        const candidate = modelChain[i];
+        try {
+          const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ ...body, model: candidate }),
+          });
+
+          if (resp.ok) {
+            if (i > 0) {
+              console.log(`[ai-fallback] modelo "${candidate}" funcionou após fallback (índice ${i})`);
+            }
+            return { resp, modelUsed: candidate };
+          }
+
+          // Não retryable: devolve direto
+          if (!isRetryableStatus(resp.status)) {
+            return { resp, modelUsed: candidate };
+          }
+
+          // Retryable: registra e tenta o próximo
+          const errText = await resp.text().catch(() => "");
+          console.warn(
+            `[ai-fallback] modelo "${candidate}" falhou (status ${resp.status}); tentando próximo. Detalhes: ${errText.slice(0, 200)}`,
+          );
+          lastResp = new Response(errText, {
+            status: resp.status,
+            headers: resp.headers,
+          });
+        } catch (err) {
+          lastErr = err;
+          console.warn(
+            `[ai-fallback] erro de rede no modelo "${candidate}": ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      }
+
+      if (lastResp) return { resp: lastResp, modelUsed: modelChain[modelChain.length - 1] };
+      throw lastErr ?? new Error("Falha ao chamar o gateway em todos os modelos");
+    };
 
     // ===== Tool-calling loop (max 4 rounds) =====
     const conversation = [...baseMessages];
