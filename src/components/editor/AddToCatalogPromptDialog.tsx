@@ -671,6 +671,72 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
               return null;
             })()}
           </div>
+
+          {/* Seções onde o item poderá aparecer */}
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Aparecer nas seções
+            </Label>
+            <p className="text-[11px] text-muted-foreground">
+              Escolha em quais seções este item deverá aparecer nas próximas buscas. A seção atual já vem marcada.
+            </p>
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {CATALOG_SECTION_OPTIONS.map((opt) => {
+                const checked = selectedSections.includes(opt.label);
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={checked}
+                    onClick={() =>
+                      setSelectedSections((prev) =>
+                        prev.includes(opt.label)
+                          ? prev.filter((s) => s !== opt.label)
+                          : [...prev, opt.label],
+                      )
+                    }
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                      checked
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-card text-muted-foreground hover:bg-muted/40",
+                    )}
+                  >
+                    {checked && <Check className="h-3 w-3 text-primary" />}
+                    {opt.label}
+                  </button>
+                );
+              })}
+              {/* Show the current section as a chip even if not in CATALOG_SECTION_OPTIONS */}
+              {sectionTitle &&
+                !CATALOG_SECTION_OPTIONS.some((o) => o.label === sectionTitle) && (
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={selectedSections.includes(sectionTitle)}
+                    onClick={() =>
+                      setSelectedSections((prev) =>
+                        prev.includes(sectionTitle)
+                          ? prev.filter((s) => s !== sectionTitle)
+                          : [...prev, sectionTitle],
+                      )
+                    }
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                      selectedSections.includes(sectionTitle)
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-card text-muted-foreground hover:bg-muted/40",
+                    )}
+                  >
+                    {selectedSections.includes(sectionTitle) && (
+                      <Check className="h-3 w-3 text-primary" />
+                    )}
+                    {sectionTitle}
+                  </button>
+                )}
+            </div>
+          </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">
