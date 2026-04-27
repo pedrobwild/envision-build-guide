@@ -16,6 +16,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import {
   ACCEPTED_MIME,
   MAX_FILES,
