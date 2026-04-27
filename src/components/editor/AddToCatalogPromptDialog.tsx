@@ -397,7 +397,12 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
               </button>
               <button
                 type="button"
-                onClick={() => setItemType("service")}
+                onClick={() => {
+                  setItemType("service");
+                  setCategoryId(NONE_VALUE);
+                  setCreatingCategory(false);
+                  setNewCategoryName("");
+                }}
                 className={cn(
                   "flex items-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-colors text-left",
                   itemType === "service"
