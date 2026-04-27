@@ -347,6 +347,7 @@ function SortableItemRow({
       ref={setNodeRef}
       style={style}
       {...attributes}
+      data-item-row-id={item.id}
       className={cn(
         "group/item transition-colors duration-100 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
         compact && !rowExpanded ? "h-11" : "",
@@ -355,6 +356,7 @@ function SortableItemRow({
         isDragging && "bg-muted/40 shadow-lg rounded border-b-0",
         isAddendum && isItemRemoved && "bg-destructive/5 border-l-2 border-destructive/40",
         isAddendum && isItemAdded && "bg-success/5 border-l-2 border-success/40",
+        highlight && "bg-success/10 ring-2 ring-success/60 ring-inset animate-in fade-in",
       )}
     >
       {/* ── Compact inline row ── */}
