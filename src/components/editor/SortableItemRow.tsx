@@ -14,6 +14,7 @@ import { ItemImageInline } from "./ItemImageInline";
 import { ItemDetailSheet } from "./ItemDetailSheet";
 import { MobileItemEditor } from "./MobileItemEditor";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export interface ItemData {
   id: string;
@@ -262,15 +263,7 @@ export function SortableItemRow({
           {isItemSaving ? (
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />
           ) : (
-            <button
-              onClick={() => {
-                if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
-              }}
-              className="p-0.5 sm:p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity duration-100 sm:opacity-0 sm:group-hover/item:opacity-100"
-              title="Excluir item"
-            >
-              <Trash2 className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
-            </button>
+            <DeleteItemButton onConfirm={() => onDelete(sectionId, item.id)} />
           )}
         </div>
       </div>
