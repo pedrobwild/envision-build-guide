@@ -593,9 +593,12 @@ export function AiAssistant() {
 
   const suggestions = isAdmin
     ? [
-        "Reduzir 5% nos orçamentos criados a partir de 01/01/2026",
-        "Mover para 'aguardando' os orçamentos criados desde 01/03/2026",
-        "Atribuir o orçamentista João aos orçamentos criados desde 15/04/2026",
+        "Qual a média de orçamentos por dia nos últimos 7 dias?",
+        "Top 10 clientes por receita nos últimos 90 dias",
+        "Como está nossa taxa de conversão na última semana?",
+        "Leads recebidos por origem nos últimos 30 dias",
+        "Como o Houzz monetiza? Compare com o nosso modelo",
+        "Tendências de software de gestão de obras em 2026",
       ]
     : [
         "Como melhorar a taxa de conversão do pipeline?",
