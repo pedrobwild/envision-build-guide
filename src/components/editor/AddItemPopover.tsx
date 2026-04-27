@@ -8,6 +8,7 @@ import {
 import { Plus, Search, Package, Wrench, PenLine, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPrimarySupplierPrice, buildSupplierPriceSnapshot } from "@/lib/catalog-helpers";
+import { AddToCatalogPromptDialog } from "./AddToCatalogPromptDialog";
 
 interface CatalogSuggestion {
   id: string;
