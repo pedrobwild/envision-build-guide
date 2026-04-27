@@ -355,7 +355,66 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
               placeholder="Ex.: Tinta acrílica premium"
               autoFocus
             />
+            {checkingDuplicates && name.trim().length >= 3 && duplicates.length === 0 && (
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" /> Verificando se já existe no catálogo…
+              </p>
+            )}
           </div>
+
+          {/* Aviso de possíveis duplicatas */}
+          {duplicates.length > 0 && !duplicatesDismissed && (
+            <div
+              role="alert"
+              className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2"
+            >
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">
+                    {duplicates.length === 1
+                      ? "Já existe um item parecido no catálogo"
+                      : `${duplicates.length} itens parecidos no catálogo`}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Verifique se não está duplicando antes de criar um novo.
+                  </p>
+                </div>
+              </div>
+              <ul className="space-y-1">
+                {duplicates.map((d) => (
+                  <li
+                    key={d.id}
+                    className="flex items-center gap-2 rounded-sm bg-background/60 px-2 py-1.5 text-xs"
+                  >
+                    {d.item_type === "product" ? (
+                      <Package className="h-3 w-3 text-primary flex-shrink-0" />
+                    ) : (
+                      <Wrench className="h-3 w-3 text-primary flex-shrink-0" />
+                    )}
+                    <span className="font-medium text-foreground truncate flex-1">{d.name}</span>
+                    {d.unit_of_measure && (
+                      <span className="text-[10px] text-muted-foreground">{d.unit_of_measure}</span>
+                    )}
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      {Math.round(d.similarity * 100)}%
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex justify-end pt-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setDuplicatesDismissed(true)}
+                >
+                  Criar mesmo assim
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Unidade + Preço base */}
           <div className="grid grid-cols-2 gap-3">
