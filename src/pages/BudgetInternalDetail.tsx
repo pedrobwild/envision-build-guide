@@ -80,6 +80,7 @@ interface BudgetDetail {
   client_name: string;
   client_phone: string | null;
   lead_email: string | null;
+  lead_name: string | null;
   property_type: string | null;
   city: string | null;
   bairro: string | null;
