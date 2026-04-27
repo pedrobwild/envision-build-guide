@@ -19,6 +19,7 @@ import { MobileItemEditor } from "@/components/editor/MobileItemEditor";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import { ItemImageInline } from "@/components/editor/ItemImageInline";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   Tooltip,
   TooltipContent,
