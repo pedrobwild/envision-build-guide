@@ -398,7 +398,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
       setSaving(false);
     }
   };
-  };
+
 
   const handleSkip = () => {
     onOpenChange(false);
