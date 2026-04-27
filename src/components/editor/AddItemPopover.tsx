@@ -306,9 +306,9 @@ export function AddItemPopover({ sectionTitle, onAddItem, onLinkCatalog }: Props
       }}
       suggested={promptSuggestion}
       sectionTitle={sectionTitle}
-      onCreated={(catalogItemId, _type, linkedSections) => {
+      onCreated={(catalogItemId, _type, linkedSections, undoCatalog) => {
         if (pendingRowId && onLinkCatalog) {
-          void onLinkCatalog(pendingRowId, catalogItemId, linkedSections);
+          void onLinkCatalog(pendingRowId, catalogItemId, linkedSections, undoCatalog);
         }
       }}
     />
