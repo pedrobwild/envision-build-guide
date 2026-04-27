@@ -416,13 +416,15 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
   const finalPublicId = prevPublished?.public_id || publicId;
 
   // Step 1: Se há versão publicada anterior, libera o public_id dela ANTES (UNIQUE constraint)
-  // e marca como superseded. Pequena janela onde o link 404 — aceita por simplicidade
+  // e marca como arquivada. Pequena janela onde o link 404 — aceita por simplicidade
   // (alternativa exigiria swap em transação RPC).
+  // Nota: usamos 'archived' porque o CHECK constraint de `status` não permite 'superseded'.
   if (prevPublished?.id) {
-    await supabase
+    const { error: demoteErr } = await supabase
       .from("budgets")
-      .update({ is_published_version: false, status: "superseded", public_id: null })
+      .update({ is_published_version: false, status: "archived", public_id: null })
       .eq("id", prevPublished.id);
+    if (demoteErr) throw demoteErr;
   }
 
   // Step 2: Publica a nova versão herdando o public_id antigo (ou usando o novo)
@@ -440,9 +442,10 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
   if (pubErr) throw pubErr;
 
   // Step 3: Demote QUALQUER outra versão publicada residual (defesa em profundidade)
+  // Também libera public_id residual para evitar duplicidade do UNIQUE.
   await supabase
     .from("budgets")
-    .update({ is_published_version: false, status: "superseded" })
+    .update({ is_published_version: false, status: "archived", public_id: null })
     .eq("version_group_id", groupId)
     .eq("is_published_version", true)
     .neq("id", budgetId);
