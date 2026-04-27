@@ -999,6 +999,9 @@ async function processAttachment(
     ) {
       extracted = await extractDocxText(bytes);
     } else if (mime.startsWith("audio/") || /\.(mp3|wav|m4a|ogg|webm|mp4)$/i.test(att.name)) {
+      if (!apiKey) {
+        return { kind: "text", text: `[Arquivo: ${att.name}] (transcrição de áudio indisponível — OPENAI_API_KEY não configurada)` };
+      }
       extracted = await transcribeAudio(bytes, att.name, mime || "audio/mpeg", apiKey);
     } else if (mime.startsWith("text/") || /\.(txt|md|json|csv|log)$/i.test(att.name)) {
       extracted = new TextDecoder().decode(bytes);
@@ -1100,13 +1103,14 @@ serve(async (req) => {
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY"); // optional, only for Whisper audio
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    if (!OPENAI_API_KEY) {
+    if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "OPENAI_API_KEY not configured" }),
+        JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -1126,10 +1130,11 @@ serve(async (req) => {
     );
 
     const hasAttachments = messages.some((m) => m.attachments && m.attachments.length > 0);
-    const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY);
+    // Use OPENAI_API_KEY for Whisper if available; otherwise audio attachments are skipped.
+    const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY ?? "");
 
-    // Vision-capable model when needed; gpt-4o for tools (better at structured calls)
-    const model = hasAttachments || isAdmin ? "gpt-4o" : "gpt-4o-mini";
+    // Lovable AI Gateway models (OpenAI-compatible API)
+    const model = "google/gemini-2.5-flash";
 
     // ===== Tool-calling loop (max 4 rounds) =====
     const conversation = [...baseMessages];
@@ -1138,16 +1143,15 @@ serve(async (req) => {
       : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
     for (let round = 0; round < 4; round++) {
-      const planResp = await fetch("https://api.openai.com/v1/chat/completions", {
+      const planResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           model,
           messages: conversation,
-          temperature: 0.3,
           tools,
           tool_choice: tools.length ? "auto" : undefined,
           stream: false,
@@ -1156,13 +1160,13 @@ serve(async (req) => {
 
       if (!planResp.ok) {
         const errText = await planResp.text();
-        console.error("OpenAI error (plan):", planResp.status, errText);
+        console.error("Lovable AI error (plan):", planResp.status, errText);
         const userMsg =
           planResp.status === 429
             ? "Rate limit excedido. Tente novamente em alguns instantes."
-            : planResp.status === 401
-              ? "Chave OpenAI inválida ou expirada."
-              : "Falha ao chamar OpenAI";
+            : planResp.status === 402
+              ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
+              : "Falha ao chamar Lovable AI";
         return new Response(JSON.stringify({ error: userMsg }), {
           status: planResp.status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1219,25 +1223,30 @@ serve(async (req) => {
     }
 
     // ===== Final streamed response =====
-    const finalResp = await fetch("https://api.openai.com/v1/chat/completions", {
+    const finalResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model,
         messages: conversation,
-        temperature: 0.4,
         stream: true,
       }),
     });
 
     if (!finalResp.ok) {
       const errText = await finalResp.text();
-      console.error("OpenAI error (final):", finalResp.status, errText);
+      console.error("Lovable AI error (final):", finalResp.status, errText);
+      const userMsg =
+        finalResp.status === 429
+          ? "Rate limit excedido. Tente novamente em alguns instantes."
+          : finalResp.status === 402
+            ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
+            : "Falha ao gerar resposta final";
       return new Response(
-        JSON.stringify({ error: "Falha ao gerar resposta final" }),
+        JSON.stringify({ error: userMsg }),
         { status: finalResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
