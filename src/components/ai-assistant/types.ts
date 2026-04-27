@@ -62,6 +62,8 @@ export type Msg = {
   role: "user" | "assistant";
   content: string;
   attachments?: Attachment[];
+  /** End-to-end correlation id (also logged on the edge function and upstream calls). */
+  correlationId?: string;
   /** When set, render an interactive bulk-op card instead of plain markdown */
   bulkOp?: {
     plan?: BulkOperationPlan;
