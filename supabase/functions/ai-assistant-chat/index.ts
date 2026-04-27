@@ -5,32 +5,8 @@ import { toArrayBuffer } from "../_shared/bytes.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-correlation-id, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Expose-Headers": "x-correlation-id",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-// Lightweight correlation id helpers — propagate end-to-end (client → function → upstream calls → logs → SSE).
-function genCorrelationId(): string {
-  // crypto.randomUUID is available in Deno; fall back to a hand-rolled UUIDv4 just in case.
-  try {
-    return crypto.randomUUID();
-  } catch {
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
-    return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10, 16).join("")}`;
-  }
-}
-
-function makeLogger(cid: string) {
-  return {
-    info: (msg: string, ...rest: unknown[]) => console.log(`[cid=${cid}] ${msg}`, ...rest),
-    error: (msg: string, ...rest: unknown[]) => console.error(`[cid=${cid}] ${msg}`, ...rest),
-    warn: (msg: string, ...rest: unknown[]) => console.warn(`[cid=${cid}] ${msg}`, ...rest),
-  };
-}
 
 const TODAY_HINT = () => new Date().toISOString().slice(0, 10);
 
@@ -1126,19 +1102,6 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Resolve correlation id: honor inbound header so client and function share the same id.
-  const incomingCid = req.headers.get("x-correlation-id")?.trim();
-  const cid = incomingCid && incomingCid.length > 0 && incomingCid.length <= 128
-    ? incomingCid
-    : genCorrelationId();
-  const log = makeLogger(cid);
-  const baseHeaders = { ...corsHeaders, "x-correlation-id": cid };
-  const jsonError = (status: number, error: string) =>
-    new Response(JSON.stringify({ error, correlation_id: cid }), {
-      status,
-      headers: { ...baseHeaders, "Content-Type": "application/json" },
-    });
-
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY"); // optional, only for Whisper audio
@@ -1146,14 +1109,18 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!LOVABLE_API_KEY) {
-      log.error("LOVABLE_API_KEY not configured");
-      return jsonError(500, "LOVABLE_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const { messages } = (await req.json()) as { messages: IncomingMessage[] };
     if (!Array.isArray(messages) || messages.length === 0) {
-      log.warn("messages array missing or empty");
-      return jsonError(400, "messages array required");
+      return new Response(
+        JSON.stringify({ error: "messages array required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const { isAdmin, admin } = await resolveUserAndRole(
@@ -1161,84 +1128,102 @@ serve(async (req) => {
       supabaseUrl,
       serviceKey,
     );
-    log.info(`request received: messages=${messages.length} isAdmin=${isAdmin} inboundCid=${incomingCid ? "yes" : "no"}`);
 
+    const hasAttachments = messages.some((m) => m.attachments && m.attachments.length > 0);
     // Use OPENAI_API_KEY for Whisper if available; otherwise audio attachments are skipped.
     const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY ?? "");
 
-    // Lovable AI Gateway models (OpenAI-compatible API).
-    // Fallback chain: if the primary model errors with a retryable status (5xx, timeout, model-specific failure),
-    // we automatically retry with the next model. Order = preferred first.
-    // 429 (workspace rate limit) and 402 (credits exhausted) are NOT retried here — they're not model-specific.
-    const MODEL_CHAIN = [
+    // ===== Configuração de cadeia de modelos e retry (via env vars) =====
+    // AI_MODEL_CHAIN: lista de modelos separados por vírgula (primeiro = preferido).
+    // AI_RETRYABLE_STATUSES: lista de status HTTP separados por vírgula que devem
+    //   acionar fallback para o próximo modelo (sem precisar redeployar).
+    // 429 e 402 são EXCLUÍDOS do default — são limites de workspace, não de modelo.
+    const DEFAULT_MODEL_CHAIN = [
       "google/gemini-2.5-flash",
       "google/gemini-3-flash-preview",
       "google/gemini-2.5-flash-lite",
       "openai/gpt-5-mini",
     ];
+    const DEFAULT_RETRYABLE_STATUSES = [408, 425, 500, 502, 503, 504];
 
-    function isModelRetryable(status: number): boolean {
-      // Retry on server errors and gateway-level model failures, but not on auth/quota issues.
-      if (status >= 500) return true;
-      if (status === 408 || status === 425) return true; // request timeout / too early
-      return false;
-    }
+    const parseList = (raw: string | undefined): string[] =>
+      (raw ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
-    async function callGatewayWithFallback(
+    const modelChain = (() => {
+      const list = parseList(Deno.env.get("AI_MODEL_CHAIN"));
+      return list.length > 0 ? list : DEFAULT_MODEL_CHAIN;
+    })();
+
+    const retryableStatuses = (() => {
+      const list = parseList(Deno.env.get("AI_RETRYABLE_STATUSES"))
+        .map((n) => Number.parseInt(n, 10))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      return list.length > 0 ? list : DEFAULT_RETRYABLE_STATUSES;
+    })();
+
+    const isRetryableStatus = (status: number): boolean => {
+      // Nunca retry para limites de workspace
+      if (status === 429 || status === 402) return false;
+      return retryableStatuses.includes(status);
+    };
+
+    /**
+     * Chama o gateway tentando cada modelo da cadeia em sequência.
+     * Faz fallback apenas para status retryable (configurável) ou erros de rede.
+     */
+    const callGatewayWithFallback = async (
       body: Record<string, unknown>,
-      label: string,
-    ): Promise<{ resp: Response; modelUsed: string } | { error: { status: number; text: string } }> {
-      let lastStatus = 0;
-      let lastText = "";
-      for (let i = 0; i < MODEL_CHAIN.length; i++) {
-        const candidate = MODEL_CHAIN[i];
-        log.info(`${label} attempt ${i + 1}/${MODEL_CHAIN.length} model=${candidate}`);
-        let resp: Response;
+    ): Promise<{ resp: Response; modelUsed: string }> => {
+      let lastResp: Response | null = null;
+      let lastErr: unknown = null;
+
+      for (let i = 0; i < modelChain.length; i++) {
+        const candidate = modelChain[i];
         try {
-          resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${LOVABLE_API_KEY}`,
               "Content-Type": "application/json",
-              "x-correlation-id": cid,
             },
             body: JSON.stringify({ ...body, model: candidate }),
           });
-        } catch (networkErr) {
-          // Network-level failure — treat as retryable and try next model.
-          log.warn(`${label} network error on model=${candidate}: ${networkErr instanceof Error ? networkErr.message : String(networkErr)}`);
-          lastStatus = 502;
-          lastText = networkErr instanceof Error ? networkErr.message : "network error";
-          continue;
-        }
 
-        if (resp.ok) {
-          if (i > 0) log.info(`${label} succeeded on fallback model=${candidate} (after ${i} failure(s))`);
-          return { resp, modelUsed: candidate };
-        }
+          if (resp.ok) {
+            if (i > 0) {
+              console.log(`[ai-fallback] modelo "${candidate}" funcionou após fallback (índice ${i})`);
+            }
+            return { resp, modelUsed: candidate };
+          }
 
-        // Non-retryable: stop chain immediately, surface the error.
-        if (!isModelRetryable(resp.status)) {
-          const errText = await resp.text();
-          log.error(`${label} non-retryable status=${resp.status} model=${candidate}: ${errText}`);
-          return { error: { status: resp.status, text: errText } };
-        }
+          // Não retryable: devolve direto
+          if (!isRetryableStatus(resp.status)) {
+            return { resp, modelUsed: candidate };
+          }
 
-        // Retryable model error — log and continue to next model.
-        const errText = await resp.text();
-        log.warn(`${label} retryable status=${resp.status} model=${candidate}: ${errText.slice(0, 300)}`);
-        lastStatus = resp.status;
-        lastText = errText;
+          // Retryable: registra e tenta o próximo
+          const errText = await resp.text().catch(() => "");
+          console.warn(
+            `[ai-fallback] modelo "${candidate}" falhou (status ${resp.status}); tentando próximo. Detalhes: ${errText.slice(0, 200)}`,
+          );
+          lastResp = new Response(errText, {
+            status: resp.status,
+            headers: resp.headers,
+          });
+        } catch (err) {
+          lastErr = err;
+          console.warn(
+            `[ai-fallback] erro de rede no modelo "${candidate}": ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
       }
-      log.error(`${label} exhausted ${MODEL_CHAIN.length} fallback model(s); last status=${lastStatus}`);
-      return { error: { status: lastStatus || 502, text: lastText || "Todos os modelos falharam" } };
-    }
 
-    function gatewayErrorMessage(status: number): string {
-      if (status === 429) return "Rate limit excedido. Tente novamente em alguns instantes.";
-      if (status === 402) return "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage.";
-      return "Falha ao chamar Lovable AI (todos os modelos de fallback falharam)";
-    }
+      if (lastResp) return { resp: lastResp, modelUsed: modelChain[modelChain.length - 1] };
+      throw lastErr ?? new Error("Falha ao chamar o gateway em todos os modelos");
+    };
 
     // ===== Tool-calling loop (max 4 rounds) =====
     const conversation = [...baseMessages];
@@ -1247,31 +1232,36 @@ serve(async (req) => {
       : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
     for (let round = 0; round < 4; round++) {
-      log.info(`plan round=${round} tools=${tools.length}`);
-      const planResult = await callGatewayWithFallback(
-        {
-          messages: conversation,
-          tools,
-          tool_choice: tools.length ? "auto" : undefined,
-          stream: false,
-        },
-        `plan[round=${round}]`,
-      );
+      const { resp: planResp } = await callGatewayWithFallback({
+        messages: conversation,
+        tools,
+        tool_choice: tools.length ? "auto" : undefined,
+        stream: false,
+      });
 
-      if ("error" in planResult) {
-        return jsonError(planResult.error.status, gatewayErrorMessage(planResult.error.status));
+      if (!planResp.ok) {
+        const errText = await planResp.text();
+        console.error("Lovable AI error (plan):", planResp.status, errText);
+        const userMsg =
+          planResp.status === 429
+            ? "Rate limit excedido. Tente novamente em alguns instantes."
+            : planResp.status === 402
+              ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
+              : "Falha ao chamar Lovable AI";
+        return new Response(JSON.stringify({ error: userMsg }), {
+          status: planResp.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
-      const planJson = await planResult.resp.json();
+      const planJson = await planResp.json();
       const choice = planJson.choices?.[0];
       const toolCalls = choice?.message?.tool_calls;
 
       if (!toolCalls || toolCalls.length === 0) {
-        log.info(`plan round=${round} -> no tool calls, proceeding to final stream`);
         break;
       }
 
-      log.info(`plan round=${round} -> ${toolCalls.length} tool call(s): ${toolCalls.map((c: { function?: { name?: string } }) => c.function?.name).join(", ")}`);
       conversation.push(choice.message);
 
       for (const call of toolCalls) {
@@ -1301,7 +1291,6 @@ serve(async (req) => {
             ? await runQueryBugReports(argsObj, admin)
             : { ok: false, error: "Apenas administradores podem consultar bug reports." };
         } else {
-          log.warn(`unknown tool requested: ${name}`);
           toolOutput = { ok: false, error: `Ferramenta desconhecida: ${name}` };
         }
 
@@ -1315,62 +1304,34 @@ serve(async (req) => {
     }
 
     // ===== Final streamed response =====
-    log.info("calling final streaming completion");
-    const finalResult = await callGatewayWithFallback(
-      {
-        messages: conversation,
-        stream: true,
-      },
-      "final-stream",
-    );
-
-    if ("error" in finalResult) {
-      return jsonError(finalResult.error.status, gatewayErrorMessage(finalResult.error.status));
-    }
-
-    const finalResp = finalResult.resp;
-    const modelUsedForStream = finalResult.modelUsed;
-
-    // Wrap the upstream stream so we can prepend a meta event with the correlation id
-    // and the model that actually served the response (useful for debugging fallbacks).
-    const upstream = finalResp.body;
-    if (!upstream) {
-      log.error("upstream stream body missing");
-      return jsonError(502, "Upstream stream indisponível");
-    }
-
-    const encoder = new TextEncoder();
-    const metaEvent = `event: meta\ndata: ${JSON.stringify({ correlation_id: cid, model: modelUsedForStream })}\n\n`;
-
-    const stream = new ReadableStream({
-      async start(controller) {
-        controller.enqueue(encoder.encode(metaEvent));
-        const reader = upstream.getReader();
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            controller.enqueue(value);
-          }
-          log.info("stream completed successfully");
-        } catch (err) {
-          log.error("stream relay error:", err);
-          controller.enqueue(
-            encoder.encode(
-              `event: error\ndata: ${JSON.stringify({ error: "stream interrompido", correlation_id: cid })}\n\n`,
-            ),
-          );
-        } finally {
-          controller.close();
-        }
-      },
+    const { resp: finalResp } = await callGatewayWithFallback({
+      messages: conversation,
+      stream: true,
     });
 
-    return new Response(stream, {
-      headers: { ...baseHeaders, "Content-Type": "text/event-stream" },
+    if (!finalResp.ok) {
+      const errText = await finalResp.text();
+      console.error("Lovable AI error (final):", finalResp.status, errText);
+      const userMsg =
+        finalResp.status === 429
+          ? "Rate limit excedido. Tente novamente em alguns instantes."
+          : finalResp.status === 402
+            ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
+            : "Falha ao gerar resposta final";
+      return new Response(
+        JSON.stringify({ error: userMsg }),
+        { status: finalResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    return new Response(finalResp.body, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (err) {
-    log.error("ai-assistant-chat error:", err);
-    return jsonError(500, err instanceof Error ? err.message : "Erro desconhecido");
+    console.error("ai-assistant-chat error:", err);
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "Erro desconhecido" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });
