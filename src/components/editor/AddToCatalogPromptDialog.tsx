@@ -199,6 +199,92 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
       clearTimeout(timer);
     };
   }, [name, open]);
+function ConfirmationSummary({
+  name,
+  itemType,
+  unit,
+  unitPrice,
+  categoryName,
+  supplierName,
+  sections,
+}: {
+  name: string;
+  itemType: "product" | "service";
+  unit: string;
+  unitPrice: string;
+  categoryName: string | null;
+  supplierName: string | null;
+  sections: string[];
+}) {
+  const priceVal = parseFloat(unitPrice.replace(",", "."));
+  const hasPrice = !Number.isNaN(priceVal) && priceVal > 0;
+  return (
+    <div className="space-y-3 py-1">
+      <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2.5">
+        <div className="flex items-center gap-2">
+          {itemType === "product" ? (
+            <Package className="h-4 w-4 text-primary flex-shrink-0" />
+          ) : (
+            <Wrench className="h-4 w-4 text-primary flex-shrink-0" />
+          )}
+          <p className="text-sm font-semibold text-foreground truncate">{name}</p>
+        </div>
+        <dl className="grid grid-cols-2 gap-y-1.5 gap-x-3 text-xs">
+          <dt className="text-muted-foreground">Tipo</dt>
+          <dd className="text-foreground text-right">
+            {itemType === "product" ? "Produto" : "Serviço"}
+          </dd>
+          {unit && (
+            <>
+              <dt className="text-muted-foreground">Unidade</dt>
+              <dd className="text-foreground text-right">{unit}</dd>
+            </>
+          )}
+          {hasPrice && (
+            <>
+              <dt className="text-muted-foreground">Preço base</dt>
+              <dd className="text-foreground text-right tabular-nums">
+                R$ {priceVal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </dd>
+            </>
+          )}
+          <dt className="text-muted-foreground">Categoria</dt>
+          <dd className="text-foreground text-right">{categoryName ?? "Sem categoria"}</dd>
+          {supplierName && (
+            <>
+              <dt className="text-muted-foreground">Fornecedor</dt>
+              <dd className="text-foreground text-right">{supplierName}</dd>
+            </>
+          )}
+        </dl>
+      </div>
+
+      <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+        <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          Ao confirmar:
+        </p>
+        <ul className="text-xs text-muted-foreground space-y-1 pl-1">
+          <li>• O item será criado no catálogo global.</li>
+          <li>
+            • Será vinculado automaticamente à linha já adicionada no orçamento.
+          </li>
+          {sections.length > 0 ? (
+            <li>
+              • Aparecerá nas próximas buscas das seções:{" "}
+              <span className="text-foreground font-medium">{sections.join(", ")}</span>.
+            </li>
+          ) : (
+            <li>• Não aparecerá em nenhuma seção (selecione ao voltar, se quiser).</li>
+          )}
+        </ul>
+        <p className="text-[11px] text-muted-foreground pt-1">
+          Você poderá desfazer essa ação imediatamente após confirmar.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 
   const { data: categories = [] } = useQuery({
