@@ -278,6 +278,7 @@ function SortableItemRow({
   budgetId,
   isItemSaving,
   searchMatch,
+  highlight,
   compact,
   suppliers,
   onUpdate,
@@ -295,6 +296,7 @@ function SortableItemRow({
   budgetId: string;
   isItemSaving: boolean;
   searchMatch?: boolean;
+  highlight?: boolean;
   compact: boolean;
   suppliers: { id: string; name: string; categoria: string | null }[];
   onUpdate: (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => void;
@@ -345,6 +347,7 @@ function SortableItemRow({
       ref={setNodeRef}
       style={style}
       {...attributes}
+      data-item-row-id={item.id}
       className={cn(
         "group/item transition-colors duration-100 border-b border-border/40 last:border-b-0 hover:bg-muted/30",
         compact && !rowExpanded ? "h-11" : "",
@@ -353,6 +356,7 @@ function SortableItemRow({
         isDragging && "bg-muted/40 shadow-lg rounded border-b-0",
         isAddendum && isItemRemoved && "bg-destructive/5 border-l-2 border-destructive/40",
         isAddendum && isItemAdded && "bg-success/5 border-l-2 border-success/40",
+        highlight && "bg-success/10 ring-2 ring-success/60 ring-inset animate-in fade-in",
       )}
     >
       {/* ── Compact inline row ── */}
@@ -735,6 +739,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     return new Set();
   });
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [highlightItemId, setHighlightItemId] = useState<string | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const densityKey = `budget-item-density-${budgetId}`;
   const [compactMode, setCompactMode] = useState(() => {
@@ -750,6 +756,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       Object.values(timers.current).forEach(t => clearTimeout(t));
       timers.current = {};
       pendingUpdates.current = {};
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     };
   }, []);
   const [suppliers, setSuppliers] = useState<{ id: string; name: string; categoria: string | null }[]>([]);
@@ -1552,6 +1559,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                                       budgetId={budgetId}
                                       isItemSaving={savingIds.has(item.id)}
                                       searchMatch={matchingItemIds?.has(item.id)}
+                                      highlight={highlightItemId === item.id}
                                       compact={compactMode}
                                       onUpdate={updateItem}
                                       onDelete={deleteItem}
@@ -1593,6 +1601,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                                         },
                                   ),
                                 );
+                                // Visual feedback: highlight the linked row, scroll into view, clear after 3.5s
+                                setHighlightItemId(rowId);
+                                if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+                                requestAnimationFrame(() => {
+                                  const el = document.querySelector<HTMLElement>(`[data-item-row-id="${rowId}"]`);
+                                  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                });
+                                highlightTimerRef.current = setTimeout(() => {
+                                  setHighlightItemId((current) => (current === rowId ? null : current));
+                                }, 3500);
                               }}
                             />
                           </div>

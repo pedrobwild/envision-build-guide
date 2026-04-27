@@ -83,7 +83,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   suggested: SuggestedItem | null;
   /** Called after a catalog item is created so the editor can attach catalog_item_id to the inserted line. */
-  onCreated?: (catalogItemId: string, itemType: "product" | "service") => void;
+  onCreated?: (catalogItemId: string, itemType: "product" | "service", linkedSections: string[]) => void;
   /** Optional: pre-select section title to attach the new item to. */
   sectionTitle?: string;
 }
@@ -349,8 +349,19 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
       }
 
       queryClient.invalidateQueries({ queryKey: ["catalog_items"] });
-      toast.success(itemType === "product" ? "Produto adicionado ao catálogo" : "Serviço adicionado ao catálogo");
-      onCreated?.(newItem.id, itemType);
+      const typeLabel = itemType === "product" ? "Produto" : "Serviço";
+      const sectionsCount = sectionsToLink.length;
+      const sectionsDescription =
+        sectionsCount === 0
+          ? "Disponível no catálogo global para próximos orçamentos."
+          : sectionsCount === 1
+            ? `Vinculado à linha do orçamento e disponível na seção "${sectionsToLink[0]}".`
+            : `Vinculado à linha do orçamento e disponível em ${sectionsCount} seções: ${sectionsToLink.join(", ")}.`;
+      toast.success(`${typeLabel} adicionado ao catálogo`, {
+        description: sectionsDescription,
+        duration: 6000,
+      });
+      onCreated?.(newItem.id, itemType, sectionsToLink);
       onOpenChange(false);
     } catch (error) {
       logger.error("Erro ao adicionar item ao catálogo", error);
