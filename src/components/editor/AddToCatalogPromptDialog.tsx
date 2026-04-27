@@ -105,6 +105,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
 
   // Reset when reopened with new suggested item
   useEffect(() => {
