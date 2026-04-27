@@ -108,6 +108,8 @@ interface BudgetDetail {
   win_probability: number | null;
   expected_close_at: string | null;
   lead_source: string | null;
+  payment_method: string | null;
+  payment_installments: number | null;
 }
 
 interface EventRow {
