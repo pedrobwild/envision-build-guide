@@ -278,6 +278,7 @@ function SortableItemRow({
   budgetId,
   isItemSaving,
   searchMatch,
+  highlight,
   compact,
   suppliers,
   onUpdate,
@@ -295,6 +296,7 @@ function SortableItemRow({
   budgetId: string;
   isItemSaving: boolean;
   searchMatch?: boolean;
+  highlight?: boolean;
   compact: boolean;
   suppliers: { id: string; name: string; categoria: string | null }[];
   onUpdate: (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => void;
