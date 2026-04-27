@@ -1232,19 +1232,11 @@ serve(async (req) => {
       : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
     for (let round = 0; round < 4; round++) {
-      const planResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: conversation,
-          tools,
-          tool_choice: tools.length ? "auto" : undefined,
-          stream: false,
-        }),
+      const { resp: planResp } = await callGatewayWithFallback({
+        messages: conversation,
+        tools,
+        tool_choice: tools.length ? "auto" : undefined,
+        stream: false,
       });
 
       if (!planResp.ok) {
