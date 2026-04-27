@@ -607,7 +607,7 @@ export default function BudgetInternalDetail() {
                   variant="outline"
                   size="sm"
                   className="gap-1.5"
-                  onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank")}
+                  onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank", "noopener,noreferrer")}
                   title="Abrir orçamento público"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -1031,7 +1031,7 @@ export default function BudgetInternalDetail() {
                         <Button
                           size="sm"
                           className="h-8 gap-1.5 text-xs"
-                          onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank")}
+                          onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank", "noopener,noreferrer")}
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                           <span className="hidden sm:inline">Visualizar</span>

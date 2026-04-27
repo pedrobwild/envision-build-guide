@@ -206,7 +206,7 @@ export function BudgetCommunicationDrawer({
               size="sm"
               variant="default"
               className="h-9 gap-1.5 bg-success hover:bg-success/90 text-success-foreground"
-              onClick={() => window.open(buildWhatsAppUrl(phone, whatsappMessage), "_blank")}
+              onClick={() => window.open(buildWhatsAppUrl(phone, whatsappMessage), "_blank", "noopener,noreferrer")}
             >
               <MessageCircle className="h-3.5 w-3.5" />
               WhatsApp
