@@ -213,6 +213,10 @@ function ContractForm({
       }
 
       const valorParcela = formatBRL(total / parcelas);
+      const pagamentoLinha =
+        paymentMethod === "cartao"
+          ? `Cartão de crédito — ${parcelas}× de ${valorParcela} (total ${formatBRL(total)})`
+          : `Parcelamento no fluxo da obra (total ${formatBRL(total)}) — condições a combinar com a consultora`;
       const msg = [
         `📋 *SOLICITAÇÃO DE CONTRATO*`,
         ``,
@@ -236,7 +240,7 @@ function ContractForm({
         `Endereço: ${enderecoImovel}`,
         ``,
         `💳 *PAGAMENTO*`,
-        `${parcelas}× de ${valorParcela} (total ${formatBRL(total)})`,
+        pagamentoLinha,
       ].filter(Boolean).join("\n");
 
       const whatsappUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(msg)}`;
