@@ -51,6 +51,7 @@ export function AddItemPopover({ sectionTitle, onAddItem, onLinkCatalog }: Props
     internal_unit_price: number | null;
   } | null>(null);
   const [manualPrice, setManualPrice] = useState("");
+  const [pendingRowId, setPendingRowId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
