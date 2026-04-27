@@ -5,8 +5,32 @@ import { toArrayBuffer } from "../_shared/bytes.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-correlation-id, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Expose-Headers": "x-correlation-id",
 };
+
+// Lightweight correlation id helpers — propagate end-to-end (client → function → upstream calls → logs → SSE).
+function genCorrelationId(): string {
+  // crypto.randomUUID is available in Deno; fall back to a hand-rolled UUIDv4 just in case.
+  try {
+    return crypto.randomUUID();
+  } catch {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
+    return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10, 16).join("")}`;
+  }
+}
+
+function makeLogger(cid: string) {
+  return {
+    info: (msg: string, ...rest: unknown[]) => console.log(`[cid=${cid}] ${msg}`, ...rest),
+    error: (msg: string, ...rest: unknown[]) => console.error(`[cid=${cid}] ${msg}`, ...rest),
+    warn: (msg: string, ...rest: unknown[]) => console.warn(`[cid=${cid}] ${msg}`, ...rest),
+  };
+}
 
 const TODAY_HINT = () => new Date().toISOString().slice(0, 10);
 
