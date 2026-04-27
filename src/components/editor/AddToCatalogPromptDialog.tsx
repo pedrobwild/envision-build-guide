@@ -118,6 +118,8 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     setSupplierId(NONE_VALUE);
     setDuplicates([]);
     setDuplicatesDismissed(false);
+    setCreatingCategory(false);
+    setNewCategoryName("");
   }, [open, suggested]);
 
   // Debounced duplicate check by name similarity
