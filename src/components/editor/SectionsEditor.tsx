@@ -171,6 +171,7 @@ function SectionContextMenu({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(section.title);
   const isMarkedRemove = section.addendum_action === "remove";
+  const confirm = useConfirm();
 
   return (
     <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) setName(section.title); }}>
@@ -215,8 +216,14 @@ function SectionContextMenu({
           </button>
         )}
         <button
-          onClick={() => {
-            if (confirm("Excluir esta seção e todos os seus itens?")) {
+          onClick={async () => {
+            const ok = await confirm({
+              title: "Excluir seção",
+              description: "Excluir esta seção e todos os seus itens? Esta ação não pode ser desfeita.",
+              confirmText: "Excluir",
+              destructive: true,
+            });
+            if (ok) {
               onDelete();
               setOpen(false);
             }
