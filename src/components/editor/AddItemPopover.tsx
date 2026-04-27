@@ -141,8 +141,9 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
   };
 
   const handleAddManual = () => {
+    const title = search.trim() || "Novo Item";
     onAddItem({
-      title: search.trim() || "Novo Item",
+      title,
       description: null,
       unit: null,
       qty: null,
@@ -152,6 +153,16 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
       catalog_snapshot: null,
     });
     setOpen(false);
+
+    // Offer to add this manual item to the global catalog for reuse
+    setPromptSuggestion({
+      title,
+      description: null,
+      unit: null,
+      internal_unit_price: null,
+    });
+    // Defer to allow popover close animation to settle
+    setTimeout(() => setPromptOpen(true), 80);
   };
 
   return (
