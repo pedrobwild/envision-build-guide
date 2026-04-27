@@ -21,7 +21,10 @@ function validate(body: Record<string, unknown>): string[] {
   if (!str("budget_id")) errors.push("budget_id obrigatório");
 
   const parcelas = Number(body.parcelas);
-  if (!Number.isInteger(parcelas) || parcelas < 1 || parcelas > 18) errors.push("Parcelas inválidas (1-18)");
+  if (!Number.isInteger(parcelas) || parcelas < 1 || parcelas > 12) errors.push("Parcelas inválidas (1-12)");
+
+  const paymentMethod = typeof body.payment_method === "string" ? body.payment_method : "cartao";
+  if (!["cartao", "fluxo_obra"].includes(paymentMethod)) errors.push("Método de pagamento inválido");
 
   return errors;
 }
