@@ -435,3 +435,24 @@ export function SortableItemRow({
     </div>
   );
 }
+
+function DeleteItemButton({ onConfirm }: { onConfirm: () => void }) {
+  const confirm = useConfirm();
+  return (
+    <button
+      onClick={async () => {
+        const ok = await confirm({
+          title: "Excluir item",
+          description: "Tem certeza que deseja excluir este item?",
+          confirmText: "Excluir",
+          destructive: true,
+        });
+        if (ok) onConfirm();
+      }}
+      className="p-0.5 sm:p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity duration-100 sm:opacity-0 sm:group-hover/item:opacity-100"
+      title="Excluir item"
+    >
+      <Trash2 className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
+    </button>
+  );
+}
