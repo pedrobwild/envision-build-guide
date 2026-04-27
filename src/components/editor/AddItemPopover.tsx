@@ -257,5 +257,12 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
         </div>
       </PopoverContent>
     </Popover>
+    <AddToCatalogPromptDialog
+      open={promptOpen}
+      onOpenChange={setPromptOpen}
+      suggested={promptSuggestion}
+      sectionTitle={sectionTitle}
+    />
+    </>
   );
 }
