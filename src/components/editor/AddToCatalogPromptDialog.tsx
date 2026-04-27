@@ -19,11 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Package, Wrench, Sparkles, AlertTriangle, Plus, X } from "lucide-react";
+import { Loader2, Package, Wrench, Sparkles, AlertTriangle, Plus, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { sanitizePostgrestPattern } from "@/lib/postgrest-escape";
+import { CATALOG_SECTION_OPTIONS } from "@/lib/catalog-helpers";
 
 interface DuplicateSuggestion {
   id: string;
