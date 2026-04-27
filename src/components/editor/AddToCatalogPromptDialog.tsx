@@ -375,7 +375,12 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setItemType("product")}
+                onClick={() => {
+                  setItemType("product");
+                  setCategoryId(NONE_VALUE);
+                  setCreatingCategory(false);
+                  setNewCategoryName("");
+                }}
                 className={cn(
                   "flex items-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-colors text-left",
                   itemType === "product"
