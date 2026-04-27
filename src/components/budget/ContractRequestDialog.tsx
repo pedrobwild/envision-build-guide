@@ -135,6 +135,8 @@ function ContractForm({
   const [enderecoImovel, setEnderecoImovel] = useState("");
 
   // Payment
+  type PaymentMethod = "cartao" | "fluxo_obra";
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cartao");
   const [parcelas, setParcelas] = useState(10);
 
   const selectedOption = installmentOptions.find((o) => o.months === parcelas)!;
@@ -198,7 +200,8 @@ function ContractForm({
           nacionalidade: nacionalidade.trim(),
           estado_civil: estadoCivil.trim(),
           profissao: profissao.trim(),
-          parcelas,
+          parcelas: paymentMethod === "cartao" ? parcelas : 1,
+          payment_method: paymentMethod,
         }),
       });
 
@@ -210,6 +213,10 @@ function ContractForm({
       }
 
       const valorParcela = formatBRL(total / parcelas);
+      const pagamentoLinha =
+        paymentMethod === "cartao"
+          ? `Cartão de crédito — ${parcelas}× de ${valorParcela} (total ${formatBRL(total)})`
+          : `Parcelamento no fluxo da obra (total ${formatBRL(total)}) — condições a combinar com a consultora`;
       const msg = [
         `📋 *SOLICITAÇÃO DE CONTRATO*`,
         ``,
@@ -233,7 +240,7 @@ function ContractForm({
         `Endereço: ${enderecoImovel}`,
         ``,
         `💳 *PAGAMENTO*`,
-        `${parcelas}× de ${valorParcela} (total ${formatBRL(total)})`,
+        pagamentoLinha,
       ].filter(Boolean).join("\n");
 
       const whatsappUrl = `https://wa.me/${DEFAULT_PHONE}?text=${encodeURIComponent(msg)}`;
@@ -333,66 +340,135 @@ function ContractForm({
             )}
 
             {step === 2 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <p className="text-xs text-muted-foreground font-body">
-                  Cartão de crédito em até 12× sem juros.
+                  Escolha como prefere pagar. Você pode ajustar com a consultora depois.
                 </p>
-                <div className="relative">
+
+                {/* Método de pagamento */}
+                <div role="radiogroup" aria-label="Método de pagamento" className="grid gap-2">
                   <button
                     type="button"
-                    onClick={() => setPaymentOpen(!paymentOpen)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors text-sm font-body min-h-[44px]"
-                    aria-expanded={paymentOpen}
-                    aria-haspopup="listbox"
+                    role="radio"
+                    aria-checked={paymentMethod === "cartao"}
+                    onClick={() => setPaymentMethod("cartao")}
+                    className={cn(
+                      "w-full text-left rounded-lg border px-3 py-3 transition-colors min-h-[56px]",
+                      paymentMethod === "cartao"
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "border-border bg-muted/30 hover:bg-muted"
+                    )}
                   >
-                    <span className="text-foreground font-medium">
-                      {selectedOption.label} — {formatBRL(total / parcelas)}/mês
-                    </span>
-                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", paymentOpen && "rotate-180")} />
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-body font-semibold text-foreground">Cartão de crédito</p>
+                        <p className="text-xs text-muted-foreground font-body">Em até 12× sem juros</p>
+                      </div>
+                      <div
+                        className={cn(
+                          "h-4 w-4 rounded-full border-2 flex-shrink-0",
+                          paymentMethod === "cartao" ? "border-primary bg-primary" : "border-border"
+                        )}
+                        aria-hidden="true"
+                      />
+                    </div>
                   </button>
 
-                  <AnimatePresence>
-                    {paymentOpen && (
-                      <motion.ul
-                        role="listbox"
-                        aria-label="Opções de parcelamento"
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg shadow-lg overflow-y-auto max-h-48"
-                      >
-                        {installmentOptions.map((opt) => (
-                          <li key={opt.months} role="option" aria-selected={parcelas === opt.months}>
-                            <button
-                              type="button"
-                              onClick={() => { setParcelas(opt.months); setPaymentOpen(false); }}
-                              className={cn(
-                                "w-full flex items-center justify-between px-3 py-2 text-sm font-body transition-colors min-h-[44px]",
-                                parcelas === opt.months
-                                  ? "bg-primary/10 text-primary font-semibold"
-                                  : "text-foreground hover:bg-muted"
-                              )}
-                            >
-                              <span>{opt.label}</span>
-                              <span className="font-semibold tabular-nums">{formatBRL(total / opt.months)}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </motion.ul>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={paymentMethod === "fluxo_obra"}
+                    onClick={() => setPaymentMethod("fluxo_obra")}
+                    className={cn(
+                      "w-full text-left rounded-lg border px-3 py-3 transition-colors min-h-[56px]",
+                      paymentMethod === "fluxo_obra"
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "border-border bg-muted/30 hover:bg-muted"
                     )}
-                  </AnimatePresence>
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-body font-semibold text-foreground">Parcelamento no fluxo da obra</p>
+                        <p className="text-xs text-muted-foreground font-body">Pagamentos atrelados às etapas da execução</p>
+                      </div>
+                      <div
+                        className={cn(
+                          "h-4 w-4 rounded-full border-2 flex-shrink-0",
+                          paymentMethod === "fluxo_obra" ? "border-primary bg-primary" : "border-border"
+                        )}
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </button>
                 </div>
 
-                <div className="text-center pt-2 pb-1">
-                  <p className="font-display font-bold text-xl text-primary tabular-nums">
-                    {parcelas}× de {formatBRL(total / parcelas)}
-                  </p>
+                {/* Seletor de parcelas (apenas para cartão) */}
+                {paymentMethod === "cartao" && (
+                  <div className="relative">
+                    <Label className="text-xs font-body block mb-1.5">Parcelas</Label>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentOpen(!paymentOpen)}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors text-sm font-body min-h-[44px]"
+                      aria-expanded={paymentOpen}
+                      aria-haspopup="listbox"
+                    >
+                      <span className="text-foreground font-medium">
+                        {selectedOption.label} — {formatBRL(total / parcelas)}/mês
+                      </span>
+                      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", paymentOpen && "rotate-180")} />
+                    </button>
+
+                    <AnimatePresence>
+                      {paymentOpen && (
+                        <motion.ul
+                          role="listbox"
+                          aria-label="Opções de parcelamento"
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg shadow-lg overflow-y-auto max-h-48"
+                        >
+                          {installmentOptions.map((opt) => (
+                            <li key={opt.months} role="option" aria-selected={parcelas === opt.months}>
+                              <button
+                                type="button"
+                                onClick={() => { setParcelas(opt.months); setPaymentOpen(false); }}
+                                className={cn(
+                                  "w-full flex items-center justify-between px-3 py-2 text-sm font-body transition-colors min-h-[44px]",
+                                  parcelas === opt.months
+                                    ? "bg-primary/10 text-primary font-semibold"
+                                    : "text-foreground hover:bg-muted"
+                                )}
+                              >
+                                <span>{opt.label}</span>
+                                <span className="font-semibold tabular-nums">{formatBRL(total / opt.months)}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                {/* Resumo */}
+                <div className="text-center pt-1 pb-1">
+                  {paymentMethod === "cartao" ? (
+                    <p className="font-display font-bold text-xl text-primary tabular-nums">
+                      {parcelas}× de {formatBRL(total / parcelas)}
+                    </p>
+                  ) : (
+                    <p className="font-display font-bold text-lg text-primary">
+                      Parcelado no fluxo da obra
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground font-body mt-0.5">Total: {formatBRL(total)}</p>
                 </div>
 
                 <p className="text-xs text-muted-foreground font-body text-center">
-                  Condições sob consulta com sua consultora
+                  Condições finais alinhadas com sua consultora.
                 </p>
               </div>
             )}
