@@ -8,6 +8,7 @@ import {
 import { Plus, Search, Package, Wrench, PenLine, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPrimarySupplierPrice, buildSupplierPriceSnapshot } from "@/lib/catalog-helpers";
+import { AddToCatalogPromptDialog } from "./AddToCatalogPromptDialog";
 
 interface CatalogSuggestion {
   id: string;
@@ -40,6 +41,13 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
   const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [selecting, setSelecting] = useState<string | null>(null);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [promptSuggestion, setPromptSuggestion] = useState<{
+    title: string;
+    description: string | null;
+    unit: string | null;
+    internal_unit_price: number | null;
+  } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
@@ -133,8 +141,9 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
   };
 
   const handleAddManual = () => {
+    const title = search.trim() || "Novo Item";
     onAddItem({
-      title: search.trim() || "Novo Item",
+      title,
       description: null,
       unit: null,
       qty: null,
@@ -144,9 +153,20 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
       catalog_snapshot: null,
     });
     setOpen(false);
+
+    // Offer to add this manual item to the global catalog for reuse
+    setPromptSuggestion({
+      title,
+      description: null,
+      unit: null,
+      internal_unit_price: null,
+    });
+    // Defer to allow popover close animation to settle
+    setTimeout(() => setPromptOpen(true), 80);
   };
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="flex items-center gap-1.5 text-sm font-body text-primary hover:text-primary/80 transition-colors">
@@ -237,5 +257,12 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
         </div>
       </PopoverContent>
     </Popover>
+    <AddToCatalogPromptDialog
+      open={promptOpen}
+      onOpenChange={setPromptOpen}
+      suggested={promptSuggestion}
+      sectionTitle={sectionTitle}
+    />
+    </>
   );
 }
