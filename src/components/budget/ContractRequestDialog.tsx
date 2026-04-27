@@ -137,9 +137,24 @@ function ContractForm({
   // Payment
   type PaymentMethod = "cartao" | "fluxo_obra";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cartao");
-  const [parcelas, setParcelas] = useState(10);
+  const MAX_INSTALLMENTS = 12;
+  const [parcelas, setParcelasState] = useState(10);
 
-  const selectedOption = installmentOptions.find((o) => o.months === parcelas)!;
+  const setParcelas = useCallback((value: number) => {
+    if (!Number.isInteger(value) || value < 1) {
+      toast.error("Selecione um número de parcelas válido (1 a 12).");
+      return;
+    }
+    if (value > MAX_INSTALLMENTS) {
+      toast.warning(`Parcelamento no cartão limitado a ${MAX_INSTALLMENTS}× sem juros.`);
+      setParcelasState(MAX_INSTALLMENTS);
+      return;
+    }
+    setParcelasState(value);
+  }, []);
+
+  const selectedOption =
+    installmentOptions.find((o) => o.months === parcelas) ?? installmentOptions[installmentOptions.length - 1];
 
   const handleCpfChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCpf(formatCpf(e.target.value));
