@@ -3296,6 +3296,7 @@ export type Database = {
         Args: { _internal_status: string }
         Returns: string
       }
+      generate_budget_public_id: { Args: never; Returns: string }
       get_budget_totals: {
         Args: never
         Returns: {
