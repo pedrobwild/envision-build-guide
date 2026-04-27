@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { BudgetSummary, BudgetMeta, ScopeCategory, ScopeItem } from "@/lib/orcamento-types";
 import { mockBudget } from "@/lib/orcamento-mock-data";
 import { format, addDays } from "date-fns";
-import { PUBLIC_BUDGET_SELECT, PUBLIC_SECTION_SELECT, PUBLIC_ITEM_SELECT } from "@/lib/public-columns";
+import { PUBLIC_SECTION_SELECT, PUBLIC_ITEM_SELECT } from "@/lib/public-columns";
 
 interface PublicBudgetRow {
   id: string;
@@ -14,6 +14,8 @@ interface PublicBudgetRow {
   date: string | null;
   validity_days: number | null;
   consultora_comercial: string | null;
+  public_id: string | null;
+  status: string | null;
 }
 
 interface PublicSectionRow {
@@ -34,23 +36,28 @@ interface PublicItemRow {
   included_rooms: string[] | null;
 }
 
-async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
-  // Fetch budget — public-safe columns only
-  const { data: budgetRaw, error: budgetError } = await supabase
-    .from("budgets")
-    .select(PUBLIC_BUDGET_SELECT)
-    .eq("id", projectId)
-    .single();
+/**
+ * Fetch a public budget by its short, shareable public_id.
+ * Uses the SECURITY DEFINER RPC `get_public_budget`, which only returns
+ * budgets in `published` or `minuta_solicitada` status — preventing
+ * accidental disclosure of drafts via the public route.
+ */
+async function fetchOrcamentoBudget(publicId: string): Promise<BudgetSummary> {
+  const { data: rpcData, error: rpcError } = await supabase.rpc("get_public_budget", {
+    p_public_id: publicId,
+  });
 
-  if (budgetError) throw new Error(`Erro ao carregar orçamento: ${budgetError.message}`);
-  if (!budgetRaw) throw new Error("Orçamento não encontrado");
-  const budget = budgetRaw as unknown as PublicBudgetRow;
+  if (rpcError) throw new Error(`Erro ao carregar orçamento: ${rpcError.message}`);
+  if (!rpcData) throw new Error("Orçamento não encontrado");
 
-  // Fetch sections ordered — public-safe columns only
+  const budget = rpcData as unknown as PublicBudgetRow;
+  if (!budget?.id) throw new Error("Orçamento não encontrado");
+
+  // Fetch sections — RLS allows SELECT only when parent budget is published
   const { data: sectionsRaw, error: sectionsError } = await supabase
     .from("sections")
     .select(PUBLIC_SECTION_SELECT)
-    .eq("budget_id", projectId)
+    .eq("budget_id", budget.id)
     .order("order_index", { ascending: true });
 
   if (sectionsError) throw new Error(`Erro ao carregar seções: ${sectionsError.message}`);
@@ -76,7 +83,7 @@ async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
     : budget.date ?? "";
 
   const meta: BudgetMeta = {
-    projectId: budget.id,
+    projectId: budget.public_id ?? budget.id,
     clientName: budget.client_name,
     projectName: budget.project_name,
     area: budget.metragem ?? "—",
@@ -99,7 +106,6 @@ async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
         : [item.description || "Incluso"],
     }));
 
-    // If section has included_bullets, use those as items too
     if (scopeItems.length === 0 && section.included_bullets) {
       const bullets = section.included_bullets as string[];
       if (bullets.length > 0) {
@@ -118,22 +124,24 @@ async function fetchOrcamentoBudget(projectId: string): Promise<BudgetSummary> {
     };
   }).filter((cat) => cat.items.length > 0);
 
-  // Static content stays from mock (services, journey, portalTabs, included)
+  // Static institutional content stays from the mock catalogue
+  // (services, journey, portalTabs, included). Scope, however, must reflect
+  // real data — never fall back to mock scope, which would mislead the client.
   return {
     meta,
     included: mockBudget.included,
     services: mockBudget.services,
     journey: mockBudget.journey,
-    scope: scope.length > 0 ? scope : mockBudget.scope,
+    scope,
     portalTabs: mockBudget.portalTabs,
   };
 }
 
-export function useOrcamentoBudget(projectId: string | undefined) {
+export function useOrcamentoBudget(publicId: string | undefined) {
   return useQuery({
-    queryKey: ["orcamento-budget", projectId],
-    queryFn: () => fetchOrcamentoBudget(projectId!),
-    enabled: !!projectId,
+    queryKey: ["orcamento-budget", publicId],
+    queryFn: () => fetchOrcamentoBudget(publicId!),
+    enabled: !!publicId,
     retry: 1,
     staleTime: 5 * 60 * 1000,
   });
