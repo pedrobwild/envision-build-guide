@@ -226,7 +226,7 @@ export function BudgetCommunicationDrawer({
               size="sm"
               variant="outline"
               className="h-9 gap-1.5"
-              onClick={() => window.open(`/orcamento/${budget.public_id}`, "_blank")}
+              onClick={() => window.open(`/orcamento/${budget.public_id}`, "_blank", "noopener,noreferrer")}
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Abrir
