@@ -410,13 +410,34 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            Adicionar ao catálogo?
+            {confirming ? "Confirmar vínculo" : "Adicionar ao catálogo?"}
           </DialogTitle>
           <DialogDescription>
-            Este item ainda não existe no catálogo. Cadastre agora para reutilizar em próximos orçamentos.
+            {confirming
+              ? "Revise antes de criar o item no catálogo e vinculá-lo automaticamente à linha do orçamento."
+              : "Este item ainda não existe no catálogo. Cadastre agora para reutilizar em próximos orçamentos."}
           </DialogDescription>
         </DialogHeader>
 
+        {confirming ? (
+          <ConfirmationSummary
+            name={name.trim()}
+            itemType={itemType}
+            unit={unit.trim()}
+            unitPrice={unitPrice}
+            categoryName={
+              categoryId !== NONE_VALUE
+                ? filteredCategories.find((c) => c.id === categoryId)?.name ?? null
+                : null
+            }
+            supplierName={
+              supplierId !== NONE_VALUE
+                ? suppliers.find((s) => s.id === supplierId)?.name ?? null
+                : null
+            }
+            sections={Array.from(new Set(selectedSections.filter(Boolean)))}
+          />
+        ) : (
         <div className="space-y-4 py-1">
           {/* Tipo: Produto vs Serviço */}
           <div className="space-y-2">
