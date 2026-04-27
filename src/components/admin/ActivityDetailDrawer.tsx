@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const TYPE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   call: Phone,
@@ -633,10 +634,14 @@ export function ActivityDetailDrawer({ activityId, open, onOpenChange, getProfil
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => {
-                if (confirm("Remover esta ação permanentemente?")) {
-                  deleteMut.mutate();
-                }
+              onClick={async () => {
+                const ok = await confirm({
+                  title: "Remover ação",
+                  description: "Remover esta ação permanentemente? Esta operação não pode ser desfeita.",
+                  confirmText: "Remover",
+                  destructive: true,
+                });
+                if (ok) deleteMut.mutate();
               }}
               disabled={deleteMut.isPending}
               className="h-7 text-[11px] gap-1.5 text-muted-foreground hover:text-destructive"
