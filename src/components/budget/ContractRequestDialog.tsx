@@ -189,6 +189,10 @@ function ContractForm({
 
   const handleSubmit = async () => {
     if (!validateStep(0) || !validateStep(1)) return;
+    if (paymentMethod === "cartao" && (parcelas < 1 || parcelas > MAX_INSTALLMENTS)) {
+      toast.error(`Parcelamento no cartão deve ser entre 1× e ${MAX_INSTALLMENTS}×.`);
+      return;
+    }
     setSending(true);
 
     try {
