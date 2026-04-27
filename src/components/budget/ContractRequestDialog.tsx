@@ -135,6 +135,8 @@ function ContractForm({
   const [enderecoImovel, setEnderecoImovel] = useState("");
 
   // Payment
+  type PaymentMethod = "cartao" | "fluxo_obra";
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cartao");
   const [parcelas, setParcelas] = useState(10);
 
   const selectedOption = installmentOptions.find((o) => o.months === parcelas)!;
