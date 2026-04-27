@@ -16,6 +16,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import {
   ACCEPTED_MIME,
   MAX_FILES,
@@ -438,10 +439,19 @@ export function AiAssistant() {
       return;
     }
 
+    // Generate a correlation id for this request — sent to the edge function and
+    // echoed back via response header + SSE meta event so it can be surfaced in
+    // toasts/error messages and used to trace failures end-to-end in logs.
+    const cid =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `cid-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
     const userMsg: Msg = {
       role: "user",
       content: trimmed || (pendingFiles.length > 0 ? "Analise os arquivos anexados." : ""),
       attachments: pendingFiles.length > 0 ? pendingFiles : undefined,
+      correlationId: cid,
     };
 
     const next = [...messages, userMsg];
@@ -450,6 +460,9 @@ export function AiAssistant() {
     setPendingFiles([]);
     setLoading(true);
 
+    // The CID may be replaced by whatever the server confirms (header or meta event)
+    // — usually identical, but we trust the server's value as the source of truth.
+    let activeCid = cid;
     let assistantSoFar = "";
     const upsertAssistant = (chunk: string) => {
       assistantSoFar += chunk;
@@ -457,10 +470,15 @@ export function AiAssistant() {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant" && !last.bulkOp) {
           return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content: assistantSoFar } : m,
+            i === prev.length - 1
+              ? { ...m, content: assistantSoFar, correlationId: activeCid }
+              : m,
           );
         }
-        return [...prev, { role: "assistant", content: assistantSoFar }];
+        return [
+          ...prev,
+          { role: "assistant", content: assistantSoFar, correlationId: activeCid },
+        ];
       });
     };
 
@@ -478,10 +496,15 @@ export function AiAssistant() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-correlation-id": cid,
             Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({ messages: next }),
         });
+
+        // Prefer server-confirmed correlation id when available.
+        const headerCid = resp.headers.get("x-correlation-id");
+        if (headerCid) activeCid = headerCid;
 
         // Handle rate limit: auto-retry with exponential backoff
         if (resp.status === 429) {
@@ -494,7 +517,7 @@ export function AiAssistant() {
           if (attempt < MAX_RETRIES) {
             toast({
               title: "Limite de requisições atingido",
-              description: `Aguardando ${Math.round(backoffMs / 1000)}s e tentando novamente (${attempt}/${MAX_RETRIES - 1})…`,
+              description: `Aguardando ${Math.round(backoffMs / 1000)}s e tentando novamente (${attempt}/${MAX_RETRIES - 1})… (id: ${activeCid.slice(0, 8)})`,
             });
             await sleep(backoffMs);
             continue;
@@ -513,6 +536,7 @@ export function AiAssistant() {
 
         if (!resp.ok || !resp.body) {
           const errBody = await resp.json().catch(() => ({}));
+          if (errBody?.correlation_id) activeCid = errBody.correlation_id;
           throw new Error(errBody.error || `Erro ${resp.status} ao contatar o assistente.`);
         }
 
@@ -520,6 +544,7 @@ export function AiAssistant() {
         const decoder = new TextDecoder();
         let buffer = "";
         let done = false;
+        let streamErrorMsg: string | null = null;
 
         while (!done) {
           const { done: streamDone, value } = await reader.read();
@@ -531,6 +556,10 @@ export function AiAssistant() {
             let line = buffer.slice(0, nl);
             buffer = buffer.slice(nl + 1);
             if (line.endsWith("\r")) line = line.slice(0, -1);
+            // Skip SSE comments and event-type markers (we identify meta/error
+            // events by the JSON payload itself for resilience).
+            if (line.startsWith(":") || line.trim() === "") continue;
+            if (line.startsWith("event:")) continue;
             if (!line.startsWith("data: ")) continue;
             const json = line.slice(6).trim();
             if (json === "[DONE]") {
@@ -539,6 +568,15 @@ export function AiAssistant() {
             }
             try {
               const parsed = JSON.parse(json);
+              // Meta event: capture/refresh correlation id confirmed by server.
+              if (parsed?.correlation_id && typeof parsed.correlation_id === "string") {
+                activeCid = parsed.correlation_id;
+              }
+              // Error event injected mid-stream by the function wrapper.
+              if (parsed?.error && typeof parsed.error === "string" && !parsed.choices) {
+                streamErrorMsg = parsed.error;
+                continue;
+              }
               const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
               if (delta) upsertAssistant(delta);
             } catch {
@@ -547,21 +585,26 @@ export function AiAssistant() {
             }
           }
         }
+
+        if (streamErrorMsg) throw new Error(streamErrorMsg);
         success = true;
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Falha ao enviar mensagem";
       const isCredits = /créditos/i.test(message);
       const isRateLimit = /limite/i.test(message);
+      // Always include a short id so the user can quote it when reporting issues.
+      const shortId = activeCid.slice(0, 8);
       toast({
         title: isCredits
           ? "Créditos esgotados"
           : isRateLimit
             ? "Muitas requisições"
             : "Erro no assistente",
-        description: message,
+        description: `${message} (id: ${shortId})`,
         variant: "destructive",
       });
+      logger.error(`[AiAssistant] request failed cid=${activeCid}:`, message);
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant" && !last.content && !last.bulkOp) {
@@ -752,9 +795,27 @@ export function AiAssistant() {
                         </div>
                       )}
                       {m.role === "assistant" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none font-body prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-pre:my-2 prose-headings:mb-1 prose-headings:mt-2">
-                          <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
-                        </div>
+                        <>
+                          <div className="prose prose-sm dark:prose-invert max-w-none font-body prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-pre:my-2 prose-headings:mb-1 prose-headings:mt-2">
+                            <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
+                          </div>
+                          {m.correlationId && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard?.writeText(m.correlationId!).catch(() => {});
+                                toast({
+                                  title: "ID copiado",
+                                  description: "Use este ID para reportar problemas.",
+                                });
+                              }}
+                              className="mt-1.5 text-[10px] font-mono text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+                              title={`Correlation id: ${m.correlationId} — clique para copiar`}
+                            >
+                              id: {m.correlationId.slice(0, 8)}
+                            </button>
+                          )}
+                        </>
                       ) : (
                         m.content && <p className="whitespace-pre-wrap font-body">{m.content}</p>
                       )}
