@@ -795,9 +795,27 @@ export function AiAssistant() {
                         </div>
                       )}
                       {m.role === "assistant" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none font-body prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-pre:my-2 prose-headings:mb-1 prose-headings:mt-2">
-                          <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
-                        </div>
+                        <>
+                          <div className="prose prose-sm dark:prose-invert max-w-none font-body prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-pre:my-2 prose-headings:mb-1 prose-headings:mt-2">
+                            <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
+                          </div>
+                          {m.correlationId && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard?.writeText(m.correlationId!).catch(() => {});
+                                toast({
+                                  title: "ID copiado",
+                                  description: "Use este ID para reportar problemas.",
+                                });
+                              }}
+                              className="mt-1.5 text-[10px] font-mono text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+                              title={`Correlation id: ${m.correlationId} — clique para copiar`}
+                            >
+                              id: {m.correlationId.slice(0, 8)}
+                            </button>
+                          )}
+                        </>
                       ) : (
                         m.content && <p className="whitespace-pre-wrap font-body">{m.content}</p>
                       )}
