@@ -635,11 +635,32 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
                 ))}
               </SelectContent>
             </Select>
-            {supplierId !== NONE_VALUE && (
-              <p className="text-[11px] text-muted-foreground">
-                O preço base será registrado como principal para este fornecedor.
-              </p>
-            )}
+            {(() => {
+              const priceVal = parseFloat(unitPrice.replace(",", "."));
+              const hasPrice = !Number.isNaN(priceVal) && priceVal > 0;
+              if (supplierId !== NONE_VALUE && hasPrice) {
+                return (
+                  <p className="text-[11px] text-primary">
+                    Preço base de R$ {priceVal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} será registrado como principal para este fornecedor.
+                  </p>
+                );
+              }
+              if (hasPrice && supplierId === NONE_VALUE) {
+                return (
+                  <p className="text-[11px] text-muted-foreground">
+                    Selecione um fornecedor para salvar o preço base de R$ {priceVal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.
+                  </p>
+                );
+              }
+              if (supplierId !== NONE_VALUE && !hasPrice) {
+                return (
+                  <p className="text-[11px] text-muted-foreground">
+                    Informe um preço base acima para vincular ao fornecedor.
+                  </p>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
 
