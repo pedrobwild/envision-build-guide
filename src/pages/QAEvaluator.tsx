@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import DOMPurify from "isomorphic-dompurify";
 
 const QA_CRITERIA = [
   {
@@ -412,7 +413,12 @@ ${code.slice(0, 8000)}`;
                   marginTop: 20, background: "#fff", border: "1px solid #e5e7eb",
                   borderRadius: 10, padding: "20px 24px", fontSize: 13, lineHeight: 1.7, color: "#374151",
                 }}
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(aiReport) }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(renderMarkdown(aiReport), {
+                    ALLOWED_TAGS: ["h1", "h2", "h3", "strong", "em", "li", "ul", "ol", "br", "span", "p"],
+                    ALLOWED_ATTR: ["style"],
+                  }),
+                }}
               />
             )}
           </div>

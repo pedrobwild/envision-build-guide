@@ -19,6 +19,7 @@ import { MobileItemEditor } from "@/components/editor/MobileItemEditor";
 import { AddItemPopover } from "@/components/editor/AddItemPopover";
 import { ItemImageInline } from "@/components/editor/ItemImageInline";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   Tooltip,
   TooltipContent,
@@ -170,6 +171,7 @@ function SectionContextMenu({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(section.title);
   const isMarkedRemove = section.addendum_action === "remove";
+  const confirm = useConfirm();
 
   return (
     <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) setName(section.title); }}>
@@ -214,8 +216,14 @@ function SectionContextMenu({
           </button>
         )}
         <button
-          onClick={() => {
-            if (confirm("Excluir esta seção e todos os seus itens?")) {
+          onClick={async () => {
+            const ok = await confirm({
+              title: "Excluir seção",
+              description: "Excluir esta seção e todos os seus itens? Esta ação não pode ser desfeita.",
+              confirmText: "Excluir",
+              destructive: true,
+            });
+            if (ok) {
               onDelete();
               setOpen(false);
             }
@@ -300,6 +308,7 @@ function SortableItemRow({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [rowExpanded, setRowExpanded] = useState(false);
+  const confirm = useConfirm();
   const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
   const isMobile = useIsMobile();
   const {
@@ -522,8 +531,14 @@ function SortableItemRow({
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/40" />
           ) : (
             <button
-              onClick={() => {
-                if (confirm("Excluir este item?")) onDelete(sectionId, item.id);
+              onClick={async () => {
+                const ok = await confirm({
+                  title: "Excluir item",
+                  description: "Tem certeza que deseja excluir este item?",
+                  confirmText: "Excluir",
+                  destructive: true,
+                });
+                if (ok) onDelete(sectionId, item.id);
               }}
               className="p-0.5 sm:p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity duration-100 sm:opacity-0 sm:group-hover/item:opacity-100"
               title="Excluir item"
