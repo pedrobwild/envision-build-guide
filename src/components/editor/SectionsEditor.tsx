@@ -756,6 +756,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       Object.values(timers.current).forEach(t => clearTimeout(t));
       timers.current = {};
       pendingUpdates.current = {};
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     };
   }, []);
   const [suppliers, setSuppliers] = useState<{ id: string; name: string; categoria: string | null }[]>([]);
