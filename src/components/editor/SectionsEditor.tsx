@@ -1595,6 +1595,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                                         },
                                   ),
                                 );
+                                // Visual feedback: highlight the linked row, scroll into view, clear after 3.5s
+                                setHighlightItemId(rowId);
+                                if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+                                requestAnimationFrame(() => {
+                                  const el = document.querySelector<HTMLElement>(`[data-item-row-id="${rowId}"]`);
+                                  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                });
+                                highlightTimerRef.current = setTimeout(() => {
+                                  setHighlightItemId((current) => (current === rowId ? null : current));
+                                }, 3500);
                               }}
                             />
                           </div>
