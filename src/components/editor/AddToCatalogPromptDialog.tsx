@@ -98,6 +98,9 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
   const [categoryId, setCategoryId] = useState<string>(NONE_VALUE);
   const [supplierId, setSupplierId] = useState<string>(NONE_VALUE);
   const [saving, setSaving] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateSuggestion[]>([]);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const [duplicatesDismissed, setDuplicatesDismissed] = useState(false);
 
   // Reset when reopened with new suggested item
   useEffect(() => {
@@ -110,7 +113,75 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     setItemType("product");
     setCategoryId(NONE_VALUE);
     setSupplierId(NONE_VALUE);
+    setDuplicates([]);
+    setDuplicatesDismissed(false);
   }, [open, suggested]);
+
+  // Debounced duplicate check by name similarity
+  useEffect(() => {
+    if (!open) return;
+    const trimmed = name.trim();
+    if (trimmed.length < 3) {
+      setDuplicates([]);
+      setCheckingDuplicates(false);
+      return;
+    }
+
+    let cancelled = false;
+    setCheckingDuplicates(true);
+    const timer = setTimeout(async () => {
+      try {
+        const normalized = normalizeForCompare(trimmed);
+        const tokens = normalized.split(" ").filter((t) => t.length >= 3);
+        // Use the longest token as a fast prefilter on search_text
+        const seedToken = tokens.sort((a, b) => b.length - a.length)[0] ?? normalized;
+        const safe = sanitizePostgrestPattern(seedToken);
+        if (!safe) {
+          if (!cancelled) {
+            setDuplicates([]);
+            setCheckingDuplicates(false);
+          }
+          return;
+        }
+        const { data, error } = await supabase
+          .from("catalog_items")
+          .select("id, name, item_type, unit_of_measure")
+          .eq("is_active", true)
+          .ilike("search_text", `%${safe}%`)
+          .limit(20);
+        if (cancelled) return;
+        if (error) {
+          setDuplicates([]);
+          setCheckingDuplicates(false);
+          return;
+        }
+        const ranked: DuplicateSuggestion[] = (data ?? [])
+          .map((row) => ({
+            id: row.id,
+            name: row.name,
+            item_type: row.item_type as "product" | "service",
+            unit_of_measure: row.unit_of_measure,
+            similarity: tokenSimilarity(trimmed, row.name),
+          }))
+          .filter((d) => d.similarity >= 0.5)
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, 4);
+        setDuplicates(ranked);
+        setCheckingDuplicates(false);
+      } catch {
+        if (!cancelled) {
+          setDuplicates([]);
+          setCheckingDuplicates(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [name, open]);
+
 
   const { data: categories = [] } = useQuery({
     queryKey: ["catalog_categories", "prompt"],
