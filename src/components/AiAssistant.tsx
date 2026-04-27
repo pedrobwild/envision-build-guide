@@ -603,8 +603,7 @@ export function AiAssistant() {
         description: `${message} (id: ${shortId})`,
         variant: "destructive",
       });
-      // eslint-disable-next-line no-console
-      console.error(`[AiAssistant] request failed cid=${activeCid}:`, message);
+      logger.error(`[AiAssistant] request failed cid=${activeCid}:`, message);
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant" && !last.content && !last.bulkOp) {
