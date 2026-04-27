@@ -246,7 +246,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
         </div>
 
         {/* Manual item option - always visible */}
-        <div className="border-t border-border p-2">
+        <div className="border-t border-border p-2 space-y-2">
           <button
             onClick={handleAddManual}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors text-left"
@@ -259,6 +259,31 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
               <p className="text-xs text-muted-foreground">Adicionar item customizado</p>
             </div>
           </button>
+          <div className="px-3 pb-1">
+            <label
+              htmlFor="manual-item-price"
+              className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              Preço unitário (opcional)
+            </label>
+            <Input
+              id="manual-item-price"
+              value={manualPrice}
+              onChange={(e) => setManualPrice(e.target.value)}
+              placeholder="0,00"
+              inputMode="decimal"
+              className="h-8 text-sm mt-1"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddManual();
+                }
+              }}
+            />
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              Se informar, o preço base poderá ser registrado no catálogo automaticamente.
+            </p>
+          </div>
         </div>
       </PopoverContent>
     </Popover>
