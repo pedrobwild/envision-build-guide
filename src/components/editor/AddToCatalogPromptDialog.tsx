@@ -83,7 +83,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   suggested: SuggestedItem | null;
   /** Called after a catalog item is created so the editor can attach catalog_item_id to the inserted line. */
-  onCreated?: (catalogItemId: string, itemType: "product" | "service") => void;
+  onCreated?: (catalogItemId: string, itemType: "product" | "service", linkedSections: string[]) => void;
   /** Optional: pre-select section title to attach the new item to. */
   sectionTitle?: string;
 }
