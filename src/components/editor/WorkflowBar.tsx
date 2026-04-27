@@ -175,7 +175,14 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
       .eq("id", budget.id);
 
     if (error) {
-      toast.error("Erro ao atualizar status.");
+      const msg = error.message || "";
+      if (/jwt|sub claim|token|401|403/i.test(msg)) {
+        toast.error("Sessão expirada. Recarregue a página e faça login novamente.");
+      } else if (/row-level security|permission/i.test(msg)) {
+        toast.error("Você não tem permissão para alterar este orçamento.");
+      } else {
+        toast.error(`Erro ao atualizar status: ${msg}`);
+      }
       return;
     }
 
