@@ -107,6 +107,7 @@ function toLocalInput(d: Date) {
 
 export function ActivityDetailDrawer({ activityId, open, onOpenChange, getProfileName }: Props) {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editType, setEditType] = useState("task");
