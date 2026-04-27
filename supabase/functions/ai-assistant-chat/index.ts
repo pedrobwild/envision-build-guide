@@ -1304,17 +1304,9 @@ serve(async (req) => {
     }
 
     // ===== Final streamed response =====
-    const finalResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: conversation,
-        stream: true,
-      }),
+    const { resp: finalResp } = await callGatewayWithFallback({
+      messages: conversation,
+      stream: true,
     });
 
     if (!finalResp.ok) {
