@@ -610,36 +610,15 @@ export default function BudgetInternalDetail() {
               variant="outline"
               size="sm"
               className="gap-1.5"
-              onClick={async () => {
-                let publicId = budget.public_id;
-                if (!publicId) {
-                  // Fallback: força a trigger a gerar o public_id e relê o registro
-                  const toastId = toast.loading("Gerando link público...");
-                  try {
-                    const { error: updErr } = await supabase
-                      .from("budgets")
-                      .update({ updated_at: new Date().toISOString() })
-                      .eq("id", budget.id);
-                    if (updErr) throw updErr;
-                    const { data, error } = await supabase
-                      .from("budgets")
-                      .select("public_id")
-                      .eq("id", budget.id)
-                      .maybeSingle();
-                    if (error) throw error;
-                    publicId = data?.public_id ?? null;
-                    if (!publicId) throw new Error("public_id ausente");
-                    setBudget((prev) => (prev ? { ...prev, public_id: publicId } : prev));
-                    toast.dismiss(toastId);
-                  } catch {
-                    toast.dismiss(toastId);
-                    toast.error("Não foi possível gerar o link público agora");
-                    return;
-                  }
+              disabled={!budget.public_id}
+              onClick={() => {
+                if (!budget.public_id) {
+                  toast.error("Link público ainda não disponível");
+                  return;
                 }
-                window.open(getPublicBudgetUrl(publicId), "_blank", "noopener,noreferrer");
+                window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
               }}
-              title="Abrir orçamento público"
+              title={budget.public_id ? "Abrir orçamento público" : "Link público sendo gerado..."}
             >
               <ExternalLink className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ver orçamento público</span>
