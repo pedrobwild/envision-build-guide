@@ -145,21 +145,24 @@ export function AddItemPopover({ sectionTitle, onAddItem, onLinkCatalog }: Props
     setSelecting(null);
   };
 
-  const handleAddManual = () => {
+  const handleAddManual = async () => {
     const title = search.trim() || "Novo Item";
     const parsedPrice = parseFloat(manualPrice.replace(",", "."));
     const priceVal = !Number.isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : null;
 
-    onAddItem({
-      title,
-      description: null,
-      unit: null,
-      qty: priceVal != null ? 1 : null,
-      internal_unit_price: priceVal,
-      internal_total: priceVal,
-      catalog_item_id: null,
-      catalog_snapshot: null,
-    });
+    const insertedId = await Promise.resolve(
+      onAddItem({
+        title,
+        description: null,
+        unit: null,
+        qty: priceVal != null ? 1 : null,
+        internal_unit_price: priceVal,
+        internal_total: priceVal,
+        catalog_item_id: null,
+        catalog_snapshot: null,
+      }),
+    );
+    setPendingRowId(typeof insertedId === "string" ? insertedId : null);
     setOpen(false);
 
     // Offer to add this manual item to the global catalog for reuse
