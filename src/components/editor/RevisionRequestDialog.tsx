@@ -18,6 +18,8 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { logRevisionRequestEvent } from "@/lib/version-audit";
 import { toast } from "sonner";
 
+import { logger } from "@/lib/logger";
+
 const CHANGE_TYPES = [
   { value: "inclusion", label: "Inclusão de itens ou escopo" },
   { value: "removal", label: "Remoção de itens ou escopo" },
@@ -104,7 +106,7 @@ export function RevisionRequestDialog({
       toast.success("Solicitação de revisão enviada ao orçamentista.");
       onSuccess();
     } catch (err) {
-      console.error("Revision request error:", err);
+      logger.error("Revision request error:", err);
       toast.error("Erro ao enviar solicitação. Tente novamente.");
     } finally {
       setSubmitting(false);

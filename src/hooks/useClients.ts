@@ -4,6 +4,8 @@ import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { sanitizePostgrestPattern } from "@/lib/postgrest-escape";
 
+import { logger } from "@/lib/logger";
+
 export type Client = Database["public"]["Tables"]["clients"]["Row"];
 export type ClientInsert = Database["public"]["Tables"]["clients"]["Insert"];
 export type ClientUpdate = Database["public"]["Tables"]["clients"]["Update"];
@@ -121,7 +123,7 @@ export function useClients(filters: ClientFilters = {}) {
 
       if (statsErr) {
         // Não bloqueia a lista se a view falhar — só retorna sem stats.
-        console.error("[useClients] client_stats error:", statsErr);
+        logger.error("[useClients] client_stats error:", statsErr);
       }
 
       const statsMap = new Map<string, ClientStats>();
@@ -383,7 +385,7 @@ export function useUpsertClient() {
       toast.success(client.id ? "Cliente salvo!" : "Cliente criado!");
     },
     onError: (err) => {
-      console.error("[useUpsertClient]", err);
+      logger.error("[useUpsertClient]", err);
       toast.error(
         err instanceof Error ? `Erro ao salvar cliente: ${err.message}` : "Erro ao salvar cliente.",
       );
@@ -407,7 +409,7 @@ export function useDeleteClient() {
       toast.success("Cliente arquivado.");
     },
     onError: (err) => {
-      console.error("[useDeleteClient]", err);
+      logger.error("[useDeleteClient]", err);
       toast.error("Erro ao arquivar cliente.");
     },
   });
@@ -424,7 +426,7 @@ export async function searchClients(query: string): Promise<Client[]> {
     .or(`name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`)
     .limit(10);
   if (error) {
-    if (import.meta.env.DEV) console.error("[searchClients]", error);
+    if (import.meta.env.DEV) logger.error("[searchClients]", error);
     return [];
   }
   return (data ?? []) as Client[];

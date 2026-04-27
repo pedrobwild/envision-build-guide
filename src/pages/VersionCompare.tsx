@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, Plus, Minus, RefreshCw, Equal, Eye, EyeOff, Trendin
 import { formatBRL } from "@/lib/formatBRL";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { logVersionEvent } from "@/lib/version-audit";
+import { logger } from "@/lib/logger";
 
 interface CompareSection {
   id: string;
@@ -186,7 +187,7 @@ export default function VersionCompare() {
           metadata: { left_version: l.meta.version_number, right_version: r.meta.version_number, left_id: leftId, right_id: rightId },
         });
       })
-      .catch(console.error)
+      .catch((err) => logger.error(err))
       .finally(() => setLoading(false));
   }, [leftId, rightId]);
 

@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+import { logger } from "@/lib/logger";
+
 export interface ClientProperty {
   id: string;
   client_id: string;
@@ -95,7 +97,7 @@ export function useUpsertClientProperty() {
       toast.success("Imóvel salvo!");
     },
     onError: (err) => {
-      console.error("[useUpsertClientProperty]", err);
+      logger.error("[useUpsertClientProperty]", err);
       toast.error(err instanceof Error ? `Erro: ${err.message}` : "Erro ao salvar imóvel.");
     },
   });
@@ -115,7 +117,7 @@ export function useDeleteClientProperty() {
       toast.success("Imóvel excluído.");
     },
     onError: (err) => {
-      console.error("[useDeleteClientProperty]", err);
+      logger.error("[useDeleteClientProperty]", err);
       toast.error("Erro ao excluir imóvel (apenas admin pode excluir).");
     },
   });
@@ -147,7 +149,7 @@ export function useSetPrimaryProperty() {
       toast.success("Imóvel principal atualizado.");
     },
     onError: (err) => {
-      console.error("[useSetPrimaryProperty]", err);
+      logger.error("[useSetPrimaryProperty]", err);
       toast.error("Erro ao definir imóvel principal.");
     },
   });

@@ -464,56 +464,104 @@ export function AiAssistant() {
       });
     };
 
+    const MAX_RETRIES = 3;
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    let attempt = 0;
+    let success = false;
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const resp = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ messages: next }),
-      });
+      while (attempt < MAX_RETRIES && !success) {
+        attempt += 1;
+        const { data: { session } } = await supabase.auth.getSession();
+        const resp = await fetch(CHAT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ messages: next }),
+        });
 
-      if (!resp.ok || !resp.body) {
-        const errBody = await resp.json().catch(() => ({}));
-        throw new Error(errBody.error || `HTTP ${resp.status}`);
-      }
+        // Handle rate limit: auto-retry with exponential backoff
+        if (resp.status === 429) {
+          const retryAfterHeader = resp.headers.get("retry-after");
+          const headerSeconds = retryAfterHeader ? Number(retryAfterHeader) : NaN;
+          const backoffMs = Number.isFinite(headerSeconds) && headerSeconds > 0
+            ? headerSeconds * 1000
+            : Math.min(2000 * 2 ** (attempt - 1), 15000);
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let done = false;
-
-      while (!done) {
-        const { done: streamDone, value } = await reader.read();
-        if (streamDone) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let nl: number;
-        while ((nl = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, nl);
-          buffer = buffer.slice(nl + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") {
-            done = true;
-            break;
+          if (attempt < MAX_RETRIES) {
+            toast({
+              title: "Limite de requisições atingido",
+              description: `Aguardando ${Math.round(backoffMs / 1000)}s e tentando novamente (${attempt}/${MAX_RETRIES - 1})…`,
+            });
+            await sleep(backoffMs);
+            continue;
           }
-          try {
-            const parsed = JSON.parse(json);
-            const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (delta) upsertAssistant(delta);
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
+          throw new Error(
+            "Limite de uso da IA atingido. Aguarde alguns instantes e tente novamente.",
+          );
+        }
+
+        // Handle insufficient credits: do NOT retry, surface clear guidance
+        if (resp.status === 402) {
+          throw new Error(
+            "Créditos da IA esgotados. Adicione créditos em Configurações → Workspace → Uso para continuar.",
+          );
+        }
+
+        if (!resp.ok || !resp.body) {
+          const errBody = await resp.json().catch(() => ({}));
+          throw new Error(errBody.error || `Erro ${resp.status} ao contatar o assistente.`);
+        }
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let done = false;
+
+        while (!done) {
+          const { done: streamDone, value } = await reader.read();
+          if (streamDone) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          let nl: number;
+          while ((nl = buffer.indexOf("\n")) !== -1) {
+            let line = buffer.slice(0, nl);
+            buffer = buffer.slice(nl + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (!line.startsWith("data: ")) continue;
+            const json = line.slice(6).trim();
+            if (json === "[DONE]") {
+              done = true;
+              break;
+            }
+            try {
+              const parsed = JSON.parse(json);
+              const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
+              if (delta) upsertAssistant(delta);
+            } catch {
+              buffer = line + "\n" + buffer;
+              break;
+            }
           }
         }
+        success = true;
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Falha ao enviar mensagem";
-      toast({ title: "Erro no assistente", description: message, variant: "destructive" });
+      const isCredits = /créditos/i.test(message);
+      const isRateLimit = /limite/i.test(message);
+      toast({
+        title: isCredits
+          ? "Créditos esgotados"
+          : isRateLimit
+            ? "Muitas requisições"
+            : "Erro no assistente",
+        description: message,
+        variant: "destructive",
+      });
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant" && !last.content && !last.bulkOp) {

@@ -53,6 +53,8 @@ import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
 import { useDealPipelines } from "@/hooks/useDealPipelines";
 import { cn } from "@/lib/utils";
 
+import { logger } from "@/lib/logger";
+
 /* ── Notion-like property row ── */
 function PropertyRow({
   icon: Icon,
@@ -294,7 +296,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
         .from("budget-pdfs")
         .upload(filePath, pdfFile, { contentType: "application/pdf" });
       if (uploadErr) {
-        console.error("PDF upload error:", uploadErr);
+        logger.error("PDF upload error:", uploadErr);
         toast.error("Erro ao fazer upload do PDF.");
         setLoading(false);
         return;
@@ -337,7 +339,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
       .single();
 
     if (error || !data) {
-      console.error("Budget insert error:", error?.message, error?.details, error?.hint, error);
+      logger.error("Budget insert error:", error?.message, error?.details, error?.hint, error);
       toast.error(`Erro ao criar solicitação: ${error?.message || "resposta vazia"}`);
       setLoading(false);
       return;
@@ -356,7 +358,7 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
         const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
         await seedFromTemplate(data.id, tplId);
       } catch (seedErr) {
-        console.error("Erro ao criar seções padrão:", seedErr);
+        logger.error("Erro ao criar seções padrão:", seedErr);
       }
     }
 

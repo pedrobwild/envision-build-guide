@@ -27,6 +27,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [capsLockOn, setCapsLockOn] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [mode, setMode] = useState<Mode>("login");
   const navigate = useNavigate();
@@ -104,6 +105,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setSuccessMessage(null);
     if (!validate()) return;
     setLoading(true);
 
@@ -112,13 +114,16 @@ export default function Login() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       setLoading(false);
-      if (error) setFormError(error.message);
-      else {
-        setFormError(null);
+      if (error) {
+        if (/rate limit/i.test(error.message)) {
+          setFormError("Muitas tentativas. Aguarde alguns minutos antes de pedir outro e-mail.");
+        } else {
+          setFormError("Não foi possível enviar o e-mail de recuperação. Tente novamente em instantes.");
+        }
+      } else {
         setFieldErrors({});
         setMode("login");
-        // Use a simple alert-style feedback via formError in green — or just switch back
-        setFormError("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+        setSuccessMessage("E-mail de recuperação enviado! Verifique sua caixa de entrada (e o spam).");
       }
       return;
     }
@@ -144,6 +149,9 @@ export default function Login() {
         }
         return;
       }
+      // Sucesso: navega; o redirect desmonta o componente, mas garantimos
+      // limpeza do loading caso a navegação seja interceptada.
+      setLoading(false);
       navigate("/admin");
     } catch {
       setLoading(false);
@@ -171,8 +179,6 @@ export default function Login() {
     );
   }
 
-  const isRecoverySuccess = mode === "login" && formError?.includes("recuperação enviado");
-
   return (
     <div
       className="min-h-[100dvh] flex relative bg-cover bg-center bg-no-repeat"
@@ -191,18 +197,25 @@ export default function Login() {
           Bwild Engine
         </h1>
 
+        {successMessage && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-start gap-2.5 rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-3.5 mb-6 w-full"
+          >
+            <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 text-emerald-400" />
+            <p className="text-sm font-body text-emerald-300">{successMessage}</p>
+          </div>
+        )}
+
         {formError && (
           <div
             role="alert"
             aria-live="assertive"
-            className={`flex items-start gap-2.5 rounded-lg border p-3.5 mb-6 w-full ${
-              isRecoverySuccess
-                ? "border-emerald-400/30 bg-emerald-500/10"
-                : "border-red-400/30 bg-red-500/10"
-            }`}
+            className="flex items-start gap-2.5 rounded-lg border border-red-400/30 bg-red-500/10 p-3.5 mb-6 w-full"
           >
-            <AlertCircle className={`h-4 w-4 shrink-0 mt-0.5 ${isRecoverySuccess ? "text-emerald-400" : "text-red-400"}`} />
-            <p className={`text-sm font-body ${isRecoverySuccess ? "text-emerald-300" : "text-red-300"}`}>{formError}</p>
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
+            <p className="text-sm font-body text-red-300">{formError}</p>
           </div>
         )}
 
@@ -292,7 +305,7 @@ export default function Login() {
             <div className="flex justify-center pt-1">
               <button
                 type="button"
-                onClick={() => { setMode("forgot"); setFormError(null); setFieldErrors({}); }}
+                onClick={() => { setMode("forgot"); setFormError(null); setSuccessMessage(null); setFieldErrors({}); }}
                 className="text-xs text-white/80 hover:text-white hover:underline font-medium font-body"
               >
                 Esqueci minha senha
@@ -321,7 +334,7 @@ export default function Login() {
             <div className="flex justify-center">
               <button
                 type="button"
-                onClick={() => { setMode("login"); setFormError(null); setFieldErrors({}); }}
+                onClick={() => { setMode("login"); setFormError(null); setSuccessMessage(null); setFieldErrors({}); }}
                 className="text-sm text-white/80 hover:text-white transition-colors font-body inline-flex items-center gap-1.5"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />

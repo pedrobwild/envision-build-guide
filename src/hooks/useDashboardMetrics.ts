@@ -2,6 +2,8 @@ import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
 import { STATUS_GROUPS } from "@/lib/role-constants";
 import type { BudgetWithSections, SectionWithItems, AdjustmentRow } from "@/types/budget-common";
 
+import { logger } from "@/lib/logger";
+
 export interface DateRange {
   from: Date;
   to: Date;
@@ -251,7 +253,7 @@ export function computeDashboardMetrics(
   if (import.meta.env.DEV) {
     const inconsistent = budgets.filter(b => b.internal_status === 'contrato_fechado' && b.status !== 'published');
     if (inconsistent.length > 0) {
-      console.warn(`[Metrics] ${inconsistent.length} budgets with inconsistent status/internal_status`);
+      logger.warn(`[Metrics] ${inconsistent.length} budgets with inconsistent status/internal_status`);
     }
   }
 

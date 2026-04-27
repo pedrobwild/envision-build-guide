@@ -60,6 +60,8 @@ import { RevisionRequestDialog } from "./RevisionRequestDialog";
 import { publishVersion, ensureVersionGroup } from "@/lib/budget-versioning";
 import { sendBudgetPublishedNotification } from "@/lib/digisac-notify";
 
+import { logger } from "@/lib/logger";
+
 interface WorkflowBarProps {
   budget: BudgetRow;
   onBudgetUpdate: (fields: Record<string, unknown>) => void;
@@ -139,7 +141,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
       .select("id, full_name")
       .then(({ data, error }) => {
         if (cancelled) return;
-        if (error) console.error('Failed to load profiles:', error.message);
+        if (error) logger.error('Failed to load profiles:', error.message);
         if (data) setProfiles(data as ProfileRow[]);
       });
     return () => { cancelled = true; };
@@ -252,7 +254,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           });
         }
       } catch (err) {
-        console.error("Erro ao publicar:", err);
+        logger.error("Erro ao publicar:", err);
         toast.error("Erro ao publicar o orçamento.");
         setConfirmLoading(false);
         setConfirmDialogOpen(false);
@@ -434,7 +436,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => window.open(`/admin/demanda/${budget.id}`, "_blank")}
+                onClick={() => window.open(`/admin/demanda/${budget.id}`, "_blank", "noopener,noreferrer")}
               >
                 <FileText className="h-3.5 w-3.5" />
               </Button>

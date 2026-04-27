@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { CATALOG_SECTION_OPTIONS, getItemSections, setItemSections, getSupplierPrices, type SupplierPrice } from "@/lib/catalog-helpers";
 import { ImagePlus, X, Loader2, Plus, Star, StarOff, Edit2, Trash2, AlertTriangle, AlertCircle } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SupplierComparisonTab } from "@/components/catalog/SupplierComparisonTab";
@@ -245,6 +246,7 @@ function SupplierPricesSection({ catalogItemId, suppliers }: { catalogItemId: st
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingPrice, setEditingPrice] = useState<SupplierPrice | null>(null);
+  const confirm = useConfirm();
 
   const { data: prices = [], isLoading } = useQuery({
     queryKey: ["catalog_item_supplier_prices", catalogItemId],
@@ -258,7 +260,13 @@ function SupplierPricesSection({ catalogItemId, suppliers }: { catalogItemId: st
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Remover fornecedor deste item?")) return;
+    const ok = await confirm({
+      title: "Remover fornecedor",
+      description: "Remover este fornecedor do item? O histórico de preços será preservado.",
+      confirmText: "Remover",
+      destructive: true,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("catalog_item_supplier_prices").delete().eq("id", id);
     if (error) { toast.error("Erro ao remover"); return; }
     toast.success("Removido");

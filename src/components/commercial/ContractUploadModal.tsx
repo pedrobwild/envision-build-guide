@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, Loader2, X } from "lucide-react";
 
+import { logger } from "@/lib/logger";
+
 interface ContractUploadModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -84,7 +86,7 @@ export function ContractUploadModal({
       onSuccess(contractUrl);
       handleClose();
     } catch (err: unknown) {
-      console.error("Contract upload error:", err);
+      logger.error("Contract upload error:", err);
       const msg = err instanceof Error ? err.message : "Tente novamente";
       toast.error("Erro ao enviar contrato: " + msg);
     } finally {

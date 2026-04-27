@@ -62,6 +62,7 @@ import { BulkActionsBar } from "@/components/crm/BulkActionsBar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLeadScores } from "@/hooks/useLeadScores";
 import { LeadScoreBadge } from "@/components/admin/LeadScoreBadge";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = Object.entries(
   CLIENT_STATUSES,
@@ -79,6 +80,7 @@ function formatBRL(value: number | null | undefined) {
 export default function ClientsList() {
   const navigate = useNavigate();
   const { members: comerciais } = useTeamMembers("comercial");
+  const confirm = useConfirm();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ClientStatus | "all">("all");
@@ -564,14 +566,14 @@ export default function ClientsList() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `Arquivar ${c.name}? Ele sai da carteira ativa mas o histórico de orçamentos é preservado.`,
-                                )
-                              ) {
-                                deleteClient.mutate(c.id);
-                              }
+                            onClick={async () => {
+                              const ok = await confirm({
+                                title: "Arquivar cliente",
+                                description: `Arquivar ${c.name}? Ele sai da carteira ativa mas o histórico de orçamentos é preservado.`,
+                                confirmText: "Arquivar",
+                                destructive: true,
+                              });
+                              if (ok) deleteClient.mutate(c.id);
                             }}
                           >
                             <Archive className="h-3.5 w-3.5 mr-2" /> Arquivar

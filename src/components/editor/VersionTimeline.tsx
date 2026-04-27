@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 
+import { logger } from "@/lib/logger";
+
 interface VersionTimelineProps {
   budgetId: string;
   onVersionChange?: () => void;
@@ -77,7 +79,7 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
       }
       setRevisionReasons(reasons);
     } catch (err) {
-      console.error("Failed to load version timeline:", err);
+      logger.error("Failed to load version timeline:", err);
     }
     setLoading(false);
   };

@@ -1,24 +1,3 @@
-// supabase/functions/ai-assistant-chat/index.ts
-//
-// Assistente BWild — chat com tool-calling.
-//
-// Capacidades:
-//  - query_analytics      → agregações multi-tabela (budgets, clients, lead_sources, items, suppliers, daily_metrics_snapshot)
-//  - get_kpi_trend        → série temporal de KPIs já calculados em daily_metrics_snapshot
-//  - top_entities         → ranking pronto (top clientes por receita, top fornecedores, top categorias, etc.)
-//  - web_market_research  → pesquisa de mercado/concorrência via Perplexity (sonar-pro)
-//
-// Mantém compatibilidade total com o cliente (UI AiAssistant.tsx) — mesma rota,
-// mesmo formato de stream SSE da OpenAI.
-//
-// SEGURANÇA
-//  - Todas as tools que tocam o banco usam o cliente service-role mas
-//    revalidam o papel do usuário (admin) antes de executar.
-//  - Usuários não-admin recebem o conjunto de tools vazio.
-//  - Limite de 5000 linhas por consulta agregada e LRU cache de 60s.
-//
-// ──────────────────────────────────────────────────────────────────────────
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { toArrayBuffer } from "../_shared/bytes.ts";
@@ -30,8 +9,6 @@ const corsHeaders = {
 };
 
 const TODAY_HINT = () => new Date().toISOString().slice(0, 10);
-
-// ─── System prompt ────────────────────────────────────────────────────────
 
 const SYSTEM_PROMPT = `Você é o **Assistente BWild**, especialista no projeto **orcamento-bwild** — plataforma da BWild Engine para gestão de orçamentos de reformas residenciais de alto padrão em São Paulo.
 
@@ -55,54 +32,51 @@ Responda **SEMPRE em português brasileiro (pt-BR)**, mesmo que a pergunta venha
 # Papéis (RBAC)
 \`admin\` (visão global), \`comercial\` (carteira + leads sem dono), \`orcamentista\` (produção).
 
-# ⚙️ Ferramentas disponíveis (somente admin)
+# Consultas analíticas (somente admin)
+Quando o admin perguntar sobre **dados reais** (contagens, médias, totais, evolução, ranking, comparativos), use a ferramenta \`query_analytics\`. Exemplos do que ela responde:
+- "média diária de novas solicitações nos últimos 7 dias" → metric=\`count\`, group_by=\`day\`, date_field=\`created_at\`, days=7 (depois calcule média = total/dias).
+- "quantos orçamentos por status este mês" → metric=\`count\`, group_by=\`internal_status\`, days=30.
+- "valor total fechado em abril" → metric=\`sum_internal_cost\` ou \`sum_manual_total\`, internal_statuses=[contrato_fechado], date range.
+- "ranking de comercial por orçamentos publicados" → metric=\`count\`, group_by=\`commercial_owner\`, internal_statuses=[published, minuta_solicitada, contrato_fechado].
+- "contratos assinados na semana" → metric=\`count\`, date_field=\`approved_at\`, internal_statuses=[contrato_fechado], days=7.
+- "orçamentos vencendo nos próximos 7 dias" → metric=\`count\`, date_field=\`due_at\`, days=7 (com from=hoje).
 
-Você tem acesso a 4 ferramentas. **Use sempre que a pergunta envolver dados reais ou mercado** — nunca invente números.
+**Escolha do \`date_field\`** (crítico para precisão):
+- "novas solicitações", "leads recebidos", "criados", "entraram" → \`created_at\`
+- "aprovados", "fechados", "ganhos", "contratos assinados" → \`approved_at\`
+- "perdidos", "encerrados" (sem distinção) → \`closed_at\`
+- "vencendo", "prazo", "atrasados", "a vencer" → \`due_at\`
+- Quando ambíguo → \`created_at\`.
 
-## 1. \`query_analytics\` — agregações em tempo real
-Consulta multi-tabela com agregação. Use para perguntas como:
-- "média de orçamentos por dia nos últimos 7 dias" → table=\`budgets\`, metric=\`count\`, group_by=\`day\`, days=7
-- "ticket médio em abril" → table=\`budgets\`, metric=\`avg_internal_cost\`, days=30
-- "ranking de comerciais por publicações" → table=\`budgets\`, metric=\`count\`, group_by=\`commercial_owner\`, internal_statuses=[published, minuta_solicitada, contrato_fechado]
-- "leads recebidos por origem nos últimos 30 dias" → table=\`lead_sources\`, metric=\`count\`, group_by=\`source\`, days=30
-- "novos clientes no mês" → table=\`clients\`, metric=\`count\`, days=30
-- "fornecedores ativos por categoria" → table=\`suppliers\`, metric=\`count\`, days=null
+**SEMPRE chame a ferramenta antes de responder com números.** Nunca invente métricas. Se a ferramenta não estiver disponível (usuário não-admin), explique educadamente e indique a página relevante (\`/admin\`, \`/admin/analises\`, \`/admin/comercial\`).
 
-**Escolha do \`date_field\` em \`budgets\`** (crítico para precisão):
-- "novas solicitações" / "criados" / "entraram" → \`created_at\`
-- "aprovados" / "fechados" / "ganhos" / "contratos assinados" → \`approved_at\`
-- "perdidos" / "encerrados" → \`closed_at\`
-- "vencendo" / "prazo" / "a vencer" / "atrasados" → \`due_at\`
+Após receber o resultado, formate a resposta de forma clara: tabelas markdown para rankings/agrupamentos, frases diretas para totais simples.
 
-## 2. \`get_kpi_trend\` — KPIs pré-calculados (rápido)
-Retorna a série de \`daily_metrics_snapshot\`. **Prefira esta ferramenta** para perguntas sobre KPIs que já são monitorados diariamente:
-SLA on-time, lead time médio, taxa de conversão, ticket médio, receita do mês, backlog/overdue. Bem mais rápido que recalcular de \`budgets\`.
+**OBRIGATÓRIO em toda resposta com números vindos de \`query_analytics\`:**
+1. Comece informando o **período verificado** usando o campo \`period_label\` exatamente como veio (ex.: "Nos últimos 7 dias (19/04 a 26/04)…").
+2. Inclua o **total de registros do período** (\`total_in_period\`) em destaque.
+3. Quando agrupado por dia/semana/mês, calcule e mostre a **média** dividindo \`total_in_period\` pelo número de buckets do período (use \`days\` se presente, não o número de buckets retornados — assim dias com zero entram no denominador).
+4. Se \`truncated=true\`, avise que o resultado foi limitado a 5000 registros.
 
-Exemplos: "como está nossa taxa de conversão na última semana?", "evolução do SLA on-time nos últimos 30 dias", "ticket médio histórico".
+# Outras ferramentas (somente admin, exceto onde indicado)
 
-## 3. \`top_entities\` — rankings prontos
-Top N entidades por uma métrica. Exemplos: top clientes por receita, top fornecedores por número de itens, top campanhas por leads.
+## \`get_kpi_trend\` — KPIs pré-calculados (rápido)
+Retorna a série de \`daily_metrics_snapshot\`. **Prefira esta ferramenta** para perguntas sobre KPIs já monitorados diariamente: SLA on-time, lead time médio, taxa de conversão, ticket médio, receita do mês, backlog/overdue. Bem mais rápido que recalcular de \`budgets\`.
 
-## 4. \`web_market_research\` — mercado e concorrência
-Pesquisa web em tempo real (Perplexity sonar-pro). Use para:
-- "como o Houzz monetiza?", "tendências de gestão de obras 2026", "como concorrentes mostram orçamento ao cliente"
-- comparativos com Buildertrend, CoConstruct, Procore, Sienge, Obra Prima
-- benchmarks de mercado, pricing, features
+## \`top_entities\` — rankings prontos
+Top N por uma métrica. \`kind\`: \`clients_by_revenue\`, \`clients_by_budget_count\`, \`suppliers_by_item_count\`, \`campaigns_by_leads\`, \`lost_reasons\`.
 
-Use \`mode='benchmarking'\` para concorrência, \`mode='references'\` para tendências/melhores práticas, \`mode='ux'\` para UX/UI.
+## \`web_market_research\` — mercado e concorrência (todos os papéis)
+Pesquisa web em tempo real (Perplexity sonar-pro). Use para "como o Houzz monetiza?", "tendências de gestão de obras 2026", comparativos com Buildertrend, CoConstruct, Procore, Sienge, Obra Prima. Use \`mode='benchmarking'\` para concorrência, \`'references'\` para tendências, \`'ux'\` para UX/UI. **Sempre cite as fontes (\`citations\`) com links clicáveis.**
 
-# Regras de uso
+## \`submit_bug_report\` — registrar problema (todos os papéis)
+Cria um bug report e dispara triagem por IA. Antes de chamar, COLETE no chat: título curto, descrição, passos reproducíveis, expected, actual. NUNCA invente os campos — pergunte ao usuário.
 
-1. **Pergunta híbrida** ("nossa taxa de conversão está abaixo do mercado?") → chame \`get_kpi_trend\` E \`web_market_research\` em sequência, depois sintetize com comparativo.
-2. **SEMPRE chame a ferramenta antes de responder com números.** Nunca invente.
-3. **Após \`query_analytics\`**, OBRIGATORIAMENTE inclua na resposta:
-   - O **período verificado** usando \`period_label\` exatamente como veio (ex.: "Nos últimos 7 dias (19/04 a 26/04)…").
-   - O **total de registros do período** (\`total_in_period\`).
-   - Para agrupamentos por dia/semana/mês, calcule a **média** dividindo \`total_in_period\` pelo \`days\` (não pelo número de buckets — assim dias com zero entram no denominador).
-   - Se \`truncated=true\`, avise que foi limitado a 5000 registros.
-4. **Após \`web_market_research\`**, sempre cite as fontes (campo \`citations\`) com links clicáveis.
-5. **Tabelas markdown** para rankings/agrupamentos, frases diretas para totais simples.
-6. Se a tool não estiver disponível (não-admin), explique educadamente e indique a página relevante (\`/admin\`, \`/admin/analises\`, \`/admin/comercial\`).
+## \`query_bug_reports\` — listar bugs
+Filtra por status, severidade, área e período. Útil para "quais bugs críticos abertos?" ou "top áreas com mais bugs".
+
+# Regras de uso combinado
+- **Pergunta híbrida** ("nossa taxa de conversão está abaixo do mercado?") → chame \`get_kpi_trend\` E \`web_market_research\` em sequência, depois sintetize com comparativo.
 
 Hoje é ${TODAY_HINT()} (use como referência para "hoje", "ontem", "esta semana").
 
@@ -125,44 +99,21 @@ Ao receber arquivos, faça nesta ordem:
 5. **Não invente** rotas, tabelas, features ou números. Se não souber, diga.
 6. **Privacidade**: nunca exponha custos internos, BDI ou margem em textos voltados ao cliente final.`;
 
-// ─── Tool definitions ─────────────────────────────────────────────────────
-
+// =============== Tool definition (analytics) ===============
 const ANALYTICS_TOOL = {
   type: "function" as const,
   function: {
     name: "query_analytics",
     description:
-      "Agregação multi-tabela em tempo real. Suporta tabelas: budgets, clients, lead_sources, items, suppliers, catalog_items, catalog_price_history. Aplica RLS automaticamente — só admin.",
+      "Consulta agregada da tabela 'budgets'. Use sempre que o admin perguntar sobre números reais (contagens, médias, totais, agrupamentos). Aplica RLS automaticamente — só admin pode usar.",
     parameters: {
       type: "object",
       properties: {
-        table: {
-          type: "string",
-          enum: [
-            "budgets",
-            "clients",
-            "lead_sources",
-            "items",
-            "suppliers",
-            "catalog_items",
-            "catalog_price_history",
-          ],
-          description:
-            "Tabela alvo. budgets = orçamentos. clients = clientes. lead_sources = leads recebidos (Meta/Google/etc.). items = linhas de orçamento. suppliers = fornecedores. catalog_items = catálogo de produtos. catalog_price_history = histórico de preços.",
-        },
         metric: {
           type: "string",
-          enum: [
-            "count",
-            "sum_internal_cost",
-            "sum_manual_total",
-            "avg_internal_cost",
-            "sum_internal_total",
-            "avg_internal_total",
-            "sum_qty",
-          ],
+          enum: ["count", "sum_internal_cost", "sum_manual_total", "avg_internal_cost"],
           description:
-            "count = contagem. sum_*/avg_* = soma/média do campo numérico equivalente da tabela escolhida.",
+            "count = contagem de orçamentos. sum_* / avg_* = somatório/média do campo numérico.",
         },
         group_by: {
           type: "string",
@@ -176,59 +127,45 @@ const ANALYTICS_TOOL = {
             "commercial_owner",
             "estimator_owner",
             "lead_source",
-            "source",
-            "status",
-            "city",
-            "bairro",
-            "processing_status",
-            "campaign_name",
-            "form_name",
-            "supplier_id",
-            "category_id",
           ],
           description:
-            "Agrupamento. 'none' = total. 'day/week/month' = série temporal. Demais = dimensão da própria tabela.",
+            "Agrupamento. 'none' = total único. 'day'/'week'/'month' = série temporal por data. 'commercial_owner'/'estimator_owner' retornam nome do responsável.",
         },
         date_field: {
           type: "string",
-          enum: [
-            "created_at",
-            "approved_at",
-            "closed_at",
-            "due_at",
-            "received_at",
-            "processed_at",
-            "updated_at",
-          ],
+          enum: ["created_at", "approved_at", "closed_at", "due_at"],
           description:
-            "Campo de data para filtros e séries. Para budgets: created_at|approved_at|closed_at|due_at. Para lead_sources: received_at|processed_at. Para clients/items/suppliers/catalog_*: created_at|updated_at.",
+            "Campo de data usado nos filtros e agrupamentos temporais. Mapeamento semântico: " +
+            "'novas solicitações' / 'leads recebidos' / 'criados' → created_at; " +
+            "'aprovados' / 'fechados' / 'ganhos' / 'contratos assinados' → approved_at (ou closed_at se contexto for encerramento geral, incluindo perdas); " +
+            "'perdidos' / 'encerrados' (sem distinção win/loss) → closed_at; " +
+            "'vencendo' / 'prazo' / 'a vencer' / 'atrasados' → due_at. " +
+            "Padrão quando ambíguo: created_at.",
         },
-        days: { type: "number", description: "Janela em dias a partir de hoje. Use ISTO ou date_from/date_to." },
+        days: {
+          type: "number",
+          description:
+            "Janela em dias contados a partir de hoje (ex.: 7 = últimos 7 dias). Use isto OU date_from/date_to.",
+        },
         date_from: { type: "string", description: "Data ISO YYYY-MM-DD inclusive." },
         date_to: { type: "string", description: "Data ISO YYYY-MM-DD inclusive." },
         internal_statuses: {
           type: "array",
           items: { type: "string" },
-          description: "Filtra budgets por internal_status. Ex.: ['contrato_fechado'].",
+          description:
+            "Filtra por status interno. Ex.: ['contrato_fechado'], ['published','minuta_solicitada'].",
         },
         pipeline_stages: {
           type: "array",
           items: { type: "string" },
-          description: "Filtra budgets por pipeline_stage. Ex.: ['negociacao'].",
+          description: "Filtra por etapa do pipeline. Ex.: ['negociacao','proposta'].",
         },
-        sources: {
-          type: "array",
-          items: { type: "string" },
-          description: "Filtra lead_sources.source. Ex.: ['meta_ads','google_ads'].",
+        limit: {
+          type: "number",
+          description: "Limite de linhas para agrupamentos (padrão 30, máx 100).",
         },
-        client_status: {
-          type: "array",
-          items: { type: "string" },
-          description: "Filtra clients.status. Ex.: ['lead','active','won'].",
-        },
-        limit: { type: "number", description: "Limite de linhas no agrupamento (padrão 30, máx 100)." },
       },
-      required: ["table", "metric", "group_by"],
+      required: ["metric", "group_by"],
     },
   },
 };
@@ -245,25 +182,12 @@ const KPI_TREND_TOOL = {
         kpi: {
           type: "string",
           enum: [
-            "received_count",
-            "backlog_count",
-            "overdue_count",
-            "closed_count",
-            "in_analysis_count",
-            "delivered_to_sales_count",
-            "published_count",
-            "sla_on_time_pct",
-            "sla_at_risk_count",
-            "sla_breach_48h_count",
-            "avg_lead_time_days",
-            "median_lead_time_days",
-            "avg_time_in_analysis_days",
-            "avg_time_in_review_days",
-            "avg_time_to_publish_days",
-            "conversion_rate_pct",
-            "portfolio_value_brl",
-            "revenue_brl",
-            "avg_ticket_brl",
+            "received_count","backlog_count","overdue_count","closed_count",
+            "in_analysis_count","delivered_to_sales_count","published_count",
+            "sla_on_time_pct","sla_at_risk_count","sla_breach_48h_count",
+            "avg_lead_time_days","median_lead_time_days",
+            "avg_time_in_analysis_days","avg_time_in_review_days","avg_time_to_publish_days",
+            "conversion_rate_pct","portfolio_value_brl","revenue_brl","avg_ticket_brl",
           ],
           description: "KPI desejado (mesmas colunas de daily_metrics_snapshot).",
         },
@@ -285,13 +209,7 @@ const TOP_ENTITIES_TOOL = {
       properties: {
         kind: {
           type: "string",
-          enum: [
-            "clients_by_revenue",
-            "clients_by_budget_count",
-            "suppliers_by_item_count",
-            "campaigns_by_leads",
-            "lost_reasons",
-          ],
+          enum: ["clients_by_revenue","clients_by_budget_count","suppliers_by_item_count","campaigns_by_leads","lost_reasons"],
           description: "Tipo de ranking.",
         },
         days: { type: "number", description: "Janela em dias (padrão 90)." },
@@ -302,42 +220,49 @@ const TOP_ENTITIES_TOOL = {
   },
 };
 
+const WEB_RESEARCH_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "web_market_research",
+    description:
+      "Pesquisa web em tempo real (Perplexity sonar-pro) sobre mercado, concorrência, tendências e UX/UI no setor de gestão de obras e reformas.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Pergunta natural sobre mercado/concorrência/UX." },
+        mode: {
+          type: "string",
+          enum: ["benchmarking","references","ux","general"],
+          description: "benchmarking = concorrentes; references = tendências; ux = UX/UI; general = pesquisa geral.",
+        },
+      },
+      required: ["query"],
+    },
+  },
+};
+
 const SUBMIT_BUG_REPORT_TOOL = {
   type: "function" as const,
   function: {
     name: "submit_bug_report",
     description:
-      "Cria um bug report estruturado e o envia para triagem por IA (severidade + área + duplicatas). Use quando o usuário descrever um problema na plataforma. Antes de chamar, COLETE no chat: título curto, descrição, passos reproducíveis, expected, actual e (se possível) frequência. NUNCA invente os campos — pergunte ao usuário.",
+      "Cria um bug report estruturado e envia para triagem por IA (severidade + área + duplicatas). Use quando o usuário descrever um problema na plataforma. COLETE no chat antes de chamar: título, descrição, passos, expected, actual. NUNCA invente os campos.",
     parameters: {
       type: "object",
       properties: {
-        title: { type: "string", description: "Título curto do bug (5-200 chars). Equivale a 'summary'." },
-        description: { type: "string", description: "Descrição completa do problema (contexto + observado)." },
-        steps_to_reproduce: { type: "string", description: "Passos para reproduzir, numerados ou em bullets." },
+        title: { type: "string", description: "Título curto do bug (5-200 chars)." },
+        description: { type: "string", description: "Descrição completa do problema." },
+        steps_to_reproduce: { type: "string", description: "Passos para reproduzir." },
         expected_behavior: { type: "string", description: "Comportamento esperado." },
-        actual_behavior: { type: "string", description: "Comportamento atual / o que de fato acontece." },
+        actual_behavior: { type: "string", description: "Comportamento atual." },
         severity: {
           type: "string",
-          enum: ["low", "medium", "high", "critical"],
-          description: "Severidade percebida pelo usuário. Se omitido, a IA classifica.",
+          enum: ["low","medium","high","critical"],
+          description: "Severidade percebida. Se omitido, a IA classifica.",
         },
-        route: { type: "string", description: "Rota/URL onde o problema ocorreu (ex.: /admin/budgets/123)." },
-        categories: {
-          type: "array",
-          items: {
-            type: "string",
-            enum: ["loading", "a11y", "microcopy", "data", "performance", "layout", "auth", "permissions", "integration", "other"],
-          },
-          description: "Categorias do template comet-bug-report (subset). Vão para triage_tags.",
-        },
-        frequency: {
-          type: "string",
-          enum: ["always", "intermittent", "first_run", "unknown"],
-          description: "Frequência de ocorrência. Se o usuário não disser, use 'unknown'.",
-        },
-        suggestion: { type: "string", description: "Sugestão de correção do usuário (opcional)." },
+        route: { type: "string", description: "Rota/URL onde ocorreu (ex.: /admin/budgets/123)." },
       },
-      required: ["title", "description", "steps_to_reproduce", "expected_behavior", "actual_behavior"],
+      required: ["title","description","steps_to_reproduce","expected_behavior","actual_behavior"],
     },
   },
 };
@@ -347,60 +272,26 @@ const QUERY_BUG_REPORTS_TOOL = {
   function: {
     name: "query_bug_reports",
     description:
-      "Lista bug reports com filtros. Apenas admin. Útil para perguntas como 'quais bugs críticos abertos?', 'bugs do editor de orçamento esta semana', 'top áreas com mais bugs'.",
+      "Lista bug reports com filtros. Apenas admin. Útil para 'quais bugs críticos abertos?' ou 'top áreas com mais bugs'.",
     parameters: {
       type: "object",
       properties: {
-        status: {
-          type: "array",
-          items: { type: "string", enum: ["open", "triaging", "resolved", "dismissed"] },
-          description: "Status do bug. 'open' = recém-criado; 'triaging' = em análise; 'resolved' = corrigido; 'dismissed' = duplicata/inválido.",
-        },
-        severity: {
-          type: "array",
-          items: { type: "string", enum: ["low", "medium", "high", "critical"] },
-        },
+        status: { type: "array", items: { type: "string", enum: ["open","triaging","resolved","dismissed"] } },
+        severity: { type: "array", items: { type: "string", enum: ["low","medium","high","critical"] } },
         area: {
           type: "array",
           items: { type: "string" },
           description: "Áreas: auth, dashboard, comercial, budget-editor, public-budget, catalog, crm, lead-sources, agenda, ai-assistant, templates, users, system, other.",
         },
         days: { type: "number", description: "Janela em dias (padrão 30)." },
-        group_by: {
-          type: "string",
-          enum: ["none", "area", "severity", "status", "day", "week"],
-          description: "Agrupamento (padrão 'none' = lista plana).",
-        },
+        group_by: { type: "string", enum: ["none","area","severity","status","day","week"] },
         limit: { type: "number", description: "Limite (padrão 25, máx 100)." },
       },
     },
   },
 };
 
-const WEB_RESEARCH_TOOL = {
-  type: "function" as const,
-  function: {
-    name: "web_market_research",
-    description:
-      "Pesquisa web em tempo real (Perplexity sonar-pro) sobre mercado, concorrência, tendências e UX/UI no setor de gestão de obras e reformas. Use para perguntas sobre Houzz, Buildertrend, CoConstruct, Procore, Sienge, Obra Prima, etc., ou tendências de mercado.",
-    parameters: {
-      type: "object",
-      properties: {
-        query: { type: "string", description: "Pergunta natural sobre mercado/concorrência/UX." },
-        mode: {
-          type: "string",
-          enum: ["benchmarking", "references", "ux", "general"],
-          description:
-            "benchmarking = analisar concorrentes; references = tendências/melhores práticas; ux = UX/UI; general = pesquisa geral.",
-        },
-      },
-      required: ["query"],
-    },
-  },
-};
-
-// ─── Helpers de período ───────────────────────────────────────────────────
-
+// =============== Helpers ===============
 function dateRangeFromArgs(
   args: Record<string, unknown>,
 ): { from: string | null; to: string | null; days: number | null } {
@@ -441,14 +332,19 @@ function buildPeriodLabel(from: string | null, to: string | null, days: number |
   return "Período não especificado";
 }
 
-// ─── Cache analítico (60s, LRU 64) ────────────────────────────────────────
-
-const ANALYTICS_CACHE_TTL_MS = 60_000;
+// ─── Short-term in-memory cache for analytics ──────────────────────────────
+// Per-isolate cache: reduces latency and OpenAI tool-call cost when the same
+// admin (or different admins) repeats the same analytics question within the
+// TTL window. Edge Function isolates are reused for many invocations, so this
+// is effective in practice without any external store.
+const ANALYTICS_CACHE_TTL_MS = 60_000; // 60s
 const ANALYTICS_CACHE_MAX = 64;
 type AnalyticsCacheEntry = { value: unknown; expiresAt: number };
 const analyticsCache = new Map<string, AnalyticsCacheEntry>();
 
 function buildAnalyticsCacheKey(normalized: Record<string, unknown>): string {
+  // Stable stringify (sort keys + sort arrays) so semantically equal args hit
+  // the same cache entry regardless of property/argument order.
   const stable = (v: unknown): unknown => {
     if (Array.isArray(v)) return [...v].map(stable).sort((a, b) => String(a).localeCompare(String(b)));
     if (v && typeof v === "object") {
@@ -463,6 +359,7 @@ function buildAnalyticsCacheKey(normalized: Record<string, unknown>): string {
   };
   return JSON.stringify(stable(normalized));
 }
+
 function getAnalyticsCache(key: string): unknown | null {
   const hit = analyticsCache.get(key);
   if (!hit) return null;
@@ -472,7 +369,9 @@ function getAnalyticsCache(key: string): unknown | null {
   }
   return hit.value;
 }
+
 function setAnalyticsCache(key: string, value: unknown): void {
+  // Simple LRU-ish eviction: drop oldest insertion when above cap.
   if (analyticsCache.size >= ANALYTICS_CACHE_MAX) {
     const oldestKey = analyticsCache.keys().next().value;
     if (oldestKey !== undefined) analyticsCache.delete(oldestKey);
@@ -480,150 +379,101 @@ function setAnalyticsCache(key: string, value: unknown): void {
   analyticsCache.set(key, { value, expiresAt: Date.now() + ANALYTICS_CACHE_TTL_MS });
 }
 
-// ─── Configuração de tabelas ──────────────────────────────────────────────
-
-type TableConfig = {
-  selectFields: string;
-  defaultDateField: string;
-  numericFieldByMetric: Record<string, string | null>;
-};
-
-const TABLE_CONFIG: Record<string, TableConfig> = {
-  budgets: {
-    selectFields:
-      "id,created_at,approved_at,closed_at,due_at,updated_at,internal_status,pipeline_stage,commercial_owner_id,estimator_owner_id,lead_source,internal_cost,manual_total",
-    defaultDateField: "created_at",
-    numericFieldByMetric: {
-      count: null,
-      sum_internal_cost: "internal_cost",
-      avg_internal_cost: "internal_cost",
-      sum_manual_total: "manual_total",
-    },
-  },
-  clients: {
-    selectFields: "id,name,status,source,city,bairro,commercial_owner_id,is_active,created_at,updated_at",
-    defaultDateField: "created_at",
-    numericFieldByMetric: { count: null },
-  },
-  lead_sources: {
-    selectFields:
-      "id,source,form_name,campaign_name,adset_name,ad_name,client_id,budget_id,processing_status,received_at,processed_at,created_at",
-    defaultDateField: "received_at",
-    numericFieldByMetric: { count: null },
-  },
-  items: {
-    selectFields:
-      "id,section_id,title,qty,unit,internal_unit_price,internal_total,created_at",
-    defaultDateField: "created_at",
-    numericFieldByMetric: {
-      count: null,
-      sum_internal_total: "internal_total",
-      avg_internal_total: "internal_total",
-      sum_qty: "qty",
-    },
-  },
-  suppliers: {
-    selectFields: "id,name,is_active,created_at,updated_at",
-    defaultDateField: "created_at",
-    numericFieldByMetric: { count: null },
-  },
-  catalog_items: {
-    selectFields: "id,name,category_id,is_active,created_at,updated_at",
-    defaultDateField: "created_at",
-    numericFieldByMetric: { count: null },
-  },
-  catalog_price_history: {
-    selectFields: "id,supplier_id,catalog_item_id,unit_price,recorded_at,created_at",
-    defaultDateField: "created_at",
-    numericFieldByMetric: { count: null },
-  },
-};
-
-// ─── Tool: query_analytics ────────────────────────────────────────────────
-
 async function runAnalytics(
   args: Record<string, unknown>,
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   admin: any,
 ): Promise<{ ok: boolean; result?: unknown; error?: string }> {
-  const table = String(args.table ?? "budgets");
-  const cfg = TABLE_CONFIG[table];
-  if (!cfg) return { ok: false, error: `Tabela não permitida: ${table}` };
-
   const metric = String(args.metric ?? "count");
-  if (!(metric in cfg.numericFieldByMetric)) {
-    return { ok: false, error: `Métrica '${metric}' não é válida para a tabela '${table}'.` };
-  }
-
   const groupBy = String(args.group_by ?? "none");
-  const dateField = String(args.date_field ?? cfg.defaultDateField);
+  const dateField = String(args.date_field ?? "created_at");
   const limit = Math.min(Number(args.limit ?? 30) || 30, 100);
   const { from, to, days } = dateRangeFromArgs(args);
   const periodLabel = buildPeriodLabel(from, to, days);
   const internalStatuses = Array.isArray(args.internal_statuses) ? args.internal_statuses : null;
   const pipelineStages = Array.isArray(args.pipeline_stages) ? args.pipeline_stages : null;
-  const sources = Array.isArray(args.sources) ? args.sources : null;
-  const clientStatus = Array.isArray(args.client_status) ? args.client_status : null;
 
+  // Cache lookup with the *resolved* args (so days→from/to is included and
+  // queries within the same minute hit the same entry).
   const cacheKey = buildAnalyticsCacheKey({
-    table, metric, groupBy, dateField, limit, from, to, days,
-    internalStatuses, pipelineStages, sources, clientStatus,
+    metric,
+    groupBy,
+    dateField,
+    limit,
+    from,
+    to,
+    days,
+    internalStatuses,
+    pipelineStages,
   });
   const cached = getAnalyticsCache(cacheKey);
-  if (cached) return { ok: true, result: { ...(cached as Record<string, unknown>), cache: "hit" } };
+  if (cached) {
+    return { ok: true, result: { ...(cached as Record<string, unknown>), cache: "hit" } };
+  }
 
-  let q = admin.from(table).select(cfg.selectFields, { count: "exact" });
+
+  const selectFields = [
+    "id",
+    "created_at",
+    "approved_at",
+    "closed_at",
+    "due_at",
+    "internal_status",
+    "pipeline_stage",
+    "commercial_owner_id",
+    "estimator_owner_id",
+    "lead_source",
+    "internal_cost",
+    "manual_total",
+  ].join(",");
+
+  let q = admin.from("budgets").select(selectFields, { count: "exact" });
 
   if (from) q = q.gte(dateField, `${from}T00:00:00Z`);
   if (to) q = q.lte(dateField, `${to}T23:59:59Z`);
-  if (table === "budgets" && internalStatuses?.length) q = q.in("internal_status", internalStatuses as string[]);
-  if (table === "budgets" && pipelineStages?.length) q = q.in("pipeline_stage", pipelineStages as string[]);
-  if (table === "lead_sources" && sources?.length) q = q.in("source", sources as string[]);
-  if (table === "clients" && clientStatus?.length) q = q.in("status", clientStatus as string[]);
+  if (internalStatuses && internalStatuses.length > 0) q = q.in("internal_status", internalStatuses as string[]);
+  if (pipelineStages && pipelineStages.length > 0) q = q.in("pipeline_stage", pipelineStages as string[]);
 
+  // Apply a hard cap on rows we pull (covers worst case)
   q = q.limit(5000);
-  // deno-lint-ignore no-explicit-any
-  const { data, error } = (await q) as any;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await q as any;
   if (error) return { ok: false, error: error.message };
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rows = (data ?? []) as any[];
 
-  // Resolver nomes de owners se preciso
+  // Resolve owner names if needed
   let nameMap: Record<string, string> = {};
-  if (table === "budgets" && (groupBy === "commercial_owner" || groupBy === "estimator_owner")) {
-    const idKey = groupBy === "commercial_owner" ? "commercial_owner_id" : "estimator_owner_id";
-    const ids = Array.from(new Set(rows.map((r) => r[idKey]).filter(Boolean)));
-    if (ids.length) {
-      // deno-lint-ignore no-explicit-any
-      const { data: profs } = (await admin.from("profiles").select("id, full_name").in("id", ids)) as any;
-      nameMap = Object.fromEntries(
-        (profs ?? []).map((p: { id: string; full_name: string | null }) => [p.id, p.full_name || "—"]),
-      );
+  if (groupBy === "commercial_owner" || groupBy === "estimator_owner") {
+    const ids = Array.from(
+      new Set(
+        rows
+          .map((r) => (groupBy === "commercial_owner" ? r.commercial_owner_id : r.estimator_owner_id))
+          .filter(Boolean),
+      ),
+    );
+    if (ids.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: profs } = await (admin.from("profiles").select("id, full_name").in("id", ids) as any);
+      nameMap = Object.fromEntries((profs ?? []).map((p: { id: string; full_name: string | null }) => [p.id, p.full_name || "—"]));
     }
   }
 
-  const numericField = cfg.numericFieldByMetric[metric];
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const valueOf = (r: any): number => {
     if (metric === "count") return 1;
-    return Number((numericField && r[numericField]) ?? 0);
+    if (metric === "sum_internal_cost" || metric === "avg_internal_cost") return Number(r.internal_cost ?? 0);
+    if (metric === "sum_manual_total") return Number(r.manual_total ?? 0);
+    return 0;
   };
 
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const keyOf = (r: any): string => {
     if (groupBy === "none") return "total";
     if (groupBy === "internal_status") return r.internal_status ?? "—";
     if (groupBy === "pipeline_stage") return r.pipeline_stage ?? "—";
     if (groupBy === "lead_source") return r.lead_source ?? "—";
-    if (groupBy === "source") return r.source ?? "—";
-    if (groupBy === "status") return r.status ?? "—";
-    if (groupBy === "city") return r.city ?? "—";
-    if (groupBy === "bairro") return r.bairro ?? "—";
-    if (groupBy === "processing_status") return r.processing_status ?? "—";
-    if (groupBy === "campaign_name") return r.campaign_name ?? "—";
-    if (groupBy === "form_name") return r.form_name ?? "—";
-    if (groupBy === "supplier_id") return r.supplier_id ?? "—";
-    if (groupBy === "category_id") return r.category_id ?? "—";
     if (groupBy === "commercial_owner") return nameMap[r.commercial_owner_id] ?? "Sem responsável";
     if (groupBy === "estimator_owner") return nameMap[r.estimator_owner_id] ?? "Sem responsável";
     const raw = r[dateField];
@@ -632,6 +482,7 @@ async function runAnalytics(
     if (groupBy === "day") return d.toISOString().slice(0, 10);
     if (groupBy === "month") return d.toISOString().slice(0, 7);
     if (groupBy === "week") {
+      // ISO week start (Monday)
       const dt = new Date(d);
       const day = (dt.getUTCDay() + 6) % 7;
       dt.setUTCDate(dt.getUTCDate() - day);
@@ -640,6 +491,7 @@ async function runAnalytics(
     return "—";
   };
 
+  // Aggregate
   const buckets = new Map<string, { sum: number; n: number }>();
   for (const r of rows) {
     const k = keyOf(r);
@@ -652,53 +504,72 @@ async function runAnalytics(
 
   const finalize = (sum: number, n: number) => {
     if (metric === "count") return n;
-    if (metric.startsWith("avg_")) return n > 0 ? Math.round((sum / n) * 100) / 100 : 0;
+    if (metric === "avg_internal_cost") return n > 0 ? Math.round((sum / n) * 100) / 100 : 0;
     return Math.round(sum * 100) / 100;
   };
 
   let series = Array.from(buckets.entries()).map(([key, { sum, n }]) => ({
-    key, value: finalize(sum, n), rows: n,
+    key,
+    value: finalize(sum, n),
+    rows: n,
   }));
-  if (["day", "week", "month"].includes(groupBy)) series.sort((a, b) => a.key.localeCompare(b.key));
-  else series.sort((a, b) => b.value - a.value);
+
+  // Order: temporal asc, otherwise value desc
+  if (["day", "week", "month"].includes(groupBy)) {
+    series.sort((a, b) => a.key.localeCompare(b.key));
+  } else {
+    series.sort((a, b) => b.value - a.value);
+  }
   series = series.slice(0, limit);
 
   const grandSum = rows.reduce((acc, r) => acc + valueOf(r), 0);
   const totalRows = rows.length;
+
+  // For temporal groupings, compute average using the requested period length
+  // (so days with zero entries are counted in the denominator, not just buckets returned).
   const denominator =
-    groupBy === "day" && days ? days
-      : groupBy === "week" && days ? Math.max(1, Math.round(days / 7))
-      : groupBy === "month" && days ? Math.max(1, Math.round(days / 30))
-      : (series.length || 1);
+    groupBy === "day" && days
+      ? days
+      : groupBy === "week" && days
+        ? Math.max(1, Math.round(days / 7))
+        : groupBy === "month" && days
+          ? Math.max(1, Math.round(days / 30))
+          : series.length || 1;
   const avgPerPeriodUnit =
-    Math.round((((finalize(grandSum, totalRows) as number) / denominator) || 0) * 100) / 100;
+    Math.round(((finalize(grandSum, totalRows) as number) / denominator) * 100) / 100;
 
   const result = {
-    table, metric, group_by: groupBy, date_field: dateField, period_label: periodLabel, days,
-    filters: { from, to, internal_statuses: internalStatuses, pipeline_stages: pipelineStages, sources, client_status: clientStatus },
+    metric,
+    group_by: groupBy,
+    date_field: dateField,
+    period_label: periodLabel,
+    days,
+    filters: { from, to, internal_statuses: internalStatuses, pipeline_stages: pipelineStages },
     total_rows_matched: totalRows,
     total_in_period: finalize(grandSum, totalRows),
     grand_total: finalize(grandSum, totalRows),
-    avg_per_bucket: series.length > 0
-      ? Math.round((series.reduce((a, b) => a + b.value, 0) / series.length) * 100) / 100
-      : 0,
+    avg_per_bucket:
+      series.length > 0
+        ? Math.round((series.reduce((a, b) => a + b.value, 0) / series.length) * 100) / 100
+        : 0,
     avg_per_period_unit: avgPerPeriodUnit,
     series,
     truncated: totalRows >= 5000,
   };
 
   setAnalyticsCache(cacheKey, result);
+
   return { ok: true, result: { ...result, cache: "miss" } };
 }
 
-// ─── Tool: get_kpi_trend ──────────────────────────────────────────────────
-
+// =============== Tool: get_kpi_trend ===============
 async function runKpiTrend(
   args: Record<string, unknown>,
   // deno-lint-ignore no-explicit-any
   admin: any,
 ): Promise<{ ok: boolean; result?: unknown; error?: string }> {
   const kpi = String(args.kpi ?? "");
+  if (!kpi) return { ok: false, error: "kpi é obrigatório" };
   const days = Math.min(Math.max(Number(args.days ?? 30) || 30, 1), 365);
   const from = new Date(Date.now() - days * 86400_000).toISOString().slice(0, 10);
   // deno-lint-ignore no-explicit-any
@@ -721,11 +592,8 @@ async function runKpiTrend(
     result: {
       kpi,
       period_label: `Últimos ${days} dias (${formatBrDate(from)} a ${formatBrDate(TODAY_HINT())})`,
-      days,
-      points: series.length,
-      latest: last,
-      first,
-      delta_from_first: delta,
+      days, points: series.length,
+      latest: last, first, delta_from_first: delta,
       avg: Math.round(avg * 100) / 100,
       min: values.length ? Math.min(...values) : null,
       max: values.length ? Math.max(...values) : null,
@@ -734,8 +602,7 @@ async function runKpiTrend(
   };
 }
 
-// ─── Tool: top_entities ───────────────────────────────────────────────────
-
+// =============== Tool: top_entities ===============
 async function runTopEntities(
   args: Record<string, unknown>,
   // deno-lint-ignore no-explicit-any
@@ -799,11 +666,11 @@ async function runTopEntities(
     // deno-lint-ignore no-explicit-any
     const { data, error } = (await admin
       .from("budget_lost_reasons")
-      .select("reason")
-      .gte("created_at", from)) as any;
+      .select("reason_category")
+      .gte("lost_at", from)) as any;
     if (error) return { ok: false, error: error.message };
     const agg = new Map<string, number>();
-    for (const r of data ?? []) agg.set(r.reason ?? "—", (agg.get(r.reason ?? "—") ?? 0) + 1);
+    for (const r of data ?? []) agg.set(r.reason_category ?? "—", (agg.get(r.reason_category ?? "—") ?? 0) + 1);
     const top = Array.from(agg.entries())
       .map(([reason, count]) => ({ reason, count }))
       .sort((a, b) => b.count - a.count)
@@ -814,7 +681,7 @@ async function runTopEntities(
   if (kind === "suppliers_by_item_count") {
     // deno-lint-ignore no-explicit-any
     const { data, error } = (await admin
-      .from("catalog_item_suppliers")
+      .from("catalog_item_supplier_prices")
       .select("supplier_id")) as any;
     if (error) return { ok: false, error: error.message };
     const agg = new Map<string, number>();
@@ -835,8 +702,7 @@ async function runTopEntities(
   return { ok: false, error: `Tipo de ranking não suportado: ${kind}` };
 }
 
-// ─── Tool: web_market_research (Perplexity) ───────────────────────────────
-
+// =============== Tool: web_market_research (Perplexity) ===============
 async function runWebResearch(
   args: Record<string, unknown>,
 ): Promise<{ ok: boolean; result?: unknown; error?: string }> {
@@ -849,16 +715,11 @@ async function runWebResearch(
   let systemPrompt =
     "Você é um analista de mercado especializado em softwares de gestão de obras e reformas residenciais no Brasil. Responda em português brasileiro de forma objetiva, com bullets e dados concretos quando disponíveis.";
   if (mode === "benchmarking") {
-    systemPrompt = `Você é um analista de produto especializado em benchmarking de softwares de gestão de obras e reformas residenciais.
-Compare concorrentes como Houzz, Buildertrend, CoConstruct, Procore, Sienge, Obra Prima, Veja Obra.
-Identifique funcionalidades inovadoras, modelos de pricing, tendências e oportunidades de diferenciação.
-Responda em português brasileiro com sugestões concretas e acionáveis, organizando por categorias.`;
+    systemPrompt = `Você é um analista de produto especializado em benchmarking de softwares de gestão de obras e reformas residenciais. Compare concorrentes como Houzz, Buildertrend, CoConstruct, Procore, Sienge, Obra Prima, Veja Obra. Identifique funcionalidades inovadoras, modelos de pricing, tendências e oportunidades de diferenciação. Responda em português brasileiro com sugestões concretas e acionáveis, organizando por categorias.`;
   } else if (mode === "references") {
-    systemPrompt = `Você é um pesquisador especializado em tecnologia para construção civil e reformas residenciais.
-Pesquise funcionalidades, tendências e melhores práticas. Cite fontes sempre que possível.`;
+    systemPrompt = `Você é um pesquisador especializado em tecnologia para construção civil e reformas residenciais. Pesquise funcionalidades, tendências e melhores práticas. Cite fontes sempre que possível.`;
   } else if (mode === "ux") {
-    systemPrompt = `Você é especialista em UX/UI para aplicações de gestão de obras.
-Analise hierarquia de informação, copy, fluxos e sugestões de melhoria. Priorize as recomendações.`;
+    systemPrompt = `Você é especialista em UX/UI para aplicações de gestão de obras. Analise hierarquia de informação, copy, fluxos e sugestões de melhoria. Priorize as recomendações.`;
   }
 
   const resp = await fetch("https://api.perplexity.ai/chat/completions", {
@@ -881,8 +742,7 @@ Analise hierarquia de informação, copy, fluxos e sugestões de melhoria. Prior
   return {
     ok: true,
     result: {
-      query,
-      mode,
+      query, mode,
       content: data.choices?.[0]?.message?.content ?? "",
       citations: data.citations ?? [],
       generated_at: new Date().toISOString(),
@@ -890,8 +750,7 @@ Analise hierarquia de informação, copy, fluxos e sugestões de melhoria. Prior
   };
 }
 
-// ─── Tool: submit_bug_report (delega para edge function) ──────────────────
-
+// =============== Tool: submit_bug_report (delega para edge function) ===============
 async function runSubmitBugReport(
   args: Record<string, unknown>,
   authHeader: string | null,
@@ -899,36 +758,41 @@ async function runSubmitBugReport(
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   if (!authHeader) return { ok: false, error: "Sessão expirada — faça login novamente." };
 
-  // Sanitização mínima antes de delegar
-  const summary = String(args.summary ?? "").trim();
-  const steps = String(args.steps ?? "").trim();
-  const expected = String(args.expected ?? "").trim();
-  const actual = String(args.actual ?? "").trim();
-  if (!summary || !steps || !expected || !actual) {
-    return { ok: false, error: "summary, steps, expected e actual são obrigatórios." };
+  const title = String(args.title ?? "").trim();
+  const description = String(args.description ?? "").trim();
+  const steps = String(args.steps_to_reproduce ?? "").trim();
+  const expected = String(args.expected_behavior ?? "").trim();
+  const actual = String(args.actual_behavior ?? "").trim();
+  if (!title || !description || !steps || !expected || !actual) {
+    return { ok: false, error: "title, description, steps_to_reproduce, expected_behavior e actual_behavior são obrigatórios." };
   }
 
   try {
     const resp = await fetch(`${supabaseUrl}/functions/v1/bug-report-triage`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authHeader,
-      },
-      body: JSON.stringify(args),
+      headers: { "Content-Type": "application/json", Authorization: authHeader },
+      body: JSON.stringify({
+        mode: "create",
+        title, description,
+        steps_to_reproduce: steps,
+        expected_behavior: expected,
+        actual_behavior: actual,
+        severity: args.severity,
+        route: args.route,
+      }),
     });
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) return { ok: false, error: data?.error ?? `bug-report-triage ${resp.status}` };
+    const bug = data.bug_report ?? data;
     return {
       ok: true,
       result: {
-        bug_id: data.bug_report?.id,
-        severity: data.bug_report?.severity_ai,
-        area: data.bug_report?.area_ai,
-        triage_summary: data.bug_report?.triage_summary,
-        duplicate_of: data.duplicate_of,
-        admin_url: `/admin/bug-reports/${data.bug_report?.id ?? ""}`,
-        message: data.duplicate_of
+        bug_id: bug?.id,
+        severity: bug?.severity_ai ?? bug?.severity,
+        area: bug?.area_ai,
+        triage_summary: bug?.triage_summary,
+        duplicate_of: data.duplicate_of ?? bug?.duplicate_of,
+        message: (data.duplicate_of ?? bug?.duplicate_of)
           ? "Bug registrado e marcado como possível duplicata de um bug existente."
           : "Bug registrado e triado pela IA.",
       },
@@ -938,8 +802,7 @@ async function runSubmitBugReport(
   }
 }
 
-// ─── Tool: query_bug_reports ──────────────────────────────────────────────
-
+// =============== Tool: query_bug_reports ===============
 async function runQueryBugReports(
   args: Record<string, unknown>,
   // deno-lint-ignore no-explicit-any
@@ -952,7 +815,7 @@ async function runQueryBugReports(
 
   let q = admin
     .from("bug_reports")
-    .select("id, summary, severity_ai, area_ai, status, role_at_report, created_at, current_url, triage_tags")
+    .select("id, title, severity, severity_ai, area_ai, status, user_role, created_at, route, triage_tags, triage_summary")
     .gte("created_at", fromIso)
     .order("created_at", { ascending: false })
     .limit(2000);
@@ -995,7 +858,10 @@ async function runQueryBugReports(
   };
 
   const buckets = new Map<string, number>();
-  for (const r of rows) buckets.set(keyOf(r), (buckets.get(keyOf(r)) ?? 0) + 1);
+  for (const r of rows) {
+    const k = keyOf(r);
+    buckets.set(k, (buckets.get(k) ?? 0) + 1);
+  }
   const series = Array.from(buckets.entries())
     .map(([key, count]) => ({ key, count }))
     .sort((a, b) =>
@@ -1014,14 +880,14 @@ async function runQueryBugReports(
   };
 }
 
-// ─── Anexos (mantido) ─────────────────────────────────────────────
-
+// =============== Attachment processing (unchanged) ===============
 type Attachment = {
   name: string;
   mimeType: string;
   dataUrl?: string;
   base64?: string;
 };
+
 type IncomingMessage = {
   role: "user" | "assistant" | "system";
   content: string;
@@ -1038,16 +904,19 @@ function base64ToBytes(b64: string): Uint8Array {
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes;
 }
+
 function truncate(text: string, max = MAX_EXTRACTED_CHARS): string {
   if (text.length <= max) return text;
   return text.slice(0, max) + `\n\n[...truncado em ${max} caracteres de ${text.length}]`;
 }
+
 async function extractPdfText(bytes: Uint8Array): Promise<string> {
   const { extractText, getDocumentProxy } = await import("https://esm.sh/unpdf@0.12.1");
   const pdf = await getDocumentProxy(bytes);
   const { text } = await extractText(pdf, { mergePages: true });
   return typeof text === "string" ? text : (text as string[]).join("\n\n");
 }
+
 async function extractXlsxText(bytes: Uint8Array): Promise<string> {
   const XLSX = await import("https://esm.sh/xlsx@0.18.5");
   const wb = XLSX.read(bytes, { type: "array" });
@@ -1059,13 +928,18 @@ async function extractXlsxText(bytes: Uint8Array): Promise<string> {
   }
   return parts.join("\n\n");
 }
+
 async function extractDocxText(bytes: Uint8Array): Promise<string> {
   const mammoth = await import("https://esm.sh/mammoth@1.8.0");
   const result = await mammoth.extractRawText({ arrayBuffer: toArrayBuffer(bytes) });
   return result.value || "";
 }
+
 async function transcribeAudio(
-  bytes: Uint8Array, filename: string, mimeType: string, apiKey: string,
+  bytes: Uint8Array,
+  filename: string,
+  mimeType: string,
+  apiKey: string,
 ): Promise<string> {
   const form = new FormData();
   form.append("file", new Blob([bytes as BlobPart], { type: mimeType }), filename);
@@ -1076,44 +950,74 @@ async function transcribeAudio(
     headers: { Authorization: `Bearer ${apiKey}` },
     body: form,
   });
-  if (!resp.ok) throw new Error(`Whisper falhou: ${resp.status} ${await resp.text().catch(() => "")}`);
+  if (!resp.ok) {
+    const t = await resp.text().catch(() => "");
+    throw new Error(`Whisper falhou: ${resp.status} ${t}`);
+  }
   const json = await resp.json();
   return json.text || "";
 }
+
 async function processAttachment(
-  att: Attachment, apiKey: string,
+  att: Attachment,
+  apiKey: string,
 ): Promise<{ kind: "image"; dataUrl: string } | { kind: "text"; text: string }> {
   const mime = att.mimeType.toLowerCase();
+
   if (mime.startsWith("image/")) {
     const dataUrl = att.dataUrl ?? `data:${mime};base64,${att.base64}`;
     return { kind: "image", dataUrl };
   }
-  if (!att.base64) return { kind: "text", text: `[Arquivo: ${att.name}] (conteúdo ausente)` };
+
+  if (!att.base64) {
+    return { kind: "text", text: `[Arquivo: ${att.name}] (conteúdo ausente)` };
+  }
+
   const bytes = base64ToBytes(att.base64);
-  if (bytes.length > MAX_FILE_BYTES)
+  if (bytes.length > MAX_FILE_BYTES) {
     return { kind: "text", text: `[Arquivo: ${att.name}] (excede 20MB — não foi processado)` };
+  }
+
   try {
     let extracted = "";
+
     if (mime === "application/pdf" || att.name.toLowerCase().endsWith(".pdf")) {
       extracted = await extractPdfText(bytes);
     } else if (
       mime === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-      mime === "application/vnd.ms-excel" || /\.(xlsx|xls|csv)$/i.test(att.name)
+      mime === "application/vnd.ms-excel" ||
+      /\.(xlsx|xls|csv)$/i.test(att.name)
     ) {
-      if (/\.csv$/i.test(att.name) || mime === "text/csv") extracted = new TextDecoder().decode(bytes);
-      else extracted = await extractXlsxText(bytes);
+      if (/\.csv$/i.test(att.name) || mime === "text/csv") {
+        extracted = new TextDecoder().decode(bytes);
+      } else {
+        extracted = await extractXlsxText(bytes);
+      }
     } else if (
       mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       /\.docx$/i.test(att.name)
-    ) extracted = await extractDocxText(bytes);
-    else if (mime.startsWith("audio/") || /\.(mp3|wav|m4a|ogg|webm|mp4)$/i.test(att.name))
+    ) {
+      extracted = await extractDocxText(bytes);
+    } else if (mime.startsWith("audio/") || /\.(mp3|wav|m4a|ogg|webm|mp4)$/i.test(att.name)) {
+      if (!apiKey) {
+        return { kind: "text", text: `[Arquivo: ${att.name}] (transcrição de áudio indisponível — OPENAI_API_KEY não configurada)` };
+      }
       extracted = await transcribeAudio(bytes, att.name, mime || "audio/mpeg", apiKey);
-    else if (mime.startsWith("text/") || /\.(txt|md|json|csv|log)$/i.test(att.name))
+    } else if (mime.startsWith("text/") || /\.(txt|md|json|csv|log)$/i.test(att.name)) {
       extracted = new TextDecoder().decode(bytes);
-    else return { kind: "text", text: `[Arquivo: ${att.name}] (tipo não suportado: ${mime})` };
+    } else {
+      return { kind: "text", text: `[Arquivo: ${att.name}] (tipo não suportado: ${mime})` };
+    }
+
     extracted = (extracted || "").trim();
-    if (!extracted) return { kind: "text", text: `[Arquivo: ${att.name}] (sem texto extraível)` };
-    return { kind: "text", text: `[Arquivo: ${att.name}]\n\`\`\`\n${truncate(extracted)}\n\`\`\`` };
+    if (!extracted) {
+      return { kind: "text", text: `[Arquivo: ${att.name}] (sem texto extraível)` };
+    }
+
+    return {
+      kind: "text",
+      text: `[Arquivo: ${att.name}]\n\`\`\`\n${truncate(extracted)}\n\`\`\``,
+    };
   } catch (err) {
     console.error(`Erro ao processar ${att.name}:`, err);
     return {
@@ -1122,13 +1026,18 @@ async function processAttachment(
     };
   }
 }
+
 async function buildOpenAIMessages(messages: IncomingMessage[], apiKey: string) {
-  const out: Array<{ role: string; content: unknown }> = [{ role: "system", content: SYSTEM_PROMPT }];
+  const out: Array<{ role: string; content: unknown }> = [
+    { role: "system", content: SYSTEM_PROMPT },
+  ];
+
   for (const msg of messages) {
     if (!msg.attachments || msg.attachments.length === 0) {
       out.push({ role: msg.role, content: msg.content });
       continue;
     }
+
     const totalBytes = msg.attachments.reduce((acc, a) => {
       const b64len = (a.base64 ?? a.dataUrl?.split(",")[1] ?? "").length;
       return acc + Math.floor((b64len * 3) / 4);
@@ -1136,101 +1045,222 @@ async function buildOpenAIMessages(messages: IncomingMessage[], apiKey: string) 
     if (totalBytes > MAX_TOTAL_BYTES) {
       out.push({
         role: msg.role,
-        content: msg.content + `\n\n[Anexos excedem 40MB combinados — ignorados. Reenvie em partes menores.]`,
+        content:
+          msg.content +
+          `\n\n[Anexos excedem 40MB combinados — ignorados. Reenvie em partes menores.]`,
       });
       continue;
     }
+
     const parts: Array<Record<string, unknown>> = [];
     if (msg.content?.trim()) parts.push({ type: "text", text: msg.content });
+
     for (const att of msg.attachments) {
       const processed = await processAttachment(att, apiKey);
-      if (processed.kind === "image") parts.push({ type: "image_url", image_url: { url: processed.dataUrl } });
-      else parts.push({ type: "text", text: processed.text });
+      if (processed.kind === "image") {
+        parts.push({ type: "image_url", image_url: { url: processed.dataUrl } });
+      } else {
+        parts.push({ type: "text", text: processed.text });
+      }
     }
+
     if (parts.length === 0) parts.push({ type: "text", text: "(mensagem vazia com anexos)" });
+
     out.push({ role: msg.role, content: parts });
   }
+
   return out;
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────
-
+// =============== Auth helper ===============
 async function resolveUserAndRole(
-  authHeader: string | null, supabaseUrl: string, serviceKey: string,
-  // deno-lint-ignore no-explicit-any
+  authHeader: string | null,
+  supabaseUrl: string,
+  serviceKey: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ userId: string | null; isAdmin: boolean; admin: any }> {
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
   if (!authHeader?.startsWith("Bearer ")) return { userId: null, isAdmin: false, admin };
   const token = authHeader.slice("Bearer ".length).trim();
-  // deno-lint-ignore no-explicit-any
-  const { data: { user } } = (await admin.auth.getUser(token)) as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: { user } } = await (admin.auth.getUser(token) as any);
   if (!user) return { userId: null, isAdmin: false, admin };
-  // deno-lint-ignore no-explicit-any
-  const { data: roles } = (await admin
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: roles } = await (admin
     .from("user_roles")
     .select("role")
-    .eq("user_id", user.id)) as any;
+    .eq("user_id", user.id) as any);
   const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
   return { userId: user.id, isAdmin, admin };
 }
 
-// ─── Server ───────────────────────────────────────────────────────────────
-
+// =============== Server ===============
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY"); // optional, only for Whisper audio
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: "OPENAI_API_KEY not configured" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+
+    if (!LOVABLE_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const { messages } = (await req.json()) as { messages: IncomingMessage[] };
     if (!Array.isArray(messages) || messages.length === 0) {
-      return new Response(JSON.stringify({ error: "messages array required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "messages array required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
-    const { isAdmin, admin } = await resolveUserAndRole(req.headers.get("authorization"), supabaseUrl, serviceKey);
+    const { isAdmin, admin } = await resolveUserAndRole(
+      req.headers.get("authorization"),
+      supabaseUrl,
+      serviceKey,
+    );
+
     const hasAttachments = messages.some((m) => m.attachments && m.attachments.length > 0);
-    const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY);
-    const model = hasAttachments || isAdmin ? "gpt-4o" : "gpt-4o-mini";
+    // Use OPENAI_API_KEY for Whisper if available; otherwise audio attachments are skipped.
+    const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY ?? "");
+
+    // ===== Configuração de cadeia de modelos e retry (via env vars) =====
+    // AI_MODEL_CHAIN: lista de modelos separados por vírgula (primeiro = preferido).
+    // AI_RETRYABLE_STATUSES: lista de status HTTP separados por vírgula que devem
+    //   acionar fallback para o próximo modelo (sem precisar redeployar).
+    // 429 e 402 são EXCLUÍDOS do default — são limites de workspace, não de modelo.
+    const DEFAULT_MODEL_CHAIN = [
+      "google/gemini-2.5-flash",
+      "google/gemini-3-flash-preview",
+      "google/gemini-2.5-flash-lite",
+      "openai/gpt-5-mini",
+    ];
+    const DEFAULT_RETRYABLE_STATUSES = [408, 425, 500, 502, 503, 504];
+
+    const parseList = (raw: string | undefined): string[] =>
+      (raw ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+    const modelChain = (() => {
+      const list = parseList(Deno.env.get("AI_MODEL_CHAIN"));
+      return list.length > 0 ? list : DEFAULT_MODEL_CHAIN;
+    })();
+
+    const retryableStatuses = (() => {
+      const list = parseList(Deno.env.get("AI_RETRYABLE_STATUSES"))
+        .map((n) => Number.parseInt(n, 10))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      return list.length > 0 ? list : DEFAULT_RETRYABLE_STATUSES;
+    })();
+
+    const isRetryableStatus = (status: number): boolean => {
+      // Nunca retry para limites de workspace
+      if (status === 429 || status === 402) return false;
+      return retryableStatuses.includes(status);
+    };
+
+    /**
+     * Chama o gateway tentando cada modelo da cadeia em sequência.
+     * Faz fallback apenas para status retryable (configurável) ou erros de rede.
+     */
+    const callGatewayWithFallback = async (
+      body: Record<string, unknown>,
+    ): Promise<{ resp: Response; modelUsed: string }> => {
+      let lastResp: Response | null = null;
+      let lastErr: unknown = null;
+
+      for (let i = 0; i < modelChain.length; i++) {
+        const candidate = modelChain[i];
+        try {
+          const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ ...body, model: candidate }),
+          });
+
+          if (resp.ok) {
+            if (i > 0) {
+              console.log(`[ai-fallback] modelo "${candidate}" funcionou após fallback (índice ${i})`);
+            }
+            return { resp, modelUsed: candidate };
+          }
+
+          // Não retryable: devolve direto
+          if (!isRetryableStatus(resp.status)) {
+            return { resp, modelUsed: candidate };
+          }
+
+          // Retryable: registra e tenta o próximo
+          const errText = await resp.text().catch(() => "");
+          console.warn(
+            `[ai-fallback] modelo "${candidate}" falhou (status ${resp.status}); tentando próximo. Detalhes: ${errText.slice(0, 200)}`,
+          );
+          lastResp = new Response(errText, {
+            status: resp.status,
+            headers: resp.headers,
+          });
+        } catch (err) {
+          lastErr = err;
+          console.warn(
+            `[ai-fallback] erro de rede no modelo "${candidate}": ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      }
+
+      if (lastResp) return { resp: lastResp, modelUsed: modelChain[modelChain.length - 1] };
+      throw lastErr ?? new Error("Falha ao chamar o gateway em todos os modelos");
+    };
+
+    // ===== Tool-calling loop (max 4 rounds) =====
     const conversation = [...baseMessages];
     const tools = isAdmin
       ? [ANALYTICS_TOOL, KPI_TREND_TOOL, TOP_ENTITIES_TOOL, WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL, QUERY_BUG_REPORTS_TOOL]
       : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
-    // tool-calling loop (até 4 rodadas para acomodar perguntas híbridas)
     for (let round = 0; round < 4; round++) {
-      const planResp = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model, messages: conversation, temperature: 0.3,
-          tools, tool_choice: tools.length ? "auto" : undefined, stream: false,
-        }),
+      const { resp: planResp } = await callGatewayWithFallback({
+        messages: conversation,
+        tools,
+        tool_choice: tools.length ? "auto" : undefined,
+        stream: false,
       });
+
       if (!planResp.ok) {
         const errText = await planResp.text();
-        console.error("OpenAI error (plan):", planResp.status, errText);
+        console.error("Lovable AI error (plan):", planResp.status, errText);
         const userMsg =
-          planResp.status === 429 ? "Rate limit excedido. Tente novamente em alguns instantes."
-          : planResp.status === 401 ? "Chave OpenAI inválida ou expirada."
-          : "Falha ao chamar OpenAI";
+          planResp.status === 429
+            ? "Rate limit excedido. Tente novamente em alguns instantes."
+            : planResp.status === 402
+              ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
+              : "Falha ao chamar Lovable AI";
         return new Response(JSON.stringify({ error: userMsg }), {
-          status: planResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: planResp.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
       const planJson = await planResp.json();
       const choice = planJson.choices?.[0];
       const toolCalls = choice?.message?.tool_calls;
-      if (!toolCalls || toolCalls.length === 0) break;
+
+      if (!toolCalls || toolCalls.length === 0) {
+        break;
+      }
 
       conversation.push(choice.message);
 
@@ -1268,31 +1298,40 @@ serve(async (req) => {
           role: "tool",
           tool_call_id: call.id,
           content: JSON.stringify(toolOutput),
-          // deno-lint-ignore no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
       }
     }
 
-    // resposta final em stream
-    const finalResp = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, messages: conversation, temperature: 0.4, stream: true }),
+    // ===== Final streamed response =====
+    const { resp: finalResp } = await callGatewayWithFallback({
+      messages: conversation,
+      stream: true,
     });
+
     if (!finalResp.ok) {
       const errText = await finalResp.text();
-      console.error("OpenAI error (final):", finalResp.status, errText);
-      return new Response(JSON.stringify({ error: "Falha ao gerar resposta final" }), {
-        status: finalResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("Lovable AI error (final):", finalResp.status, errText);
+      const userMsg =
+        finalResp.status === 429
+          ? "Rate limit excedido. Tente novamente em alguns instantes."
+          : finalResp.status === 402
+            ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
+            : "Falha ao gerar resposta final";
+      return new Response(
+        JSON.stringify({ error: userMsg }),
+        { status: finalResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
+
     return new Response(finalResp.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (err) {
     console.error("ai-assistant-chat error:", err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Erro desconhecido" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "Erro desconhecido" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });

@@ -14,6 +14,8 @@ import ExecutiveSummary from "./ExecutiveSummary";
 import type { ElephantInsightsCacheRow, InsightChartsData } from "@/types/insights";
 import { listCacheEntries, getCacheAgeMinutes } from "@/lib/insights-cache";
 
+import { logger } from "@/lib/logger";
+
 interface ConsolidatedData {
   totalMeetings: number;
   totalDurationMinutes: number;
@@ -58,7 +60,7 @@ export default function ConsolidatedInsights() {
         (Array.isArray(d.topQuestions) && d.topQuestions.length > 0)
       );
       if (!hasQualitative && merged.totalMeetings > 0) {
-        console.log("Qualitative data missing from cache, auto-refreshing...");
+        logger.debug("Qualitative data missing from cache, auto-refreshing...");
         // Don't await — let it run in background while showing metrics
         fetchFresh();
       }
@@ -95,13 +97,13 @@ export default function ConsolidatedInsights() {
         throw new Error("Falha ao processar todos os consultores");
       }
       if (failures.length > 0) {
-        console.warn(`${failures.length}/${consultores.length} consultores falharam`);
+        logger.warn(`${failures.length}/${consultores.length} consultores falharam`);
       }
 
       await loadFromCache();
       toast({ title: "Insights consolidados atualizados", description: `${consultores.length} consultores processados.` });
     } catch (err: any) {
-      console.error("Consolidated fetch error:", err);
+      logger.error("Consolidated fetch error:", err);
       toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);

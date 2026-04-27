@@ -8,6 +8,7 @@ import {
 import { Plus, Search, Package, Wrench, PenLine, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPrimarySupplierPrice, buildSupplierPriceSnapshot } from "@/lib/catalog-helpers";
+import { AddToCatalogPromptDialog } from "./AddToCatalogPromptDialog";
 
 interface CatalogSuggestion {
   id: string;
@@ -31,15 +32,26 @@ interface AddItemResult {
 
 interface Props {
   sectionTitle: string;
-  onAddItem: (item: AddItemResult) => void;
+  onAddItem: (item: AddItemResult) => Promise<string | null> | string | null | void;
+  /** Called after the catalog prompt creates a catalog item. Lets the editor link the just-inserted budget row. */
+  onLinkCatalog?: (insertedRowId: string, catalogItemId: string) => void | Promise<void>;
 }
 
-export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
+export function AddItemPopover({ sectionTitle, onAddItem, onLinkCatalog }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [selecting, setSelecting] = useState<string | null>(null);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [promptSuggestion, setPromptSuggestion] = useState<{
+    title: string;
+    description: string | null;
+    unit: string | null;
+    internal_unit_price: number | null;
+  } | null>(null);
+  const [manualPrice, setManualPrice] = useState("");
+  const [pendingRowId, setPendingRowId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
@@ -50,6 +62,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
     } else {
       setSearch("");
       setSuggestions([]);
+      setManualPrice("");
     }
   }, [open]);
 
@@ -132,21 +145,39 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
     setSelecting(null);
   };
 
-  const handleAddManual = () => {
-    onAddItem({
-      title: search.trim() || "Novo Item",
+  const handleAddManual = async () => {
+    const title = search.trim() || "Novo Item";
+    const parsedPrice = parseFloat(manualPrice.replace(",", "."));
+    const priceVal = !Number.isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : null;
+
+    const insertedId = await Promise.resolve(
+      onAddItem({
+        title,
+        description: null,
+        unit: null,
+        qty: priceVal != null ? 1 : null,
+        internal_unit_price: priceVal,
+        internal_total: priceVal,
+        catalog_item_id: null,
+        catalog_snapshot: null,
+      }),
+    );
+    setPendingRowId(typeof insertedId === "string" ? insertedId : null);
+    setOpen(false);
+
+    // Offer to add this manual item to the global catalog for reuse
+    setPromptSuggestion({
+      title,
       description: null,
       unit: null,
-      qty: null,
-      internal_unit_price: null,
-      internal_total: null,
-      catalog_item_id: null,
-      catalog_snapshot: null,
+      internal_unit_price: priceVal,
     });
-    setOpen(false);
+    // Defer to allow popover close animation to settle
+    setTimeout(() => setPromptOpen(true), 80);
   };
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="flex items-center gap-1.5 text-sm font-body text-primary hover:text-primary/80 transition-colors">
@@ -221,7 +252,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
         </div>
 
         {/* Manual item option - always visible */}
-        <div className="border-t border-border p-2">
+        <div className="border-t border-border p-2 space-y-2">
           <button
             onClick={handleAddManual}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors text-left"
@@ -234,8 +265,48 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
               <p className="text-xs text-muted-foreground">Adicionar item customizado</p>
             </div>
           </button>
+          <div className="px-3 pb-1">
+            <label
+              htmlFor="manual-item-price"
+              className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              Preço unitário (opcional)
+            </label>
+            <Input
+              id="manual-item-price"
+              value={manualPrice}
+              onChange={(e) => setManualPrice(e.target.value)}
+              placeholder="0,00"
+              inputMode="decimal"
+              className="h-8 text-sm mt-1"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddManual();
+                }
+              }}
+            />
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              Se informar, o preço base poderá ser registrado no catálogo automaticamente.
+            </p>
+          </div>
         </div>
       </PopoverContent>
     </Popover>
+    <AddToCatalogPromptDialog
+      open={promptOpen}
+      onOpenChange={(next) => {
+        setPromptOpen(next);
+        if (!next) setPendingRowId(null);
+      }}
+      suggested={promptSuggestion}
+      sectionTitle={sectionTitle}
+      onCreated={(catalogItemId) => {
+        if (pendingRowId && onLinkCatalog) {
+          void onLinkCatalog(pendingRowId, catalogItemId);
+        }
+      }}
+    />
+    </>
   );
 }

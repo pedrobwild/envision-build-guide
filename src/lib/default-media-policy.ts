@@ -19,6 +19,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+import { logger } from "@/lib/logger";
+
 export type MediaConfigShape = {
   video3d?: string;
   projeto3d?: string[];
@@ -144,7 +146,7 @@ export async function resolveDefaultMedia(
       const safe = sanitizeDefaultMedia(data?.media_config as MediaConfigShape | null);
       if (safe) return { media: safe, source: "selected_template" };
     } catch (err) {
-      console.warn("[default-media] Falha ao ler template selecionado:", err);
+      logger.warn("[default-media] Falha ao ler template selecionado:", err);
     }
   }
 
@@ -160,7 +162,7 @@ export async function resolveDefaultMedia(
     const safe = sanitizeDefaultMedia(data?.media_config as MediaConfigShape | null);
     if (safe) return { media: safe, source: "first_active_template" };
   } catch (err) {
-    console.warn("[default-media] Falha ao ler primeiro template ativo:", err);
+    logger.warn("[default-media] Falha ao ler primeiro template ativo:", err);
   }
 
   // 3. Safety net final — sempre disponível

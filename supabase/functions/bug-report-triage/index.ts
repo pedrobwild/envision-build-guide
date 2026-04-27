@@ -53,7 +53,7 @@ Devolva APENAS este JSON (sem markdown, sem comentário):
 }`;
 
 // deno-lint-ignore no-explicit-any
-async function callTriageLLM(bug: any, openaiKey: string) {
+async function callTriageLLM(bug: any, lovableApiKey: string) {
   const userMsg = [
     `Título: ${bug.title}`,
     `Descrição: ${bug.description}`,
@@ -65,16 +65,15 @@ async function callTriageLLM(bug: any, openaiKey: string) {
     bug.device_type ? `Device: ${bug.device_type} (${bug.os_name ?? ""} ${bug.browser_name ?? ""})` : "",
   ].filter(Boolean).join("\n");
 
-  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
-    headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "google/gemini-3-flash-preview",
       messages: [
         { role: "system", content: TRIAGE_SYSTEM },
         { role: "user", content: userMsg },
       ],
-      temperature: 0.1,
       response_format: { type: "json_object" },
     }),
   });
@@ -154,7 +153,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
     const { userId, admin } = await resolveUser(req.headers.get("authorization"), supabaseUrl, serviceKey);
     if (!userId) {
@@ -237,7 +236,7 @@ serve(async (req) => {
 
     // Triagem por IA
     let triage = null;
-    if (openaiKey) triage = await callTriageLLM(bug, openaiKey);
+    if (lovableApiKey) triage = await callTriageLLM(bug, lovableApiKey);
     const duplicateOf = await findPossibleDuplicate(bug.id, bug.title ?? "", admin);
 
     // Update

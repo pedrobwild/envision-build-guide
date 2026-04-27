@@ -47,6 +47,8 @@ import { useBudgetTemplates } from "@/hooks/useBudgetTemplates";
 import { cn } from "@/lib/utils";
 import { LayoutTemplate } from "lucide-react";
 
+import { logger } from "@/lib/logger";
+
 /* ── Notion-like property row ── */
 function PropertyRow({
   icon: Icon,
@@ -285,7 +287,7 @@ export default function NewBudgetRequest() {
           .upload(filePath, pdfFile, { contentType: "application/pdf" });
 
         if (uploadErr) {
-          console.error("PDF upload error:", uploadErr);
+          logger.error("PDF upload error:", uploadErr);
           toast.error("Erro ao fazer upload do PDF.");
           return;
         }
@@ -316,7 +318,7 @@ export default function NewBudgetRequest() {
           resolvedClientId = c.id;
           setLinkedClientId(c.id);
         } catch (clientErr) {
-          console.error("[NewBudgetRequest] upsertClient falhou (seguindo sem vincular):", clientErr);
+          logger.error("[NewBudgetRequest] upsertClient falhou (seguindo sem vincular):", clientErr);
         }
       }
 
@@ -347,12 +349,12 @@ export default function NewBudgetRequest() {
                 .select("id")
                 .single();
               if (propErr) {
-                console.error("[NewBudgetRequest] criar property falhou:", propErr);
+                logger.error("[NewBudgetRequest] criar property falhou:", propErr);
               } else if (newProp?.id) {
                 resolvedPropertyId = newProp.id;
               }
             } catch (e) {
-              console.error("[NewBudgetRequest] property insert exception:", e);
+              logger.error("[NewBudgetRequest] property insert exception:", e);
             }
           }
         }
@@ -393,7 +395,7 @@ export default function NewBudgetRequest() {
         .single();
 
       if (error || !inserted) {
-        console.error("Budget insert error:", error?.message, error?.details, error?.hint, error);
+        logger.error("Budget insert error:", error?.message, error?.details, error?.hint, error);
         const detail = [error?.message, error?.details, error?.hint].filter(Boolean).join(" · ");
         toast.error(`Erro ao criar solicitação: ${detail || "resposta vazia"}`, { duration: 10000 });
         return;
@@ -409,7 +411,7 @@ export default function NewBudgetRequest() {
         }]);
 
         if (eventError) {
-          console.error("Budget event insert error:", eventError);
+          logger.error("Budget event insert error:", eventError);
         }
 
         toast.success("Orçamento importado!", {
@@ -424,7 +426,7 @@ export default function NewBudgetRequest() {
         const tplId = selectedTemplateId && selectedTemplateId !== "none" ? selectedTemplateId : null;
         await seedFromTemplate(inserted.id, tplId);
       } catch (seedErr) {
-        console.error("Erro ao criar seções iniciais:", seedErr);
+        logger.error("Erro ao criar seções iniciais:", seedErr);
       }
 
       const estimatorName = orcamentistas.find((m) => m.id === estimatorOwnerId)?.full_name;
@@ -449,7 +451,7 @@ export default function NewBudgetRequest() {
         scheduleNav("/admin/solicitacoes", 1000);
       }
     } catch (err) {
-      console.error("New request submit error:", err);
+      logger.error("New request submit error:", err);
       toast.error(
         err instanceof Error
           ? `Erro ao criar solicitação: ${err.message}`

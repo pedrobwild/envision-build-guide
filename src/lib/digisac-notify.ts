@@ -2,6 +2,8 @@
 // Usado no fluxo de publicação de orçamento para notificar cliente automaticamente.
 import { supabase } from "@/integrations/supabase/client";
 
+import { logger } from "@/lib/logger";
+
 interface SendBudgetNotificationParams {
   budgetId: string;
   clientName: string;
@@ -51,7 +53,7 @@ export async function sendBudgetPublishedNotification(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     // eslint-disable-next-line no-console
-    console.warn("[digisac] notificação automática falhou:", msg);
+    logger.warn("[digisac] notificação automática falhou:", msg);
     return { success: false, error: msg };
   }
 }

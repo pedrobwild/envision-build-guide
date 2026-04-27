@@ -71,7 +71,7 @@ describe("Public budget — no category color leaks", () => {
     });
   });
 
-  it("SectionSummaryRow renderiza o pip com classe neutra `bg-border`", () => {
+  it("SectionSummaryRow renderiza indicador neutro de expansão (sem cores de categoria)", () => {
     const { container } = render(
       <SectionSummaryRow
         section={makeSection()}
@@ -80,9 +80,17 @@ describe("Public budget — no category color leaks", () => {
       />
     );
 
-    // Existe pelo menos um elemento com bg-border (o pip neutralizado)
-    const neutralPip = container.querySelector(".bg-border");
-    expect(neutralPip).not.toBeNull();
+    // O indicador atual usa borda/fundo neutros (border-border/60, foreground/[0.04])
+    // — basta garantir que existe um botão de expansão acessível e que nenhuma
+    // classe colorida da paleta foi vazada (já coberto pelo teste anterior).
+    const trigger = container.querySelector('button[aria-expanded]');
+    expect(trigger).not.toBeNull();
+
+    // Reforço: o indicador interno usa apenas tokens neutros (border-border, foreground/...)
+    const neutralIndicator = container.querySelector(
+      '[class*="border-border"], [class*="border-foreground"]'
+    );
+    expect(neutralIndicator).not.toBeNull();
   });
 
   it("CategoryDetailDialog não vaza colorClass/bgClass no header", () => {
