@@ -366,10 +366,10 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
           {duplicates.length > 0 && !duplicatesDismissed && (
             <div
               role="alert"
-              className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2"
+              className="rounded-md border border-warning/40 bg-warning/10 p-3 space-y-2"
             >
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">
                     {duplicates.length === 1
