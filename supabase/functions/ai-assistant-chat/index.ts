@@ -302,6 +302,81 @@ const TOP_ENTITIES_TOOL = {
   },
 };
 
+const SUBMIT_BUG_REPORT_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "submit_bug_report",
+    description:
+      "Cria um bug report estruturado e o envia para triagem por IA (severidade + área + duplicatas). Use quando o usuário descrever um problema na plataforma. Antes de chamar, COLETE no chat: título curto, descrição, passos reproducíveis, expected, actual e (se possível) frequência. NUNCA invente os campos — pergunte ao usuário.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Título curto do bug (5-200 chars). Equivale a 'summary'." },
+        description: { type: "string", description: "Descrição completa do problema (contexto + observado)." },
+        steps_to_reproduce: { type: "string", description: "Passos para reproduzir, numerados ou em bullets." },
+        expected_behavior: { type: "string", description: "Comportamento esperado." },
+        actual_behavior: { type: "string", description: "Comportamento atual / o que de fato acontece." },
+        severity: {
+          type: "string",
+          enum: ["low", "medium", "high", "critical"],
+          description: "Severidade percebida pelo usuário. Se omitido, a IA classifica.",
+        },
+        route: { type: "string", description: "Rota/URL onde o problema ocorreu (ex.: /admin/budgets/123)." },
+        categories: {
+          type: "array",
+          items: {
+            type: "string",
+            enum: ["loading", "a11y", "microcopy", "data", "performance", "layout", "auth", "permissions", "integration", "other"],
+          },
+          description: "Categorias do template comet-bug-report (subset). Vão para triage_tags.",
+        },
+        frequency: {
+          type: "string",
+          enum: ["always", "intermittent", "first_run", "unknown"],
+          description: "Frequência de ocorrência. Se o usuário não disser, use 'unknown'.",
+        },
+        suggestion: { type: "string", description: "Sugestão de correção do usuário (opcional)." },
+      },
+      required: ["title", "description", "steps_to_reproduce", "expected_behavior", "actual_behavior"],
+    },
+  },
+};
+
+const QUERY_BUG_REPORTS_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "query_bug_reports",
+    description:
+      "Lista bug reports com filtros. Apenas admin. Útil para perguntas como 'quais bugs críticos abertos?', 'bugs do editor de orçamento esta semana', 'top áreas com mais bugs'.",
+    parameters: {
+      type: "object",
+      properties: {
+        status: {
+          type: "array",
+          items: { type: "string", enum: ["open", "triaging", "resolved", "dismissed"] },
+          description: "Status do bug. 'open' = recém-criado; 'triaging' = em análise; 'resolved' = corrigido; 'dismissed' = duplicata/inválido.",
+        },
+        severity: {
+          type: "array",
+          items: { type: "string", enum: ["low", "medium", "high", "critical"] },
+        },
+        area: {
+          type: "array",
+          items: { type: "string" },
+          description: "Áreas: auth, dashboard, comercial, budget-editor, public-budget, catalog, crm, lead-sources, agenda, ai-assistant, templates, users, system, other.",
+        },
+        days: { type: "number", description: "Janela em dias (padrão 30)." },
+        group_by: {
+          type: "string",
+          enum: ["none", "area", "severity", "status", "day", "week"],
+          description: "Agrupamento (padrão 'none' = lista plana).",
+        },
+        limit: { type: "number", description: "Limite (padrão 25, máx 100)." },
+      },
+    },
+  },
+};
+
 const WEB_RESEARCH_TOOL = {
   type: "function" as const,
   function: {
@@ -815,7 +890,131 @@ Analise hierarquia de informação, copy, fluxos e sugestões de melhoria. Prior
   };
 }
 
-// ─── Anexos (mantido) ─────────────────────────────────────────────────────
+// ─── Tool: submit_bug_report (delega para edge function) ──────────────────
+
+async function runSubmitBugReport(
+  args: Record<string, unknown>,
+  authHeader: string | null,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  if (!authHeader) return { ok: false, error: "Sessão expirada — faça login novamente." };
+
+  // Sanitização mínima antes de delegar
+  const summary = String(args.summary ?? "").trim();
+  const steps = String(args.steps ?? "").trim();
+  const expected = String(args.expected ?? "").trim();
+  const actual = String(args.actual ?? "").trim();
+  if (!summary || !steps || !expected || !actual) {
+    return { ok: false, error: "summary, steps, expected e actual são obrigatórios." };
+  }
+
+  try {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/bug-report-triage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
+      body: JSON.stringify(args),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) return { ok: false, error: data?.error ?? `bug-report-triage ${resp.status}` };
+    return {
+      ok: true,
+      result: {
+        bug_id: data.bug_report?.id,
+        severity: data.bug_report?.severity_ai,
+        area: data.bug_report?.area_ai,
+        triage_summary: data.bug_report?.triage_summary,
+        duplicate_of: data.duplicate_of,
+        admin_url: `/admin/bug-reports/${data.bug_report?.id ?? ""}`,
+        message: data.duplicate_of
+          ? "Bug registrado e marcado como possível duplicata de um bug existente."
+          : "Bug registrado e triado pela IA.",
+      },
+    };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Falha ao enviar bug report." };
+  }
+}
+
+// ─── Tool: query_bug_reports ──────────────────────────────────────────────
+
+async function runQueryBugReports(
+  args: Record<string, unknown>,
+  // deno-lint-ignore no-explicit-any
+  admin: any,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const days = Math.min(Math.max(Number(args.days ?? 30) || 30, 1), 365);
+  const limit = Math.min(Math.max(Number(args.limit ?? 25) || 25, 1), 100);
+  const groupBy = String(args.group_by ?? "none");
+  const fromIso = new Date(Date.now() - days * 86400_000).toISOString();
+
+  let q = admin
+    .from("bug_reports")
+    .select("id, summary, severity_ai, area_ai, status, role_at_report, created_at, current_url, triage_tags")
+    .gte("created_at", fromIso)
+    .order("created_at", { ascending: false })
+    .limit(2000);
+
+  if (Array.isArray(args.status) && args.status.length) q = q.in("status", args.status as string[]);
+  if (Array.isArray(args.severity) && args.severity.length) q = q.in("severity_ai", args.severity as string[]);
+  if (Array.isArray(args.area) && args.area.length) q = q.in("area_ai", args.area as string[]);
+
+  // deno-lint-ignore no-explicit-any
+  const { data, error } = (await q) as any;
+  if (error) return { ok: false, error: error.message };
+  // deno-lint-ignore no-explicit-any
+  const rows = (data ?? []) as any[];
+
+  if (groupBy === "none") {
+    return {
+      ok: true,
+      result: {
+        period_label: `Últimos ${days} dias`,
+        total: rows.length,
+        items: rows.slice(0, limit),
+      },
+    };
+  }
+
+  // deno-lint-ignore no-explicit-any
+  const keyOf = (r: any): string => {
+    if (groupBy === "area") return r.area_ai ?? "(não triado)";
+    if (groupBy === "severity") return r.severity_ai ?? "(não triado)";
+    if (groupBy === "status") return r.status ?? "—";
+    const d = new Date(r.created_at);
+    if (groupBy === "day") return d.toISOString().slice(0, 10);
+    if (groupBy === "week") {
+      const dt = new Date(d);
+      const day = (dt.getUTCDay() + 6) % 7;
+      dt.setUTCDate(dt.getUTCDate() - day);
+      return dt.toISOString().slice(0, 10);
+    }
+    return "—";
+  };
+
+  const buckets = new Map<string, number>();
+  for (const r of rows) buckets.set(keyOf(r), (buckets.get(keyOf(r)) ?? 0) + 1);
+  const series = Array.from(buckets.entries())
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) =>
+      ["day", "week"].includes(groupBy) ? a.key.localeCompare(b.key) : b.count - a.count,
+    )
+    .slice(0, limit);
+
+  return {
+    ok: true,
+    result: {
+      period_label: `Últimos ${days} dias`,
+      group_by: groupBy,
+      total: rows.length,
+      series,
+    },
+  };
+}
+
+// ─── Anexos (mantido) ─────────────────────────────────────────────
 
 type Attachment = {
   name: string;
@@ -1004,8 +1203,8 @@ serve(async (req) => {
     const model = hasAttachments || isAdmin ? "gpt-4o" : "gpt-4o-mini";
     const conversation = [...baseMessages];
     const tools = isAdmin
-      ? [ANALYTICS_TOOL, KPI_TREND_TOOL, TOP_ENTITIES_TOOL, WEB_RESEARCH_TOOL]
-      : [WEB_RESEARCH_TOOL];
+      ? [ANALYTICS_TOOL, KPI_TREND_TOOL, TOP_ENTITIES_TOOL, WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL, QUERY_BUG_REPORTS_TOOL]
+      : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
     // tool-calling loop (até 4 rodadas para acomodar perguntas híbridas)
     for (let round = 0; round < 4; round++) {
@@ -1055,6 +1254,12 @@ serve(async (req) => {
             : { ok: false, error: "Apenas administradores podem consultar rankings." };
         } else if (name === "web_market_research") {
           toolOutput = await runWebResearch(argsObj);
+        } else if (name === "submit_bug_report") {
+          toolOutput = await runSubmitBugReport(argsObj, req.headers.get("authorization"));
+        } else if (name === "query_bug_reports") {
+          toolOutput = isAdmin
+            ? await runQueryBugReports(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem consultar bug reports." };
         } else {
           toolOutput = { ok: false, error: `Ferramenta desconhecida: ${name}` };
         }
