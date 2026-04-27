@@ -1,0 +1,1 @@
+UPDATE public.budgets SET status='published', lead_name=NULL, lead_email=NULL WHERE id='06ab7f6e-1ec2-40de-a65d-3a1e868bba37' AND lead_name='Teste QA';
