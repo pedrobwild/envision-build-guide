@@ -59,6 +59,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
     } else {
       setSearch("");
       setSuggestions([]);
+      setManualPrice("");
     }
   }, [open]);
 
