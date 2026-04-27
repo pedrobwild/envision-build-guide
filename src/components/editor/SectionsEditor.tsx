@@ -735,6 +735,8 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     return new Set();
   });
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [highlightItemId, setHighlightItemId] = useState<string | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const densityKey = `budget-item-density-${budgetId}`;
   const [compactMode, setCompactMode] = useState(() => {
