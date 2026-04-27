@@ -1166,8 +1166,79 @@ serve(async (req) => {
     // Use OPENAI_API_KEY for Whisper if available; otherwise audio attachments are skipped.
     const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY ?? "");
 
-    // Lovable AI Gateway models (OpenAI-compatible API)
-    const model = "google/gemini-2.5-flash";
+    // Lovable AI Gateway models (OpenAI-compatible API).
+    // Fallback chain: if the primary model errors with a retryable status (5xx, timeout, model-specific failure),
+    // we automatically retry with the next model. Order = preferred first.
+    // 429 (workspace rate limit) and 402 (credits exhausted) are NOT retried here — they're not model-specific.
+    const MODEL_CHAIN = [
+      "google/gemini-2.5-flash",
+      "google/gemini-3-flash-preview",
+      "google/gemini-2.5-flash-lite",
+      "openai/gpt-5-mini",
+    ];
+
+    function isModelRetryable(status: number): boolean {
+      // Retry on server errors and gateway-level model failures, but not on auth/quota issues.
+      if (status >= 500) return true;
+      if (status === 408 || status === 425) return true; // request timeout / too early
+      return false;
+    }
+
+    async function callGatewayWithFallback(
+      body: Record<string, unknown>,
+      label: string,
+    ): Promise<{ resp: Response; modelUsed: string } | { error: { status: number; text: string } }> {
+      let lastStatus = 0;
+      let lastText = "";
+      for (let i = 0; i < MODEL_CHAIN.length; i++) {
+        const candidate = MODEL_CHAIN[i];
+        log.info(`${label} attempt ${i + 1}/${MODEL_CHAIN.length} model=${candidate}`);
+        let resp: Response;
+        try {
+          resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+              "x-correlation-id": cid,
+            },
+            body: JSON.stringify({ ...body, model: candidate }),
+          });
+        } catch (networkErr) {
+          // Network-level failure — treat as retryable and try next model.
+          log.warn(`${label} network error on model=${candidate}: ${networkErr instanceof Error ? networkErr.message : String(networkErr)}`);
+          lastStatus = 502;
+          lastText = networkErr instanceof Error ? networkErr.message : "network error";
+          continue;
+        }
+
+        if (resp.ok) {
+          if (i > 0) log.info(`${label} succeeded on fallback model=${candidate} (after ${i} failure(s))`);
+          return { resp, modelUsed: candidate };
+        }
+
+        // Non-retryable: stop chain immediately, surface the error.
+        if (!isModelRetryable(resp.status)) {
+          const errText = await resp.text();
+          log.error(`${label} non-retryable status=${resp.status} model=${candidate}: ${errText}`);
+          return { error: { status: resp.status, text: errText } };
+        }
+
+        // Retryable model error — log and continue to next model.
+        const errText = await resp.text();
+        log.warn(`${label} retryable status=${resp.status} model=${candidate}: ${errText.slice(0, 300)}`);
+        lastStatus = resp.status;
+        lastText = errText;
+      }
+      log.error(`${label} exhausted ${MODEL_CHAIN.length} fallback model(s); last status=${lastStatus}`);
+      return { error: { status: lastStatus || 502, text: lastText || "Todos os modelos falharam" } };
+    }
+
+    function gatewayErrorMessage(status: number): string {
+      if (status === 429) return "Rate limit excedido. Tente novamente em alguns instantes.";
+      if (status === 402) return "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage.";
+      return "Falha ao chamar Lovable AI (todos os modelos de fallback falharam)";
+    }
 
     // ===== Tool-calling loop (max 4 rounds) =====
     const conversation = [...baseMessages];
@@ -1176,36 +1247,22 @@ serve(async (req) => {
       : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
     for (let round = 0; round < 4; round++) {
-      log.info(`plan round=${round} model=${model} tools=${tools.length}`);
-      const planResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-          "x-correlation-id": cid,
-        },
-        body: JSON.stringify({
-          model,
+      log.info(`plan round=${round} tools=${tools.length}`);
+      const planResult = await callGatewayWithFallback(
+        {
           messages: conversation,
           tools,
           tool_choice: tools.length ? "auto" : undefined,
           stream: false,
-        }),
-      });
+        },
+        `plan[round=${round}]`,
+      );
 
-      if (!planResp.ok) {
-        const errText = await planResp.text();
-        log.error(`Lovable AI error (plan) status=${planResp.status}: ${errText}`);
-        const userMsg =
-          planResp.status === 429
-            ? "Rate limit excedido. Tente novamente em alguns instantes."
-            : planResp.status === 402
-              ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
-              : "Falha ao chamar Lovable AI";
-        return jsonError(planResp.status, userMsg);
+      if ("error" in planResult) {
+        return jsonError(planResult.error.status, gatewayErrorMessage(planResult.error.status));
       }
 
-      const planJson = await planResp.json();
+      const planJson = await planResult.resp.json();
       const choice = planJson.choices?.[0];
       const toolCalls = choice?.message?.tool_calls;
 
@@ -1259,34 +1316,23 @@ serve(async (req) => {
 
     // ===== Final streamed response =====
     log.info("calling final streaming completion");
-    const finalResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-        "x-correlation-id": cid,
-      },
-      body: JSON.stringify({
-        model,
+    const finalResult = await callGatewayWithFallback(
+      {
         messages: conversation,
         stream: true,
-      }),
-    });
+      },
+      "final-stream",
+    );
 
-    if (!finalResp.ok) {
-      const errText = await finalResp.text();
-      log.error(`Lovable AI error (final) status=${finalResp.status}: ${errText}`);
-      const userMsg =
-        finalResp.status === 429
-          ? "Rate limit excedido. Tente novamente em alguns instantes."
-          : finalResp.status === 402
-            ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
-            : "Falha ao gerar resposta final";
-      return jsonError(finalResp.status, userMsg);
+    if ("error" in finalResult) {
+      return jsonError(finalResult.error.status, gatewayErrorMessage(finalResult.error.status));
     }
 
+    const finalResp = finalResult.resp;
+    const modelUsedForStream = finalResult.modelUsed;
+
     // Wrap the upstream stream so we can prepend a meta event with the correlation id
-    // (lets the client surface it on toasts/errors and tag the assistant message).
+    // and the model that actually served the response (useful for debugging fallbacks).
     const upstream = finalResp.body;
     if (!upstream) {
       log.error("upstream stream body missing");
@@ -1294,7 +1340,7 @@ serve(async (req) => {
     }
 
     const encoder = new TextEncoder();
-    const metaEvent = `event: meta\ndata: ${JSON.stringify({ correlation_id: cid })}\n\n`;
+    const metaEvent = `event: meta\ndata: ${JSON.stringify({ correlation_id: cid, model: modelUsedForStream })}\n\n`;
 
     const stream = new ReadableStream({
       async start(controller) {
