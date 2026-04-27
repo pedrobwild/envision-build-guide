@@ -82,13 +82,105 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   suggested: SuggestedItem | null;
-  /** Called after a catalog item is created so the editor can attach catalog_item_id to the inserted line. */
-  onCreated?: (catalogItemId: string, itemType: "product" | "service", linkedSections: string[]) => void;
+  /** Called after a catalog item is created so the editor can attach catalog_item_id to the inserted line.
+   * `undoCatalog` removes the just-created catalog item + its section links (use it inside the editor's
+   * own undo flow to also revert the budget row's catalog_item_id). */
+  onCreated?: (
+    catalogItemId: string,
+    itemType: "product" | "service",
+    linkedSections: string[],
+    undoCatalog: () => Promise<void>,
+  ) => void;
   /** Optional: pre-select section title to attach the new item to. */
   sectionTitle?: string;
 }
 
 const NONE_VALUE = "__none__";
+
+function ConfirmationSummary({
+  name,
+  itemType,
+  unit,
+  unitPrice,
+  categoryName,
+  supplierName,
+  sections,
+}: {
+  name: string;
+  itemType: "product" | "service";
+  unit: string;
+  unitPrice: string;
+  categoryName: string | null;
+  supplierName: string | null;
+  sections: string[];
+}) {
+  const priceVal = parseFloat(unitPrice.replace(",", "."));
+  const hasPrice = !Number.isNaN(priceVal) && priceVal > 0;
+  return (
+    <div className="space-y-3 py-1">
+      <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2.5">
+        <div className="flex items-center gap-2">
+          {itemType === "product" ? (
+            <Package className="h-4 w-4 text-primary flex-shrink-0" />
+          ) : (
+            <Wrench className="h-4 w-4 text-primary flex-shrink-0" />
+          )}
+          <p className="text-sm font-semibold text-foreground truncate">{name}</p>
+        </div>
+        <dl className="grid grid-cols-2 gap-y-1.5 gap-x-3 text-xs">
+          <dt className="text-muted-foreground">Tipo</dt>
+          <dd className="text-foreground text-right">
+            {itemType === "product" ? "Produto" : "Serviço"}
+          </dd>
+          {unit && (
+            <>
+              <dt className="text-muted-foreground">Unidade</dt>
+              <dd className="text-foreground text-right">{unit}</dd>
+            </>
+          )}
+          {hasPrice && (
+            <>
+              <dt className="text-muted-foreground">Preço base</dt>
+              <dd className="text-foreground text-right tabular-nums">
+                R$ {priceVal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </dd>
+            </>
+          )}
+          <dt className="text-muted-foreground">Categoria</dt>
+          <dd className="text-foreground text-right">{categoryName ?? "Sem categoria"}</dd>
+          {supplierName && (
+            <>
+              <dt className="text-muted-foreground">Fornecedor</dt>
+              <dd className="text-foreground text-right">{supplierName}</dd>
+            </>
+          )}
+        </dl>
+      </div>
+
+      <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+        <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          Ao confirmar:
+        </p>
+        <ul className="text-xs text-muted-foreground space-y-1 pl-1">
+          <li>• O item será criado no catálogo global.</li>
+          <li>• Será vinculado automaticamente à linha já adicionada no orçamento.</li>
+          {sections.length > 0 ? (
+            <li>
+              • Aparecerá nas próximas buscas das seções:{" "}
+              <span className="text-foreground font-medium">{sections.join(", ")}</span>.
+            </li>
+          ) : (
+            <li>• Não aparecerá em nenhuma seção (selecione ao voltar, se quiser).</li>
+          )}
+        </ul>
+        <p className="text-[11px] text-muted-foreground pt-1">
+          Você poderá desfazer essa ação imediatamente após confirmar.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCreated, sectionTitle }: Props) {
   const queryClient = useQueryClient();
@@ -106,6 +198,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
   const [newCategoryName, setNewCategoryName] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
+  const [confirming, setConfirming] = useState(false);
 
   // Reset when reopened with new suggested item
   useEffect(() => {
@@ -124,6 +217,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     setNewCategoryName("");
     // Pre-select current section so the new catalog item appears in this same section's autocomplete next time.
     setSelectedSections(sectionTitle ? [sectionTitle] : []);
+    setConfirming(false);
   }, [open, suggested, sectionTitle]);
 
   // Debounced duplicate check by name similarity
@@ -287,7 +381,37 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     }
   };
 
-  const handleSave = async () => {
+  /** Step 1 → step 2: validate and show the confirmation summary before persisting. */
+  const handleRequestSave = () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      toast.error("Informe um nome para o item");
+      return;
+    }
+    setConfirming(true);
+  };
+
+  /** Build an undo callback that removes the catalog item + its section links + supplier price.
+   * Called by the editor when the user clicks "Desfazer" in the toast. */
+  const buildUndoCatalog = (catalogItemId: string) => async () => {
+    try {
+      // Children first to avoid orphan FK rows
+      await supabase.from("catalog_item_sections").delete().eq("catalog_item_id", catalogItemId);
+      await supabase
+        .from("catalog_item_supplier_prices")
+        .delete()
+        .eq("catalog_item_id", catalogItemId);
+      await supabase.from("catalog_items").delete().eq("id", catalogItemId);
+      queryClient.invalidateQueries({ queryKey: ["catalog_items"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
+    } catch (error) {
+      logger.error("Falha ao desfazer item do catálogo", error);
+      throw error;
+    }
+  };
+
+  /** Step 2: actually persist after the user confirms. */
+  const handleConfirmAndSave = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       toast.error("Informe um nome para o item");
@@ -349,19 +473,8 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
       }
 
       queryClient.invalidateQueries({ queryKey: ["catalog_items"] });
-      const typeLabel = itemType === "product" ? "Produto" : "Serviço";
-      const sectionsCount = sectionsToLink.length;
-      const sectionsDescription =
-        sectionsCount === 0
-          ? "Disponível no catálogo global para próximos orçamentos."
-          : sectionsCount === 1
-            ? `Vinculado à linha do orçamento e disponível na seção "${sectionsToLink[0]}".`
-            : `Vinculado à linha do orçamento e disponível em ${sectionsCount} seções: ${sectionsToLink.join(", ")}.`;
-      toast.success(`${typeLabel} adicionado ao catálogo`, {
-        description: sectionsDescription,
-        duration: 6000,
-      });
-      onCreated?.(newItem.id, itemType, sectionsToLink);
+      // Hand off to editor — it will show its own toast with Undo (which will also revert the budget row link).
+      onCreated?.(newItem.id, itemType, sectionsToLink, buildUndoCatalog(newItem.id));
       onOpenChange(false);
     } catch (error) {
       logger.error("Erro ao adicionar item ao catálogo", error);
@@ -370,6 +483,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
       setSaving(false);
     }
   };
+
 
   const handleSkip = () => {
     onOpenChange(false);
@@ -381,13 +495,34 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            Adicionar ao catálogo?
+            {confirming ? "Confirmar vínculo" : "Adicionar ao catálogo?"}
           </DialogTitle>
           <DialogDescription>
-            Este item ainda não existe no catálogo. Cadastre agora para reutilizar em próximos orçamentos.
+            {confirming
+              ? "Revise antes de criar o item no catálogo e vinculá-lo automaticamente à linha do orçamento."
+              : "Este item ainda não existe no catálogo. Cadastre agora para reutilizar em próximos orçamentos."}
           </DialogDescription>
         </DialogHeader>
 
+        {confirming ? (
+          <ConfirmationSummary
+            name={name.trim()}
+            itemType={itemType}
+            unit={unit.trim()}
+            unitPrice={unitPrice}
+            categoryName={
+              categoryId !== NONE_VALUE
+                ? filteredCategories.find((c) => c.id === categoryId)?.name ?? null
+                : null
+            }
+            supplierName={
+              supplierId !== NONE_VALUE
+                ? suppliers.find((s) => s.id === supplierId)?.name ?? null
+                : null
+            }
+            sections={Array.from(new Set(selectedSections.filter(Boolean)))}
+          />
+        ) : (
         <div className="space-y-4 py-1">
           {/* Tipo: Produto vs Serviço */}
           <div className="space-y-2">
@@ -749,15 +884,33 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
             </div>
           </div>
         </div>
+        )}
 
         <DialogFooter className="gap-2 sm:gap-2">
-          <Button variant="ghost" onClick={handleSkip} disabled={saving}>
-            Agora não
-          </Button>
-          <Button onClick={handleSave} disabled={saving || !name.trim()}>
-            {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
-            Adicionar ao catálogo
-          </Button>
+          {confirming ? (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => setConfirming(false)}
+                disabled={saving}
+              >
+                Voltar
+              </Button>
+              <Button onClick={handleConfirmAndSave} disabled={saving}>
+                {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                Confirmar e vincular
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={handleSkip} disabled={saving}>
+                Agora não
+              </Button>
+              <Button onClick={handleRequestSave} disabled={saving || !name.trim()}>
+                Revisar vínculo
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

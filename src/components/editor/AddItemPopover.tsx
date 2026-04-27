@@ -34,7 +34,12 @@ interface Props {
   sectionTitle: string;
   onAddItem: (item: AddItemResult) => Promise<string | null> | string | null | void;
   /** Called after the catalog prompt creates a catalog item. Lets the editor link the just-inserted budget row. */
-  onLinkCatalog?: (insertedRowId: string, catalogItemId: string, linkedSections: string[]) => void | Promise<void>;
+  onLinkCatalog?: (
+    insertedRowId: string,
+    catalogItemId: string,
+    linkedSections: string[],
+    undoCatalog: () => Promise<void>,
+  ) => void | Promise<void>;
 }
 
 export function AddItemPopover({ sectionTitle, onAddItem, onLinkCatalog }: Props) {
@@ -301,9 +306,9 @@ export function AddItemPopover({ sectionTitle, onAddItem, onLinkCatalog }: Props
       }}
       suggested={promptSuggestion}
       sectionTitle={sectionTitle}
-      onCreated={(catalogItemId, _type, linkedSections) => {
+      onCreated={(catalogItemId, _type, linkedSections, undoCatalog) => {
         if (pendingRowId && onLinkCatalog) {
-          void onLinkCatalog(pendingRowId, catalogItemId, linkedSections);
+          void onLinkCatalog(pendingRowId, catalogItemId, linkedSections, undoCatalog);
         }
       }}
     />

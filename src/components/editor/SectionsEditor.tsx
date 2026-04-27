@@ -4,6 +4,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { formatBRL } from "@/lib/formatBRL";
 import { calcSaleUnitPrice, calcItemSaleTotal, calcItemCostTotal, calcSectionCostTotal, calcSectionSaleTotal, calcGrandTotals } from "@/lib/budget-calc";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
@@ -1582,7 +1583,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                             <AddItemPopover
                               sectionTitle={section.title}
                               onAddItem={(itemData) => addItem(section.id, itemData)}
-                              onLinkCatalog={async (rowId, catalogItemId) => {
+                              onLinkCatalog={async (rowId, catalogItemId, linkedSections, undoCatalog) => {
                                 if (cfg.disableCatalog || !rowId) return;
                                 await dbFrom(cfg.itemTable)
                                   .update({ catalog_item_id: catalogItemId })
@@ -1611,6 +1612,52 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                                 highlightTimerRef.current = setTimeout(() => {
                                   setHighlightItemId((current) => (current === rowId ? null : current));
                                 }, 3500);
+                                // Toast com ação Desfazer
+                                const sectionsCount = linkedSections.length;
+                                const description =
+                                  sectionsCount === 0
+                                    ? "Vinculado à linha do orçamento."
+                                    : sectionsCount === 1
+                                      ? `Vinculado à linha e disponível na seção "${linkedSections[0]}".`
+                                      : `Vinculado à linha e disponível em ${sectionsCount} seções: ${linkedSections.join(", ")}.`;
+                                toast.success("Item adicionado ao catálogo", {
+                                  description,
+                                  duration: 8000,
+                                  action: {
+                                    label: "Desfazer",
+                                    onClick: () => {
+                                      void (async () => {
+                                        try {
+                                          // Reverte vínculo na linha do orçamento
+                                          await dbFrom(cfg.itemTable)
+                                            .update({ catalog_item_id: null })
+                                            .eq("id", rowId);
+                                          onSectionsChange(
+                                            sections.map((s) =>
+                                              s.id !== section.id
+                                                ? s
+                                                : {
+                                                    ...s,
+                                                    items: s.items.map((it) =>
+                                                      it.id === rowId
+                                                        ? ({ ...it, catalog_item_id: null } as ItemData)
+                                                        : it,
+                                                    ),
+                                                  },
+                                            ),
+                                          );
+                                          // Remove o item recém-criado do catálogo
+                                          await undoCatalog();
+                                          setHighlightItemId((c) => (c === rowId ? null : c));
+                                          toast.success("Vínculo desfeito");
+                                        } catch (err) {
+                                          logger.error("Falha ao desfazer vínculo do catálogo", err);
+                                          toast.error("Não foi possível desfazer");
+                                        }
+                                      })();
+                                    },
+                                  },
+                                });
                               }}
                             />
                           </div>
