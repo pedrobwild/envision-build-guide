@@ -137,9 +137,24 @@ function ContractForm({
   // Payment
   type PaymentMethod = "cartao" | "fluxo_obra";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cartao");
-  const [parcelas, setParcelas] = useState(10);
+  const MAX_INSTALLMENTS = 12;
+  const [parcelas, setParcelasState] = useState(10);
 
-  const selectedOption = installmentOptions.find((o) => o.months === parcelas)!;
+  const setParcelas = useCallback((value: number) => {
+    if (!Number.isInteger(value) || value < 1) {
+      toast.error("Selecione um número de parcelas válido (1 a 12).");
+      return;
+    }
+    if (value > MAX_INSTALLMENTS) {
+      toast.warning(`Parcelamento no cartão limitado a ${MAX_INSTALLMENTS}× sem juros.`);
+      setParcelasState(MAX_INSTALLMENTS);
+      return;
+    }
+    setParcelasState(value);
+  }, []);
+
+  const selectedOption =
+    installmentOptions.find((o) => o.months === parcelas) ?? installmentOptions[installmentOptions.length - 1];
 
   const handleCpfChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCpf(formatCpf(e.target.value));
@@ -174,6 +189,10 @@ function ContractForm({
 
   const handleSubmit = async () => {
     if (!validateStep(0) || !validateStep(1)) return;
+    if (paymentMethod === "cartao" && (!Number.isInteger(parcelas) || parcelas < 1 || parcelas > MAX_INSTALLMENTS)) {
+      toast.error(`Parcelamento no cartão deve ser entre 1× e ${MAX_INSTALLMENTS}×.`);
+      return;
+    }
     setSending(true);
 
     try {
@@ -212,11 +231,22 @@ function ContractForm({
         return;
       }
 
-      const valorParcela = formatBRL(total / parcelas);
-      const pagamentoLinha =
-        paymentMethod === "cartao"
-          ? `Cartão de crédito — ${parcelas}× de ${valorParcela} (total ${formatBRL(total)})`
-          : `Parcelamento no fluxo da obra (total ${formatBRL(total)}) — condições a combinar com a consultora`;
+      const parcelasValidas =
+        Number.isInteger(parcelas) && parcelas >= 1 && parcelas <= MAX_INSTALLMENTS;
+      const totalFmt = formatBRL(total);
+      let pagamentoLinha: string;
+      if (paymentMethod === "cartao") {
+        if (parcelasValidas) {
+          const valorParcela = formatBRL(total / parcelas);
+          pagamentoLinha = `Cartão de crédito — ${parcelas}× de ${valorParcela} (total ${totalFmt})`;
+        } else {
+          pagamentoLinha = `Cartão de crédito (total ${totalFmt}) — número de parcelas a confirmar com a consultora (até ${MAX_INSTALLMENTS}× sem juros)`;
+        }
+      } else if (paymentMethod === "fluxo_obra") {
+        pagamentoLinha = `Parcelamento no fluxo da obra (total ${totalFmt}) — condições a combinar com a consultora`;
+      } else {
+        pagamentoLinha = `Total ${totalFmt} — forma de pagamento a combinar com a consultora`;
+      }
       const msg = [
         `📋 *SOLICITAÇÃO DE CONTRATO*`,
         ``,
