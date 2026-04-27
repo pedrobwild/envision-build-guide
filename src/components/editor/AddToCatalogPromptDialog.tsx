@@ -19,10 +19,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Package, Wrench, Sparkles } from "lucide-react";
+import { Loader2, Package, Wrench, Sparkles, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
+import { sanitizePostgrestPattern } from "@/lib/postgrest-escape";
+
+interface DuplicateSuggestion {
+  id: string;
+  name: string;
+  item_type: "product" | "service";
+  unit_of_measure: string | null;
+  similarity: number;
+}
+
+/** Normalize string for similarity comparison: lowercase, strip accents, collapse whitespace. */
+function normalizeForCompare(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Token-based Jaccard similarity (0..1). Cheap and good enough for short item names. */
+function tokenSimilarity(a: string, b: string): number {
+  const ta = new Set(normalizeForCompare(a).split(" ").filter((t) => t.length >= 2));
+  const tb = new Set(normalizeForCompare(b).split(" ").filter((t) => t.length >= 2));
+  if (ta.size === 0 || tb.size === 0) return 0;
+  let inter = 0;
+  ta.forEach((t) => {
+    if (tb.has(t)) inter += 1;
+  });
+  const union = ta.size + tb.size - inter;
+  return union === 0 ? 0 : inter / union;
+}
 
 interface CatalogCategory {
   id: string;
