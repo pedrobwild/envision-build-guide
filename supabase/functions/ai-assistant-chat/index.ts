@@ -999,6 +999,9 @@ async function processAttachment(
     ) {
       extracted = await extractDocxText(bytes);
     } else if (mime.startsWith("audio/") || /\.(mp3|wav|m4a|ogg|webm|mp4)$/i.test(att.name)) {
+      if (!apiKey) {
+        return { kind: "text", text: `[Arquivo: ${att.name}] (transcrição de áudio indisponível — OPENAI_API_KEY não configurada)` };
+      }
       extracted = await transcribeAudio(bytes, att.name, mime || "audio/mpeg", apiKey);
     } else if (mime.startsWith("text/") || /\.(txt|md|json|csv|log)$/i.test(att.name)) {
       extracted = new TextDecoder().decode(bytes);
