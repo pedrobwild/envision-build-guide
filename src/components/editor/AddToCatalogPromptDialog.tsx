@@ -799,15 +799,33 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
             </div>
           </div>
         </div>
+        )}
 
         <DialogFooter className="gap-2 sm:gap-2">
-          <Button variant="ghost" onClick={handleSkip} disabled={saving}>
-            Agora não
-          </Button>
-          <Button onClick={handleSave} disabled={saving || !name.trim()}>
-            {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
-            Adicionar ao catálogo
-          </Button>
+          {confirming ? (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => setConfirming(false)}
+                disabled={saving}
+              >
+                Voltar
+              </Button>
+              <Button onClick={handleConfirmAndSave} disabled={saving}>
+                {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                Confirmar e vincular
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={handleSkip} disabled={saving}>
+                Agora não
+              </Button>
+              <Button onClick={handleRequestSave} disabled={saving || !name.trim()}>
+                Revisar vínculo
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
