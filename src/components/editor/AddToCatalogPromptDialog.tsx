@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Package, Wrench, Sparkles, AlertTriangle } from "lucide-react";
+import { Loader2, Package, Wrench, Sparkles, AlertTriangle, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
@@ -101,6 +101,9 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
   const [duplicates, setDuplicates] = useState<DuplicateSuggestion[]>([]);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [duplicatesDismissed, setDuplicatesDismissed] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
 
   // Reset when reopened with new suggested item
   useEffect(() => {
@@ -115,6 +118,8 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     setSupplierId(NONE_VALUE);
     setDuplicates([]);
     setDuplicatesDismissed(false);
+    setCreatingCategory(false);
+    setNewCategoryName("");
   }, [open, suggested]);
 
   // Debounced duplicate check by name similarity
@@ -216,6 +221,68 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     return categories.filter((c) => c.category_type === expectedType);
   }, [categories, itemType]);
 
+  const handleCreateCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (trimmed.length < 2) {
+      toast.error("Informe um nome para a categoria");
+      return;
+    }
+    const expectedType = itemType === "product" ? "Produtos" : "Prestadores";
+    // Prevent duplicate (case/accent-insensitive) within the same type
+    const norm = trimmed
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+    const dup = filteredCategories.find(
+      (c) =>
+        c.name
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim() === norm
+    );
+    if (dup) {
+      toast.info("Esta categoria já existe — selecionada automaticamente.");
+      setCategoryId(dup.id);
+      setCreatingCategory(false);
+      setNewCategoryName("");
+      return;
+    }
+
+    setSavingCategory(true);
+    try {
+      const { data, error } = await supabase
+        .from("catalog_categories")
+        .insert({
+          name: trimmed,
+          category_type: expectedType,
+          is_active: true,
+        })
+        .select("id, name, category_type, is_active")
+        .single();
+      if (error || !data) throw error ?? new Error("Falha ao criar categoria");
+
+      // Optimistic update of the cached list so the new item appears immediately
+      queryClient.setQueryData<CatalogCategory[]>(["catalog_categories", "prompt"], (prev) => {
+        const next = [...(prev ?? []), data as CatalogCategory];
+        return next.sort((a, b) => a.name.localeCompare(b.name));
+      });
+      // Invalidate other consumers of categories
+      queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
+
+      setCategoryId(data.id);
+      setCreatingCategory(false);
+      setNewCategoryName("");
+      toast.success("Categoria criada");
+    } catch (error) {
+      logger.error("Erro ao criar categoria", error);
+      toast.error("Não foi possível criar a categoria");
+    } finally {
+      setSavingCategory(false);
+    }
+  };
+
   const handleSave = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
@@ -308,7 +375,12 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setItemType("product")}
+                onClick={() => {
+                  setItemType("product");
+                  setCategoryId(NONE_VALUE);
+                  setCreatingCategory(false);
+                  setNewCategoryName("");
+                }}
                 className={cn(
                   "flex items-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-colors text-left",
                   itemType === "product"
@@ -325,7 +397,12 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
               </button>
               <button
                 type="button"
-                onClick={() => setItemType("service")}
+                onClick={() => {
+                  setItemType("service");
+                  setCategoryId(NONE_VALUE);
+                  setCreatingCategory(false);
+                  setNewCategoryName("");
+                }}
                 className={cn(
                   "flex items-center gap-2 rounded-md border px-3 py-2.5 text-sm transition-colors text-left",
                   itemType === "service"
@@ -445,24 +522,100 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
 
           {/* Categoria */}
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Categoria</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sem categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE_VALUE}>Sem categoria</SelectItem>
-                {filteredCategories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {filteredCategories.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                Nenhuma categoria de {itemType === "product" ? "produtos" : "prestadores"} cadastrada ainda.
-              </p>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Categoria</Label>
+              {!creatingCategory && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreatingCategory(true);
+                    setNewCategoryName("");
+                  }}
+                  className="text-[11px] font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                >
+                  <Plus className="h-3 w-3" /> Nova categoria
+                </button>
+              )}
+            </div>
+
+            {!creatingCategory ? (
+              <>
+                <Select value={categoryId} onValueChange={setCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sem categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE_VALUE}>Sem categoria</SelectItem>
+                    {filteredCategories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {filteredCategories.length === 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Nenhuma categoria de {itemType === "product" ? "produtos" : "prestadores"} cadastrada. Use "Nova categoria" acima.
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="rounded-md border border-border bg-muted/30 p-2.5 space-y-2">
+                <p className="text-[11px] text-muted-foreground">
+                  Criar categoria de{" "}
+                  <span className="font-medium text-foreground">
+                    {itemType === "product" ? "Produtos" : "Prestadores"}
+                  </span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder={itemType === "product" ? "Ex.: Iluminação" : "Ex.: Marcenaria"}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (!savingCategory && newCategoryName.trim().length >= 2) {
+                          handleCreateCategory();
+                        }
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        setCreatingCategory(false);
+                        setNewCategoryName("");
+                      }
+                    }}
+                    className="h-8 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8"
+                    onClick={handleCreateCategory}
+                    disabled={savingCategory || newCategoryName.trim().length < 2}
+                  >
+                    {savingCategory ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      "Criar"
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                      setCreatingCategory(false);
+                      setNewCategoryName("");
+                    }}
+                    disabled={savingCategory}
+                    aria-label="Cancelar criação de categoria"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
 
