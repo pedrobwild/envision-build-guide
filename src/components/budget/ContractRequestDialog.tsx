@@ -200,7 +200,8 @@ function ContractForm({
           nacionalidade: nacionalidade.trim(),
           estado_civil: estadoCivil.trim(),
           profissao: profissao.trim(),
-          parcelas,
+          parcelas: paymentMethod === "cartao" ? parcelas : 1,
+          payment_method: paymentMethod,
         }),
       });
 
