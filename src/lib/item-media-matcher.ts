@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCategoryForSection } from "@/lib/scope-categories";
 import { lookupPhotosFromLibrary } from "@/lib/item-photo-library";
 
+import { logger } from "@/lib/logger";
+
 const MATCHABLE_CATEGORIES = new Set(["marcenaria", "mobiliario", "eletro"]);
 
 /**
@@ -134,7 +136,7 @@ export async function matchAndCopyItemMedia(
   if (imageInserts.length > 0) {
     const { error: insertErr } = await supabase.from("item_images").insert(imageInserts);
     if (insertErr) {
-      console.error("Falha ao inserir imagens de template:", insertErr.message);
+      logger.error("Falha ao inserir imagens de template:", insertErr.message);
       return { matched: 0, skipped: imageInserts.length };
     }
   }
@@ -142,9 +144,9 @@ export async function matchAndCopyItemMedia(
   // 8. Update descriptions
   for (const upd of descriptionUpdates) {
     const { error: updErr } = await supabase.from("items").update({ description: upd.description }).eq("id", upd.id);
-    if (updErr) console.error(`Falha ao atualizar descrição do item ${upd.id}:`, updErr.message);
+    if (updErr) logger.error(`Falha ao atualizar descrição do item ${upd.id}:`, updErr.message);
   }
 
-  if (import.meta.env.DEV) console.log(`[ItemMediaMatcher] Matched ${matched} items, copied ${imageInserts.length} images`);
+  if (import.meta.env.DEV) logger.debug(`[ItemMediaMatcher] Matched ${matched} items, copied ${imageInserts.length} images`);
   return { matched, imagesCopied: imageInserts.length };
 }

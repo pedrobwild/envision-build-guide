@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { SectionsEditor, TEMPLATE_TABLE_CONFIG } from "@/components/editor/SectionsEditor";
 import { cn } from "@/lib/utils";
 
+import { logger } from "@/lib/logger";
+
 // ─── Types ───────────────────────────────────────────────────────
 
 interface TemplateData {
@@ -155,7 +157,7 @@ export default function TemplateEditorPage() {
         .update({ name: tpl.name, description: tpl.description, media_config: tpl.media_config as any })
         .eq("id", tpl.id);
       if (error) {
-        console.error("Auto-save error:", error.message);
+        logger.error("Auto-save error:", error.message);
         setAutoSaveStatus("error");
         return;
       }

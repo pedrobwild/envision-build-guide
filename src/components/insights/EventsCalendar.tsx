@@ -10,6 +10,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+import { logger } from "@/lib/logger";
+
 interface EventItem {
   name: string;
   category: string;
@@ -75,7 +77,7 @@ export default function EventsCalendar({ onDataLoaded }: { onDataLoaded?: (data:
           : "Pesquisa concluída com dados atualizados.",
       });
     } catch (err: any) {
-      console.error("Events error:", err);
+      logger.error("Events error:", err);
       toast({
         title: "Erro ao buscar eventos",
         description: err.message || "Tente novamente.",

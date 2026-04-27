@@ -5,6 +5,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, Package, DollarSign, TrendingUp, Loader2 } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 
+import { logger } from "@/lib/logger";
+
 interface SectionWithItemsLocal {
   id: string;
   title: string;
@@ -50,7 +52,7 @@ export function BudgetBreakdownPanel({ budgetId }: Props) {
         .order("order_index", { ascending: true });
 
       if (cancelled) return;
-      if (error) console.error('Failed to load sections:', error.message);
+      if (error) logger.error('Failed to load sections:', error.message);
 
       const mapped = (data || []).map((s) => ({
         ...s,

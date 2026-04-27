@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Brain, ShieldAlert, Target, Eye, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+import { logger } from "@/lib/logger";
+
 const ICON_MAP: Record<string, React.ElementType> = {
   brain: Brain,
   shield: ShieldAlert,
@@ -57,7 +59,7 @@ export default function ExecutiveSummary({ dashboardData }: ExecutiveSummaryProp
       setTakeaways(data.takeaways || []);
       setHasLoaded(true);
     } catch (err) {
-      console.error("Executive summary error:", err);
+      logger.error("Executive summary error:", err);
     } finally {
       setLoading(false);
     }

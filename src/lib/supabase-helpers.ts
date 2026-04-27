@@ -8,6 +8,8 @@ import {
 } from "@/lib/public-columns";
 import type { BudgetData, BudgetSection, BudgetItem, BudgetItemImage, BudgetAdjustment, BudgetRoom } from "@/types/budget";
 
+import { logger } from "@/lib/logger";
+
 interface RpcBudgetRow {
   id: string;
   project_name: string;
@@ -112,7 +114,7 @@ export async function fetchPublicBudget(publicId: string): Promise<BudgetData | 
     .rpc('get_public_budget', { p_public_id: publicId });
 
   if (budgetError) {
-    console.error('RPC get_public_budget failed:', budgetError.message);
+    logger.error('RPC get_public_budget failed:', budgetError.message);
     return null;
   }
   if (!budget) return null;
@@ -137,9 +139,9 @@ export async function fetchPublicBudget(publicId: string): Promise<BudgetData | 
       .order('order_index'),
   ]);
 
-  if (sectionsRes.error) console.error('Failed to fetch sections:', sectionsRes.error.message);
-  if (adjustmentsRes.error) console.error('Failed to fetch adjustments:', adjustmentsRes.error.message);
-  if (roomsRes.error) console.error('Failed to fetch rooms:', roomsRes.error.message);
+  if (sectionsRes.error) logger.error('Failed to fetch sections:', sectionsRes.error.message);
+  if (adjustmentsRes.error) logger.error('Failed to fetch adjustments:', adjustmentsRes.error.message);
+  if (roomsRes.error) logger.error('Failed to fetch rooms:', roomsRes.error.message);
 
   const sections = (sectionsRes.data ?? []) as unknown as SectionRow[];
   const adjustments = (adjustmentsRes.data ?? []) as unknown as AdjustmentRow[];
@@ -154,7 +156,7 @@ export async function fetchPublicBudget(publicId: string): Promise<BudgetData | 
     .in('section_id', sectionIds.length ? sectionIds : ['__none__'])
     .order('order_index');
 
-  if (itemsError) console.error('Failed to fetch items:', itemsError.message);
+  if (itemsError) logger.error('Failed to fetch items:', itemsError.message);
   const items = (itemsRaw ?? []) as unknown as ItemRow[];
 
   // Step 4: fetch item images (depends on itemIds)
@@ -164,7 +166,7 @@ export async function fetchPublicBudget(publicId: string): Promise<BudgetData | 
     .select(PUBLIC_ITEM_IMAGE_SELECT)
     .in('item_id', itemIds.length ? itemIds : ['__none__']);
 
-  if (imagesError) console.error('Failed to fetch item_images:', imagesError.message);
+  if (imagesError) logger.error('Failed to fetch item_images:', imagesError.message);
   const itemImages = (itemImagesRaw ?? []) as unknown as ItemImageRow[];
 
   // Attach items + images to sections

@@ -8,6 +8,8 @@ import { Plus, Minus, Check, Loader2, ShoppingBag, Sparkles } from "lucide-react
 import { toast } from "sonner";
 import type { BudgetSection } from "@/types/budget";
 
+import { logger } from "@/lib/logger";
+
 interface OptionalItemsSimulatorProps {
   budgetId: string;
   sections: BudgetSection[];
@@ -102,7 +104,7 @@ export function OptionalItemsSimulator({
       setShowForm(false);
       toast.success("Seleção confirmada! Entraremos em contato.");
     } catch (err) {
-      if (import.meta.env.DEV) console.error(err);
+      if (import.meta.env.DEV) logger.error(err);
       toast.error("Erro ao confirmar seleção. Tente novamente.");
       submittingRef.current = false;
     }

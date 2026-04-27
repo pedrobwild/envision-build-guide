@@ -16,6 +16,8 @@ const MAX_IMAGES = 5;
 
 import type { ItemWithImages } from "@/types/budget-common";
 
+import { logger } from "@/lib/logger";
+
 interface ItemImageGalleryProps {
   item: ItemWithImages;
   budgetId: string;
@@ -59,7 +61,7 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
       }
       toast.success("Imagem adicionada");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error("Erro no upload");
     }
     setUploading(false);
@@ -80,7 +82,7 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
       setActiveIdx((prev) => Math.min(prev, Math.max(0, updated.length - 1)));
       toast.success("Imagem removida");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error("Erro ao remover");
     }
     setUploading(false);
@@ -104,7 +106,7 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
       }
       toast.success("Imagem principal definida");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     }
   };
 

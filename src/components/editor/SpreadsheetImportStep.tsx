@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { logger } from "@/lib/logger";
+
 import {
   Dialog,
   DialogContent,
@@ -194,8 +196,8 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
         const headers = Array.from(headerRow as unknown[], (c: unknown) => (c == null ? "" : String(c)));
         const map = detectColumns(headers);
 
-        if (import.meta.env.DEV) console.log("[Excel Import] Header row:", headerRowIdx, headers);
-        if (import.meta.env.DEV) console.log("[Excel Import] Column map:", map);
+        if (import.meta.env.DEV) logger.debug("[Excel Import] Header row:", headerRowIdx, headers);
+        if (import.meta.env.DEV) logger.debug("[Excel Import] Column map:", map);
 
         if (!map.index && !map.section && !map.title) {
           setError("Não foi possível detectar colunas 'Índice', 'Seção' ou 'Item'.");
@@ -222,7 +224,7 @@ export function SpreadsheetImportStep({ packages, onImported, onNext, onBack }: 
         }
         onImported(pkgs);
       } catch (err) {
-        console.error("[Excel Import] Error:", err);
+        logger.error("[Excel Import] Error:", err);
         setError(`Erro ao ler o arquivo: ${err instanceof Error ? err.message : "formato inválido"}`);
       }
     };

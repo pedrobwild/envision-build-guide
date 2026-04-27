@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
+import { logger } from "@/lib/logger";
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
 const STORAGE_BASE = `${SUPABASE_URL}/storage/v1/object/public/budget-assets`;
 
@@ -78,7 +80,7 @@ export async function appendUtensiliosTemplate(budgetId: string, startOrderIndex
     .single();
 
   if (secErr || !section) {
-    console.error("[UtensiliosTemplate] Failed to create section:", secErr);
+    logger.error("[UtensiliosTemplate] Failed to create section:", secErr);
     return;
   }
 
@@ -97,7 +99,7 @@ export async function appendUtensiliosTemplate(budgetId: string, startOrderIndex
     .select("id, title");
 
   if (itemsErr || !createdItems) {
-    console.error("[UtensiliosTemplate] Failed to create items:", itemsErr);
+    logger.error("[UtensiliosTemplate] Failed to create items:", itemsErr);
     return;
   }
 
@@ -113,7 +115,7 @@ export async function appendUtensiliosTemplate(budgetId: string, startOrderIndex
   if (imageInserts.length > 0) {
     const { error: imgErr } = await supabase.from("item_images").insert(imageInserts);
     if (imgErr) {
-      console.error("[UtensiliosTemplate] Failed to create images:", imgErr);
+      logger.error("[UtensiliosTemplate] Failed to create images:", imgErr);
     }
   }
 }

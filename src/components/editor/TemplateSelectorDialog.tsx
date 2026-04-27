@@ -17,6 +17,8 @@ import { seedFromTemplate } from "@/lib/seed-from-template";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+import { logger } from "@/lib/logger";
+
 interface TemplateSelectorDialogProps {
   open: boolean;
   budgetId: string;
@@ -60,7 +62,7 @@ export function TemplateSelectorDialog({
       }
       onConfirm();
     } catch (err) {
-      console.error("Erro ao aplicar template:", err);
+      logger.error("Erro ao aplicar template:", err);
       toast.error("Erro ao aplicar template.");
     } finally {
       setSeeding(false);

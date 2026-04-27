@@ -13,6 +13,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Loader2, Copy, Check, Brain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+import { logger } from "@/lib/logger";
+
 interface ProfileOption {
   type: string;
   description: string;
@@ -121,7 +123,7 @@ export default function ScriptBuilder({ profiles, dashboardData }: ScriptBuilder
       }
     } catch (err: any) {
       if (err.name === "AbortError") return;
-      console.error("Script generation error:", err);
+      logger.error("Script generation error:", err);
       toast({
         title: "Erro ao gerar roteiro",
         description: err.message || "Tente novamente.",

@@ -15,6 +15,8 @@ import * as XLSX from "xlsx";
 import { matchAndCopyItemMedia } from "@/lib/item-media-matcher";
 import type { PdfTextItem, ParsedPdfSection, ParsedPdfItem } from "@/types/budget-common";
 
+import { logger } from "@/lib/logger";
+
 interface ParsedRow {
   section: string;
   title: string;
@@ -238,8 +240,8 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         const headers = Array.from(headerRow, (c: unknown) => (c == null ? "" : String(c)));
         const map = detectColumns(headers);
 
-        if (import.meta.env.DEV) console.log("[Excel Import] Header row:", headerRowIdx, headers);
-        if (import.meta.env.DEV) console.log("[Excel Import] Column map:", map);
+        if (import.meta.env.DEV) logger.debug("[Excel Import] Header row:", headerRowIdx, headers);
+        if (import.meta.env.DEV) logger.debug("[Excel Import] Column map:", map);
 
         if (!map.section && !map.title && !map.index) {
           const firstTextCol = headers.findIndex((h) => h.trim().length > 0);
@@ -354,13 +356,13 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
           });
         }
 
-        if (import.meta.env.DEV) console.log("[Excel Import] Parsed", rows.length, "items across", new Set(rows.map(r => r.section)).size, "sections");
+        if (import.meta.env.DEV) logger.debug("[Excel Import] Parsed", rows.length, "items across", new Set(rows.map(r => r.section)).size, "sections");
 
         setParsedSectionTotals(sectionTotals);
         setParsedRows(rows);
         setStep("preview");
       } catch (err) {
-        console.error("[Excel Import] Error:", err);
+        logger.error("[Excel Import] Error:", err);
         setError(`Erro ao ler o arquivo: ${err instanceof Error ? err.message : "formato inválido"}. Verifique se é um Excel válido (.xlsx ou .xls).`);
       }
     };
@@ -470,7 +472,7 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
       setParsedRows(rows);
       setStep("preview");
     } catch (err: unknown) {
-      console.error("PDF parse error:", err);
+      logger.error("PDF parse error:", err);
       setError(err instanceof Error ? err.message : "Erro ao processar o PDF. Tente novamente.");
       setStep("upload");
     }
@@ -612,17 +614,17 @@ export function ImportExcelModal({ open, onOpenChange, fileFilter, targetBudgetG
         const { applyDefaultMediaWithGuardrail } = await import("@/lib/apply-default-media");
         await applyDefaultMediaWithGuardrail(budget.id, null);
       } catch (mediaErr) {
-        console.warn("[Import] Falha ao aplicar mídia padrão (não-crítico):", mediaErr);
+        logger.warn("[Import] Falha ao aplicar mídia padrão (não-crítico):", mediaErr);
       }
 
       // Auto-match images and descriptions from existing items in mobiliário/eletro/marcenaria
       try {
         const result = await matchAndCopyItemMedia(budget.id, createdSections);
         if (result.matched > 0) {
-          if (import.meta.env.DEV) console.log(`[Import] Auto-matched ${result.matched} items with existing media`);
+          if (import.meta.env.DEV) logger.debug(`[Import] Auto-matched ${result.matched} items with existing media`);
         }
       } catch (matchErr) {
-        console.warn("[Import] Media matching failed (non-critical):", matchErr);
+        logger.warn("[Import] Media matching failed (non-critical):", matchErr);
       }
 
       // NOTE: Utensílios template is NOT auto-appended on import.
