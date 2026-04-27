@@ -1126,6 +1126,19 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Resolve correlation id: honor inbound header so client and function share the same id.
+  const incomingCid = req.headers.get("x-correlation-id")?.trim();
+  const cid = incomingCid && incomingCid.length > 0 && incomingCid.length <= 128
+    ? incomingCid
+    : genCorrelationId();
+  const log = makeLogger(cid);
+  const baseHeaders = { ...corsHeaders, "x-correlation-id": cid };
+  const jsonError = (status: number, error: string) =>
+    new Response(JSON.stringify({ error, correlation_id: cid }), {
+      status,
+      headers: { ...baseHeaders, "Content-Type": "application/json" },
+    });
+
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY"); // optional, only for Whisper audio
@@ -1133,18 +1146,14 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!LOVABLE_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      log.error("LOVABLE_API_KEY not configured");
+      return jsonError(500, "LOVABLE_API_KEY not configured");
     }
 
     const { messages } = (await req.json()) as { messages: IncomingMessage[] };
     if (!Array.isArray(messages) || messages.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "messages array required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      log.warn("messages array missing or empty");
+      return jsonError(400, "messages array required");
     }
 
     const { isAdmin, admin } = await resolveUserAndRole(
@@ -1152,8 +1161,8 @@ serve(async (req) => {
       supabaseUrl,
       serviceKey,
     );
+    log.info(`request received: messages=${messages.length} isAdmin=${isAdmin} inboundCid=${incomingCid ? "yes" : "no"}`);
 
-    const hasAttachments = messages.some((m) => m.attachments && m.attachments.length > 0);
     // Use OPENAI_API_KEY for Whisper if available; otherwise audio attachments are skipped.
     const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY ?? "");
 
@@ -1167,11 +1176,13 @@ serve(async (req) => {
       : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
     for (let round = 0; round < 4; round++) {
+      log.info(`plan round=${round} model=${model} tools=${tools.length}`);
       const planResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
+          "x-correlation-id": cid,
         },
         body: JSON.stringify({
           model,
@@ -1184,17 +1195,14 @@ serve(async (req) => {
 
       if (!planResp.ok) {
         const errText = await planResp.text();
-        console.error("Lovable AI error (plan):", planResp.status, errText);
+        log.error(`Lovable AI error (plan) status=${planResp.status}: ${errText}`);
         const userMsg =
           planResp.status === 429
             ? "Rate limit excedido. Tente novamente em alguns instantes."
             : planResp.status === 402
               ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
               : "Falha ao chamar Lovable AI";
-        return new Response(JSON.stringify({ error: userMsg }), {
-          status: planResp.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonError(planResp.status, userMsg);
       }
 
       const planJson = await planResp.json();
@@ -1202,9 +1210,11 @@ serve(async (req) => {
       const toolCalls = choice?.message?.tool_calls;
 
       if (!toolCalls || toolCalls.length === 0) {
+        log.info(`plan round=${round} -> no tool calls, proceeding to final stream`);
         break;
       }
 
+      log.info(`plan round=${round} -> ${toolCalls.length} tool call(s): ${toolCalls.map((c: { function?: { name?: string } }) => c.function?.name).join(", ")}`);
       conversation.push(choice.message);
 
       for (const call of toolCalls) {
@@ -1234,6 +1244,7 @@ serve(async (req) => {
             ? await runQueryBugReports(argsObj, admin)
             : { ok: false, error: "Apenas administradores podem consultar bug reports." };
         } else {
+          log.warn(`unknown tool requested: ${name}`);
           toolOutput = { ok: false, error: `Ferramenta desconhecida: ${name}` };
         }
 
@@ -1247,11 +1258,13 @@ serve(async (req) => {
     }
 
     // ===== Final streamed response =====
+    log.info("calling final streaming completion");
     const finalResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
+        "x-correlation-id": cid,
       },
       body: JSON.stringify({
         model,
@@ -1262,27 +1275,56 @@ serve(async (req) => {
 
     if (!finalResp.ok) {
       const errText = await finalResp.text();
-      console.error("Lovable AI error (final):", finalResp.status, errText);
+      log.error(`Lovable AI error (final) status=${finalResp.status}: ${errText}`);
       const userMsg =
         finalResp.status === 429
           ? "Rate limit excedido. Tente novamente em alguns instantes."
           : finalResp.status === 402
             ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
             : "Falha ao gerar resposta final";
-      return new Response(
-        JSON.stringify({ error: userMsg }),
-        { status: finalResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return jsonError(finalResp.status, userMsg);
     }
 
-    return new Response(finalResp.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    // Wrap the upstream stream so we can prepend a meta event with the correlation id
+    // (lets the client surface it on toasts/errors and tag the assistant message).
+    const upstream = finalResp.body;
+    if (!upstream) {
+      log.error("upstream stream body missing");
+      return jsonError(502, "Upstream stream indisponível");
+    }
+
+    const encoder = new TextEncoder();
+    const metaEvent = `event: meta\ndata: ${JSON.stringify({ correlation_id: cid })}\n\n`;
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        controller.enqueue(encoder.encode(metaEvent));
+        const reader = upstream.getReader();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            controller.enqueue(value);
+          }
+          log.info("stream completed successfully");
+        } catch (err) {
+          log.error("stream relay error:", err);
+          controller.enqueue(
+            encoder.encode(
+              `event: error\ndata: ${JSON.stringify({ error: "stream interrompido", correlation_id: cid })}\n\n`,
+            ),
+          );
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: { ...baseHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (err) {
-    console.error("ai-assistant-chat error:", err);
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Erro desconhecido" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    log.error("ai-assistant-chat error:", err);
+    return jsonError(500, err instanceof Error ? err.message : "Erro desconhecido");
   }
 });
