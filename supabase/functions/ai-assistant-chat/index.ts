@@ -1140,16 +1140,15 @@ serve(async (req) => {
       : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
     for (let round = 0; round < 4; round++) {
-      const planResp = await fetch("https://api.openai.com/v1/chat/completions", {
+      const planResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           model,
           messages: conversation,
-          temperature: 0.3,
           tools,
           tool_choice: tools.length ? "auto" : undefined,
           stream: false,
@@ -1158,13 +1157,13 @@ serve(async (req) => {
 
       if (!planResp.ok) {
         const errText = await planResp.text();
-        console.error("OpenAI error (plan):", planResp.status, errText);
+        console.error("Lovable AI error (plan):", planResp.status, errText);
         const userMsg =
           planResp.status === 429
             ? "Rate limit excedido. Tente novamente em alguns instantes."
-            : planResp.status === 401
-              ? "Chave OpenAI inválida ou expirada."
-              : "Falha ao chamar OpenAI";
+            : planResp.status === 402
+              ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
+              : "Falha ao chamar Lovable AI";
         return new Response(JSON.stringify({ error: userMsg }), {
           status: planResp.status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
