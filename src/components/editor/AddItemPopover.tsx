@@ -295,9 +295,17 @@ export function AddItemPopover({ sectionTitle, onAddItem, onLinkCatalog }: Props
     </Popover>
     <AddToCatalogPromptDialog
       open={promptOpen}
-      onOpenChange={setPromptOpen}
+      onOpenChange={(next) => {
+        setPromptOpen(next);
+        if (!next) setPendingRowId(null);
+      }}
       suggested={promptSuggestion}
       sectionTitle={sectionTitle}
+      onCreated={(catalogItemId) => {
+        if (pendingRowId && onLinkCatalog) {
+          void onLinkCatalog(pendingRowId, catalogItemId);
+        }
+      }}
     />
     </>
   );
