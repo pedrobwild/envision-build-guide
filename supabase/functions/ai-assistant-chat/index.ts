@@ -1316,34 +1316,23 @@ serve(async (req) => {
 
     // ===== Final streamed response =====
     log.info("calling final streaming completion");
-    const finalResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-        "x-correlation-id": cid,
-      },
-      body: JSON.stringify({
-        model,
+    const finalResult = await callGatewayWithFallback(
+      {
         messages: conversation,
         stream: true,
-      }),
-    });
+      },
+      "final-stream",
+    );
 
-    if (!finalResp.ok) {
-      const errText = await finalResp.text();
-      log.error(`Lovable AI error (final) status=${finalResp.status}: ${errText}`);
-      const userMsg =
-        finalResp.status === 429
-          ? "Rate limit excedido. Tente novamente em alguns instantes."
-          : finalResp.status === 402
-            ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
-            : "Falha ao gerar resposta final";
-      return jsonError(finalResp.status, userMsg);
+    if ("error" in finalResult) {
+      return jsonError(finalResult.error.status, gatewayErrorMessage(finalResult.error.status));
     }
 
+    const finalResp = finalResult.resp;
+    const modelUsedForStream = finalResult.modelUsed;
+
     // Wrap the upstream stream so we can prepend a meta event with the correlation id
-    // (lets the client surface it on toasts/errors and tag the assistant message).
+    // and the model that actually served the response (useful for debugging fallbacks).
     const upstream = finalResp.body;
     if (!upstream) {
       log.error("upstream stream body missing");
@@ -1351,7 +1340,7 @@ serve(async (req) => {
     }
 
     const encoder = new TextEncoder();
-    const metaEvent = `event: meta\ndata: ${JSON.stringify({ correlation_id: cid })}\n\n`;
+    const metaEvent = `event: meta\ndata: ${JSON.stringify({ correlation_id: cid, model: modelUsedForStream })}\n\n`;
 
     const stream = new ReadableStream({
       async start(controller) {
