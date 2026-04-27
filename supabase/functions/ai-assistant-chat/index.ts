@@ -1100,13 +1100,14 @@ serve(async (req) => {
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY"); // optional, only for Whisper audio
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    if (!OPENAI_API_KEY) {
+    if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "OPENAI_API_KEY not configured" }),
+        JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -1126,10 +1127,11 @@ serve(async (req) => {
     );
 
     const hasAttachments = messages.some((m) => m.attachments && m.attachments.length > 0);
-    const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY);
+    // Use OPENAI_API_KEY for Whisper if available; otherwise audio attachments are skipped.
+    const baseMessages = await buildOpenAIMessages(messages, OPENAI_API_KEY ?? "");
 
-    // Vision-capable model when needed; gpt-4o for tools (better at structured calls)
-    const model = hasAttachments || isAdmin ? "gpt-4o" : "gpt-4o-mini";
+    // Lovable AI Gateway models (OpenAI-compatible API)
+    const model = "google/gemini-2.5-flash";
 
     // ===== Tool-calling loop (max 4 rounds) =====
     const conversation = [...baseMessages];
