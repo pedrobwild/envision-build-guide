@@ -512,24 +512,100 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
 
           {/* Categoria */}
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Categoria</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sem categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE_VALUE}>Sem categoria</SelectItem>
-                {filteredCategories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {filteredCategories.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                Nenhuma categoria de {itemType === "product" ? "produtos" : "prestadores"} cadastrada ainda.
-              </p>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Categoria</Label>
+              {!creatingCategory && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreatingCategory(true);
+                    setNewCategoryName("");
+                  }}
+                  className="text-[11px] font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                >
+                  <Plus className="h-3 w-3" /> Nova categoria
+                </button>
+              )}
+            </div>
+
+            {!creatingCategory ? (
+              <>
+                <Select value={categoryId} onValueChange={setCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sem categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE_VALUE}>Sem categoria</SelectItem>
+                    {filteredCategories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {filteredCategories.length === 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Nenhuma categoria de {itemType === "product" ? "produtos" : "prestadores"} cadastrada. Use "Nova categoria" acima.
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="rounded-md border border-border bg-muted/30 p-2.5 space-y-2">
+                <p className="text-[11px] text-muted-foreground">
+                  Criar categoria de{" "}
+                  <span className="font-medium text-foreground">
+                    {itemType === "product" ? "Produtos" : "Prestadores"}
+                  </span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder={itemType === "product" ? "Ex.: Iluminação" : "Ex.: Marcenaria"}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (!savingCategory && newCategoryName.trim().length >= 2) {
+                          handleCreateCategory();
+                        }
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        setCreatingCategory(false);
+                        setNewCategoryName("");
+                      }
+                    }}
+                    className="h-8 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8"
+                    onClick={handleCreateCategory}
+                    disabled={savingCategory || newCategoryName.trim().length < 2}
+                  >
+                    {savingCategory ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      "Criar"
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                      setCreatingCategory(false);
+                      setNewCategoryName("");
+                    }}
+                    disabled={savingCategory}
+                    aria-label="Cancelar criação de categoria"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
 
