@@ -1574,6 +1574,26 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                             <AddItemPopover
                               sectionTitle={section.title}
                               onAddItem={(itemData) => addItem(section.id, itemData)}
+                              onLinkCatalog={async (rowId, catalogItemId) => {
+                                if (cfg.disableCatalog || !rowId) return;
+                                await dbFrom(cfg.itemTable)
+                                  .update({ catalog_item_id: catalogItemId })
+                                  .eq("id", rowId);
+                                onSectionsChange(
+                                  sections.map((s) =>
+                                    s.id !== section.id
+                                      ? s
+                                      : {
+                                          ...s,
+                                          items: s.items.map((it) =>
+                                            it.id === rowId
+                                              ? ({ ...it, catalog_item_id: catalogItemId } as ItemData)
+                                              : it,
+                                          ),
+                                        },
+                                  ),
+                                );
+                              }}
                             />
                           </div>
                         </div>
