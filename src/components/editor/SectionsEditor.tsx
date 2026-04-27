@@ -4,6 +4,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { formatBRL } from "@/lib/formatBRL";
 import { calcSaleUnitPrice, calcItemSaleTotal, calcItemCostTotal, calcSectionCostTotal, calcSectionSaleTotal, calcGrandTotals } from "@/lib/budget-calc";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
 import {
