@@ -32,10 +32,12 @@ interface AddItemResult {
 
 interface Props {
   sectionTitle: string;
-  onAddItem: (item: AddItemResult) => void;
+  onAddItem: (item: AddItemResult) => Promise<string | null> | string | null | void;
+  /** Called after the catalog prompt creates a catalog item. Lets the editor link the just-inserted budget row. */
+  onLinkCatalog?: (insertedRowId: string, catalogItemId: string) => void | Promise<void>;
 }
 
-export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
+export function AddItemPopover({ sectionTitle, onAddItem, onLinkCatalog }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([]);
