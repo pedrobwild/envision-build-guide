@@ -144,13 +144,16 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
 
   const handleAddManual = () => {
     const title = search.trim() || "Novo Item";
+    const parsedPrice = parseFloat(manualPrice.replace(",", "."));
+    const priceVal = !Number.isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : null;
+
     onAddItem({
       title,
       description: null,
       unit: null,
-      qty: null,
-      internal_unit_price: null,
-      internal_total: null,
+      qty: priceVal != null ? 1 : null,
+      internal_unit_price: priceVal,
+      internal_total: priceVal,
       catalog_item_id: null,
       catalog_snapshot: null,
     });
@@ -161,7 +164,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
       title,
       description: null,
       unit: null,
-      internal_unit_price: null,
+      internal_unit_price: priceVal,
     });
     // Defer to allow popover close animation to settle
     setTimeout(() => setPromptOpen(true), 80);
