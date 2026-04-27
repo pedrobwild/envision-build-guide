@@ -132,6 +132,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     setNewCategoryName("");
     // Pre-select current section so the new catalog item appears in this same section's autocomplete next time.
     setSelectedSections(sectionTitle ? [sectionTitle] : []);
+    setConfirming(false);
   }, [open, suggested, sectionTitle]);
 
   // Debounced duplicate check by name similarity
