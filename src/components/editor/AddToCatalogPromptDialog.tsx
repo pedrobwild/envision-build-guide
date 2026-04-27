@@ -296,7 +296,37 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     }
   };
 
-  const handleSave = async () => {
+  /** Step 1 → step 2: validate and show the confirmation summary before persisting. */
+  const handleRequestSave = () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      toast.error("Informe um nome para o item");
+      return;
+    }
+    setConfirming(true);
+  };
+
+  /** Build an undo callback that removes the catalog item + its section links + supplier price.
+   * Called by the editor when the user clicks "Desfazer" in the toast. */
+  const buildUndoCatalog = (catalogItemId: string) => async () => {
+    try {
+      // Children first to avoid orphan FK rows
+      await supabase.from("catalog_item_sections").delete().eq("catalog_item_id", catalogItemId);
+      await supabase
+        .from("catalog_item_supplier_prices")
+        .delete()
+        .eq("catalog_item_id", catalogItemId);
+      await supabase.from("catalog_items").delete().eq("id", catalogItemId);
+      queryClient.invalidateQueries({ queryKey: ["catalog_items"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
+    } catch (error) {
+      logger.error("Falha ao desfazer item do catálogo", error);
+      throw error;
+    }
+  };
+
+  /** Step 2: actually persist after the user confirms. */
+  const handleConfirmAndSave = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       toast.error("Informe um nome para o item");
@@ -358,19 +388,8 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
       }
 
       queryClient.invalidateQueries({ queryKey: ["catalog_items"] });
-      const typeLabel = itemType === "product" ? "Produto" : "Serviço";
-      const sectionsCount = sectionsToLink.length;
-      const sectionsDescription =
-        sectionsCount === 0
-          ? "Disponível no catálogo global para próximos orçamentos."
-          : sectionsCount === 1
-            ? `Vinculado à linha do orçamento e disponível na seção "${sectionsToLink[0]}".`
-            : `Vinculado à linha do orçamento e disponível em ${sectionsCount} seções: ${sectionsToLink.join(", ")}.`;
-      toast.success(`${typeLabel} adicionado ao catálogo`, {
-        description: sectionsDescription,
-        duration: 6000,
-      });
-      onCreated?.(newItem.id, itemType, sectionsToLink);
+      // Hand off to editor — it will show its own toast with Undo (which will also revert the budget row link).
+      onCreated?.(newItem.id, itemType, sectionsToLink, buildUndoCatalog(newItem.id));
       onOpenChange(false);
     } catch (error) {
       logger.error("Erro ao adicionar item ao catálogo", error);
@@ -378,6 +397,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     } finally {
       setSaving(false);
     }
+  };
   };
 
   const handleSkip = () => {
