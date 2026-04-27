@@ -212,11 +212,22 @@ function ContractForm({
         return;
       }
 
-      const valorParcela = formatBRL(total / parcelas);
-      const pagamentoLinha =
-        paymentMethod === "cartao"
-          ? `Cartão de crédito — ${parcelas}× de ${valorParcela} (total ${formatBRL(total)})`
-          : `Parcelamento no fluxo da obra (total ${formatBRL(total)}) — condições a combinar com a consultora`;
+      const parcelasValidas =
+        Number.isInteger(parcelas) && parcelas >= 1 && parcelas <= MAX_INSTALLMENTS;
+      const totalFmt = formatBRL(total);
+      let pagamentoLinha: string;
+      if (paymentMethod === "cartao") {
+        if (parcelasValidas) {
+          const valorParcela = formatBRL(total / parcelas);
+          pagamentoLinha = `Cartão de crédito — ${parcelas}× de ${valorParcela} (total ${totalFmt})`;
+        } else {
+          pagamentoLinha = `Cartão de crédito (total ${totalFmt}) — número de parcelas a confirmar com a consultora (até ${MAX_INSTALLMENTS}× sem juros)`;
+        }
+      } else if (paymentMethod === "fluxo_obra") {
+        pagamentoLinha = `Parcelamento no fluxo da obra (total ${totalFmt}) — condições a combinar com a consultora`;
+      } else {
+        pagamentoLinha = `Total ${totalFmt} — forma de pagamento a combinar com a consultora`;
+      }
       const msg = [
         `📋 *SOLICITAÇÃO DE CONTRATO*`,
         ``,
