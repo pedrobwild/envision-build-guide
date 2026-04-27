@@ -221,6 +221,68 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
     return categories.filter((c) => c.category_type === expectedType);
   }, [categories, itemType]);
 
+  const handleCreateCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (trimmed.length < 2) {
+      toast.error("Informe um nome para a categoria");
+      return;
+    }
+    const expectedType = itemType === "product" ? "Produtos" : "Prestadores";
+    // Prevent duplicate (case/accent-insensitive) within the same type
+    const norm = trimmed
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+    const dup = filteredCategories.find(
+      (c) =>
+        c.name
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim() === norm
+    );
+    if (dup) {
+      toast.info("Esta categoria já existe — selecionada automaticamente.");
+      setCategoryId(dup.id);
+      setCreatingCategory(false);
+      setNewCategoryName("");
+      return;
+    }
+
+    setSavingCategory(true);
+    try {
+      const { data, error } = await supabase
+        .from("catalog_categories")
+        .insert({
+          name: trimmed,
+          category_type: expectedType,
+          is_active: true,
+        })
+        .select("id, name, category_type, is_active")
+        .single();
+      if (error || !data) throw error ?? new Error("Falha ao criar categoria");
+
+      // Optimistic update of the cached list so the new item appears immediately
+      queryClient.setQueryData<CatalogCategory[]>(["catalog_categories", "prompt"], (prev) => {
+        const next = [...(prev ?? []), data as CatalogCategory];
+        return next.sort((a, b) => a.name.localeCompare(b.name));
+      });
+      // Invalidate other consumers of categories
+      queryClient.invalidateQueries({ queryKey: ["catalog_categories"] });
+
+      setCategoryId(data.id);
+      setCreatingCategory(false);
+      setNewCategoryName("");
+      toast.success("Categoria criada");
+    } catch (error) {
+      logger.error("Erro ao criar categoria", error);
+      toast.error("Não foi possível criar a categoria");
+    } finally {
+      setSavingCategory(false);
+    }
+  };
+
   const handleSave = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
