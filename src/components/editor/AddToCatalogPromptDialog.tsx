@@ -101,6 +101,9 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
   const [duplicates, setDuplicates] = useState<DuplicateSuggestion[]>([]);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [duplicatesDismissed, setDuplicatesDismissed] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
 
   // Reset when reopened with new suggested item
   useEffect(() => {
