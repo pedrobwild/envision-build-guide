@@ -836,6 +836,8 @@ export type Database = {
           metragem: string | null
           notes: string | null
           parent_budget_id: string | null
+          payment_installments: number | null
+          payment_method: string | null
           pipeline_id: string | null
           pipeline_stage: string | null
           prazo_dias_uteis: number | null
@@ -927,6 +929,8 @@ export type Database = {
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
+          payment_installments?: number | null
+          payment_method?: string | null
           pipeline_id?: string | null
           pipeline_stage?: string | null
           prazo_dias_uteis?: number | null
@@ -1018,6 +1022,8 @@ export type Database = {
           metragem?: string | null
           notes?: string | null
           parent_budget_id?: string | null
+          payment_installments?: number | null
+          payment_method?: string | null
           pipeline_id?: string | null
           pipeline_stage?: string | null
           prazo_dias_uteis?: number | null

@@ -72,10 +72,15 @@ Deno.serve(async (req) => {
     }
 
     // Update status
+    const paymentMethod = typeof body.payment_method === "string" && ["cartao", "fluxo_obra"].includes(body.payment_method)
+      ? body.payment_method
+      : "cartao";
     await supabase.from("budgets").update({
       status: "minuta_solicitada",
       lead_name: (body.nome_completo as string).trim().substring(0, 255),
       lead_email: (body.email as string).trim().substring(0, 255),
+      payment_method: paymentMethod,
+      payment_installments: paymentMethod === "cartao" ? Number(body.parcelas) : null,
     }).eq("id", budgetId);
 
     return new Response(JSON.stringify({ success: true, project_name: budget.project_name }), {

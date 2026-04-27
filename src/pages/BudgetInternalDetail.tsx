@@ -80,6 +80,7 @@ interface BudgetDetail {
   client_name: string;
   client_phone: string | null;
   lead_email: string | null;
+  lead_name: string | null;
   property_type: string | null;
   city: string | null;
   bairro: string | null;
@@ -108,6 +109,8 @@ interface BudgetDetail {
   win_probability: number | null;
   expected_close_at: string | null;
   lead_source: string | null;
+  payment_method: string | null;
+  payment_installments: number | null;
 }
 
 interface EventRow {
@@ -253,7 +256,7 @@ export default function BudgetInternalDetail() {
         supabase
           .from("budgets")
           .select(
-            "id, project_name, client_id, client_name, client_phone, lead_email, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source"
+            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments"
           )
           .eq("id", id)
           .single(),
@@ -788,6 +791,32 @@ export default function BudgetInternalDetail() {
             />
           </div>
         </section>
+
+        {/* SOLICITAÇÃO DE CONTRATO (cliente preencheu o formulário público) */}
+        {budget.payment_method && (
+          <section className="mt-6 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.08em] font-body font-semibold text-primary/80">
+                  Solicitação de contrato
+                </p>
+                <p className="mt-1 text-sm font-display font-semibold text-foreground">
+                  {budget.payment_method === "cartao"
+                    ? `Cartão de crédito${budget.payment_installments ? ` em ${budget.payment_installments}× sem juros` : ""}`
+                    : "Parcelamento no fluxo da obra"}
+                </p>
+                {(budget.lead_email || budget.lead_name) && (
+                  <p className="mt-0.5 text-xs text-muted-foreground font-body">
+                    {[budget.lead_name, budget.lead_email].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </div>
+              <span className="text-[10px] uppercase tracking-wide font-body font-semibold px-2 py-1 rounded-md bg-primary/15 text-primary">
+                {budget.payment_method === "cartao" ? "Cartão" : "Fluxo da obra"}
+              </span>
+            </div>
+          </section>
+        )}
 
         {/* WORKSPACE: Sidebar de módulos + Painel de ações */}
         <section className="mt-8 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-5">
