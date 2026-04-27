@@ -42,14 +42,14 @@ const sidebarVariants = {
 };
 
 export default function OrcamentoPage() {
-  const { projectId } = useParams<{ projectId: string }>();
-  const { data: budget, isLoading, error } = useOrcamentoBudget(projectId);
+  const { publicId } = useParams<{ publicId: string }>();
+  const { data: budget, isLoading, error } = useOrcamentoBudget(publicId);
 
   // Demo só é permitido quando explicitamente habilitado por env.
   // Erros reais NÃO caem para mock — exibimos a tela de "não encontrado".
   const allowDemo = import.meta.env.VITE_ALLOW_DEMO === "true";
   const resolvedBudget =
-    budget ?? (projectId === "demo" && allowDemo ? mockBudget : null);
+    budget ?? (publicId === "demo" && allowDemo ? mockBudget : null);
 
   if (isLoading && !resolvedBudget) {
     return (
