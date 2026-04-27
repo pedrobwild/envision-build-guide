@@ -316,13 +316,18 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
         throw insertError ?? new Error("Falha ao criar item no catálogo");
       }
 
-      // Optional: link to section if provided
-      if (sectionTitle) {
+      // Link to one or more sections so item shows up in autocomplete for those sections next time
+      const sectionsToLink = Array.from(new Set(selectedSections.filter(Boolean)));
+      if (sectionsToLink.length > 0) {
+        const rows = sectionsToLink.map((title) => ({
+          catalog_item_id: newItem.id,
+          section_title: title,
+        }));
         await supabase
           .from("catalog_item_sections")
-          .insert({ catalog_item_id: newItem.id, section_title: sectionTitle })
+          .insert(rows)
           .then(({ error }) => {
-            if (error) logger.warn("Falha ao vincular seção ao novo item de catálogo", error);
+            if (error) logger.warn("Falha ao vincular seções ao novo item de catálogo", error);
           });
       }
 
