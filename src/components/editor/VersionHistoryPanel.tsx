@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { ImportExcelModal } from "@/components/budget/ImportExcelModal";
 import { assignImportedBudgetToGroup } from "@/lib/budget-versioning";
 
+import { logger } from "@/lib/logger";
+
 const VERSION_CHANGE_REASONS = [
   { value: "cliente", label: "Mudança do cliente" },
   { value: "escopo", label: "Ajuste de escopo" },
@@ -75,7 +77,7 @@ export function VersionHistoryPanel({ budgetId, onVersionChange, defaultExpanded
       const events = await getVersionAuditEvents(allIds);
       setAuditEvents(events);
     } catch (err) {
-      console.error("Failed to load versions:", err);
+      logger.error("Failed to load versions:", err);
     }
     setLoading(false);
   };

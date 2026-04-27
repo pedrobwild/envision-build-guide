@@ -35,6 +35,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+import { logger } from "@/lib/logger";
+
 type StorageTab = "3d" | "fotos" | "exec" | "video";
 type MediaTab = StorageTab | "tour3d";
 
@@ -302,7 +304,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
 
       for (const { tab, data, error } of listings) {
         if (error) {
-          console.error(`Error listing ${folderMap[tab]}:`, error.message);
+          logger.error(`Error listing ${folderMap[tab]}:`, error.message);
           continue;
         }
         if (data) {
@@ -330,7 +332,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
         syncMediaConfig(result, loadedPrimary);
       }
     } catch (err) {
-      console.error("loadFiles error:", err);
+      logger.error("loadFiles error:", err);
     } finally {
       setLoading(false);
     }
@@ -418,7 +420,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
         await loadFiles(true);
       }
     } catch (err) {
-      console.error("handleUpload error:", err);
+      logger.error("handleUpload error:", err);
       toast.error("Erro inesperado no upload. Tente novamente.");
     } finally {
       setUploading(false);
@@ -436,7 +438,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
         await loadFiles(true);
       }
     } catch (err) {
-      console.error("handleDelete error:", err);
+      logger.error("handleDelete error:", err);
       toast.error("Erro ao remover arquivo.");
     }
   };
@@ -484,7 +486,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       exitSelectionMode();
       await loadFiles(true);
     } catch (err) {
-      console.error("Bulk delete error:", err);
+      logger.error("Bulk delete error:", err);
       toast.error("Erro ao apagar arquivos. Tente novamente.");
     } finally {
       setBulkDeleting(false);
@@ -553,7 +555,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
         const oldPath = `${folder}/${file.name}`;
         const { data: blob, error: dlErr } = await supabase.storage.from("media").download(oldPath);
         if (dlErr || !blob) {
-          console.error("Download error for reorder:", dlErr);
+          logger.error("Download error for reorder:", dlErr);
           throw new Error(`Falha ao baixar ${file.name}`);
         }
         toProcess.push({ oldName: file.name, newName: finalName, blob });
@@ -568,7 +570,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       const pathsToDelete = toProcess.map(f => `${folder}/${f.oldName}`);
       const { error: removeErr } = await supabase.storage.from("media").remove(pathsToDelete);
       if (removeErr) {
-        console.error("Bulk remove error:", removeErr);
+        logger.error("Bulk remove error:", removeErr);
         throw new Error("Falha ao remover arquivos originais");
       }
 
@@ -580,7 +582,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
           contentType: entry.blob.type || "application/octet-stream",
         });
         if (upErr) {
-          console.error("Upload error:", upErr);
+          logger.error("Upload error:", upErr);
           throw new Error(`Falha ao enviar ${entry.newName}`);
         }
       }
@@ -588,7 +590,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       toast.success("Ordem atualizada!");
       await loadFiles(true);
     } catch (err) {
-      console.error("Reorder error:", err);
+      logger.error("Reorder error:", err);
       toast.error("Erro ao reordenar. Tente novamente.");
       await loadFiles(true);
     }
@@ -608,7 +610,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       .select("id, room_id, room_label, tour_url, order_index")
       .eq("budget_id", budgetId)
       .order("order_index", { ascending: true });
-    if (error) console.error('Failed to load tours:', error.message);
+    if (error) logger.error('Failed to load tours:', error.message);
     setTours((data ?? []).map((t) => ({
       id: t.id,
       room_id: t.room_id,
@@ -663,7 +665,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       toast.success("Tours 3D salvos com sucesso!");
       await loadTours();
     } catch (err) {
-      console.error("Error saving tours:", err);
+      logger.error("Error saving tours:", err);
       toast.error("Erro ao salvar tours.");
     }
     setToursSaving(false);

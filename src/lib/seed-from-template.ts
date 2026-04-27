@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { applyDefaultMediaWithGuardrail } from "@/lib/apply-default-media";
 
+import { logger } from "@/lib/logger";
+
 interface TemplateSectionRow {
   id: string;
   title: string;
@@ -54,12 +56,12 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     try {
       const result = await applyDefaultMediaWithGuardrail(budgetId, null);
       if (result.applied && result.source === "hardcoded_fallback") {
-        console.info("[seed] Mídia padrão aplicada via fallback hard-coded (sem template ativo).");
+        logger.debug("[seed] Mídia padrão aplicada via fallback hard-coded (sem template ativo).");
       } else if (!result.applied && result.reason === "manual_media_present") {
-        console.info("[seed] Orçamento já possui mídia manual — preservada.");
+        logger.debug("[seed] Orçamento já possui mídia manual — preservada.");
       }
     } catch (err) {
-      console.warn("Falha ao aplicar mídia padrão (sem template):", err);
+      logger.warn("Falha ao aplicar mídia padrão (sem template):", err);
     }
 
     const { seedDefaultSections } = await import("@/lib/default-budget-sections");
@@ -71,12 +73,12 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
   try {
     const result = await applyDefaultMediaWithGuardrail(budgetId, templateId);
     if (result.applied && result.source === "hardcoded_fallback") {
-      console.info("[seed] Mídia padrão aplicada via fallback hard-coded (template sem mídia válida).");
+      logger.debug("[seed] Mídia padrão aplicada via fallback hard-coded (template sem mídia válida).");
     } else if (!result.applied && result.reason === "manual_media_present") {
-      console.info("[seed] Orçamento já possui mídia manual — preservada.");
+      logger.debug("[seed] Orçamento já possui mídia manual — preservada.");
     }
   } catch (err) {
-    console.warn("Falha ao resolver mídia padrão para o orçamento:", err);
+    logger.warn("Falha ao resolver mídia padrão para o orçamento:", err);
   }
 
   const { data: templateSections, error: secErr } = await supabase

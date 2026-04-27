@@ -2,6 +2,8 @@ import React from "react";
 import { PublicBudgetFallback } from "./PublicBudgetFallback";
 import type { BudgetData } from "@/types/budget";
 
+import { logger } from "@/lib/logger";
+
 interface Props {
   budget: BudgetData;
   children: React.ReactNode;
@@ -32,7 +34,7 @@ export class PublicBudgetErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     // Log estruturado para diagnóstico (não polui o usuário final)
-    console.error("[PublicBudgetErrorBoundary]", error, info.componentStack);
+    logger.error("[PublicBudgetErrorBoundary]", error, info.componentStack);
   }
 
   render() {

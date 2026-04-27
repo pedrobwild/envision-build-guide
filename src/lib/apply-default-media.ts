@@ -7,6 +7,8 @@ import {
 } from "@/lib/default-media-policy";
 import { hasManualMedia } from "@/lib/media-replication";
 
+import { logger } from "@/lib/logger";
+
 export type ApplyDefaultMediaResult =
   | { applied: true; source: DefaultMediaSource; media: MediaConfigShape }
   | { applied: false; reason: "manual_media_present" | "db_error"; message?: string };
@@ -34,7 +36,7 @@ export async function applyDefaultMediaWithGuardrail(
     .maybeSingle();
 
   if (readErr) {
-    console.warn(
+    logger.warn(
       `[media-guardrail] Falha ao ler media_config de ${budgetId}:`,
       readErr.message
     );
@@ -43,7 +45,7 @@ export async function applyDefaultMediaWithGuardrail(
 
   // 2. GUARDRAIL: orçamentos com mídia manual NUNCA são alterados.
   if (hasManualMedia(current?.media_config as MediaConfigShape | null)) {
-    console.info(
+    logger.debug(
       `[media-guardrail] Orçamento ${budgetId} possui upload manual — replicação pulada.`
     );
     return { applied: false, reason: "manual_media_present" };
@@ -59,7 +61,7 @@ export async function applyDefaultMediaWithGuardrail(
     .eq("id", budgetId);
 
   if (updErr) {
-    console.warn(
+    logger.warn(
       `[media-guardrail] Falha ao aplicar mídia padrão em ${budgetId}:`,
       updErr.message
     );

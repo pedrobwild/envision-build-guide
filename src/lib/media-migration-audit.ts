@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
+import { logger } from "@/lib/logger";
+
 export type MediaMigrationAction = "updated" | "skipped";
 
 export interface MediaMigrationAuditEntry {
@@ -40,10 +42,10 @@ export async function logMediaMigrationAudit(
       }))
     );
     if (error) {
-      console.warn("[media-migration-audit] insert falhou:", error.message);
+      logger.warn("[media-migration-audit] insert falhou:", error.message);
     }
   } catch (err) {
-    console.warn("[media-migration-audit] erro inesperado:", err);
+    logger.warn("[media-migration-audit] erro inesperado:", err);
   }
 }
 
@@ -59,7 +61,7 @@ export async function getMediaMigrationBatch(batchName: string) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.warn("[media-migration-audit] read falhou:", error.message);
+    logger.warn("[media-migration-audit] read falhou:", error.message);
     return [];
   }
   return data ?? [];

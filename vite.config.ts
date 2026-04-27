@@ -33,5 +33,30 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Sobe o limite porque PDF/Map/cmdk são carregados sob demanda
+    // (rotas/funções específicas), não no bundle inicial.
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        // Separa libs pesadas em chunks dedicados — melhora cache entre deploys
+        // e mantém o entry inicial enxuto (só vendors essenciais para a 1ª tela).
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "supabase": ["@supabase/supabase-js"],
+          "tanstack-query": ["@tanstack/react-query"],
+          "framer": ["framer-motion"],
+          "radix-core": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-tabs",
+          ],
+        },
+      },
+    },
+  },
 }));
 

@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
 
+import { logger } from "@/lib/logger";
+
 export interface ItemImage {
   id: string;
   url: string;
@@ -66,7 +68,7 @@ export function ItemImageUpload({ images, onImagesChange, budgetId, itemLabel }:
       }
       toast.success(`${newImages.length} imagem(ns) adicionada(s)`);
     } catch (err) {
-      console.error("Upload error:", err);
+      logger.error("Upload error:", err);
       toast.error("Erro ao fazer upload da imagem.");
     }
     setUploading(false);

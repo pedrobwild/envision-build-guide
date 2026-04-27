@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
+import { logger } from "@/lib/logger";
+
 export type VersionEventType =
   | "version_created"
   | "version_cloned_from_previous"
@@ -47,7 +49,7 @@ export async function logVersionEvent({
       note: note ?? buildNote(event_type, metadata),
     });
   } catch (err) {
-    console.warn("[version-audit] Failed to log event:", err);
+    logger.warn("[version-audit] Failed to log event:", err);
   }
 }
 
@@ -103,7 +105,7 @@ export async function getVersionAuditEvents(budgetIds: string[]) {
     .limit(50);
 
   if (error) {
-    console.warn("[version-audit] Failed to fetch events:", error);
+    logger.warn("[version-audit] Failed to fetch events:", error);
     return [];
   }
 
