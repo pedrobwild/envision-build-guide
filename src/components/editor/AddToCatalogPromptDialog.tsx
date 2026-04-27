@@ -82,8 +82,15 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   suggested: SuggestedItem | null;
-  /** Called after a catalog item is created so the editor can attach catalog_item_id to the inserted line. */
-  onCreated?: (catalogItemId: string, itemType: "product" | "service", linkedSections: string[]) => void;
+  /** Called after a catalog item is created so the editor can attach catalog_item_id to the inserted line.
+   * `undoCatalog` removes the just-created catalog item + its section links (use it inside the editor's
+   * own undo flow to also revert the budget row's catalog_item_id). */
+  onCreated?: (
+    catalogItemId: string,
+    itemType: "product" | "service",
+    linkedSections: string[],
+    undoCatalog: () => Promise<void>,
+  ) => void;
   /** Optional: pre-select section title to attach the new item to. */
   sectionTitle?: string;
 }
