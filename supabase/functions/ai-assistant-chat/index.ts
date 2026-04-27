@@ -1220,25 +1220,30 @@ serve(async (req) => {
     }
 
     // ===== Final streamed response =====
-    const finalResp = await fetch("https://api.openai.com/v1/chat/completions", {
+    const finalResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model,
         messages: conversation,
-        temperature: 0.4,
         stream: true,
       }),
     });
 
     if (!finalResp.ok) {
       const errText = await finalResp.text();
-      console.error("OpenAI error (final):", finalResp.status, errText);
+      console.error("Lovable AI error (final):", finalResp.status, errText);
+      const userMsg =
+        finalResp.status === 429
+          ? "Rate limit excedido. Tente novamente em alguns instantes."
+          : finalResp.status === 402
+            ? "Créditos do Lovable AI esgotados. Adicione créditos em Settings > Workspace > Usage."
+            : "Falha ao gerar resposta final";
       return new Response(
-        JSON.stringify({ error: "Falha ao gerar resposta final" }),
+        JSON.stringify({ error: userMsg }),
         { status: finalResp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
