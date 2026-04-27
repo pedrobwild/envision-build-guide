@@ -166,6 +166,7 @@ export function AddItemPopover({ sectionTitle, onAddItem }: Props) {
   };
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="flex items-center gap-1.5 text-sm font-body text-primary hover:text-primary/80 transition-colors">
