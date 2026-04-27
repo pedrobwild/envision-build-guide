@@ -611,17 +611,43 @@ export default function BudgetInternalDetail() {
               size="sm"
               className="gap-1.5"
               disabled={!budget.public_id}
-              onClick={() => {
+              onClick={async () => {
                 if (!budget.public_id) {
                   toast.error("Link público ainda não disponível");
                   return;
                 }
+                const isPublishable =
+                  budget.status === "published" || budget.status === "minuta_solicitada";
+                if (!isPublishable) {
+                  const toastId = toast.loading("Publicando orçamento...");
+                  const { error } = await supabase
+                    .from("budgets")
+                    .update({ status: "published" })
+                    .eq("id", budget.id);
+                  toast.dismiss(toastId);
+                  if (error) {
+                    toast.error("Não foi possível publicar: " + error.message);
+                    return;
+                  }
+                  setBudget((prev) => (prev ? { ...prev, status: "published" } : prev));
+                  toast.success("Orçamento publicado");
+                }
                 window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
               }}
-              title={budget.public_id ? "Abrir orçamento público" : "Link público sendo gerado..."}
+              title={
+                !budget.public_id
+                  ? "Link público sendo gerado..."
+                  : budget.status === "published" || budget.status === "minuta_solicitada"
+                    ? "Abrir orçamento público"
+                    : "Orçamento ainda em rascunho — clique para publicar e abrir"
+              }
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Ver orçamento público</span>
+              <span className="hidden sm:inline">
+                {budget.status === "published" || budget.status === "minuta_solicitada"
+                  ? "Ver orçamento público"
+                  : "Publicar e ver"}
+              </span>
             </Button>
             <Button
               variant="outline"
