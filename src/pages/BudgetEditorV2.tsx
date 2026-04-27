@@ -382,8 +382,13 @@ export default function BudgetEditorV2() {
         }
       });
     } catch (err) {
-      
-      toast.error("Erro ao salvar. Tente novamente.");
+      const msg = err instanceof Error ? err.message : String(err);
+      // Detecta JWT expirado/inválido e orienta o usuário a refazer login
+      if (/jwt|sub claim|token|401|403/i.test(msg)) {
+        toast.error("Sessão expirada. Recarregue a página e faça login novamente.");
+      } else {
+        toast.error(`Erro ao publicar: ${msg}`);
+      }
     }
 
     setSaving(false);
