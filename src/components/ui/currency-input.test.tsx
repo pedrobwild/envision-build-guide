@@ -19,39 +19,39 @@ describe("CurrencyInput", () => {
     const input = getByTestId("ci") as HTMLInputElement;
     // Simula digitar "30000" — input.value segue a mudança incremental do navegador
     fireEvent.change(input, { target: { value: "3" } });
-    expect(input.value).toBe("R$ 0,03");
+    expect(input.value).toBe("R$ 0,03");
     fireEvent.change(input, { target: { value: input.value + "0" } });
-    expect(input.value).toBe("R$ 0,30");
+    expect(input.value).toBe("R$ 0,30");
     fireEvent.change(input, { target: { value: input.value + "000" } });
-    expect(input.value).toBe("R$ 300,00");
+    expect(input.value).toBe("R$ 300,00");
     expect(getByTestId("val").textContent).toBe("300");
   });
 
   it("aceita valor negativo via prefixo colado", () => {
     const { getByTestId } = render(<Harness />);
     const input = getByTestId("ci") as HTMLInputElement;
-    fireEvent.change(input, { target: { value: "-R$ 3.000,00" } });
-    expect(input.value).toBe("−R$ 3.000,00");
+    fireEvent.change(input, { target: { value: "-R$ 3.000,00" } });
+    expect(input.value).toBe("−R$ 3.000,00");
     expect(getByTestId("val").textContent).toBe("-3000");
   });
 
   it("permite alternar sinal pela tecla '-'", () => {
     const { getByTestId } = render(<Harness initial={1500} />);
     const input = getByTestId("ci") as HTMLInputElement;
-    expect(input.value).toBe("R$ 1.500,00");
+    expect(input.value).toBe("R$ 1.500,00");
     fireEvent.keyDown(input, { key: "-" });
-    expect(input.value).toBe("−R$ 1.500,00");
+    expect(input.value).toBe("−R$ 1.500,00");
     expect(getByTestId("val").textContent).toBe("-1500");
     fireEvent.keyDown(input, { key: "-" });
-    expect(input.value).toBe("R$ 1.500,00");
+    expect(input.value).toBe("R$ 1.500,00");
   });
 
   it("backspace remove o último dígito sem perder o sinal", () => {
     const { getByTestId } = render(<Harness initial={-3000} />);
     const input = getByTestId("ci") as HTMLInputElement;
-    expect(input.value).toBe("−R$ 3.000,00");
+    expect(input.value).toBe("−R$ 3.000,00");
     fireEvent.keyDown(input, { key: "Backspace" });
-    expect(input.value).toBe("−R$ 300,00");
+    expect(input.value).toBe("−R$ 300,00");
     expect(getByTestId("val").textContent).toBe("-300");
   });
 
@@ -67,7 +67,7 @@ describe("CurrencyInput", () => {
     const { getByTestId } = render(<Harness initial={1000} allowNegative={false} />);
     const input = getByTestId("ci") as HTMLInputElement;
     fireEvent.keyDown(input, { key: "-" });
-    expect(input.value).toBe("R$ 1.000,00");
+    expect(input.value).toBe("R$ 1.000,00");
   });
 
   it("sincroniza display quando prop value muda externamente", () => {
@@ -82,8 +82,8 @@ describe("CurrencyInput", () => {
     }
     const { getByTestId, getByText } = render(<Wrap />);
     const input = getByTestId("ci") as HTMLInputElement;
-    expect(input.value).toBe("R$ 100,00");
+    expect(input.value).toBe("R$ 100,00");
     fireEvent.click(getByText("set"));
-    expect(input.value).toBe("−R$ 2.500,00");
+    expect(input.value).toBe("−R$ 2.500,00");
   });
 });
