@@ -200,6 +200,37 @@ export function StickyEditorHeader({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {budget.public_id && (
+            <div className="inline-flex items-center rounded-full bg-success/10 hover:bg-success/15 transition-colors shrink-0 overflow-hidden">
+              <a
+                href={getPublicBudgetUrl(budget.public_id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[11px] font-body font-medium text-success hover:text-success/80 pl-2.5 pr-1.5 py-1"
+                title="Abrir orçamento público em nova aba"
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Link público</span>
+                <span className="sm:hidden">Link</span>
+                <ExternalLink className="h-3 w-3 opacity-70" />
+              </a>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
+                    toast.success("Link público copiado");
+                  } catch {
+                    toast.error("Não foi possível copiar o link");
+                  }
+                }}
+                className="inline-flex items-center justify-center px-1.5 py-1 border-l border-success/20 text-success hover:text-success/80"
+                title="Copiar link público"
+              >
+                <Copy className="h-3 w-3" />
+              </button>
+            </div>
+          )}
           {pdfUrl && (
             <a
               href={pdfUrl}
