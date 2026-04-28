@@ -712,6 +712,7 @@ function SortableItemRow({
         onOpenChange={setDetailOpen}
         item={item}
         sectionId={sectionId}
+        sectionTitle={sectionTitle}
         budgetId={budgetId}
         onUpdate={onUpdate}
         onImagesChange={onImagesChange}
@@ -723,6 +724,7 @@ function SortableItemRow({
         onOpenChange={setMobileEditorOpen}
         item={item}
         sectionId={sectionId}
+        sectionTitle={sectionTitle}
         onUpdate={onUpdate}
       />
     </div>
