@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
-import { isCreditSection, isDiscountSection } from "@/lib/budget-calc";
+import { aggregateAbatementsByLabel, type AbatementLine } from "@/lib/budget-calc";
 import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
 import { Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -72,20 +72,11 @@ export function BudgetSummary({
   const scopeTotal =
     categorizedGroups?.reduce((s, g) => s + g.subtotal, 0) || 0;
 
-  // Split abatements by dedicated section title.
-  // - Discounts: section "Descontos" (impacts margin)
-  // - Credits:   section "Créditos" (does NOT impact margin)
-  // Anything else negative falls back into "discount" bucket so we don't lose it.
-  let discountTotal = 0;
-  let creditTotal = 0;
-  for (const s of sections) {
-    const sub = calculateSectionSubtotal(s);
-    if (sub >= 0) continue;
-    const abs = Math.abs(sub);
-    if (isCreditSection(s)) creditTotal += abs;
-    else if (isDiscountSection(s)) discountTotal += abs;
-    else discountTotal += abs;
-  }
+  // Agregação de abatimentos por rótulo do item.
+  // - Descontos: itens negativos em seções de desconto (ou genéricas, fallback).
+  // - Créditos: itens negativos em seções de crédito (não impactam margem).
+  // Cada rótulo único vira uma linha; valores por item NUNCA são expostos ao cliente.
+  const { discounts, credits, discountTotal, creditTotal } = aggregateAbatementsByLabel(sections);
   const abatementTotal = discountTotal + creditTotal;
   const subtotalBeforeDiscount = total + abatementTotal;
 
@@ -137,7 +128,15 @@ export function BudgetSummary({
         )}
 
         {/* Total card */}
-        <TotalCard total={total} installments={installments} discount={discountTotal} credit={creditTotal} subtotal={subtotalBeforeDiscount} />
+        <TotalCard
+          total={total}
+          installments={installments}
+          discounts={discounts}
+          credits={credits}
+          discountTotal={discountTotal}
+          creditTotal={creditTotal}
+          subtotal={subtotalBeforeDiscount}
+        />
 
         {/* Installment simulator */}
         <div className="px-5 pb-2">
@@ -302,17 +301,21 @@ function AdjustmentsList({ adjustments }: { adjustments: AdjustmentRow[] }) {
 function TotalCard({
   total,
   installments,
-  discount = 0,
-  credit = 0,
+  discounts = [],
+  credits = [],
+  discountTotal = 0,
+  creditTotal = 0,
   subtotal = 0,
 }: {
   total: number;
   installments: number;
-  discount?: number;
-  credit?: number;
+  discounts?: AbatementLine[];
+  credits?: AbatementLine[];
+  discountTotal?: number;
+  creditTotal?: number;
   subtotal?: number;
 }) {
-  const hasAbatement = (discount > 0 || credit > 0) && subtotal > 0;
+  const hasAbatement = (discountTotal > 0 || creditTotal > 0) && subtotal > 0;
   return (
     <div
       className="mx-5 mb-3 rounded-xl border border-primary/10 px-4 py-3.5 relative overflow-hidden"
@@ -335,26 +338,28 @@ function TotalCard({
                 {formatBRL(subtotal)}
               </span>
             </div>
-            {discount > 0 && (
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400">
-                  Desconto promocional
+
+            {discounts.map((line) => (
+              <div key={`d-${line.label}`} className="flex items-baseline justify-between gap-3">
+                <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400 truncate">
+                  {line.label}
                 </span>
-                <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  − {formatBRL(discount)}
-                </span>
-              </div>
-            )}
-            {credit > 0 && (
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[11px] font-body font-medium text-sky-700 dark:text-sky-400">
-                  Crédito
-                </span>
-                <span className="text-sm font-body font-semibold tabular-nums text-sky-700 dark:text-sky-400">
-                  − {formatBRL(credit)}
+                <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400 shrink-0">
+                  − {formatBRL(line.total)}
                 </span>
               </div>
-            )}
+            ))}
+
+            {credits.map((line) => (
+              <div key={`c-${line.label}`} className="flex items-baseline justify-between gap-3">
+                <span className="text-[11px] font-body font-medium text-sky-700 dark:text-sky-400 truncate">
+                  {line.label}
+                </span>
+                <span className="text-sm font-body font-semibold tabular-nums text-sky-700 dark:text-sky-400 shrink-0">
+                  − {formatBRL(line.total)}
+                </span>
+              </div>
+            ))}
           </div>
         )}
         <div>

@@ -5,6 +5,7 @@ export interface CalcItem {
   internal_unit_price?: number | null;
   internal_total?: number | null;
   bdi_percentage?: number | null;
+  title?: string | null;
 }
 
 export interface CalcSection {
@@ -101,3 +102,62 @@ export function calcGrandTotals(sections: CalcSection[]) {
   const marginPercent = sale > 0 ? (margin / sale) * 100 : 0;
   return { cost, sale, margin, bdiPercent, marginPercent };
 }
+
+/** Linha agregada de abatimento exibida ao cliente: rótulo + total absoluto (R$). */
+export interface AbatementLine {
+  label: string;
+  total: number;
+}
+
+/** Agrupa abatimentos negativos por rótulo do item, separando descontos e créditos.
+ *
+ *  Regras:
+ *  - Considera APENAS itens com contribuição de venda negativa (`calcItemSaleTotal < 0`).
+ *  - O bucket é decidido pela seção: `isDiscountSection` → desconto, `isCreditSection` → crédito,
+ *    qualquer outra seção com item negativo → desconto (fallback seguro, mantém comportamento
+ *    histórico do `BudgetSummary`).
+ *  - O rótulo vem de `item.title` (trim). Vazio → "Desconto" / "Crédito".
+ *  - Itens com mesmo rótulo (case-insensitive, normalizando espaços) somam na mesma linha.
+ *  - Valores são sempre positivos no retorno (representam o abatimento em módulo). */
+export function aggregateAbatementsByLabel(sections: CalcSection[]): {
+  discounts: AbatementLine[];
+  credits: AbatementLine[];
+  discountTotal: number;
+  creditTotal: number;
+} {
+  const discountMap = new Map<string, { label: string; total: number }>();
+  const creditMap = new Map<string, { label: string; total: number }>();
+
+  for (const section of sections) {
+    const isCredit = isCreditSection(section);
+    const isDiscount = isDiscountSection(section);
+    // Bucket: crédito tem prioridade quando aplicável; senão tudo negativo cai em desconto.
+    const bucket = isCredit ? creditMap : discountMap;
+    const fallbackLabel = isCredit ? "Crédito" : "Desconto";
+
+    for (const item of section.items) {
+      const sale = calcItemSaleTotal(item);
+      if (sale >= 0) continue;
+      // Só consideramos como abatimento itens dentro de seção de desconto/crédito,
+      // OU itens isolados negativos em qualquer outra seção (compat histórica).
+      if (!isCredit && !isDiscount) {
+        // Mantém comportamento atual: soma no balde "desconto" sob rótulo genérico.
+      }
+      const rawLabel = (item.title ?? "").trim();
+      const label = rawLabel || fallbackLabel;
+      const key = label.toLowerCase().replace(/\s+/g, " ");
+      const abs = Math.abs(sale);
+      const existing = bucket.get(key);
+      if (existing) existing.total += abs;
+      else bucket.set(key, { label, total: abs });
+    }
+  }
+
+  const discounts = Array.from(discountMap.values()).sort((a, b) => b.total - a.total);
+  const credits = Array.from(creditMap.values()).sort((a, b) => b.total - a.total);
+  const discountTotal = discounts.reduce((s, l) => s + l.total, 0);
+  const creditTotal = credits.reduce((s, l) => s + l.total, 0);
+
+  return { discounts, credits, discountTotal, creditTotal };
+}
+

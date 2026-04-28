@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { fetchPublicBudget, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
-import { isCreditSection } from "@/lib/budget-calc";
+import { isCreditSection, aggregateAbatementsByLabel } from "@/lib/budget-calc";
 import { AddendumDeltaCard } from "@/components/budget/AddendumDeltaCard";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
@@ -329,6 +329,7 @@ export default function PublicBudget() {
 
   // Split abatements by section title for the public summary breakdown.
   // Same logic as BudgetSummary so mobile + desktop stay in sync.
+  // Totals (mantidos para o cálculo do subtotal) — somam abatimentos por seção.
   let publicDiscountTotal = 0;
   let publicCreditTotal = 0;
   for (const s of visibleSections) {
@@ -338,6 +339,8 @@ export default function PublicBudget() {
     if (isCreditSection(s)) publicCreditTotal += abs;
     else publicDiscountTotal += abs;
   }
+  // Breakdown agrupado por rótulo do item (sem expor valores por item).
+  const abatementBreakdown = aggregateAbatementsByLabel(visibleSections);
   const publicSubtotalBeforeAbatements = total + publicDiscountTotal + publicCreditTotal;
 
   // Meta for mobile hero
@@ -545,6 +548,8 @@ export default function PublicBudget() {
               discount={publicDiscountTotal}
               credit={publicCreditTotal}
               subtotal={publicSubtotalBeforeAbatements}
+              discounts={abatementBreakdown.discounts}
+              credits={abatementBreakdown.credits}
             />
             </div>
 
