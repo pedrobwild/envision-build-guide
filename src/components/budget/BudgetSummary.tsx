@@ -289,7 +289,18 @@ function AdjustmentsList({ adjustments }: { adjustments: AdjustmentRow[] }) {
   );
 }
 
-function TotalCard({ total, installments }: { total: number; installments: number }) {
+function TotalCard({
+  total,
+  installments,
+  discount = 0,
+  subtotal = 0,
+}: {
+  total: number;
+  installments: number;
+  discount?: number;
+  subtotal?: number;
+}) {
+  const hasDiscount = discount > 0 && subtotal > 0;
   return (
     <div
       className="mx-5 mb-3 rounded-xl border border-primary/10 px-4 py-3.5 relative overflow-hidden"
@@ -304,6 +315,24 @@ function TotalCard({ total, installments }: { total: number; installments: numbe
         aria-hidden
       />
       <div className="relative space-y-1.5">
+        {hasDiscount && (
+          <div className="space-y-1 pb-2 mb-1 border-b border-border/60">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-[11px] text-muted-foreground font-body">Subtotal</span>
+              <span className="text-sm font-body tabular-nums text-muted-foreground line-through">
+                {formatBRL(subtotal)}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400">
+                Desconto promocional
+              </span>
+              <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                − {formatBRL(discount)}
+              </span>
+            </div>
+          </div>
+        )}
         <div>
           <p className="budget-label text-[10px] text-muted-foreground mb-0.5 leading-none">
             Investimento Total
