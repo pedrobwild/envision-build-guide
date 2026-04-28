@@ -654,6 +654,21 @@ export default function BudgetInternalDetail() {
                   : "Publicar e ver"}
               </span>
             </Button>
+            {(isAdmin || isComercial) &&
+              ["delivered_to_sales", "sent_to_client", "minuta_solicitada"].includes(
+                budget.internal_status
+              ) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRevisionDialogOpen(true)}
+                  className="gap-1.5 border-warning/40 text-warning hover:bg-warning/5 hover:text-warning"
+                  title="Devolver para o orçamentista revisar"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Solicitar revisão</span>
+                </Button>
+              )}
             <Button
               variant="outline"
               size="sm"
