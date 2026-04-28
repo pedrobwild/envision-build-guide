@@ -11,7 +11,7 @@ import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
   PenLine, BookOpen, BookmarkPlus, Link as LinkIcon, Lock, Search, ChevronsUpDown, ChevronsDownUp,
-  AlertTriangle, Paperclip, Rows3, Rows4, MoreVertical, Building2,
+  AlertTriangle, Paperclip, Rows3, Rows4, MoreVertical, Building2, BadgePercent,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
@@ -955,6 +955,74 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     }
   };
 
+  /** Cria (ou reutiliza) a seção "Descontos" e adiciona um item de desconto promocional
+   *  com qtd=1 e custo negativo padrão de -R$ 1.000 (editável). */
+  const addDiscount = async () => {
+    if (readOnly) return;
+    const DISCOUNT_SECTION_TITLE = "Descontos";
+    const DEFAULT_DISCOUNT_AMOUNT = -1000;
+
+    // 1) Reutiliza seção "Descontos" se já existir; senão cria
+    let discountSection = sections.find(
+      (s) => (s.title || "").trim().toLowerCase() === DISCOUNT_SECTION_TITLE.toLowerCase(),
+    );
+    let updatedSections = sections;
+
+    if (!discountSection) {
+      const order = sections.length;
+      const { data: newSec, error: secErr } = await dbFrom(cfg.sectionTable)
+        .insert({
+          [cfg.sectionForeignKey]: budgetId,
+          title: DISCOUNT_SECTION_TITLE,
+          subtitle: "Aplicado sobre o subtotal do projeto",
+          order_index: order,
+        })
+        .select()
+        .single();
+      if (secErr || !newSec) {
+        toast.error("Não foi possível criar a seção de descontos");
+        return;
+      }
+      discountSection = { ...newSec, items: [] } as SectionData;
+      updatedSections = [...sections, discountSection];
+    }
+
+    // 2) Insere o item de desconto
+    const order = discountSection.items.length;
+    const insertPayload: Record<string, unknown> = {
+      [cfg.itemForeignKey]: discountSection.id,
+      title: "Desconto promocional",
+      description: null,
+      unit: null,
+      qty: 1,
+      internal_unit_price: DEFAULT_DISCOUNT_AMOUNT,
+      bdi_percentage: 0,
+      order_index: order,
+    };
+    const { data: newItem, error: itemErr } = await dbFrom(cfg.itemTable)
+      .insert(insertPayload)
+      .select()
+      .single();
+    if (itemErr || !newItem) {
+      toast.error("Não foi possível adicionar o desconto");
+      return;
+    }
+
+    // 3) Atualiza estado local + section_price
+    let next = updatedSections.map((s) => {
+      if (s.id !== discountSection!.id) return s;
+      const newItems = [...s.items, { ...newItem, images: [] } as ItemData];
+      const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
+      dbFrom(cfg.sectionTable).update({ section_price: newSaleTotal }).eq("id", s.id);
+      return { ...s, items: newItems, section_price: newSaleTotal };
+    });
+    next = recalcTaxItem(next);
+    onSectionsChange(next);
+    setExpandedSections((prev) => new Set(prev).add(discountSection!.id));
+    toast.success("Desconto adicionado — ajuste o valor conforme necessário");
+  };
+
+
   const duplicateSection = async (sectionId: string) => {
     if (readOnly) return;
     const source = sections.find(s => s.id === sectionId);
@@ -1055,10 +1123,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
         const newItem = { ...data, images: itemImages } as ItemData;
         const newItems = [...s.items, newItem];
         const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
-        if (newSaleTotal > 0) {
+        if (newSaleTotal !== 0) {
           dbFrom(cfg.sectionTable).update({ section_price: newSaleTotal }).eq("id", sectionId);
         }
-        return { ...s, items: newItems, section_price: newSaleTotal > 0 ? newSaleTotal : s.section_price };
+        return { ...s, items: newItems, section_price: newSaleTotal !== 0 ? newSaleTotal : s.section_price };
       });
       updated = recalcTaxItem(updated);
       onSectionsChange(updated);
@@ -1263,14 +1331,25 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   return (
     <div className="mt-6 pb-20">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-4 px-1">
+      <div className="flex items-center justify-between mb-4 px-1 gap-2">
         <h2 className="text-xs sm:text-sm font-display font-bold text-foreground uppercase tracking-[0.06em]">Seções e Itens</h2>
-        <button
-          onClick={addSection}
-          className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-body font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
-        >
-          <Plus className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Nova</span> Seção
-        </button>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {!readOnly && (
+            <button
+              onClick={addDiscount}
+              title="Adicionar desconto promocional (item com custo negativo)"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-body font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15 transition-colors"
+            >
+              <BadgePercent className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Adicionar</span> Desconto
+            </button>
+          )}
+          <button
+            onClick={addSection}
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-body font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Nova</span> Seção
+          </button>
+        </div>
       </div>
 
       {/* ── Control bar ── */}
