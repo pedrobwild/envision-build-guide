@@ -62,6 +62,8 @@ export function MobileInlineSummary({
   discount = 0,
   credit = 0,
   subtotal = 0,
+  discounts = [],
+  credits = [],
 }: MobileInlineSummaryProps) {
   const [installments, setInstallments] = useState(12);
   const [contractOpen, setContractOpen] = useState(false);
