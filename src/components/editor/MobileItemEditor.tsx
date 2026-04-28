@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Check, Percent, TrendingUp, DollarSign, Link as LinkIcon } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import type { ItemData } from "./SortableItemRow";
+import { isAbatementSection, normalizeAbatementValue } from "@/lib/abatement-utils";
 
 const BDI_PRESETS = [
   { label: "15%", value: 15 },
@@ -28,6 +29,7 @@ interface MobileItemEditorProps {
   onOpenChange: (open: boolean) => void;
   item: ItemData;
   sectionId: string;
+  sectionTitle?: string;
   onUpdate: (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => void;
 }
 
@@ -48,6 +50,7 @@ export function MobileItemEditor({
   onOpenChange,
   item,
   sectionId,
+  sectionTitle,
   onUpdate,
 }: MobileItemEditorProps) {
   const [title, setTitle] = useState(item.title);
@@ -88,13 +91,17 @@ export function MobileItemEditor({
   const marginPercent = saleUnit > 0 ? (margin / saleUnit) * 100 : 0;
 
   const handleSave = useCallback(() => {
+    // Normaliza o custo unitário caso a seção seja de abatimento (Descontos/Créditos):
+    // valores positivos viram negativos automaticamente.
+    const normalizedCost = normalizeAbatementValue(unitCost, sectionTitle);
+
     // Build a merged patch of all changed fields
     const patch: Record<string, string | number | null> = {
       title,
       description: description || null,
       qty: qty ? Number(qty) : null,
       unit: unit || null,
-      internal_unit_price: unitCost,
+      internal_unit_price: normalizedCost,
       bdi_percentage: bdi,
       reference_url: refUrl || null,
     };
@@ -106,7 +113,7 @@ export function MobileItemEditor({
       onUpdate(sectionId, item.id, field, value);
     }
     onOpenChange(false);
-  }, [sectionId, item.id, title, description, qty, unit, unitCost, bdi, refUrl, onUpdate, onOpenChange]);
+  }, [sectionId, item.id, title, description, qty, unit, unitCost, bdi, refUrl, sectionTitle, onUpdate, onOpenChange]);
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
