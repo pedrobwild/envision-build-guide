@@ -171,11 +171,18 @@ export function MobileItemEditor({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">Custo un.</label>
+              <label className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+                {isAbatementSection(sectionTitle) ? "Custo un. (negativo)" : "Custo un."}
+              </label>
               <CurrencyInput
                 value={unitCost}
                 onChange={setUnitCost}
-                placeholder="R$ 0,00"
+                placeholder={isAbatementSection(sectionTitle) ? "−R$ 0,00" : "R$ 0,00"}
+                title={
+                  isAbatementSection(sectionTitle)
+                    ? "Valores nesta seção são sempre negativos. Ao salvar, o sinal será ajustado automaticamente."
+                    : undefined
+                }
                 className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm font-mono tabular-nums text-right placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
               />
             </div>

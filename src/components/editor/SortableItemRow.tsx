@@ -442,6 +442,7 @@ export function SortableItemRow({
         onOpenChange={setMobileEditorOpen}
         item={item}
         sectionId={sectionId}
+        sectionTitle={sectionTitle}
         onUpdate={onUpdate}
       />
     </div>
