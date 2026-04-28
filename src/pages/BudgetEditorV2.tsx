@@ -101,6 +101,31 @@ export default function BudgetEditorV2() {
     enabled: !!budget?.version_group_id && budget?.is_current_version === false,
   });
 
+  // Query published sibling in the same version group — used to enable "discard this draft"
+  // when the user forked a published version, edited it, and now wants to revert.
+  const { data: publishedSibling } = useQuery({
+    queryKey: ["published-sibling", budget?.version_group_id, budgetId],
+    queryFn: async () => {
+      if (!budget?.version_group_id) return null;
+      const { data } = await supabase
+        .from("budgets")
+        .select("id, version_number, public_id")
+        .eq("version_group_id", budget.version_group_id)
+        .eq("is_published_version", true)
+        .neq("id", budgetId!)
+        .limit(1)
+        .maybeSingle();
+      return data ?? null;
+    },
+    enabled:
+      !!budget?.version_group_id &&
+      budget?.status === "draft" &&
+      budget?.is_published_version === false &&
+      budget?.is_current_version === true,
+  });
+
+  const [discardingDraft, setDiscardingDraft] = useState(false);
+
   // Fetch latest revision request when status is revision_requested
   const { data: revisionRequest } = useQuery({
     queryKey: ["revision-request", budgetId],
