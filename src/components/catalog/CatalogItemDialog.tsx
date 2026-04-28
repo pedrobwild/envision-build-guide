@@ -859,6 +859,11 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
                   placeholder="0,00"
                 />
               )}
+              {!currentItemId && form.initial_unit_price && !form.default_supplier_id && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  ⚠ Selecione um fornecedor principal para que o preço seja salvo.
+                </p>
+              )}
             </div>
           </div>
 
