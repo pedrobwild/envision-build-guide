@@ -293,6 +293,30 @@ export default function BudgetEditorV2() {
     }
   }, [budgetId, user, navigate]);
 
+  // Quando o usuário tenta editar/excluir itens ou seções numa versão publicada,
+  // criamos automaticamente uma nova versão (rascunho) e navegamos para ela —
+  // a operação pode ser refeita imediatamente sem o readOnly. Evita o "sistema
+  // não está deixando modificar" silencioso.
+  const forkPublishedForStructuralEdit = useCallback(async () => {
+    if (!budgetId || !user || forkInProgress.current) return;
+    forkInProgress.current = true;
+    const tid = toast.loading("Criando rascunho para edição…", {
+      description: "A versão publicada continua online. Você poderá editar tudo na nova versão.",
+    });
+    try {
+      const newId = await duplicateBudgetAsVersion(budgetId, user.id, "Edição pós-publicação (rascunho automático)");
+      toast.success("Rascunho criado — agora você pode editar.", {
+        id: tid,
+        description: "A versão pública continua online. Use 'Salvar e Publicar' para publicar.",
+        duration: 5000,
+      });
+      navigate(`/admin/budget/${newId}`);
+    } catch (err) {
+      forkInProgress.current = false;
+      toast.error(err instanceof Error ? err.message : "Não foi possível criar rascunho para edição.", { id: tid });
+    }
+  }, [budgetId, user, navigate]);
+
   const autoSaveBudgetField = useCallback((field: string, value: unknown) => {
     if (!budgetId) return;
     if (PROTECTED_FIELDS.current.has(field)) {
