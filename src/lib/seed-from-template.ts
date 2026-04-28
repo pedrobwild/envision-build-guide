@@ -29,12 +29,32 @@ interface TemplateItemRow {
   bdi_percentage: number | null;
 }
 
+export interface SeedProgress {
+  /** Fase atual em linguagem humana (ex.: "Limpando seções existentes…") */
+  phase: string;
+  /** 0–100. Quando indeterminado, omitir (UI mostra barra animada). */
+  percent?: number;
+}
+
+export type SeedProgressCallback = (p: SeedProgress) => void;
+
 /**
  * Seed a budget's sections and items from a template.
  * Falls back to default sections if no template is provided.
  * Deletes existing sections first to avoid duplicates.
+ *
+ * @param onProgress - callback opcional para reportar fases ao UI.
  */
-export async function seedFromTemplate(budgetId: string, templateId: string | null) {
+export async function seedFromTemplate(
+  budgetId: string,
+  templateId: string | null,
+  onProgress?: SeedProgressCallback,
+) {
+  const report = (phase: string, percent?: number) => {
+    try { onProgress?.({ phase, percent }); } catch { /* UI failures must not break seed */ }
+  };
+
+  report("Verificando seções existentes…", 2);
   // Delete existing items first, then sections
   const { data: existingSections } = await supabase
     .from("sections")
