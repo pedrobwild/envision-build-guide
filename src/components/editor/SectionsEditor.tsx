@@ -1348,13 +1348,22 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
         <h2 className="text-xs sm:text-sm font-display font-bold text-foreground uppercase tracking-[0.06em]">Seções e Itens</h2>
         <div className="flex items-center gap-1.5 sm:gap-2">
           {!readOnly && (
-            <button
-              onClick={addDiscount}
-              title="Adicionar desconto promocional (item com custo negativo)"
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-body font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15 transition-colors"
-            >
-              <BadgePercent className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Adicionar</span> Desconto
-            </button>
+            <>
+              <button
+                onClick={addDiscount}
+                title="Adicionar desconto promocional (impacta margem)"
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-body font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15 transition-colors"
+              >
+                <BadgePercent className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Adicionar</span> Desconto
+              </button>
+              <button
+                onClick={addCredit}
+                title="Adicionar crédito (abatimento contratual — não impacta margem)"
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-body font-medium text-sky-700 dark:text-sky-400 bg-sky-500/10 hover:bg-sky-500/15 transition-colors"
+              >
+                <MinusCircle className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Adicionar</span> Crédito
+              </button>
+            </>
           )}
           <button
             onClick={addSection}
