@@ -276,6 +276,19 @@ export default function BudgetEditorV2() {
   const isPublishedVersion = budget?.is_published_version === true;
   const forkInProgress = useRef(false);
 
+  // Após o navigate para a nova versão (rascunho), libera o lock do source
+  // publicado — assim qualquer ação futura no mesmo source criaria um fork
+  // novo, mas dentro desta sessão de edição reaproveita o rascunho recém-criado.
+  useEffect(() => {
+    const parentId = (budget as { parent_budget_id?: string | null } | null)?.parent_budget_id;
+    if (parentId && budget?.id) {
+      // pequeno delay para garantir que outros mutations em flight também
+      // tenham tempo de hit no lock antes de removê-lo.
+      const t = setTimeout(() => releaseForkLock(parentId), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [budget?.id]);
+
   // Quando o usuário edita uma versão publicada, criamos automaticamente uma nova
   // versão (rascunho) para que as alterações não fiquem visíveis ao cliente até
   // que ele clique em "Salvar e Publicar".
