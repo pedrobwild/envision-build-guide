@@ -94,6 +94,7 @@ export async function seedFromTemplate(
     return result;
   }
 
+  report("Aplicando mídia padrão…", 14);
   // Guardrail: replicação de mídia padrão (com template) também respeita
   // upload manual e nunca sobrescreve.
   try {
@@ -107,6 +108,7 @@ export async function seedFromTemplate(
     logger.warn("Falha ao resolver mídia padrão para o orçamento:", err);
   }
 
+  report("Carregando metadados do template…", 18);
   // Carrega metadados do template (incluindo desconto promocional padrão)
   const { data: tplMeta } = await supabase
     .from("budget_templates")
@@ -125,7 +127,16 @@ export async function seedFromTemplate(
     throw new Error("Template não encontrado ou está vazio");
   }
 
+  const totalSections = templateSections.length;
+  // Reservamos a faixa 22%–88% para o loop de criação de seções/itens.
+  const SECTIONS_START = 22;
+  const SECTIONS_END = 88;
+  let processed = 0;
+
   for (const tSec of templateSections as TemplateSectionRow[]) {
+    const pct = SECTIONS_START + Math.round((processed / totalSections) * (SECTIONS_END - SECTIONS_START));
+    report(`Criando seção “${tSec.title}” (${processed + 1}/${totalSections})…`, pct);
+
     const sectionPayload = {
       budget_id: budgetId,
       title: tSec.title,
