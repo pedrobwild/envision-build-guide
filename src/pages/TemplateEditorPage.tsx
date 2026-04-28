@@ -355,7 +355,32 @@ export default function TemplateEditorPage() {
           />
         </div>
 
-        {/* Media Manager */}
+        {/* Desconto promocional padrão */}
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+          <BadgePercent className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <label
+              htmlFor="default-discount-amount"
+              className="text-xs font-display font-bold uppercase tracking-[0.06em] text-foreground block"
+            >
+              Desconto promocional padrão
+            </label>
+            <p className="text-[11px] text-muted-foreground font-body mt-0.5">
+              Quando &gt; 0, todo orçamento criado a partir deste template recebe automaticamente uma seção
+              <span className="font-medium text-foreground"> Descontos</span> com este valor como custo negativo.
+              Deixe em <span className="font-medium text-foreground">R$ 0,00</span> para desativar.
+            </p>
+          </div>
+          <CurrencyInput
+            id="default-discount-amount"
+            value={template.default_discount_amount}
+            onChange={(v) => setTemplate({ ...template, default_discount_amount: Math.max(0, v ?? 0) })}
+            allowNegative={false}
+            className="w-36 shrink-0 h-9 rounded-md border border-border/60 bg-background px-3 text-sm font-mono tabular-nums text-right focus:outline-none focus:ring-2 focus:ring-primary/30"
+            placeholder="R$ 0,00"
+          />
+        </div>
+
         <div className="mb-4">
           <TemplateMediaManager
             templateId={templateId!}
