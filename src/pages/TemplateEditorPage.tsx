@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/formatBRL";
 import { calcItemSaleTotal, calcItemCostTotal } from "@/lib/budget-calc";
-import { ArrowLeft, LayoutTemplate, Loader2, Save, Check, X } from "lucide-react";
+import { ArrowLeft, LayoutTemplate, Loader2, Save, Check, X, BadgePercent } from "lucide-react";
 import TemplateMediaManager, { type MediaConfig, EMPTY_MEDIA_CONFIG } from "@/components/editor/TemplateMediaManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { SectionsEditor, TEMPLATE_TABLE_CONFIG } from "@/components/editor/SectionsEditor";
 import { cn } from "@/lib/utils";
 
