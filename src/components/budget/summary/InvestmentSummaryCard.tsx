@@ -22,7 +22,7 @@ interface InvestmentSummaryCardProps {
 }
 
 export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummaryCardProps>(
-  function InvestmentSummaryCard({ total, installments, loading }, ref) {
+  function InvestmentSummaryCard({ total, installments, loading, discount = 0, credit = 0, subtotal = 0 }, ref) {
     if (loading) {
       return (
         <div
