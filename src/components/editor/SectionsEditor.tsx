@@ -737,7 +737,15 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, readOnly = false, isAddendum = false }: SectionsEditorProps) {
+export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, readOnly = false, isAddendum = false, onProtectedEditAttempt }: SectionsEditorProps) {
+  // Centralised guard so any mutation attempted while in readOnly mode can be
+  // intercepted by the parent (e.g. to auto-fork a published version into a
+  // new draft instead of silently no-op'ing the user's action).
+  const blockedByReadOnly = useCallback(() => {
+    if (!readOnly) return false;
+    if (onProtectedEditAttempt) onProtectedEditAttempt();
+    return true;
+  }, [readOnly, onProtectedEditAttempt]);
   const cfg = tableConfig ?? DEFAULT_TABLE_CONFIG;
   const storageKey = `budget-sections-state-${budgetId}`;
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
