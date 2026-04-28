@@ -72,13 +72,22 @@ export function BudgetSummary({
   const scopeTotal =
     categorizedGroups?.reduce((s, g) => s + g.subtotal, 0) || 0;
 
-  // Sum of negative section subtotals = promotional discounts.
-  // Returns a positive number representing the discount amount (or 0 if none).
-  const discountTotal = sections.reduce((sum, s) => {
+  // Split abatements by dedicated section title.
+  // - Discounts: section "Descontos" (impacts margin)
+  // - Credits:   section "Créditos" (does NOT impact margin)
+  // Anything else negative falls back into "discount" bucket so we don't lose it.
+  let discountTotal = 0;
+  let creditTotal = 0;
+  for (const s of sections) {
     const sub = calculateSectionSubtotal(s);
-    return sub < 0 ? sum + Math.abs(sub) : sum;
-  }, 0);
-  const subtotalBeforeDiscount = total + discountTotal;
+    if (sub >= 0) continue;
+    const abs = Math.abs(sub);
+    if (isCreditSection(s)) creditTotal += abs;
+    else if (isDiscountSection(s)) discountTotal += abs;
+    else discountTotal += abs;
+  }
+  const abatementTotal = discountTotal + creditTotal;
+  const subtotalBeforeDiscount = total + abatementTotal;
 
   return (
     <motion.div
