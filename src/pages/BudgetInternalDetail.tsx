@@ -1317,6 +1317,29 @@ export default function BudgetInternalDetail() {
         onOpenChange={setLostDialogOpen}
         onConfirm={handleMarkLost}
       />
+
+      <RevisionRequestDialog
+        open={revisionDialogOpen}
+        onOpenChange={setRevisionDialogOpen}
+        budgetId={budget.id}
+        currentStatus={budget.internal_status}
+        onSuccess={() => {
+          setRevisionDialogOpen(false);
+          setBudget((prev) => (prev ? { ...prev, internal_status: "revision_requested" } : prev));
+          setEvents((prev) => [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              event_type: "revision_requested",
+              from_status: budget.internal_status,
+              to_status: "revision_requested",
+              note: null,
+              user_id: user?.id ?? null,
+              created_at: new Date().toISOString(),
+            },
+          ]);
+        }}
+      />
     </div>
   );
 }
