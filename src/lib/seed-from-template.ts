@@ -127,6 +127,8 @@ export async function seedFromTemplate(
     throw new Error("Template não encontrado ou está vazio");
   }
 
+  const discountAmount = Number(tplMeta?.default_discount_amount ?? 0);
+
   const totalSections = templateSections.length;
   // Reservamos a faixa 22%–88% para o loop de criação de seções/itens.
   const SECTIONS_START = 22;
