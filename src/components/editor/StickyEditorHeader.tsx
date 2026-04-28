@@ -1,12 +1,14 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText } from "lucide-react";
+import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText, Link2, Copy, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 import { formatBRL } from "@/lib/formatBRL";
 import { calcGrandTotals, type CalcSection } from "@/lib/budget-calc";
 import { cn } from "@/lib/utils";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { toast } from "sonner";
 import type { BudgetRow } from "@/types/budget-common";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
