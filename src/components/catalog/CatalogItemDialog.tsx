@@ -241,6 +241,80 @@ function InlinePriceForm({
   );
 }
 
+// ─── Inline price cell — quick edit unit price directly in the table ───
+function InlinePriceCell({
+  price,
+  onSaved,
+}: {
+  price: SupplierPrice;
+  onSaved: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState<string>(price.unit_price?.toString() ?? "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setValue(price.unit_price?.toString() ?? "");
+  }, [price.unit_price]);
+
+  const commit = async () => {
+    const trimmed = value.trim().replace(",", ".");
+    const parsed = trimmed === "" ? null : parseFloat(trimmed);
+    if (trimmed !== "" && (isNaN(parsed!) || parsed! < 0)) {
+      toast.error("Valor inválido");
+      setValue(price.unit_price?.toString() ?? "");
+      setEditing(false);
+      return;
+    }
+    if (parsed === price.unit_price) { setEditing(false); return; }
+    setSaving(true);
+    const { error } = await supabase
+      .from("catalog_item_supplier_prices")
+      .update({ unit_price: parsed })
+      .eq("id", price.id);
+    setSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar preço");
+      setValue(price.unit_price?.toString() ?? "");
+    } else {
+      toast.success("Preço atualizado");
+      onSaved();
+    }
+    setEditing(false);
+  };
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        className="font-mono text-sm hover:bg-muted/50 px-1.5 py-0.5 rounded transition-colors w-full text-right"
+        onClick={() => setEditing(true)}
+        title="Clique para editar"
+      >
+        {formatBRL(price.unit_price)}
+      </button>
+    );
+  }
+
+  return (
+    <Input
+      autoFocus
+      type="number"
+      step="0.01"
+      min="0"
+      className="h-7 text-sm font-mono text-right"
+      value={value}
+      disabled={saving}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { e.preventDefault(); commit(); }
+        else if (e.key === "Escape") { setValue(price.unit_price?.toString() ?? ""); setEditing(false); }
+      }}
+    />
+  );
+}
+
 // ─── Supplier prices section (inline in dialog) ─────────────────
 function SupplierPricesSection({ catalogItemId, suppliers }: { catalogItemId: string; suppliers: Supplier[] }) {
   const queryClient = useQueryClient();
