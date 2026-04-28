@@ -81,6 +81,13 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     logger.warn("Falha ao resolver mídia padrão para o orçamento:", err);
   }
 
+  // Carrega metadados do template (incluindo desconto promocional padrão)
+  const { data: tplMeta } = await supabase
+    .from("budget_templates")
+    .select("default_discount_amount")
+    .eq("id", templateId)
+    .maybeSingle();
+
   const { data: templateSections, error: secErr } = await supabase
     .from("budget_template_sections")
     .select("id, title, subtitle, order_index, notes, tags, included_bullets, excluded_bullets, is_optional")
