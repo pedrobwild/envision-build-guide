@@ -67,7 +67,7 @@ describe("Discount + Credit — calculation engine", () => {
         },
       ];
       // 50.000 + (-3.000) = 47.000
-      expect(calculateBudgetTotal(sections as never)).toBe(47000);
+      expect(calculateBudgetTotal(sections as never, [])).toBe(47000);
     });
 
     it("subtrai múltiplos descontos e créditos do total", () => {
@@ -77,7 +77,7 @@ describe("Discount + Credit — calculation engine", () => {
         { title: "Créditos", items: [{ internal_unit_price: -2500, qty: 1 }], qty: 1 },
       ];
       // 100.000 - 5.000 - 2.500 = 92.500
-      expect(calculateBudgetTotal(sections as never)).toBe(92500);
+      expect(calculateBudgetTotal(sections as never, [])).toBe(92500);
     });
 
     it("nunca produz total negativo na prática (desconto < subtotal)", () => {
@@ -85,7 +85,7 @@ describe("Discount + Credit — calculation engine", () => {
         { items: [{ internal_total: 10000 }], qty: 1 },
         { title: "Descontos", items: [{ internal_unit_price: -500, qty: 1 }], qty: 1 },
       ];
-      const total = calculateBudgetTotal(sections as never);
+      const total = calculateBudgetTotal(sections as never, []);
       expect(total).toBeGreaterThan(0);
       expect(total).toBe(9500);
     });
@@ -269,7 +269,7 @@ describe("Discount + Credit — calculation engine", () => {
       expect(calculateSectionSubtotal(taxSection)).toBe(6000);
       // Total = obra + taxa - desconto
       expect(
-        calculateBudgetTotal([obra, taxSection, discountSection] as never),
+        calculateBudgetTotal([obra, taxSection, discountSection] as never, []),
       ).toBe(103000);
     });
   });
