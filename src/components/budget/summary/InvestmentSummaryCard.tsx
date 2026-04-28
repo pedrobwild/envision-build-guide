@@ -4,6 +4,7 @@ import { CountUpValue } from "../CountUpValue";
 import { TrustBadgesRow } from "./TrustBadgesRow";
 import { InstallmentPreview } from "./InstallmentPreview";
 import { cn } from "@/lib/utils";
+import { formatBRL } from "@/lib/formatBRL";
 
 const LABEL = "budget-label text-[10px] text-muted-foreground";
 
@@ -12,10 +13,16 @@ interface InvestmentSummaryCardProps {
   installments: number;
   /** Loading skeleton state */
   loading?: boolean;
+  /** Promotional discount amount (positive number, optional) */
+  discount?: number;
+  /** Credit/abatement amount (positive number, optional) */
+  credit?: number;
+  /** Subtotal before discount+credit (optional) */
+  subtotal?: number;
 }
 
 export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummaryCardProps>(
-  function InvestmentSummaryCard({ total, installments, loading }, ref) {
+  function InvestmentSummaryCard({ total, installments, loading, discount = 0, credit = 0, subtotal = 0 }, ref) {
     if (loading) {
       return (
         <div
@@ -57,6 +64,36 @@ export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummar
         />
 
         <div className="relative space-y-1.5">
+          {(discount > 0 || credit > 0) && subtotal > 0 && (
+            <div className="space-y-1 pb-2 mb-1 border-b border-border/60">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[11px] text-muted-foreground font-body">Subtotal</span>
+                <span className="text-sm font-body tabular-nums text-muted-foreground line-through">
+                  {formatBRL(subtotal)}
+                </span>
+              </div>
+              {discount > 0 && (
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400">
+                    Desconto promocional
+                  </span>
+                  <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                    − {formatBRL(discount)}
+                  </span>
+                </div>
+              )}
+              {credit > 0 && (
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[11px] font-body font-medium text-sky-700 dark:text-sky-400">
+                    Crédito
+                  </span>
+                  <span className="text-sm font-body font-semibold tabular-nums text-sky-700 dark:text-sky-400">
+                    − {formatBRL(credit)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
           {/* Total — label e valor sem espaço extra para criar bloco coeso */}
           <div>
             <p className={cn(LABEL, "mb-0.5 leading-none")}>Investimento total</p>

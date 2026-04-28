@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { isCreditSection, isDiscountSection } from "@/lib/budget-calc";
 import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
 import { Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -71,13 +72,22 @@ export function BudgetSummary({
   const scopeTotal =
     categorizedGroups?.reduce((s, g) => s + g.subtotal, 0) || 0;
 
-  // Sum of negative section subtotals = promotional discounts.
-  // Returns a positive number representing the discount amount (or 0 if none).
-  const discountTotal = sections.reduce((sum, s) => {
+  // Split abatements by dedicated section title.
+  // - Discounts: section "Descontos" (impacts margin)
+  // - Credits:   section "Créditos" (does NOT impact margin)
+  // Anything else negative falls back into "discount" bucket so we don't lose it.
+  let discountTotal = 0;
+  let creditTotal = 0;
+  for (const s of sections) {
     const sub = calculateSectionSubtotal(s);
-    return sub < 0 ? sum + Math.abs(sub) : sum;
-  }, 0);
-  const subtotalBeforeDiscount = total + discountTotal;
+    if (sub >= 0) continue;
+    const abs = Math.abs(sub);
+    if (isCreditSection(s)) creditTotal += abs;
+    else if (isDiscountSection(s)) discountTotal += abs;
+    else discountTotal += abs;
+  }
+  const abatementTotal = discountTotal + creditTotal;
+  const subtotalBeforeDiscount = total + abatementTotal;
 
   return (
     <motion.div
@@ -127,7 +137,7 @@ export function BudgetSummary({
         )}
 
         {/* Total card */}
-        <TotalCard total={total} installments={installments} discount={discountTotal} subtotal={subtotalBeforeDiscount} />
+        <TotalCard total={total} installments={installments} discount={discountTotal} credit={creditTotal} subtotal={subtotalBeforeDiscount} />
 
         {/* Installment simulator */}
         <div className="px-5 pb-2">
@@ -293,14 +303,16 @@ function TotalCard({
   total,
   installments,
   discount = 0,
+  credit = 0,
   subtotal = 0,
 }: {
   total: number;
   installments: number;
   discount?: number;
+  credit?: number;
   subtotal?: number;
 }) {
-  const hasDiscount = discount > 0 && subtotal > 0;
+  const hasAbatement = (discount > 0 || credit > 0) && subtotal > 0;
   return (
     <div
       className="mx-5 mb-3 rounded-xl border border-primary/10 px-4 py-3.5 relative overflow-hidden"
@@ -315,7 +327,7 @@ function TotalCard({
         aria-hidden
       />
       <div className="relative space-y-1.5">
-        {hasDiscount && (
+        {hasAbatement && (
           <div className="space-y-1 pb-2 mb-1 border-b border-border/60">
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-[11px] text-muted-foreground font-body">Subtotal</span>
@@ -323,14 +335,26 @@ function TotalCard({
                 {formatBRL(subtotal)}
               </span>
             </div>
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400">
-                Desconto promocional
-              </span>
-              <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                − {formatBRL(discount)}
-              </span>
-            </div>
+            {discount > 0 && (
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400">
+                  Desconto promocional
+                </span>
+                <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                  − {formatBRL(discount)}
+                </span>
+              </div>
+            )}
+            {credit > 0 && (
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[11px] font-body font-medium text-sky-700 dark:text-sky-400">
+                  Crédito
+                </span>
+                <span className="text-sm font-body font-semibold tabular-nums text-sky-700 dark:text-sky-400">
+                  − {formatBRL(credit)}
+                </span>
+              </div>
+            )}
           </div>
         )}
         <div>

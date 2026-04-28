@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { fetchPublicBudget, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
+import { isCreditSection } from "@/lib/budget-calc";
 import { AddendumDeltaCard } from "@/components/budget/AddendumDeltaCard";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
@@ -326,6 +327,19 @@ export default function PublicBudget() {
   const categorizedGroups = categorizeSections(visibleSections);
   const scopeTotal = visibleSections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
 
+  // Split abatements by section title for the public summary breakdown.
+  // Same logic as BudgetSummary so mobile + desktop stay in sync.
+  let publicDiscountTotal = 0;
+  let publicCreditTotal = 0;
+  for (const s of visibleSections) {
+    const sub = calculateSectionSubtotal(s);
+    if (sub >= 0) continue;
+    const abs = Math.abs(sub);
+    if (isCreditSection(s)) publicCreditTotal += abs;
+    else publicDiscountTotal += abs;
+  }
+  const publicSubtotalBeforeAbatements = total + publicDiscountTotal + publicCreditTotal;
+
   // Meta for mobile hero
   const heroNeighborhood = budget.bairro || budget.condominio || "";
   const rawArea = budget.metragem ? budget.metragem.toString().replace(/\s/g, '').replace(/m²?$/i, '') : "";
@@ -528,7 +542,9 @@ export default function PublicBudget() {
               clientName={budget.client_name}
               publicId={publicId || "demo"}
               budgetId={budget.id}
-              
+              discount={publicDiscountTotal}
+              credit={publicCreditTotal}
+              subtotal={publicSubtotalBeforeAbatements}
             />
             </div>
 

@@ -30,6 +30,12 @@ interface MobileInlineSummaryProps {
   revised?: boolean;
   /** Contract already requested */
   contractRequested?: boolean;
+  /** Promotional discount amount (positive number) */
+  discount?: number;
+  /** Credit/abatement amount (positive number) */
+  credit?: number;
+  /** Subtotal before discount+credit */
+  subtotal?: number;
 }
 
 const DEFAULT_PHONE = "5511911906183";
@@ -48,6 +54,9 @@ export function MobileInlineSummary({
   loading,
   revised,
   contractRequested,
+  discount = 0,
+  credit = 0,
+  subtotal = 0,
 }: MobileInlineSummaryProps) {
   const [installments, setInstallments] = useState(12);
   const [contractOpen, setContractOpen] = useState(false);
@@ -89,6 +98,9 @@ export function MobileInlineSummary({
           total={total}
           installments={installments}
           loading={loading}
+          discount={discount}
+          credit={credit}
+          subtotal={subtotal}
         />
 
         {/* ── Validity ── */}
