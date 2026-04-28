@@ -98,6 +98,9 @@ export function MobileInlineSummary({
           total={total}
           installments={installments}
           loading={loading}
+          discount={discount}
+          credit={credit}
+          subtotal={subtotal}
         />
 
         {/* ── Validity ── */}
