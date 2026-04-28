@@ -29,12 +29,32 @@ interface TemplateItemRow {
   bdi_percentage: number | null;
 }
 
+export interface SeedProgress {
+  /** Fase atual em linguagem humana (ex.: "Limpando seções existentes…") */
+  phase: string;
+  /** 0–100. Quando indeterminado, omitir (UI mostra barra animada). */
+  percent?: number;
+}
+
+export type SeedProgressCallback = (p: SeedProgress) => void;
+
 /**
  * Seed a budget's sections and items from a template.
  * Falls back to default sections if no template is provided.
  * Deletes existing sections first to avoid duplicates.
+ *
+ * @param onProgress - callback opcional para reportar fases ao UI.
  */
-export async function seedFromTemplate(budgetId: string, templateId: string | null) {
+export async function seedFromTemplate(
+  budgetId: string,
+  templateId: string | null,
+  onProgress?: SeedProgressCallback,
+) {
+  const report = (phase: string, percent?: number) => {
+    try { onProgress?.({ phase, percent }); } catch { /* UI failures must not break seed */ }
+  };
+
+  report("Verificando seções existentes…", 2);
   // Delete existing items first, then sections
   const { data: existingSections } = await supabase
     .from("sections")
@@ -43,13 +63,16 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
 
   const sectionIds = existingSections?.map(s => s.id) ?? [];
   if (sectionIds.length > 0) {
+    report("Limpando itens existentes…", 6);
     const { error: itemsDelErr } = await supabase.from("items").delete().in("section_id", sectionIds);
     if (itemsDelErr) throw new Error(`Falha ao limpar itens existentes: ${itemsDelErr.message}`);
   }
+  report("Limpando seções existentes…", 10);
   const { error: secDelErr } = await supabase.from("sections").delete().eq("budget_id", budgetId);
   if (secDelErr) throw new Error(`Falha ao limpar seções existentes: ${secDelErr.message}`);
 
   if (!templateId) {
+    report("Aplicando mídia padrão…", 30);
     // Guardrail: nunca sobrescreve upload manual. Aplica padrão em camadas
     // (template selecionado → primeiro ativo → hardcoded) somente se o
     // orçamento ainda não tiver mídia.
@@ -64,10 +87,14 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
       logger.warn("Falha ao aplicar mídia padrão (sem template):", err);
     }
 
+    report("Criando seções padrão…", 60);
     const { seedDefaultSections } = await import("@/lib/default-budget-sections");
-    return seedDefaultSections(budgetId);
+    const result = await seedDefaultSections(budgetId);
+    report("Pronto!", 100);
+    return result;
   }
 
+  report("Aplicando mídia padrão…", 14);
   // Guardrail: replicação de mídia padrão (com template) também respeita
   // upload manual e nunca sobrescreve.
   try {
@@ -81,6 +108,7 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     logger.warn("Falha ao resolver mídia padrão para o orçamento:", err);
   }
 
+  report("Carregando metadados do template…", 18);
   // Carrega metadados do template (incluindo desconto promocional padrão)
   const { data: tplMeta } = await supabase
     .from("budget_templates")
@@ -99,7 +127,18 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     throw new Error("Template não encontrado ou está vazio");
   }
 
+  const discountAmount = Number(tplMeta?.default_discount_amount ?? 0);
+
+  const totalSections = templateSections.length;
+  // Reservamos a faixa 22%–88% para o loop de criação de seções/itens.
+  const SECTIONS_START = 22;
+  const SECTIONS_END = 88;
+  let processed = 0;
+
   for (const tSec of templateSections as TemplateSectionRow[]) {
+    const pct = SECTIONS_START + Math.round((processed / totalSections) * (SECTIONS_END - SECTIONS_START));
+    report(`Criando seção “${tSec.title}” (${processed + 1}/${totalSections})…`, pct);
+
     const sectionPayload = {
       budget_id: budgetId,
       title: tSec.title,
@@ -117,7 +156,7 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
       .select("id")
       .single();
 
-    if (!section) continue;
+    if (!section) { processed += 1; continue; }
 
     // Load items for this template section
     const { data: templateItems } = await supabase
@@ -126,29 +165,33 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
       .eq("template_section_id", tSec.id)
       .order("order_index");
 
-    if (!templateItems || templateItems.length === 0) continue;
-
-    for (const tItem of templateItems as TemplateItemRow[]) {
-      await supabase.from("items").insert({
-        section_id: section.id,
-        title: tItem.title,
-        description: tItem.description || null,
-        unit: tItem.unit || null,
-        qty: tItem.qty ?? null,
-        order_index: tItem.order_index,
-        coverage_type: tItem.coverage_type || "geral",
-        reference_url: tItem.reference_url || null,
-        internal_unit_price: tItem.internal_unit_price ?? null,
-        internal_total: tItem.internal_total ?? null,
-        bdi_percentage: tItem.bdi_percentage ?? 0,
-      });
+    if (templateItems && templateItems.length > 0) {
+      for (const tItem of templateItems as TemplateItemRow[]) {
+        await supabase.from("items").insert({
+          section_id: section.id,
+          title: tItem.title,
+          description: tItem.description || null,
+          unit: tItem.unit || null,
+          qty: tItem.qty ?? null,
+          order_index: tItem.order_index,
+          coverage_type: tItem.coverage_type || "geral",
+          reference_url: tItem.reference_url || null,
+          internal_unit_price: tItem.internal_unit_price ?? null,
+          internal_total: tItem.internal_total ?? null,
+          bdi_percentage: tItem.bdi_percentage ?? 0,
+        });
+      }
     }
+    processed += 1;
+  }
+
+  if (discountAmount > 0) {
+    report("Aplicando desconto promocional…", 92);
   }
 
   // ── Desconto promocional automático ──
   // Se o template tiver `default_discount_amount > 0`, cria seção "Descontos"
   // com item "Desconto promocional" de custo NEGATIVO desse valor.
-  const discountAmount = Number(tplMeta?.default_discount_amount ?? 0);
   if (discountAmount > 0) {
     const { data: discountSection } = await supabase
       .from("sections")
@@ -174,4 +217,6 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
       logger.warn("[seed] Falha ao criar seção de desconto automático do template.");
     }
   }
+
+  report("Pronto!", 100);
 }
