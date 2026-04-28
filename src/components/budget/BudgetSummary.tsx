@@ -71,6 +71,14 @@ export function BudgetSummary({
   const scopeTotal =
     categorizedGroups?.reduce((s, g) => s + g.subtotal, 0) || 0;
 
+  // Sum of negative section subtotals = promotional discounts.
+  // Returns a positive number representing the discount amount (or 0 if none).
+  const discountTotal = sections.reduce((sum, s) => {
+    const sub = calculateSectionSubtotal(s);
+    return sub < 0 ? sum + Math.abs(sub) : sum;
+  }, 0);
+  const subtotalBeforeDiscount = total + discountTotal;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
