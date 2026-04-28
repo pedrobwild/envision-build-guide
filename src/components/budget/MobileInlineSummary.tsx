@@ -30,6 +30,12 @@ interface MobileInlineSummaryProps {
   revised?: boolean;
   /** Contract already requested */
   contractRequested?: boolean;
+  /** Promotional discount amount (positive number) */
+  discount?: number;
+  /** Credit/abatement amount (positive number) */
+  credit?: number;
+  /** Subtotal before discount+credit */
+  subtotal?: number;
 }
 
 const DEFAULT_PHONE = "5511911906183";
