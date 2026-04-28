@@ -35,6 +35,7 @@ export default function BudgetEditorV2() {
   const location = useLocation();
   const { isOrcamentista, isComercial, isAdmin, profile } = useUserProfile();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const backPath = (location.state as { from?: string } | null)?.from
     || (isOrcamentista ? "/admin/producao" : isComercial ? "/admin/comercial" : "/admin");
