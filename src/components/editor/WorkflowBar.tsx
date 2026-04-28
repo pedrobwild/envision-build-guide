@@ -222,12 +222,40 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const showSecondary = isAdmin || isComercial;
   const isWaiting = internalStatus === "waiting_info";
 
-  function handlePrimaryClick() {
+  async function ensurePublishedSilently(): Promise<string | null> {
+    try {
+      let publishedPublicId = budget.public_id;
+      if (!budget.is_published_version) {
+        const groupId = await ensureVersionGroup(budget.id);
+        publishedPublicId = budget.public_id || crypto.randomUUID().slice(0, 12);
+        await publishVersion(budget.id, groupId, publishedPublicId, user?.id);
+        onBudgetUpdate({ is_published_version: true, public_id: publishedPublicId, status: "published" });
+      }
+      return publishedPublicId ?? null;
+    } catch (err) {
+      logger.error("Erro ao publicar (silencioso):", err);
+      toast.error("Erro ao publicar o orçamento.");
+      return null;
+    }
+  }
+
+  async function handlePrimaryClick() {
     if (!primaryTransition) return;
     if (primaryTransition.confirmRequired) {
       setConfirmDialogOpen(true);
       return;
     }
+
+    // Ao "Entregar ao Comercial": publica automaticamente (sem notificar o cliente)
+    // para que o link público fique disponível ao time comercial.
+    if (internalStatus === "ready_for_review" && primaryTransition.newStatus === "delivered_to_sales") {
+      const publicId = await ensurePublishedSilently();
+      if (!publicId) return;
+      await changeStatus(primaryTransition.newStatus);
+      toast.success("Entregue ao comercial. Link público disponível.");
+      return;
+    }
+
     const note = internalStatus === "revision_requested" ? "Revisão iniciada pelo orçamentista" : undefined;
     changeStatus(primaryTransition.newStatus, note);
     if (internalStatus === "revision_requested") {
@@ -239,34 +267,22 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
     if (!primaryTransition) return;
     setConfirmLoading(true);
 
-    // For delivered_to_sales → sent_to_client, also publish
+    // delivered_to_sales → sent_to_client: garante publicação + notifica cliente
     if (internalStatus === "delivered_to_sales" && primaryTransition.newStatus === "sent_to_client") {
-      try {
-        let publishedPublicId = budget.public_id;
-        if (!budget.is_published_version) {
-          const groupId = await ensureVersionGroup(budget.id);
-          publishedPublicId = budget.public_id || crypto.randomUUID().slice(0, 12);
-          await publishVersion(budget.id, groupId, publishedPublicId, user?.id);
-          onBudgetUpdate({ is_published_version: true, public_id: publishedPublicId, status: "published" });
-        }
-        // Disparo automático de WhatsApp
-        if (publishedPublicId) {
-          void sendBudgetPublishedNotification({
-            budgetId: budget.id,
-            clientName: budget.client_name,
-            clientPhone: (budget as { client_phone?: string | null }).client_phone,
-            publicId: publishedPublicId,
-          }).then((res) => {
-            if (res.success) toast.info("WhatsApp enviado ao cliente.");
-          });
-        }
-      } catch (err) {
-        logger.error("Erro ao publicar:", err);
-        toast.error("Erro ao publicar o orçamento.");
+      const publishedPublicId = await ensurePublishedSilently();
+      if (!publishedPublicId) {
         setConfirmLoading(false);
         setConfirmDialogOpen(false);
         return;
       }
+      void sendBudgetPublishedNotification({
+        budgetId: budget.id,
+        clientName: budget.client_name,
+        clientPhone: (budget as { client_phone?: string | null }).client_phone,
+        publicId: publishedPublicId,
+      }).then((res) => {
+        if (res.success) toast.info("WhatsApp enviado ao cliente.");
+      });
     }
 
     await changeStatus(primaryTransition.newStatus);
