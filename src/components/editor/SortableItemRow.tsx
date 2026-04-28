@@ -12,6 +12,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { ItemImageInline } from "./ItemImageInline";
 import { ItemDetailSheet } from "./ItemDetailSheet";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { MobileItemEditor } from "./MobileItemEditor";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useConfirm } from "@/hooks/useConfirm";
