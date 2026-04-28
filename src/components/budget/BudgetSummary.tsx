@@ -301,17 +301,21 @@ function AdjustmentsList({ adjustments }: { adjustments: AdjustmentRow[] }) {
 function TotalCard({
   total,
   installments,
-  discount = 0,
-  credit = 0,
+  discounts = [],
+  credits = [],
+  discountTotal = 0,
+  creditTotal = 0,
   subtotal = 0,
 }: {
   total: number;
   installments: number;
-  discount?: number;
-  credit?: number;
+  discounts?: AbatementLine[];
+  credits?: AbatementLine[];
+  discountTotal?: number;
+  creditTotal?: number;
   subtotal?: number;
 }) {
-  const hasAbatement = (discount > 0 || credit > 0) && subtotal > 0;
+  const hasAbatement = (discountTotal > 0 || creditTotal > 0) && subtotal > 0;
   return (
     <div
       className="mx-5 mb-3 rounded-xl border border-primary/10 px-4 py-3.5 relative overflow-hidden"
@@ -334,26 +338,28 @@ function TotalCard({
                 {formatBRL(subtotal)}
               </span>
             </div>
-            {discount > 0 && (
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400">
-                  Desconto promocional
+
+            {discounts.map((line) => (
+              <div key={`d-${line.label}`} className="flex items-baseline justify-between gap-3">
+                <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400 truncate">
+                  {line.label}
                 </span>
-                <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  − {formatBRL(discount)}
-                </span>
-              </div>
-            )}
-            {credit > 0 && (
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[11px] font-body font-medium text-sky-700 dark:text-sky-400">
-                  Crédito
-                </span>
-                <span className="text-sm font-body font-semibold tabular-nums text-sky-700 dark:text-sky-400">
-                  − {formatBRL(credit)}
+                <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400 shrink-0">
+                  − {formatBRL(line.total)}
                 </span>
               </div>
-            )}
+            ))}
+
+            {credits.map((line) => (
+              <div key={`c-${line.label}`} className="flex items-baseline justify-between gap-3">
+                <span className="text-[11px] font-body font-medium text-sky-700 dark:text-sky-400 truncate">
+                  {line.label}
+                </span>
+                <span className="text-sm font-body font-semibold tabular-nums text-sky-700 dark:text-sky-400 shrink-0">
+                  − {formatBRL(line.total)}
+                </span>
+              </div>
+            ))}
           </div>
         )}
         <div>
