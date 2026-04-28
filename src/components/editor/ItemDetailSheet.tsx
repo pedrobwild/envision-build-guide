@@ -11,6 +11,7 @@ import { Lock, ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
 import { cn } from "@/lib/utils";
 import { saveToPhotoLibrary } from "@/lib/item-photo-library";
+import { isAbatementSection, normalizeAbatementValue } from "@/lib/abatement-utils";
 
 interface ItemImage {
   id?: string;
@@ -37,6 +38,7 @@ interface ItemDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   item: ItemDetailData;
   sectionId: string;
+  sectionTitle?: string;
   budgetId: string;
   onUpdate: (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => void;
   onImagesChange: (sectionId: string, itemId: string, images: ItemImage[]) => void;
