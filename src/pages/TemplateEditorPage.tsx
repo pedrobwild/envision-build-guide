@@ -156,7 +156,12 @@ export default function TemplateEditorPage() {
     try {
       const { error } = await supabase
         .from("budget_templates")
-        .update({ name: tpl.name, description: tpl.description, media_config: tpl.media_config as any })
+        .update({
+          name: tpl.name,
+          description: tpl.description,
+          media_config: tpl.media_config as any,
+          default_discount_amount: Math.max(0, Number(tpl.default_discount_amount) || 0),
+        })
         .eq("id", tpl.id);
       if (error) {
         logger.error("Auto-save error:", error.message);
