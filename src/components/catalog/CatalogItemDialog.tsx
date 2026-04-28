@@ -396,7 +396,9 @@ function SupplierPricesSection({ catalogItemId, suppliers }: { catalogItemId: st
                         {(p.suppliers as { name?: string } | null)?.name ?? "—"}
                         {p.supplier_sku && <span className="text-xs text-muted-foreground ml-1">({p.supplier_sku})</span>}
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm">{formatBRL(p.unit_price)}</TableCell>
+                      <TableCell className="text-right p-1">
+                        <InlinePriceCell price={p} onSaved={refresh} />
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {p.lead_time_days ? `${p.lead_time_days}d` : "—"}
                       </TableCell>
