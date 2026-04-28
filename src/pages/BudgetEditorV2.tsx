@@ -642,13 +642,25 @@ export default function BudgetEditorV2() {
             </div>
           )}
 
-          {/* Workflow Bar — always visible */}
+          {/* Workflow Bar — always visible (não bloqueado por sections) */}
           <div className="mt-4">
             <WorkflowBar
               budget={budget}
               onBudgetUpdate={(fields) => setBudget({ ...budget, ...fields })}
             />
           </div>
+
+          {/* Banner não-bloqueante: sections ainda chegando.
+              UI continua editável (atribuição, prazo, status) — só a planilha
+              mostra skeleton. Edições falhas são guardadas em fila local. */}
+          {sectionsInitialLoading && (
+            <div className="mt-3 flex items-center gap-2 text-xs font-body text-muted-foreground border border-border/40 bg-muted/30 rounded-md px-3 py-2">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>
+                Carregando seções… você já pode atribuir responsável e ajustar status — alterações serão salvas mesmo se a planilha demorar.
+              </span>
+            </div>
+          )}
 
           {/* ── Tab navigation ── */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 flex-1 flex flex-col">
