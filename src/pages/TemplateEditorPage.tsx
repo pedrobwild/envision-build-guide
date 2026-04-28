@@ -21,6 +21,7 @@ interface TemplateData {
   description: string | null;
   is_active: boolean;
   media_config: MediaConfig;
+  default_discount_amount: number;
 }
 
 interface SectionData {
