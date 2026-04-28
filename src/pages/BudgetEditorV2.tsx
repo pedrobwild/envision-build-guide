@@ -726,6 +726,49 @@ export default function BudgetEditorV2() {
             </Alert>
           ) : null}
 
+          {/* Scenario D — Draft forked from a published version. Allow discarding to revert. */}
+          {publishedSibling && !budget.is_published_version && budget.is_current_version === true && budget.status === "draft" && (
+            <Alert className="mt-4 border-destructive/30 bg-destructive/5">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <AlertDescription className="flex items-center justify-between gap-4">
+                <span className="text-sm font-body text-foreground">
+                  ✏️ Este é um rascunho criado a partir da versão publicada v{publishedSibling.version_number ?? "?"}. Ao publicar, ele substituirá a versão visível ao cliente. Se preferir descartar as alterações, volte para a versão publicada.
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10"
+                  disabled={discardingDraft}
+                  onClick={async () => {
+                    if (!user) return;
+                    const confirmed = window.confirm(
+                      `Descartar este rascunho?\n\nTodas as alterações feitas após a publicação da v${publishedSibling.version_number ?? "?"} serão perdidas. A versão publicada continuará intacta e voltará a ser a versão atual.\n\nEsta ação não pode ser desfeita.`
+                    );
+                    if (!confirmed) return;
+                    setDiscardingDraft(true);
+                    try {
+                      const draftId = budgetId!;
+                      const groupId = budget.version_group_id!;
+                      const publishedId = publishedSibling.id;
+                      // Promove a publicada para versão atual ANTES de excluir o rascunho
+                      // (deleteDraftVersion recusa excluir a versão atual).
+                      await setCurrentVersion(publishedId, groupId, user.id);
+                      await deleteDraftVersion(draftId, user.id);
+                      toast.success("Rascunho descartado. Voltando para a versão publicada.");
+                      navigate(`/admin/budget/${publishedId}`, { replace: true });
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Erro ao descartar rascunho");
+                      setDiscardingDraft(false);
+                    }
+                  }}
+                >
+                  {discardingDraft ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                  Descartar este rascunho
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Revision Banner — Scenario C (only if A/B not shown) */}
           {budget.internal_status === "revision_requested" && revisionRequest && !budget.is_published_version && budget.is_current_version !== false && (
             <div className="mt-4">
