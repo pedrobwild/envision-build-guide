@@ -170,7 +170,6 @@ export default function BudgetEditorV2() {
   // simultâneos.
   const {
     data: sectionsData,
-    isFetching: sectionsFetching,
     refetch: refetchSections,
   } = useQuery({
     queryKey: ["budget-editor-sections", budgetId],
