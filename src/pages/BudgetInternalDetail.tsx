@@ -203,6 +203,7 @@ export default function BudgetInternalDetail() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin, isComercial } = useUserProfile();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [budget, setBudget] = useState<BudgetDetail | null>(null);
