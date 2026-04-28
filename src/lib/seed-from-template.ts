@@ -144,4 +144,34 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
       });
     }
   }
+
+  // ── Desconto promocional automático ──
+  // Se o template tiver `default_discount_amount > 0`, cria seção "Descontos"
+  // com item "Desconto promocional" de custo NEGATIVO desse valor.
+  const discountAmount = Number(tplMeta?.default_discount_amount ?? 0);
+  if (discountAmount > 0) {
+    const { data: discountSection } = await supabase
+      .from("sections")
+      .insert({
+        budget_id: budgetId,
+        title: "Descontos",
+        subtitle: "Aplicado sobre o subtotal do projeto",
+        order_index: templateSections.length,
+      })
+      .select("id")
+      .single();
+    if (discountSection) {
+      await supabase.from("items").insert({
+        section_id: discountSection.id,
+        title: "Desconto promocional",
+        qty: 1,
+        internal_unit_price: -discountAmount,
+        bdi_percentage: 0,
+        order_index: 0,
+        coverage_type: "geral",
+      });
+    } else {
+      logger.warn("[seed] Falha ao criar seção de desconto automático do template.");
+    }
+  }
 }
