@@ -4,7 +4,7 @@ import { CountUpValue } from "../CountUpValue";
 import { TrustBadgesRow } from "./TrustBadgesRow";
 import { InstallmentPreview } from "./InstallmentPreview";
 import { cn } from "@/lib/utils";
-import { formatBRL } from "@/lib/utils/format-brl";
+import { formatBRL } from "@/lib/formatBRL";
 
 const LABEL = "budget-label text-[10px] text-muted-foreground";
 
