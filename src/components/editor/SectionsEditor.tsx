@@ -955,47 +955,53 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     }
   };
 
-  /** Cria (ou reutiliza) a seção "Descontos" e adiciona um item de desconto promocional
-   *  com qtd=1 e custo negativo padrão de -R$ 1.000 (editável). */
-  const addDiscount = async () => {
+  /** Cria (ou reutiliza) uma seção de abatimento ("Descontos" ou "Créditos") e adiciona
+   *  um item com qtd=1 e custo negativo padrão de -R$ 1.000 (editável).
+   *  - Desconto: aparece como "Desconto promocional" e impacta margem.
+   *  - Crédito: aparece como "Crédito" e NÃO impacta a margem interna. */
+  const addAbatement = async (kind: "discount" | "credit") => {
     if (readOnly) return;
-    const DISCOUNT_SECTION_TITLE = "Descontos";
-    const DEFAULT_DISCOUNT_AMOUNT = -1000;
+    const SECTION_TITLE = kind === "credit" ? "Créditos" : "Descontos";
+    const ITEM_TITLE = kind === "credit" ? "Crédito" : "Desconto promocional";
+    const SUBTITLE = kind === "credit"
+      ? "Abatimento contratual aplicado ao total"
+      : "Aplicado sobre o subtotal do projeto";
+    const DEFAULT_AMOUNT = -1000;
 
-    // 1) Reutiliza seção "Descontos" se já existir; senão cria
-    let discountSection = sections.find(
-      (s) => (s.title || "").trim().toLowerCase() === DISCOUNT_SECTION_TITLE.toLowerCase(),
+    // 1) Reutiliza seção se já existir; senão cria
+    let targetSection = sections.find(
+      (s) => (s.title || "").trim().toLowerCase() === SECTION_TITLE.toLowerCase(),
     );
     let updatedSections = sections;
 
-    if (!discountSection) {
+    if (!targetSection) {
       const order = sections.length;
       const { data: newSec, error: secErr } = await dbFrom(cfg.sectionTable)
         .insert({
           [cfg.sectionForeignKey]: budgetId,
-          title: DISCOUNT_SECTION_TITLE,
-          subtitle: "Aplicado sobre o subtotal do projeto",
+          title: SECTION_TITLE,
+          subtitle: SUBTITLE,
           order_index: order,
         })
         .select()
         .single();
       if (secErr || !newSec) {
-        toast.error("Não foi possível criar a seção de descontos");
+        toast.error(`Não foi possível criar a seção de ${kind === "credit" ? "créditos" : "descontos"}`);
         return;
       }
-      discountSection = { ...newSec, items: [] } as SectionData;
-      updatedSections = [...sections, discountSection];
+      targetSection = { ...newSec, items: [] } as SectionData;
+      updatedSections = [...sections, targetSection];
     }
 
-    // 2) Insere o item de desconto
-    const order = discountSection.items.length;
+    // 2) Insere o item de abatimento
+    const order = targetSection.items.length;
     const insertPayload: Record<string, unknown> = {
-      [cfg.itemForeignKey]: discountSection.id,
-      title: "Desconto promocional",
+      [cfg.itemForeignKey]: targetSection.id,
+      title: ITEM_TITLE,
       description: null,
       unit: null,
       qty: 1,
-      internal_unit_price: DEFAULT_DISCOUNT_AMOUNT,
+      internal_unit_price: DEFAULT_AMOUNT,
       bdi_percentage: 0,
       order_index: order,
     };
@@ -1004,13 +1010,13 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       .select()
       .single();
     if (itemErr || !newItem) {
-      toast.error("Não foi possível adicionar o desconto");
+      toast.error(`Não foi possível adicionar o ${kind === "credit" ? "crédito" : "desconto"}`);
       return;
     }
 
     // 3) Atualiza estado local + section_price
     let next = updatedSections.map((s) => {
-      if (s.id !== discountSection!.id) return s;
+      if (s.id !== targetSection!.id) return s;
       const newItems = [...s.items, { ...newItem, images: [] } as ItemData];
       const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
       dbFrom(cfg.sectionTable).update({ section_price: newSaleTotal }).eq("id", s.id);
@@ -1018,9 +1024,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     });
     next = recalcTaxItem(next);
     onSectionsChange(next);
-    setExpandedSections((prev) => new Set(prev).add(discountSection!.id));
-    toast.success("Desconto adicionado — ajuste o valor conforme necessário");
+    setExpandedSections((prev) => new Set(prev).add(targetSection!.id));
+    toast.success(
+      kind === "credit"
+        ? "Crédito adicionado — ajuste o valor conforme necessário"
+        : "Desconto adicionado — ajuste o valor conforme necessário",
+    );
   };
+
+  const addDiscount = () => addAbatement("discount");
+  const addCredit = () => addAbatement("credit");
 
 
   const duplicateSection = async (sectionId: string) => {
