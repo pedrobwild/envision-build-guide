@@ -751,6 +751,7 @@ export default function BudgetEditorV2() {
                     loading={sectionsLoading || (sectionsInitialLoading && sections.length === 0)}
                     readOnly={isPublishedVersion}
                     isAddendum={budget.is_addendum === true}
+                    onProtectedEditAttempt={isPublishedVersion ? forkPublishedForStructuralEdit : undefined}
                   />
                 </div>
 
