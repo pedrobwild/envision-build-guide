@@ -151,6 +151,12 @@ interface SectionsEditorProps {
   readOnly?: boolean;
   /** When true, shows addendum controls (mark item/section as add/remove) */
   isAddendum?: boolean;
+  /**
+   * Called when the user attempts to mutate while readOnly is true.
+   * Useful for the "auto-fork on edit of published version" pattern:
+   * the parent can intercept and create a draft version transparently.
+   */
+  onProtectedEditAttempt?: () => void;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
