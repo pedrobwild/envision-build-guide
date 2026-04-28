@@ -548,6 +548,8 @@ export default function PublicBudget() {
               discount={publicDiscountTotal}
               credit={publicCreditTotal}
               subtotal={publicSubtotalBeforeAbatements}
+              discounts={abatementBreakdown.discounts}
+              credits={abatementBreakdown.credits}
             />
             </div>
 
