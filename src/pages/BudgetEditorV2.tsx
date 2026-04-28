@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import type { BudgetRow, EditorSection } from "@/types/budget-common";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { sendBudgetPublishedNotification } from "@/lib/digisac-notify";
+import { enqueueOfflineSave, flushOfflineQueue, hasPending } from "@/lib/offline-save-queue";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -170,6 +171,7 @@ export default function BudgetEditorV2() {
   // simultâneos.
   const {
     data: sectionsData,
+    isLoading: sectionsInitialLoading,
     refetch: refetchSections,
   } = useQuery({
     queryKey: ["budget-editor-sections", budgetId],
@@ -307,20 +309,30 @@ export default function BudgetEditorV2() {
     setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      const { error } = await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", budgetId);
+      // Flush qualquer pendência anterior junto com o save atual.
+      const pending = (() => {
+        try { return JSON.parse(localStorage.getItem(`budget-offline-queue:${budgetId}`) || "{}"); } catch { return {}; }
+      })();
+      const payload = { ...pending, [field]: value };
+
+      const { error } = await supabase
+        .from("budgets")
+        .update(payload as Record<string, unknown>)
+        .eq("id", budgetId);
       if (error) {
+        // Persistência local: não perdemos a edição mesmo se a rede/RLS falhar.
+        enqueueOfflineSave(budgetId, field, value);
         saveErrorCount.current += 1;
         setSaveStatus("error");
-        // Dismiss previous error toast if any
         if (errorToastId.current) toast.dismiss(errorToastId.current);
         const persistent = saveErrorCount.current >= 2;
         errorToastId.current = toast.error(
-          "Não foi possível salvar as alterações.",
+          "Sem conexão — alteração salva localmente.",
           {
             duration: Infinity,
             description: persistent
-              ? "Se o problema continuar, copie o orçamento e recarregue a página."
-              : undefined,
+              ? "Vamos tentar enviar novamente automaticamente quando a conexão voltar."
+              : "Sua edição não será perdida.",
             action: {
               label: "Tentar novamente",
               onClick: () => {
@@ -332,6 +344,8 @@ export default function BudgetEditorV2() {
           }
         );
       } else {
+        // Sucesso — limpa fila local (foi flushada junto no UPDATE acima).
+        try { localStorage.removeItem(`budget-offline-queue:${budgetId}`); } catch { /* ignore */ }
         saveErrorCount.current = 0;
         if (errorToastId.current) { toast.dismiss(errorToastId.current); errorToastId.current = null; }
         setSaveStatus("saved");
@@ -342,7 +356,7 @@ export default function BudgetEditorV2() {
         }, 3000);
       }
     }, 600);
-  }, [budgetId, isPublishedVersion]);
+  }, [budgetId, isPublishedVersion, forkPublishedThenEdit]);
 
   // C3: Cancel auto-save timer on unmount
   useEffect(() => {
@@ -353,6 +367,29 @@ export default function BudgetEditorV2() {
       }
     };
   }, []);
+
+  // Sincroniza fila offline ao montar e ao reconectar — garante que edições
+  // feitas durante quedas de rede (ex.: trocar responsável enquanto sections
+  // carregam) sejam persistidas assim que possível.
+  useEffect(() => {
+    if (!budgetId) return;
+
+    const tryFlush = async () => {
+      if (!hasPending(budgetId)) return;
+      const ok = await flushOfflineQueue(budgetId);
+      if (ok) {
+        if (errorToastId.current) { toast.dismiss(errorToastId.current); errorToastId.current = null; }
+        setSaveStatus("saved");
+        setLastSavedAt(new Date());
+        toast.success("Alterações salvas localmente foram sincronizadas.");
+        setTimeout(() => setSaveStatus(prev => prev === "saved" ? "idle" : prev), 3000);
+      }
+    };
+
+    void tryFlush();
+    window.addEventListener("online", tryFlush);
+    return () => window.removeEventListener("online", tryFlush);
+  }, [budgetId]);
 
   const retrySave = useCallback(() => {
     if (lastSavePayload.current) {
@@ -604,13 +641,25 @@ export default function BudgetEditorV2() {
             </div>
           )}
 
-          {/* Workflow Bar — always visible */}
+          {/* Workflow Bar — always visible (não bloqueado por sections) */}
           <div className="mt-4">
             <WorkflowBar
               budget={budget}
               onBudgetUpdate={(fields) => setBudget({ ...budget, ...fields })}
             />
           </div>
+
+          {/* Banner não-bloqueante: sections ainda chegando.
+              UI continua editável (atribuição, prazo, status) — só a planilha
+              mostra skeleton. Edições falhas são guardadas em fila local. */}
+          {sectionsInitialLoading && (
+            <div className="mt-3 flex items-center gap-2 text-xs font-body text-muted-foreground border border-border/40 bg-muted/30 rounded-md px-3 py-2">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>
+                Carregando seções… você já pode atribuir responsável e ajustar status — alterações serão salvas mesmo se a planilha demorar.
+              </span>
+            </div>
+          )}
 
           {/* ── Tab navigation ── */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 flex-1 flex flex-col">
