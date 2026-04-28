@@ -369,6 +369,29 @@ export default function BudgetEditorV2() {
     };
   }, []);
 
+  // Sincroniza fila offline ao montar e ao reconectar — garante que edições
+  // feitas durante quedas de rede (ex.: trocar responsável enquanto sections
+  // carregam) sejam persistidas assim que possível.
+  useEffect(() => {
+    if (!budgetId) return;
+
+    const tryFlush = async () => {
+      if (!hasPending(budgetId)) return;
+      const ok = await flushOfflineQueue(budgetId);
+      if (ok) {
+        if (errorToastId.current) { toast.dismiss(errorToastId.current); errorToastId.current = null; }
+        setSaveStatus("saved");
+        setLastSavedAt(new Date());
+        toast.success("Alterações salvas localmente foram sincronizadas.");
+        setTimeout(() => setSaveStatus(prev => prev === "saved" ? "idle" : prev), 3000);
+      }
+    };
+
+    void tryFlush();
+    window.addEventListener("online", tryFlush);
+    return () => window.removeEventListener("online", tryFlush);
+  }, [budgetId]);
+
   const retrySave = useCallback(() => {
     if (lastSavePayload.current) {
       autoSaveBudgetField(lastSavePayload.current.field, lastSavePayload.current.value);
