@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { isCreditSection, isDiscountSection } from "@/lib/budget-calc";
 import { formatBRL, formatDate, formatDateLong, getValidityInfo } from "@/lib/formatBRL";
 import { Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
