@@ -225,6 +225,7 @@ export default function BudgetInternalDetail() {
     (searchParams.get("module") as ModuleKey) ?? null
   );
   const [lostDialogOpen, setLostDialogOpen] = useState(false);
+  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
   const hub = useBudgetHub(budgetId);
 
   // Sync activeModule with URL ?module=
