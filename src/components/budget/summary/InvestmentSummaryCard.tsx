@@ -5,6 +5,7 @@ import { TrustBadgesRow } from "./TrustBadgesRow";
 import { InstallmentPreview } from "./InstallmentPreview";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/formatBRL";
+import type { AbatementLine } from "@/lib/budget-calc";
 
 const LABEL = "budget-label text-[10px] text-muted-foreground";
 
@@ -13,16 +14,23 @@ interface InvestmentSummaryCardProps {
   installments: number;
   /** Loading skeleton state */
   loading?: boolean;
-  /** Promotional discount amount (positive number, optional) */
+  /** Promotional discount amount (positive number, optional) — total agregado */
   discount?: number;
-  /** Credit/abatement amount (positive number, optional) */
+  /** Credit/abatement amount (positive number, optional) — total agregado */
   credit?: number;
   /** Subtotal before discount+credit (optional) */
   subtotal?: number;
+  /** Linhas de desconto agrupadas por rótulo do item (sem expor valor por item) */
+  discounts?: AbatementLine[];
+  /** Linhas de crédito agrupadas por rótulo do item */
+  credits?: AbatementLine[];
 }
 
 export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummaryCardProps>(
-  function InvestmentSummaryCard({ total, installments, loading, discount = 0, credit = 0, subtotal = 0 }, ref) {
+  function InvestmentSummaryCard(
+    { total, installments, loading, discount = 0, credit = 0, subtotal = 0, discounts = [], credits = [] },
+    ref,
+  ) {
     if (loading) {
       return (
         <div
