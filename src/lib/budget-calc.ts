@@ -10,7 +10,26 @@ export interface CalcItem {
 export interface CalcSection {
   qty?: number | null;
   section_price?: number | null;
+  title?: string | null;
   items: CalcItem[];
+}
+
+/** Section title constants used to flag abatement-style sections. */
+export const DISCOUNT_SECTION_TITLE = "Descontos";
+export const CREDIT_SECTION_TITLE = "Créditos";
+
+const normalizeTitle = (t?: string | null): string =>
+  (t ?? "").trim().toLowerCase();
+
+/** True when the section is the dedicated discount bucket. */
+export function isDiscountSection(section: { title?: string | null }): boolean {
+  return normalizeTitle(section.title) === DISCOUNT_SECTION_TITLE.toLowerCase();
+}
+
+/** True when the section is the dedicated credit bucket.
+ *  Credits reduce the total shown to the client but DO NOT affect internal margin. */
+export function isCreditSection(section: { title?: string | null }): boolean {
+  return normalizeTitle(section.title) === CREDIT_SECTION_TITLE.toLowerCase();
 }
 
 export function calcSaleUnitPrice(cost: number | null | undefined, bdi: number | null | undefined): number {
