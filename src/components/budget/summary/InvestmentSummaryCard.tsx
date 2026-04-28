@@ -4,6 +4,7 @@ import { CountUpValue } from "../CountUpValue";
 import { TrustBadgesRow } from "./TrustBadgesRow";
 import { InstallmentPreview } from "./InstallmentPreview";
 import { cn } from "@/lib/utils";
+import { formatBRL } from "@/lib/utils/format-brl";
 
 const LABEL = "budget-label text-[10px] text-muted-foreground";
 
@@ -12,6 +13,12 @@ interface InvestmentSummaryCardProps {
   installments: number;
   /** Loading skeleton state */
   loading?: boolean;
+  /** Promotional discount amount (positive number, optional) */
+  discount?: number;
+  /** Credit/abatement amount (positive number, optional) */
+  credit?: number;
+  /** Subtotal before discount+credit (optional) */
+  subtotal?: number;
 }
 
 export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummaryCardProps>(
