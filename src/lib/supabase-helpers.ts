@@ -224,20 +224,28 @@ export function calculateSectionSubtotal(section: SectionLike): number {
       // explicitly by calculateBudgetTotal as a NEGATIVE.
       if (item.addendum_action === "remove") return sum;
       const unitPrice = Number(item.internal_unit_price) || 0;
-      const itemQty = Number(item.qty) || (unitPrice > 0 ? 1 : 0);
+      const itemQty = Number(item.qty) || (unitPrice !== 0 ? 1 : 0);
       const bdi = Number(item.bdi_percentage) || 0;
 
-      if (unitPrice > 0) {
+      // Allow negative unit prices (promotional discounts as line items)
+      if (unitPrice !== 0) {
         return sum + unitPrice * (1 + bdi / 100) * itemQty;
       }
       const cost = Number(item.internal_total) || 0;
-      if (cost > 0) {
+      if (cost !== 0) {
         const fallbackQty = Number(item.qty) || 1;
         return sum + cost * (1 + bdi / 100) * fallbackQty;
       }
       return sum;
     }, 0);
-    if (itemsSum > 0) return itemsSum * qty;
+    // Use computed sum whenever any item contributed (positive or negative).
+    const hasContribution = items.some((i) => {
+      if (i.addendum_action === "remove") return false;
+      const u = Number(i.internal_unit_price) || 0;
+      if (u !== 0) return true;
+      return (Number(i.internal_total) || 0) !== 0;
+    });
+    if (hasContribution) return itemsSum * qty;
   }
 
   if (section.section_price != null) {
