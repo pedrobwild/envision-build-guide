@@ -81,6 +81,13 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
     logger.warn("Falha ao resolver mídia padrão para o orçamento:", err);
   }
 
+  // Carrega metadados do template (incluindo desconto promocional padrão)
+  const { data: tplMeta } = await supabase
+    .from("budget_templates")
+    .select("default_discount_amount")
+    .eq("id", templateId)
+    .maybeSingle();
+
   const { data: templateSections, error: secErr } = await supabase
     .from("budget_template_sections")
     .select("id, title, subtitle, order_index, notes, tags, included_bullets, excluded_bullets, is_optional")
@@ -135,6 +142,36 @@ export async function seedFromTemplate(budgetId: string, templateId: string | nu
         internal_total: tItem.internal_total ?? null,
         bdi_percentage: tItem.bdi_percentage ?? 0,
       });
+    }
+  }
+
+  // ── Desconto promocional automático ──
+  // Se o template tiver `default_discount_amount > 0`, cria seção "Descontos"
+  // com item "Desconto promocional" de custo NEGATIVO desse valor.
+  const discountAmount = Number(tplMeta?.default_discount_amount ?? 0);
+  if (discountAmount > 0) {
+    const { data: discountSection } = await supabase
+      .from("sections")
+      .insert({
+        budget_id: budgetId,
+        title: "Descontos",
+        subtitle: "Aplicado sobre o subtotal do projeto",
+        order_index: templateSections.length,
+      })
+      .select("id")
+      .single();
+    if (discountSection) {
+      await supabase.from("items").insert({
+        section_id: discountSection.id,
+        title: "Desconto promocional",
+        qty: 1,
+        internal_unit_price: -discountAmount,
+        bdi_percentage: 0,
+        order_index: 0,
+        coverage_type: "geral",
+      });
+    } else {
+      logger.warn("[seed] Falha ao criar seção de desconto automático do template.");
     }
   }
 }

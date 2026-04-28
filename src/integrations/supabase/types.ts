@@ -702,6 +702,7 @@ export type Database = {
       budget_templates: {
         Row: {
           created_at: string | null
+          default_discount_amount: number
           description: string | null
           id: string
           is_active: boolean
@@ -711,6 +712,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          default_discount_amount?: number
           description?: string | null
           id?: string
           is_active?: boolean
@@ -720,6 +722,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          default_discount_amount?: number
           description?: string | null
           id?: string
           is_active?: boolean

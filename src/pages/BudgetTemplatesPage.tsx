@@ -508,20 +508,23 @@ export default function BudgetTemplatesPage() {
   };
 
   const duplicateTemplate = async (template: Template) => {
-    // 1. Load source template media_config
+    // 1. Load source template media_config + default_discount_amount
     const { data: srcTpl } = await supabase
       .from("budget_templates")
-      .select("media_config")
+      .select("media_config, default_discount_amount")
       .eq("id", template.id)
       .single();
 
-    // 2. Clone template with media_config
+    // 2. Clone template with media_config and default_discount_amount
     const { data: newTpl, error: tplErr } = await supabase
       .from("budget_templates")
       .insert({
         name: `${template.name} (cópia)`,
         description: template.description,
         ...(srcTpl?.media_config ? { media_config: srcTpl.media_config } : {}),
+        ...(srcTpl?.default_discount_amount != null
+          ? { default_discount_amount: srcTpl.default_discount_amount }
+          : {}),
       } as any)
       .select("id")
       .single();

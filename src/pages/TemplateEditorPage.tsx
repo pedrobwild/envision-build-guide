@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/formatBRL";
 import { calcItemSaleTotal, calcItemCostTotal } from "@/lib/budget-calc";
-import { ArrowLeft, LayoutTemplate, Loader2, Save, Check, X } from "lucide-react";
+import { ArrowLeft, LayoutTemplate, Loader2, Save, Check, X, BadgePercent } from "lucide-react";
 import TemplateMediaManager, { type MediaConfig, EMPTY_MEDIA_CONFIG } from "@/components/editor/TemplateMediaManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { SectionsEditor, TEMPLATE_TABLE_CONFIG } from "@/components/editor/SectionsEditor";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ interface TemplateData {
   description: string | null;
   is_active: boolean;
   media_config: MediaConfig;
+  default_discount_amount: number;
 }
 
 interface SectionData {
@@ -110,13 +112,14 @@ export default function TemplateEditorPage() {
 
     const { data: tpl } = await supabase
       .from("budget_templates")
-      .select("id, name, description, is_active, media_config, created_at, updated_at")
+      .select("id, name, description, is_active, media_config, default_discount_amount, created_at, updated_at")
       .eq("id", templateId)
       .single();
     if (!tpl) { navigate("/admin/templates"); return; }
     setTemplate({
       ...tpl,
       media_config: (tpl.media_config as unknown as MediaConfig | null) ?? { ...EMPTY_MEDIA_CONFIG },
+      default_discount_amount: Number((tpl as { default_discount_amount?: number | null }).default_discount_amount ?? 0),
     });
 
     const { data: secs } = await supabase
@@ -154,7 +157,12 @@ export default function TemplateEditorPage() {
     try {
       const { error } = await supabase
         .from("budget_templates")
-        .update({ name: tpl.name, description: tpl.description, media_config: tpl.media_config as any })
+        .update({
+          name: tpl.name,
+          description: tpl.description,
+          media_config: tpl.media_config as any,
+          default_discount_amount: Math.max(0, Number(tpl.default_discount_amount) || 0),
+        })
         .eq("id", tpl.id);
       if (error) {
         logger.error("Auto-save error:", error.message);
@@ -347,7 +355,32 @@ export default function TemplateEditorPage() {
           />
         </div>
 
-        {/* Media Manager */}
+        {/* Desconto promocional padrão */}
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+          <BadgePercent className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <label
+              htmlFor="default-discount-amount"
+              className="text-xs font-display font-bold uppercase tracking-[0.06em] text-foreground block"
+            >
+              Desconto promocional padrão
+            </label>
+            <p className="text-[11px] text-muted-foreground font-body mt-0.5">
+              Quando &gt; 0, todo orçamento criado a partir deste template recebe automaticamente uma seção
+              <span className="font-medium text-foreground"> Descontos</span> com este valor como custo negativo.
+              Deixe em <span className="font-medium text-foreground">R$ 0,00</span> para desativar.
+            </p>
+          </div>
+          <CurrencyInput
+            id="default-discount-amount"
+            value={template.default_discount_amount}
+            onChange={(v) => setTemplate({ ...template, default_discount_amount: Math.max(0, v ?? 0) })}
+            allowNegative={false}
+            className="w-36 shrink-0 h-9 rounded-md border border-border/60 bg-background px-3 text-sm font-mono tabular-nums text-right focus:outline-none focus:ring-2 focus:ring-primary/30"
+            placeholder="R$ 0,00"
+          />
+        </div>
+
         <div className="mb-4">
           <TemplateMediaManager
             templateId={templateId!}
