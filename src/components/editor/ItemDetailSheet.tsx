@@ -52,7 +52,7 @@ function calcMargin(cost: number | null | undefined, bdi: number | null | undefi
   return (Number(cost) || 0) * ((Number(bdi) || 0) / 100);
 }
 
-export function ItemDetailSheet({ open, onOpenChange, item, sectionId, budgetId, onUpdate, onImagesChange }: ItemDetailSheetProps) {
+export function ItemDetailSheet({ open, onOpenChange, item, sectionId, sectionTitle, budgetId, onUpdate, onImagesChange }: ItemDetailSheetProps) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const images = item.images || [];
@@ -177,11 +177,25 @@ export function ItemDetailSheet({ open, onOpenChange, item, sectionId, budgetId,
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-body">Custo unitário</Label>
+                <Label className="text-xs font-body">
+                  {isAbatementSection(sectionTitle) ? "Custo unitário (negativo)" : "Custo unitário"}
+                </Label>
                 <CurrencyInput
                   value={item.internal_unit_price ?? null}
-                  onChange={(v) => onUpdate(sectionId, item.id, "internal_unit_price", v)}
-                  placeholder="R$ 0,00"
+                  onChange={(v) =>
+                    onUpdate(
+                      sectionId,
+                      item.id,
+                      "internal_unit_price",
+                      normalizeAbatementValue(v, sectionTitle),
+                    )
+                  }
+                  placeholder={isAbatementSection(sectionTitle) ? "−R$ 0,00" : "R$ 0,00"}
+                  title={
+                    isAbatementSection(sectionTitle)
+                      ? "Valores nesta seção são sempre negativos. O sinal será ajustado automaticamente."
+                      : undefined
+                  }
                   className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-0 focus-visible:border-primary tabular-nums"
                 />
               </div>
