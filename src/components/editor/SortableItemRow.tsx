@@ -12,6 +12,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { ItemImageInline } from "./ItemImageInline";
 import { ItemDetailSheet } from "./ItemDetailSheet";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { MobileItemEditor } from "./MobileItemEditor";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -203,13 +204,11 @@ export function SortableItemRow({
 
         {/* [Custo] — 56px mobile, 100px desktop */}
         <div className="w-14 sm:w-[100px] flex-shrink-0 px-0.5 sm:px-1">
-          <input
-            type="number"
-            value={item.internal_unit_price ?? ""}
-            onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
-            placeholder="0.00"
-            step="0.01"
-            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-[11px] sm:text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 tabular-nums"
+          <CurrencyInput
+            value={item.internal_unit_price ?? null}
+            onChange={(v) => onUpdate(sectionId, item.id, "internal_unit_price", v)}
+            placeholder="R$ 0,00"
+            className="w-full h-7 sm:h-8 rounded border border-transparent bg-transparent text-[11px] sm:text-sm font-mono text-right placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary transition-colors duration-100 px-1"
           />
         </div>
 

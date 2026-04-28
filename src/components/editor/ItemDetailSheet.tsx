@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Lock, ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
@@ -175,13 +176,11 @@ export function ItemDetailSheet({ open, onOpenChange, item, sectionId, budgetId,
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-body">Custo unitário</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={item.internal_unit_price ?? ""}
-                  onChange={(e) => onUpdate(sectionId, item.id, "internal_unit_price", e.target.value ? Number(e.target.value) : null)}
-                  placeholder="0.00"
-                  className="tabular-nums"
+                <CurrencyInput
+                  value={item.internal_unit_price ?? null}
+                  onChange={(v) => onUpdate(sectionId, item.id, "internal_unit_price", v)}
+                  placeholder="R$ 0,00"
+                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-0 focus-visible:border-primary tabular-nums"
                 />
               </div>
               <div className="space-y-1.5">

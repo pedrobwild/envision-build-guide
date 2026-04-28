@@ -12,6 +12,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import { calcSaleUnitPrice } from "@/lib/budget-calc";
 import { cn } from "@/lib/utils";
 import { Check, Percent, TrendingUp, DollarSign, Link as LinkIcon } from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import type { ItemData } from "./SortableItemRow";
 
 const BDI_PRESETS = [
@@ -53,7 +54,7 @@ export function MobileItemEditor({
   const [description, setDescription] = useState(item.description || "");
   const [qty, setQty] = useState<string>(item.qty != null ? String(item.qty) : "");
   const [unit, setUnit] = useState(item.unit || "");
-  const [unitCost, setUnitCost] = useState<string>(item.internal_unit_price != null ? String(item.internal_unit_price) : "");
+  const [unitCost, setUnitCost] = useState<number | null>(item.internal_unit_price ?? null);
   const [bdi, setBdi] = useState<number>(Number(item.bdi_percentage) || 0);
   const [refUrl, setRefUrl] = useState(item.reference_url || "");
 
@@ -70,7 +71,7 @@ export function MobileItemEditor({
     setDescription(item.description || "");
     setQty(item.qty != null ? String(item.qty) : "");
     setUnit(item.unit || "");
-    setUnitCost(item.internal_unit_price != null ? String(item.internal_unit_price) : "");
+    setUnitCost(item.internal_unit_price ?? null);
     setBdi(Number(item.bdi_percentage) || 0);
     setRefUrl(item.reference_url || "");
     // Only sync when drawer opens (open changes to true)
@@ -78,7 +79,7 @@ export function MobileItemEditor({
   }, [open, item.id]);
 
   // Live calc values
-  const costNum = parseFloat(unitCost) || 0;
+  const costNum = unitCost ?? 0;
   const qtyNum = parseFloat(qty) || 1;
   const saleUnit = calcSaleUnitPrice(costNum, bdi);
   const margin = costNum * (bdi / 100);
@@ -93,7 +94,7 @@ export function MobileItemEditor({
       description: description || null,
       qty: qty ? Number(qty) : null,
       unit: unit || null,
-      internal_unit_price: unitCost ? Number(unitCost) : null,
+      internal_unit_price: unitCost,
       bdi_percentage: bdi,
       reference_url: refUrl || null,
     };
@@ -164,13 +165,10 @@ export function MobileItemEditor({
             </div>
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">Custo un.</label>
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.01"
+              <CurrencyInput
                 value={unitCost}
-                onChange={(e) => setUnitCost(e.target.value)}
-                placeholder="0.00"
+                onChange={setUnitCost}
+                placeholder="R$ 0,00"
                 className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm font-mono tabular-nums text-right placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
               />
             </div>
