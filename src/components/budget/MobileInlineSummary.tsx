@@ -10,6 +10,7 @@ import { PrimaryCTAButton } from "./summary/PrimaryCTAButton";
 import { ContractRequestDialog } from "./ContractRequestDialog";
 import { WhatsAppCommentDialog } from "./WhatsAppCommentDialog";
 import type { CategorizedGroup } from "@/lib/scope-categories";
+import type { AbatementLine } from "@/lib/budget-calc";
 
 interface MobileInlineSummaryProps {
   total: number;
@@ -30,12 +31,16 @@ interface MobileInlineSummaryProps {
   revised?: boolean;
   /** Contract already requested */
   contractRequested?: boolean;
-  /** Promotional discount amount (positive number) */
+  /** Promotional discount amount (positive number) — total agregado */
   discount?: number;
-  /** Credit/abatement amount (positive number) */
+  /** Credit/abatement amount (positive number) — total agregado */
   credit?: number;
   /** Subtotal before discount+credit */
   subtotal?: number;
+  /** Linhas de desconto agrupadas por rótulo do item */
+  discounts?: AbatementLine[];
+  /** Linhas de crédito agrupadas por rótulo do item */
+  credits?: AbatementLine[];
 }
 
 const DEFAULT_PHONE = "5511911906183";
