@@ -310,20 +310,30 @@ export default function BudgetEditorV2() {
     setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      const { error } = await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", budgetId);
+      // Flush qualquer pendência anterior junto com o save atual.
+      const pending = (() => {
+        try { return JSON.parse(localStorage.getItem(`budget-offline-queue:${budgetId}`) || "{}"); } catch { return {}; }
+      })();
+      const payload = { ...pending, [field]: value };
+
+      const { error } = await supabase
+        .from("budgets")
+        .update(payload as Record<string, unknown>)
+        .eq("id", budgetId);
       if (error) {
+        // Persistência local: não perdemos a edição mesmo se a rede/RLS falhar.
+        enqueueOfflineSave(budgetId, field, value);
         saveErrorCount.current += 1;
         setSaveStatus("error");
-        // Dismiss previous error toast if any
         if (errorToastId.current) toast.dismiss(errorToastId.current);
         const persistent = saveErrorCount.current >= 2;
         errorToastId.current = toast.error(
-          "Não foi possível salvar as alterações.",
+          "Sem conexão — alteração salva localmente.",
           {
             duration: Infinity,
             description: persistent
-              ? "Se o problema continuar, copie o orçamento e recarregue a página."
-              : undefined,
+              ? "Vamos tentar enviar novamente automaticamente quando a conexão voltar."
+              : "Sua edição não será perdida.",
             action: {
               label: "Tentar novamente",
               onClick: () => {
@@ -335,6 +345,8 @@ export default function BudgetEditorV2() {
           }
         );
       } else {
+        // Sucesso — limpa fila local (foi flushada junto no UPDATE acima).
+        try { localStorage.removeItem(`budget-offline-queue:${budgetId}`); } catch { /* ignore */ }
         saveErrorCount.current = 0;
         if (errorToastId.current) { toast.dismiss(errorToastId.current); errorToastId.current = null; }
         setSaveStatus("saved");
@@ -345,7 +357,7 @@ export default function BudgetEditorV2() {
         }, 3000);
       }
     }, 600);
-  }, [budgetId, isPublishedVersion]);
+  }, [budgetId, isPublishedVersion, forkPublishedThenEdit]);
 
   // C3: Cancel auto-save timer on unmount
   useEffect(() => {
