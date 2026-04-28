@@ -63,13 +63,16 @@ export async function seedFromTemplate(
 
   const sectionIds = existingSections?.map(s => s.id) ?? [];
   if (sectionIds.length > 0) {
+    report("Limpando itens existentes…", 6);
     const { error: itemsDelErr } = await supabase.from("items").delete().in("section_id", sectionIds);
     if (itemsDelErr) throw new Error(`Falha ao limpar itens existentes: ${itemsDelErr.message}`);
   }
+  report("Limpando seções existentes…", 10);
   const { error: secDelErr } = await supabase.from("sections").delete().eq("budget_id", budgetId);
   if (secDelErr) throw new Error(`Falha ao limpar seções existentes: ${secDelErr.message}`);
 
   if (!templateId) {
+    report("Aplicando mídia padrão…", 30);
     // Guardrail: nunca sobrescreve upload manual. Aplica padrão em camadas
     // (template selecionado → primeiro ativo → hardcoded) somente se o
     // orçamento ainda não tiver mídia.
@@ -84,8 +87,11 @@ export async function seedFromTemplate(
       logger.warn("Falha ao aplicar mídia padrão (sem template):", err);
     }
 
+    report("Criando seções padrão…", 60);
     const { seedDefaultSections } = await import("@/lib/default-budget-sections");
-    return seedDefaultSections(budgetId);
+    const result = await seedDefaultSections(budgetId);
+    report("Pronto!", 100);
+    return result;
   }
 
   // Guardrail: replicação de mídia padrão (com template) também respeita
