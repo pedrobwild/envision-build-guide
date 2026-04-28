@@ -111,13 +111,14 @@ export default function TemplateEditorPage() {
 
     const { data: tpl } = await supabase
       .from("budget_templates")
-      .select("id, name, description, is_active, media_config, created_at, updated_at")
+      .select("id, name, description, is_active, media_config, default_discount_amount, created_at, updated_at")
       .eq("id", templateId)
       .single();
     if (!tpl) { navigate("/admin/templates"); return; }
     setTemplate({
       ...tpl,
       media_config: (tpl.media_config as unknown as MediaConfig | null) ?? { ...EMPTY_MEDIA_CONFIG },
+      default_discount_amount: Number((tpl as { default_discount_amount?: number | null }).default_discount_amount ?? 0),
     });
 
     const { data: secs } = await supabase
