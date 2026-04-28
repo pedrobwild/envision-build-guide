@@ -218,8 +218,8 @@ describe("Discount + Credit — calculation engine", () => {
         };
         return discountFirst ? [discount, sales] : [sales, discount];
       };
-      expect(calculateBudgetTotal(make(true) as never)).toBe(
-        calculateBudgetTotal(make(false) as never),
+      expect(calculateBudgetTotal(make(true) as never, [])).toBe(
+        calculateBudgetTotal(make(false) as never, []),
       );
     });
   });
