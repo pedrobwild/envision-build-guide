@@ -90,8 +90,12 @@ export function calcSectionSaleTotal(section: CalcSection): number {
 }
 
 export function calcGrandTotals(sections: CalcSection[]) {
-  const cost = sections.reduce((sum, s) => sum + calcSectionCostTotal(s), 0);
-  const sale = sections.reduce((sum, s) => sum + calcSectionSaleTotal(s), 0);
+  // Credits are abatements that should not impact internal margin / BDI.
+  // They still reduce the public total elsewhere, but here we exclude them
+  // so the margin reflects the real production economics.
+  const marginSections = sections.filter((s) => !isCreditSection(s));
+  const cost = marginSections.reduce((sum, s) => sum + calcSectionCostTotal(s), 0);
+  const sale = marginSections.reduce((sum, s) => sum + calcSectionSaleTotal(s), 0);
   const margin = sale - cost;
   const bdiPercent = cost > 0 ? ((sale / cost) - 1) * 100 : 0;
   const marginPercent = sale > 0 ? (margin / sale) * 100 : 0;
