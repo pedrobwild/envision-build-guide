@@ -151,6 +151,12 @@ interface SectionsEditorProps {
   readOnly?: boolean;
   /** When true, shows addendum controls (mark item/section as add/remove) */
   isAddendum?: boolean;
+  /**
+   * Called when the user attempts to mutate while readOnly is true.
+   * Useful for the "auto-fork on edit of published version" pattern:
+   * the parent can intercept and create a draft version transparently.
+   */
+  onProtectedEditAttempt?: () => void;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
@@ -731,7 +737,15 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, readOnly = false, isAddendum = false }: SectionsEditorProps) {
+export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, readOnly = false, isAddendum = false, onProtectedEditAttempt }: SectionsEditorProps) {
+  // Centralised guard so any mutation attempted while in readOnly mode can be
+  // intercepted by the parent (e.g. to auto-fork a published version into a
+  // new draft instead of silently no-op'ing the user's action).
+  const blockedByReadOnly = useCallback(() => {
+    if (!readOnly) return false;
+    if (onProtectedEditAttempt) onProtectedEditAttempt();
+    return true;
+  }, [readOnly, onProtectedEditAttempt]);
   const cfg = tableConfig ?? DEFAULT_TABLE_CONFIG;
   const storageKey = `budget-sections-state-${budgetId}`;
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
@@ -823,7 +837,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   );
 
   const debouncedSave = useCallback((logicalTable: string, id: string, updates: Record<string, unknown>) => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     const key = `${logicalTable}-${id}`;
 
     pendingUpdates.current[key] = {
@@ -854,7 +868,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   }, [cfg, readOnly]);
 
   const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     const updated = sections.map(s =>
       s.id === sectionId ? { ...s, [field]: value } : s
     );
@@ -915,7 +929,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   sectionsRef.current = sections;
 
   const updateItem = (sectionId: string, itemId: string, field: string, value: string | number | boolean | Record<string, unknown> | null) => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     const currentSections = sectionsRef.current;
     let updated = currentSections.map(s => {
       if (s.id !== sectionId) return s;
@@ -943,7 +957,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const addSection = async () => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     const order = sections.length;
     const { data } = await dbFrom(cfg.sectionTable)
       .insert({ [cfg.sectionForeignKey]: budgetId, title: "Nova Seção", order_index: order })
@@ -962,7 +976,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
    *  - Desconto: aparece como "Desconto promocional" e impacta margem.
    *  - Crédito: aparece como "Crédito" e NÃO impacta a margem interna. */
   const addAbatement = async (kind: "discount" | "credit") => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     const SECTION_TITLE = kind === "credit" ? "Créditos" : "Descontos";
     const ITEM_TITLE = kind === "credit" ? "Crédito" : "Desconto promocional";
     const SUBTITLE = kind === "credit"
@@ -1039,7 +1053,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
 
   const duplicateSection = async (sectionId: string) => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     const source = sections.find(s => s.id === sectionId);
     if (!source) return;
     const order = sections.length;
@@ -1153,7 +1167,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const deleteItem = async (sectionId: string, itemId: string) => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     await dbFrom(cfg.itemTable).delete().eq("id", itemId);
     let updated = sections.map(s => {
       if (s.id !== sectionId) return s;
@@ -1168,7 +1182,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const deleteSection = async (sectionId: string) => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     const section = sections.find(s => s.id === sectionId);
     if (section && section.items.length > 0) {
       const itemIds = section.items.map(i => i.id);
@@ -1242,7 +1256,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
   /* ── Drag handlers with rollback ── */
   const handleSectionDragEnd = async (event: DragEndEvent) => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -1267,7 +1281,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const handleItemDragEnd = (sectionId: string) => async (event: DragEndEvent) => {
-    if (readOnly) return;
+    if (blockedByReadOnly()) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
