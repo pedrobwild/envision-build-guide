@@ -154,7 +154,7 @@ export async function seedFromTemplate(
       .select("id")
       .single();
 
-    if (!section) continue;
+    if (!section) { processed += 1; continue; }
 
     // Load items for this template section
     const { data: templateItems } = await supabase
@@ -163,23 +163,28 @@ export async function seedFromTemplate(
       .eq("template_section_id", tSec.id)
       .order("order_index");
 
-    if (!templateItems || templateItems.length === 0) continue;
-
-    for (const tItem of templateItems as TemplateItemRow[]) {
-      await supabase.from("items").insert({
-        section_id: section.id,
-        title: tItem.title,
-        description: tItem.description || null,
-        unit: tItem.unit || null,
-        qty: tItem.qty ?? null,
-        order_index: tItem.order_index,
-        coverage_type: tItem.coverage_type || "geral",
-        reference_url: tItem.reference_url || null,
-        internal_unit_price: tItem.internal_unit_price ?? null,
-        internal_total: tItem.internal_total ?? null,
-        bdi_percentage: tItem.bdi_percentage ?? 0,
-      });
+    if (templateItems && templateItems.length > 0) {
+      for (const tItem of templateItems as TemplateItemRow[]) {
+        await supabase.from("items").insert({
+          section_id: section.id,
+          title: tItem.title,
+          description: tItem.description || null,
+          unit: tItem.unit || null,
+          qty: tItem.qty ?? null,
+          order_index: tItem.order_index,
+          coverage_type: tItem.coverage_type || "geral",
+          reference_url: tItem.reference_url || null,
+          internal_unit_price: tItem.internal_unit_price ?? null,
+          internal_total: tItem.internal_total ?? null,
+          bdi_percentage: tItem.bdi_percentage ?? 0,
+        });
+      }
     }
+    processed += 1;
+  }
+
+  if (discountAmount > 0) {
+    report("Aplicando desconto promocional…", 92);
   }
 
   // ── Desconto promocional automático ──
