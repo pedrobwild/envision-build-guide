@@ -72,36 +72,52 @@ export const InvestmentSummaryCard = forwardRef<HTMLDivElement, InvestmentSummar
         />
 
         <div className="relative space-y-1.5">
-          {(discount > 0 || credit > 0) && subtotal > 0 && (
-            <div className="space-y-1 pb-2 mb-1 border-b border-border/60">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[11px] text-muted-foreground font-body">Subtotal</span>
-                <span className="text-sm font-body tabular-nums text-muted-foreground line-through">
-                  {formatBRL(subtotal)}
-                </span>
+          {(discount > 0 || credit > 0) && subtotal > 0 && (() => {
+            // Se vieram listas detalhadas por rótulo, renderiza-as.
+            // Senão, mantém compat com totais agregados (1 linha cada).
+            const discountLines: AbatementLine[] =
+              discounts.length > 0
+                ? discounts
+                : discount > 0
+                ? [{ label: "Desconto promocional", total: discount }]
+                : [];
+            const creditLines: AbatementLine[] =
+              credits.length > 0
+                ? credits
+                : credit > 0
+                ? [{ label: "Crédito", total: credit }]
+                : [];
+            return (
+              <div className="space-y-1 pb-2 mb-1 border-b border-border/60">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[11px] text-muted-foreground font-body">Subtotal</span>
+                  <span className="text-sm font-body tabular-nums text-muted-foreground line-through">
+                    {formatBRL(subtotal)}
+                  </span>
+                </div>
+                {discountLines.map((line) => (
+                  <div key={`d-${line.label}`} className="flex items-baseline justify-between gap-3">
+                    <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400 truncate">
+                      {line.label}
+                    </span>
+                    <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400 shrink-0">
+                      − {formatBRL(line.total)}
+                    </span>
+                  </div>
+                ))}
+                {creditLines.map((line) => (
+                  <div key={`c-${line.label}`} className="flex items-baseline justify-between gap-3">
+                    <span className="text-[11px] font-body font-medium text-sky-700 dark:text-sky-400 truncate">
+                      {line.label}
+                    </span>
+                    <span className="text-sm font-body font-semibold tabular-nums text-sky-700 dark:text-sky-400 shrink-0">
+                      − {formatBRL(line.total)}
+                    </span>
+                  </div>
+                ))}
               </div>
-              {discount > 0 && (
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-[11px] font-body font-medium text-emerald-700 dark:text-emerald-400">
-                    Desconto promocional
-                  </span>
-                  <span className="text-sm font-body font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                    − {formatBRL(discount)}
-                  </span>
-                </div>
-              )}
-              {credit > 0 && (
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-[11px] font-body font-medium text-sky-700 dark:text-sky-400">
-                    Crédito
-                  </span>
-                  <span className="text-sm font-body font-semibold tabular-nums text-sky-700 dark:text-sky-400">
-                    − {formatBRL(credit)}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+            );
+          })()}
           {/* Total — label e valor sem espaço extra para criar bloco coeso */}
           <div>
             <p className={cn(LABEL, "mb-0.5 leading-none")}>Investimento total</p>
