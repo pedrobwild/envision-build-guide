@@ -542,7 +542,9 @@ export default function PublicBudget() {
               clientName={budget.client_name}
               publicId={publicId || "demo"}
               budgetId={budget.id}
-              
+              discount={publicDiscountTotal}
+              credit={publicCreditTotal}
+              subtotal={publicSubtotalBeforeAbatements}
             />
             </div>
 
