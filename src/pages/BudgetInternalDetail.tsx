@@ -64,6 +64,8 @@ import { format, differenceInCalendarDays, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { BlockingDialog } from "@/components/editor/BlockingDialog";
+import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
