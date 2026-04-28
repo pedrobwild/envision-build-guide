@@ -72,20 +72,11 @@ export function BudgetSummary({
   const scopeTotal =
     categorizedGroups?.reduce((s, g) => s + g.subtotal, 0) || 0;
 
-  // Split abatements by dedicated section title.
-  // - Discounts: section "Descontos" (impacts margin)
-  // - Credits:   section "Créditos" (does NOT impact margin)
-  // Anything else negative falls back into "discount" bucket so we don't lose it.
-  let discountTotal = 0;
-  let creditTotal = 0;
-  for (const s of sections) {
-    const sub = calculateSectionSubtotal(s);
-    if (sub >= 0) continue;
-    const abs = Math.abs(sub);
-    if (isCreditSection(s)) creditTotal += abs;
-    else if (isDiscountSection(s)) discountTotal += abs;
-    else discountTotal += abs;
-  }
+  // Agregação de abatimentos por rótulo do item.
+  // - Descontos: itens negativos em seções de desconto (ou genéricas, fallback).
+  // - Créditos: itens negativos em seções de crédito (não impactam margem).
+  // Cada rótulo único vira uma linha; valores por item NUNCA são expostos ao cliente.
+  const { discounts, credits, discountTotal, creditTotal } = aggregateAbatementsByLabel(sections);
   const abatementTotal = discountTotal + creditTotal;
   const subtotalBeforeDiscount = total + abatementTotal;
 
