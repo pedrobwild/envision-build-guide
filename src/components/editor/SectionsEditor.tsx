@@ -1123,10 +1123,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
         const newItem = { ...data, images: itemImages } as ItemData;
         const newItems = [...s.items, newItem];
         const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
-        if (newSaleTotal > 0) {
+        if (newSaleTotal !== 0) {
           dbFrom(cfg.sectionTable).update({ section_price: newSaleTotal }).eq("id", sectionId);
         }
-        return { ...s, items: newItems, section_price: newSaleTotal > 0 ? newSaleTotal : s.section_price };
+        return { ...s, items: newItems, section_price: newSaleTotal !== 0 ? newSaleTotal : s.section_price };
       });
       updated = recalcTaxItem(updated);
       onSectionsChange(updated);
