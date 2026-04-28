@@ -137,7 +137,7 @@ export function BudgetSummary({
         )}
 
         {/* Total card */}
-        <TotalCard total={total} installments={installments} discount={discountTotal} subtotal={subtotalBeforeDiscount} />
+        <TotalCard total={total} installments={installments} discount={discountTotal} credit={creditTotal} subtotal={subtotalBeforeDiscount} />
 
         {/* Installment simulator */}
         <div className="px-5 pb-2">
