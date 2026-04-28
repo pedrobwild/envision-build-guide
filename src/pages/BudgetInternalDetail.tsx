@@ -52,6 +52,7 @@ import {
   Activity,
   Plus,
   Copy,
+  RotateCcw,
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import {
@@ -64,6 +65,8 @@ import { format, differenceInCalendarDays, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { BlockingDialog } from "@/components/editor/BlockingDialog";
+import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
@@ -200,6 +203,7 @@ export default function BudgetInternalDetail() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin, isComercial } = useUserProfile();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [budget, setBudget] = useState<BudgetDetail | null>(null);
@@ -221,6 +225,7 @@ export default function BudgetInternalDetail() {
     (searchParams.get("module") as ModuleKey) ?? null
   );
   const [lostDialogOpen, setLostDialogOpen] = useState(false);
+  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
   const hub = useBudgetHub(budgetId);
 
   // Sync activeModule with URL ?module=
@@ -649,6 +654,21 @@ export default function BudgetInternalDetail() {
                   : "Publicar e ver"}
               </span>
             </Button>
+            {(isAdmin || isComercial) &&
+              ["delivered_to_sales", "sent_to_client", "minuta_solicitada"].includes(
+                budget.internal_status
+              ) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRevisionDialogOpen(true)}
+                  className="gap-1.5 border-warning/40 text-warning hover:bg-warning/5 hover:text-warning"
+                  title="Devolver para o orçamentista revisar"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Solicitar revisão</span>
+                </Button>
+              )}
             <Button
               variant="outline"
               size="sm"
@@ -1296,6 +1316,29 @@ export default function BudgetInternalDetail() {
         open={lostDialogOpen}
         onOpenChange={setLostDialogOpen}
         onConfirm={handleMarkLost}
+      />
+
+      <RevisionRequestDialog
+        open={revisionDialogOpen}
+        onOpenChange={setRevisionDialogOpen}
+        budgetId={budget.id}
+        currentStatus={budget.internal_status}
+        onSuccess={() => {
+          setRevisionDialogOpen(false);
+          setBudget((prev) => (prev ? { ...prev, internal_status: "revision_requested" } : prev));
+          setEvents((prev) => [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              event_type: "revision_requested",
+              from_status: budget.internal_status,
+              to_status: "revision_requested",
+              note: null,
+              user_id: user?.id ?? null,
+              created_at: new Date().toISOString(),
+            },
+          ]);
+        }}
       />
     </div>
   );
