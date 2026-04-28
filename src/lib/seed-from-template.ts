@@ -192,7 +192,6 @@ export async function seedFromTemplate(
   // ── Desconto promocional automático ──
   // Se o template tiver `default_discount_amount > 0`, cria seção "Descontos"
   // com item "Desconto promocional" de custo NEGATIVO desse valor.
-  const discountAmount = Number(tplMeta?.default_discount_amount ?? 0);
   if (discountAmount > 0) {
     const { data: discountSection } = await supabase
       .from("sections")
@@ -218,4 +217,6 @@ export async function seedFromTemplate(
       logger.warn("[seed] Falha ao criar seção de desconto automático do template.");
     }
   }
+
+  report("Pronto!", 100);
 }
