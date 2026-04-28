@@ -128,72 +128,108 @@ export default function BudgetEditorV2() {
     setStartingRevision(false);
   };
 
-  useEffect(() => {
-    let cancelled = false;
+  // ── Cached fetches via React Query ────────────────────────────────────────
+  // Budget header (single row). Cached por budgetId; staleTime herda do
+  // QueryClient global (2 min). Evita refetch redundante em remounts rápidos
+  // após import de template, navegação entre abas, etc.
+  const {
+    data: budgetData,
+    error: budgetQueryError,
+  } = useQuery({
+    queryKey: ["budget-editor-budget", budgetId],
+    queryFn: async () => {
+      if (!budgetId) return null;
+      const { data, error } = await supabase
+        .from("budgets")
+        .select("*")
+        .eq("id", budgetId)
+        .single();
+      if (error) throw error;
+      return data as BudgetRow;
+    },
+    enabled: !!budgetId,
+  });
 
-    async function loadBudgetData() {
-      if (!budgetId) return;
-      const { data: b, error: bErr } = await supabase.from("budgets").select("*").eq("id", budgetId).single();
-      if (cancelled) return;
-      if (bErr || !b) { navigate("/admin"); return; }
-      setBudget(b);
+  // Version count (lookup leve). Só dispara quando há version_group_id.
+  const { data: versionCountData } = useQuery({
+    queryKey: ["budget-editor-version-count", budgetData?.version_group_id],
+    queryFn: async () => {
+      if (!budgetData?.version_group_id) return 1;
+      const { count } = await supabase
+        .from("budgets")
+        .select("id", { count: "exact", head: true })
+        .eq("version_group_id", budgetData.version_group_id);
+      return count ?? 1;
+    },
+    enabled: !!budgetData?.version_group_id,
+  });
 
-      if (b.version_group_id) {
-        const { count } = await supabase
-          .from("budgets")
-          .select("id", { count: "exact", head: true })
-          .eq("version_group_id", b.version_group_id);
-        if (!cancelled) setVersionCount(count ?? 1);
-      } else {
-        if (!cancelled) setVersionCount(1);
-      }
-
-      const { data: secs, error: secsErr } = await supabase
+  // Sections + items + item_images. Single nested query (1 round-trip),
+  // resultado em cache por budgetId. Após import/template, o `invalidateQueries`
+  // disparado por `reloadSections` garante refetch sem requests duplicados
+  // simultâneos.
+  const {
+    data: sectionsData,
+    isFetching: sectionsFetching,
+    refetch: refetchSections,
+  } = useQuery({
+    queryKey: ["budget-editor-sections", budgetId],
+    queryFn: async () => {
+      if (!budgetId) return [] as EditorSection[];
+      const { data, error } = await supabase
         .from("sections")
         .select("*, items(*, item_images(*))")
         .eq("budget_id", budgetId)
         .order("order_index", { ascending: true });
-
-      if (cancelled) return;
-      if (secsErr) toast.error(`Erro ao carregar seções: ${secsErr.message}`);
-
-      const sorted = (secs || []).map(s => ({
+      if (error) throw error;
+      return (data || []).map((s) => ({
         ...s,
         items: (s.items || [])
-          .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
-          .map((item) => ({
+          .sort(
+            (a: Record<string, unknown>, b: Record<string, unknown>) =>
+              ((a.order_index as number) || 0) - ((b.order_index as number) || 0),
+          )
+          .map((item: Record<string, unknown>) => ({
             ...item,
-            images: item.item_images || [],
+            images: (item as Record<string, unknown>).item_images || [],
           })),
       })) as unknown as EditorSection[];
-      setSections(sorted);
+    },
+    enabled: !!budgetId,
+  });
+
+  // Sync remote → local mutable state. Mantemos `setSections` para edição
+  // local rápida (drag/drop, inline edits) sem reescrever o cache a cada keystroke.
+  useEffect(() => {
+    if (budgetQueryError) {
+      navigate("/admin");
+      return;
     }
+    if (budgetData) setBudget(budgetData);
+  }, [budgetData, budgetQueryError, navigate]);
 
-    loadBudgetData();
-    return () => { cancelled = true; };
-  }, [budgetId, navigate]);
+  useEffect(() => {
+    if (sectionsData) setSections(sectionsData);
+  }, [sectionsData]);
 
-  // Reload sections from DB without full page reload
+  useEffect(() => {
+    if (typeof versionCountData === "number") setVersionCount(versionCountData);
+  }, [versionCountData]);
+
+  // Reload sections from DB without full page reload. Invalida o cache para
+  // forçar refetch e desduplicar múltiplas chamadas simultâneas.
   const reloadSections = useCallback(async () => {
     if (!budgetId) return;
     setSectionsLoading(true);
-    const { data: secs } = await supabase
-      .from("sections")
-      .select("*, items(*, item_images(*))")
-      .eq("budget_id", budgetId)
-      .order("order_index", { ascending: true });
-    const sorted = (secs || []).map(s => ({
-      ...s,
-      items: (s.items || [])
-        .sort((a: Record<string, unknown>, b: Record<string, unknown>) => ((a.order_index as number) || 0) - ((b.order_index as number) || 0))
-        .map((item: Record<string, unknown>) => ({
-          ...item,
-          images: (item as Record<string, unknown>).item_images || [],
-        })),
-    })) as unknown as EditorSection[];
-    setSections(sorted);
-    setSectionsLoading(false);
-  }, [budgetId]);
+    try {
+      await queryClient.invalidateQueries({
+        queryKey: ["budget-editor-sections", budgetId],
+      });
+      await refetchSections();
+    } finally {
+      setSectionsLoading(false);
+    }
+  }, [budgetId, queryClient, refetchSections]);
 
   // Reload callback for VersionTimeline — navigate to new version instead of full reload
   const reloadBudget = useCallback((newBudgetId?: string) => {
