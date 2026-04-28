@@ -56,7 +56,8 @@ export function ItemDetailSheet({ open, onOpenChange, item, sectionId, budgetId,
 
   const saleUnit = calcSaleUnit(item.internal_unit_price, item.bdi_percentage);
   const qty = Number(item.qty) || 1;
-  const totalCost = item.internal_total != null && Number(item.internal_total) > 0
+  // Allow negative totals (discounts/credits applied as negative line items)
+  const totalCost = item.internal_total != null && Number(item.internal_total) !== 0
     ? Number(item.internal_total)
     : (Number(item.internal_unit_price) || 0) * qty;
   const totalSale = saleUnit * qty;
