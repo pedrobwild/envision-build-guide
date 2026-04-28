@@ -8,7 +8,7 @@ import { MetadataStep } from "@/components/editor/MetadataStep";
 import { SectionsEditor } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { VersionTimeline } from "@/components/editor/VersionTimeline";
-import { ensureVersionGroup, publishVersion, duplicateBudgetAsVersion } from "@/lib/budget-versioning";
+import { ensureVersionGroup, publishVersion, duplicateBudgetAsVersion, deleteDraftVersion, setCurrentVersion } from "@/lib/budget-versioning";
 import {
   hasActiveForkFor,
   tryAcquireForkLock,
