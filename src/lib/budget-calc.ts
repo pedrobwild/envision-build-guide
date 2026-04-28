@@ -5,6 +5,7 @@ export interface CalcItem {
   internal_unit_price?: number | null;
   internal_total?: number | null;
   bdi_percentage?: number | null;
+  title?: string | null;
 }
 
 export interface CalcSection {
