@@ -955,6 +955,74 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     }
   };
 
+  /** Cria (ou reutiliza) a seção "Descontos" e adiciona um item de desconto promocional
+   *  com qtd=1 e custo negativo padrão de -R$ 1.000 (editável). */
+  const addDiscount = async () => {
+    if (readOnly) return;
+    const DISCOUNT_SECTION_TITLE = "Descontos";
+    const DEFAULT_DISCOUNT_AMOUNT = -1000;
+
+    // 1) Reutiliza seção "Descontos" se já existir; senão cria
+    let discountSection = sections.find(
+      (s) => (s.title || "").trim().toLowerCase() === DISCOUNT_SECTION_TITLE.toLowerCase(),
+    );
+    let updatedSections = sections;
+
+    if (!discountSection) {
+      const order = sections.length;
+      const { data: newSec, error: secErr } = await dbFrom(cfg.sectionTable)
+        .insert({
+          [cfg.sectionForeignKey]: budgetId,
+          title: DISCOUNT_SECTION_TITLE,
+          subtitle: "Aplicado sobre o subtotal do projeto",
+          order_index: order,
+        })
+        .select()
+        .single();
+      if (secErr || !newSec) {
+        toast.error("Não foi possível criar a seção de descontos");
+        return;
+      }
+      discountSection = { ...newSec, items: [] } as SectionData;
+      updatedSections = [...sections, discountSection];
+    }
+
+    // 2) Insere o item de desconto
+    const order = discountSection.items.length;
+    const insertPayload: Record<string, unknown> = {
+      [cfg.itemForeignKey]: discountSection.id,
+      title: "Desconto promocional",
+      description: null,
+      unit: null,
+      qty: 1,
+      internal_unit_price: DEFAULT_DISCOUNT_AMOUNT,
+      bdi_percentage: 0,
+      order_index: order,
+    };
+    const { data: newItem, error: itemErr } = await dbFrom(cfg.itemTable)
+      .insert(insertPayload)
+      .select()
+      .single();
+    if (itemErr || !newItem) {
+      toast.error("Não foi possível adicionar o desconto");
+      return;
+    }
+
+    // 3) Atualiza estado local + section_price
+    let next = updatedSections.map((s) => {
+      if (s.id !== discountSection!.id) return s;
+      const newItems = [...s.items, { ...newItem, images: [] } as ItemData];
+      const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
+      dbFrom(cfg.sectionTable).update({ section_price: newSaleTotal }).eq("id", s.id);
+      return { ...s, items: newItems, section_price: newSaleTotal };
+    });
+    next = recalcTaxItem(next);
+    onSectionsChange(next);
+    setExpandedSections((prev) => new Set(prev).add(discountSection!.id));
+    toast.success("Desconto adicionado — ajuste o valor conforme necessário");
+  };
+
+
   const duplicateSection = async (sectionId: string) => {
     if (readOnly) return;
     const source = sections.find(s => s.id === sectionId);
