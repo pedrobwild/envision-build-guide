@@ -690,8 +690,12 @@ export default function BudgetEditorV2() {
             <TabsContent value="planilha" className="mt-0 flex-1">
               <div className="flex">
                 <div className={cn("flex-1 min-w-0", briefingOpen && "mr-[320px]")}>
-                  {/* Apply template button for orçamentista/admin */}
-                  {(isOrcamentista || isAdmin) && sections.length === 0 && (
+                  {/* Apply template button for orçamentista/admin — só mostra "Aplicar Template" como CTA grande
+                      quando temos certeza de que o orçamento está vazio (load concluído). Durante o
+                      carregamento inicial mostramos um skeleton em vez do empty state, para evitar
+                      o efeito visual de "Orçamento em branco" quando na verdade os dados ainda
+                      estão chegando do servidor. */}
+                  {(isOrcamentista || isAdmin) && sections.length === 0 && !sectionsInitialLoading && (
                     <div className="flex items-center justify-center py-8">
                       <Button
                         variant="outline"
@@ -720,7 +724,7 @@ export default function BudgetEditorV2() {
                     budgetId={budgetId!}
                     sections={sections}
                     onSectionsChange={setSections}
-                    loading={sectionsLoading}
+                    loading={sectionsLoading || (sectionsInitialLoading && sections.length === 0)}
                     readOnly={isPublishedVersion}
                     isAddendum={budget.is_addendum === true}
                   />
