@@ -279,14 +279,29 @@ export default function BudgetEditorV2() {
   // Quando o usuário edita uma versão publicada, criamos automaticamente uma nova
   // versão (rascunho) para que as alterações não fiquem visíveis ao cliente até
   // que ele clique em "Salvar e Publicar".
+  //
+  // Dedup cross-route: usamos `auto-fork-lock` (sessionStorage) para garantir
+  // que múltiplas mutações em sequência reaproveitem o mesmo rascunho — sem
+  // isso, cada delete/edit gerava uma versão nova porque o ref em memória
+  // resetava no remount após o `navigate`.
   const forkPublishedThenEdit = useCallback(async (field: string, value: unknown) => {
-    if (!budgetId || !user || forkInProgress.current) return;
+    if (!budgetId || !user) return;
+
+    const existing = hasActiveForkFor(budgetId);
+    if (existing?.status === "ready" && existing.newId) {
+      await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", existing.newId);
+      navigate(`/admin/budget/${existing.newId}`);
+      return;
+    }
+    if (existing?.status === "pending" || forkInProgress.current) return;
+    if (!tryAcquireForkLock(budgetId)) return;
+
     forkInProgress.current = true;
     setSaveStatus("saving");
     try {
       const newId = await duplicateBudgetAsVersion(budgetId, user.id, "Edição pós-publicação (rascunho automático)");
-      // Aplica a edição diretamente na nova versão antes de navegar para evitar perda do valor.
       await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", newId);
+      completeForkLock(budgetId, newId);
       toast.success("Rascunho criado para esta edição.", {
         description: "A versão pública continua online. Use 'Salvar e Publicar' para publicar.",
         duration: 5000,
@@ -294,6 +309,7 @@ export default function BudgetEditorV2() {
       navigate(`/admin/budget/${newId}`);
     } catch (err) {
       forkInProgress.current = false;
+      releaseForkLock(budgetId);
       setSaveStatus("error");
       toast.error(err instanceof Error ? err.message : "Não foi possível criar rascunho para edição.");
     }
@@ -301,16 +317,26 @@ export default function BudgetEditorV2() {
 
   // Quando o usuário tenta editar/excluir itens ou seções numa versão publicada,
   // criamos automaticamente uma nova versão (rascunho) e navegamos para ela —
-  // a operação pode ser refeita imediatamente sem o readOnly. Evita o "sistema
-  // não está deixando modificar" silencioso.
+  // a operação pode ser refeita imediatamente sem o readOnly. Mesma estratégia
+  // de dedup do `forkPublishedThenEdit`.
   const forkPublishedForStructuralEdit = useCallback(async () => {
-    if (!budgetId || !user || forkInProgress.current) return;
+    if (!budgetId || !user) return;
+
+    const existing = hasActiveForkFor(budgetId);
+    if (existing?.status === "ready" && existing.newId) {
+      navigate(`/admin/budget/${existing.newId}`);
+      return;
+    }
+    if (existing?.status === "pending" || forkInProgress.current) return;
+    if (!tryAcquireForkLock(budgetId)) return;
+
     forkInProgress.current = true;
     const tid = toast.loading("Criando rascunho para edição…", {
       description: "A versão publicada continua online. Você poderá editar tudo na nova versão.",
     });
     try {
       const newId = await duplicateBudgetAsVersion(budgetId, user.id, "Edição pós-publicação (rascunho automático)");
+      completeForkLock(budgetId, newId);
       toast.success("Rascunho criado — agora você pode editar.", {
         id: tid,
         description: "A versão pública continua online. Use 'Salvar e Publicar' para publicar.",
@@ -319,9 +345,11 @@ export default function BudgetEditorV2() {
       navigate(`/admin/budget/${newId}`);
     } catch (err) {
       forkInProgress.current = false;
+      releaseForkLock(budgetId);
       toast.error(err instanceof Error ? err.message : "Não foi possível criar rascunho para edição.", { id: tid });
     }
   }, [budgetId, user, navigate]);
+
 
   const autoSaveBudgetField = useCallback((field: string, value: unknown) => {
     if (!budgetId) return;
