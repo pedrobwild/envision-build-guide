@@ -418,6 +418,19 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
                   </SelectContent>
                 </Select>
               </Field>
+              <Field label="Responsável comercial" required>
+                <Select value={ownerId || "none"} onValueChange={(v) => setOwnerId(v === "none" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o comercial responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Sem responsável</SelectItem>
+                    {comerciais.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
             </div>
           </SectionGroup>
 
