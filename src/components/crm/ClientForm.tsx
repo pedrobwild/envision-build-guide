@@ -160,7 +160,10 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
     setLocationType(initial?.location_type_default ?? "");
     setNotes(initial?.notes ?? "");
     setTags(initial?.tags ?? []);
-    setOwnerId(initial?.commercial_owner_id ?? "");
+    // Default inteligente: se for novo cliente e o usuário logado é comercial,
+    // pré-seleciona ele como responsável. Caso contrário, mantém o que veio em `initial`.
+    const defaultOwner = !initial?.id && isComercial && user?.id ? user.id : "";
+    setOwnerId(initial?.commercial_owner_id ?? defaultOwner);
   }, [open, initial]);
 
   function addTag() {
