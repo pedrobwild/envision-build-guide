@@ -578,6 +578,7 @@ export default function EstimatorDashboard() {
                 onSetStatusFilter={setStatusFilter}
                 onOpenAssignDialog={handleOpenAssignDialog}
                 onRefresh={loadData}
+                onQuickUpdate={quickUpdate}
               />
             )}
           </>
