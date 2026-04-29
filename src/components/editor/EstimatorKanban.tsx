@@ -58,8 +58,9 @@ import {
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
-import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
+import { differenceInCalendarDays, isPast, isToday, format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRevisionRequests, type RevisionRequestInfo } from "@/hooks/useRevisionRequests";
 
 /* ── Columns — mirrors Commercial Kanban, with estimator lock rules ── */
 const ESTIMATOR_COLUMNS = [
