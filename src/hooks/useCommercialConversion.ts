@@ -102,7 +102,7 @@ interface EventRow {
 
 export function useCommercialConversion(range: ConversionRange = "30d") {
   const { profile, isAdmin } = useUserProfile();
-  const userId = profile?.user_id ?? null;
+  const userId = profile?.id ?? null;
   const fromIso = rangeToDate(range);
 
   return useQuery<ConversionMetrics>({
