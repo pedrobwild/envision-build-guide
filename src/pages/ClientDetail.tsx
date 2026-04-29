@@ -197,6 +197,26 @@ export default function ClientDetail() {
   const [tagInput, setTagInput] = useState("");
   const [exportingBudgetId, setExportingBudgetId] = useState<string | null>(null);
   const [exportingPdfId, setExportingPdfId] = useState<string | null>(null);
+  const [selectedExportBudgetId, setSelectedExportBudgetId] = useState<string | null>(null);
+
+  // Mantém o orçamento selecionado válido; padrão = mais recente.
+  useEffect(() => {
+    if (budgets.length === 0) {
+      if (selectedExportBudgetId !== null) setSelectedExportBudgetId(null);
+      return;
+    }
+    if (
+      !selectedExportBudgetId ||
+      !budgets.some((b) => b.id === selectedExportBudgetId)
+    ) {
+      setSelectedExportBudgetId(budgets[0].id);
+    }
+  }, [budgets, selectedExportBudgetId]);
+
+  const selectedExportBudget = useMemo(
+    () => budgets.find((b) => b.id === selectedExportBudgetId) ?? budgets[0] ?? null,
+    [budgets, selectedExportBudgetId],
+  );
 
   const handleExportBudget = async (budgetId: string, code: string | null) => {
     if (exportingBudgetId) return;
@@ -414,18 +434,46 @@ export default function ClientDetail() {
               <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="gap-1.5">
                 <Pencil className="h-3.5 w-3.5" /> Editar
               </Button>
-              {budgets.length > 0 && (
+              {budgets.length > 0 && selectedExportBudget && (
                 <>
+                  {budgets.length > 1 && (
+                    <Select
+                      value={selectedExportBudget.id}
+                      onValueChange={(v) => setSelectedExportBudgetId(v)}
+                      disabled={!!exportingBudgetId || !!exportingPdfId}
+                    >
+                      <SelectTrigger
+                        className="h-8 w-[220px] text-xs"
+                        aria-label="Selecionar orçamento para exportar"
+                      >
+                        <SelectValue placeholder="Selecionar orçamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {budgets.map((b) => {
+                          const code = b.sequential_code ?? b.id.slice(0, 8);
+                          const name = b.project_name?.trim() || "Sem nome";
+                          return (
+                            <SelectItem key={b.id} value={b.id} className="text-xs">
+                              <span className="font-mono mr-2">{code}</span>
+                              <span className="text-muted-foreground">{name}</span>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-1.5"
                     disabled={!!exportingBudgetId}
-                    onClick={() => {
-                      const latest = budgets[0];
-                      handleExportBudget(latest.id, latest.sequential_code ?? null);
-                    }}
-                    title={`Exporta o orçamento mais recente${budgets[0].sequential_code ? ` (${budgets[0].sequential_code})` : ""} com valores abertos`}
+                    onClick={() =>
+                      handleExportBudget(
+                        selectedExportBudget.id,
+                        selectedExportBudget.sequential_code ?? null,
+                      )
+                    }
+                    title={`Exportar ${selectedExportBudget.sequential_code ?? "orçamento selecionado"} em .xlsx com valores abertos`}
                   >
                     {exportingBudgetId ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -439,11 +487,13 @@ export default function ClientDetail() {
                     size="sm"
                     className="gap-1.5"
                     disabled={!!exportingPdfId}
-                    onClick={() => {
-                      const latest = budgets[0];
-                      handleExportBudgetPdf(latest.id, latest.sequential_code ?? null);
-                    }}
-                    title={`Exporta o orçamento mais recente${budgets[0].sequential_code ? ` (${budgets[0].sequential_code})` : ""} em PDF com valores abertos`}
+                    onClick={() =>
+                      handleExportBudgetPdf(
+                        selectedExportBudget.id,
+                        selectedExportBudget.sequential_code ?? null,
+                      )
+                    }
+                    title={`Exportar ${selectedExportBudget.sequential_code ?? "orçamento selecionado"} em PDF com valores abertos`}
                   >
                     {exportingPdfId ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
