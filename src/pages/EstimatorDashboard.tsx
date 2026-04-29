@@ -117,8 +117,9 @@ export default function EstimatorDashboard() {
 
   async function loadData() {
     setLoading(true);
-    const adminCheck = profile?.roles.includes("admin");
-    let budgetQuery = supabase
+    // Orçamentistas e admins enxergam todos os orçamentos do sistema.
+    // Filtros por responsável continuam disponíveis na UI (estimatorFilter).
+    const budgetQuery = supabase
       .from("budgets")
       .select(
         "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context, version_number, version_group_id, is_current_version, sequential_code, metragem, public_id"
@@ -127,13 +128,10 @@ export default function EstimatorDashboard() {
       // Versões anteriores ficam acessíveis via histórico interno do editor.
       .or("is_current_version.eq.true,is_current_version.is.null")
       .order("created_at", { ascending: false });
-    if (!adminCheck) {
-      budgetQuery = budgetQuery.or(`estimator_owner_id.eq.${user!.id},estimator_owner_id.is.null`);
-    }
     const [budgetsRes, profilesRes, rolesRes] = await Promise.all([
       budgetQuery,
       supabase.from("profiles").select("id, full_name"),
-      adminCheck ? supabase.from("user_roles").select("user_id, role") : Promise.resolve({ data: [] }),
+      supabase.from("user_roles").select("user_id, role"),
     ]);
 
     if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetRow[]);
