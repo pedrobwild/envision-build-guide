@@ -257,8 +257,6 @@ function sortBudgets(budgets: BudgetRow[]): BudgetRow[] {
 /* ── Sub-section group (for Em Elaboração) ── */
 function SubSectionGroup({
   subsection,
-function SubSectionGroup({
-  subsection,
   budgets,
   locked,
   onCardClick,
