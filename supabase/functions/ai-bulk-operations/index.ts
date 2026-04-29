@@ -1273,11 +1273,24 @@ serve(async (req) => {
               } catch (e) { updateErrors.push({ id: s.id, error: toError(e).message }); }
             });
           } else {
-            const r = (Array.isArray(rpcRes) ? rpcRes[0] : rpcRes) as { items_updated?: number; lump_sections_updated?: number } | null;
+            const r = (Array.isArray(rpcRes) ? rpcRes[0] : rpcRes) as {
+              items_updated?: number;
+              sections_updated?: number;
+              budgets_updated?: number;
+            } | null;
             const itemsUpdated = Number(r?.items_updated ?? 0);
-            const lumpUpdated = Number(r?.lump_sections_updated ?? 0);
+            const sectionsUpdated = Number(r?.sections_updated ?? 0);
             applied = clones.length;
-            logCtx(`apply-financial: cloned=${clones.length} items_updated=${itemsUpdated} lump_updated=${lumpUpdated} factor=${factor}`);
+            logCtx(`apply-financial: cloned=${clones.length} items_updated=${itemsUpdated} sections_updated=${sectionsUpdated} factor=${factor}`);
+
+            // Guarda de sanidade: se o factor é diferente de 1.0 mas NADA foi
+            // atualizado, abortamos com erro — significa que as novas versões
+            // ficaram idênticas à fonte (regressão silenciosa).
+            if (Math.abs(factor - 1) > 0.0001 && itemsUpdated === 0 && sectionsUpdated === 0) {
+              throw new Error(
+                `Ajuste financeiro não foi persistido: 0 itens e 0 seções atualizados em ${clones.length} novas versões (fator=${factor}). Versões clonadas serão desfeitas pelo revert.`
+              );
+            }
           }
           await updateProgress(clones.length, "events");
 
