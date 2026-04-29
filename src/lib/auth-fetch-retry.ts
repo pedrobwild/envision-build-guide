@@ -192,16 +192,28 @@ export function installAuthFetchRetry() {
       return originalFetch(input, init);
     }
 
+    const redactedUrl = redactUrl(input);
     let lastError: unknown;
     const { maxRetries, baseDelayMs, backoffFactor, maxDelayMs } = AUTH_RETRY_CONFIG;
+    const totalAttempts = maxRetries + 1;
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       // Se estiver offline, pausa antes de gastar uma tentativa.
       if (isOffline()) {
         toast.dismiss(TOAST_ID_RETRYING);
         const cameBack = await waitForOnline();
         if (!cameBack) {
-          // timeout esperando rede — sai do loop e mostra falha definitiva
           lastError = lastError ?? new TypeError("Failed to fetch (offline)");
+          recordFailure({
+            timestamp: new Date().toISOString(),
+            url: redactedUrl,
+            attempt: attempt + 1,
+            maxAttempts: totalAttempts,
+            online: false,
+            phase: "offline-timeout",
+            errorName: (lastError as Error)?.name ?? "Error",
+            errorMessage: (lastError as Error)?.message ?? String(lastError),
+          });
           break;
         }
       }
@@ -215,10 +227,22 @@ export function installAuthFetchRetry() {
         return res;
       } catch (err) {
         lastError = err;
-        if (!isNetworkError(err) || attempt === maxRetries) break;
+        const isLast = attempt === maxRetries;
+        const networkErr = isNetworkError(err);
 
-        // Se acabamos de cair offline durante o try, deixa o próximo
-        // ciclo do loop pausar via waitForOnline (sem gastar backoff).
+        recordFailure({
+          timestamp: new Date().toISOString(),
+          url: redactedUrl,
+          attempt: attempt + 1,
+          maxAttempts: totalAttempts,
+          online: !isOffline(),
+          phase: !networkErr || isLast ? "final" : "retry",
+          errorName: (err as Error)?.name ?? "Error",
+          errorMessage: (err as Error)?.message ?? String(err),
+        });
+
+        if (!networkErr || isLast) break;
+
         if (isOffline()) continue;
 
         const delay = Math.min(
