@@ -1152,32 +1152,66 @@ export default function BudgetInternalDetail() {
                         {moduleSubtitles[activeModule]}
                       </SheetDescription>
                     </div>
-                    {activeModule === "budget" && budget.public_id && (
-                      <div className="flex items-center gap-1.5 shrink-0">
+                    {activeModule === "budget" && (
+                      <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
                         <Button
                           size="sm"
                           variant="outline"
                           className="h-8 gap-1.5 text-xs"
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
-                              toast.success("Link copiado");
-                            } catch {
-                              toast.error("Não foi possível copiar");
-                            }
-                          }}
+                          onClick={handleExportXlsx}
+                          disabled={exportingXlsx}
+                          title="Exportar planilha completa (.xlsx) da versão atual"
                         >
-                          <Copy className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Copiar link</span>
+                          {exportingXlsx ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <FileSpreadsheet className="h-3.5 w-3.5" />
+                          )}
+                          <span className="hidden sm:inline">.xlsx</span>
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
                           className="h-8 gap-1.5 text-xs"
-                          onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank", "noopener,noreferrer")}
+                          onClick={handleExportPdf}
+                          disabled={exportingPdf}
+                          title="Exportar PDF completo da versão atual"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Visualizar</span>
+                          {exportingPdf ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <FileDown className="h-3.5 w-3.5" />
+                          )}
+                          <span className="hidden sm:inline">.pdf</span>
                         </Button>
+                        {budget.public_id && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1.5 text-xs"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
+                                  toast.success("Link copiado");
+                                } catch {
+                                  toast.error("Não foi possível copiar");
+                                }
+                              }}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              <span className="hidden sm:inline">Copiar link</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-8 gap-1.5 text-xs"
+                              onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank", "noopener,noreferrer")}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span className="hidden sm:inline">Visualizar</span>
+                            </Button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
