@@ -648,3 +648,98 @@ export function EstimatorListView({
     </>
   );
 }
+
+interface BriefingQuickEditProps {
+  value: string | null;
+  projectName: string;
+  onSave: (next: string | null) => Promise<void> | void;
+}
+
+function BriefingQuickEdit({ value, projectName, onSave }: BriefingQuickEditProps) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const hasBriefing = !!(value && value.trim());
+
+  async function handleSave() {
+    const next = draft.trim() ? draft.trim() : null;
+    if (next === (value ?? null)) {
+      setOpen(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(next);
+      setOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        if (o) setDraft(value ?? "");
+        setOpen(o);
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          aria-label={hasBriefing ? "Editar briefing" : "Adicionar briefing"}
+          className={`inline-flex items-center gap-1 rounded-full border px-1.5 h-4 text-[9px] font-body transition-colors ${
+            hasBriefing
+              ? "border-primary/20 bg-primary/5 text-primary hover:bg-primary/10"
+              : "border-dashed border-muted-foreground/30 text-muted-foreground hover:bg-muted/50"
+          }`}
+        >
+          <FileText className="h-2.5 w-2.5" />
+          {hasBriefing ? "Briefing" : "+ briefing"}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        side="bottom"
+        className="w-[min(420px,calc(100vw-2rem))] p-3 space-y-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-0.5">
+          <p className="text-[11px] font-semibold font-display text-foreground">Briefing</p>
+          <p className="text-[10px] text-muted-foreground font-body truncate">{projectName}</p>
+        </div>
+        <Textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Resumo da demanda, escopo, observações…"
+          rows={6}
+          className="text-xs font-body resize-y"
+          autoFocus
+        />
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setOpen(false)}
+            disabled={saving}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            Salvar
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
