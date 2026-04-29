@@ -563,7 +563,7 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
       const addr = XLSX.utils.encode_cell({ r, c });
       const cell = wsSec[addr] as (XLSX.CellObject & { s?: unknown }) | undefined;
       if (!cell) continue;
-      cell.s = isFinal ? TOTAL_STYLE_PROTO() : SUBTOTAL_STYLE_PROTO();
+      cell.s = isFinal ? TOTAL_STYLE : SUBTOTAL_STYLE;
     }
   }
   XLSX.utils.book_append_sheet(wb, wsSec, "Resumo por seção");
