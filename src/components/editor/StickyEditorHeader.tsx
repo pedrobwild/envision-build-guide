@@ -1,13 +1,23 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText, Link2, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText, Link2, Copy, ExternalLink, Download, FileSpreadsheet, FileDown, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 import { formatBRL } from "@/lib/formatBRL";
 import { calcGrandTotals, type CalcSection } from "@/lib/budget-calc";
 import { cn } from "@/lib/utils";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { exportBudgetToXlsx } from "@/lib/budget-xlsx-export";
+import { exportBudgetToPdf } from "@/lib/budget-pdf-export";
 import { toast } from "sonner";
 import type { BudgetRow } from "@/types/budget-common";
 
@@ -125,7 +135,26 @@ export function StickyEditorHeader({
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(projectName);
+  const [exporting, setExporting] = useState<"xlsx" | "pdf" | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = async (kind: "xlsx" | "pdf") => {
+    if (!budget.id || exporting) return;
+    setExporting(kind);
+    const tId = toast.loading(kind === "xlsx" ? "Gerando planilha…" : "Gerando PDF…");
+    try {
+      if (kind === "xlsx") await exportBudgetToXlsx(budget.id);
+      else await exportBudgetToPdf(budget.id);
+      toast.success(kind === "xlsx" ? "Planilha gerada" : "PDF gerado", { id: tId });
+    } catch (err) {
+      toast.error(`Falha ao exportar ${kind.toUpperCase()}`, {
+        id: tId,
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setExporting(null);
+    }
+  };
 
   useEffect(() => {
     setNameValue(budget.project_name || "");
@@ -243,6 +272,50 @@ export function StickyEditorHeader({
               <span className="sm:hidden">PDF</span>
             </a>
           )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                disabled={!budget.id || !!exporting}
+                className="inline-flex items-center gap-1 text-[11px] font-body font-medium text-foreground/80 hover:text-foreground px-2 sm:px-2.5 py-1 rounded-full bg-muted/60 hover:bg-muted transition-colors shrink-0 disabled:opacity-50"
+                title="Exportar versão atual"
+              >
+                {exporting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                <span className="hidden sm:inline">Exportar</span>
+                <ChevronDown className="h-3 w-3 opacity-70" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="text-[11px] font-body font-medium text-muted-foreground">
+                Versão atual
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleExport("xlsx")}
+                disabled={!!exporting}
+                className="gap-2 cursor-pointer"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-success" />
+                <span className="flex-1">Exportar .xlsx</span>
+                {exporting === "xlsx" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleExport("pdf")}
+                disabled={!!exporting}
+                className="gap-2 cursor-pointer"
+              >
+                <FileDown className="h-4 w-4 text-destructive" />
+                <span className="flex-1">Exportar .pdf</span>
+                {exporting === "pdf" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <div className="hidden sm:block">
             <AutoSaveChip status={saveStatus} lastSavedAt={lastSavedAt} onRetry={onRetrySave} />
           </div>
