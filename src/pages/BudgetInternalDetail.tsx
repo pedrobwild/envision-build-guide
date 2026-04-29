@@ -60,6 +60,7 @@ import {
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { exportBudgetToXlsx } from "@/lib/budget-xlsx-export";
 import { exportBudgetToPdf } from "@/lib/budget-pdf-export";
+import { calculateBudgetTotal } from "@/lib/supabase-helpers";
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
@@ -307,7 +308,7 @@ export default function BudgetInternalDetail() {
         supabase
           .from("budgets")
           .select(
-            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments"
+            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, is_current_version, version_group_id, version_number"
           )
           .eq("id", id)
           .single(),
@@ -350,24 +351,50 @@ export default function BudgetInternalDetail() {
       if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
       setLoading(false);
 
-      // Compute total from items
-      const { data: secs } = await supabase.from("sections").select("id").eq("budget_id", id);
-      const sectionIds = (secs ?? []).map((s) => s.id);
+      // Compute total using the same logic as the public budget view, ensuring
+      // the value shown in the deal/client card matches what the client sees.
+      // Resolve to the current version of the version_group when needed.
+      let effectiveBudgetId = id;
+      const baseRow = budgetRes.data as { id: string; is_current_version?: boolean | null } | null;
+      const versionGroupId = (budgetRes.data as { version_group_id?: string | null } | null)?.version_group_id ?? null;
+      if (baseRow && versionGroupId && baseRow.is_current_version === false) {
+        const { data: current } = await supabase
+          .from("budgets")
+          .select("id")
+          .eq("version_group_id", versionGroupId)
+          .eq("is_current_version", true)
+          .maybeSingle();
+        if (current?.id) effectiveBudgetId = current.id;
+      }
+
+      const { data: secs } = await supabase
+        .from("sections")
+        .select("id, section_price, qty, addendum_action")
+        .eq("budget_id", effectiveBudgetId)
+        .order("order_index", { ascending: true });
+      const sectionRows = secs ?? [];
+      const sectionIds = sectionRows.map((s) => s.id);
       if (cancelled) return;
       setSectionsCount(sectionIds.length);
 
       if (sectionIds.length > 0) {
-        const { data: itemsData } = await supabase
-          .from("items")
-          .select("internal_total, internal_unit_price, qty, bdi_percentage")
-          .in("section_id", sectionIds);
+        const [{ data: itemsData }, { data: adjData }] = await Promise.all([
+          supabase
+            .from("items")
+            .select("id, section_id, internal_total, internal_unit_price, qty, bdi_percentage, addendum_action")
+            .in("section_id", sectionIds),
+          supabase
+            .from("adjustments")
+            .select("amount, sign")
+            .eq("budget_id", effectiveBudgetId),
+        ]);
         if (cancelled) return;
         setItemsCount((itemsData ?? []).length);
-        const total = (itemsData ?? []).reduce((acc, it) => {
-          const base = it.internal_total ?? (Number(it.internal_unit_price ?? 0) * Number(it.qty ?? 0));
-          const bdi = 1 + Number(it.bdi_percentage ?? 0) / 100;
-          return acc + base * bdi;
-        }, 0);
+        const sectionsForCalc = sectionRows.map((s) => ({
+          ...s,
+          items: (itemsData ?? []).filter((i) => i.section_id === s.id),
+        }));
+        const total = calculateBudgetTotal(sectionsForCalc as never, (adjData ?? []) as never);
         setBudgetTotal(total);
       } else {
         setItemsCount(0);
