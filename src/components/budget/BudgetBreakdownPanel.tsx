@@ -165,6 +165,18 @@ export function BudgetBreakdownPanel({ budgetId, onResolvedBudgetId }: Props) {
 
   return (
     <Card>
+      {resolvedBanner && (
+        <div className="px-4 pt-4">
+          <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-[11px] font-body text-foreground">
+            Exibindo a <span className="font-semibold">versão atual</span>
+            {resolvedBanner.versionNumber != null ? ` (v${resolvedBanner.versionNumber}` : ""}
+            {resolvedBanner.to ? `${resolvedBanner.versionNumber != null ? " · " : " ("}${resolvedBanner.to})` : resolvedBanner.versionNumber != null ? ")" : ""}
+            {resolvedBanner.from && resolvedBanner.from !== resolvedBanner.to && (
+              <> — esta tela foi aberta a partir de <span className="font-mono">{resolvedBanner.from}</span>.</>
+            )}
+          </div>
+        </div>
+      )}
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger className="w-full">
           <CardHeader className="pb-3 flex flex-row items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors">
