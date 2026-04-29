@@ -323,6 +323,68 @@ export default function EstimatorDashboard() {
     toast.success(`Status atualizado para "${statusLabel}"`);
   }
 
+  const quickUpdate = useCallback(
+    async (
+      budgetId: string,
+      patch: Partial<Pick<BudgetRow, "internal_status" | "priority" | "due_at" | "briefing">>,
+    ) => {
+      const previous = budgets.find((b) => b.id === budgetId);
+      if (!previous) return;
+
+      // Optimistic update
+      setBudgets((prev) =>
+        prev.map((b) =>
+          b.id === budgetId ? { ...b, ...patch, updated_at: new Date().toISOString() } : b,
+        ),
+      );
+
+      const { error } = await supabase
+        .from("budgets")
+        .update({ ...patch, updated_at: new Date().toISOString() })
+        .eq("id", budgetId);
+
+      if (error) {
+        // Rollback
+        setBudgets((prev) => prev.map((b) => (b.id === budgetId ? previous : b)));
+        toast.error("Não foi possível atualizar.", { description: error.message });
+        return;
+      }
+
+      const fields = Object.keys(patch);
+      const label =
+        fields.length === 1
+          ? ({
+              internal_status: "Status atualizado",
+              priority: "Prioridade atualizada",
+              due_at: "Validade atualizada",
+              briefing: "Briefing atualizado",
+            } as Record<string, string>)[fields[0]] ?? "Atualizado"
+          : "Atualizado";
+
+      toast.success(label, {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            const rollback: Record<string, unknown> = {};
+            for (const k of fields) rollback[k] = (previous as any)[k] ?? null;
+            const { error: rbErr } = await supabase
+              .from("budgets")
+              .update({ ...rollback, updated_at: new Date().toISOString() })
+              .eq("id", budgetId);
+            if (rbErr) {
+              toast.error("Falha ao desfazer.", { description: rbErr.message });
+              return;
+            }
+            setBudgets((prev) => prev.map((b) => (b.id === budgetId ? previous : b)));
+            toast.success("Alteração desfeita");
+          },
+        },
+        duration: 5000,
+      });
+    },
+    [budgets],
+  );
+
   const handleOpenAssignDialog = useCallback((budgetId: string, type: "estimator" | "commercial", currentValue: string | null) => {
     setAssignValue(currentValue ?? "");
     setAssignDialog({ open: true, budgetId, type, currentValue });
