@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { getCapturedConsoleEntries } from "@/lib/console-error-buffer";
+import { getAuthRefreshFailures } from "@/lib/auth-fetch-retry";
 
 export interface DeviceContext {
   route: string;
