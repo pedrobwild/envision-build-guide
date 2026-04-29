@@ -754,6 +754,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
                           locked={col.locked}
                           onCardClick={onCardClick}
                           getProfileName={getProfileName}
+                          revisionInfoMap={revisionInfoMap}
                           compact
                         />
                       </div>
