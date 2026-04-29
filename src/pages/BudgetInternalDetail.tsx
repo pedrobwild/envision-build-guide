@@ -1231,7 +1231,12 @@ export default function BudgetInternalDetail() {
                     />
                   )}
 
-                  {activeModule === "budget" && <BudgetBreakdownPanel budgetId={budget.id} />}
+                  {activeModule === "budget" && (
+                    <BudgetBreakdownPanel
+                      budgetId={budget.id}
+                      onResolvedBudgetId={handleResolvedBudgetId}
+                    />
+                  )}
 
                   {activeModule === "activities" && (
                     <div className="space-y-6">
