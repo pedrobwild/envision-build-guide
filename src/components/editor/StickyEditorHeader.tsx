@@ -272,6 +272,50 @@ export function StickyEditorHeader({
               <span className="sm:hidden">PDF</span>
             </a>
           )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                disabled={!budget.id || !!exporting}
+                className="inline-flex items-center gap-1 text-[11px] font-body font-medium text-foreground/80 hover:text-foreground px-2 sm:px-2.5 py-1 rounded-full bg-muted/60 hover:bg-muted transition-colors shrink-0 disabled:opacity-50"
+                title="Exportar versão atual"
+              >
+                {exporting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                <span className="hidden sm:inline">Exportar</span>
+                <ChevronDown className="h-3 w-3 opacity-70" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="text-[11px] font-body font-medium text-muted-foreground">
+                Versão atual
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleExport("xlsx")}
+                disabled={!!exporting}
+                className="gap-2 cursor-pointer"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-success" />
+                <span className="flex-1">Exportar .xlsx</span>
+                {exporting === "xlsx" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleExport("pdf")}
+                disabled={!!exporting}
+                className="gap-2 cursor-pointer"
+              >
+                <FileDown className="h-4 w-4 text-destructive" />
+                <span className="flex-1">Exportar .pdf</span>
+                {exporting === "pdf" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <div className="hidden sm:block">
             <AutoSaveChip status={saveStatus} lastSavedAt={lastSavedAt} onRetry={onRetrySave} />
           </div>
