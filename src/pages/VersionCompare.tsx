@@ -63,7 +63,7 @@ interface SectionDiff {
   items: DiffRow[];
 }
 
-async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; sections: CompareSection[] }> {
+async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; sections: CompareSection[]; adjustments: CompareAdjustment[] }> {
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
     .select("id, version_number, versao, project_name, client_name, status, created_at, change_reason, version_group_id")
@@ -74,18 +74,23 @@ async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; secti
 
   const { data: sections, error: secErr } = await supabase
     .from("sections")
-    .select("id, title, order_index, section_price, qty, items(id, title, description, qty, unit, internal_total, internal_unit_price)")
+    .select("id, title, order_index, section_price, qty, addendum_action, items(id, title, description, qty, unit, internal_total, internal_unit_price, bdi_percentage, addendum_action)")
     .eq("budget_id", budgetId)
     .order("order_index");
 
   if (secErr) toast.error(`Erro ao carregar seções: ${secErr.message}`);
+
+  const { data: adjustments } = await supabase
+    .from("budget_adjustments")
+    .select("id, label, amount, sign")
+    .eq("budget_id", budgetId);
 
   const mapped: CompareSection[] = (sections || []).map((s) => ({
     ...s,
     items: ((s.items as CompareItem[]) || []).sort((a, b) => (a.title || "").localeCompare(b.title || "")),
   }));
 
-  return { meta: budget as VersionMeta, sections: mapped };
+  return { meta: budget as VersionMeta, sections: mapped, adjustments: (adjustments || []) as CompareAdjustment[] };
 }
 
 function diffSections(left: CompareSection[], right: CompareSection[]): SectionDiff[] {
