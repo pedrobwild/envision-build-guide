@@ -84,7 +84,8 @@ export function installAuthFetchRetry() {
     }
 
     let lastError: unknown;
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const { maxRetries, baseDelayMs, backoffFactor, maxDelayMs } = AUTH_RETRY_CONFIG;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const res = await originalFetch(input, init);
         // Sucesso (mesmo que 4xx/5xx) — limpa toast de retry se existir
@@ -95,12 +96,15 @@ export function installAuthFetchRetry() {
         return res;
       } catch (err) {
         lastError = err;
-        if (!isNetworkError(err) || attempt === MAX_RETRIES) break;
+        if (!isNetworkError(err) || attempt === maxRetries) break;
 
-        const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+        const delay = Math.min(
+          baseDelayMs * Math.pow(backoffFactor, attempt),
+          maxDelayMs,
+        );
         toast.warning("Conexão instável", {
           id: TOAST_ID_RETRYING,
-          description: `Tentando reconectar… (${attempt + 1}/${MAX_RETRIES})`,
+          description: `Tentando reconectar… (${attempt + 1}/${maxRetries})`,
           duration: delay + 500,
         });
         await sleep(delay);
