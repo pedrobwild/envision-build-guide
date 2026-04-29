@@ -56,6 +56,9 @@ import { EstimatorFilterBar, type SortOption } from "@/components/estimator/Esti
 import { EstimatorListView, type BudgetRow } from "@/components/estimator/EstimatorListView";
 import { NewRequestsSection } from "@/components/estimator/NewRequestsSection";
 import { NotificationBell } from "@/components/estimator/NotificationBell";
+import { BulkActionsBar } from "@/components/estimator/BulkActionsBar";
+import { logRevisionRequestEvent } from "@/lib/version-audit";
+import { useUserProfile as _useUserProfile } from "@/hooks/useUserProfile";
 
 const PENDING_STATUSES: string[] = ["requested", "novo"];
 const IN_PROGRESS_STATUSES: string[] = ["triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"];
