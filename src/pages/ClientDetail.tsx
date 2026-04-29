@@ -193,6 +193,22 @@ export default function ClientDetail() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [tagInput, setTagInput] = useState("");
+  const [exportingBudgetId, setExportingBudgetId] = useState<string | null>(null);
+
+  const handleExportBudget = async (budgetId: string, code: string | null) => {
+    if (exportingBudgetId) return;
+    setExportingBudgetId(budgetId);
+    const tId = toast.loading(`Gerando .xlsx${code ? ` (${code})` : ""}…`);
+    try {
+      await exportBudgetToXlsx(budgetId);
+      toast.success("Planilha exportada.", { id: tId });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao exportar planilha.";
+      toast.error(msg, { id: tId });
+    } finally {
+      setExportingBudgetId(null);
+    }
+  };
 
   // Inicializa draft quando entra em modo edição (ou cliente recarrega)
   useEffect(() => {
