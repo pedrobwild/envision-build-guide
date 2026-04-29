@@ -62,7 +62,8 @@ const NAV_ACTIONS: ActionItem[] = [
 ];
 
 const QUICK_ACTIONS: ActionItem[] = [
-  { id: "act-new-budget", label: "Nova solicitação de orçamento", icon: Plus, to: "/admin/solicitacoes/nova", roles: ["admin", "comercial"], shortcut: "N", keywords: "criar novo" },
+  // Atalho aponta para a lista de clientes — escolha o cliente e use "Novo orçamento".
+  { id: "act-new-budget", label: "Novo orçamento (escolher cliente)", icon: Plus, to: "/admin/crm", roles: ["admin", "comercial"], shortcut: "N", keywords: "criar novo solicitacao orcamento" },
 ];
 
 interface BudgetHit {
