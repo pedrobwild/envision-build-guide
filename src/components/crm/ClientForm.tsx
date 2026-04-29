@@ -62,6 +62,7 @@ const BR_STATES = [
 
 export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormProps) {
   const { user } = useAuth();
+  const { isComercial } = useUserProfile();
   const { members: comerciais } = useTeamMembers("comercial");
   const upsert = useUpsertClient();
   const queryClient = useQueryClient();
