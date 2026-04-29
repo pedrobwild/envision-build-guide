@@ -257,10 +257,13 @@ function sortBudgets(budgets: BudgetRow[]): BudgetRow[] {
 /* ── Sub-section group (for Em Elaboração) ── */
 function SubSectionGroup({
   subsection,
+function SubSectionGroup({
+  subsection,
   budgets,
   locked,
   onCardClick,
   getProfileName,
+  revisionInfoMap,
   compact = false,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
@@ -268,6 +271,7 @@ function SubSectionGroup({
   locked: boolean;
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
+  revisionInfoMap: Record<string, RevisionRequestInfo>;
   compact?: boolean;
 }) {
   const Icon = subsection.icon;
@@ -324,6 +328,7 @@ function SubSectionGroup({
                 locked={locked}
                 onClick={() => onCardClick(b.id)}
                 getProfileName={getProfileName}
+                revisionInfo={revisionInfoMap[b.id]}
               />
             )}
           </div>
