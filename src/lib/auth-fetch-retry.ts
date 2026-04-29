@@ -70,6 +70,42 @@ function isNetworkError(err: unknown): boolean {
   );
 }
 
+const TOAST_ID_OFFLINE = "auth-fetch-offline";
+const OFFLINE_WAIT_TIMEOUT_MS = 60_000; // teto: não esperar offline para sempre
+
+function isOffline(): boolean {
+  return typeof navigator !== "undefined" && navigator.onLine === false;
+}
+
+/**
+ * Aguarda o evento `online` do navegador (ou um timeout). Mantém um toast
+ * persistente "Sem conexão" enquanto offline e o remove ao voltar.
+ */
+function waitForOnline(timeoutMs = OFFLINE_WAIT_TIMEOUT_MS): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (!isOffline()) return resolve(true);
+
+    toast.error("Sem conexão com a internet", {
+      id: TOAST_ID_OFFLINE,
+      description: "Aguardando a rede voltar para renovar sua sessão…",
+      duration: Infinity,
+    });
+
+    let done = false;
+    const finish = (ok: boolean) => {
+      if (done) return;
+      done = true;
+      window.removeEventListener("online", onOnline);
+      clearTimeout(timer);
+      toast.dismiss(TOAST_ID_OFFLINE);
+      resolve(ok);
+    };
+    const onOnline = () => finish(true);
+    window.addEventListener("online", onOnline, { once: true });
+    const timer = setTimeout(() => finish(false), timeoutMs);
+  });
+}
+
 let installed = false;
 
 export function installAuthFetchRetry() {
@@ -77,6 +113,17 @@ export function installAuthFetchRetry() {
   installed = true;
 
   const originalFetch = window.fetch.bind(window);
+
+  // Quando o navegador volta a ficar online, esconde toast de offline.
+  window.addEventListener("online", () => toast.dismiss(TOAST_ID_OFFLINE));
+  // Quando perde a conexão a qualquer momento, sinaliza ao usuário.
+  window.addEventListener("offline", () => {
+    toast.error("Sem conexão com a internet", {
+      id: TOAST_ID_OFFLINE,
+      description: "As novas tentativas serão pausadas até a rede voltar.",
+      duration: Infinity,
+    });
+  });
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (!isAuthTokenRequest(input)) {
@@ -86,9 +133,19 @@ export function installAuthFetchRetry() {
     let lastError: unknown;
     const { maxRetries, baseDelayMs, backoffFactor, maxDelayMs } = AUTH_RETRY_CONFIG;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      // Se estiver offline, pausa antes de gastar uma tentativa.
+      if (isOffline()) {
+        toast.dismiss(TOAST_ID_RETRYING);
+        const cameBack = await waitForOnline();
+        if (!cameBack) {
+          // timeout esperando rede — sai do loop e mostra falha definitiva
+          lastError = lastError ?? new TypeError("Failed to fetch (offline)");
+          break;
+        }
+      }
+
       try {
         const res = await originalFetch(input, init);
-        // Sucesso (mesmo que 4xx/5xx) — limpa toast de retry se existir
         if (attempt > 0) {
           toast.dismiss(TOAST_ID_RETRYING);
           toast.dismiss(TOAST_ID_FAILED);
@@ -97,6 +154,10 @@ export function installAuthFetchRetry() {
       } catch (err) {
         lastError = err;
         if (!isNetworkError(err) || attempt === maxRetries) break;
+
+        // Se acabamos de cair offline durante o try, deixa o próximo
+        // ciclo do loop pausar via waitForOnline (sem gastar backoff).
+        if (isOffline()) continue;
 
         const delay = Math.min(
           baseDelayMs * Math.pow(backoffFactor, attempt),
@@ -115,8 +176,9 @@ export function installAuthFetchRetry() {
     toast.dismiss(TOAST_ID_RETRYING);
     toast.error("Sem conexão com o servidor", {
       id: TOAST_ID_FAILED,
-      description:
-        "Não foi possível renovar sua sessão. Verifique sua internet.",
+      description: isOffline()
+        ? "Você está offline. Reconecte para renovar sua sessão."
+        : "Não foi possível renovar sua sessão. Verifique sua internet.",
       duration: Infinity,
       action: {
         label: "Tentar novamente",
@@ -127,3 +189,4 @@ export function installAuthFetchRetry() {
     throw lastError;
   };
 }
+
