@@ -4,6 +4,12 @@ import App from "./App.tsx";
 import "./index.css";
 import { installConsoleErrorBuffer } from "./lib/console-error-buffer";
 import { installChunkErrorTelemetry } from "./lib/chunk-telemetry";
+import { installAuthFetchRetry } from "./lib/auth-fetch-retry";
+
+// Retry automático para refresh_token do Supabase em erros de rede
+// ("Failed to fetch"), com aviso visível ao usuário. Deve rodar antes
+// de qualquer import que crie cliente Supabase.
+installAuthFetchRetry();
 
 // Captura erros de runtime numa janela rolante para o BugReporter anexar
 // contexto técnico mesmo em mobile (sem precisar abrir o DevTools).
