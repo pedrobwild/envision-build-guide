@@ -285,6 +285,12 @@ export default function NewBudgetRequest() {
       toast.error("Preencha ao menos o nome do cliente.");
       return;
     }
+    // Se veio do card do cliente (?client_id=...), exigir que a validação tenha
+    // confirmado que o cliente existe e está ativo antes de prosseguir.
+    if (prefillClientId && (!linkedClientId || !linkedClientValidated)) {
+      toast.error("Não foi possível confirmar o cliente vinculado. Volte ao card do cliente e tente novamente.");
+      return;
+    }
 
     const isImport = mode === "import";
     if (isImport) {
