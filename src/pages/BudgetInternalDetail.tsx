@@ -693,6 +693,19 @@ export default function BudgetInternalDetail() {
         </div>
       </header>
 
+      {/* Cross-pipeline context strip — visibilidade do estágio comercial dentro da tela de produção */}
+      <CrossPipelineStrip
+        internalStatus={budget.internal_status}
+        pipelineStage={budget.pipeline_stage}
+        winProbability={budget.win_probability}
+        expectedCloseAt={budget.expected_close_at}
+        totalDisplay={totalDisplay}
+        commercialOwnerName={commercialName}
+        onOpenComercial={() =>
+          navigate(`/admin/comercial?budgetId=${budget.id}`)
+        }
+      />
+
       {/* Pending action banner */}
       {budget.internal_status === "waiting_info" && (
         <div className="border-b px-4 sm:px-6 py-3 bg-warning/5 border-warning/20">
