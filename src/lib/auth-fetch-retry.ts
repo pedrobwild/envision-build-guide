@@ -132,6 +132,44 @@ function isNetworkError(err: unknown): boolean {
   );
 }
 
+// ───────────────────────────────────────────────────────────────────
+// Estado observável de "reconectando" — permite que componentes React
+// (botões de submit, AuthGuard, etc.) desabilitem ações enquanto um
+// refresh de sessão estiver em curso, evitando cliques repetidos.
+// ───────────────────────────────────────────────────────────────────
+export interface AuthRetryState {
+  reconnecting: boolean;        // true se há ≥1 tentativa de retry em andamento
+  attempt: number;              // tentativa atual (1-based) do último ciclo
+  maxAttempts: number;
+  reason: "retrying" | "offline" | null;
+}
+
+let retryState: AuthRetryState = {
+  reconnecting: false,
+  attempt: 0,
+  maxAttempts: 0,
+  reason: null,
+};
+const retryListeners = new Set<(s: AuthRetryState) => void>();
+
+function setRetryState(patch: Partial<AuthRetryState>) {
+  retryState = { ...retryState, ...patch };
+  retryListeners.forEach((l) => {
+    try { l(retryState); } catch { /* ignore */ }
+  });
+}
+
+export function getAuthRetryState(): AuthRetryState {
+  return retryState;
+}
+
+export function subscribeAuthRetryState(
+  listener: (s: AuthRetryState) => void,
+): () => void {
+  retryListeners.add(listener);
+  return () => retryListeners.delete(listener);
+}
+
 const TOAST_ID_OFFLINE = "auth-fetch-offline";
 const OFFLINE_WAIT_TIMEOUT_MS = 60_000; // teto: não esperar offline para sempre
 
