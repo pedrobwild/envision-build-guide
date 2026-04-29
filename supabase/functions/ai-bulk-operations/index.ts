@@ -575,18 +575,50 @@ const CLONE_PROTECTED_STATUSES = new Set([
 
 // deno-lint-ignore no-explicit-any
 async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userId: string, changeReason: string, expectedStatus?: string): Promise<VersionCloneResult> {
+  // Resolve a melhor fonte do clone DENTRO do mesmo grupo de versões.
+  // Histórico do bug: quando `is_current_version` está dessincronizado (ex.:
+  // publicação antiga não rebaixou versões anteriores), `sourceBudgetId` pode
+  // apontar para uma versão obsoleta. Para garantir que clonamos o estado mais
+  // confiável, preferimos a versão publicada mais recente do grupo. Se não
+  // houver, caímos em `is_current_version=true`. Em último caso, usamos o id
+  // original mesmo.
+  const { data: candidate } = await admin
+    .from("budgets")
+    .select("id, version_group_id")
+    .eq("id", sourceBudgetId)
+    .maybeSingle();
+  const groupOfRequested = (candidate as { version_group_id?: string } | null)?.version_group_id ?? sourceBudgetId;
+
+  let resolvedSourceId = sourceBudgetId;
+  if (groupOfRequested) {
+    const { data: best } = await admin
+      .from("budgets")
+      .select("id, is_published_version, is_current_version, version_number, updated_at")
+      .eq("version_group_id", groupOfRequested)
+      .order("is_published_version", { ascending: false, nullsFirst: false })
+      .order("is_current_version", { ascending: false, nullsFirst: false })
+      .order("version_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const bestId = (best as { id?: string } | null)?.id;
+    if (bestId && bestId !== sourceBudgetId) {
+      logCtx(`clone:${sourceBudgetId} resolvendo fonte para versão mais recente publicada/atual: ${bestId}`);
+      resolvedSourceId = bestId;
+    }
+  }
+
   const { data: source, error: srcErr } = await admin
     .from("budgets")
     .select("*")
-    .eq("id", sourceBudgetId)
+    .eq("id", resolvedSourceId)
     .single();
-  if (srcErr || !source) throw toError(srcErr ?? new Error("source-not-found"), `clone:${sourceBudgetId}`);
+  if (srcErr || !source) throw toError(srcErr ?? new Error("source-not-found"), `clone:${resolvedSourceId}`);
 
   const currentStatus = String((source as { internal_status?: string }).internal_status ?? "");
 
   // Guard 1: estado protegido (mudou para final entre o plan e o apply)
   if (CLONE_PROTECTED_STATUSES.has(currentStatus)) {
-    throw new Error(`Orçamento ${sourceBudgetId} está em estado protegido '${currentStatus}' — pulado para evitar conflito.`);
+    throw new Error(`Orçamento ${resolvedSourceId} está em estado protegido '${currentStatus}' — pulado para evitar conflito.`);
   }
 
   // Guard 2: divergência entre o estado capturado no plan e o estado atual
@@ -594,17 +626,17 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
   // mas registramos no result para que o revert preserve fielmente o estado
   // que de fato existia imediatamente antes do clone.
   if (expectedStatus && expectedStatus !== currentStatus) {
-    logCtx(`clone:${sourceBudgetId} status drift: plan='${expectedStatus}' actual='${currentStatus}' — usando atual`);
+    logCtx(`clone:${resolvedSourceId} status drift: plan='${expectedStatus}' actual='${currentStatus}' — usando atual`);
   }
 
   let groupId = source.version_group_id as string | null;
   if (!groupId) {
-    groupId = sourceBudgetId;
+    groupId = resolvedSourceId;
     const { error: ensureErr } = await admin
       .from("budgets")
       .update({ version_group_id: groupId, version_number: 1, is_current_version: true })
-      .eq("id", sourceBudgetId);
-    if (ensureErr) throw toError(ensureErr, `ensure-group:${sourceBudgetId}`);
+      .eq("id", resolvedSourceId);
+    if (ensureErr) throw toError(ensureErr, `ensure-group:${resolvedSourceId}`);
   }
 
   const { data: maxRow } = await admin
@@ -636,7 +668,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
       version_number: nextVersion,
       is_current_version: false,
       is_published_version: false,
-      parent_budget_id: sourceBudgetId,
+      parent_budget_id: resolvedSourceId,
       change_reason: changeReason,
       versao: `${nextVersion}`,
       status: "draft",
@@ -647,7 +679,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
     })
     .select("id")
     .single();
-  if (insErr || !newBudget) throw toError(insErr ?? new Error("insert-failed"), `clone-insert:${sourceBudgetId}`);
+  if (insErr || !newBudget) throw toError(insErr ?? new Error("insert-failed"), `clone-insert:${resolvedSourceId}`);
   const newBudgetId = newBudget.id as string;
 
   // Guard 3: race com publicação/clone concorrente. Se entre nossa leitura de
@@ -681,7 +713,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
   const { data: oldSections } = await admin
     .from("sections")
     .select("*")
-    .eq("budget_id", sourceBudgetId)
+    .eq("budget_id", resolvedSourceId)
     .order("order_index");
 
   const sectionIdMap: Record<string, string> = {};
@@ -696,7 +728,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
       .from("sections")
       .insert(sectionInserts)
       .select("id");
-    if (secInsErr) throw toError(secInsErr, `clone-sections:${sourceBudgetId}`);
+    if (secInsErr) throw toError(secInsErr, `clone-sections:${resolvedSourceId}`);
     (newSections ?? []).forEach((ns: { id: string }, i: number) => {
       const old = oldSections[i];
       if (old?.id && ns?.id) sectionIdMap[old.id as string] = ns.id;
@@ -717,7 +749,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
         .from("items")
         .insert(itemInserts)
         .select("id");
-      if (itemInsErr) throw toError(itemInsErr, `clone-items:${sourceBudgetId}`);
+      if (itemInsErr) throw toError(itemInsErr, `clone-items:${resolvedSourceId}`);
       (newItems ?? []).forEach((ni: { id: string }, i: number) => {
         const old = oldItems[i];
         if (old?.id && ni?.id) itemIdMap[old.id as string] = ni.id;
@@ -745,7 +777,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
 
   // Best-effort clone of adjustments
   try {
-    const { data: adj } = await admin.from("adjustments").select("*").eq("budget_id", sourceBudgetId);
+    const { data: adj } = await admin.from("adjustments").select("*").eq("budget_id", resolvedSourceId);
     if (adj && adj.length > 0) {
       await admin.from("adjustments").insert(
         adj.map(({ id: _aid, created_at: _aca, budget_id: _abid, ...rest }: Record<string, unknown>) => ({
@@ -765,7 +797,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
       note: changeReason,
       metadata: {
         source: "ai_bulk_operation",
-        source_budget_id: sourceBudgetId,
+        source_budget_id: resolvedSourceId,
         version_number: nextVersion,
       },
       user_id: userId,
@@ -776,7 +808,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
 
   return {
     new_budget_id: newBudgetId,
-    old_budget_id: sourceBudgetId,
+    old_budget_id: resolvedSourceId,
     old_was_current: Boolean((source as { is_current_version?: boolean }).is_current_version),
     // Usa o status REAL no momento do clone (currentStatus), não o do plan,
     // garantindo que o revert restaure o estado de fato preservado.
@@ -1222,10 +1254,15 @@ serve(async (req) => {
           // A RPC bulk_apply_factor_to_items roda em uma única transação no
           // Postgres e atualiza milhares de items + sections em milissegundos
           // (substitui dezenas/centenas de updates row-a-row do código antigo).
+          // CRÍTICO: nomes dos parâmetros DEVEM bater com a assinatura da função
+          // no Postgres (`p_budget_ids`, `p_factor`). Em deploys anteriores
+          // estavam como `_budget_ids`/`_factor` e PostgREST falhava silenciosamente
+          // → caía no fallback row-a-row, que em alta concorrência podia não
+          // persistir a redução, deixando a nova versão idêntica à fonte.
           const newBudgetIds = clones.map((c) => c.new_budget_id);
           const { data: rpcRes, error: rpcErr } = await admin.rpc("bulk_apply_factor_to_items", {
-            _budget_ids: newBudgetIds,
-            _factor: factor,
+            p_budget_ids: newBudgetIds,
+            p_factor: factor,
           });
           if (rpcErr) {
             // Fallback para updates row-a-row se a RPC não existir (deploy anterior
@@ -1268,11 +1305,24 @@ serve(async (req) => {
               } catch (e) { updateErrors.push({ id: s.id, error: toError(e).message }); }
             });
           } else {
-            const r = (Array.isArray(rpcRes) ? rpcRes[0] : rpcRes) as { items_updated?: number; lump_sections_updated?: number } | null;
+            const r = (Array.isArray(rpcRes) ? rpcRes[0] : rpcRes) as {
+              items_updated?: number;
+              sections_updated?: number;
+              budgets_updated?: number;
+            } | null;
             const itemsUpdated = Number(r?.items_updated ?? 0);
-            const lumpUpdated = Number(r?.lump_sections_updated ?? 0);
+            const sectionsUpdated = Number(r?.sections_updated ?? 0);
             applied = clones.length;
-            logCtx(`apply-financial: cloned=${clones.length} items_updated=${itemsUpdated} lump_updated=${lumpUpdated} factor=${factor}`);
+            logCtx(`apply-financial: cloned=${clones.length} items_updated=${itemsUpdated} sections_updated=${sectionsUpdated} factor=${factor}`);
+
+            // Guarda de sanidade: se o factor é diferente de 1.0 mas NADA foi
+            // atualizado, abortamos com erro — significa que as novas versões
+            // ficaram idênticas à fonte (regressão silenciosa).
+            if (Math.abs(factor - 1) > 0.0001 && itemsUpdated === 0 && sectionsUpdated === 0) {
+              throw new Error(
+                `Ajuste financeiro não foi persistido: 0 itens e 0 seções atualizados em ${clones.length} novas versões (fator=${factor}). Versões clonadas serão desfeitas pelo revert.`
+              );
+            }
           }
           await updateProgress(clones.length, "events");
 
