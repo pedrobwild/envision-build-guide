@@ -105,6 +105,7 @@ export function useDeviceContext(): () => DeviceContext {
       userAgent: ua,
       activeFilters: collectActiveFilters(location.pathname),
       consoleErrors: getCapturedConsoleEntries(),
+      authRefreshFailures: getAuthRefreshFailures(),
     };
   };
 }
