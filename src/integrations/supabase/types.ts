@@ -3363,9 +3363,17 @@ export type Database = {
         Returns: string
       }
       normalize_phone: { Args: { p_phone: string }; Returns: string }
+      reactivate_or_addendum_budget: {
+        Args: { _client_id: string; _property_id?: string }
+        Returns: string
+      }
       reorder_catalog_categories: {
         Args: { p_ids: string[] }
         Returns: undefined
+      }
+      resolve_active_budget_for_lead: {
+        Args: { _client_id: string; _property_id?: string }
+        Returns: string
       }
       resolve_lead_owner: {
         Args: {
