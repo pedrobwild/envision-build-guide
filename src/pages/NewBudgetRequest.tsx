@@ -91,6 +91,7 @@ function NotionInput({
   maxLength,
   required,
   suffix,
+  disabled,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -99,6 +100,7 @@ function NotionInput({
   maxLength?: number;
   required?: boolean;
   suffix?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="relative">
@@ -109,7 +111,8 @@ function NotionInput({
         placeholder={placeholder}
         maxLength={maxLength}
         required={required}
-        className="w-full px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+        disabled={disabled}
+        className="w-full px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:border-transparent"
       />
       {suffix && value && (
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/50 pointer-events-none font-body">
