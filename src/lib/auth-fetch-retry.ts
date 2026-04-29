@@ -319,7 +319,22 @@ export function installAuthFetchRetry() {
         duration: Infinity,
         action: {
           label: "Tentar novamente",
-          onClick: () => window.location.reload(),
+          onClick: async () => {
+            // Tenta primeiro recuperar a sessão silenciosamente (sem reload).
+            // Se falhar, recarrega a página como fallback.
+            try {
+              const mod = await import("@/lib/auth-session-recovery");
+              await mod.triggerAuthSessionRecovery();
+              // Se a recuperação resolveu, o toast TOAST_ID_FAILED já foi
+              // dismissado pelo módulo de recovery. Caso contrário, reload.
+              const stillVisible = document.querySelector(
+                `[data-sonner-toast][data-id="${TOAST_ID_FAILED}"]`,
+              );
+              if (stillVisible) window.location.reload();
+            } catch {
+              window.location.reload();
+            }
+          },
         },
       });
 
