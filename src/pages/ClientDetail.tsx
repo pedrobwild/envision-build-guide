@@ -58,6 +58,7 @@ import {
 } from "@/hooks/useClients";
 import { useClientProperties, summarizeProperty } from "@/hooks/useClientProperties";
 import { ClientPropertiesManager } from "@/components/crm/ClientPropertiesManager";
+import { ClientTimeline } from "@/components/crm/ClientTimeline";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { INTERNAL_STATUSES, LOCATION_TYPES } from "@/lib/role-constants";
 import { supabase } from "@/integrations/supabase/client";
@@ -434,6 +435,7 @@ export default function ClientDetail() {
       <Tabs defaultValue="overview" className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Visão geral</TabsTrigger>
+          <TabsTrigger value="timeline">Atividades</TabsTrigger>
           <TabsTrigger value="properties">Imóveis ({properties.length})</TabsTrigger>
           <TabsTrigger value="budgets">Orçamentos ({budgets.length})</TabsTrigger>
           <TabsTrigger value="notes">Notas</TabsTrigger>
@@ -690,6 +692,10 @@ export default function ClientDetail() {
               </p>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="timeline" className="mt-4">
+          <ClientTimeline clientId={client.id} />
         </TabsContent>
 
         <TabsContent value="properties" className="mt-4">
