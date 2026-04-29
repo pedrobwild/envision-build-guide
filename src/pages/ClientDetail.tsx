@@ -801,11 +801,28 @@ export default function ClientDetail() {
                             : "—"}
                         </TableCell>
                         <TableCell>
-                          <Button asChild variant="ghost" size="icon" className="h-7 w-7">
-                            <Link to={`/admin/budget/${b.id}`}>
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </Link>
-                          </Button>
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              title="Exportar planilha (.xlsx) com valores abertos"
+                              aria-label="Exportar planilha .xlsx"
+                              disabled={exportingBudgetId === b.id}
+                              onClick={() => handleExportBudget(b.id, b.sequential_code)}
+                            >
+                              {exportingBudgetId === b.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <FileSpreadsheet className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                            <Button asChild variant="ghost" size="icon" className="h-7 w-7" title="Abrir orçamento">
+                              <Link to={`/admin/budget/${b.id}`}>
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </Link>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
