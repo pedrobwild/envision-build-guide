@@ -575,18 +575,50 @@ const CLONE_PROTECTED_STATUSES = new Set([
 
 // deno-lint-ignore no-explicit-any
 async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userId: string, changeReason: string, expectedStatus?: string): Promise<VersionCloneResult> {
+  // Resolve a melhor fonte do clone DENTRO do mesmo grupo de versões.
+  // Histórico do bug: quando `is_current_version` está dessincronizado (ex.:
+  // publicação antiga não rebaixou versões anteriores), `sourceBudgetId` pode
+  // apontar para uma versão obsoleta. Para garantir que clonamos o estado mais
+  // confiável, preferimos a versão publicada mais recente do grupo. Se não
+  // houver, caímos em `is_current_version=true`. Em último caso, usamos o id
+  // original mesmo.
+  const { data: candidate } = await admin
+    .from("budgets")
+    .select("id, version_group_id")
+    .eq("id", sourceBudgetId)
+    .maybeSingle();
+  const groupOfRequested = (candidate as { version_group_id?: string } | null)?.version_group_id ?? sourceBudgetId;
+
+  let resolvedSourceId = sourceBudgetId;
+  if (groupOfRequested) {
+    const { data: best } = await admin
+      .from("budgets")
+      .select("id, is_published_version, is_current_version, version_number, updated_at")
+      .eq("version_group_id", groupOfRequested)
+      .order("is_published_version", { ascending: false, nullsFirst: false })
+      .order("is_current_version", { ascending: false, nullsFirst: false })
+      .order("version_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const bestId = (best as { id?: string } | null)?.id;
+    if (bestId && bestId !== sourceBudgetId) {
+      logCtx(`clone:${sourceBudgetId} resolvendo fonte para versão mais recente publicada/atual: ${bestId}`);
+      resolvedSourceId = bestId;
+    }
+  }
+
   const { data: source, error: srcErr } = await admin
     .from("budgets")
     .select("*")
-    .eq("id", sourceBudgetId)
+    .eq("id", resolvedSourceId)
     .single();
-  if (srcErr || !source) throw toError(srcErr ?? new Error("source-not-found"), `clone:${sourceBudgetId}`);
+  if (srcErr || !source) throw toError(srcErr ?? new Error("source-not-found"), `clone:${resolvedSourceId}`);
 
   const currentStatus = String((source as { internal_status?: string }).internal_status ?? "");
 
   // Guard 1: estado protegido (mudou para final entre o plan e o apply)
   if (CLONE_PROTECTED_STATUSES.has(currentStatus)) {
-    throw new Error(`Orçamento ${sourceBudgetId} está em estado protegido '${currentStatus}' — pulado para evitar conflito.`);
+    throw new Error(`Orçamento ${resolvedSourceId} está em estado protegido '${currentStatus}' — pulado para evitar conflito.`);
   }
 
   // Guard 2: divergência entre o estado capturado no plan e o estado atual
@@ -594,17 +626,17 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
   // mas registramos no result para que o revert preserve fielmente o estado
   // que de fato existia imediatamente antes do clone.
   if (expectedStatus && expectedStatus !== currentStatus) {
-    logCtx(`clone:${sourceBudgetId} status drift: plan='${expectedStatus}' actual='${currentStatus}' — usando atual`);
+    logCtx(`clone:${resolvedSourceId} status drift: plan='${expectedStatus}' actual='${currentStatus}' — usando atual`);
   }
 
   let groupId = source.version_group_id as string | null;
   if (!groupId) {
-    groupId = sourceBudgetId;
+    groupId = resolvedSourceId;
     const { error: ensureErr } = await admin
       .from("budgets")
       .update({ version_group_id: groupId, version_number: 1, is_current_version: true })
-      .eq("id", sourceBudgetId);
-    if (ensureErr) throw toError(ensureErr, `ensure-group:${sourceBudgetId}`);
+      .eq("id", resolvedSourceId);
+    if (ensureErr) throw toError(ensureErr, `ensure-group:${resolvedSourceId}`);
   }
 
   const { data: maxRow } = await admin
