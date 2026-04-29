@@ -655,9 +655,12 @@ export default function BudgetInternalDetail() {
               </span>
             </Button>
             {(isAdmin || isComercial) &&
-              ["delivered_to_sales", "sent_to_client", "minuta_solicitada"].includes(
-                budget.internal_status
-              ) && (
+              [
+                "ready_for_review",
+                "delivered_to_sales",
+                "sent_to_client",
+                "minuta_solicitada",
+              ].includes(budget.internal_status) && (
                 <Button
                   variant="outline"
                   size="sm"
