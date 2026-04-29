@@ -11,6 +11,7 @@ import {
 import authBg from "@/assets/bg-auth-v2.png";
 import bwildLogo from "@/assets/logo-bwild-white.png";
 import { z } from "zod";
+import { useAuthRetryState } from "@/hooks/useAuthRetryState";
 
 const loginSchema = z.object({
   email: z.string().trim().min(1, "Informe seu e-mail.").email("Digite um e-mail válido."),
