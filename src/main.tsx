@@ -12,6 +12,10 @@ import { installAuthSessionRecovery } from "./lib/auth-session-recovery";
 // de qualquer import que crie cliente Supabase.
 installAuthFetchRetry();
 
+// Recupera silenciosamente a sessão (refreshSession) quando a rede volta
+// após uma falha definitiva de refresh_token, evitando reload da página.
+installAuthSessionRecovery();
+
 // Captura erros de runtime numa janela rolante para o BugReporter anexar
 // contexto técnico mesmo em mobile (sem precisar abrir o DevTools).
 installConsoleErrorBuffer();
