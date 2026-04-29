@@ -172,8 +172,8 @@ export default function VersionCompare() {
   const rightId = params.get("right");
 
   const [loading, setLoading] = useState(true);
-  const [leftData, setLeftData] = useState<{ meta: VersionMeta; sections: CompareSection[] } | null>(null);
-  const [rightData, setRightData] = useState<{ meta: VersionMeta; sections: CompareSection[] } | null>(null);
+  const [leftData, setLeftData] = useState<{ meta: VersionMeta; sections: CompareSection[]; adjustments: CompareAdjustment[] } | null>(null);
+  const [rightData, setRightData] = useState<{ meta: VersionMeta; sections: CompareSection[]; adjustments: CompareAdjustment[] } | null>(null);
   const [diffs, setDiffs] = useState<SectionDiff[]>([]);
   const [showUnchanged, setShowUnchanged] = useState(false);
   const [clientView, setClientView] = useState(false);
