@@ -58,6 +58,7 @@ import {
 } from "@/hooks/useClients";
 import { useClientProperties, summarizeProperty } from "@/hooks/useClientProperties";
 import { ClientPropertiesManager } from "@/components/crm/ClientPropertiesManager";
+import { ClientTimeline } from "@/components/crm/ClientTimeline";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { INTERNAL_STATUSES, LOCATION_TYPES } from "@/lib/role-constants";
 import { supabase } from "@/integrations/supabase/client";
