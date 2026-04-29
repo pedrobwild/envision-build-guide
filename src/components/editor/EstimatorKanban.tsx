@@ -831,6 +831,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
               budgets={columnBudgets(col)}
               onCardClick={onCardClick}
               getProfileName={getProfileName}
+              revisionInfoMap={revisionInfoMap}
             />
           ))}
         </div>
