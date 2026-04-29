@@ -365,10 +365,21 @@ export function EstimatorListView({
                 <Handshake className="h-3 w-3 shrink-0" />
                 {getProfileName(b.commercial_owner_id)}
               </span>
-              {isAdmin && (
-                <span className="flex items-center gap-1" title="Orçamentista">
-                  <UserCog className="h-3 w-3 shrink-0" />
-                  {getProfileName(b.estimator_owner_id)}
+              <span className="flex items-center gap-1" title="Orçamentista responsável">
+                <UserCog className="h-3 w-3 shrink-0" />
+                {getProfileName(b.estimator_owner_id)}
+              </span>
+              {b.internal_status === "revision_requested" && revisionInfoMap[b.id] && (
+                <span
+                  className="flex items-center gap-1 text-warning"
+                  title={`Revisão solicitada por ${revisionInfoMap[b.id].requestedByName} em ${format(
+                    new Date(revisionInfoMap[b.id].requestedAt),
+                    "dd MMM 'às' HH:mm",
+                    { locale: ptBR }
+                  )}`}
+                >
+                  <RotateCcw className="h-3 w-3 shrink-0" />
+                  {revisionInfoMap[b.id].requestedByName}
                 </span>
               )}
               {timeAgo && <span>{timeAgo}</span>}
