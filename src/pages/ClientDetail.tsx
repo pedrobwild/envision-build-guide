@@ -1057,8 +1057,21 @@ export default function ClientDetail() {
                       Este cliente ainda não tem orçamentos.
                     </TableCell>
                   </TableRow>
+                ) : visibleBudgets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10 text-sm text-muted-foreground">
+                      Nenhum orçamento corresponde ao filtro.{" "}
+                      <button
+                        type="button"
+                        className="underline hover:text-foreground"
+                        onClick={() => setBudgetsFilterOnlySelected(false)}
+                      >
+                        Mostrar todos
+                      </button>
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  budgets.map((b) => {
+                  visibleBudgets.map((b) => {
                     const st =
                       INTERNAL_STATUSES[
                         b.internal_status as keyof typeof INTERNAL_STATUSES
@@ -1068,8 +1081,21 @@ export default function ClientDetail() {
                     const propLabel = prop
                       ? summarizeProperty(prop)
                       : [b.condominio, b.bairro, b.metragem].filter(Boolean).join(" · ");
+                    const isSelected = selectedExportBudget?.id === b.id;
                     return (
-                      <TableRow key={b.id}>
+                      <TableRow
+                        key={b.id}
+                        className={cn(
+                          "cursor-pointer transition-colors",
+                          isSelected && "bg-primary/5 hover:bg-primary/10",
+                        )}
+                        onClick={(e) => {
+                          // Evita conflito com cliques em bot\u00f5es/links da pr\u00f3pria linha
+                          const target = e.target as HTMLElement;
+                          if (target.closest("button, a")) return;
+                          setSelectedExportBudgetId(b.id);
+                        }}
+                      >
                         <TableCell>
                           {b.sequential_code ? (
                             <span className="font-mono text-[11px] tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded">
