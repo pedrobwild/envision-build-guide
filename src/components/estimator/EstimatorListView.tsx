@@ -279,28 +279,79 @@ export function EstimatorListView({
               <span className="font-medium font-display text-sm text-foreground truncate">
                 {b.project_name || b.client_name}
               </span>
-              {!compact && (
-                <Badge variant="secondary" className={`text-[10px] font-body px-1.5 py-0 h-[18px] ${status.color}`}>
-                  {status.icon} {status.label}
-                </Badge>
-              )}
-              {isUrgent && (
-                <Badge className="bg-destructive/10 text-destructive border-destructive/20 border text-[9px] px-1 py-0 h-4 gap-0.5">
-                  <Flame className="h-2.5 w-2.5" />
-                  Urgente
-                </Badge>
-              )}
-              {b.priority === "alta" && (
-                <Badge variant="outline" className={`text-[9px] px-1 py-0 h-4 ${prio.color}`}>
-                  Alta
-                </Badge>
-              )}
-              {due.label && (
-                <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0 h-4 rounded-full border ${dueVariantStyles[due.variant]}`}>
-                  <Calendar className="h-2.5 w-2.5" />
-                  {due.label}
-                </span>
-              )}
+              <InlineEdit
+                type="select"
+                value={b.internal_status}
+                options={STATUS_OPTIONS}
+                ariaLabel="Editar status"
+                onSave={(v) => {
+                  if (!v || v === b.internal_status) return;
+                  return onQuickUpdate(b.id, { internal_status: v as InternalStatus });
+                }}
+                display={
+                  <Badge variant="secondary" className={`text-[10px] font-body px-1.5 py-0 h-[18px] ${status.color}`}>
+                    {status.icon} {status.label}
+                  </Badge>
+                }
+                className="!p-0 !m-0 hover:bg-transparent"
+              />
+              <InlineEdit
+                type="select"
+                value={b.priority}
+                options={PRIORITY_OPTIONS}
+                ariaLabel="Editar prioridade"
+                onSave={(v) => {
+                  if (!v || v === b.priority) return;
+                  return onQuickUpdate(b.id, { priority: v as string });
+                }}
+                display={
+                  isUrgent ? (
+                    <Badge className="bg-destructive/10 text-destructive border-destructive/20 border text-[9px] px-1 py-0 h-4 gap-0.5">
+                      <Flame className="h-2.5 w-2.5" />
+                      Urgente
+                    </Badge>
+                  ) : b.priority === "alta" ? (
+                    <Badge variant="outline" className={`text-[9px] px-1 py-0 h-4 ${prio.color}`}>
+                      Alta
+                    </Badge>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground/70 font-body">
+                      {prio.label}
+                    </span>
+                  )
+                }
+                className="!p-0 !m-0 hover:bg-transparent"
+              />
+              <InlineEdit
+                type="date"
+                value={b.due_at ? String(b.due_at).slice(0, 10) : null}
+                ariaLabel="Editar data de validade"
+                placeholder="Sem prazo"
+                onSave={(v) => {
+                  const next = v ? new Date(`${v}T23:59:59`).toISOString() : null;
+                  return onQuickUpdate(b.id, { due_at: next });
+                }}
+                display={
+                  due.label ? (
+                    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0 h-4 rounded-full border ${dueVariantStyles[due.variant]}`}>
+                      <Calendar className="h-2.5 w-2.5" />
+                      {due.label}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
+                      <Calendar className="h-2.5 w-2.5" />
+                      Sem prazo
+                    </span>
+                  )
+                }
+                className="!p-0 !m-0 hover:bg-transparent"
+              />
+              <BriefingQuickEdit
+                value={b.briefing}
+                onSave={(next) => onQuickUpdate(b.id, { briefing: next })}
+                projectName={b.project_name || b.client_name}
+              />
+
               {b.internal_status === "revision_requested" && (() => {
                 const info = revisionInfoMap[b.id];
                 const dateLabel = info
