@@ -101,8 +101,8 @@ interface EventRow {
 }
 
 export function useCommercialConversion(range: ConversionRange = "30d") {
-  const { roles, userId } = useUserProfile();
-  const isAdmin = roles?.includes("admin");
+  const { profile, isAdmin } = useUserProfile();
+  const userId = profile?.user_id ?? null;
   const fromIso = rangeToDate(range);
 
   return useQuery<ConversionMetrics>({
