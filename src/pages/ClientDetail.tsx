@@ -850,7 +850,193 @@ export default function ClientDetail() {
           <ClientPropertiesManager clientId={client.id} budgetCountByProperty={budgetCountByProperty} />
         </TabsContent>
 
-        <TabsContent value="budgets" className="mt-4">
+        <TabsContent value="budgets" className="mt-4 space-y-4">
+          {/* Painel de detalhes do or\u00e7amento selecionado + seletor + filtro */}
+          {budgets.length > 0 && selectedExportBudget && (
+            <Card className="p-4 space-y-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Or\u00e7amento em destaque
+                  </Label>
+                  <Select
+                    value={selectedExportBudget.id}
+                    onValueChange={(v) => setSelectedExportBudgetId(v)}
+                  >
+                    <SelectTrigger
+                      className="h-9 w-full md:w-[280px] text-xs"
+                      aria-label="Selecionar or\u00e7amento em destaque"
+                    >
+                      <SelectValue placeholder="Selecionar or\u00e7amento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {budgets.map((b) => {
+                        const code = b.sequential_code ?? b.id.slice(0, 8);
+                        const name = b.project_name?.trim() || "Sem nome";
+                        return (
+                          <SelectItem key={b.id} value={b.id} className="text-xs">
+                            <span className="font-mono mr-2">{code}</span>
+                            <span className="text-muted-foreground">{name}</span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {budgets.length > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Label
+                      htmlFor="filter-only-selected"
+                      className="text-xs text-muted-foreground cursor-pointer"
+                    >
+                      Mostrar apenas o selecionado
+                    </Label>
+                    <Switch
+                      id="filter-only-selected"
+                      checked={budgetsFilterOnlySelected}
+                      onCheckedChange={setBudgetsFilterOnlySelected}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Resumo do or\u00e7amento selecionado */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    C\u00f3digo
+                  </div>
+                  <div className="font-mono text-sm">
+                    {selectedExportBudget.sequential_code ?? selectedExportBudget.id.slice(0, 8)}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Status
+                  </div>
+                  <div>
+                    {(() => {
+                      const st =
+                        INTERNAL_STATUSES[
+                          selectedExportBudget.internal_status as keyof typeof INTERNAL_STATUSES
+                        ];
+                      return st ? (
+                        <Badge variant="outline" className={cn("font-normal", st.color)}>
+                          {st.icon} {st.label}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {selectedExportBudget.internal_status}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Valor
+                  </div>
+                  <div className="font-medium tabular-nums">
+                    {formatBRL(selectedBudgetSummary?.total ?? null)}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Margem m\u00e9dia
+                  </div>
+                  <div className="font-medium tabular-nums">
+                    {selectedBudgetSummary?.margin != null
+                      ? `${selectedBudgetSummary.margin.toFixed(1)}%`
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Criado
+                  </div>
+                  <div className="text-sm">
+                    {selectedExportBudget.created_at
+                      ? format(new Date(selectedExportBudget.created_at), "dd MMM yy", { locale: ptBR })
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Atualizado
+                  </div>
+                  <div className="text-sm">
+                    {selectedExportBudget.updated_at
+                      ? format(new Date(selectedExportBudget.updated_at), "dd MMM yy", { locale: ptBR })
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Vencimento
+                  </div>
+                  <div className="text-sm">
+                    {selectedExportBudget.due_at
+                      ? format(new Date(selectedExportBudget.due_at), "dd MMM yy", { locale: ptBR })
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    A\u00e7\u00f5es
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button asChild variant="outline" size="sm" className="h-7 px-2 text-xs gap-1">
+                      <Link to={`/admin/budget/${selectedExportBudget.id}`}>
+                        <ExternalLink className="h-3 w-3" /> Abrir
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1"
+                      disabled={exportingBudgetId === selectedExportBudget.id}
+                      onClick={() =>
+                        handleExportBudget(
+                          selectedExportBudget.id,
+                          selectedExportBudget.sequential_code,
+                        )
+                      }
+                      aria-label="Exportar planilha .xlsx"
+                    >
+                      {exportingBudgetId === selectedExportBudget.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <FileSpreadsheet className="h-3 w-3" />
+                      )}
+                      .xlsx
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1"
+                      disabled={exportingPdfId === selectedExportBudget.id}
+                      onClick={() =>
+                        handleExportBudgetPdf(
+                          selectedExportBudget.id,
+                          selectedExportBudget.sequential_code,
+                        )
+                      }
+                      aria-label="Exportar PDF"
+                    >
+                      {exportingPdfId === selectedExportBudget.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <FileDown className="h-3 w-3" />
+                      )}
+                      .pdf
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card className="overflow-hidden">
             <Table>
               <TableHeader>
