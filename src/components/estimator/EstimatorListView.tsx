@@ -1,10 +1,13 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { InlineEdit } from "@/components/ui/inline-edit";
 import { useRevisionRequests } from "@/hooks/useRevisionRequests";
 import {
   DropdownMenuItem,
@@ -31,18 +34,30 @@ import {
   Ruler,
   MapPin,
   Eye,
+  
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
   STATUS_GROUPS,
+  VALID_INTERNAL_STATUSES,
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
 import { format, formatDistanceToNow, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+
+const STATUS_OPTIONS = VALID_INTERNAL_STATUSES.map((s) => ({
+  value: s,
+  label: `${INTERNAL_STATUSES[s].icon} ${INTERNAL_STATUSES[s].label}`,
+}));
+
+const PRIORITY_OPTIONS = (Object.keys(PRIORITIES) as Priority[]).map((p) => ({
+  value: p,
+  label: PRIORITIES[p].label,
+}));
 
 const PENDING_STATUSES: readonly string[] = STATUS_GROUPS.PENDING;
 const IN_PROGRESS_STATUSES: readonly string[] = STATUS_GROUPS.ACTIVE_WORK;
@@ -128,6 +143,10 @@ interface EstimatorListViewProps {
   onSetStatusFilter: (value: string) => void;
   onOpenAssignDialog: (budgetId: string, type: "estimator" | "commercial", currentValue: string | null) => void;
   onRefresh: () => void;
+  onQuickUpdate: (
+    budgetId: string,
+    patch: Partial<Pick<BudgetRow, "internal_status" | "priority" | "due_at" | "briefing">>,
+  ) => Promise<void> | void;
 }
 
 interface WorkflowGroup {
@@ -153,6 +172,7 @@ export function EstimatorListView({
   onSetStatusFilter,
   onOpenAssignDialog,
   onRefresh,
+  onQuickUpdate,
 }: EstimatorListViewProps) {
   const navigate = useNavigate();
 
@@ -259,28 +279,79 @@ export function EstimatorListView({
               <span className="font-medium font-display text-sm text-foreground truncate">
                 {b.project_name || b.client_name}
               </span>
-              {!compact && (
-                <Badge variant="secondary" className={`text-[10px] font-body px-1.5 py-0 h-[18px] ${status.color}`}>
-                  {status.icon} {status.label}
-                </Badge>
-              )}
-              {isUrgent && (
-                <Badge className="bg-destructive/10 text-destructive border-destructive/20 border text-[9px] px-1 py-0 h-4 gap-0.5">
-                  <Flame className="h-2.5 w-2.5" />
-                  Urgente
-                </Badge>
-              )}
-              {b.priority === "alta" && (
-                <Badge variant="outline" className={`text-[9px] px-1 py-0 h-4 ${prio.color}`}>
-                  Alta
-                </Badge>
-              )}
-              {due.label && (
-                <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0 h-4 rounded-full border ${dueVariantStyles[due.variant]}`}>
-                  <Calendar className="h-2.5 w-2.5" />
-                  {due.label}
-                </span>
-              )}
+              <InlineEdit
+                type="select"
+                value={b.internal_status}
+                options={STATUS_OPTIONS}
+                ariaLabel="Editar status"
+                onSave={(v) => {
+                  if (!v || v === b.internal_status) return;
+                  return onQuickUpdate(b.id, { internal_status: v as InternalStatus });
+                }}
+                display={
+                  <Badge variant="secondary" className={`text-[10px] font-body px-1.5 py-0 h-[18px] ${status.color}`}>
+                    {status.icon} {status.label}
+                  </Badge>
+                }
+                className="!p-0 !m-0 hover:bg-transparent"
+              />
+              <InlineEdit
+                type="select"
+                value={b.priority}
+                options={PRIORITY_OPTIONS}
+                ariaLabel="Editar prioridade"
+                onSave={(v) => {
+                  if (!v || v === b.priority) return;
+                  return onQuickUpdate(b.id, { priority: v as string });
+                }}
+                display={
+                  isUrgent ? (
+                    <Badge className="bg-destructive/10 text-destructive border-destructive/20 border text-[9px] px-1 py-0 h-4 gap-0.5">
+                      <Flame className="h-2.5 w-2.5" />
+                      Urgente
+                    </Badge>
+                  ) : b.priority === "alta" ? (
+                    <Badge variant="outline" className={`text-[9px] px-1 py-0 h-4 ${prio.color}`}>
+                      Alta
+                    </Badge>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground/70 font-body">
+                      {prio.label}
+                    </span>
+                  )
+                }
+                className="!p-0 !m-0 hover:bg-transparent"
+              />
+              <InlineEdit
+                type="date"
+                value={b.due_at ? String(b.due_at).slice(0, 10) : null}
+                ariaLabel="Editar data de validade"
+                placeholder="Sem prazo"
+                onSave={(v) => {
+                  const next = v ? new Date(`${v}T23:59:59`).toISOString() : null;
+                  return onQuickUpdate(b.id, { due_at: next });
+                }}
+                display={
+                  due.label ? (
+                    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0 h-4 rounded-full border ${dueVariantStyles[due.variant]}`}>
+                      <Calendar className="h-2.5 w-2.5" />
+                      {due.label}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
+                      <Calendar className="h-2.5 w-2.5" />
+                      Sem prazo
+                    </span>
+                  )
+                }
+                className="!p-0 !m-0 hover:bg-transparent"
+              />
+              <BriefingQuickEdit
+                value={b.briefing}
+                onSave={(next) => onQuickUpdate(b.id, { briefing: next })}
+                projectName={b.project_name || b.client_name}
+              />
+
               {b.internal_status === "revision_requested" && (() => {
                 const info = revisionInfoMap[b.id];
                 const dateLabel = info
@@ -575,5 +646,100 @@ export function EstimatorListView({
         </div>
       )}
     </>
+  );
+}
+
+interface BriefingQuickEditProps {
+  value: string | null;
+  projectName: string;
+  onSave: (next: string | null) => Promise<void> | void;
+}
+
+function BriefingQuickEdit({ value, projectName, onSave }: BriefingQuickEditProps) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const hasBriefing = !!(value && value.trim());
+
+  async function handleSave() {
+    const next = draft.trim() ? draft.trim() : null;
+    if (next === (value ?? null)) {
+      setOpen(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(next);
+      setOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        if (o) setDraft(value ?? "");
+        setOpen(o);
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          aria-label={hasBriefing ? "Editar briefing" : "Adicionar briefing"}
+          className={`inline-flex items-center gap-1 rounded-full border px-1.5 h-4 text-[9px] font-body transition-colors ${
+            hasBriefing
+              ? "border-primary/20 bg-primary/5 text-primary hover:bg-primary/10"
+              : "border-dashed border-muted-foreground/30 text-muted-foreground hover:bg-muted/50"
+          }`}
+        >
+          <FileText className="h-2.5 w-2.5" />
+          {hasBriefing ? "Briefing" : "+ briefing"}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        side="bottom"
+        className="w-[min(420px,calc(100vw-2rem))] p-3 space-y-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-0.5">
+          <p className="text-[11px] font-semibold font-display text-foreground">Briefing</p>
+          <p className="text-[10px] text-muted-foreground font-body truncate">{projectName}</p>
+        </div>
+        <Textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Resumo da demanda, escopo, observações…"
+          rows={6}
+          className="text-xs font-body resize-y"
+          autoFocus
+        />
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setOpen(false)}
+            disabled={saving}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            Salvar
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
