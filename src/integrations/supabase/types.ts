@@ -3295,6 +3295,10 @@ export type Database = {
         Returns: number
       }
       default_win_probability: { Args: { _stage: string }; Returns: number }
+      derive_internal_status_from_stage: {
+        Args: { _stage: string }
+        Returns: string
+      }
       derive_pipeline_stage: {
         Args: { _internal_status: string }
         Returns: string
@@ -3319,6 +3323,10 @@ export type Database = {
       increment_view_count: {
         Args: { p_public_id: string }
         Returns: undefined
+      }
+      is_production_ready_for_proposal: {
+        Args: { _status: string }
+        Returns: boolean
       }
       list_failed_lead_sources: {
         Args: { p_limit?: number }
