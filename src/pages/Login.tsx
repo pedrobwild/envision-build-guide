@@ -32,6 +32,7 @@ export default function Login() {
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [mode, setMode] = useState<Mode>("login");
   const navigate = useNavigate();
+  const authRetry = useAuthRetryState();
 
   useEffect(() => {
     let isMounted = true;
