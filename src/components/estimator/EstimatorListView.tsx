@@ -4,6 +4,8 @@ import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRevisionRequests } from "@/hooks/useRevisionRequests";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
