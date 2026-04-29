@@ -456,8 +456,15 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
 
   const wsDet = XLSX.utils.aoa_to_sheet(detRows);
   wsDet["!cols"] = [
-    { wch: 34 }, { wch: 40 }, { wch: 12 }, { wch: 10 },
-    { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 16 },
+    { wch: 38 }, // Item
+    { wch: 60 }, // Descrição
+    { wch: 10 }, // Qtd
+    { wch: 8 },  // Un.
+    { wch: 16 }, // Custo unit.
+    { wch: 18 }, // Custo total
+    { wch: 10 }, // BDI
+    { wch: 16 }, // Venda unit.
+    { wch: 18 }, // Venda total
   ];
   wsDet["!freeze"] = { xSplit: 0, ySplit: 1 };
   wsDet["!merges"] = detMerges;
@@ -490,7 +497,7 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
         cell.z = m.fmt;
       }
       if (!cell) continue;
-      const styled = cell as XLSX.CellObject & { s?: unknown };
+      const styled = cell as XLSX.CellObject & { s?: { alignment?: { horizontal?: string; vertical?: string; wrapText?: boolean } } };
       if (r === 0) {
         styled.s = HEADER_STYLE;
       } else if (m.section) {
@@ -498,9 +505,17 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
       } else if (m.total) {
         styled.s = TOTAL_STYLE;
       } else if (m.subtotal) {
-        styled.s = SUBTOTAL_STYLE;
+        styled.s = { ...SUBTOTAL_STYLE };
       } else if (m.bold) {
         styled.s = { font: { bold: true } };
+      }
+      // Aplica alinhamento por célula sem perder demais propriedades.
+      if (m.align) {
+        const existing = (styled.s ?? {}) as { alignment?: { horizontal?: string; vertical?: string; wrapText?: boolean } };
+        styled.s = {
+          ...existing,
+          alignment: { ...(existing.alignment ?? {}), horizontal: m.align, vertical: "center", wrapText: true },
+        };
       }
     }
   }
