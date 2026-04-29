@@ -158,6 +158,12 @@ export function EstimatorListView({
 
   const isDefaultView = statusFilter === "all" && priorityFilter === "all" && !search;
 
+  const revisionIds = useMemo(
+    () => filtered.filter((b) => b.internal_status === "revision_requested").map((b) => b.id),
+    [filtered]
+  );
+  const revisionInfoMap = useRevisionRequests(revisionIds);
+
   const groups = useMemo<WorkflowGroup[]>(() => {
     if (!isDefaultView) return [];
 
