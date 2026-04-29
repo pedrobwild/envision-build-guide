@@ -222,6 +222,24 @@ export default function ClientDetail() {
     [budgets, selectedExportBudgetId],
   );
 
+  // Filtro da tabela: mostrar apenas o or\u00e7amento selecionado.
+  const [budgetsFilterOnlySelected, setBudgetsFilterOnlySelected] = useState(false);
+  const visibleBudgets = useMemo(() => {
+    if (budgetsFilterOnlySelected && selectedExportBudget) {
+      return budgets.filter((b) => b.id === selectedExportBudget.id);
+    }
+    return budgets;
+  }, [budgets, budgetsFilterOnlySelected, selectedExportBudget]);
+
+  // Resumo financeiro do or\u00e7amento selecionado (sem refazer queries).
+  const selectedBudgetSummary = useMemo(() => {
+    if (!selectedExportBudget) return null;
+    const cost = Number(selectedExportBudget.internal_cost) || 0;
+    const total = Number(selectedExportBudget.manual_total) || 0;
+    const margin = total > 0 ? ((total - cost) / total) * 100 : null;
+    return { cost, total, margin };
+  }, [selectedExportBudget]);
+
   const handleExportBudget = async (budgetId: string, code: string | null) => {
     if (exportingBudgetId) return;
     setExportingBudgetId(budgetId);
