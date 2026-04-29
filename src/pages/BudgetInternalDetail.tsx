@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
+import { CrossPipelineStrip } from "@/components/budget/CrossPipelineStrip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -692,6 +693,19 @@ export default function BudgetInternalDetail() {
           </div>
         </div>
       </header>
+
+      {/* Cross-pipeline context strip — visibilidade do estágio comercial dentro da tela de produção */}
+      <CrossPipelineStrip
+        internalStatus={budget.internal_status}
+        pipelineStage={budget.pipeline_stage}
+        winProbability={budget.win_probability}
+        expectedCloseAt={budget.expected_close_at}
+        totalDisplay={totalDisplay}
+        commercialOwnerName={getProfileName(budget.commercial_owner_id)}
+        onOpenComercial={() =>
+          navigate(`/admin/comercial?budgetId=${budget.id}`)
+        }
+      />
 
       {/* Pending action banner */}
       {budget.internal_status === "waiting_info" && (

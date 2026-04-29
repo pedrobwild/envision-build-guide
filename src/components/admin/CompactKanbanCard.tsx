@@ -13,6 +13,14 @@ import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-tem
 import type { LeadScoreResult } from "@/lib/lead-score";
 import { LeadScoreBadge } from "@/components/admin/LeadScoreBadge";
 import { VersionBadge } from "@/components/admin/VersionBadge";
+import {
+  COMMERCIAL_STAGES,
+  PRODUCTION_STAGES,
+  deriveCommercialStage,
+  deriveProductionStage,
+  type CommercialStage,
+  type ProductionStage,
+} from "@/lib/pipeline-stages";
 
 interface CompactKanbanCardProps {
   projectName: string;
@@ -297,6 +305,40 @@ export function CompactKanbanCard({
               {statusMeta.icon} {statusMeta.label}
             </span>
           )}
+          {/* Cross-pipeline stage chip — visibilidade entre comercial ↔ produção */}
+          {(() => {
+            if (mode === "commercial") {
+              const stage: ProductionStage = deriveProductionStage(internalStatus);
+              const meta = PRODUCTION_STAGES[stage];
+              return (
+                <span
+                  className={cn(
+                    "text-[9px] font-medium font-body px-1.5 py-0.5 rounded-md ring-1 ring-border/40 opacity-90",
+                    meta.color,
+                  )}
+                  title={`Produção · ${meta.label}`}
+                >
+                  ⚙ {meta.label}
+                </span>
+              );
+            }
+            if (mode === "estimator") {
+              const stage: CommercialStage = deriveCommercialStage(internalStatus);
+              const meta = COMMERCIAL_STAGES[stage];
+              return (
+                <span
+                  className={cn(
+                    "text-[9px] font-medium font-body px-1.5 py-0.5 rounded-md ring-1 ring-border/40 opacity-90",
+                    meta.color,
+                  )}
+                  title={`Comercial · ${meta.label}`}
+                >
+                  💼 {meta.label}
+                </span>
+              );
+            }
+            return null;
+          })()}
           <div className="flex items-center gap-1 flex-wrap justify-end">
             {leadScore && <LeadScoreBadge score={leadScore} />}
             {temperature && <DealTemperatureBadge result={temperature} compact />}
