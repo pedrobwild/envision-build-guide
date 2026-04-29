@@ -14,8 +14,35 @@
  */
 import { toast } from "sonner";
 
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1000;
+/**
+ * Configuração de retry — pode ser ajustada via variáveis de ambiente Vite:
+ *   VITE_AUTH_RETRY_MAX        → número máximo de tentativas (default 3)
+ *   VITE_AUTH_RETRY_BASE_MS    → delay base em ms (default 1000)
+ *   VITE_AUTH_RETRY_FACTOR     → fator do backoff exponencial (default 2)
+ *   VITE_AUTH_RETRY_MAX_MS     → teto do delay por tentativa em ms (default 30000)
+ *
+ * Backoff: delay(attempt) = min(BASE * FACTOR^attempt, MAX_MS)
+ * Os valores podem ser sobrescritos em runtime via `setAuthRetryConfig({...})`
+ * (útil para testes ou para ajustar dinamicamente conforme telemetria).
+ */
+const env = (import.meta as any).env ?? {};
+
+function num(value: unknown, fallback: number, min = 0): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= min ? n : fallback;
+}
+
+export const AUTH_RETRY_CONFIG = {
+  maxRetries: num(env.VITE_AUTH_RETRY_MAX, 3, 0),
+  baseDelayMs: num(env.VITE_AUTH_RETRY_BASE_MS, 1000, 0),
+  backoffFactor: num(env.VITE_AUTH_RETRY_FACTOR, 2, 1),
+  maxDelayMs: num(env.VITE_AUTH_RETRY_MAX_MS, 30_000, 0),
+};
+
+export function setAuthRetryConfig(patch: Partial<typeof AUTH_RETRY_CONFIG>) {
+  Object.assign(AUTH_RETRY_CONFIG, patch);
+}
+
 const TOAST_ID_RETRYING = "auth-fetch-retrying";
 const TOAST_ID_FAILED = "auth-fetch-failed";
 
@@ -57,7 +84,8 @@ export function installAuthFetchRetry() {
     }
 
     let lastError: unknown;
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const { maxRetries, baseDelayMs, backoffFactor, maxDelayMs } = AUTH_RETRY_CONFIG;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const res = await originalFetch(input, init);
         // Sucesso (mesmo que 4xx/5xx) — limpa toast de retry se existir
@@ -68,12 +96,15 @@ export function installAuthFetchRetry() {
         return res;
       } catch (err) {
         lastError = err;
-        if (!isNetworkError(err) || attempt === MAX_RETRIES) break;
+        if (!isNetworkError(err) || attempt === maxRetries) break;
 
-        const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+        const delay = Math.min(
+          baseDelayMs * Math.pow(backoffFactor, attempt),
+          maxDelayMs,
+        );
         toast.warning("Conexão instável", {
           id: TOAST_ID_RETRYING,
-          description: `Tentando reconectar… (${attempt + 1}/${MAX_RETRIES})`,
+          description: `Tentando reconectar… (${attempt + 1}/${maxRetries})`,
           duration: delay + 500,
         });
         await sleep(delay);
