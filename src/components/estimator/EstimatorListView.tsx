@@ -1,10 +1,13 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { InlineEdit } from "@/components/ui/inline-edit";
 import { useRevisionRequests } from "@/hooks/useRevisionRequests";
 import {
   DropdownMenuItem,
@@ -31,18 +34,30 @@ import {
   Ruler,
   MapPin,
   Eye,
+  Pencil,
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
   STATUS_GROUPS,
+  VALID_INTERNAL_STATUSES,
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
 import { format, formatDistanceToNow, differenceInCalendarDays, isToday, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+
+const STATUS_OPTIONS = VALID_INTERNAL_STATUSES.map((s) => ({
+  value: s,
+  label: `${INTERNAL_STATUSES[s].icon} ${INTERNAL_STATUSES[s].label}`,
+}));
+
+const PRIORITY_OPTIONS = (Object.keys(PRIORITIES) as Priority[]).map((p) => ({
+  value: p,
+  label: PRIORITIES[p].label,
+}));
 
 const PENDING_STATUSES: readonly string[] = STATUS_GROUPS.PENDING;
 const IN_PROGRESS_STATUSES: readonly string[] = STATUS_GROUPS.ACTIVE_WORK;
