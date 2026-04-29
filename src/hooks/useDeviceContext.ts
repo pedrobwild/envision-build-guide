@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { getCapturedConsoleEntries } from "@/lib/console-error-buffer";
+import { getAuthRefreshFailures } from "@/lib/auth-fetch-retry";
 
 export interface DeviceContext {
   route: string;
@@ -16,6 +17,7 @@ export interface DeviceContext {
   userAgent: string;
   activeFilters: Record<string, unknown>;
   consoleErrors: ReturnType<typeof getCapturedConsoleEntries>;
+  authRefreshFailures: ReturnType<typeof getAuthRefreshFailures>;
 }
 
 function detectBrowser(ua: string): { name: string; version: string } {
@@ -103,6 +105,7 @@ export function useDeviceContext(): () => DeviceContext {
       userAgent: ua,
       activeFilters: collectActiveFilters(location.pathname),
       consoleErrors: getCapturedConsoleEntries(),
+      authRefreshFailures: getAuthRefreshFailures(),
     };
   };
 }
