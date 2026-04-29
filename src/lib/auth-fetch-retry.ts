@@ -235,82 +235,106 @@ export function installAuthFetchRetry() {
     const { maxRetries, baseDelayMs, backoffFactor, maxDelayMs } = AUTH_RETRY_CONFIG;
     const totalAttempts = maxRetries + 1;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      // Se estiver offline, pausa antes de gastar uma tentativa.
-      if (isOffline()) {
-        toast.dismiss(TOAST_ID_RETRYING);
-        const cameBack = await waitForOnline();
-        if (!cameBack) {
-          lastError = lastError ?? new TypeError("Failed to fetch (offline)");
+    try {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        // Se estiver offline, pausa antes de gastar uma tentativa.
+        if (isOffline()) {
+          toast.dismiss(TOAST_ID_RETRYING);
+          setRetryState({
+            reconnecting: true,
+            attempt: attempt + 1,
+            maxAttempts: totalAttempts,
+            reason: "offline",
+          });
+          const cameBack = await waitForOnline();
+          if (!cameBack) {
+            lastError = lastError ?? new TypeError("Failed to fetch (offline)");
+            recordFailure({
+              timestamp: new Date().toISOString(),
+              url: redactedUrl,
+              attempt: attempt + 1,
+              maxAttempts: totalAttempts,
+              online: false,
+              phase: "offline-timeout",
+              errorName: (lastError as Error)?.name ?? "Error",
+              errorMessage: (lastError as Error)?.message ?? String(lastError),
+            });
+            break;
+          }
+        }
+
+        try {
+          const res = await originalFetch(input, init);
+          if (attempt > 0) {
+            toast.dismiss(TOAST_ID_RETRYING);
+            toast.dismiss(TOAST_ID_FAILED);
+          }
+          return res;
+        } catch (err) {
+          lastError = err;
+          const isLast = attempt === maxRetries;
+          const networkErr = isNetworkError(err);
+
           recordFailure({
             timestamp: new Date().toISOString(),
             url: redactedUrl,
             attempt: attempt + 1,
             maxAttempts: totalAttempts,
-            online: false,
-            phase: "offline-timeout",
-            errorName: (lastError as Error)?.name ?? "Error",
-            errorMessage: (lastError as Error)?.message ?? String(lastError),
+            online: !isOffline(),
+            phase: !networkErr || isLast ? "final" : "retry",
+            errorName: (err as Error)?.name ?? "Error",
+            errorMessage: (err as Error)?.message ?? String(err),
           });
-          break;
+
+          if (!networkErr || isLast) break;
+          if (isOffline()) continue;
+
+          const delay = Math.min(
+            baseDelayMs * Math.pow(backoffFactor, attempt),
+            maxDelayMs,
+          );
+          // Sinaliza estado de reconexão para componentes React
+          setRetryState({
+            reconnecting: true,
+            attempt: attempt + 1,
+            maxAttempts: totalAttempts,
+            reason: "retrying",
+          });
+          toast.warning("Conexão instável", {
+            id: TOAST_ID_RETRYING,
+            description: `Tentando reconectar… (${attempt + 1}/${maxRetries})`,
+            duration: delay + 500,
+          });
+          await sleep(delay);
         }
       }
 
-      try {
-        const res = await originalFetch(input, init);
-        if (attempt > 0) {
-          toast.dismiss(TOAST_ID_RETRYING);
-          toast.dismiss(TOAST_ID_FAILED);
-        }
-        return res;
-      } catch (err) {
-        lastError = err;
-        const isLast = attempt === maxRetries;
-        const networkErr = isNetworkError(err);
+      // Falha definitiva — avisa o usuário
+      toast.dismiss(TOAST_ID_RETRYING);
+      toast.error("Sem conexão com o servidor", {
+        id: TOAST_ID_FAILED,
+        description: isOffline()
+          ? "Você está offline. Reconecte para renovar sua sessão."
+          : "Não foi possível renovar sua sessão. Verifique sua internet.",
+        duration: Infinity,
+        action: {
+          label: "Tentar novamente",
+          onClick: () => window.location.reload(),
+        },
+      });
 
-        recordFailure({
-          timestamp: new Date().toISOString(),
-          url: redactedUrl,
-          attempt: attempt + 1,
-          maxAttempts: totalAttempts,
-          online: !isOffline(),
-          phase: !networkErr || isLast ? "final" : "retry",
-          errorName: (err as Error)?.name ?? "Error",
-          errorMessage: (err as Error)?.message ?? String(err),
+      throw lastError;
+    } finally {
+      // Sempre limpa o estado de reconexão ao sair do ciclo (sucesso ou falha).
+      if (retryState.reconnecting) {
+        setRetryState({
+          reconnecting: false,
+          attempt: 0,
+          maxAttempts: 0,
+          reason: null,
         });
-
-        if (!networkErr || isLast) break;
-
-        if (isOffline()) continue;
-
-        const delay = Math.min(
-          baseDelayMs * Math.pow(backoffFactor, attempt),
-          maxDelayMs,
-        );
-        toast.warning("Conexão instável", {
-          id: TOAST_ID_RETRYING,
-          description: `Tentando reconectar… (${attempt + 1}/${maxRetries})`,
-          duration: delay + 500,
-        });
-        await sleep(delay);
       }
     }
-
-    // Falha definitiva — avisa o usuário
-    toast.dismiss(TOAST_ID_RETRYING);
-    toast.error("Sem conexão com o servidor", {
-      id: TOAST_ID_FAILED,
-      description: isOffline()
-        ? "Você está offline. Reconecte para renovar sua sessão."
-        : "Não foi possível renovar sua sessão. Verifique sua internet.",
-      duration: Infinity,
-      action: {
-        label: "Tentar novamente",
-        onClick: () => window.location.reload(),
-      },
-    });
-
-    throw lastError;
   };
 }
 
