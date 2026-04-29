@@ -731,7 +731,7 @@ export default function ClientDetail() {
                   <TableHead>Status interno</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Criado</TableHead>
-                  <TableHead className="w-8" />
+                  <TableHead className="w-[88px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
