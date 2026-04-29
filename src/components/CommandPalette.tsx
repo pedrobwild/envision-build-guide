@@ -197,10 +197,10 @@ export function CommandPalette() {
       const [budgetsRes, clientsRes] = await Promise.all([
         supabase
           .from("budgets")
-          .select("id, project_name, client_name, sequential_code, status, public_id")
-          .or(`project_name.ilike.${pattern},client_name.ilike.${pattern},sequential_code.ilike.${pattern}`)
+          .select("id, project_name, client_name, sequential_code, status, public_id, unit, city")
+          .or(`project_name.ilike.${pattern},client_name.ilike.${pattern},sequential_code.ilike.${pattern},unit.ilike.${pattern},city.ilike.${pattern}`)
           .order("created_at", { ascending: false })
-          .limit(6),
+          .limit(8),
         supabase
           .from("clients")
           .select("id, name, email, phone")
