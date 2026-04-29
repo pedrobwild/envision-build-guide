@@ -143,6 +143,10 @@ interface EstimatorListViewProps {
   onSetStatusFilter: (value: string) => void;
   onOpenAssignDialog: (budgetId: string, type: "estimator" | "commercial", currentValue: string | null) => void;
   onRefresh: () => void;
+  onQuickUpdate: (
+    budgetId: string,
+    patch: Partial<Pick<BudgetRow, "internal_status" | "priority" | "due_at" | "briefing">>,
+  ) => Promise<void> | void;
 }
 
 interface WorkflowGroup {
