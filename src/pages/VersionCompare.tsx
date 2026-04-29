@@ -231,8 +231,8 @@ export default function VersionCompare() {
   };
 
   // Executive summary calculations
-  const leftTotal = leftData ? calcTotal(leftData.sections) : 0;
-  const rightTotal = rightData ? calcTotal(rightData.sections) : 0;
+  const leftTotal = leftData ? calcTotal(leftData.sections, leftData.adjustments) : 0;
+  const rightTotal = rightData ? calcTotal(rightData.sections, rightData.adjustments) : 0;
   const delta = rightTotal - leftTotal;
   const deltaPercent = leftTotal > 0 ? (delta / leftTotal) * 100 : 0;
   const totalItems = (side: CompareSection[]) => side.reduce((n, s) => n + s.items.length, 0);
