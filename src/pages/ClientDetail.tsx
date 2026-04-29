@@ -694,6 +694,10 @@ export default function ClientDetail() {
           </div>
         </TabsContent>
 
+        <TabsContent value="timeline" className="mt-4">
+          <ClientTimeline clientId={client.id} />
+        </TabsContent>
+
         <TabsContent value="properties" className="mt-4">
           <ClientPropertiesManager clientId={client.id} budgetCountByProperty={budgetCountByProperty} />
         </TabsContent>
