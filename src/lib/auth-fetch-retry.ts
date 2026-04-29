@@ -46,6 +46,68 @@ export function setAuthRetryConfig(patch: Partial<typeof AUTH_RETRY_CONFIG>) {
 const TOAST_ID_RETRYING = "auth-fetch-retrying";
 const TOAST_ID_FAILED = "auth-fetch-failed";
 
+// ───────────────────────────────────────────────────────────────────
+// Buffer de diagnóstico — guarda detalhes das falhas de refresh para
+// que o BugReporter possa anexá-las ao reportar um bug. Usa janela
+// rolante e redige a query da URL para não vazar refresh_token.
+// ───────────────────────────────────────────────────────────────────
+export interface AuthRefreshFailureEntry {
+  timestamp: string;
+  url: string;
+  attempt: number;          // 1-based
+  maxAttempts: number;
+  online: boolean;
+  phase: "retry" | "final" | "offline-timeout";
+  errorName: string;
+  errorMessage: string;
+}
+
+const MAX_FAILURE_ENTRIES = 20;
+const failureBuffer: AuthRefreshFailureEntry[] = [];
+
+function redactUrl(input: RequestInfo | URL): string {
+  try {
+    const raw =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url;
+    const u = new URL(raw, typeof location !== "undefined" ? location.href : "http://x");
+    return `${u.origin}${u.pathname}`; // descarta query/hash
+  } catch {
+    return "[unparseable-url]";
+  }
+}
+
+function recordFailure(entry: AuthRefreshFailureEntry) {
+  failureBuffer.push(entry);
+  if (failureBuffer.length > MAX_FAILURE_ENTRIES) {
+    failureBuffer.splice(0, failureBuffer.length - MAX_FAILURE_ENTRIES);
+  }
+  const tag = "[auth-fetch-retry]";
+  const payload = {
+    url: entry.url,
+    attempt: `${entry.attempt}/${entry.maxAttempts}`,
+    online: entry.online,
+    phase: entry.phase,
+    error: `${entry.errorName}: ${entry.errorMessage}`,
+  };
+  if (entry.phase === "final" || entry.phase === "offline-timeout") {
+    console.error(tag, "refresh failed", payload);
+  } else {
+    console.warn(tag, "refresh attempt failed", payload);
+  }
+}
+
+export function getAuthRefreshFailures(): AuthRefreshFailureEntry[] {
+  return [...failureBuffer];
+}
+
+export function clearAuthRefreshFailures() {
+  failureBuffer.length = 0;
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function isAuthTokenRequest(input: RequestInfo | URL): boolean {
