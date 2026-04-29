@@ -1222,10 +1222,15 @@ serve(async (req) => {
           // A RPC bulk_apply_factor_to_items roda em uma única transação no
           // Postgres e atualiza milhares de items + sections em milissegundos
           // (substitui dezenas/centenas de updates row-a-row do código antigo).
+          // CRÍTICO: nomes dos parâmetros DEVEM bater com a assinatura da função
+          // no Postgres (`p_budget_ids`, `p_factor`). Em deploys anteriores
+          // estavam como `_budget_ids`/`_factor` e PostgREST falhava silenciosamente
+          // → caía no fallback row-a-row, que em alta concorrência podia não
+          // persistir a redução, deixando a nova versão idêntica à fonte.
           const newBudgetIds = clones.map((c) => c.new_budget_id);
           const { data: rpcRes, error: rpcErr } = await admin.rpc("bulk_apply_factor_to_items", {
-            _budget_ids: newBudgetIds,
-            _factor: factor,
+            p_budget_ids: newBudgetIds,
+            p_factor: factor,
           });
           if (rpcErr) {
             // Fallback para updates row-a-row se a RPC não existir (deploy anterior
