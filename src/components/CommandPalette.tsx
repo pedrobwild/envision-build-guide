@@ -72,6 +72,8 @@ interface BudgetHit {
   sequential_code: string | null;
   status: string;
   public_id: string | null;
+  unit: string | null;
+  city: string | null;
 }
 
 interface ClientHit {
@@ -195,10 +197,10 @@ export function CommandPalette() {
       const [budgetsRes, clientsRes] = await Promise.all([
         supabase
           .from("budgets")
-          .select("id, project_name, client_name, sequential_code, status, public_id")
-          .or(`project_name.ilike.${pattern},client_name.ilike.${pattern},sequential_code.ilike.${pattern}`)
+          .select("id, project_name, client_name, sequential_code, status, public_id, unit, city")
+          .or(`project_name.ilike.${pattern},client_name.ilike.${pattern},sequential_code.ilike.${pattern},unit.ilike.${pattern},city.ilike.${pattern}`)
           .order("created_at", { ascending: false })
-          .limit(6),
+          .limit(8),
         supabase
           .from("clients")
           .select("id, name, email, phone")
@@ -280,7 +282,7 @@ export function CommandPalette() {
               {budgets.map((b) => (
                 <CommandItem
                   key={b.id}
-                  value={`budget-${b.id} ${b.project_name} ${b.client_name} ${b.sequential_code ?? ""}`}
+                  value={`budget-${b.id} ${b.project_name} ${b.client_name} ${b.sequential_code ?? ""} ${b.unit ?? ""} ${b.city ?? ""}`}
                   onSelect={() => run(() => navigate(`/admin/budget/${b.id}`))}
                 >
                   <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -296,6 +298,12 @@ export function CommandPalette() {
                         </>
                       ) : null}
                       <Highlight text={b.client_name} query={query} />
+                      {(b.unit || b.city) && (
+                        <>
+                          {" · "}
+                          <Highlight text={[b.unit, b.city].filter(Boolean).join(" · ")} query={query} />
+                        </>
+                      )}
                     </span>
                   </div>
                   {b.public_id && (
