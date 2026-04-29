@@ -75,6 +75,13 @@ export function RevisionRequestDialog({
     setSubmitting(true);
 
     try {
+      // 0. Buscar dados do orçamento para notificação (orçamentista, código, projeto)
+      const { data: budgetData } = await supabase
+        .from("budgets")
+        .select("estimator_owner_id, sequential_code, project_name, client_name")
+        .eq("id", budgetId)
+        .maybeSingle();
+
       // 1. Update budget status
       const { error: updateErr } = await supabase
         .from("budgets")
@@ -102,6 +109,27 @@ export function RevisionRequestDialog({
         user_id: user!.id,
         body: `🔄 **Revisão solicitada:**\n${trimmed}`,
       });
+
+      // 4. Notificar orçamentista (in-app, realtime via NotificationBell)
+      if (budgetData?.estimator_owner_id) {
+        const requesterName = profile?.full_name || user!.email || "Comercial";
+        const codeLabel = budgetData.sequential_code ? `${budgetData.sequential_code} · ` : "";
+        const subject = budgetData.project_name || budgetData.client_name || "orçamento";
+        const preview = trimmed.length > 120 ? `${trimmed.slice(0, 117)}…` : trimmed;
+
+        const { error: notifErr } = await supabase.from("notifications").insert({
+          user_id: budgetData.estimator_owner_id,
+          type: "revision_requested",
+          title: "Revisão solicitada pelo comercial",
+          message: `${codeLabel}${subject} · ${requesterName}: ${preview}`,
+          budget_id: budgetId,
+          read: false,
+        });
+
+        if (notifErr) {
+          logger.error("Failed to insert revision notification:", notifErr);
+        }
+      }
 
       toast.success("Solicitação de revisão enviada ao orçamentista.");
       onSuccess();
