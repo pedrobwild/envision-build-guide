@@ -11,6 +11,7 @@ import {
 import authBg from "@/assets/bg-auth-v2.png";
 import bwildLogo from "@/assets/logo-bwild-white.png";
 import { z } from "zod";
+import { useAuthRetryState } from "@/hooks/useAuthRetryState";
 
 const loginSchema = z.object({
   email: z.string().trim().min(1, "Informe seu e-mail.").email("Digite um e-mail válido."),
@@ -31,6 +32,7 @@ export default function Login() {
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [mode, setMode] = useState<Mode>("login");
   const navigate = useNavigate();
+  const authRetry = useAuthRetryState();
 
   useEffect(() => {
     let isMounted = true;
@@ -317,9 +319,17 @@ export default function Login() {
           <Button
             type="submit"
             className="w-full h-12 bg-white text-slate-900 hover:bg-white/90 font-semibold text-base font-body"
-            disabled={loading}
+            disabled={loading || authRetry.reconnecting}
+            aria-busy={loading || authRetry.reconnecting}
           >
-            {loading ? (
+            {authRetry.reconnecting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {authRetry.reason === "offline"
+                  ? "Aguardando conexão…"
+                  : `Reconectando… (${authRetry.attempt}/${authRetry.maxAttempts})`}
+              </>
+            ) : loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {mode === "forgot" ? "Enviando..." : "Entrando..."}
@@ -328,6 +338,18 @@ export default function Login() {
               mode === "forgot" ? "Enviar e-mail de recuperação" : "Entrar"
             )}
           </Button>
+
+          {authRetry.reconnecting && (
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-xs text-white/70 text-center font-body -mt-2"
+            >
+              {authRetry.reason === "offline"
+                ? "Você está offline. Aguardaremos a rede voltar para concluir sua entrada."
+                : "Conexão instável. Não feche a página — tentaremos novamente automaticamente."}
+            </p>
+          )}
 
           {/* Back to login from forgot */}
           {mode === "forgot" && (
