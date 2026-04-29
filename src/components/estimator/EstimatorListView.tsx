@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { InlineEdit } from "@/components/ui/inline-edit";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useRevisionRequests } from "@/hooks/useRevisionRequests";
 import {
   DropdownMenuItem,
