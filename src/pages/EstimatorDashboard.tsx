@@ -578,12 +578,7 @@ export default function EstimatorDashboard() {
           </div>
           <div className="flex items-center gap-2">
             {user && <NotificationBell userId={user.id} />}
-            {isAdmin && (
-              <Button size="sm" className="gap-1.5" onClick={() => setNewBudgetOpen(true)}>
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nova Solicitação</span>
-              </Button>
-            )}
+            {/* CTA "Nova Solicitação" removido: novas solicitações partem do card do cliente em /admin/crm */}
             <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
               <Button
                 variant={viewMode === "list" ? "secondary" : "ghost"}
