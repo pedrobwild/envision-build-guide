@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserProfile } from "@/contexts/UserProfileContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 /**
  * Funil de conversão Pipeline Comercial → Orçamento → Cliente.
