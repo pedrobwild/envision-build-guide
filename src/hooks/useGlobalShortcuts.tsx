@@ -89,7 +89,8 @@ export function useGlobalShortcuts() {
           navigate("/admin/crm");
           break;
         case "n":
-          navigate("/admin/solicitacoes/nova");
+          // Solicitações partem do card do cliente — atalho leva à lista de clientes
+          navigate("/admin/crm");
           break;
         default:
           // unknown — silent

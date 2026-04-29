@@ -173,13 +173,7 @@ export default function BudgetRequestsList() {
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => setNewBudgetOpen(true)}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Nova Solicitação</span>
-          </Button>
+          {/* CTA removido: novas solicitações partem do card do cliente em /admin/crm */}
         </div>
       </header>
 
@@ -247,11 +241,8 @@ export default function BudgetRequestsList() {
                 : "Crie sua primeira solicitação de orçamento para começar."}
             </p>
             {!search && statusFilter === "all" && priorityFilter === "all" && (
-              <Button
-                onClick={() => setNewBudgetOpen(true)}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" /> Nova Solicitação
+              <Button onClick={() => navigate("/admin/crm")} className="gap-2">
+                <Plus className="h-4 w-4" /> Abrir clientes
               </Button>
             )}
           </div>
