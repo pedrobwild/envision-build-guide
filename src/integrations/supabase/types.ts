@@ -593,6 +593,39 @@ export type Database = {
           },
         ]
       }
+      budget_reuse_log: {
+        Row: {
+          attempted_at: string
+          attempted_by: string | null
+          attempted_payload: Json | null
+          client_id: string | null
+          id: string
+          property_id: string | null
+          reused_budget_id: string
+          source: string | null
+        }
+        Insert: {
+          attempted_at?: string
+          attempted_by?: string | null
+          attempted_payload?: Json | null
+          client_id?: string | null
+          id?: string
+          property_id?: string | null
+          reused_budget_id: string
+          source?: string | null
+        }
+        Update: {
+          attempted_at?: string
+          attempted_by?: string | null
+          attempted_payload?: Json | null
+          client_id?: string | null
+          id?: string
+          property_id?: string | null
+          reused_budget_id?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       budget_template_items: {
         Row: {
           bdi_percentage: number | null
@@ -3312,6 +3345,10 @@ export type Database = {
         }[]
       }
       get_dashboard_summary: { Args: never; Returns: Json }
+      get_or_reuse_budget_for_client: {
+        Args: { _client_id: string; _property_id?: string }
+        Returns: string
+      }
       get_public_budget: { Args: { p_public_id: string }; Returns: Json }
       has_role: {
         Args: {
