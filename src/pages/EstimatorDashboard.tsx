@@ -747,11 +747,28 @@ export default function EstimatorDashboard() {
                 onOpenAssignDialog={handleOpenAssignDialog}
                 onRefresh={loadData}
                 onQuickUpdate={quickUpdate}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onToggleSelectMany={toggleSelectMany}
               />
             )}
           </>
         )}
       </div>
+
+      {/* Bulk actions bar */}
+      {selectedIds.size > 0 && (
+        <BulkActionsBar
+          count={selectedIds.size}
+          onClear={clearSelection}
+          isAdmin={isAdmin}
+          estimatorOptions={bulkEstimatorOptions}
+          commercialOptions={bulkCommercialOptions}
+          onBulkStatus={bulkUpdateStatus}
+          onBulkRevision={bulkRequestRevision}
+          onBulkAssign={bulkAssign}
+        />
+      )}
 
       {/* Assignment Dialog (admin only) */}
       <Dialog open={assignDialog.open} onOpenChange={(open) => {
