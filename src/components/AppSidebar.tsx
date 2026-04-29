@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import {
   LayoutDashboard,
-  FileText,
   Plus,
   Hammer,
   Briefcase,
@@ -71,7 +70,9 @@ const COMERCIAL_ITEMS: NavItem[] = [
   { title: "Agenda", url: "/admin/agenda", icon: CalendarClock, roles: ["admin", "comercial"] },
   { title: "Insights por Consultor", url: "/admin/insights", icon: Brain, roles: ["admin", "comercial"] },
   { title: "Clientes", url: "/admin/crm", icon: Users, roles: ["admin", "comercial"] },
-  { title: "Solicitações", url: "/admin/solicitacoes", icon: FileText, roles: ["admin", "comercial"], actionUrl: "/admin/solicitacoes/nova", actionLabel: "Nova solicitação" },
+  // Removido: "Solicitações" — agora a criação de solicitação acontece dentro do
+  // card do cliente (botão "Novo orçamento" em /admin/crm/:id), evitando
+  // duplicidade. As rotas /admin/solicitacoes* permanecem ativas para compatibilidade.
 ];
 
 const PROJETOS_ITEMS: NavItem[] = [

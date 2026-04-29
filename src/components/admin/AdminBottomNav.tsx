@@ -29,10 +29,12 @@ const TABS: TabItem[] = [
     roles: ["admin", "orcamentista"],
   },
   {
+    // Atalho de criação aponta para a lista de clientes — toda solicitação
+    // deve nascer dentro do card de um cliente para evitar duplicidade.
     label: "",
     icon: Plus,
-    path: "/admin/solicitacoes/nova",
-    matchPaths: ["/admin/solicitacoes/nova"],
+    path: "/admin/crm",
+    matchPaths: ["/admin/crm"],
     roles: ["admin", "comercial"],
     isAction: true,
   },

@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, X, Upload, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { LOCATION_TYPES } from "@/lib/role-constants";
 import {
@@ -61,6 +62,7 @@ const BR_STATES = [
 
 export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormProps) {
   const { user } = useAuth();
+  const { isComercial } = useUserProfile();
   const { members: comerciais } = useTeamMembers("comercial");
   const upsert = useUpsertClient();
   const queryClient = useQueryClient();
@@ -158,8 +160,11 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
     setLocationType(initial?.location_type_default ?? "");
     setNotes(initial?.notes ?? "");
     setTags(initial?.tags ?? []);
-    setOwnerId(initial?.commercial_owner_id ?? "");
-  }, [open, initial]);
+    // Default inteligente: se for novo cliente e o usuário logado é comercial,
+    // pré-seleciona ele como responsável. Caso contrário, mantém o que veio em `initial`.
+    const defaultOwner = !initial?.id && isComercial && user?.id ? user.id : "";
+    setOwnerId(initial?.commercial_owner_id ?? defaultOwner);
+  }, [open, initial, isComercial, user]);
 
   function addTag() {
     const v = tagInput.trim();
@@ -413,6 +418,19 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
                   </SelectContent>
                 </Select>
               </Field>
+              <Field label="Responsável comercial" required>
+                <Select value={ownerId || "none"} onValueChange={(v) => setOwnerId(v === "none" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o comercial responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Sem responsável</SelectItem>
+                    {comerciais.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
             </div>
           </SectionGroup>
 
@@ -662,17 +680,6 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
                   onChange={(e) => setReferrerName(e.target.value)}
                   placeholder="Nome do corretor, arquiteto..."
                 />
-              </Field>
-              <Field label="Responsável comercial">
-                <Select value={ownerId || "none"} onValueChange={(v) => setOwnerId(v === "none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o comercial" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {comerciais.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </Field>
             </div>
 
