@@ -641,18 +641,31 @@ export function EstimatorListView({
           {groups.map((group) => (
             <section key={group.key}>
               {/* Group header */}
-              <div className={`flex items-center gap-2 mb-2 pl-1 border-l-2 ${group.borderAccent}`}>
-                <span className={`${group.accent} ml-2`}>{group.icon}</span>
-                <h3 className={`text-xs font-semibold font-display uppercase tracking-wider ${group.accent}`}>
-                  {group.label}
-                </h3>
-                <Badge variant="outline" className="text-[9px] px-1 py-0 h-[14px] font-mono border-current">
-                  {group.budgets.length}
-                </Badge>
-                <span className="text-[10px] text-muted-foreground font-body hidden sm:inline">
-                  {group.description}
-                </span>
-              </div>
+              {(() => {
+                const groupIds = group.budgets.map((b) => b.id);
+                const allSelected = groupIds.length > 0 && groupIds.every((id) => selectedIds.has(id));
+                const someSelected = !allSelected && groupIds.some((id) => selectedIds.has(id));
+                return (
+                  <div className={`flex items-center gap-2 mb-2 pl-1 border-l-2 ${group.borderAccent}`}>
+                    <Checkbox
+                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                      onCheckedChange={(c) => onToggleSelectMany(groupIds, c === true)}
+                      aria-label={`Selecionar todos do grupo ${group.label}`}
+                      className="ml-2"
+                    />
+                    <span className={`${group.accent}`}>{group.icon}</span>
+                    <h3 className={`text-xs font-semibold font-display uppercase tracking-wider ${group.accent}`}>
+                      {group.label}
+                    </h3>
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-[14px] font-mono border-current">
+                      {group.budgets.length}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground font-body hidden sm:inline">
+                      {group.description}
+                    </span>
+                  </div>
+                );
+              })()}
               {/* Cards */}
               <div className="space-y-1.5">
                 {group.budgets.map((b) => renderBudgetCard(b, true))}
