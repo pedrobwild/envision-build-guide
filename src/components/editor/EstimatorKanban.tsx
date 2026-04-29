@@ -617,6 +617,11 @@ function EstimatorCard({
 
 /* ── Main Kanban Board ── */
 export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
+  const revisionIds = useMemo(
+    () => budgets.filter((b) => b.internal_status === "revision_requested").map((b) => b.id),
+    [budgets]
+  );
+  const revisionInfoMap = useRevisionRequests(revisionIds);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const [pendingMove, setPendingMove] = useState<{
