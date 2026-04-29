@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -44,6 +45,9 @@ import {
   X,
   FileSpreadsheet,
   FileDown,
+  Calendar,
+  Clock,
+  Filter,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -217,6 +221,24 @@ export default function ClientDetail() {
     () => budgets.find((b) => b.id === selectedExportBudgetId) ?? budgets[0] ?? null,
     [budgets, selectedExportBudgetId],
   );
+
+  // Filtro da tabela: mostrar apenas o or\u00e7amento selecionado.
+  const [budgetsFilterOnlySelected, setBudgetsFilterOnlySelected] = useState(false);
+  const visibleBudgets = useMemo(() => {
+    if (budgetsFilterOnlySelected && selectedExportBudget) {
+      return budgets.filter((b) => b.id === selectedExportBudget.id);
+    }
+    return budgets;
+  }, [budgets, budgetsFilterOnlySelected, selectedExportBudget]);
+
+  // Resumo financeiro do or\u00e7amento selecionado (sem refazer queries).
+  const selectedBudgetSummary = useMemo(() => {
+    if (!selectedExportBudget) return null;
+    const cost = Number(selectedExportBudget.internal_cost) || 0;
+    const total = Number(selectedExportBudget.manual_total) || 0;
+    const margin = total > 0 ? ((total - cost) / total) * 100 : null;
+    return { cost, total, margin };
+  }, [selectedExportBudget]);
 
   const handleExportBudget = async (budgetId: string, code: string | null) => {
     if (exportingBudgetId) return;
@@ -828,7 +850,193 @@ export default function ClientDetail() {
           <ClientPropertiesManager clientId={client.id} budgetCountByProperty={budgetCountByProperty} />
         </TabsContent>
 
-        <TabsContent value="budgets" className="mt-4">
+        <TabsContent value="budgets" className="mt-4 space-y-4">
+          {/* Painel de detalhes do or\u00e7amento selecionado + seletor + filtro */}
+          {budgets.length > 0 && selectedExportBudget && (
+            <Card className="p-4 space-y-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Or\u00e7amento em destaque
+                  </Label>
+                  <Select
+                    value={selectedExportBudget.id}
+                    onValueChange={(v) => setSelectedExportBudgetId(v)}
+                  >
+                    <SelectTrigger
+                      className="h-9 w-full md:w-[280px] text-xs"
+                      aria-label="Selecionar or\u00e7amento em destaque"
+                    >
+                      <SelectValue placeholder="Selecionar or\u00e7amento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {budgets.map((b) => {
+                        const code = b.sequential_code ?? b.id.slice(0, 8);
+                        const name = b.project_name?.trim() || "Sem nome";
+                        return (
+                          <SelectItem key={b.id} value={b.id} className="text-xs">
+                            <span className="font-mono mr-2">{code}</span>
+                            <span className="text-muted-foreground">{name}</span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {budgets.length > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Label
+                      htmlFor="filter-only-selected"
+                      className="text-xs text-muted-foreground cursor-pointer"
+                    >
+                      Mostrar apenas o selecionado
+                    </Label>
+                    <Switch
+                      id="filter-only-selected"
+                      checked={budgetsFilterOnlySelected}
+                      onCheckedChange={setBudgetsFilterOnlySelected}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Resumo do or\u00e7amento selecionado */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    C\u00f3digo
+                  </div>
+                  <div className="font-mono text-sm">
+                    {selectedExportBudget.sequential_code ?? selectedExportBudget.id.slice(0, 8)}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Status
+                  </div>
+                  <div>
+                    {(() => {
+                      const st =
+                        INTERNAL_STATUSES[
+                          selectedExportBudget.internal_status as keyof typeof INTERNAL_STATUSES
+                        ];
+                      return st ? (
+                        <Badge variant="outline" className={cn("font-normal", st.color)}>
+                          {st.icon} {st.label}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {selectedExportBudget.internal_status}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Valor
+                  </div>
+                  <div className="font-medium tabular-nums">
+                    {formatBRL(selectedBudgetSummary?.total ?? null)}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Margem m\u00e9dia
+                  </div>
+                  <div className="font-medium tabular-nums">
+                    {selectedBudgetSummary?.margin != null
+                      ? `${selectedBudgetSummary.margin.toFixed(1)}%`
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Criado
+                  </div>
+                  <div className="text-sm">
+                    {selectedExportBudget.created_at
+                      ? format(new Date(selectedExportBudget.created_at), "dd MMM yy", { locale: ptBR })
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Atualizado
+                  </div>
+                  <div className="text-sm">
+                    {selectedExportBudget.updated_at
+                      ? format(new Date(selectedExportBudget.updated_at), "dd MMM yy", { locale: ptBR })
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Vencimento
+                  </div>
+                  <div className="text-sm">
+                    {selectedExportBudget.due_at
+                      ? format(new Date(selectedExportBudget.due_at), "dd MMM yy", { locale: ptBR })
+                      : "\u2014"}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    A\u00e7\u00f5es
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button asChild variant="outline" size="sm" className="h-7 px-2 text-xs gap-1">
+                      <Link to={`/admin/budget/${selectedExportBudget.id}`}>
+                        <ExternalLink className="h-3 w-3" /> Abrir
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1"
+                      disabled={exportingBudgetId === selectedExportBudget.id}
+                      onClick={() =>
+                        handleExportBudget(
+                          selectedExportBudget.id,
+                          selectedExportBudget.sequential_code,
+                        )
+                      }
+                      aria-label="Exportar planilha .xlsx"
+                    >
+                      {exportingBudgetId === selectedExportBudget.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <FileSpreadsheet className="h-3 w-3" />
+                      )}
+                      .xlsx
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1"
+                      disabled={exportingPdfId === selectedExportBudget.id}
+                      onClick={() =>
+                        handleExportBudgetPdf(
+                          selectedExportBudget.id,
+                          selectedExportBudget.sequential_code,
+                        )
+                      }
+                      aria-label="Exportar PDF"
+                    >
+                      {exportingPdfId === selectedExportBudget.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <FileDown className="h-3 w-3" />
+                      )}
+                      .pdf
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card className="overflow-hidden">
             <Table>
               <TableHeader>
@@ -849,8 +1057,21 @@ export default function ClientDetail() {
                       Este cliente ainda não tem orçamentos.
                     </TableCell>
                   </TableRow>
+                ) : visibleBudgets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10 text-sm text-muted-foreground">
+                      Nenhum orçamento corresponde ao filtro.{" "}
+                      <button
+                        type="button"
+                        className="underline hover:text-foreground"
+                        onClick={() => setBudgetsFilterOnlySelected(false)}
+                      >
+                        Mostrar todos
+                      </button>
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  budgets.map((b) => {
+                  visibleBudgets.map((b) => {
                     const st =
                       INTERNAL_STATUSES[
                         b.internal_status as keyof typeof INTERNAL_STATUSES
@@ -860,8 +1081,21 @@ export default function ClientDetail() {
                     const propLabel = prop
                       ? summarizeProperty(prop)
                       : [b.condominio, b.bairro, b.metragem].filter(Boolean).join(" · ");
+                    const isSelected = selectedExportBudget?.id === b.id;
                     return (
-                      <TableRow key={b.id}>
+                      <TableRow
+                        key={b.id}
+                        className={cn(
+                          "cursor-pointer transition-colors",
+                          isSelected && "bg-primary/5 hover:bg-primary/10",
+                        )}
+                        onClick={(e) => {
+                          // Evita conflito com cliques em bot\u00f5es/links da pr\u00f3pria linha
+                          const target = e.target as HTMLElement;
+                          if (target.closest("button, a")) return;
+                          setSelectedExportBudgetId(b.id);
+                        }}
+                      >
                         <TableCell>
                           {b.sequential_code ? (
                             <span className="font-mono text-[11px] tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded">
