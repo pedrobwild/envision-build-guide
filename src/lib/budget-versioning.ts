@@ -435,13 +435,17 @@ export async function publishVersion(budgetId: string, groupId: string, publicId
     if (demoteErr) throw demoteErr;
   }
 
-  // Step 2: Publica a nova versão herdando o public_id antigo (ou usando o novo)
+  // Step 2: Publica a nova versão herdando o public_id antigo (ou usando o novo).
+  // Também renova `date` para hoje, garantindo que a validade (date + validity_days)
+  // seja recontada a partir da publicação desta nova versão.
+  const todayISO = new Date().toISOString().slice(0, 10);
   const { data: published, error: pubErr } = await supabase
     .from("budgets")
     .update({
       is_published_version: true,
       status: "published",
       public_id: finalPublicId,
+      date: todayISO,
     })
     .eq("id", budgetId)
     .select("version_number, public_id")
