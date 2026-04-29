@@ -161,8 +161,35 @@ export default function NewBudgetRequest() {
   // Pré-preenche a partir de ?client_id=&name=&email=&phone= (vindo do CRM)
   const prefillClientId = searchParams.get("client_id");
   const [linkedClientId, setLinkedClientId] = useState<string | null>(prefillClientId);
+  const [linkedClientValidated, setLinkedClientValidated] = useState<boolean>(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("__new__");
   const { data: clientProperties = [] } = useClientProperties(linkedClientId ?? undefined);
+
+  // Valida no mount que o client_id da URL aponta para um cliente real e ativo.
+  // Se inválido, desvincula e avisa — evita criar orçamento referenciando id fantasma.
+  useEffect(() => {
+    if (!prefillClientId) {
+      setLinkedClientValidated(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, name, is_active")
+        .eq("id", prefillClientId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data || !data.is_active) {
+        setLinkedClientId(null);
+        setLinkedClientValidated(false);
+        toast.error("Cliente do link não encontrado ou inativo. Preencha os dados manualmente.");
+        return;
+      }
+      setLinkedClientValidated(true);
+    })();
+    return () => { cancelled = true; };
+  }, [prefillClientId]);
 
   const [clientName, setClientName] = useState(searchParams.get("name") ?? "");
   const [clientEmail, setClientEmail] = useState(searchParams.get("email") ?? "");
