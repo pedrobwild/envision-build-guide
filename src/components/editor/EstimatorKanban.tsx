@@ -492,12 +492,14 @@ function EstimatorCard({
   locked,
   onClick,
   getProfileName,
+  revisionInfo,
 }: {
   budget: BudgetRow;
   isDragging?: boolean;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
+  revisionInfo?: RevisionRequestInfo;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at, b.internal_status);
