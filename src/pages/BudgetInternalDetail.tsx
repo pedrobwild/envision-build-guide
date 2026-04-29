@@ -700,7 +700,7 @@ export default function BudgetInternalDetail() {
         winProbability={budget.win_probability}
         expectedCloseAt={budget.expected_close_at}
         totalDisplay={totalDisplay}
-        commercialOwnerName={commercialName}
+        commercialOwnerName={getProfileName(budget.commercial_owner_id)}
         onOpenComercial={() =>
           navigate(`/admin/comercial?budgetId=${budget.id}`)
         }
