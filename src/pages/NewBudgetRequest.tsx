@@ -161,8 +161,35 @@ export default function NewBudgetRequest() {
   // Pré-preenche a partir de ?client_id=&name=&email=&phone= (vindo do CRM)
   const prefillClientId = searchParams.get("client_id");
   const [linkedClientId, setLinkedClientId] = useState<string | null>(prefillClientId);
+  const [linkedClientValidated, setLinkedClientValidated] = useState<boolean>(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("__new__");
   const { data: clientProperties = [] } = useClientProperties(linkedClientId ?? undefined);
+
+  // Valida no mount que o client_id da URL aponta para um cliente real e ativo.
+  // Se inválido, desvincula e avisa — evita criar orçamento referenciando id fantasma.
+  useEffect(() => {
+    if (!prefillClientId) {
+      setLinkedClientValidated(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, name, is_active")
+        .eq("id", prefillClientId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data || !data.is_active) {
+        setLinkedClientId(null);
+        setLinkedClientValidated(false);
+        toast.error("Cliente do link não encontrado ou inativo. Preencha os dados manualmente.");
+        return;
+      }
+      setLinkedClientValidated(true);
+    })();
+    return () => { cancelled = true; };
+  }, [prefillClientId]);
 
   const [clientName, setClientName] = useState(searchParams.get("name") ?? "");
   const [clientEmail, setClientEmail] = useState(searchParams.get("email") ?? "");
@@ -258,6 +285,12 @@ export default function NewBudgetRequest() {
       toast.error("Preencha ao menos o nome do cliente.");
       return;
     }
+    // Se veio do card do cliente (?client_id=...), exigir que a validação tenha
+    // confirmado que o cliente existe e está ativo antes de prosseguir.
+    if (prefillClientId && (!linkedClientId || !linkedClientValidated)) {
+      toast.error("Não foi possível confirmar o cliente vinculado. Volte ao card do cliente e tente novamente.");
+      return;
+    }
 
     const isImport = mode === "import";
     if (isImport) {
@@ -318,11 +351,22 @@ export default function NewBudgetRequest() {
               commercial_owner_id: commercialOwnerId || user.id,
             },
           });
+          if (!c?.id) {
+            throw new Error("upsertClientByContact retornou sem id");
+          }
           resolvedClientId = c.id;
           setLinkedClientId(c.id);
         } catch (clientErr) {
-          logger.error("[NewBudgetRequest] upsertClient falhou (seguindo sem vincular):", clientErr);
+          logger.error("[NewBudgetRequest] upsertClient falhou:", clientErr);
+          toast.error("Não foi possível criar/vincular o cliente. Verifique nome, e-mail e telefone e tente novamente.");
+          return;
         }
+      }
+
+      // Invariante: a esta altura SEMPRE deve haver um client_id resolvido.
+      if (!resolvedClientId) {
+        toast.error("Não foi possível identificar o cliente para vincular ao orçamento.");
+        return;
       }
 
       // Resolve property_id: usa o existente OU cria um novo se há dados de imóvel
@@ -402,6 +446,36 @@ export default function NewBudgetRequest() {
         const detail = [error?.message, error?.details, error?.hint].filter(Boolean).join(" · ");
         toast.error(`Erro ao criar solicitação: ${detail || "resposta vazia"}`, { duration: 10000 });
         return;
+      }
+
+      // Validação pós-insert: confirma que o client_id foi efetivamente persistido
+      // no orçamento gerado (defesa contra triggers de reuse/redirect que possam
+      // alterar o registro alvo). Se faltar, faz auto-correção via UPDATE.
+      try {
+        const { data: verify } = await supabase
+          .from("budgets")
+          .select("id, client_id")
+          .eq("id", inserted.id)
+          .maybeSingle();
+        if (!verify) {
+          logger.error("[NewBudgetRequest] verify pós-insert: registro não encontrado", inserted.id);
+        } else if (verify.client_id !== resolvedClientId) {
+          logger.error("[NewBudgetRequest] client_id divergente após insert", {
+            expected: resolvedClientId,
+            got: verify.client_id,
+            budgetId: inserted.id,
+          });
+          const { error: fixErr } = await supabase
+            .from("budgets")
+            .update({ client_id: resolvedClientId })
+            .eq("id", inserted.id);
+          if (fixErr) {
+            logger.error("[NewBudgetRequest] auto-fix client_id falhou:", fixErr);
+            toast.error("O orçamento foi criado, mas não conseguimos vincular ao cliente. Abra o orçamento e revise.", { duration: 10000 });
+          }
+        }
+      } catch (verifyErr) {
+        logger.error("[NewBudgetRequest] verify pós-insert exception:", verifyErr);
       }
 
       if (isImport) {
