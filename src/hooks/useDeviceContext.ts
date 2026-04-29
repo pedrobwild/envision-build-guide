@@ -17,6 +17,7 @@ export interface DeviceContext {
   userAgent: string;
   activeFilters: Record<string, unknown>;
   consoleErrors: ReturnType<typeof getCapturedConsoleEntries>;
+  authRefreshFailures: ReturnType<typeof getAuthRefreshFailures>;
 }
 
 function detectBrowser(ua: string): { name: string; version: string } {
