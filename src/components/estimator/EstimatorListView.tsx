@@ -172,6 +172,7 @@ export function EstimatorListView({
   onSetStatusFilter,
   onOpenAssignDialog,
   onRefresh,
+  onQuickUpdate,
 }: EstimatorListViewProps) {
   const navigate = useNavigate();
 
