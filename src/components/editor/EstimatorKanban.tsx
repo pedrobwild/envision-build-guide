@@ -411,6 +411,7 @@ function Column({
                   locked={column.locked}
                   onCardClick={onCardClick}
                   getProfileName={getProfileName}
+                  revisionInfoMap={revisionInfoMap}
                 />
               </div>
             ))}
