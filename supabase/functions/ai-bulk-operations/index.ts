@@ -668,7 +668,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
       version_number: nextVersion,
       is_current_version: false,
       is_published_version: false,
-      parent_budget_id: sourceBudgetId,
+      parent_budget_id: resolvedSourceId,
       change_reason: changeReason,
       versao: `${nextVersion}`,
       status: "draft",
@@ -679,7 +679,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
     })
     .select("id")
     .single();
-  if (insErr || !newBudget) throw toError(insErr ?? new Error("insert-failed"), `clone-insert:${sourceBudgetId}`);
+  if (insErr || !newBudget) throw toError(insErr ?? new Error("insert-failed"), `clone-insert:${resolvedSourceId}`);
   const newBudgetId = newBudget.id as string;
 
   // Guard 3: race com publicação/clone concorrente. Se entre nossa leitura de
@@ -713,7 +713,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
   const { data: oldSections } = await admin
     .from("sections")
     .select("*")
-    .eq("budget_id", sourceBudgetId)
+    .eq("budget_id", resolvedSourceId)
     .order("order_index");
 
   const sectionIdMap: Record<string, string> = {};
@@ -728,7 +728,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
       .from("sections")
       .insert(sectionInserts)
       .select("id");
-    if (secInsErr) throw toError(secInsErr, `clone-sections:${sourceBudgetId}`);
+    if (secInsErr) throw toError(secInsErr, `clone-sections:${resolvedSourceId}`);
     (newSections ?? []).forEach((ns: { id: string }, i: number) => {
       const old = oldSections[i];
       if (old?.id && ns?.id) sectionIdMap[old.id as string] = ns.id;
@@ -749,7 +749,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
         .from("items")
         .insert(itemInserts)
         .select("id");
-      if (itemInsErr) throw toError(itemInsErr, `clone-items:${sourceBudgetId}`);
+      if (itemInsErr) throw toError(itemInsErr, `clone-items:${resolvedSourceId}`);
       (newItems ?? []).forEach((ni: { id: string }, i: number) => {
         const old = oldItems[i];
         if (old?.id && ni?.id) itemIdMap[old.id as string] = ni.id;
@@ -777,7 +777,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
 
   // Best-effort clone of adjustments
   try {
-    const { data: adj } = await admin.from("adjustments").select("*").eq("budget_id", sourceBudgetId);
+    const { data: adj } = await admin.from("adjustments").select("*").eq("budget_id", resolvedSourceId);
     if (adj && adj.length > 0) {
       await admin.from("adjustments").insert(
         adj.map(({ id: _aid, created_at: _aca, budget_id: _abid, ...rest }: Record<string, unknown>) => ({
@@ -797,7 +797,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
       note: changeReason,
       metadata: {
         source: "ai_bulk_operation",
-        source_budget_id: sourceBudgetId,
+        source_budget_id: resolvedSourceId,
         version_number: nextVersion,
       },
       user_id: userId,
@@ -808,7 +808,7 @@ async function cloneBudgetAsNewVersion(admin: any, sourceBudgetId: string, userI
 
   return {
     new_budget_id: newBudgetId,
-    old_budget_id: sourceBudgetId,
+    old_budget_id: resolvedSourceId,
     old_was_current: Boolean((source as { is_current_version?: boolean }).is_current_version),
     // Usa o status REAL no momento do clone (currentStatus), não o do plan,
     // garantindo que o revert restaure o estado de fato preservado.
