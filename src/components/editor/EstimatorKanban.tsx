@@ -460,11 +460,13 @@ function DraggableCard({
   locked,
   onClick,
   getProfileName,
+  revisionInfo,
 }: {
   budget: BudgetRow;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
+  revisionInfo?: RevisionRequestInfo;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: budget.id,
@@ -478,7 +480,7 @@ function DraggableCard({
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <EstimatorCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} />
+      <EstimatorCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} revisionInfo={revisionInfo} />
     </div>
   );
 }
