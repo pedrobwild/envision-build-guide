@@ -448,6 +448,36 @@ export default function NewBudgetRequest() {
         return;
       }
 
+      // Validação pós-insert: confirma que o client_id foi efetivamente persistido
+      // no orçamento gerado (defesa contra triggers de reuse/redirect que possam
+      // alterar o registro alvo). Se faltar, faz auto-correção via UPDATE.
+      try {
+        const { data: verify } = await supabase
+          .from("budgets")
+          .select("id, client_id")
+          .eq("id", inserted.id)
+          .maybeSingle();
+        if (!verify) {
+          logger.error("[NewBudgetRequest] verify pós-insert: registro não encontrado", inserted.id);
+        } else if (verify.client_id !== resolvedClientId) {
+          logger.error("[NewBudgetRequest] client_id divergente após insert", {
+            expected: resolvedClientId,
+            got: verify.client_id,
+            budgetId: inserted.id,
+          });
+          const { error: fixErr } = await supabase
+            .from("budgets")
+            .update({ client_id: resolvedClientId })
+            .eq("id", inserted.id);
+          if (fixErr) {
+            logger.error("[NewBudgetRequest] auto-fix client_id falhou:", fixErr);
+            toast.error("O orçamento foi criado, mas não conseguimos vincular ao cliente. Abra o orçamento e revise.", { duration: 10000 });
+          }
+        }
+      } catch (verifyErr) {
+        logger.error("[NewBudgetRequest] verify pós-insert exception:", verifyErr);
+      }
+
       if (isImport) {
         const { error: eventError } = await supabase.from("budget_events").insert([{
           budget_id: inserted.id,
