@@ -396,6 +396,26 @@ export default function ClientDetail() {
               <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="gap-1.5">
                 <Pencil className="h-3.5 w-3.5" /> Editar
               </Button>
+              {budgets.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={!!exportingBudgetId}
+                  onClick={() => {
+                    const latest = budgets[0];
+                    handleExportBudget(latest.id, latest.sequential_code ?? null);
+                  }}
+                  title={`Exporta o orçamento mais recente${budgets[0].sequential_code ? ` (${budgets[0].sequential_code})` : ""} com valores abertos`}
+                >
+                  {exportingBudgetId ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                  )}
+                  Exportar .xlsx
+                </Button>
+              )}
               <Button
                 size="sm"
                 className="gap-1.5"
