@@ -351,11 +351,22 @@ export default function NewBudgetRequest() {
               commercial_owner_id: commercialOwnerId || user.id,
             },
           });
+          if (!c?.id) {
+            throw new Error("upsertClientByContact retornou sem id");
+          }
           resolvedClientId = c.id;
           setLinkedClientId(c.id);
         } catch (clientErr) {
-          logger.error("[NewBudgetRequest] upsertClient falhou (seguindo sem vincular):", clientErr);
+          logger.error("[NewBudgetRequest] upsertClient falhou:", clientErr);
+          toast.error("Não foi possível criar/vincular o cliente. Verifique nome, e-mail e telefone e tente novamente.");
+          return;
         }
+      }
+
+      // Invariante: a esta altura SEMPRE deve haver um client_id resolvido.
+      if (!resolvedClientId) {
+        toast.error("Não foi possível identificar o cliente para vincular ao orçamento.");
+        return;
       }
 
       // Resolve property_id: usa o existente OU cria um novo se há dados de imóvel
