@@ -4,7 +4,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Plus, Minus, RefreshCw, Equal, Eye, EyeOff, TrendingUp, TrendingDown } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
-import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { calculateBudgetTotal } from "@/lib/supabase-helpers";
 import { logVersionEvent } from "@/lib/version-audit";
 import { logger } from "@/lib/logger";
 
@@ -24,6 +24,16 @@ interface CompareItem {
   qty: number | null;
   unit: string | null;
   internal_total: number | null;
+  internal_unit_price?: number | null;
+  bdi_percentage?: number | null;
+  addendum_action?: "add" | "remove" | null;
+}
+
+interface CompareAdjustment {
+  id: string;
+  label: string;
+  amount: number;
+  sign: number;
 }
 
 interface VersionMeta {
@@ -53,7 +63,7 @@ interface SectionDiff {
   items: DiffRow[];
 }
 
-async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; sections: CompareSection[] }> {
+async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; sections: CompareSection[]; adjustments: CompareAdjustment[] }> {
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
     .select("id, version_number, versao, project_name, client_name, status, created_at, change_reason, version_group_id")
@@ -64,18 +74,23 @@ async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; secti
 
   const { data: sections, error: secErr } = await supabase
     .from("sections")
-    .select("id, title, order_index, section_price, qty, items(id, title, description, qty, unit, internal_total, internal_unit_price)")
+    .select("id, title, order_index, section_price, qty, addendum_action, items(id, title, description, qty, unit, internal_total, internal_unit_price, bdi_percentage, addendum_action)")
     .eq("budget_id", budgetId)
     .order("order_index");
 
   if (secErr) toast.error(`Erro ao carregar seções: ${secErr.message}`);
+
+  const { data: adjustments } = await supabase
+    .from("adjustments")
+    .select("id, label, amount, sign")
+    .eq("budget_id", budgetId);
 
   const mapped: CompareSection[] = (sections || []).map((s) => ({
     ...s,
     items: ((s.items as CompareItem[]) || []).sort((a, b) => (a.title || "").localeCompare(b.title || "")),
   }));
 
-  return { meta: budget as VersionMeta, sections: mapped };
+  return { meta: budget as VersionMeta, sections: mapped, adjustments: ((adjustments as unknown) as CompareAdjustment[]) || [] };
 }
 
 function diffSections(left: CompareSection[], right: CompareSection[]): SectionDiff[] {
@@ -132,8 +147,8 @@ function diffItems(left: CompareItem[], right: CompareItem[]): DiffRow[] {
   return result;
 }
 
-function calcTotal(sections: CompareSection[]): number {
-  return sections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
+function calcTotal(sections: CompareSection[], adjustments: CompareAdjustment[]): number {
+  return calculateBudgetTotal(sections, adjustments);
 }
 
 const statusConfig: Record<DiffStatus, { icon: typeof Equal; color: string; bg: string }> = {
@@ -157,8 +172,8 @@ export default function VersionCompare() {
   const rightId = params.get("right");
 
   const [loading, setLoading] = useState(true);
-  const [leftData, setLeftData] = useState<{ meta: VersionMeta; sections: CompareSection[] } | null>(null);
-  const [rightData, setRightData] = useState<{ meta: VersionMeta; sections: CompareSection[] } | null>(null);
+  const [leftData, setLeftData] = useState<{ meta: VersionMeta; sections: CompareSection[]; adjustments: CompareAdjustment[] } | null>(null);
+  const [rightData, setRightData] = useState<{ meta: VersionMeta; sections: CompareSection[]; adjustments: CompareAdjustment[] } | null>(null);
   const [diffs, setDiffs] = useState<SectionDiff[]>([]);
   const [showUnchanged, setShowUnchanged] = useState(false);
   const [clientView, setClientView] = useState(false);
@@ -216,8 +231,8 @@ export default function VersionCompare() {
   };
 
   // Executive summary calculations
-  const leftTotal = leftData ? calcTotal(leftData.sections) : 0;
-  const rightTotal = rightData ? calcTotal(rightData.sections) : 0;
+  const leftTotal = leftData ? calcTotal(leftData.sections, leftData.adjustments) : 0;
+  const rightTotal = rightData ? calcTotal(rightData.sections, rightData.adjustments) : 0;
   const delta = rightTotal - leftTotal;
   const deltaPercent = leftTotal > 0 ? (delta / leftTotal) * 100 : 0;
   const totalItems = (side: CompareSection[]) => side.reduce((n, s) => n + s.items.length, 0);
