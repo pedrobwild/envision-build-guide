@@ -147,6 +147,9 @@ interface EstimatorListViewProps {
     budgetId: string,
     patch: Partial<Pick<BudgetRow, "internal_status" | "priority" | "due_at" | "briefing">>,
   ) => Promise<void> | void;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleSelectMany: (ids: string[], checked: boolean) => void;
 }
 
 interface WorkflowGroup {
