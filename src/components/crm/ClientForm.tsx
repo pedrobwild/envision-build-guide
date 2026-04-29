@@ -164,7 +164,7 @@ export function ClientForm({ open, onOpenChange, initial, onSaved }: ClientFormP
     // pré-seleciona ele como responsável. Caso contrário, mantém o que veio em `initial`.
     const defaultOwner = !initial?.id && isComercial && user?.id ? user.id : "";
     setOwnerId(initial?.commercial_owner_id ?? defaultOwner);
-  }, [open, initial]);
+  }, [open, initial, isComercial, user]);
 
   function addTag() {
     const v = tagInput.trim();
