@@ -62,8 +62,8 @@ interface AdjustmentRow {
   sign: number;
 }
 
-const fmtBR = (n: number | null | undefined): number | null =>
-  n === null || n === undefined || Number.isNaN(Number(n)) ? null : Number(n);
+// (helpers de formato BR ficam definidos dentro de exportBudgetToXlsx)
+
 
 const sanitizeFileName = (s: string) =>
   s
