@@ -72,6 +72,8 @@ interface BudgetHit {
   sequential_code: string | null;
   status: string;
   public_id: string | null;
+  unit: string | null;
+  city: string | null;
 }
 
 interface ClientHit {
