@@ -266,13 +266,29 @@ export function EstimatorListView({
       ? formatDistanceToNow(new Date(b.created_at), { addSuffix: true, locale: ptBR })
       : null;
 
+    const isSelected = selectedIds.has(b.id);
+
     return (
       <Card
         key={b.id}
-        className="px-4 py-3 hover:shadow-md transition-all border group cursor-pointer"
+        className={`px-4 py-3 hover:shadow-md transition-all border group cursor-pointer ${
+          isSelected ? "ring-2 ring-primary/40 border-primary/40 bg-primary/5" : ""
+        }`}
         onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}
       >
         <div className="flex items-center gap-3">
+          {/* Selection checkbox */}
+          <div
+            className="shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={() => onToggleSelect(b.id)}
+              aria-label={`Selecionar ${b.project_name || b.client_name}`}
+              className={`${isSelected ? "" : "opacity-40 group-hover:opacity-100"} transition-opacity`}
+            />
+          </div>
           {/* Left: main info */}
           <div className="flex-1 min-w-0">
             {/* Row 1: Code + Name + Badges */}
