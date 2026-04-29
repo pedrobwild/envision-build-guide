@@ -58,8 +58,9 @@ import {
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
-import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
+import { differenceInCalendarDays, isPast, isToday, format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRevisionRequests, type RevisionRequestInfo } from "@/hooks/useRevisionRequests";
 
 /* ── Columns — mirrors Commercial Kanban, with estimator lock rules ── */
 const ESTIMATOR_COLUMNS = [
@@ -260,6 +261,7 @@ function SubSectionGroup({
   locked,
   onCardClick,
   getProfileName,
+  revisionInfoMap,
   compact = false,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
@@ -267,6 +269,7 @@ function SubSectionGroup({
   locked: boolean;
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
+  revisionInfoMap: Record<string, RevisionRequestInfo>;
   compact?: boolean;
 }) {
   const Icon = subsection.icon;
@@ -323,6 +326,7 @@ function SubSectionGroup({
                 locked={locked}
                 onClick={() => onCardClick(b.id)}
                 getProfileName={getProfileName}
+                revisionInfo={revisionInfoMap[b.id]}
               />
             )}
           </div>
@@ -338,11 +342,13 @@ function Column({
   budgets,
   onCardClick,
   getProfileName,
+  revisionInfoMap,
 }: {
   column: (typeof ESTIMATOR_COLUMNS)[number];
   budgets: BudgetRow[];
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
+  revisionInfoMap: Record<string, RevisionRequestInfo>;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
@@ -405,6 +411,7 @@ function Column({
                   locked={column.locked}
                   onCardClick={onCardClick}
                   getProfileName={getProfileName}
+                  revisionInfoMap={revisionInfoMap}
                 />
               </div>
             ))}
@@ -430,6 +437,7 @@ function Column({
                     locked={column.locked}
                     onClick={() => onCardClick(b.id)}
                     getProfileName={getProfileName}
+                    revisionInfo={revisionInfoMap[b.id]}
                   />
                 </div>
               );
@@ -452,11 +460,13 @@ function DraggableCard({
   locked,
   onClick,
   getProfileName,
+  revisionInfo,
 }: {
   budget: BudgetRow;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
+  revisionInfo?: RevisionRequestInfo;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: budget.id,
@@ -470,7 +480,7 @@ function DraggableCard({
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <EstimatorCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} />
+      <EstimatorCard budget={budget} isDragging={isDragging} locked={locked} onClick={onClick} getProfileName={getProfileName} revisionInfo={revisionInfo} />
     </div>
   );
 }
@@ -482,12 +492,14 @@ function EstimatorCard({
   locked,
   onClick,
   getProfileName,
+  revisionInfo,
 }: {
   budget: BudgetRow;
   isDragging?: boolean;
   locked: boolean;
   onClick: () => void;
   getProfileName: (id: string | null) => string;
+  revisionInfo?: RevisionRequestInfo;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
   const due = getDueInfo(b.due_at, b.internal_status);
@@ -551,6 +563,41 @@ function EstimatorCard({
         </div>
       )}
 
+      {b.internal_status === "revision_requested" && revisionInfo && (
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="flex items-center gap-1 text-[10px] font-body text-warning bg-warning/10 border border-warning/20 rounded px-1.5 py-0.5 mb-1.5 cursor-help"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <RotateCcw className="h-2.5 w-2.5 shrink-0" />
+                <span className="truncate">
+                  Revisão por <strong>{revisionInfo.requestedByName}</strong>
+                  {" · "}
+                  {formatDistanceToNow(new Date(revisionInfo.requestedAt), { addSuffix: true, locale: ptBR })}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs space-y-1.5 p-3">
+              <p className="text-[11px] font-semibold font-display text-foreground">Revisão solicitada</p>
+              <p className="text-[11px] font-body text-muted-foreground">
+                <span className="font-medium text-foreground">{revisionInfo.requestedByName}</span>
+                {" · "}
+                {format(new Date(revisionInfo.requestedAt), "dd MMM 'às' HH:mm", { locale: ptBR })}
+              </p>
+              {revisionInfo.instructions && (
+                <p className="text-[11px] font-body text-foreground/90 whitespace-pre-wrap leading-snug pt-1 border-t border-border/60">
+                  {revisionInfo.instructions.length > 200
+                    ? `${revisionInfo.instructions.slice(0, 197)}…`
+                    : revisionInfo.instructions}
+                </p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
       <div className="flex items-center gap-1.5 flex-wrap">
         {due && (
           <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium font-body px-1.5 py-0.5 rounded-full ${dueVariantStyles[due.variant]}`}>
@@ -570,6 +617,11 @@ function EstimatorCard({
 
 /* ── Main Kanban Board ── */
 export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfileName }: EstimatorKanbanProps) {
+  const revisionIds = useMemo(
+    () => budgets.filter((b) => b.internal_status === "revision_requested").map((b) => b.id),
+    [budgets]
+  );
+  const revisionInfoMap = useRevisionRequests(revisionIds);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const [pendingMove, setPendingMove] = useState<{
@@ -702,6 +754,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
                           locked={col.locked}
                           onCardClick={onCardClick}
                           getProfileName={getProfileName}
+                          revisionInfoMap={revisionInfoMap}
                           compact
                         />
                       </div>
@@ -778,6 +831,7 @@ export function EstimatorKanban({ budgets, onStatusChange, onCardClick, getProfi
               budgets={columnBudgets(col)}
               onCardClick={onCardClick}
               getProfileName={getProfileName}
+              revisionInfoMap={revisionInfoMap}
             />
           ))}
         </div>
