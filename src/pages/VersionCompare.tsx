@@ -81,7 +81,7 @@ async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; secti
   if (secErr) toast.error(`Erro ao carregar seções: ${secErr.message}`);
 
   const { data: adjustments } = await supabase
-    .from("budget_adjustments")
+    .from("adjustments")
     .select("id, label, amount, sign")
     .eq("budget_id", budgetId);
 
@@ -90,7 +90,7 @@ async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; secti
     items: ((s.items as CompareItem[]) || []).sort((a, b) => (a.title || "").localeCompare(b.title || "")),
   }));
 
-  return { meta: budget as VersionMeta, sections: mapped, adjustments: (adjustments || []) as CompareAdjustment[] };
+  return { meta: budget as VersionMeta, sections: mapped, adjustments: ((adjustments as unknown) as CompareAdjustment[]) || [] };
 }
 
 function diffSections(left: CompareSection[], right: CompareSection[]): SectionDiff[] {
@@ -147,8 +147,8 @@ function diffItems(left: CompareItem[], right: CompareItem[]): DiffRow[] {
   return result;
 }
 
-function calcTotal(sections: CompareSection[]): number {
-  return sections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
+function calcTotal(sections: CompareSection[], adjustments: CompareAdjustment[]): number {
+  return calculateBudgetTotal(sections, adjustments);
 }
 
 const statusConfig: Record<DiffStatus, { icon: typeof Equal; color: string; bg: string }> = {
