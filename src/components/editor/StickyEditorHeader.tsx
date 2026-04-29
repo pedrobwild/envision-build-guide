@@ -135,7 +135,26 @@ export function StickyEditorHeader({
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(projectName);
+  const [exporting, setExporting] = useState<"xlsx" | "pdf" | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = async (kind: "xlsx" | "pdf") => {
+    if (!budget.id || exporting) return;
+    setExporting(kind);
+    const tId = toast.loading(kind === "xlsx" ? "Gerando planilha…" : "Gerando PDF…");
+    try {
+      if (kind === "xlsx") await exportBudgetToXlsx(budget.id);
+      else await exportBudgetToPdf(budget.id);
+      toast.success(kind === "xlsx" ? "Planilha gerada" : "PDF gerado", { id: tId });
+    } catch (err) {
+      toast.error(`Falha ao exportar ${kind.toUpperCase()}`, {
+        id: tId,
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setExporting(null);
+    }
+  };
 
   useEffect(() => {
     setNameValue(budget.project_name || "");
