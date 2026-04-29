@@ -282,7 +282,7 @@ export function CommandPalette() {
               {budgets.map((b) => (
                 <CommandItem
                   key={b.id}
-                  value={`budget-${b.id} ${b.project_name} ${b.client_name} ${b.sequential_code ?? ""}`}
+                  value={`budget-${b.id} ${b.project_name} ${b.client_name} ${b.sequential_code ?? ""} ${b.unit ?? ""} ${b.city ?? ""}`}
                   onSelect={() => run(() => navigate(`/admin/budget/${b.id}`))}
                 >
                   <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -298,6 +298,12 @@ export function CommandPalette() {
                         </>
                       ) : null}
                       <Highlight text={b.client_name} query={query} />
+                      {(b.unit || b.city) && (
+                        <>
+                          {" · "}
+                          <Highlight text={[b.unit, b.city].filter(Boolean).join(" · ")} query={query} />
+                        </>
+                      )}
                     </span>
                   </div>
                   {b.public_id && (
