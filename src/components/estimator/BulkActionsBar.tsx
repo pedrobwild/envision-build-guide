@@ -129,9 +129,10 @@ export function BulkActionsBar({
 
   async function handleAssignConfirm() {
     if (!assignOpen) return;
+    const target = pendingAssignee === "__none__" ? null : pendingAssignee || null;
     setSubmitting(true);
     try {
-      await onBulkAssign(assignOpen, pendingAssignee || null);
+      await onBulkAssign(assignOpen, target);
       setAssignOpen(null);
       setPendingAssignee("");
     } finally {
