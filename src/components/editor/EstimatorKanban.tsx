@@ -563,6 +563,41 @@ function EstimatorCard({
         </div>
       )}
 
+      {b.internal_status === "revision_requested" && revisionInfo && (
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="flex items-center gap-1 text-[10px] font-body text-warning bg-warning/10 border border-warning/20 rounded px-1.5 py-0.5 mb-1.5 cursor-help"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <RotateCcw className="h-2.5 w-2.5 shrink-0" />
+                <span className="truncate">
+                  Revisão por <strong>{revisionInfo.requestedByName}</strong>
+                  {" · "}
+                  {formatDistanceToNow(new Date(revisionInfo.requestedAt), { addSuffix: true, locale: ptBR })}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs space-y-1.5 p-3">
+              <p className="text-[11px] font-semibold font-display text-foreground">Revisão solicitada</p>
+              <p className="text-[11px] font-body text-muted-foreground">
+                <span className="font-medium text-foreground">{revisionInfo.requestedByName}</span>
+                {" · "}
+                {format(new Date(revisionInfo.requestedAt), "dd MMM 'às' HH:mm", { locale: ptBR })}
+              </p>
+              {revisionInfo.instructions && (
+                <p className="text-[11px] font-body text-foreground/90 whitespace-pre-wrap leading-snug pt-1 border-t border-border/60">
+                  {revisionInfo.instructions.length > 200
+                    ? `${revisionInfo.instructions.slice(0, 197)}…`
+                    : revisionInfo.instructions}
+                </p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
       <div className="flex items-center gap-1.5 flex-wrap">
         {due && (
           <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium font-body px-1.5 py-0.5 rounded-full ${dueVariantStyles[due.variant]}`}>
