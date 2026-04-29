@@ -4,6 +4,8 @@ import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRevisionRequests } from "@/hooks/useRevisionRequests";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -156,6 +158,12 @@ export function EstimatorListView({
 
   const isDefaultView = statusFilter === "all" && priorityFilter === "all" && !search;
 
+  const revisionIds = useMemo(
+    () => filtered.filter((b) => b.internal_status === "revision_requested").map((b) => b.id),
+    [filtered]
+  );
+  const revisionInfoMap = useRevisionRequests(revisionIds);
+
   const groups = useMemo<WorkflowGroup[]>(() => {
     if (!isDefaultView) return [];
 
@@ -273,12 +281,53 @@ export function EstimatorListView({
                   {due.label}
                 </span>
               )}
-              {b.internal_status === "revision_requested" && (
-                <Badge className="bg-warning/10 text-warning border-warning/20 border text-[9px] px-1 py-0 h-4 gap-0.5">
-                  <RotateCcw className="h-2.5 w-2.5" />
-                  Revisão
-                </Badge>
-              )}
+              {b.internal_status === "revision_requested" && (() => {
+                const info = revisionInfoMap[b.id];
+                const dateLabel = info
+                  ? format(new Date(info.requestedAt), "dd MMM 'às' HH:mm", { locale: ptBR })
+                  : null;
+                const relative = info
+                  ? formatDistanceToNow(new Date(info.requestedAt), { addSuffix: true, locale: ptBR })
+                  : null;
+                const preview = info?.instructions
+                  ? info.instructions.length > 180
+                    ? `${info.instructions.slice(0, 177)}…`
+                    : info.instructions
+                  : null;
+                const badge = (
+                  <Badge
+                    className="bg-warning/10 text-warning border-warning/20 border text-[9px] px-1 py-0 h-4 gap-0.5 cursor-help"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <RotateCcw className="h-2.5 w-2.5" />
+                    Revisão
+                    {info ? <span className="font-body normal-case">· {relative}</span> : null}
+                  </Badge>
+                );
+                if (!info) return badge;
+                return (
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>{badge}</TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs space-y-1.5 p-3">
+                        <p className="text-[11px] font-semibold font-display text-foreground">
+                          Revisão solicitada
+                        </p>
+                        <p className="text-[11px] font-body text-muted-foreground">
+                          <span className="font-medium text-foreground">{info.requestedByName}</span>
+                          {" · "}
+                          {dateLabel}
+                        </p>
+                        {preview && (
+                          <p className="text-[11px] font-body text-foreground/90 whitespace-pre-wrap leading-snug pt-1 border-t border-border/60">
+                            {preview}
+                          </p>
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })()}
               {(b.version_number ?? 1) > 1 && (
                 <span className="text-[9px] font-mono text-muted-foreground px-1 py-0 h-4 rounded bg-muted border border-border inline-flex items-center">
                   V{b.version_number}
