@@ -91,6 +91,7 @@ function NotionInput({
   maxLength,
   required,
   suffix,
+  disabled,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -99,6 +100,7 @@ function NotionInput({
   maxLength?: number;
   required?: boolean;
   suffix?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="relative">
@@ -109,7 +111,8 @@ function NotionInput({
         placeholder={placeholder}
         maxLength={maxLength}
         required={required}
-        className="w-full px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
+        disabled={disabled}
+        className="w-full px-2.5 py-2 rounded-lg border border-transparent hover:border-border focus:border-primary/40 bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:border-transparent"
       />
       {suffix && value && (
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/50 pointer-events-none font-body">
@@ -642,6 +645,34 @@ export default function NewBudgetRequest() {
 
         {/* ── Cliente ── */}
         <SectionTitle icon={User} title="Cliente" />
+        {linkedClientId && (
+          <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <UserCheck className="h-4 w-4 text-primary shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[10px] font-display font-bold uppercase tracking-[0.08em] text-primary/80">
+                  Vinculado ao cliente
+                </div>
+                <div className="text-sm font-body text-foreground truncate">
+                  {clientName || "Cliente"}
+                </div>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                setLinkedClientId(null);
+                setSelectedPropertyId("__new__");
+                toast.message("Vínculo removido. Os campos do cliente foram liberados.");
+              }}
+            >
+              Desvincular
+            </Button>
+          </div>
+        )}
         <div className="border-b border-border/30 pb-1 mb-1">
           <PropertyRow icon={User} label="Nome" required>
             <NotionInput
@@ -650,6 +681,7 @@ export default function NewBudgetRequest() {
               placeholder="João Silva"
               maxLength={255}
               required
+              disabled={!!linkedClientId}
             />
           </PropertyRow>
           <PropertyRow icon={Mail} label="E-mail">
@@ -659,6 +691,7 @@ export default function NewBudgetRequest() {
               placeholder="cliente@email.com"
               type="email"
               maxLength={255}
+              disabled={!!linkedClientId}
             />
           </PropertyRow>
           <PropertyRow icon={Phone} label="Telefone">
@@ -667,6 +700,7 @@ export default function NewBudgetRequest() {
               onChange={setClientPhone}
               placeholder="(11) 99999-9999"
               maxLength={20}
+              disabled={!!linkedClientId}
             />
           </PropertyRow>
         </div>
