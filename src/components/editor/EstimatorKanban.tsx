@@ -342,11 +342,13 @@ function Column({
   budgets,
   onCardClick,
   getProfileName,
+  revisionInfoMap,
 }: {
   column: (typeof ESTIMATOR_COLUMNS)[number];
   budgets: BudgetRow[];
   onCardClick: (id: string) => void;
   getProfileName: (id: string | null) => string;
+  revisionInfoMap: Record<string, RevisionRequestInfo>;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
