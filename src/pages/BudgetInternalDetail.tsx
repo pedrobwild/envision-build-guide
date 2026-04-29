@@ -54,8 +54,12 @@ import {
   Plus,
   Copy,
   RotateCcw,
+  FileSpreadsheet,
+  FileDown,
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { exportBudgetToXlsx } from "@/lib/budget-xlsx-export";
+import { exportBudgetToPdf } from "@/lib/budget-pdf-export";
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
@@ -227,6 +231,47 @@ export default function BudgetInternalDetail() {
   );
   const [lostDialogOpen, setLostDialogOpen] = useState(false);
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
+  const [resolvedBudgetId, setResolvedBudgetId] = useState<string | null>(null);
+  const [resolvedSeqCode, setResolvedSeqCode] = useState<string | null>(null);
+  const [exportingXlsx, setExportingXlsx] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const handleResolvedBudgetId = useCallback(
+    (id: string, info: { isCurrent: boolean; versionNumber: number | null; sequentialCode: string | null }) => {
+      setResolvedBudgetId(id);
+      setResolvedSeqCode(info.sequentialCode);
+    },
+    []
+  );
+  const handleExportXlsx = useCallback(async () => {
+    const id = resolvedBudgetId ?? budgetId;
+    if (!id || exportingXlsx) return;
+    setExportingXlsx(true);
+    const tId = toast.loading(`Gerando .xlsx${resolvedSeqCode ? ` (${resolvedSeqCode})` : ""}…`);
+    try {
+      await exportBudgetToXlsx(id);
+      toast.success("Planilha exportada.", { id: tId });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao exportar planilha.";
+      toast.error(msg, { id: tId });
+    } finally {
+      setExportingXlsx(false);
+    }
+  }, [resolvedBudgetId, budgetId, exportingXlsx, resolvedSeqCode]);
+  const handleExportPdf = useCallback(async () => {
+    const id = resolvedBudgetId ?? budgetId;
+    if (!id || exportingPdf) return;
+    setExportingPdf(true);
+    const tId = toast.loading(`Gerando .pdf${resolvedSeqCode ? ` (${resolvedSeqCode})` : ""}…`);
+    try {
+      await exportBudgetToPdf(id);
+      toast.success("PDF exportado.", { id: tId });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao exportar PDF.";
+      toast.error(msg, { id: tId });
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [resolvedBudgetId, budgetId, exportingPdf, resolvedSeqCode]);
   const hub = useBudgetHub(budgetId);
 
   // Sync activeModule with URL ?module=
@@ -1107,32 +1152,66 @@ export default function BudgetInternalDetail() {
                         {moduleSubtitles[activeModule]}
                       </SheetDescription>
                     </div>
-                    {activeModule === "budget" && budget.public_id && (
-                      <div className="flex items-center gap-1.5 shrink-0">
+                    {activeModule === "budget" && (
+                      <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
                         <Button
                           size="sm"
                           variant="outline"
                           className="h-8 gap-1.5 text-xs"
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
-                              toast.success("Link copiado");
-                            } catch {
-                              toast.error("Não foi possível copiar");
-                            }
-                          }}
+                          onClick={handleExportXlsx}
+                          disabled={exportingXlsx}
+                          title="Exportar planilha completa (.xlsx) da versão atual"
                         >
-                          <Copy className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Copiar link</span>
+                          {exportingXlsx ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <FileSpreadsheet className="h-3.5 w-3.5" />
+                          )}
+                          <span className="hidden sm:inline">.xlsx</span>
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
                           className="h-8 gap-1.5 text-xs"
-                          onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank", "noopener,noreferrer")}
+                          onClick={handleExportPdf}
+                          disabled={exportingPdf}
+                          title="Exportar PDF completo da versão atual"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Visualizar</span>
+                          {exportingPdf ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <FileDown className="h-3.5 w-3.5" />
+                          )}
+                          <span className="hidden sm:inline">.pdf</span>
                         </Button>
+                        {budget.public_id && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1.5 text-xs"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(getPublicBudgetUrl(budget.public_id!));
+                                  toast.success("Link copiado");
+                                } catch {
+                                  toast.error("Não foi possível copiar");
+                                }
+                              }}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              <span className="hidden sm:inline">Copiar link</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-8 gap-1.5 text-xs"
+                              onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank", "noopener,noreferrer")}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span className="hidden sm:inline">Visualizar</span>
+                            </Button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1152,7 +1231,12 @@ export default function BudgetInternalDetail() {
                     />
                   )}
 
-                  {activeModule === "budget" && <BudgetBreakdownPanel budgetId={budget.id} />}
+                  {activeModule === "budget" && (
+                    <BudgetBreakdownPanel
+                      budgetId={budget.id}
+                      onResolvedBudgetId={handleResolvedBudgetId}
+                    />
+                  )}
 
                   {activeModule === "activities" && (
                     <div className="space-y-6">

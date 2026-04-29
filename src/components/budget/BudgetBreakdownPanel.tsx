@@ -33,22 +33,65 @@ function calcSalePrice(cost: number | null, bdi: number | null): number {
 
 interface Props {
   budgetId: string;
+  /** Called with the actually-resolved budget id (current version of the same group, or the original id). */
+  onResolvedBudgetId?: (id: string, info: { isCurrent: boolean; versionNumber: number | null; sequentialCode: string | null }) => void;
 }
 
-export function BudgetBreakdownPanel({ budgetId }: Props) {
+export function BudgetBreakdownPanel({ budgetId, onResolvedBudgetId }: Props) {
   const [sections, setSections] = useState<SectionWithItemsLocal[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
+  const [resolvedBanner, setResolvedBanner] = useState<{ from: string | null; to: string | null; versionNumber: number | null } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       setLoading(true);
+      setResolvedBanner(null);
+
+      // Resolve to the current version of the same version group, falling back to the given id.
+      let effectiveId = budgetId;
+      const { data: original } = await supabase
+        .from("budgets")
+        .select("id, sequential_code, version_number, is_current_version, version_group_id")
+        .eq("id", budgetId)
+        .maybeSingle();
+
+      if (original && original.version_group_id && !original.is_current_version) {
+        const { data: current } = await supabase
+          .from("budgets")
+          .select("id, sequential_code, version_number")
+          .eq("version_group_id", original.version_group_id)
+          .eq("is_current_version", true)
+          .maybeSingle();
+        if (current && current.id) {
+          effectiveId = current.id;
+          if (!cancelled) {
+            setResolvedBanner({
+              from: original.sequential_code,
+              to: current.sequential_code,
+              versionNumber: current.version_number ?? null,
+            });
+            onResolvedBudgetId?.(current.id, {
+              isCurrent: true,
+              versionNumber: current.version_number ?? null,
+              sequentialCode: current.sequential_code ?? null,
+            });
+          }
+        }
+      } else if (original && !cancelled) {
+        onResolvedBudgetId?.(original.id, {
+          isCurrent: !!original.is_current_version,
+          versionNumber: original.version_number ?? null,
+          sequentialCode: original.sequential_code ?? null,
+        });
+      }
+
       const { data, error } = await supabase
         .from("sections")
         .select("id, title, order_index, section_price, is_optional, items(id, title, qty, unit, internal_unit_price, internal_total, bdi_percentage, order_index)")
-        .eq("budget_id", budgetId)
+        .eq("budget_id", effectiveId)
         .order("order_index", { ascending: true });
 
       if (cancelled) return;
@@ -122,6 +165,18 @@ export function BudgetBreakdownPanel({ budgetId }: Props) {
 
   return (
     <Card>
+      {resolvedBanner && (
+        <div className="px-4 pt-4">
+          <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-[11px] font-body text-foreground">
+            Exibindo a <span className="font-semibold">versão atual</span>
+            {resolvedBanner.versionNumber != null ? ` (v${resolvedBanner.versionNumber}` : ""}
+            {resolvedBanner.to ? `${resolvedBanner.versionNumber != null ? " · " : " ("}${resolvedBanner.to})` : resolvedBanner.versionNumber != null ? ")" : ""}
+            {resolvedBanner.from && resolvedBanner.from !== resolvedBanner.to && (
+              <> — esta tela foi aberta a partir de <span className="font-mono">{resolvedBanner.from}</span>.</>
+            )}
+          </div>
+        </div>
+      )}
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger className="w-full">
           <CardHeader className="pb-3 flex flex-row items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors">
