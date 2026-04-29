@@ -4,7 +4,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Plus, Minus, RefreshCw, Equal, Eye, EyeOff, TrendingUp, TrendingDown } from "lucide-react";
 import { formatBRL } from "@/lib/formatBRL";
-import { calculateSectionSubtotal } from "@/lib/supabase-helpers";
+import { calculateBudgetTotal } from "@/lib/supabase-helpers";
 import { logVersionEvent } from "@/lib/version-audit";
 import { logger } from "@/lib/logger";
 
@@ -24,6 +24,16 @@ interface CompareItem {
   qty: number | null;
   unit: string | null;
   internal_total: number | null;
+  internal_unit_price?: number | null;
+  bdi_percentage?: number | null;
+  addendum_action?: "add" | "remove" | null;
+}
+
+interface CompareAdjustment {
+  id: string;
+  label: string;
+  amount: number;
+  sign: number;
 }
 
 interface VersionMeta {
