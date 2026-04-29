@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, X, Upload, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { LOCATION_TYPES } from "@/lib/role-constants";
 import {
