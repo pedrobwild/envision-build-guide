@@ -176,6 +176,9 @@ export function EstimatorListView({
   onOpenAssignDialog,
   onRefresh,
   onQuickUpdate,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectMany,
 }: EstimatorListViewProps) {
   const navigate = useNavigate();
 
