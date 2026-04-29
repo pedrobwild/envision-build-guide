@@ -405,11 +405,7 @@ export function BulkActionsBar({
               Cancelar
             </Button>
             <Button
-              onClick={() => {
-                // map sentinel to null
-                if (pendingAssignee === "__none__") setPendingAssignee("");
-                handleAssignConfirm();
-              }}
+              onClick={handleAssignConfirm}
               disabled={!pendingAssignee || submitting}
             >
               {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
