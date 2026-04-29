@@ -278,21 +278,21 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
   // linhas de itens com unitários abertos, e subtotal da seção.
   // Ao final, linhas de TOTAIS (subtotal de seções, ajustes, total geral
   // e margem média) — refletindo o resumo financeiro da página.
+  // Mesmas colunas do PDF (sem "Margem unitária").
   const detHeader = [
     "Item",
     "Descrição",
-    "Quantidade",
-    "Unidade",
-    "Custo unitário",
+    "Qtd",
+    "Un.",
+    "Custo unit.",
     "Custo total",
     "BDI",
-    "Margem unitária",
-    "Venda unitária",
+    "Venda unit.",
     "Venda total",
   ];
-  const detLastCol = detHeader.length - 1; // 9
+  const detLastCol = detHeader.length - 1; // 8
 
-  type CellFmt = { fmt?: string; bold?: boolean; section?: boolean; subtotal?: boolean; total?: boolean };
+  type CellFmt = { fmt?: string; bold?: boolean; section?: boolean; subtotal?: boolean; total?: boolean; align?: "left" | "right" | "center" };
   const detRows: (string | number | null)[][] = [detHeader];
   const detRowMeta: CellFmt[][] = [
     detHeader.map(() => ({ bold: true } as CellFmt)),
@@ -312,7 +312,7 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
     }, 0);
     const secMargem = secVenda > 0 ? (secVenda - secCost) / secVenda : 0;
 
-    // 1) Cabeçalho da seção (mesclado em toda a largura)
+    // 1) Cabeçalho da seção (mesclado em toda a largura) — igual ao PDF
     const secTitle = `${sec.title ?? "(sem título)"}${sec.is_optional ? "  ·  opcional" : ""}${
       sec.subtitle ? `  —  ${sec.subtitle}` : ""
     }`;
@@ -326,30 +326,35 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
 
     // 2) Itens da seção
     if (secItems.length === 0) {
+      // Mesma diagramação do PDF: "(seção sem itens)" mesclado A:E,
+      // depois Custo total e Venda total na coluna correspondente.
       detRows.push([
         "(seção sem itens)",
-        sec.subtitle ?? "",
-        sec.qty != null ? Number(sec.qty) : null,
         "",
-        null,
+        "",
+        "",
+        "",
         sec.section_price != null ? Number(sec.section_price) : null,
-        null,
-        null,
-        null,
+        "",
+        "",
         sec.section_price != null ? Number(sec.section_price) : null,
       ]);
+      const emptyRowIdx = detRows.length - 1;
       detRowMeta.push([
         { },
         { },
-        { fmt: FMT.QTY },
         { },
-        { fmt: FMT.BRL },
-        { fmt: FMT.BRL },
-        { fmt: FMT.PCT },
-        { fmt: FMT.BRL },
-        { fmt: FMT.BRL },
-        { fmt: FMT.BRL },
+        { },
+        { },
+        { fmt: FMT.BRL, align: "right" },
+        { },
+        { },
+        { fmt: FMT.BRL, align: "right" },
       ]);
+      detMerges.push({
+        s: { r: emptyRowIdx, c: 0 },
+        e: { r: emptyRowIdx, c: 4 },
+      });
     } else {
       for (const it of secItems) {
         const cost = Number(it.internal_total) || 0;
@@ -360,8 +365,6 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
           ? Number(it.internal_unit_price)
           : (qty > 0 ? cost / qty : null);
         const unitVenda = qty > 0 ? venda / qty : null;
-        const unitMargem =
-          unitVenda !== null && unitCost !== null ? unitVenda - unitCost : null;
         detRows.push([
           it.title ?? "",
           it.description ?? "",
@@ -370,72 +373,81 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
           unitCost,
           cost,
           bdi / 100,
-          unitMargem,
           unitVenda,
           venda,
         ]);
         detRowMeta.push([
+          { bold: true },
           { },
-          { },
-          { fmt: FMT.QTY },
-          { },
-          { fmt: FMT.BRL },
-          { fmt: FMT.BRL },
-          { fmt: FMT.PCT },
-          { fmt: FMT.BRL },
-          { fmt: FMT.BRL },
-          { fmt: FMT.BRL },
+          { fmt: FMT.QTY, align: "right" },
+          { align: "center" },
+          { fmt: FMT.BRL, align: "right" },
+          { fmt: FMT.BRL, align: "right" },
+          { fmt: FMT.PCT, align: "right" },
+          { fmt: FMT.BRL, align: "right" },
+          { fmt: FMT.BRL, align: "right" },
         ]);
       }
     }
 
-    // 3) Subtotal da seção
+    // 3) Subtotal da seção (mesmo formato do PDF):
+    //    "Subtotal da seção  ·  margem X%" mesclado A:E
+    //    Custo total na col F, Venda total na col I (J no PDF = índice 8).
+    const margemPct = secMargem * 100;
+    const subtotalLabel = `Subtotal da seção  ·  margem ${margemPct.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}%`;
     detRows.push([
-      `Subtotal — ${sec.title ?? ""}`,
+      subtotalLabel,
       "",
       "",
       "",
       "",
       secCost,
-      secMargem,
       "",
       "",
       secVenda,
     ]);
+    const subtotalRowIdx = detRows.length - 1;
     detRowMeta.push([
-      { subtotal: true, bold: true },
+      { subtotal: true, bold: true, align: "right" },
       { subtotal: true },
       { subtotal: true },
       { subtotal: true },
       { subtotal: true },
-      { subtotal: true, bold: true, fmt: FMT.BRL },
-      { subtotal: true, bold: true, fmt: FMT.PCT },
+      { subtotal: true, bold: true, fmt: FMT.BRL, align: "right" },
       { subtotal: true },
       { subtotal: true },
-      { subtotal: true, bold: true, fmt: FMT.BRL },
+      { subtotal: true, bold: true, fmt: FMT.BRL, align: "right" },
     ]);
+    detMerges.push({
+      s: { r: subtotalRowIdx, c: 0 },
+      e: { r: subtotalRowIdx, c: 4 },
+    });
     // Linha em branco após cada seção
     detRows.push(Array(detHeader.length).fill(""));
     detRowMeta.push(detHeader.map(() => ({} as CellFmt)));
   }
 
-  // 4) Bloco final de TOTAIS (refletindo o resumo da página)
-  const totalsRows: { label: string; value: number; fmt: string; emphasize?: boolean }[] = [
-    { label: "Subtotal das seções (custo)", value: totalCusto, fmt: FMT.BRL },
-    { label: "Subtotal das seções (venda)", value: totalVenda, fmt: FMT.BRL },
+  // 4) Bloco final de TOTAIS (idêntico ao PDF)
+  const totalsRows: { label: string; value: number; fmt: string }[] = [
+    { label: "Custo total", value: totalCusto, fmt: FMT.BRL },
+    { label: "Venda (BDI)", value: totalVenda, fmt: FMT.BRL },
     { label: "Ajustes globais", value: totalAjustes, fmt: FMT.BRL },
-    { label: "Total geral", value: totalVenda + totalAjustes, fmt: FMT.BRL, emphasize: true },
-    { label: "Margem média", value: margemRatio, fmt: FMT.PCT, emphasize: true },
+    { label: "Margem média", value: margemRatio, fmt: FMT.PCT },
+    { label: "Total geral", value: totalVenda + totalAjustes, fmt: FMT.BRL },
   ];
   for (const t of totalsRows) {
-    detRows.push([t.label, "", "", "", "", "", "", "", "", t.value]);
+    const isFinal = t.label === "Total geral";
+    detRows.push([t.label, "", "", "", "", "", "", "", t.value]);
     detRowMeta.push([
-      { total: true, bold: true },
-      { total: true }, { total: true }, { total: true }, { total: true },
-      { total: true }, { total: true }, { total: true }, { total: true },
-      { total: true, bold: true, fmt: t.fmt },
+      { total: isFinal, bold: true, align: "right" },
+      { total: isFinal }, { total: isFinal }, { total: isFinal }, { total: isFinal },
+      { total: isFinal }, { total: isFinal }, { total: isFinal },
+      { total: isFinal, bold: true, fmt: t.fmt, align: "right" },
     ]);
-    // Mescla A:I (rótulo) deixando a coluna J com o valor
+    // Mescla A:H (rótulo) deixando a coluna I com o valor
     detMerges.push({
       s: { r: detRows.length - 1, c: 0 },
       e: { r: detRows.length - 1, c: detLastCol - 1 },
