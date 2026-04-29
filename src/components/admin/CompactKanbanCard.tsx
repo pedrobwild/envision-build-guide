@@ -13,6 +13,14 @@ import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-tem
 import type { LeadScoreResult } from "@/lib/lead-score";
 import { LeadScoreBadge } from "@/components/admin/LeadScoreBadge";
 import { VersionBadge } from "@/components/admin/VersionBadge";
+import {
+  COMMERCIAL_STAGES,
+  PRODUCTION_STAGES,
+  deriveCommercialStage,
+  deriveProductionStage,
+  type CommercialStage,
+  type ProductionStage,
+} from "@/lib/pipeline-stages";
 
 interface CompactKanbanCardProps {
   projectName: string;
