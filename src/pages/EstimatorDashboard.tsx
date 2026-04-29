@@ -56,6 +56,9 @@ import { EstimatorFilterBar, type SortOption } from "@/components/estimator/Esti
 import { EstimatorListView, type BudgetRow } from "@/components/estimator/EstimatorListView";
 import { NewRequestsSection } from "@/components/estimator/NewRequestsSection";
 import { NotificationBell } from "@/components/estimator/NotificationBell";
+import { BulkActionsBar } from "@/components/estimator/BulkActionsBar";
+import { logRevisionRequestEvent } from "@/lib/version-audit";
+
 
 const PENDING_STATUSES: string[] = ["requested", "novo"];
 const IN_PROGRESS_STATUSES: string[] = ["triage", "assigned", "in_progress", "waiting_info", "revision_requested", "ready_for_review"];
@@ -385,6 +388,171 @@ export default function EstimatorDashboard() {
     [budgets],
   );
 
+  // ----- Bulk selection -----
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectMany = useCallback((ids: string[], checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (checked) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  // Auto-clear ids that disappear from filtered/budgets list
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const valid = new Set(budgets.map((b) => b.id));
+      let changed = false;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (valid.has(id)) next.add(id);
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [budgets]);
+
+  const bulkEstimatorOptions = useMemo(
+    () => getUsersByRole("orcamentista").map((p) => ({ id: p.id, full_name: p.full_name })),
+    [getUsersByRole],
+  );
+  const bulkCommercialOptions = useMemo(
+    () => getUsersByRole("comercial").map((p) => ({ id: p.id, full_name: p.full_name })),
+    [getUsersByRole],
+  );
+
+  async function bulkUpdateStatus(newStatus: InternalStatus) {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const { error, count } = await supabase
+      .from("budgets")
+      .update({ internal_status: newStatus, updated_at: new Date().toISOString() }, { count: "exact" })
+      .in("id", ids);
+
+    if (error) {
+      toast.error("Falha ao atualizar status em lote.", { description: error.message });
+      return;
+    }
+    setBudgets((prev) =>
+      prev.map((b) => (ids.includes(b.id) ? { ...b, internal_status: newStatus } : b)),
+    );
+    const label = INTERNAL_STATUSES[newStatus]?.label ?? newStatus;
+    toast.success(`Status atualizado para "${label}" em ${count ?? ids.length} orçamento(s).`);
+    clearSelection();
+  }
+
+  async function bulkAssign(type: "estimator" | "commercial", userId: string | null) {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const column = type === "estimator" ? "estimator_owner_id" : "commercial_owner_id";
+    const { error } = await supabase
+      .from("budgets")
+      .update({ [column]: userId, updated_at: new Date().toISOString() })
+      .in("id", ids);
+
+    if (error) {
+      toast.error("Falha ao reatribuir em lote.", { description: error.message });
+      return;
+    }
+    setBudgets((prev) =>
+      prev.map((b) => (ids.includes(b.id) ? { ...b, [column]: userId } : b)),
+    );
+    const name = userId
+      ? getProfileName(userId)
+      : type === "estimator"
+        ? "sem orçamentista"
+        : "sem comercial";
+    toast.success(`${ids.length} orçamento(s) reatribuído(s) para ${name}.`);
+    clearSelection();
+  }
+
+  async function bulkRequestRevision(instructions: string) {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0 || !user) return;
+
+    const requesterName = profile?.full_name || user.email || "Comercial";
+
+    // Fetch current data to know previous status, estimator, code/name for notifications
+    const { data: targets, error: fetchErr } = await supabase
+      .from("budgets")
+      .select("id, internal_status, estimator_owner_id, sequential_code, project_name, client_name")
+      .in("id", ids);
+
+    if (fetchErr || !targets) {
+      toast.error("Falha ao carregar orçamentos.", { description: fetchErr?.message });
+      return;
+    }
+
+    // 1. Update statuses
+    const { error: updateErr } = await supabase
+      .from("budgets")
+      .update({ internal_status: "revision_requested", updated_at: new Date().toISOString() })
+      .in("id", ids);
+
+    if (updateErr) {
+      toast.error("Falha ao solicitar revisão em lote.", { description: updateErr.message });
+      return;
+    }
+
+    // 2. Side-effects per budget (events, comments, notifications) in parallel
+    const tasks = targets.map(async (b) => {
+      try {
+        await logRevisionRequestEvent({
+          budgetId: b.id,
+          userId: user.id,
+          instructions,
+          changeTypes: [],
+          requestedByName: requesterName,
+          fromStatus: b.internal_status,
+        });
+
+        await supabase.from("budget_comments").insert({
+          budget_id: b.id,
+          user_id: user.id,
+          body: `🔄 **Revisão solicitada (em lote):**\n${instructions}`,
+        });
+
+        if (b.estimator_owner_id) {
+          const codeLabel = b.sequential_code ? `${b.sequential_code} · ` : "";
+          const subject = b.project_name || b.client_name || "orçamento";
+          const preview = instructions.length > 120 ? `${instructions.slice(0, 117)}…` : instructions;
+          await supabase.from("notifications").insert({
+            user_id: b.estimator_owner_id,
+            type: "revision_requested",
+            title: "Revisão solicitada pelo comercial",
+            message: `${codeLabel}${subject} · ${requesterName}: ${preview}`,
+            budget_id: b.id,
+            read: false,
+          });
+        }
+      } catch (_e) {
+        // best-effort; main status update already succeeded
+      }
+    });
+    await Promise.all(tasks);
+
+    setBudgets((prev) =>
+      prev.map((b) => (ids.includes(b.id) ? { ...b, internal_status: "revision_requested" } : b)),
+    );
+    toast.success(`Revisão solicitada para ${ids.length} orçamento(s).`);
+    clearSelection();
+  }
+
   const handleOpenAssignDialog = useCallback((budgetId: string, type: "estimator" | "commercial", currentValue: string | null) => {
     setAssignValue(currentValue ?? "");
     setAssignDialog({ open: true, budgetId, type, currentValue });
@@ -579,11 +747,28 @@ export default function EstimatorDashboard() {
                 onOpenAssignDialog={handleOpenAssignDialog}
                 onRefresh={loadData}
                 onQuickUpdate={quickUpdate}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onToggleSelectMany={toggleSelectMany}
               />
             )}
           </>
         )}
       </div>
+
+      {/* Bulk actions bar */}
+      {selectedIds.size > 0 && (
+        <BulkActionsBar
+          count={selectedIds.size}
+          onClear={clearSelection}
+          isAdmin={isAdmin}
+          estimatorOptions={bulkEstimatorOptions}
+          commercialOptions={bulkCommercialOptions}
+          onBulkStatus={bulkUpdateStatus}
+          onBulkRevision={bulkRequestRevision}
+          onBulkAssign={bulkAssign}
+        />
+      )}
 
       {/* Assignment Dialog (admin only) */}
       <Dialog open={assignDialog.open} onOpenChange={(open) => {
