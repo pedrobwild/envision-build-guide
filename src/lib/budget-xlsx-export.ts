@@ -273,9 +273,12 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
   });
   XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
 
-  // ── Aba 2: Itens (com TODOS os valores abertos) ───────────────────────
-  const itensHeader = [
-    "Seção",
+  // ── Aba 2: Detalhamento (mesma estrutura visual da página do cliente) ─
+  // Cada seção aparece como um bloco: cabeçalho da seção (mesclado),
+  // linhas de itens com unitários abertos, e subtotal da seção.
+  // Ao final, linhas de TOTAIS (subtotal de seções, ajustes, total geral
+  // e margem média) — refletindo o resumo financeiro da página.
+  const detHeader = [
     "Item",
     "Descrição",
     "Quantidade",
@@ -287,12 +290,43 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
     "Venda unitária",
     "Venda total",
   ];
-  const itensRows: (string | number | null)[][] = [itensHeader];
+  const detLastCol = detHeader.length - 1; // 9
+
+  type CellFmt = { fmt?: string; bold?: boolean; section?: boolean; subtotal?: boolean; total?: boolean };
+  const detRows: (string | number | null)[][] = [detHeader];
+  const detRowMeta: CellFmt[][] = [
+    detHeader.map(() => ({ bold: true } as CellFmt)),
+  ];
+  const detMerges: XLSX.Range[] = [];
+
   for (const sec of sections) {
     const secItems = items.filter((i) => i.section_id === sec.id);
+    const secCost = secItems.reduce(
+      (acc, it) => acc + (Number(it.internal_total) || 0),
+      0,
+    );
+    const secVenda = secItems.reduce((acc, it) => {
+      const c = Number(it.internal_total) || 0;
+      const bdi = Number(it.bdi_percentage) || 0;
+      return acc + c * (1 + bdi / 100);
+    }, 0);
+    const secMargem = secVenda > 0 ? (secVenda - secCost) / secVenda : 0;
+
+    // 1) Cabeçalho da seção (mesclado em toda a largura)
+    const secTitle = `${sec.title ?? "(sem título)"}${sec.is_optional ? "  ·  opcional" : ""}${
+      sec.subtitle ? `  —  ${sec.subtitle}` : ""
+    }`;
+    detRows.push([secTitle, ...Array(detLastCol).fill("")]);
+    const secHeaderRowIdx = detRows.length - 1;
+    detRowMeta.push(detHeader.map(() => ({ section: true } as CellFmt)));
+    detMerges.push({
+      s: { r: secHeaderRowIdx, c: 0 },
+      e: { r: secHeaderRowIdx, c: detLastCol },
+    });
+
+    // 2) Itens da seção
     if (secItems.length === 0) {
-      itensRows.push([
-        sec.title ?? "(sem título)",
+      detRows.push([
         "(seção sem itens)",
         sec.subtitle ?? "",
         sec.qty != null ? Number(sec.qty) : null,
@@ -304,59 +338,165 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
         null,
         sec.section_price != null ? Number(sec.section_price) : null,
       ]);
-      continue;
-    }
-    for (const it of secItems) {
-      const cost = Number(it.internal_total) || 0;
-      const bdi = Number(it.bdi_percentage) || 0;
-      const venda = cost * (1 + bdi / 100);
-      const qty = Number(it.qty) || 0;
-      const unitCost = it.internal_unit_price !== null
-        ? Number(it.internal_unit_price)
-        : (qty > 0 ? cost / qty : null);
-      const unitVenda = qty > 0 ? venda / qty : null;
-      const unitMargem = unitVenda !== null && unitCost !== null ? unitVenda - unitCost : null;
-      itensRows.push([
-        sec.title ?? "",
-        it.title ?? "",
-        it.description ?? "",
-        it.qty != null ? Number(it.qty) : null,
-        it.unit ?? "",
-        unitCost,
-        cost,
-        bdi / 100, // armazenado como ratio para formato %
-        unitMargem,
-        unitVenda,
-        venda,
+      detRowMeta.push([
+        { },
+        { },
+        { fmt: FMT.QTY },
+        { },
+        { fmt: FMT.BRL },
+        { fmt: FMT.BRL },
+        { fmt: FMT.PCT },
+        { fmt: FMT.BRL },
+        { fmt: FMT.BRL },
+        { fmt: FMT.BRL },
       ]);
+    } else {
+      for (const it of secItems) {
+        const cost = Number(it.internal_total) || 0;
+        const bdi = Number(it.bdi_percentage) || 0;
+        const venda = cost * (1 + bdi / 100);
+        const qty = Number(it.qty) || 0;
+        const unitCost = it.internal_unit_price !== null
+          ? Number(it.internal_unit_price)
+          : (qty > 0 ? cost / qty : null);
+        const unitVenda = qty > 0 ? venda / qty : null;
+        const unitMargem =
+          unitVenda !== null && unitCost !== null ? unitVenda - unitCost : null;
+        detRows.push([
+          it.title ?? "",
+          it.description ?? "",
+          it.qty != null ? Number(it.qty) : null,
+          it.unit ?? "",
+          unitCost,
+          cost,
+          bdi / 100,
+          unitMargem,
+          unitVenda,
+          venda,
+        ]);
+        detRowMeta.push([
+          { },
+          { },
+          { fmt: FMT.QTY },
+          { },
+          { fmt: FMT.BRL },
+          { fmt: FMT.BRL },
+          { fmt: FMT.PCT },
+          { fmt: FMT.BRL },
+          { fmt: FMT.BRL },
+          { fmt: FMT.BRL },
+        ]);
+      }
     }
+
+    // 3) Subtotal da seção
+    detRows.push([
+      `Subtotal — ${sec.title ?? ""}`,
+      "",
+      "",
+      "",
+      "",
+      secCost,
+      secMargem,
+      "",
+      "",
+      secVenda,
+    ]);
+    detRowMeta.push([
+      { subtotal: true, bold: true },
+      { subtotal: true },
+      { subtotal: true },
+      { subtotal: true },
+      { subtotal: true },
+      { subtotal: true, bold: true, fmt: FMT.BRL },
+      { subtotal: true, bold: true, fmt: FMT.PCT },
+      { subtotal: true },
+      { subtotal: true },
+      { subtotal: true, bold: true, fmt: FMT.BRL },
+    ]);
+    // Linha em branco após cada seção
+    detRows.push(Array(detHeader.length).fill(""));
+    detRowMeta.push(detHeader.map(() => ({} as CellFmt)));
   }
-  const wsItens = XLSX.utils.aoa_to_sheet(itensRows);
-  wsItens["!cols"] = [
-    { wch: 28 }, { wch: 30 }, { wch: 40 }, { wch: 12 }, { wch: 10 },
+
+  // 4) Bloco final de TOTAIS (refletindo o resumo da página)
+  const totalsRows: { label: string; value: number; fmt: string; emphasize?: boolean }[] = [
+    { label: "Subtotal das seções (custo)", value: totalCusto, fmt: FMT.BRL },
+    { label: "Subtotal das seções (venda)", value: totalVenda, fmt: FMT.BRL },
+    { label: "Ajustes globais", value: totalAjustes, fmt: FMT.BRL },
+    { label: "Total geral", value: totalVenda + totalAjustes, fmt: FMT.BRL, emphasize: true },
+    { label: "Margem média", value: margemRatio, fmt: FMT.PCT, emphasize: true },
+  ];
+  for (const t of totalsRows) {
+    detRows.push([t.label, "", "", "", "", "", "", "", "", t.value]);
+    detRowMeta.push([
+      { total: true, bold: true },
+      { total: true }, { total: true }, { total: true }, { total: true },
+      { total: true }, { total: true }, { total: true }, { total: true },
+      { total: true, bold: true, fmt: t.fmt },
+    ]);
+    // Mescla A:I (rótulo) deixando a coluna J com o valor
+    detMerges.push({
+      s: { r: detRows.length - 1, c: 0 },
+      e: { r: detRows.length - 1, c: detLastCol - 1 },
+    });
+  }
+
+  const wsDet = XLSX.utils.aoa_to_sheet(detRows);
+  wsDet["!cols"] = [
+    { wch: 34 }, { wch: 40 }, { wch: 12 }, { wch: 10 },
     { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 16 },
   ];
-  wsItens["!freeze"] = { xSplit: 0, ySplit: 1 };
-  wsItens["!autofilter"] = {
-    ref: XLSX.utils.encode_range({
-      s: { r: 0, c: 0 },
-      e: { r: itensRows.length - 1, c: itensHeader.length - 1 },
-    }),
-  };
-  styleHeaderRow(wsItens, 0, itensHeader.length);
-  // Formatos por coluna a partir da linha 2
-  for (let r = 1; r < itensRows.length; r++) {
-    setCellFormat(wsItens, XLSX.utils.encode_cell({ r, c: 3 }), FMT.QTY); // Qtd
-    setCellFormat(wsItens, XLSX.utils.encode_cell({ r, c: 5 }), FMT.BRL); // Custo unit
-    setCellFormat(wsItens, XLSX.utils.encode_cell({ r, c: 6 }), FMT.BRL); // Custo total
-    setCellFormat(wsItens, XLSX.utils.encode_cell({ r, c: 7 }), FMT.PCT); // BDI
-    setCellFormat(wsItens, XLSX.utils.encode_cell({ r, c: 8 }), FMT.BRL); // Margem unit
-    setCellFormat(wsItens, XLSX.utils.encode_cell({ r, c: 9 }), FMT.BRL); // Venda unit
-    setCellFormat(wsItens, XLSX.utils.encode_cell({ r, c: 10 }), FMT.BRL); // Venda total
-  }
-  XLSX.utils.book_append_sheet(wb, wsItens, "Itens");
+  wsDet["!freeze"] = { xSplit: 0, ySplit: 1 };
+  wsDet["!merges"] = detMerges;
 
-  // ── Aba 3: Seções (subtotais) ─────────────────────────────────────────
+  // Estilos de seção/subtotal/total
+  const SECTION_STYLE = {
+    font: { bold: true, color: { rgb: "0F172A" } },
+    fill: { fgColor: { rgb: "E5E7EB" } },
+    alignment: { vertical: "center", horizontal: "left" },
+  };
+  const SUBTOTAL_STYLE = {
+    font: { bold: true },
+    fill: { fgColor: { rgb: "F3F4F6" } },
+    border: { top: { style: "thin", color: { rgb: "D1D5DB" } } },
+  };
+  const TOTAL_STYLE = {
+    font: { bold: true, color: { rgb: "FFFFFF" } },
+    fill: { fgColor: { rgb: "0F172A" } },
+    alignment: { vertical: "center", horizontal: "left" },
+  };
+
+  for (let r = 0; r < detRowMeta.length; r++) {
+    const meta = detRowMeta[r];
+    for (let c = 0; c < meta.length; c++) {
+      const m = meta[c];
+      const addr = XLSX.utils.encode_cell({ r, c });
+      const cell = wsDet[addr] as XLSX.CellObject | undefined;
+      if (m.fmt && cell) {
+        cell.t = "n";
+        cell.z = m.fmt;
+      }
+      if (!cell) continue;
+      const styled = cell as XLSX.CellObject & { s?: unknown };
+      if (r === 0) {
+        styled.s = HEADER_STYLE;
+      } else if (m.section) {
+        styled.s = SECTION_STYLE;
+      } else if (m.total) {
+        styled.s = TOTAL_STYLE;
+      } else if (m.subtotal) {
+        styled.s = SUBTOTAL_STYLE;
+      } else if (m.bold) {
+        styled.s = { font: { bold: true } };
+      }
+    }
+  }
+  XLSX.utils.book_append_sheet(wb, wsDet, "Detalhamento");
+
+  // ── Aba 3: Resumo por seção ───────────────────────────────────────────
+  // Réplica direta da tabela vista pelo cliente: uma linha por seção com
+  // subtotais, e linha final com Total geral.
   const secHeader = [
     "#",
     "Seção",
@@ -390,6 +530,14 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
       sec.is_optional ? "Sim" : "Não",
     ]);
   });
+  // Linhas de totais finais
+  const secTotalsStartRow = secRows.length;
+  secRows.push(["", "Subtotal das seções", "", "", "", totalCusto, totalVenda, margemRatio, ""]);
+  if (totalAjustes !== 0) {
+    secRows.push(["", "Ajustes globais", "", "", "", "", totalAjustes, "", ""]);
+  }
+  secRows.push(["", "Total geral", "", "", "", "", totalVenda + totalAjustes, "", ""]);
+
   const wsSec = XLSX.utils.aoa_to_sheet(secRows);
   wsSec["!cols"] = [
     { wch: 5 }, { wch: 28 }, { wch: 28 }, { wch: 12 }, { wch: 8 },
@@ -397,7 +545,7 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
   ];
   wsSec["!freeze"] = { xSplit: 0, ySplit: 1 };
   styleHeaderRow(wsSec, 0, secHeader.length);
-  for (let r = 1; r < secRows.length; r++) {
+  for (let r = 1; r < secTotalsStartRow; r++) {
     setCellFormat(wsSec, XLSX.utils.encode_cell({ r, c: 0 }), FMT.INT);
     setCellFormat(wsSec, XLSX.utils.encode_cell({ r, c: 3 }), FMT.QTY);
     setCellFormat(wsSec, XLSX.utils.encode_cell({ r, c: 4 }), FMT.INT);
@@ -405,7 +553,21 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
     setCellFormat(wsSec, XLSX.utils.encode_cell({ r, c: 6 }), FMT.BRL);
     setCellFormat(wsSec, XLSX.utils.encode_cell({ r, c: 7 }), FMT.PCT);
   }
-  XLSX.utils.book_append_sheet(wb, wsSec, "Seções");
+  // Estiliza as linhas de totais
+  for (let r = secTotalsStartRow; r < secRows.length; r++) {
+    setCellFormat(wsSec, XLSX.utils.encode_cell({ r, c: 5 }), FMT.BRL);
+    setCellFormat(wsSec, XLSX.utils.encode_cell({ r, c: 6 }), FMT.BRL);
+    setCellFormat(wsSec, XLSX.utils.encode_cell({ r, c: 7 }), FMT.PCT);
+    const isFinal = r === secRows.length - 1;
+    for (let c = 0; c < secHeader.length; c++) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      const cell = wsSec[addr] as (XLSX.CellObject & { s?: unknown }) | undefined;
+      if (!cell) continue;
+      cell.s = isFinal ? TOTAL_STYLE : SUBTOTAL_STYLE;
+    }
+  }
+  XLSX.utils.book_append_sheet(wb, wsSec, "Resumo por seção");
+
 
   // ── Aba 4: Ajustes ────────────────────────────────────────────────────
   if (adjustments.length > 0) {
