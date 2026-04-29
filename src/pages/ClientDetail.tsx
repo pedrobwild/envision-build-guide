@@ -42,6 +42,7 @@ import {
   Users as UsersIcon,
   Loader2,
   X,
+  FileSpreadsheet,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -64,6 +65,7 @@ import { INTERNAL_STATUSES, LOCATION_TYPES } from "@/lib/role-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { exportBudgetToXlsx } from "@/lib/budget-xlsx-export";
 
 function formatBRL(value: number | null | undefined) {
   if (!value) return "R$ 0";
@@ -191,6 +193,22 @@ export default function ClientDetail() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [tagInput, setTagInput] = useState("");
+  const [exportingBudgetId, setExportingBudgetId] = useState<string | null>(null);
+
+  const handleExportBudget = async (budgetId: string, code: string | null) => {
+    if (exportingBudgetId) return;
+    setExportingBudgetId(budgetId);
+    const tId = toast.loading(`Gerando .xlsx${code ? ` (${code})` : ""}…`);
+    try {
+      await exportBudgetToXlsx(budgetId);
+      toast.success("Planilha exportada.", { id: tId });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao exportar planilha.";
+      toast.error(msg, { id: tId });
+    } finally {
+      setExportingBudgetId(null);
+    }
+  };
 
   // Inicializa draft quando entra em modo edição (ou cliente recarrega)
   useEffect(() => {
@@ -713,7 +731,7 @@ export default function ClientDetail() {
                   <TableHead>Status interno</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Criado</TableHead>
-                  <TableHead className="w-8" />
+                  <TableHead className="w-[88px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -783,11 +801,28 @@ export default function ClientDetail() {
                             : "—"}
                         </TableCell>
                         <TableCell>
-                          <Button asChild variant="ghost" size="icon" className="h-7 w-7">
-                            <Link to={`/admin/budget/${b.id}`}>
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </Link>
-                          </Button>
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              title="Exportar planilha (.xlsx) com valores abertos"
+                              aria-label="Exportar planilha .xlsx"
+                              disabled={exportingBudgetId === b.id}
+                              onClick={() => handleExportBudget(b.id, b.sequential_code)}
+                            >
+                              {exportingBudgetId === b.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <FileSpreadsheet className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                            <Button asChild variant="ghost" size="icon" className="h-7 w-7" title="Abrir orçamento">
+                              <Link to={`/admin/budget/${b.id}`}>
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </Link>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
