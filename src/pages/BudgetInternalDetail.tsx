@@ -1212,7 +1212,22 @@ export default function BudgetInternalDetail() {
                             <Button
                               size="sm"
                               className="h-8 gap-1.5 text-xs"
-                              onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank", "noopener,noreferrer")}
+                              onClick={() =>
+                                openPublicBudget(
+                                  {
+                                    id: budget.id,
+                                    public_id: budget.public_id,
+                                    status: budget.status,
+                                    version_group_id: budget.version_group_id,
+                                  },
+                                  {
+                                    onStatusChanged: (newStatus) =>
+                                      setBudget((prev) =>
+                                        prev ? { ...prev, status: newStatus } : prev,
+                                      ),
+                                  },
+                                )
+                              }
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                               <span className="hidden sm:inline">Visualizar</span>
