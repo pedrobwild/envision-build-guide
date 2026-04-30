@@ -240,34 +240,22 @@ export default function ClientDetail() {
     return { cost, total, margin };
   }, [selectedExportBudget]);
 
-  const handleExportBudget = async (budgetId: string, code: string | null) => {
+  // Em vez de gerar e baixar direto, abrimos o diálogo de pré-visualização
+  // com o `budgetId` + `kind`. O download só ocorre depois que o usuário
+  // confere o conteúdo e confirma — evita arquivos errados sendo enviados
+  // ao cliente sem revisão.
+  const [previewExport, setPreviewExport] = useState<
+    { budgetId: string; kind: "pdf" | "xlsx" } | null
+  >(null);
+
+  const handleExportBudget = (budgetId: string, _code: string | null) => {
     if (exportingBudgetId) return;
-    setExportingBudgetId(budgetId);
-    const tId = toast.loading(`Gerando .xlsx${code ? ` (${code})` : ""}…`);
-    try {
-      await exportBudgetToXlsx(budgetId);
-      toast.success("Planilha exportada.", { id: tId });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Falha ao exportar planilha.";
-      toast.error(msg, { id: tId });
-    } finally {
-      setExportingBudgetId(null);
-    }
+    setPreviewExport({ budgetId, kind: "xlsx" });
   };
 
-  const handleExportBudgetPdf = async (budgetId: string, code: string | null) => {
+  const handleExportBudgetPdf = (budgetId: string, _code: string | null) => {
     if (exportingPdfId) return;
-    setExportingPdfId(budgetId);
-    const tId = toast.loading(`Gerando .pdf${code ? ` (${code})` : ""}…`);
-    try {
-      await exportBudgetToPdf(budgetId);
-      toast.success("PDF exportado.", { id: tId });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Falha ao exportar PDF.";
-      toast.error(msg, { id: tId });
-    } finally {
-      setExportingPdfId(null);
-    }
+    setPreviewExport({ budgetId, kind: "pdf" });
   };
 
   // Inicializa draft quando entra em modo edição (ou cliente recarrega)
