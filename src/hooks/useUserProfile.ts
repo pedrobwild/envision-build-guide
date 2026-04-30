@@ -63,43 +63,85 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
 
-    async function load() {
-      // 1. Ensure profile exists (upsert)
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("id, full_name, is_active")
-        .eq("id", user!.id)
-        .maybeSingle();
-
-      if (!prof) {
-        await supabase.from("profiles").insert({
-          id: user!.id,
-          full_name: user!.user_metadata?.full_name ?? user!.email ?? "",
-        });
-      }
-
-      // 2. Fetch roles
-      const { data: rolesData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user!.id);
-
+    // Timeout de segurança: se as queries travarem (rede flaky, edge node lento),
+    // liberamos a UI com um perfil mínimo em vez de prender o usuário em
+    // "Verificando sessão..." para sempre. O perfil real é refetched assim
+    // que `user` mudar ou a página recarregar.
+    const safetyTimer = window.setTimeout(() => {
       if (cancelled) return;
-
+      console.warn("[useUserProfile] timeout — liberando UI com perfil mínimo");
       prevUserId.current = user!.id;
-
       setProfile({
         id: user!.id,
-        full_name: prof?.full_name ?? user!.user_metadata?.full_name ?? "",
-        is_active: prof?.is_active ?? true,
-        roles: (rolesData ?? []).map((r) => r.role as AppRole),
+        full_name: user!.user_metadata?.full_name ?? user!.email ?? "",
+        is_active: true,
+        roles: [],
       });
       setLoading(false);
+    }, 8000);
+
+    async function load() {
+      try {
+        // 1. Ensure profile exists (upsert)
+        const { data: prof, error: profErr } = await supabase
+          .from("profiles")
+          .select("id, full_name, is_active")
+          .eq("id", user!.id)
+          .maybeSingle();
+
+        if (profErr) {
+          console.warn("[useUserProfile] profile fetch failed", profErr.message);
+        }
+
+        if (!prof) {
+          await supabase.from("profiles").insert({
+            id: user!.id,
+            full_name: user!.user_metadata?.full_name ?? user!.email ?? "",
+          });
+        }
+
+        // 2. Fetch roles
+        const { data: rolesData, error: rolesErr } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user!.id);
+
+        if (rolesErr) {
+          console.warn("[useUserProfile] roles fetch failed", rolesErr.message);
+        }
+
+        if (cancelled) return;
+        window.clearTimeout(safetyTimer);
+
+        prevUserId.current = user!.id;
+
+        setProfile({
+          id: user!.id,
+          full_name: prof?.full_name ?? user!.user_metadata?.full_name ?? "",
+          is_active: prof?.is_active ?? true,
+          roles: (rolesData ?? []).map((r) => r.role as AppRole),
+        });
+        setLoading(false);
+      } catch (err) {
+        if (cancelled) return;
+        window.clearTimeout(safetyTimer);
+        console.error("[useUserProfile] unexpected load error", err);
+        // Libera a UI mesmo em erro — evita tela travada de loading.
+        prevUserId.current = user!.id;
+        setProfile({
+          id: user!.id,
+          full_name: user!.user_metadata?.full_name ?? user!.email ?? "",
+          is_active: true,
+          roles: [],
+        });
+        setLoading(false);
+      }
     }
 
     load();
     return () => {
       cancelled = true;
+      window.clearTimeout(safetyTimer);
     };
   }, [user]);
 
