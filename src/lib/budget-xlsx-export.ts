@@ -428,14 +428,7 @@ export async function buildBudgetXlsxBlob(
     CreatedDate: new Date(),
   };
 
-  // Monta a estrutura canônica usada por `budget-calc` para garantir que
-  // os totais aqui batam EXATAMENTE com o que o editor e o resumo público
-  // mostram. Isso considera:
-  //   - internal_unit_price * qty (e não só internal_total)
-  //   - BDI por item aplicado sobre o custo correto
-  //   - quantidade da seção (`sec.qty`) multiplicando o subtotal
-  //   - seções de "Créditos" excluídas da margem (mas somadas no total)
-  //   - itens com valor negativo (descontos) tratados corretamente
+  // Estrutura canônica reusada para subtotais por seção mais abaixo.
   const calcSectionsAll: (CalcSection & { __id: string })[] = sections.map((sec) => {
     const secItems: CalcItem[] = items
       .filter((i) => i.section_id === sec.id)
@@ -455,20 +448,28 @@ export async function buildBudgetXlsxBlob(
     };
   });
 
-  const grand = calcGrandTotals(calcSectionsAll);
-  const totalCusto = grand.cost;
-  // Venda das seções que entram na margem (exclui créditos).
-  const totalVendaMargem = grand.sale;
-  // Créditos abatem o total mostrado ao cliente, mas não a margem.
-  const creditTotal = calcSectionsAll
-    .filter((s) => isCreditSection(s))
-    .reduce((acc, s) => acc + calcSectionSaleTotal(s), 0);
-  const totalVenda = totalVendaMargem + creditTotal;
-  const totalAjustes = adjustments.reduce(
-    (acc, a) => acc + (Number(a.amount) || 0) * (Number(a.sign) || 1),
-    0,
+  // Fonte única dos números globais — mesma função coberta pelos testes.
+  const totals = computeBudgetXlsxTotals(
+    sections.map((s) => ({
+      id: s.id,
+      title: s.title,
+      qty: s.qty,
+      section_price: s.section_price,
+    })),
+    items.map((i) => ({
+      section_id: i.section_id,
+      qty: i.qty,
+      internal_unit_price: i.internal_unit_price,
+      internal_total: i.internal_total,
+      bdi_percentage: i.bdi_percentage,
+      title: i.title,
+    })),
+    adjustments,
   );
-  const margemRatio = grand.marginPercent / 100;
+  const totalCusto = totals.cost;
+  const totalVenda = totals.sale;
+  const totalAjustes = totals.adjustments;
+  const margemRatio = totals.marginRatio;
 
   // ── Aba 1: Resumo ─────────────────────────────────────────────────────
   // Coluna A = rótulo, Coluna B = valor (já no tipo correto).
