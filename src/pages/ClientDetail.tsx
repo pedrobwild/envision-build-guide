@@ -70,8 +70,7 @@ import { INTERNAL_STATUSES, LOCATION_TYPES } from "@/lib/role-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { exportBudgetToXlsx } from "@/lib/budget-xlsx-export";
-import { exportBudgetToPdf } from "@/lib/budget-pdf-export";
+import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 
 function formatBRL(value: number | null | undefined) {
   if (!value) return "R$ 0";
@@ -199,8 +198,16 @@ export default function ClientDetail() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [tagInput, setTagInput] = useState("");
-  const [exportingBudgetId, setExportingBudgetId] = useState<string | null>(null);
-  const [exportingPdfId, setExportingPdfId] = useState<string | null>(null);
+  // Estado da pré-visualização de export. Usamos derivados (`exportingBudgetId`
+  // e `exportingPdfId`) para manter a mesma UX de "carregando" nos botões
+  // existentes enquanto o diálogo gera o preview.
+  const [previewExport, setPreviewExport] = useState<
+    { budgetId: string; kind: "pdf" | "xlsx" } | null
+  >(null);
+  const exportingBudgetId =
+    previewExport?.kind === "xlsx" ? previewExport.budgetId : null;
+  const exportingPdfId =
+    previewExport?.kind === "pdf" ? previewExport.budgetId : null;
   const [selectedExportBudgetId, setSelectedExportBudgetId] = useState<string | null>(null);
 
   // Mantém o orçamento selecionado válido; padrão = mais recente.
@@ -240,34 +247,17 @@ export default function ClientDetail() {
     return { cost, total, margin };
   }, [selectedExportBudget]);
 
-  const handleExportBudget = async (budgetId: string, code: string | null) => {
+  // Os handlers abaixo apenas abrem o diálogo de pré-visualização —
+  // a geração efetiva e o download acontecem dentro do componente.
+
+  const handleExportBudget = (budgetId: string, _code: string | null) => {
     if (exportingBudgetId) return;
-    setExportingBudgetId(budgetId);
-    const tId = toast.loading(`Gerando .xlsx${code ? ` (${code})` : ""}…`);
-    try {
-      await exportBudgetToXlsx(budgetId);
-      toast.success("Planilha exportada.", { id: tId });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Falha ao exportar planilha.";
-      toast.error(msg, { id: tId });
-    } finally {
-      setExportingBudgetId(null);
-    }
+    setPreviewExport({ budgetId, kind: "xlsx" });
   };
 
-  const handleExportBudgetPdf = async (budgetId: string, code: string | null) => {
+  const handleExportBudgetPdf = (budgetId: string, _code: string | null) => {
     if (exportingPdfId) return;
-    setExportingPdfId(budgetId);
-    const tId = toast.loading(`Gerando .pdf${code ? ` (${code})` : ""}…`);
-    try {
-      await exportBudgetToPdf(budgetId);
-      toast.success("PDF exportado.", { id: tId });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Falha ao exportar PDF.";
-      toast.error(msg, { id: tId });
-    } finally {
-      setExportingPdfId(null);
-    }
+    setPreviewExport({ budgetId, kind: "pdf" });
   };
 
   // Inicializa draft quando entra em modo edição (ou cliente recarrega)
@@ -1235,6 +1225,15 @@ export default function ClientDetail() {
           </div>
         </div>
       )}
+
+      <ExportPreviewDialog
+        open={!!previewExport}
+        onOpenChange={(open) => {
+          if (!open) setPreviewExport(null);
+        }}
+        budgetId={previewExport?.budgetId ?? null}
+        kind={previewExport?.kind ?? "pdf"}
+      />
     </div>
   );
 }

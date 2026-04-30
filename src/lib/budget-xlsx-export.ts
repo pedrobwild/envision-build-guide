@@ -79,10 +79,14 @@ const sanitizeFileName = (s: string) =>
     .slice(0, 80) || "orcamento";
 
 /**
- * Gera e dispara o download do .xlsx do orçamento.
- * Lança erro caso a query falhe — chame de dentro de try/catch e use toast.
+ * Constrói o .xlsx do orçamento em memória e devolve `{ blob, fileName, workbook }`.
+ * Não dispara download — o `workbook` é exposto para que a UI de pré-visualização
+ * possa renderizar cada planilha como tabela HTML sem reler o arquivo.
+ * Lança erro caso a query falhe.
  */
-export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
+export async function buildBudgetXlsxBlob(
+  budgetId: string,
+): Promise<{ blob: Blob; fileName: string; workbook: XLSX.WorkBook }> {
   // 1) Cabeçalho do orçamento
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
@@ -685,6 +689,27 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
   const namePart = sanitizeFileName(b.project_name || b.client_name || "orcamento");
   const fileName = `${codePart}_${namePart}.xlsx`;
 
-  XLSX.writeFile(wb, fileName);
+  // `XLSX.write` em vez de `XLSX.writeFile`: gera o conteúdo em memória,
+  // permitindo pré-visualização antes de oferecer o download.
+  const arrayBuffer = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  return { blob, fileName, workbook: wb };
+}
+
+/**
+ * Wrapper de compatibilidade — gera o XLSX e dispara o download imediato.
+ */
+export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
+  const { blob, fileName } = await buildBudgetXlsxBlob(budgetId);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 

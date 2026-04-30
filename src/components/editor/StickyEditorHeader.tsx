@@ -16,8 +16,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import { calcGrandTotals, type CalcSection } from "@/lib/budget-calc";
 import { cn } from "@/lib/utils";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
-import { exportBudgetToXlsx } from "@/lib/budget-xlsx-export";
-import { exportBudgetToPdf } from "@/lib/budget-pdf-export";
+import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { toast } from "sonner";
 import type { BudgetRow } from "@/types/budget-common";
 
@@ -135,25 +134,18 @@ export function StickyEditorHeader({
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(projectName);
-  const [exporting, setExporting] = useState<"xlsx" | "pdf" | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  // Pré-visualização do export antes do download. O estado é único; o
+  // botão correspondente mostra spinner enquanto o diálogo está aberto
+  // (gerando ou exibindo o preview).
+  const [previewExport, setPreviewExport] = useState<
+    { budgetId: string; kind: "pdf" | "xlsx" } | null
+  >(null);
+  const exporting: "xlsx" | "pdf" | null = previewExport?.kind ?? null;
 
-  const handleExport = async (kind: "xlsx" | "pdf") => {
+  const handleExport = (kind: "xlsx" | "pdf") => {
     if (!budget.id || exporting) return;
-    setExporting(kind);
-    const tId = toast.loading(kind === "xlsx" ? "Gerando planilha…" : "Gerando PDF…");
-    try {
-      if (kind === "xlsx") await exportBudgetToXlsx(budget.id);
-      else await exportBudgetToPdf(budget.id);
-      toast.success(kind === "xlsx" ? "Planilha gerada" : "PDF gerado", { id: tId });
-    } catch (err) {
-      toast.error(`Falha ao exportar ${kind.toUpperCase()}`, {
-        id: tId,
-        description: err instanceof Error ? err.message : undefined,
-      });
-    } finally {
-      setExporting(null);
-    }
+    setPreviewExport({ budgetId: budget.id, kind });
   };
 
   useEffect(() => {
@@ -184,6 +176,7 @@ export function StickyEditorHeader({
     : "text-destructive";
 
   return (
+    <>
     <div className="sticky top-0 z-50 bg-card/85 backdrop-blur-xl border-b border-border/40 shadow-sm">
       {/* Layer 1 — Breadcrumb + status + action + auto-save */}
       <div className="max-w-[1200px] mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between gap-2 sm:gap-3">
@@ -404,5 +397,14 @@ export function StickyEditorHeader({
         </div>
       </div>
     </div>
+    <ExportPreviewDialog
+      open={!!previewExport}
+      onOpenChange={(open) => {
+        if (!open) setPreviewExport(null);
+      }}
+      budgetId={previewExport?.budgetId ?? null}
+      kind={previewExport?.kind ?? "pdf"}
+    />
+    </>
   );
 }
