@@ -503,21 +503,26 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
   wsDet["!freeze"] = { xSplit: 0, ySplit: 1 };
   wsDet["!merges"] = detMerges;
 
-  // Estilos de seção/subtotal/total
+  // Estilos de seção/subtotal/total — `patternType: "solid"` é obrigatório
+  // para que o Excel renderize a cor de fundo (sem isso, o `fgColor` é
+  // ignorado mesmo no `xlsx-js-style`).
   const SECTION_STYLE = {
-    font: { bold: true, color: { rgb: "0F172A" } },
-    fill: { fgColor: { rgb: "E5E7EB" } },
-    alignment: { vertical: "center", horizontal: "left" },
+    font: { ...FONT_BASE, bold: true, color: { rgb: "0F172A" } },
+    fill: { patternType: "solid", fgColor: { rgb: "E5E7EB" } },
+    alignment: { vertical: "center", horizontal: "left", wrapText: true },
+    border: THIN_BORDER,
   };
   const SUBTOTAL_STYLE = {
-    font: { bold: true },
-    fill: { fgColor: { rgb: "F3F4F6" } },
-    border: { top: { style: "thin", color: { rgb: "D1D5DB" } } },
+    font: { ...FONT_BASE, bold: true },
+    fill: { patternType: "solid", fgColor: { rgb: "F3F4F6" } },
+    alignment: { vertical: "center", wrapText: true },
+    border: THIN_BORDER,
   };
   const TOTAL_STYLE = {
-    font: { bold: true, color: { rgb: "FFFFFF" } },
-    fill: { fgColor: { rgb: "0F172A" } },
-    alignment: { vertical: "center", horizontal: "left" },
+    font: { ...FONT_BASE, bold: true, color: { rgb: "FFFFFF" } },
+    fill: { patternType: "solid", fgColor: { rgb: "0F172A" } },
+    alignment: { vertical: "center", horizontal: "left", wrapText: true },
+    border: THIN_BORDER,
   };
 
   for (let r = 0; r < detRowMeta.length; r++) {
