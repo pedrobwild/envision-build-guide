@@ -498,16 +498,14 @@ export async function buildBudgetXlsxBlob(
 
   for (const sec of sections) {
     const secItems = items.filter((i) => i.section_id === sec.id);
-    const secCost = secItems.reduce(
-      (acc, it) => acc + (Number(it.internal_total) || 0),
-      0,
-    );
-    const secVenda = secItems.reduce((acc, it) => {
-      const c = Number(it.internal_total) || 0;
-      const bdi = Number(it.bdi_percentage) || 0;
-      return acc + c * (1 + bdi / 100);
-    }, 0);
-    const secMargem = secVenda > 0 ? (secVenda - secCost) / secVenda : 0;
+    const calcSec = calcSectionsAll.find((s) => s.__id === sec.id) as CalcSection;
+    const secCost = calcSectionCostTotal(calcSec);
+    const secVenda = calcSectionSaleTotal(calcSec);
+    // Margem da seção: créditos não têm margem própria (cost = sale = abatimento).
+    const secMargem = !isCreditSection(calcSec) && secVenda > 0
+      ? (secVenda - secCost) / secVenda
+      : 0;
+    const secQty = Number(sec.qty) || 1;
 
     // 1) Cabeçalho da seção (mesclado em toda a largura) — igual ao PDF
     const secTitle = `${sec.title ?? "(sem título)"}${sec.is_optional ? "  ·  opcional" : ""}${
@@ -523,18 +521,18 @@ export async function buildBudgetXlsxBlob(
 
     // 2) Itens da seção
     if (secItems.length === 0) {
-      // Mesma diagramação do PDF: "(seção sem itens)" mesclado A:E,
-      // depois Custo total e Venda total na coluna correspondente.
+      // Sem itens: fallback é section_price * sec.qty (mesma regra de calcSectionCostTotal).
+      const fallback = (Number(sec.section_price) || 0) * secQty;
       detRows.push([
         "(seção sem itens)",
         "",
         "",
         "",
         "",
-        sec.section_price != null ? Number(sec.section_price) : null,
+        fallback || null,
         "",
         "",
-        sec.section_price != null ? Number(sec.section_price) : null,
+        fallback || null,
       ]);
       const emptyRowIdx = detRows.length - 1;
       detRowMeta.push([
@@ -554,14 +552,25 @@ export async function buildBudgetXlsxBlob(
       });
     } else {
       for (const it of secItems) {
-        const cost = Number(it.internal_total) || 0;
+        const calcItem: CalcItem = {
+          qty: it.qty,
+          internal_unit_price: it.internal_unit_price,
+          internal_total: it.internal_total,
+          bdi_percentage: it.bdi_percentage,
+        };
+        // Custo/venda do item respeitando unit_price * qty OU lump-sum.
+        const cost = calcItemCostTotal(calcItem);
+        const venda = calcItemSaleTotal(calcItem);
         const bdi = Number(it.bdi_percentage) || 0;
-        const venda = cost * (1 + bdi / 100);
+        const unitPrice = Number(it.internal_unit_price) || 0;
         const qty = Number(it.qty) || 0;
-        const unitCost = it.internal_unit_price !== null
-          ? Number(it.internal_unit_price)
+        // Se há unit_price, mostra-o; senão deriva de cost/qty quando possível.
+        const unitCost = unitPrice !== 0
+          ? unitPrice
           : (qty > 0 ? cost / qty : null);
-        const unitVenda = qty > 0 ? venda / qty : null;
+        const unitVenda = unitPrice !== 0
+          ? unitPrice * (1 + bdi / 100)
+          : (qty > 0 ? venda / qty : null);
         detRows.push([
           it.title ?? "",
           it.description ?? "",
