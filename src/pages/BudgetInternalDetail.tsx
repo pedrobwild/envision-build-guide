@@ -58,6 +58,7 @@ import {
   FileDown,
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudget } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
 import {
