@@ -99,3 +99,32 @@ export async function openPublicBudget(
   toast.success("Orçamento publicado");
   window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
 }
+
+/**
+ * Versão simplificada para chamadores que só têm o `public_id` em mãos
+ * (cards de kanban, listas, header do editor). Resolve para a versão publicada
+ * mais recente do mesmo grupo via RPC `resolve_published_public_id` antes de
+ * abrir — assim o link nunca cai em "Página não encontrada" quando o orçamento
+ * apontado é um draft.
+ */
+export async function openPublicBudgetByPublicId(publicId: string): Promise<void> {
+  if (!publicId) {
+    toast.error("Link público ainda não foi gerado para este orçamento.");
+    return;
+  }
+  try {
+    const { data: resolved, error } = await supabase.rpc(
+      "resolve_published_public_id",
+      { p_public_id: publicId },
+    );
+    if (error) {
+      // RPC indisponível ou erro de rede: abre o link original como fallback.
+      window.open(getPublicBudgetUrl(publicId), "_blank", "noopener,noreferrer");
+      return;
+    }
+    const target = (typeof resolved === "string" && resolved) || publicId;
+    window.open(getPublicBudgetUrl(target), "_blank", "noopener,noreferrer");
+  } catch {
+    window.open(getPublicBudgetUrl(publicId), "_blank", "noopener,noreferrer");
+  }
+}

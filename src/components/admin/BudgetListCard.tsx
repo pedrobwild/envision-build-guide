@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -116,7 +117,7 @@ export function BudgetListCard({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-primary hover:bg-primary/10"
-                onClick={(e) => { e.stopPropagation(); window.open(getPublicBudgetUrl(budget.public_id!), "_blank", "noopener,noreferrer"); }}
+                onClick={(e) => { e.stopPropagation(); void openPublicBudgetByPublicId(budget.public_id!); }}
                 title="Ver orçamento público"
                 aria-label="Ver orçamento público"
               >

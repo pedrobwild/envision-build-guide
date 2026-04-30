@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { ContractUploadModal } from "@/components/commercial/ContractUploadModal";
 import {
   DropdownMenu,
@@ -114,7 +115,7 @@ export function BudgetActionsMenu({
 
   const openPublicPage = () => {
     if (!budget.public_id) return;
-    window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
+    void openPublicBudgetByPublicId(budget.public_id);
   };
 
   const markContractClosed = () => {

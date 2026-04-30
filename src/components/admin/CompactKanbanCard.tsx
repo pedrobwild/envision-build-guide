@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motio
 import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -377,7 +378,7 @@ export function CompactKanbanCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              window.open(getPublicBudgetUrl(publicId), "_blank", "noopener,noreferrer");
+              void openPublicBudgetByPublicId(publicId);
             }}
             className="h-5 w-5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50 flex items-center justify-center transition-colors"
             title="Ver orçamento público"

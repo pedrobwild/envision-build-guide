@@ -16,6 +16,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import { calcGrandTotals, type CalcSection } from "@/lib/budget-calc";
 import { cn } from "@/lib/utils";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { toast } from "sonner";
 import type { BudgetRow } from "@/types/budget-common";
@@ -224,10 +225,9 @@ export function StickyEditorHeader({
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {budget.public_id && (
             <div className="inline-flex items-center rounded-full bg-success/10 hover:bg-success/15 transition-colors shrink-0 overflow-hidden">
-              <a
-                href={getPublicBudgetUrl(budget.public_id)}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => void openPublicBudgetByPublicId(budget.public_id!)}
                 className="inline-flex items-center gap-1.5 text-[11px] font-body font-medium text-success hover:text-success/80 pl-2.5 pr-1.5 py-1"
                 title="Abrir orçamento público em nova aba"
               >
@@ -235,7 +235,7 @@ export function StickyEditorHeader({
                 <span className="hidden sm:inline">Link público</span>
                 <span className="sm:hidden">Link</span>
                 <ExternalLink className="h-3 w-3 opacity-70" />
-              </a>
+              </button>
               <button
                 type="button"
                 onClick={async () => {
