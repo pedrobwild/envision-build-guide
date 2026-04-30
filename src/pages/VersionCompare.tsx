@@ -185,11 +185,15 @@ export default function VersionCompare() {
     setLoading(true);
     Promise.all([loadVersion(leftId), loadVersion(rightId)])
       .then(async ([l, r]) => {
-        // Validate versions belong to same group
-        const lGroup = (l.meta as VersionMeta & { version_group_id?: string | null }).version_group_id;
-        const rGroup = (r.meta as VersionMeta & { version_group_id?: string | null }).version_group_id;
-        if (lGroup && rGroup && lGroup !== rGroup) {
-          toast.error("Estas versões não pertencem ao mesmo orçamento.");
+        // Validate compatibility:
+        // - mesma família de versões (version_group_id) → comparação de versões
+        // - OU mesmo cliente → comparação de orçamentos coexistentes
+        const lGroup = l.meta.version_group_id;
+        const rGroup = r.meta.version_group_id;
+        const sameGroup = !!lGroup && !!rGroup && lGroup === rGroup;
+        const sameClient = !!l.meta.client_id && l.meta.client_id === r.meta.client_id;
+        if (!sameGroup && !sameClient) {
+          toast.error("Só é possível comparar orçamentos da mesma versão ou do mesmo cliente.");
           return;
         }
         setLeftData(l);
