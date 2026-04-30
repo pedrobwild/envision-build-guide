@@ -573,6 +573,9 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
       }
     }
   }
+  // Garante bordas em todas as células do Detalhamento (mantém estilos
+  // específicos já aplicados acima — `applyBaseGrid` preserva `existing`).
+  applyBaseGrid(wsDet, 0, detRows.length - 1, 0, detLastCol);
   XLSX.utils.book_append_sheet(wb, wsDet, "Detalhamento");
 
   // ── Aba 3: Resumo por seção ───────────────────────────────────────────
