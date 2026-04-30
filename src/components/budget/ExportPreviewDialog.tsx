@@ -81,12 +81,32 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
   // renderiza errado a formatação avançada (Excel antigo, alguns
   // visualizadores embarcados, planilha do celular sem suporte etc.).
   const [simpleXlsx, setSimpleXlsx] = useState(false);
+  // Personalizações do PDF: logo da Bwild (on/off) e texto livre que vai
+  // ao rodapé como "Observações". Default carrega o disclaimer padrão da
+  // empresa, e o usuário pode editar/limpar antes de baixar.
+  const [includeLogo, setIncludeLogo] = useState(true);
+  const [disclaimer, setDisclaimer] = useState<string>(DEFAULT_BUDGET_PDF_DISCLAIMER);
+  // Versão "debounced" do disclaimer — só dispara nova geração depois de
+  // 600ms parado, evitando regerar o PDF a cada tecla pressionada.
+  const [disclaimerDebounced, setDisclaimerDebounced] = useState<string>(
+    DEFAULT_BUDGET_PDF_DISCLAIMER,
+  );
 
-  // Reseta o toggle ao trocar de alvo/tipo para não carregar preferência
+  // Reseta toggles ao trocar de alvo/tipo para não carregar preferência
   // de um orçamento anterior sem o usuário perceber.
   useEffect(() => {
     setSimpleXlsx(false);
+    setIncludeLogo(true);
+    setDisclaimer(DEFAULT_BUDGET_PDF_DISCLAIMER);
+    setDisclaimerDebounced(DEFAULT_BUDGET_PDF_DISCLAIMER);
   }, [budgetId, kind]);
+
+  // Debounce do textarea: aguarda 600ms sem digitação para regerar.
+  useEffect(() => {
+    if (kind !== "pdf") return;
+    const t = setTimeout(() => setDisclaimerDebounced(disclaimer), 600);
+    return () => clearTimeout(t);
+  }, [disclaimer, kind]);
 
   // Limpa estado quando o diálogo abre/fecha ou o alvo muda.
   useEffect(() => {
