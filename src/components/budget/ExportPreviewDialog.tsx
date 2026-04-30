@@ -76,10 +76,31 @@ interface EditorSectionTotal {
   isCredit: boolean;
 }
 
+/** Sinaliza qual regra canônica do motor de cálculo foi efetivamente
+ *  acionada para o orçamento exibido. Permite ao usuário validar
+ *  rapidamente se o export reflete o tratamento esperado. */
+interface CanonicalRuleFlags {
+  /** Algum item com BDI = -100% (item removido / brinde) — venda zerada
+   *  mesmo com custo positivo. */
+  hasBdiMinus100: boolean;
+  /** Existe pelo menos uma seção de Crédito (excluída da margem). */
+  hasCreditSection: boolean;
+  /** Existe pelo menos uma seção de Desconto (com itens negativos
+   *  abatendo o total). */
+  hasDiscountSection: boolean;
+  /** Alguma seção sem itens caiu no fallback `section_price * qty`. */
+  usedSectionPriceFallback: boolean;
+  /** Alguma seção tem multiplicador `qty > 1` aplicado sobre os itens. */
+  hasSectionMultiplier: boolean;
+  /** O export normalizou pelo menos um item (sinal flipado / BDI zerado). */
+  hadAbatementNormalization: boolean;
+}
+
 interface EditorAuditTotals {
   sections: EditorSectionTotal[];
   cost: number;
   sale: number;
+  rules: CanonicalRuleFlags;
 }
 
 function triggerDownload(blob: Blob, fileName: string) {
