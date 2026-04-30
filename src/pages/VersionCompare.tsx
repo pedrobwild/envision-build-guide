@@ -339,12 +339,12 @@ export default function VersionCompare() {
         <div className="grid grid-cols-2 gap-4">
           {[leftData, rightData].map((d, idx) => (
             <div key={idx} className="rounded-lg border border-border bg-card p-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-display font-bold text-sm text-foreground">
-                  V{d?.meta.version_number || "?"}
+                  {sideLabel(d, idx)}
                 </span>
                 <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-body">
-                  {idx === 0 ? "Anterior" : "Nova"}
+                  {isCoexisting ? (idx === 0 ? "Lado A" : "Lado B") : (idx === 0 ? "Anterior" : "Nova")}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground font-body mt-1">
