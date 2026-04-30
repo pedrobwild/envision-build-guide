@@ -120,7 +120,10 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
     (async () => {
       try {
         if (kind === "pdf") {
-          const { blob, fileName } = await buildBudgetPdfBlob(budgetId);
+          const { blob, fileName } = await buildBudgetPdfBlob(budgetId, {
+            includeLogo,
+            disclaimer: disclaimerDebounced,
+          });
           if (cancelled) return;
           const url = URL.createObjectURL(blob);
           setPdfPreview({ blob, fileName, url });
@@ -145,7 +148,7 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
     return () => {
       cancelled = true;
     };
-  }, [open, budgetId, kind, simpleXlsx]);
+  }, [open, budgetId, kind, simpleXlsx, includeLogo, disclaimerDebounced]);
 
   // Revoga o object URL do PDF quando o preview é descartado/refeito.
   useEffect(() => {
