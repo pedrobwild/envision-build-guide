@@ -3422,6 +3422,10 @@ export type Database = {
         }
         Returns: string
       }
+      resolve_published_public_id: {
+        Args: { p_public_id: string }
+        Returns: string
+      }
       run_reengagement_sweep: {
         Args: never
         Returns: {
