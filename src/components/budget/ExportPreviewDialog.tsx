@@ -15,7 +15,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx-js-style";
-import { Download, Loader2, X } from "lucide-react";
+import { Check, Download, Loader2, Minus, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +43,7 @@ import {
   calcSectionCostTotal,
   calcSectionSaleTotal,
   isCreditSection,
+  isDiscountSection,
   type CalcSection,
 } from "@/lib/budget-calc";
 
@@ -76,10 +77,31 @@ interface EditorSectionTotal {
   isCredit: boolean;
 }
 
+/** Sinaliza qual regra canônica do motor de cálculo foi efetivamente
+ *  acionada para o orçamento exibido. Permite ao usuário validar
+ *  rapidamente se o export reflete o tratamento esperado. */
+interface CanonicalRuleFlags {
+  /** Algum item com BDI = -100% (item removido / brinde) — venda zerada
+   *  mesmo com custo positivo. */
+  hasBdiMinus100: boolean;
+  /** Existe pelo menos uma seção de Crédito (excluída da margem). */
+  hasCreditSection: boolean;
+  /** Existe pelo menos uma seção de Desconto (com itens negativos
+   *  abatendo o total). */
+  hasDiscountSection: boolean;
+  /** Alguma seção sem itens caiu no fallback `section_price * qty`. */
+  usedSectionPriceFallback: boolean;
+  /** Alguma seção tem multiplicador `qty > 1` aplicado sobre os itens. */
+  hasSectionMultiplier: boolean;
+  /** O export normalizou pelo menos um item (sinal flipado / BDI zerado). */
+  hadAbatementNormalization: boolean;
+}
+
 interface EditorAuditTotals {
   sections: EditorSectionTotal[];
   cost: number;
   sale: number;
+  rules: CanonicalRuleFlags;
 }
 
 function triggerDownload(blob: Blob, fileName: string) {
@@ -139,7 +161,7 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
   // (que já é o que vai pro arquivo) revela divergências introduzidas
   // pela normalização (descontos com sinal errado, BDI em crédito etc.).
   useEffect(() => {
-    if (!open || !budgetId || kind !== "xlsx" || !auditMode) return;
+    if (!open || !budgetId || kind !== "xlsx") return;
     let cancelled = false;
     setAuditLoading(true);
     (async () => {
@@ -198,7 +220,29 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
           .filter((s) => !s.isCredit)
           .reduce((a, s) => a + s.cost, 0);
         const sale = sectionsAudit.reduce((a, s) => a + s.sale, 0);
-        setAuditEditor({ sections: sectionsAudit, cost, sale });
+
+        // Detecta quais regras canônicas foram acionadas
+        const rules: CanonicalRuleFlags = {
+          hasBdiMinus100: itemsRaw.some(
+            (i) => Number(i.bdi_percentage) === -100,
+          ),
+          hasCreditSection: secs.some((s) => isCreditSection({ title: s.title })),
+          hasDiscountSection: secs.some((s) =>
+            isDiscountSection({ title: s.title }),
+          ),
+          usedSectionPriceFallback: secs.some((s) => {
+            const sectionItems = itemsRaw.filter((i) => i.section_id === s.id);
+            const hasContribution = sectionItems.some((i) => {
+              const up = Number(i.internal_unit_price) || 0;
+              if (up !== 0) return true;
+              return (Number(i.internal_total) || 0) !== 0;
+            });
+            return !hasContribution && (Number(s.section_price) || 0) !== 0;
+          }),
+          hasSectionMultiplier: secs.some((s) => (Number(s.qty) || 1) > 1),
+          hadAbatementNormalization: false, // preenchido abaixo
+        };
+        setAuditEditor({ sections: sectionsAudit, cost, sale, rules });
       } catch (e) {
         if (cancelled) return;
         logger.error("[ExportPreviewDialog] audit fetch failed:", e);
@@ -211,7 +255,7 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
     return () => {
       cancelled = true;
     };
-  }, [open, budgetId, kind, auditMode]);
+  }, [open, budgetId, kind]);
 
   // Debounce do textarea: aguarda 600ms sem digitação para regerar.
   useEffect(() => {
@@ -368,13 +412,23 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
             </aside>
           )}
 
-          {kind === "xlsx" && auditMode && xlsxPreview && (
-            <aside className="hidden md:flex w-[360px] shrink-0 flex-col gap-3 border-l bg-background p-4 overflow-y-auto">
-              <XlsxAuditPanel
-                exportTotals={xlsxPreview.totals}
-                editor={auditEditor}
+          {kind === "xlsx" && xlsxPreview && (
+            <aside className="hidden md:flex w-[360px] shrink-0 flex-col gap-4 border-l bg-background p-4 overflow-y-auto">
+              <CanonicalRulesChecklist
+                rules={auditEditor?.rules ?? null}
+                warnings={xlsxPreview.totals.warnings}
                 loading={auditLoading}
               />
+              {auditMode && (
+                <>
+                  <div className="border-t -mx-4" />
+                  <XlsxAuditPanel
+                    exportTotals={xlsxPreview.totals}
+                    editor={auditEditor}
+                    loading={auditLoading}
+                  />
+                </>
+              )}
             </aside>
           )}
         </div>
@@ -1143,5 +1197,141 @@ function XlsxAuditPanel({
         </>
       )}
     </>
+  );
+}
+
+/** Checklist visual das regras canônicas do motor de cálculo, para que o
+ *  usuário valide rapidamente quais comportamentos especiais foram
+ *  acionados na geração do Excel:
+ *   - BDI -100% (item zerado em venda)
+ *   - Seção de Crédito (excluída da margem)
+ *   - Seção de Desconto (itens negativos abatem total)
+ *   - Fallback `section_price * qty` (seção sem itens)
+ *   - Multiplicador de seção (qty > 1)
+ *   - Normalização de abatimento aplicada (sinal flipado / BDI zerado)
+ *
+ *  Cada linha aparece como "aplicada" (ícone Check) ou "não aplicável"
+ *  (ícone Minus, atenuado), nunca como "erro" — são regras esperadas. */
+function CanonicalRulesChecklist({
+  rules,
+  warnings,
+  loading,
+}: {
+  rules: CanonicalRuleFlags | null;
+  warnings: BudgetXlsxTotals["warnings"];
+  loading: boolean;
+}) {
+  // O sinal de "normalização aplicada" vem dos warnings do export:
+  // se o validador encontrou abatimento positivo ou crédito com BDI,
+  // a normalização ajustou aqueles itens.
+  const hadNormalization =
+    warnings.some(
+      (w) =>
+        w.kind === "abatement_positive_value" || w.kind === "credit_with_bdi",
+    );
+
+  const items: Array<{
+    key: string;
+    label: string;
+    hint: string;
+    applied: boolean;
+  }> = rules
+    ? [
+        {
+          key: "bdi-minus-100",
+          label: "BDI -100% em algum item",
+          hint: "Itens com BDI -100% têm venda zerada — usado para brindes ou itens removidos sem mexer no custo.",
+          applied: rules.hasBdiMinus100,
+        },
+        {
+          key: "credit",
+          label: "Seção de Crédito presente",
+          hint: "Créditos abatem o total mostrado ao cliente, mas não entram na margem interna.",
+          applied: rules.hasCreditSection,
+        },
+        {
+          key: "discount",
+          label: "Seção de Desconto presente",
+          hint: "Descontos têm itens negativos que reduzem custo e venda no total final.",
+          applied: rules.hasDiscountSection,
+        },
+        {
+          key: "section-price-fallback",
+          label: "Fallback de section_price × qty",
+          hint: "Quando uma seção não tem itens com valor, o cálculo cai no preço fixo da seção multiplicado pela quantidade.",
+          applied: rules.usedSectionPriceFallback,
+        },
+        {
+          key: "section-multiplier",
+          label: "Multiplicador de seção (qty > 1)",
+          hint: "Seções com qty > 1 multiplicam a soma dos itens — uma linha auxiliar é inserida no Excel para deixar isso explícito.",
+          applied: rules.hasSectionMultiplier,
+        },
+        {
+          key: "abatement-normalization",
+          label: "Normalização de abatimento aplicada",
+          hint: "O export forçou sinal negativo / zerou BDI em itens de Desconto/Crédito digitados de forma incorreta. Veja avisos abaixo.",
+          applied: hadNormalization,
+        },
+      ]
+    : [];
+
+  return (
+    <div>
+      <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Regras canônicas aplicadas
+      </h4>
+      <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+        Mostra quais comportamentos do motor de cálculo foram acionados
+        neste orçamento. Use para validar se o Excel reflete o esperado.
+      </p>
+
+      {loading || !rules ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-3">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Verificando regras…
+        </div>
+      ) : (
+        <ul className="mt-3 space-y-1.5" aria-label="Checklist de regras canônicas">
+          {items.map((it) => (
+            <li
+              key={it.key}
+              className="flex items-start gap-2 text-[11px] leading-snug"
+              title={it.hint}
+            >
+              <span
+                className={
+                  "mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border " +
+                  (it.applied
+                    ? "border-primary/50 bg-primary/10 text-primary"
+                    : "border-muted bg-muted/40 text-muted-foreground")
+                }
+                aria-hidden="true"
+              >
+                {it.applied ? (
+                  <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                ) : (
+                  <Minus className="h-2.5 w-2.5" strokeWidth={3} />
+                )}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div
+                  className={
+                    it.applied
+                      ? "font-medium text-foreground"
+                      : "text-muted-foreground"
+                  }
+                >
+                  {it.label}
+                </div>
+                <div className="text-muted-foreground/80 text-[10px]">
+                  {it.applied ? "Aplicada neste export." : "Não aplicável."}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
