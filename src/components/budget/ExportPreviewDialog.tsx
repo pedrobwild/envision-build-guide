@@ -367,6 +367,16 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
               </div>
             </aside>
           )}
+
+          {kind === "xlsx" && auditMode && xlsxPreview && (
+            <aside className="hidden md:flex w-[360px] shrink-0 flex-col gap-3 border-l bg-background p-4 overflow-y-auto">
+              <XlsxAuditPanel
+                exportTotals={xlsxPreview.totals}
+                editor={auditEditor}
+                loading={auditLoading}
+              />
+            </aside>
+          )}
         </div>
 
         <DialogFooter className="px-6 py-3 border-t flex-row items-center justify-between gap-3 sm:justify-between">
