@@ -660,18 +660,23 @@ export async function buildBudgetXlsxBlob(
 
     // 2) Itens da seção
     if (secItems.length === 0) {
-      // Sem itens: fallback é section_price * sec.qty (mesma regra de calcSectionCostTotal).
-      const fallback = (Number(sec.section_price) || 0) * secQty;
+      // Sem itens: o valor exibido na linha do "fallback" precisa bater
+      // EXATAMENTE com o subtotal logo abaixo. Em vez de recomputar
+      // (`section_price * sec.qty`), reusamos `secCost` / `secVenda` —
+      // que já vêm de `calcSectionCostTotal` / `calcSectionSaleTotal`
+      // sobre `calcSec` (estrutura canônica normalizada). Assim, qualquer
+      // mudança em `sec.qty` ou na regra de fallback se propaga para
+      // ambas as linhas sem risco de divergência.
       detRows.push([
         "(seção sem itens)",
         "",
         "",
         "",
         "",
-        fallback || null,
+        secCost || null,
         "",
         "",
-        fallback || null,
+        secVenda || null,
       ]);
       const emptyRowIdx = detRows.length - 1;
       detRowMeta.push([
@@ -690,6 +695,11 @@ export async function buildBudgetXlsxBlob(
         e: { r: emptyRowIdx, c: 4 },
       });
     } else {
+      // Soma "bruta" dos itens (antes de multiplicar por sec.qty) — usada
+      // apenas para a linha auxiliar abaixo, quando aplicável. O subtotal
+      // oficial vem de calcSectionCostTotal/SaleTotal.
+      let rawCostSum = 0;
+      let rawSaleSum = 0;
       for (const it of secItems) {
         const calcItem: CalcItem = {
           qty: it.qty,
@@ -700,6 +710,8 @@ export async function buildBudgetXlsxBlob(
         // Custo/venda do item respeitando unit_price * qty OU lump-sum.
         const cost = calcItemCostTotal(calcItem);
         const venda = calcItemSaleTotal(calcItem);
+        rawCostSum += cost;
+        rawSaleSum += venda;
         const bdi = Number(it.bdi_percentage) || 0;
         const unitPrice = Number(it.internal_unit_price) || 0;
         const qty = Number(it.qty) || 0;
@@ -732,6 +744,45 @@ export async function buildBudgetXlsxBlob(
           { fmt: FMT.BRL, align: "right" },
           { fmt: FMT.BRL, align: "right" },
         ]);
+      }
+
+      // Quando sec.qty > 1, o subtotal canônico multiplica a soma dos
+      // itens por sec.qty. Sem deixar isso explícito, a soma das linhas
+      // acima parece divergir do subtotal logo abaixo. Inserimos uma
+      // linha auxiliar "× N — quantidade da seção" mostrando a soma
+      // bruta e o efeito do multiplicador. Os valores impressos vêm
+      // exclusivamente das mesmas funções canônicas.
+      if (secQty !== 1 && (rawCostSum !== 0 || rawSaleSum !== 0)) {
+        const multLabel = `× ${secQty.toLocaleString("pt-BR", {
+          maximumFractionDigits: 2,
+        })}  ·  quantidade da seção`;
+        detRows.push([
+          multLabel,
+          "",
+          "",
+          "",
+          "",
+          rawCostSum,
+          "",
+          "",
+          rawSaleSum,
+        ]);
+        const multRowIdx = detRows.length - 1;
+        detRowMeta.push([
+          { bold: true, align: "right" },
+          { },
+          { },
+          { },
+          { },
+          { fmt: FMT.BRL, align: "right" },
+          { },
+          { },
+          { fmt: FMT.BRL, align: "right" },
+        ]);
+        detMerges.push({
+          s: { r: multRowIdx, c: 0 },
+          e: { r: multRowIdx, c: 4 },
+        });
       }
     }
 
