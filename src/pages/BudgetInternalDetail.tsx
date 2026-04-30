@@ -58,6 +58,7 @@ import {
   FileDown,
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudget } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
 import {
@@ -119,6 +120,9 @@ interface BudgetDetail {
   lead_source: string | null;
   payment_method: string | null;
   payment_installments: number | null;
+  version_group_id?: string | null;
+  is_current_version?: boolean | null;
+  version_number?: number | null;
 }
 
 interface EventRow {
@@ -675,27 +679,18 @@ export default function BudgetInternalDetail() {
               className="gap-1.5"
               disabled={!budget.public_id}
               onClick={async () => {
-                if (!budget.public_id) {
-                  toast.error("Link público ainda não disponível");
-                  return;
-                }
-                const isPublishable =
-                  budget.status === "published" || budget.status === "minuta_solicitada";
-                if (!isPublishable) {
-                  const toastId = toast.loading("Publicando orçamento...");
-                  const { error } = await supabase
-                    .from("budgets")
-                    .update({ status: "published" })
-                    .eq("id", budget.id);
-                  toast.dismiss(toastId);
-                  if (error) {
-                    toast.error("Não foi possível publicar: " + error.message);
-                    return;
-                  }
-                  setBudget((prev) => (prev ? { ...prev, status: "published" } : prev));
-                  toast.success("Orçamento publicado");
-                }
-                window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
+                await openPublicBudget(
+                  {
+                    id: budget.id,
+                    public_id: budget.public_id,
+                    status: budget.status,
+                    version_group_id: budget.version_group_id,
+                  },
+                  {
+                    onStatusChanged: (newStatus) =>
+                      setBudget((prev) => (prev ? { ...prev, status: newStatus } : prev)),
+                  },
+                );
               }}
               title={
                 !budget.public_id
@@ -1217,7 +1212,22 @@ export default function BudgetInternalDetail() {
                             <Button
                               size="sm"
                               className="h-8 gap-1.5 text-xs"
-                              onClick={() => window.open(getPublicBudgetUrl(budget.public_id!), "_blank", "noopener,noreferrer")}
+                              onClick={() =>
+                                openPublicBudget(
+                                  {
+                                    id: budget.id,
+                                    public_id: budget.public_id,
+                                    status: budget.status,
+                                    version_group_id: budget.version_group_id,
+                                  },
+                                  {
+                                    onStatusChanged: (newStatus) =>
+                                      setBudget((prev) =>
+                                        prev ? { ...prev, status: newStatus } : prev,
+                                      ),
+                                  },
+                                )
+                              }
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                               <span className="hidden sm:inline">Visualizar</span>
