@@ -28,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { buildBudgetPdfBlob } from "@/lib/budget-pdf-export";
@@ -70,6 +72,17 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
   const [error, setError] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<PdfPreview | null>(null);
   const [xlsxPreview, setXlsxPreview] = useState<XlsxPreview | null>(null);
+  // Modo compatível: gera o XLSX sem cores, bordas, mesclagens nem
+  // wrapText. Útil quando o cliente abre o arquivo num leitor que
+  // renderiza errado a formatação avançada (Excel antigo, alguns
+  // visualizadores embarcados, planilha do celular sem suporte etc.).
+  const [simpleXlsx, setSimpleXlsx] = useState(false);
+
+  // Reseta o toggle ao trocar de alvo/tipo para não carregar preferência
+  // de um orçamento anterior sem o usuário perceber.
+  useEffect(() => {
+    setSimpleXlsx(false);
+  }, [budgetId, kind]);
 
   // Limpa estado quando o diálogo abre/fecha ou o alvo muda.
   useEffect(() => {
@@ -88,7 +101,10 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
           const url = URL.createObjectURL(blob);
           setPdfPreview({ blob, fileName, url });
         } else {
-          const { blob, fileName, workbook } = await buildBudgetXlsxBlob(budgetId);
+          const { blob, fileName, workbook } = await buildBudgetXlsxBlob(
+            budgetId,
+            { simple: simpleXlsx },
+          );
           if (cancelled) return;
           setXlsxPreview({ blob, fileName, workbook });
         }
@@ -105,7 +121,7 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
     return () => {
       cancelled = true;
     };
-  }, [open, budgetId, kind]);
+  }, [open, budgetId, kind, simpleXlsx]);
 
   // Revoga o object URL do PDF quando o preview é descartado/refeito.
   useEffect(() => {
@@ -163,10 +179,29 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
         </div>
 
         <DialogFooter className="px-6 py-3 border-t flex-row items-center justify-between gap-3 sm:justify-between">
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground truncate">
-            {fileName ?? "—"}
-          </span>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground truncate">
+              {fileName ?? "—"}
+            </span>
+            {kind === "xlsx" && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="xlsx-simple-mode"
+                  checked={simpleXlsx}
+                  onCheckedChange={setSimpleXlsx}
+                  disabled={loading}
+                />
+                <Label
+                  htmlFor="xlsx-simple-mode"
+                  className="text-xs text-muted-foreground cursor-pointer"
+                  title="Gera o arquivo sem cores, bordas, mesclagens nem quebra de texto. Use quando o Excel do destinatário não renderiza bem a formatação."
+                >
+                  Modo compatível (sem estilos avançados)
+                </Label>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="ghost"
               size="sm"
