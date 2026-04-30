@@ -150,12 +150,12 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
           const url = URL.createObjectURL(blob);
           setPdfPreview({ blob, fileName, url });
         } else {
-          const { blob, fileName, workbook } = await buildBudgetXlsxBlob(
+          const { blob, fileName, workbook, totals } = await buildBudgetXlsxBlob(
             budgetId,
             { simple: simpleXlsx },
           );
           if (cancelled) return;
-          setXlsxPreview({ blob, fileName, workbook });
+          setXlsxPreview({ blob, fileName, workbook, totals });
         }
       } catch (e) {
         if (cancelled) return;
