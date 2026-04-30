@@ -661,6 +661,16 @@ export async function buildBudgetXlsxBlob(
   // Garante bordas em todas as células do Detalhamento (mantém estilos
   // específicos já aplicados acima — `applyBaseGrid` preserva `existing`).
   applyBaseGrid(wsDet, 0, detRows.length - 1, 0, detLastCol);
+  // Linhas com cabeçalho de seção e subtotal são mescladas em A:E (ou A:H
+  // nos totais); o auto-fit precisa considerar a largura combinada para
+  // calcular quantas linhas a quebra de texto realmente ocupa.
+  const detMergedRows = new Set<number>(detMerges.map((m) => m.s.r));
+  const detColsArr = wsDet["!cols"] as { wch: number }[];
+  const detMergedTotalWidth = detColsArr.reduce((s, k) => s + (k.wch || 0), 0);
+  autoFitRowHeights(wsDet, detRows, detColsArr, {
+    mergedRows: detMergedRows,
+    mergedTotalWidth: detMergedTotalWidth,
+  });
   XLSX.utils.book_append_sheet(wb, wsDet, "Detalhamento");
 
   // ── Aba 3: Resumo por seção ───────────────────────────────────────────
