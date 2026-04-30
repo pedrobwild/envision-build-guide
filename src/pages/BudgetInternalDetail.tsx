@@ -676,27 +676,18 @@ export default function BudgetInternalDetail() {
               className="gap-1.5"
               disabled={!budget.public_id}
               onClick={async () => {
-                if (!budget.public_id) {
-                  toast.error("Link público ainda não disponível");
-                  return;
-                }
-                const isPublishable =
-                  budget.status === "published" || budget.status === "minuta_solicitada";
-                if (!isPublishable) {
-                  const toastId = toast.loading("Publicando orçamento...");
-                  const { error } = await supabase
-                    .from("budgets")
-                    .update({ status: "published" })
-                    .eq("id", budget.id);
-                  toast.dismiss(toastId);
-                  if (error) {
-                    toast.error("Não foi possível publicar: " + error.message);
-                    return;
-                  }
-                  setBudget((prev) => (prev ? { ...prev, status: "published" } : prev));
-                  toast.success("Orçamento publicado");
-                }
-                window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
+                await openPublicBudget(
+                  {
+                    id: budget.id,
+                    public_id: budget.public_id,
+                    status: budget.status,
+                    version_group_id: budget.version_group_id,
+                  },
+                  {
+                    onStatusChanged: (newStatus) =>
+                      setBudget((prev) => (prev ? { ...prev, status: newStatus } : prev)),
+                  },
+                );
               }}
               title={
                 !budget.public_id
