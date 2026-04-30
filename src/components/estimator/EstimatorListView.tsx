@@ -38,6 +38,7 @@ import {
   
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import {
   INTERNAL_STATUSES,
   PRIORITIES,
