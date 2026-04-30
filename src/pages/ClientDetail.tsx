@@ -199,8 +199,16 @@ export default function ClientDetail() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [tagInput, setTagInput] = useState("");
-  const [exportingBudgetId, setExportingBudgetId] = useState<string | null>(null);
-  const [exportingPdfId, setExportingPdfId] = useState<string | null>(null);
+  // Estado da pré-visualização de export. Usamos derivados (`exportingBudgetId`
+  // e `exportingPdfId`) para manter a mesma UX de "carregando" nos botões
+  // existentes enquanto o diálogo gera o preview.
+  const [previewExport, setPreviewExport] = useState<
+    { budgetId: string; kind: "pdf" | "xlsx" } | null
+  >(null);
+  const exportingBudgetId =
+    previewExport?.kind === "xlsx" ? previewExport.budgetId : null;
+  const exportingPdfId =
+    previewExport?.kind === "pdf" ? previewExport.budgetId : null;
   const [selectedExportBudgetId, setSelectedExportBudgetId] = useState<string | null>(null);
 
   // Mantém o orçamento selecionado válido; padrão = mais recente.
