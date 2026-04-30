@@ -68,7 +68,7 @@ interface SectionDiff {
 async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; sections: CompareSection[]; adjustments: CompareAdjustment[] }> {
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
-    .select("id, version_number, versao, project_name, client_name, status, created_at, change_reason, version_group_id")
+    .select("id, version_number, versao, project_name, client_name, status, created_at, change_reason, version_group_id, client_id, sequential_code")
     .eq("id", budgetId)
     .single();
 
