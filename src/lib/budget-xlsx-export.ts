@@ -77,6 +77,93 @@ interface AdjustmentRow {
   sign: number;
 }
 
+/**
+ * Calcula os totais financeiros do orçamento exatamente como exibidos no Excel.
+ * Função pura — espelha a lógica do editor (`budget-calc`) e é a fonte única
+ * de verdade dos números mostrados na aba "Resumo" e nas linhas de TOTAIS da
+ * aba "Detalhamento".
+ *
+ * Regras:
+ *   - `cost` / `saleMargin` vêm de `calcGrandTotals` (excluem seções de Crédito).
+ *   - `creditTotal` soma o valor das seções de Crédito (abatem o total final
+ *     mas não impactam a margem).
+ *   - `sale` = saleMargin + creditTotal (créditos têm sale negativo, então
+ *     subtraem do total mostrado ao cliente).
+ *   - `adjustments` = soma de `amount * sign` dos ajustes globais.
+ *   - `grandTotal` = sale + adjustments (o que aparece como "Total geral").
+ *   - `marginRatio` = `marginPercent` em fração [0,1].
+ */
+export interface BudgetXlsxTotals {
+  cost: number;
+  sale: number;
+  saleMargin: number;
+  creditTotal: number;
+  adjustments: number;
+  grandTotal: number;
+  marginRatio: number;
+}
+
+export interface BudgetXlsxSectionInput {
+  id: string;
+  title: string | null;
+  qty: number | null;
+  section_price: number | null;
+}
+
+export interface BudgetXlsxItemInput {
+  section_id: string;
+  qty: number | null;
+  internal_unit_price: number | null;
+  internal_total: number | null;
+  bdi_percentage: number | null;
+  title?: string | null;
+}
+
+export interface BudgetXlsxAdjustmentInput {
+  amount: number | null;
+  sign: number | null;
+}
+
+export function computeBudgetXlsxTotals(
+  sections: BudgetXlsxSectionInput[],
+  items: BudgetXlsxItemInput[],
+  adjustments: BudgetXlsxAdjustmentInput[],
+): BudgetXlsxTotals {
+  const calcSections: CalcSection[] = sections.map((sec) => ({
+    qty: sec.qty,
+    section_price: sec.section_price,
+    title: sec.title,
+    items: items
+      .filter((i) => i.section_id === sec.id)
+      .map((it) => ({
+        qty: it.qty,
+        internal_unit_price: it.internal_unit_price,
+        internal_total: it.internal_total,
+        bdi_percentage: it.bdi_percentage,
+        title: it.title,
+      })),
+  }));
+
+  const grand = calcGrandTotals(calcSections);
+  const creditTotal = calcSections
+    .filter((s) => isCreditSection(s))
+    .reduce((acc, s) => acc + calcSectionSaleTotal(s), 0);
+  const sale = grand.sale + creditTotal;
+  const adjustmentsTotal = adjustments.reduce(
+    (acc, a) => acc + (Number(a.amount) || 0) * (Number(a.sign) || 1),
+    0,
+  );
+  return {
+    cost: grand.cost,
+    sale,
+    saleMargin: grand.sale,
+    creditTotal,
+    adjustments: adjustmentsTotal,
+    grandTotal: sale + adjustmentsTotal,
+    marginRatio: grand.marginPercent / 100,
+  };
+}
+
 // (helpers de formato BR ficam definidos dentro de exportBudgetToXlsx)
 
 
