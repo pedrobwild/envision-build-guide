@@ -377,12 +377,61 @@ function buildMergeMap(merges: XLSX.Range[] | undefined): MergeMap {
 // valores nem o arquivo gerado.
 type RowKind = "header" | "section" | "subtotal" | "total" | "default";
 
-const TOTAL_GERAL_RE = /\b(total\s+geral|grand\s+total|valor\s+total)\b/i;
-const TOTAL_RE = /^\s*total\b/i;
-const SUBTOTAL_RE = /^\s*sub-?total\b/i;
-const SECTION_RE = /^\s*(se[cç][aã]o|categoria|grupo|ambiente)\b/i;
+// Normaliza o texto da primeira célula para casar com variações comuns
+// em PT-BR: remove acentos, colapsa espaços/pontuação e padroniza
+// minúsculas. Assim "Sub-Total", "SUBTOTAL", "Subt." e "Sub total"
+// passam pela MESMA regex.
+function normalizeRowLabel(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // tira acentos
+    .toLowerCase()
+    .replace(/[._:;]+/g, " ") // pontuação vira espaço (cobre "tot." etc.)
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-function detectRowKind(
+// "Total geral" e variantes que SEMPRE indicam o fechamento do orçamento.
+// Cobre: total geral, total final, total do orçamento, total a pagar,
+// total a investir, valor total do investimento, investimento total,
+// grand total, vl/vlr total geral.
+const TOTAL_GERAL_RE =
+  /\b(total\s+(geral|final|do\s+or[cç]amento|a\s+(pagar|investir)|investimento|liquido|bruto)|(valor\s+(total|final))|investimento\s+total|grand\s+total|(vlr?|vl)\s+total(\s+geral)?)\b/;
+
+// "Subtotal" e abreviações: subtotal, sub total, sub-total, subt,
+// sub-tot, soma parcial, parcial.
+const SUBTOTAL_RE =
+  /^\s*(sub\s*-?\s*tot(al)?|subt|soma\s+parcial|parcial)\b/;
+
+// "Total" sozinho ou abreviado: total, tot, tot., totais, total da
+// seção/categoria/grupo/ambiente/item/serviço — quando vem qualificado
+// por uma seção é subtotal; quando vem sozinho a posição decide.
+const TOTAL_SECTION_RE =
+  /^\s*total\s+(da\s+)?(se[cç]ao|categoria|grupo|ambiente|etapa|fase|servico|servicos|item|itens|obra|escopo)\b/;
+const TOTAL_RE = /^\s*(tot(al|ais)?|tot)\b/;
+
+// Cabeçalhos de agrupamento.
+const SECTION_RE =
+  /^\s*(se[cç]ao|categoria|grupo|ambiente|etapa|fase|m[oó]dulo|escopo)\b/;
+
+  // 1) Sinais de TOTAL — texto explícito vence qualquer outro sinal,
+  //    pois é o que o usuário lê primeiro ao escanear a tabela.
+  //    Movido para dentro de `detectRowKind` (mantém helper acima).
+}
+
+function detectTextualKind(rawText: string): RowKind | null {
+  if (!rawText) return null;
+  const text = normalizeRowLabel(rawText);
+  if (!text) return null;
+  if (TOTAL_GERAL_RE.test(text)) return "total";
+  if (SUBTOTAL_RE.test(text)) return "subtotal";
+  if (TOTAL_SECTION_RE.test(text)) return "subtotal";
+  if (TOTAL_RE.test(text)) return "total"; // posição decide depois
+  if (SECTION_RE.test(text)) return "section";
+  return null;
+}
+
+function detectRowKindInner(
   ws: XLSX.WorkSheet,
   row: number,
   startCol: number,
@@ -424,17 +473,19 @@ function detectRowKind(
     if (cell.s.font?.bold) hasBold = true;
   }
 
-  // 1) Sinais de TOTAL — texto explícito vence qualquer outro sinal,
-  //    pois é o que o usuário lê primeiro ao escanear a tabela.
+  // 1) Texto explícito da primeira célula — sinal mais forte.
   if (hasAnyContent) {
-    if (TOTAL_GERAL_RE.test(firstText)) return "total";
-    if (SUBTOTAL_RE.test(firstText)) return "subtotal";
-    if (TOTAL_RE.test(firstText)) {
-      // "Total" sozinho na última linha de conteúdo → total geral.
-      // Em qualquer outra posição → subtotal de seção.
-      return row === lastContentRow ? "total" : "subtotal";
+    const textual = detectTextualKind(firstText);
+    if (textual === "total") {
+      // "Total" puro sem qualificador → posição decide se é geral ou de seção.
+      const isPureTotal = TOTAL_RE.test(normalizeRowLabel(firstText)) &&
+        !TOTAL_GERAL_RE.test(normalizeRowLabel(firstText));
+      if (isPureTotal) {
+        return row === lastContentRow ? "total" : "subtotal";
+      }
+      return "total";
     }
-    if (SECTION_RE.test(firstText)) return "section";
+    if (textual) return textual;
   }
 
   // 2) Estilo do exporter avançado.
