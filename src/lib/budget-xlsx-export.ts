@@ -233,7 +233,7 @@ export interface BuildXlsxOptions {
 export async function buildBudgetXlsxBlob(
   budgetId: string,
   options: BuildXlsxOptions = {},
-): Promise<{ blob: Blob; fileName: string; workbook: XLSX.WorkBook }> {
+): Promise<{ blob: Blob; fileName: string; workbook: XLSX.WorkBook; totals: BudgetXlsxTotals }> {
   // 1) Cabeçalho do orçamento
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
