@@ -702,7 +702,7 @@ function KanbanCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              window.open(getPublicBudgetUrl(b.public_id!), "_blank", "noopener,noreferrer");
+              void openPublicBudgetByPublicId(b.public_id!);
             }}
             onPointerDown={(e) => e.stopPropagation()}
             className="h-5 w-5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50 flex items-center justify-center transition-colors shrink-0"
