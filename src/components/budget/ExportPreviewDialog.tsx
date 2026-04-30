@@ -539,6 +539,9 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
   }
 
   const colWidths = (worksheet["!cols"] ?? []) as { wch?: number }[];
+  // Alturas explícitas definidas pelo exporter (em pontos). Quando
+  // presente, respeitamos para bater 1:1 com o arquivo gerado.
+  const rowMeta = (worksheet["!rows"] ?? []) as { hpt?: number; hpx?: number }[];
 
   return (
     <table className="w-full border-collapse text-xs font-mono tabular-nums">
@@ -547,7 +550,7 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
           const wch = colWidths[c]?.wch;
           // ~7px por "char" do Excel é uma aproximação razoável que mantém
           // proporção entre as colunas no preview HTML.
-          const widthPx = wch ? Math.round(wch * 7) : undefined;
+          const widthPx = wch ? Math.round(wch * PX_PER_CHAR) : undefined;
           return (
             <col
               key={`col-${idx}`}
@@ -575,8 +578,61 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
                   : kind === "section"
                     ? "bg-slate-50 font-semibold text-slate-700"
                     : "";
+
+          // Altura da linha:
+          // 1) Se o exporter definiu altura explícita (`!rows[r].hpt`),
+          //    usamos ela diretamente — é exatamente o que o Excel vai
+          //    aplicar.
+          // 2) Caso contrário, estimamos baseado no wrapText: contamos
+          //    quantas linhas o texto vai ocupar dada a largura da coluna
+          //    e multiplicamos pela altura padrão da linha.
+          let heightPt = rowMeta[r]?.hpt;
+          if (heightPt == null && rowMeta[r]?.hpx != null) {
+            heightPt = rowMeta[r]!.hpx! / PX_PER_POINT;
+          }
+          if (heightPt == null) {
+            let maxLines = 1;
+            for (const c of cols) {
+              const key = `${r}:${c}`;
+              if (mergeMap.hidden.has(key)) continue;
+              const span = mergeMap.spans.get(key);
+              const addr = XLSX.utils.encode_cell({ r, c });
+              const cell = worksheet[addr] as
+                | (XLSX.CellObject & {
+                    s?: { alignment?: { wrapText?: boolean } };
+                  })
+                | undefined;
+              if (!cell) continue;
+              const wraps = cell.s?.alignment?.wrapText === true;
+              if (!wraps) continue;
+              let text = "";
+              try {
+                text = XLSX.utils.format_cell(cell);
+              } catch {
+                text = String(cell.v ?? "");
+              }
+              if (!text) continue;
+              // Largura efetiva: soma das colunas mescladas.
+              const colSpan = span?.colSpan ?? 1;
+              let totalWch = 0;
+              for (let k = 0; k < colSpan; k++) {
+                totalWch += colWidths[c + k]?.wch ?? 10;
+              }
+              // Desconta um pouco do padding interno do Excel (~2 chars).
+              const usableWch = Math.max(1, totalWch - 2);
+              const lines = estimateWrappedLines(text, usableWch);
+              if (lines > maxLines) maxLines = lines;
+            }
+            heightPt = DEFAULT_ROW_PT + (maxLines - 1) * EXTRA_LINE_PT;
+          }
+          const heightPx = Math.round(heightPt * PX_PER_POINT);
+
           return (
-            <tr key={`row-${r}`} className={rowClass}>
+            <tr
+              key={`row-${r}`}
+              className={rowClass}
+              style={{ height: `${heightPx}px` }}
+            >
               {cols.map((c) => {
                 const key = `${r}:${c}`;
                 if (mergeMap.hidden.has(key)) return null;
@@ -610,7 +666,7 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
                     key={`cell-${r}-${c}`}
                     rowSpan={span?.rowSpan}
                     colSpan={span?.colSpan}
-                    className="border border-slate-200 px-2 py-1 align-middle whitespace-pre-wrap break-words"
+                    className="border border-slate-200 px-2 py-1 align-middle whitespace-pre-wrap break-words overflow-hidden"
                     style={align ? { textAlign: align as "left" | "right" | "center" } : undefined}
                   >
                     {display}
