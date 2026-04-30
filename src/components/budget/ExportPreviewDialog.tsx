@@ -37,7 +37,14 @@ import {
   buildBudgetPdfBlob,
   DEFAULT_BUDGET_PDF_DISCLAIMER,
 } from "@/lib/budget-pdf-export";
-import { buildBudgetXlsxBlob } from "@/lib/budget-xlsx-export";
+import { buildBudgetXlsxBlob, type BudgetXlsxTotals } from "@/lib/budget-xlsx-export";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  calcSectionCostTotal,
+  calcSectionSaleTotal,
+  isCreditSection,
+  type CalcSection,
+} from "@/lib/budget-calc";
 
 export type ExportPreviewKind = "pdf" | "xlsx";
 
@@ -58,6 +65,21 @@ interface XlsxPreview {
   blob: Blob;
   fileName: string;
   workbook: XLSX.WorkBook;
+  totals: BudgetXlsxTotals;
+}
+
+interface EditorSectionTotal {
+  id: string;
+  title: string;
+  cost: number;
+  sale: number;
+  isCredit: boolean;
+}
+
+interface EditorAuditTotals {
+  sections: EditorSectionTotal[];
+  cost: number;
+  sale: number;
 }
 
 function triggerDownload(blob: Blob, fileName: string) {
@@ -76,6 +98,14 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
   const [error, setError] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<PdfPreview | null>(null);
   const [xlsxPreview, setXlsxPreview] = useState<XlsxPreview | null>(null);
+  // Modo de auditoria do XLSX: mostra, por seção, custo/venda usados no
+  // export (já normalizados) e compara com o resumo do editor (dados
+  // crus do banco). Útil para identificar onde uma diferença surge —
+  // por exemplo, um desconto digitado positivo é normalizado para
+  // negativo no export e a divergência fica visível na coluna "Δ".
+  const [auditMode, setAuditMode] = useState(false);
+  const [auditEditor, setAuditEditor] = useState<EditorAuditTotals | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
   // Modo compatível: gera o XLSX sem cores, bordas, mesclagens nem
   // wrapText. Útil quando o cliente abre o arquivo num leitor que
   // renderiza errado a formatação avançada (Excel antigo, alguns
@@ -99,7 +129,89 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
     setIncludeLogo(true);
     setDisclaimer(DEFAULT_BUDGET_PDF_DISCLAIMER);
     setDisclaimerDebounced(DEFAULT_BUDGET_PDF_DISCLAIMER);
+    setAuditMode(false);
+    setAuditEditor(null);
   }, [budgetId, kind]);
+
+  // Carrega o "resumo do editor" — dados crus do banco passados pelo
+  // mesmo motor de cálculo do editor (`calcSection*`), SEM normalização
+  // de descontos/créditos. Comparar este número com `xlsxPreview.totals`
+  // (que já é o que vai pro arquivo) revela divergências introduzidas
+  // pela normalização (descontos com sinal errado, BDI em crédito etc.).
+  useEffect(() => {
+    if (!open || !budgetId || kind !== "xlsx" || !auditMode) return;
+    let cancelled = false;
+    setAuditLoading(true);
+    (async () => {
+      try {
+        const { data: secsRaw, error: secErr } = await supabase
+          .from("sections")
+          .select("id, title, qty, section_price, order_index")
+          .eq("budget_id", budgetId)
+          .order("order_index", { ascending: true });
+        if (secErr) throw secErr;
+        const secs = secsRaw ?? [];
+        const ids = secs.map((s) => s.id);
+        let itemsRaw: Array<{
+          section_id: string;
+          qty: number | null;
+          internal_unit_price: number | null;
+          internal_total: number | null;
+          bdi_percentage: number | null;
+          title: string | null;
+        }> = [];
+        if (ids.length > 0) {
+          const { data: itData, error: itErr } = await supabase
+            .from("items")
+            .select(
+              "section_id, qty, internal_unit_price, internal_total, bdi_percentage, title",
+            )
+            .in("section_id", ids);
+          if (itErr) throw itErr;
+          itemsRaw = itData ?? [];
+        }
+        if (cancelled) return;
+        const sectionsAudit: EditorSectionTotal[] = secs.map((s) => {
+          const calc: CalcSection = {
+            qty: s.qty,
+            section_price: s.section_price,
+            title: s.title,
+            items: itemsRaw
+              .filter((i) => i.section_id === s.id)
+              .map((i) => ({
+                qty: i.qty,
+                internal_unit_price: i.internal_unit_price,
+                internal_total: i.internal_total,
+                bdi_percentage: i.bdi_percentage,
+                title: i.title,
+              })),
+          };
+          return {
+            id: s.id,
+            title: (s.title ?? "").trim() || "Sem título",
+            cost: calcSectionCostTotal(calc),
+            sale: calcSectionSaleTotal(calc),
+            isCredit: isCreditSection(calc),
+          };
+        });
+        const cost = sectionsAudit
+          .filter((s) => !s.isCredit)
+          .reduce((a, s) => a + s.cost, 0);
+        const sale = sectionsAudit.reduce((a, s) => a + s.sale, 0);
+        setAuditEditor({ sections: sectionsAudit, cost, sale });
+      } catch (e) {
+        if (cancelled) return;
+        logger.error("[ExportPreviewDialog] audit fetch failed:", e);
+        toast.error("Falha ao carregar dados do editor para auditoria.");
+        setAuditEditor(null);
+      } finally {
+        if (!cancelled) setAuditLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, budgetId, kind, auditMode]);
 
   // Debounce do textarea: aguarda 600ms sem digitação para regerar.
   useEffect(() => {
@@ -128,12 +240,12 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
           const url = URL.createObjectURL(blob);
           setPdfPreview({ blob, fileName, url });
         } else {
-          const { blob, fileName, workbook } = await buildBudgetXlsxBlob(
+          const { blob, fileName, workbook, totals } = await buildBudgetXlsxBlob(
             budgetId,
             { simple: simpleXlsx },
           );
           if (cancelled) return;
-          setXlsxPreview({ blob, fileName, workbook });
+          setXlsxPreview({ blob, fileName, workbook, totals });
         }
       } catch (e) {
         if (cancelled) return;
@@ -255,6 +367,16 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
               </div>
             </aside>
           )}
+
+          {kind === "xlsx" && auditMode && xlsxPreview && (
+            <aside className="hidden md:flex w-[360px] shrink-0 flex-col gap-3 border-l bg-background p-4 overflow-y-auto">
+              <XlsxAuditPanel
+                exportTotals={xlsxPreview.totals}
+                editor={auditEditor}
+                loading={auditLoading}
+              />
+            </aside>
+          )}
         </div>
 
         <DialogFooter className="px-6 py-3 border-t flex-row items-center justify-between gap-3 sm:justify-between">
@@ -263,20 +385,37 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
               {fileName ?? "—"}
             </span>
             {kind === "xlsx" && (
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="xlsx-simple-mode"
-                  checked={simpleXlsx}
-                  onCheckedChange={setSimpleXlsx}
-                  disabled={loading}
-                />
-                <Label
-                  htmlFor="xlsx-simple-mode"
-                  className="text-xs text-muted-foreground cursor-pointer"
-                  title="Gera o arquivo sem cores, bordas, mesclagens nem quebra de texto. Use quando o Excel do destinatário não renderiza bem a formatação."
-                >
-                  Modo compatível (sem estilos avançados)
-                </Label>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="xlsx-simple-mode"
+                    checked={simpleXlsx}
+                    onCheckedChange={setSimpleXlsx}
+                    disabled={loading}
+                  />
+                  <Label
+                    htmlFor="xlsx-simple-mode"
+                    className="text-xs text-muted-foreground cursor-pointer"
+                    title="Gera o arquivo sem cores, bordas, mesclagens nem quebra de texto. Use quando o Excel do destinatário não renderiza bem a formatação."
+                  >
+                    Modo compatível (sem estilos avançados)
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="xlsx-audit-mode"
+                    checked={auditMode}
+                    onCheckedChange={setAuditMode}
+                    disabled={loading}
+                  />
+                  <Label
+                    htmlFor="xlsx-audit-mode"
+                    className="text-xs text-muted-foreground cursor-pointer"
+                    title="Mostra um painel lateral comparando, por seção, custo/venda usados no export com o resumo do editor."
+                  >
+                    Modo auditoria
+                  </Label>
+                </div>
               </div>
             )}
           </div>
@@ -796,5 +935,213 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
         })}
       </tbody>
     </table>
+  );
+}
+
+// ── Painel de auditoria do XLSX ─────────────────────────────────────────
+// Mostra, por seção, os valores de custo/venda usados no arquivo gerado
+// (totals do `buildBudgetXlsxBlob`, já normalizados) ao lado dos valores
+// crus do editor (mesma fórmula, dados sem normalização). Diferenças
+// destacadas em cor de aviso revelam onde a normalização agiu — quase
+// sempre por causa de descontos/créditos digitados com sinal trocado.
+
+const fmtBRL = (n: number) =>
+  n.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+// Considera "igual" diferenças menores que 1 centavo para evitar ruído
+// de ponto flutuante.
+const isClose = (a: number, b: number) => Math.abs(a - b) < 0.005;
+
+function XlsxAuditPanel({
+  exportTotals,
+  editor,
+  loading,
+}: {
+  exportTotals: BudgetXlsxTotals;
+  editor: EditorAuditTotals | null;
+  loading: boolean;
+}) {
+  // Indexa o editor por id para alinhar com as seções do export.
+  const editorById = new Map(editor?.sections.map((s) => [s.id, s]) ?? []);
+  const rows = exportTotals.sections.map((exp) => {
+    const ed = editorById.get(exp.id);
+    return {
+      id: exp.id,
+      title: exp.title,
+      isCredit: exp.isCredit,
+      expCost: exp.cost,
+      expSale: exp.sale,
+      edCost: ed?.cost ?? null,
+      edSale: ed?.sale ?? null,
+    };
+  });
+
+  return (
+    <>
+      <div>
+        <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Auditoria do export
+        </h4>
+        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+          Compara, por seção, os valores enviados ao arquivo (export) com os
+          valores crus do editor. Δ destacado indica que a normalização
+          ajustou sinais ou BDI.
+        </p>
+      </div>
+
+      {loading || !editor ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Carregando dados do editor…
+        </div>
+      ) : (
+        <>
+          <div className="rounded-md border bg-muted/30 p-3">
+            <div className="grid grid-cols-3 gap-2 text-[11px]">
+              <div>
+                <div className="text-muted-foreground">Custo</div>
+                <div className="font-mono font-semibold">
+                  {fmtBRL(exportTotals.cost)}
+                </div>
+                <div
+                  className={
+                    isClose(exportTotals.cost, editor.cost)
+                      ? "text-muted-foreground"
+                      : "text-destructive font-semibold"
+                  }
+                >
+                  Editor: {fmtBRL(editor.cost)}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Venda</div>
+                <div className="font-mono font-semibold">
+                  {fmtBRL(exportTotals.sale)}
+                </div>
+                <div
+                  className={
+                    isClose(exportTotals.sale, editor.sale)
+                      ? "text-muted-foreground"
+                      : "text-destructive font-semibold"
+                  }
+                >
+                  Editor: {fmtBRL(editor.sale)}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Margem</div>
+                <div className="font-mono font-semibold">
+                  {(exportTotals.marginRatio * 100).toFixed(2)}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full text-[11px] border-collapse">
+              <thead>
+                <tr className="text-left text-muted-foreground border-b">
+                  <th className="py-1.5 px-1 font-medium">Seção</th>
+                  <th className="py-1.5 px-1 font-medium text-right">Export</th>
+                  <th className="py-1.5 px-1 font-medium text-right">Editor</th>
+                  <th className="py-1.5 px-1 font-medium text-right">Δ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => {
+                  const deltaCost = r.edCost == null ? null : r.expCost - r.edCost;
+                  const deltaSale = r.edSale == null ? null : r.expSale - r.edSale;
+                  const costDiff = deltaCost != null && !isClose(deltaCost, 0);
+                  const saleDiff = deltaSale != null && !isClose(deltaSale, 0);
+                  return (
+                    <tr key={r.id} className="border-b last:border-0 align-top">
+                      <td className="py-1.5 px-1">
+                        <div className="font-medium truncate" title={r.title}>
+                          {r.title}
+                        </div>
+                        {r.isCredit && (
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            crédito
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-1.5 px-1 text-right font-mono">
+                        <div>{fmtBRL(r.expCost)}</div>
+                        <div className="text-muted-foreground">
+                          {fmtBRL(r.expSale)}
+                        </div>
+                      </td>
+                      <td className="py-1.5 px-1 text-right font-mono">
+                        <div>{r.edCost == null ? "—" : fmtBRL(r.edCost)}</div>
+                        <div className="text-muted-foreground">
+                          {r.edSale == null ? "—" : fmtBRL(r.edSale)}
+                        </div>
+                      </td>
+                      <td className="py-1.5 px-1 text-right font-mono">
+                        <div
+                          className={
+                            costDiff
+                              ? "text-destructive font-semibold"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {deltaCost == null
+                            ? "—"
+                            : isClose(deltaCost, 0)
+                            ? "0,00"
+                            : fmtBRL(deltaCost)}
+                        </div>
+                        <div
+                          className={
+                            saleDiff
+                              ? "text-destructive font-semibold"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {deltaSale == null
+                            ? "—"
+                            : isClose(deltaSale, 0)
+                            ? "0,00"
+                            : fmtBRL(deltaSale)}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {exportTotals.warnings.length > 0 && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2.5">
+              <div className="text-[11px] font-semibold text-destructive mb-1">
+                {exportTotals.warnings.length} aviso(s) de estrutura
+              </div>
+              <ul className="text-[11px] text-destructive/90 space-y-0.5 list-disc pl-4">
+                {exportTotals.warnings.slice(0, 6).map((w, i) => (
+                  <li key={i}>
+                    <span className="font-semibold">{w.sectionTitle}</span>
+                    {w.itemTitle ? ` › ${w.itemTitle}` : ""} —{" "}
+                    {w.kind === "abatement_positive_value"
+                      ? "valor positivo em abatimento (normalizado para negativo)"
+                      : w.kind === "negative_in_productive_section"
+                      ? "item negativo em seção produtiva"
+                      : "BDI aplicado em crédito (zerado)"}
+                  </li>
+                ))}
+                {exportTotals.warnings.length > 6 && (
+                  <li>… e mais {exportTotals.warnings.length - 6}.</li>
+                )}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+    </>
   );
 }

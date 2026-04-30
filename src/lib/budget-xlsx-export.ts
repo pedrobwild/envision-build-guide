@@ -96,6 +96,14 @@ interface AdjustmentRow {
  *   - `grandTotal` = sale + adjustments (o que aparece como "Total geral").
  *   - `marginRatio` = `marginPercent` em fração [0,1].
  */
+export interface BudgetXlsxSectionTotal {
+  id: string;
+  title: string;
+  cost: number;
+  sale: number;
+  isCredit: boolean;
+}
+
 export interface BudgetXlsxTotals {
   cost: number;
   sale: number;
@@ -104,6 +112,10 @@ export interface BudgetXlsxTotals {
   adjustments: number;
   grandTotal: number;
   marginRatio: number;
+  /** Subtotais por seção exatamente como usados no export — base do modo
+   *  de auditoria do preview, que compara estes valores com o resumo
+   *  exibido no editor. */
+  sections: BudgetXlsxSectionTotal[];
   /** Avisos da auditoria de estrutura — operadores podem ter colocado um
    *  valor positivo numa seção de Desconto/Crédito, ou um item negativo
    *  numa seção produtiva. O export normaliza automaticamente, mas devolve
@@ -171,6 +183,13 @@ export function computeBudgetXlsxTotals(
     (acc, a) => acc + (Number(a.amount) || 0) * (Number(a.sign) || 1),
     0,
   );
+  const sectionTotals: BudgetXlsxSectionTotal[] = calcSections.map((s, idx) => ({
+    id: sections[idx].id,
+    title: (s.title ?? sections[idx].title ?? "Sem título").trim() || "Sem título",
+    cost: calcSectionCostTotal(s),
+    sale: calcSectionSaleTotal(s),
+    isCredit: isCreditSection(s),
+  }));
   return {
     cost: grand.cost,
     sale,
@@ -179,6 +198,7 @@ export function computeBudgetXlsxTotals(
     adjustments: adjustmentsTotal,
     grandTotal: sale + adjustmentsTotal,
     marginRatio: grand.marginPercent / 100,
+    sections: sectionTotals,
     warnings,
   };
 }
@@ -213,7 +233,7 @@ export interface BuildXlsxOptions {
 export async function buildBudgetXlsxBlob(
   budgetId: string,
   options: BuildXlsxOptions = {},
-): Promise<{ blob: Blob; fileName: string; workbook: XLSX.WorkBook }> {
+): Promise<{ blob: Blob; fileName: string; workbook: XLSX.WorkBook; totals: BudgetXlsxTotals }> {
   // 1) Cabeçalho do orçamento
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
@@ -1005,7 +1025,7 @@ export async function buildBudgetXlsxBlob(
   const blob = new Blob([arrayBuffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
-  return { blob, fileName, workbook: wb };
+  return { blob, fileName, workbook: wb, totals };
 }
 
 /**
