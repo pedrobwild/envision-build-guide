@@ -120,6 +120,9 @@ interface BudgetDetail {
   lead_source: string | null;
   payment_method: string | null;
   payment_installments: number | null;
+  version_group_id?: string | null;
+  is_current_version?: boolean | null;
+  version_number?: number | null;
 }
 
 interface EventRow {
