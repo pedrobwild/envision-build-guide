@@ -32,7 +32,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
-import { buildBudgetPdfBlob } from "@/lib/budget-pdf-export";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  buildBudgetPdfBlob,
+  DEFAULT_BUDGET_PDF_DISCLAIMER,
+} from "@/lib/budget-pdf-export";
 import { buildBudgetXlsxBlob } from "@/lib/budget-xlsx-export";
 
 export type ExportPreviewKind = "pdf" | "xlsx";
