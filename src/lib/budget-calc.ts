@@ -161,3 +161,113 @@ export function aggregateAbatementsByLabel(sections: CalcSection[]): {
   return { discounts, credits, discountTotal, creditTotal };
 }
 
+// ─── Validação e normalização de abatimentos ───────────────────────────────
+//
+// Defesas explícitas para garantir que:
+//   1. Itens em seções "Descontos"/"Créditos" SEMPRE têm contribuição negativa
+//      (`unit_price * qty` ou `internal_total` < 0). Se um operador digitar
+//      um valor positivo por engano, ele seria somado ao custo/venda e
+//      INFLARIA o orçamento — exatamente o oposto do esperado.
+//   2. Itens negativos NÃO ficam soltos em seções produtivas, onde reduziriam
+//      a margem real sem aparecer como abatimento ao cliente.
+//   3. Créditos não tenham BDI ≠ 0 (créditos são abatimentos puros e não
+//      passam por marcação comercial).
+//
+// `normalizeAbatementItem` força o sinal: se o item está em desconto/crédito
+// e tem valor positivo, inverte para negativo. Não modifica o input — devolve
+// uma cópia, preservando imutabilidade.
+
+/** Sinaliza problemas detectados na estrutura do orçamento que poderiam
+ *  distorcer o cálculo de margem ou o total mostrado ao cliente. */
+export interface BudgetCalcIssue {
+  kind:
+    | "abatement_positive_value"      // item em desconto/crédito com valor ≥ 0
+    | "negative_in_productive_section" // item negativo em seção produtiva
+    | "credit_with_bdi";               // crédito com BDI ≠ 0
+  sectionTitle: string;
+  itemTitle: string;
+  /** Valor de venda originalmente calculado (antes de normalização). */
+  originalSale: number;
+}
+
+/** Devolve uma cópia do item com `internal_unit_price` / `internal_total`
+ *  forçados a serem ≤ 0 e `bdi_percentage = 0` (créditos não têm BDI).
+ *  Usado quando a seção é de Desconto ou Crédito. */
+export function normalizeAbatementItem(
+  item: CalcItem,
+  opts: { isCredit: boolean },
+): CalcItem {
+  const flipIfPositive = (v: number | null | undefined): number | null | undefined => {
+    if (v == null) return v;
+    const n = Number(v);
+    if (!Number.isFinite(n)) return v;
+    return n > 0 ? -n : n;
+  };
+  return {
+    ...item,
+    internal_unit_price: flipIfPositive(item.internal_unit_price),
+    internal_total: flipIfPositive(item.internal_total),
+    // Créditos não recebem BDI; descontos podem manter (raramente útil).
+    bdi_percentage: opts.isCredit ? 0 : item.bdi_percentage,
+  };
+}
+
+/** Aplica `normalizeAbatementItem` em todas as seções de Desconto/Crédito.
+ *  Seções produtivas passam intactas. */
+export function normalizeBudgetSections(sections: CalcSection[]): CalcSection[] {
+  return sections.map((sec) => {
+    const isCredit = isCreditSection(sec);
+    const isDiscount = isDiscountSection(sec);
+    if (!isCredit && !isDiscount) return sec;
+    return {
+      ...sec,
+      items: sec.items.map((it) => normalizeAbatementItem(it, { isCredit })),
+    };
+  });
+}
+
+/** Auditoria: lista violações sem mutar nada. Útil para logar avisos
+ *  durante o export e para testes que verificam detecção de problemas. */
+export function validateBudgetCalcStructure(sections: CalcSection[]): BudgetCalcIssue[] {
+  const issues: BudgetCalcIssue[] = [];
+  for (const sec of sections) {
+    const isCredit = isCreditSection(sec);
+    const isDiscount = isDiscountSection(sec);
+    const secTitle = (sec.title ?? "").trim() || "(sem título)";
+    for (const it of sec.items) {
+      const sale = calcItemSaleTotal(it);
+      const cost = calcItemCostTotal(it);
+      const itTitle = (it.title ?? "").trim() || "(sem título)";
+
+      if (isCredit || isDiscount) {
+        // Em seção de abatimento, item DEVE ser negativo (sale < 0 ou cost < 0).
+        // Item totalmente zerado é ignorado (linha em branco, sem efeito).
+        if (sale > 0 || cost > 0) {
+          issues.push({
+            kind: "abatement_positive_value",
+            sectionTitle: secTitle,
+            itemTitle: itTitle,
+            originalSale: sale,
+          });
+        }
+        if (isCredit && (Number(it.bdi_percentage) || 0) !== 0) {
+          issues.push({
+            kind: "credit_with_bdi",
+            sectionTitle: secTitle,
+            itemTitle: itTitle,
+            originalSale: sale,
+          });
+        }
+      } else if (sale < 0 || cost < 0) {
+        // Item negativo solto em seção produtiva: corrói margem invisivelmente.
+        issues.push({
+          kind: "negative_in_productive_section",
+          sectionTitle: secTitle,
+          itemTitle: itTitle,
+          originalSale: sale,
+        });
+      }
+    }
+  }
+  return issues;
+}
