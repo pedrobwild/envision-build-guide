@@ -513,7 +513,7 @@ export function EstimatorListView({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-primary hover:bg-primary/10"
-                onClick={() => window.open(getPublicBudgetUrl(b.public_id!), "_blank", "noopener,noreferrer")}
+                onClick={() => void openPublicBudgetByPublicId(b.public_id!)}
                 title="Ver orçamento público"
                 aria-label="Ver orçamento público"
               >
