@@ -445,6 +445,67 @@ function XlsxWorkbookPreview({ workbook }: { workbook: XLSX.WorkBook }) {
   );
 }
 
+// Constantes do mapeamento Excel → preview HTML.
+// O Excel mede largura em "characters" (wch) ≈ 7px no nosso preview.
+// Altura é em "points" (pt); 1pt ≈ 1.333px. Linha padrão do Excel = 15pt
+// (~20px). Cada linha extra de wrapText adiciona ~15pt.
+const PX_PER_CHAR = 7;
+const PX_PER_POINT = 4 / 3; // 1pt = 1.333px
+const DEFAULT_ROW_PT = 15;
+const EXTRA_LINE_PT = 15;
+// Largura média de char no nosso preview (text-xs font-mono ~10px).
+// Como cada coluna tem largura em px definida pela contagem de chars do
+// Excel, a quebra real depende de quantos chars cabem nessa largura.
+// Usamos a mesma métrica: 1 "wrap char" ≈ 1 char Excel.
+const WRAP_CHARS_PER_WCH = 1;
+
+function estimateWrappedLines(text: string, wch: number | undefined): number {
+  if (!text) return 1;
+  // Sem largura definida → considera só quebras explícitas.
+  const hardLines = text.split(/\r?\n/);
+  if (!wch || wch <= 0) return hardLines.length;
+  const maxChars = Math.max(1, Math.floor(wch * WRAP_CHARS_PER_WCH));
+  let total = 0;
+  for (const line of hardLines) {
+    if (line.length === 0) {
+      total += 1;
+      continue;
+    }
+    // Quebra preferindo espaços (mesma heurística do Excel: word-wrap).
+    const words = line.split(/\s+/);
+    let current = 0;
+    let lines = 1;
+    for (const w of words) {
+      if (w.length === 0) continue;
+      // Palavra maior que a largura → quebra forçada por chars.
+      if (w.length > maxChars) {
+        if (current > 0) {
+          lines += 1;
+          current = 0;
+        }
+        lines += Math.ceil(w.length / maxChars) - 1;
+        current = w.length % maxChars;
+        if (current === 0) {
+          // múltiplo exato; próxima palavra começa em linha nova
+          current = 0;
+        } else {
+          current += 1; // espaço seguinte
+        }
+        continue;
+      }
+      const need = current === 0 ? w.length : current + 1 + w.length;
+      if (need > maxChars) {
+        lines += 1;
+        current = w.length + 1;
+      } else {
+        current = need;
+      }
+    }
+    total += lines;
+  }
+  return Math.max(1, total);
+}
+
 function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
   const { rows, cols, mergeMap, range } = useMemo(() => {
     const ref = worksheet["!ref"];
@@ -478,6 +539,9 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
   }
 
   const colWidths = (worksheet["!cols"] ?? []) as { wch?: number }[];
+  // Alturas explícitas definidas pelo exporter (em pontos). Quando
+  // presente, respeitamos para bater 1:1 com o arquivo gerado.
+  const rowMeta = (worksheet["!rows"] ?? []) as { hpt?: number; hpx?: number }[];
 
   return (
     <table className="w-full border-collapse text-xs font-mono tabular-nums">
@@ -486,7 +550,7 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
           const wch = colWidths[c]?.wch;
           // ~7px por "char" do Excel é uma aproximação razoável que mantém
           // proporção entre as colunas no preview HTML.
-          const widthPx = wch ? Math.round(wch * 7) : undefined;
+          const widthPx = wch ? Math.round(wch * PX_PER_CHAR) : undefined;
           return (
             <col
               key={`col-${idx}`}
@@ -514,8 +578,61 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
                   : kind === "section"
                     ? "bg-slate-50 font-semibold text-slate-700"
                     : "";
+
+          // Altura da linha:
+          // 1) Se o exporter definiu altura explícita (`!rows[r].hpt`),
+          //    usamos ela diretamente — é exatamente o que o Excel vai
+          //    aplicar.
+          // 2) Caso contrário, estimamos baseado no wrapText: contamos
+          //    quantas linhas o texto vai ocupar dada a largura da coluna
+          //    e multiplicamos pela altura padrão da linha.
+          let heightPt = rowMeta[r]?.hpt;
+          if (heightPt == null && rowMeta[r]?.hpx != null) {
+            heightPt = rowMeta[r]!.hpx! / PX_PER_POINT;
+          }
+          if (heightPt == null) {
+            let maxLines = 1;
+            for (const c of cols) {
+              const key = `${r}:${c}`;
+              if (mergeMap.hidden.has(key)) continue;
+              const span = mergeMap.spans.get(key);
+              const addr = XLSX.utils.encode_cell({ r, c });
+              const cell = worksheet[addr] as
+                | (XLSX.CellObject & {
+                    s?: { alignment?: { wrapText?: boolean } };
+                  })
+                | undefined;
+              if (!cell) continue;
+              const wraps = cell.s?.alignment?.wrapText === true;
+              if (!wraps) continue;
+              let text = "";
+              try {
+                text = XLSX.utils.format_cell(cell);
+              } catch {
+                text = String(cell.v ?? "");
+              }
+              if (!text) continue;
+              // Largura efetiva: soma das colunas mescladas.
+              const colSpan = span?.colSpan ?? 1;
+              let totalWch = 0;
+              for (let k = 0; k < colSpan; k++) {
+                totalWch += colWidths[c + k]?.wch ?? 10;
+              }
+              // Desconta um pouco do padding interno do Excel (~2 chars).
+              const usableWch = Math.max(1, totalWch - 2);
+              const lines = estimateWrappedLines(text, usableWch);
+              if (lines > maxLines) maxLines = lines;
+            }
+            heightPt = DEFAULT_ROW_PT + (maxLines - 1) * EXTRA_LINE_PT;
+          }
+          const heightPx = Math.round(heightPt * PX_PER_POINT);
+
           return (
-            <tr key={`row-${r}`} className={rowClass}>
+            <tr
+              key={`row-${r}`}
+              className={rowClass}
+              style={{ height: `${heightPx}px` }}
+            >
               {cols.map((c) => {
                 const key = `${r}:${c}`;
                 if (mergeMap.hidden.has(key)) return null;
@@ -549,7 +666,7 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
                     key={`cell-${r}-${c}`}
                     rowSpan={span?.rowSpan}
                     colSpan={span?.colSpan}
-                    className="border border-slate-200 px-2 py-1 align-middle whitespace-pre-wrap break-words"
+                    className="border border-slate-200 px-2 py-1 align-middle whitespace-pre-wrap break-words overflow-hidden"
                     style={align ? { textAlign: align as "left" | "right" | "center" } : undefined}
                   >
                     {display}
