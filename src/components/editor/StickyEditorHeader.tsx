@@ -134,25 +134,17 @@ export function StickyEditorHeader({
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(projectName);
-  const [exporting, setExporting] = useState<"xlsx" | "pdf" | null>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  // Pré-visualização do export antes do download. O estado é único; o
+  // botão correspondente mostra spinner enquanto o diálogo está aberto
+  // (gerando ou exibindo o preview).
+  const [previewExport, setPreviewExport] = useState<
+    { budgetId: string; kind: "pdf" | "xlsx" } | null
+  >(null);
+  const exporting: "xlsx" | "pdf" | null = previewExport?.kind ?? null;
 
-  const handleExport = async (kind: "xlsx" | "pdf") => {
+  const handleExport = (kind: "xlsx" | "pdf") => {
     if (!budget.id || exporting) return;
-    setExporting(kind);
-    const tId = toast.loading(kind === "xlsx" ? "Gerando planilha…" : "Gerando PDF…");
-    try {
-      if (kind === "xlsx") await exportBudgetToXlsx(budget.id);
-      else await exportBudgetToPdf(budget.id);
-      toast.success(kind === "xlsx" ? "Planilha gerada" : "PDF gerado", { id: tId });
-    } catch (err) {
-      toast.error(`Falha ao exportar ${kind.toUpperCase()}`, {
-        id: tId,
-        description: err instanceof Error ? err.message : undefined,
-      });
-    } finally {
-      setExporting(null);
-    }
+    setPreviewExport({ budgetId: budget.id, kind });
   };
 
   useEffect(() => {
