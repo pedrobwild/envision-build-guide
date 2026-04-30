@@ -6,7 +6,12 @@
 // orçamentos visíveis ao usuário, então não há vazamento de dados sensíveis
 // para fora da base de usuários autorizados.
 
-import * as XLSX from "xlsx";
+// Usamos `xlsx-js-style` (fork drop-in do `xlsx` oficial) porque o pacote
+// `xlsx` puro IGNORA o atributo `s` das células — o que fazia o arquivo
+// exportado sair sem cores, sem fonte em negrito e sem realces de seção/
+// subtotal/total. Com o fork, mantemos a mesma API mas os estilos são
+// efetivamente gravados no .xlsx.
+import * as XLSX from "xlsx-js-style";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 
