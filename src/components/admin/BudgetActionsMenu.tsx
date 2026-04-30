@@ -115,7 +115,7 @@ export function BudgetActionsMenu({
 
   const openPublicPage = () => {
     if (!budget.public_id) return;
-    window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
+    void openPublicBudgetByPublicId(budget.public_id);
   };
 
   const markContractClosed = () => {
