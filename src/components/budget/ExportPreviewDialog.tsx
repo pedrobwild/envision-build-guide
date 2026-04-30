@@ -98,6 +98,14 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
   const [error, setError] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<PdfPreview | null>(null);
   const [xlsxPreview, setXlsxPreview] = useState<XlsxPreview | null>(null);
+  // Modo de auditoria do XLSX: mostra, por seção, custo/venda usados no
+  // export (já normalizados) e compara com o resumo do editor (dados
+  // crus do banco). Útil para identificar onde uma diferença surge —
+  // por exemplo, um desconto digitado positivo é normalizado para
+  // negativo no export e a divergência fica visível na coluna "Δ".
+  const [auditMode, setAuditMode] = useState(false);
+  const [auditEditor, setAuditEditor] = useState<EditorAuditTotals | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
   // Modo compatível: gera o XLSX sem cores, bordas, mesclagens nem
   // wrapText. Útil quando o cliente abre o arquivo num leitor que
   // renderiza errado a formatação avançada (Excel antigo, alguns
