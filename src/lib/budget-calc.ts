@@ -84,7 +84,11 @@ export function calcSectionSaleTotal(section: CalcSection): number {
   const qty = Number(section.qty) || 1;
   if (section.items.length > 0) {
     const sum = section.items.reduce((s, i) => s + calcItemSaleTotal(i), 0);
-    const hasContribution = section.items.some((i) => calcItemSaleTotal(i) !== 0);
+    const hasContribution = section.items.some((i) => {
+      const unitPrice = Number(i.internal_unit_price) || 0;
+      if (unitPrice !== 0) return true;
+      return (Number(i.internal_total) || 0) !== 0;
+    });
     if (hasContribution) return sum * qty;
   }
   return (Number(section.section_price) || 0) * qty;
