@@ -206,6 +206,8 @@ export async function buildBudgetXlsxBlob(
     }
   };
   // Aplica borda + fonte base a todas as células de uma faixa retangular.
+  // Também garante `wrapText: true` no alinhamento para que textos longos
+  // quebrem dentro da célula em vez de ficarem cortados.
   const applyBaseGrid = (
     ws: XLSX.WorkSheet,
     startRow: number,
@@ -219,13 +221,94 @@ export async function buildBudgetXlsxBlob(
         const cell = ws[addr] as (XLSX.CellObject & { s?: Record<string, unknown> }) | undefined;
         if (!cell) continue;
         const existing = (cell.s ?? {}) as Record<string, unknown>;
+        const existingAlign = (existing.alignment as Record<string, unknown> | undefined) ?? {};
         cell.s = {
           font: { ...FONT_BASE, ...((existing.font as object) ?? {}) },
           border: THIN_BORDER,
           ...existing,
+          alignment: {
+            vertical: "center",
+            wrapText: true,
+            ...existingAlign,
+            // Força wrapText mesmo se o existing.alignment vier sem ele.
+            ...(existingAlign && (existingAlign as { wrapText?: boolean }).wrapText === false
+              ? {}
+              : { wrapText: true }),
+          },
         };
       }
     }
+  };
+
+  // Calcula largura ideal por coluna a partir do conteúdo real do AOA.
+  // - Considera a maior linha de cada célula (após split em "\n") para evitar
+  //   superdimensionar colunas que contenham textos com quebras.
+  // - Aplica min/max por coluna para evitar colunas estreitas demais
+  //   (cabeçalhos cortados) ou largas demais (rolagem horizontal).
+  // - Datas e números formatados ficam com largura mínima maior.
+  const autoFitColumns = (
+    aoa: (string | number | Date | null | undefined)[][],
+    opts?: { min?: number[]; max?: number[]; defaultMin?: number; defaultMax?: number },
+  ): { wch: number }[] => {
+    const defaultMin = opts?.defaultMin ?? 8;
+    const defaultMax = opts?.defaultMax ?? 60;
+    const colCount = aoa.reduce((m, row) => Math.max(m, row.length), 0);
+    const widths: number[] = new Array(colCount).fill(0);
+    for (const row of aoa) {
+      for (let c = 0; c < row.length; c++) {
+        const v = row[c];
+        if (v == null || v === "") continue;
+        const text = v instanceof Date ? "00/00/0000" : String(v);
+        // Considera só a maior linha quando há \n (texto multi-linha).
+        const longest = text.split(/\r?\n/).reduce((m, l) => Math.max(m, l.length), 0);
+        if (longest > widths[c]) widths[c] = longest;
+      }
+    }
+    return widths.map((w, c) => {
+      const min = opts?.min?.[c] ?? defaultMin;
+      const max = opts?.max?.[c] ?? defaultMax;
+      // +2 de folga para padding/borda; clamp em [min, max].
+      const wch = Math.min(Math.max(w + 2, min), max);
+      return { wch };
+    });
+  };
+
+  // Calcula altura sugerida da linha quando há texto que pode quebrar
+  // (descrição longa, título de seção mesclado, etc.). Isso evita que o
+  // wrapText "esconda" linhas porque a altura padrão é 15pt.
+  const autoFitRowHeights = (
+    ws: XLSX.WorkSheet,
+    aoa: (string | number | Date | null | undefined)[][],
+    cols: { wch: number }[],
+    opts?: { mergedRows?: Set<number>; mergedTotalWidth?: number },
+  ) => {
+    const rows: { hpt: number }[] = [];
+    for (let r = 0; r < aoa.length; r++) {
+      const row = aoa[r];
+      let maxLines = 1;
+      const isMerged = opts?.mergedRows?.has(r);
+      for (let c = 0; c < row.length; c++) {
+        const v = row[c];
+        if (v == null || v === "") continue;
+        const text = String(v);
+        const explicit = text.split(/\r?\n/).length;
+        // Largura disponível: célula isolada → wch da coluna; mesclada →
+        // soma de todas as colunas (passada via mergedTotalWidth).
+        const widthChars = isMerged
+          ? (opts?.mergedTotalWidth ?? cols.reduce((s, k) => s + (k.wch || 0), 0))
+          : (cols[c]?.wch ?? 10);
+        const longestLine = text
+          .split(/\r?\n/)
+          .reduce((m, l) => Math.max(m, l.length), 0);
+        const wrapped = Math.max(1, Math.ceil(longestLine / Math.max(widthChars - 1, 1)));
+        const lines = Math.max(explicit, wrapped);
+        if (lines > maxLines) maxLines = lines;
+      }
+      // 15pt é a altura padrão de uma linha; ~14pt por linha extra.
+      const hpt = Math.min(Math.max(15, maxLines * 15), 220);
+      rows.push({ hpt });
+    }
+    ws["!rows"] = rows;
   };
 
   // ── Totais ────────────────────────────────────────────────────────────
