@@ -100,6 +100,15 @@ describe("calcSectionSaleTotal", () => {
     };
     expect(calcSectionSaleTotal(section)).toBe(130);
   });
+
+  it("does not fall back to section_price when an item contribution exists but sale becomes zero with BDI -100%", () => {
+    const section = {
+      qty: 1,
+      section_price: 4120,
+      items: [{ internal_unit_price: 4120, qty: 1, bdi_percentage: -100 }],
+    };
+    expect(calcSectionSaleTotal(section)).toBe(0);
+  });
 });
 
 describe("calcGrandTotals", () => {
