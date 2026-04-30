@@ -445,6 +445,67 @@ function XlsxWorkbookPreview({ workbook }: { workbook: XLSX.WorkBook }) {
   );
 }
 
+// Constantes do mapeamento Excel → preview HTML.
+// O Excel mede largura em "characters" (wch) ≈ 7px no nosso preview.
+// Altura é em "points" (pt); 1pt ≈ 1.333px. Linha padrão do Excel = 15pt
+// (~20px). Cada linha extra de wrapText adiciona ~15pt.
+const PX_PER_CHAR = 7;
+const PX_PER_POINT = 4 / 3; // 1pt = 1.333px
+const DEFAULT_ROW_PT = 15;
+const EXTRA_LINE_PT = 15;
+// Largura média de char no nosso preview (text-xs font-mono ~10px).
+// Como cada coluna tem largura em px definida pela contagem de chars do
+// Excel, a quebra real depende de quantos chars cabem nessa largura.
+// Usamos a mesma métrica: 1 "wrap char" ≈ 1 char Excel.
+const WRAP_CHARS_PER_WCH = 1;
+
+function estimateWrappedLines(text: string, wch: number | undefined): number {
+  if (!text) return 1;
+  // Sem largura definida → considera só quebras explícitas.
+  const hardLines = text.split(/\r?\n/);
+  if (!wch || wch <= 0) return hardLines.length;
+  const maxChars = Math.max(1, Math.floor(wch * WRAP_CHARS_PER_WCH));
+  let total = 0;
+  for (const line of hardLines) {
+    if (line.length === 0) {
+      total += 1;
+      continue;
+    }
+    // Quebra preferindo espaços (mesma heurística do Excel: word-wrap).
+    const words = line.split(/\s+/);
+    let current = 0;
+    let lines = 1;
+    for (const w of words) {
+      if (w.length === 0) continue;
+      // Palavra maior que a largura → quebra forçada por chars.
+      if (w.length > maxChars) {
+        if (current > 0) {
+          lines += 1;
+          current = 0;
+        }
+        lines += Math.ceil(w.length / maxChars) - 1;
+        current = w.length % maxChars;
+        if (current === 0) {
+          // múltiplo exato; próxima palavra começa em linha nova
+          current = 0;
+        } else {
+          current += 1; // espaço seguinte
+        }
+        continue;
+      }
+      const need = current === 0 ? w.length : current + 1 + w.length;
+      if (need > maxChars) {
+        lines += 1;
+        current = w.length + 1;
+      } else {
+        current = need;
+      }
+    }
+    total += lines;
+  }
+  return Math.max(1, total);
+}
+
 function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
   const { rows, cols, mergeMap, range } = useMemo(() => {
     const ref = worksheet["!ref"];
