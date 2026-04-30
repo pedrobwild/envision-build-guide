@@ -96,6 +96,14 @@ interface AdjustmentRow {
  *   - `grandTotal` = sale + adjustments (o que aparece como "Total geral").
  *   - `marginRatio` = `marginPercent` em fração [0,1].
  */
+export interface BudgetXlsxSectionTotal {
+  id: string;
+  title: string;
+  cost: number;
+  sale: number;
+  isCredit: boolean;
+}
+
 export interface BudgetXlsxTotals {
   cost: number;
   sale: number;
@@ -104,6 +112,10 @@ export interface BudgetXlsxTotals {
   adjustments: number;
   grandTotal: number;
   marginRatio: number;
+  /** Subtotais por seção exatamente como usados no export — base do modo
+   *  de auditoria do preview, que compara estes valores com o resumo
+   *  exibido no editor. */
+  sections: BudgetXlsxSectionTotal[];
   /** Avisos da auditoria de estrutura — operadores podem ter colocado um
    *  valor positivo numa seção de Desconto/Crédito, ou um item negativo
    *  numa seção produtiva. O export normaliza automaticamente, mas devolve
