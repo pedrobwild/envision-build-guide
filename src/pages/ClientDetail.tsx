@@ -231,6 +231,8 @@ export default function ClientDetail() {
 
   // Filtro da tabela: mostrar apenas o or\u00e7amento selecionado.
   const [budgetsFilterOnlySelected, setBudgetsFilterOnlySelected] = useState(false);
+  const [compareLeftId, setCompareLeftId] = useState<string>("");
+  const [compareRightId, setCompareRightId] = useState<string>("");
   const visibleBudgets = useMemo(() => {
     if (budgetsFilterOnlySelected && selectedExportBudget) {
       return budgets.filter((b) => b.id === selectedExportBudget.id);
