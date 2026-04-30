@@ -364,20 +364,81 @@ function buildMergeMap(merges: XLSX.Range[] | undefined): MergeMap {
   return { spans, hidden };
 }
 
-// Heurística leve de "tipo da linha" baseada nos estilos que o exporter
-// já aplica. Mantém a tabela legível e parecida com o que o Excel mostra
-// (header escuro, seção cinza, total destacado). Não mexe em valores.
+// Heurística de "tipo da linha" combinando três sinais:
+// 1) ESTILO da célula (fill escuro/claro, bold) — mais confiável quando o
+//    exporter aplicou estilos avançados.
+// 2) POSIÇÃO da linha (primeira linha = header da planilha; última linha
+//    com conteúdo = total geral) — funciona mesmo no "Modo compatível"
+//    em que os estilos são removidos.
+// 3) TEXTO da primeira célula não vazia (palavras-chave como "TOTAL",
+//    "SUBTOTAL", "TOTAL GERAL", "SEÇÃO") — fallback semântico para quando
+//    nem estilo nem posição bastam.
+// O resultado é usado apenas para realce visual no preview; nunca altera
+// valores nem o arquivo gerado.
 type RowKind = "header" | "section" | "subtotal" | "total" | "default";
+
+// Normaliza o texto da primeira célula para casar com variações comuns
+// em PT-BR: remove acentos, colapsa espaços/pontuação e padroniza
+// minúsculas. Assim "Sub-Total", "SUBTOTAL", "Subt." e "Sub total"
+// passam pela MESMA regex.
+function normalizeRowLabel(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // tira acentos
+    .toLowerCase()
+    .replace(/[._:;]+/g, " ") // pontuação vira espaço (cobre "tot." etc.)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// "Total geral" e variantes que SEMPRE indicam o fechamento do orçamento.
+// Cobre: total geral, total final, total do orçamento, total a pagar,
+// total a investir, valor total do investimento, investimento total,
+// grand total, vl/vlr total geral.
+const TOTAL_GERAL_RE =
+  /\b(total\s+(geral|final|do\s+or[cç]amento|a\s+(pagar|investir)|investimento|liquido|bruto)|(valor\s+(total|final))|investimento\s+total|grand\s+total|(vlr?|vl)\s+total(\s+geral)?)\b/;
+
+// "Subtotal" e abreviações: subtotal, sub total, sub-total, subt,
+// sub-tot, soma parcial, parcial.
+const SUBTOTAL_RE =
+  /^\s*(sub\s*-?\s*tot(al)?|subt|soma\s+parcial|parcial)\b/;
+
+// "Total" sozinho ou abreviado: total, tot, tot., totais, total da
+// seção/categoria/grupo/ambiente/item/serviço — quando vem qualificado
+// por uma seção é subtotal; quando vem sozinho a posição decide.
+const TOTAL_SECTION_RE =
+  /^\s*total\s+(da\s+)?(se[cç]ao|categoria|grupo|ambiente|etapa|fase|servico|servicos|item|itens|obra|escopo)\b/;
+const TOTAL_RE = /^\s*(tot(al|ais)?|tot)\b/;
+
+// Cabeçalhos de agrupamento.
+const SECTION_RE =
+  /^\s*(se[cç]ao|categoria|grupo|ambiente|etapa|fase|m[oó]dulo|escopo)\b/;
+
+function detectTextualKind(rawText: string): RowKind | null {
+  if (!rawText) return null;
+  const text = normalizeRowLabel(rawText);
+  if (!text) return null;
+  if (TOTAL_GERAL_RE.test(text)) return "total";
+  if (SUBTOTAL_RE.test(text)) return "subtotal";
+  if (TOTAL_SECTION_RE.test(text)) return "subtotal";
+  if (TOTAL_RE.test(text)) return "total"; // posição decide depois
+  if (SECTION_RE.test(text)) return "section";
+  return null;
+}
+
 function detectRowKind(
   ws: XLSX.WorkSheet,
   row: number,
   startCol: number,
   endCol: number,
   hidden: Set<string>,
+  lastContentRow: number,
 ): RowKind {
   let hasDarkFill = false;
   let hasLightFill = false;
   let hasBold = false;
+  let firstText = "";
+  let hasAnyContent = false;
   for (let c = startCol; c <= endCol; c++) {
     if (hidden.has(`${row}:${c}`)) continue;
     const addr = XLSX.utils.encode_cell({ r: row, c });
@@ -389,15 +450,54 @@ function detectRowKind(
           };
         })
       | undefined;
-    if (!cell?.s) continue;
+    if (!cell) continue;
+    if (cell.v != null && cell.v !== "") {
+      hasAnyContent = true;
+      if (!firstText) {
+        try {
+          firstText = XLSX.utils.format_cell(cell);
+        } catch {
+          firstText = String(cell.v ?? "");
+        }
+      }
+    }
+    if (!cell.s) continue;
     const rgb = cell.s.fill?.fgColor?.rgb?.toUpperCase();
-    if (rgb === "0F172A") hasDarkFill = true;
-    else if (rgb === "E5E7EB" || rgb === "F3F4F6") hasLightFill = true;
+    if (rgb === "0F172A" || rgb === "111827" || rgb === "1E293B") hasDarkFill = true;
+    else if (rgb === "E5E7EB" || rgb === "F3F4F6" || rgb === "F1F5F9") hasLightFill = true;
     if (cell.s.font?.bold) hasBold = true;
   }
-  if (row === 0 || hasDarkFill) return hasBold ? (row === 0 ? "header" : "total") : "header";
+
+  // 1) Texto explícito da primeira célula — sinal mais forte.
+  if (hasAnyContent) {
+    const textual = detectTextualKind(firstText);
+    if (textual === "total") {
+      // "Total" puro sem qualificador → posição decide se é geral ou de seção.
+      const isPureTotal = TOTAL_RE.test(normalizeRowLabel(firstText)) &&
+        !TOTAL_GERAL_RE.test(normalizeRowLabel(firstText));
+      if (isPureTotal) {
+        return row === lastContentRow ? "total" : "subtotal";
+      }
+      return "total";
+    }
+    if (textual) return textual;
+  }
+
+  // 2) Estilo do exporter avançado.
+  if (hasDarkFill) {
+    // Fill escuro pode ser tanto cabeçalho quanto total. Diferenciamos
+    // pela posição: linha 0 é sempre header; última linha de conteúdo é
+    // total; meio = header de seção.
+    if (row === 0) return "header";
+    if (row === lastContentRow) return "total";
+    return "header";
+  }
   if (hasLightFill && hasBold) return "subtotal";
   if (hasLightFill) return "section";
+
+  // 3) Fallback puramente posicional (modo compatível, sem estilos).
+  if (row === 0 && hasAnyContent) return "header";
+  if (row === lastContentRow && hasAnyContent && hasBold) return "total";
   return "default";
 }
 
@@ -543,6 +643,20 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
   // presente, respeitamos para bater 1:1 com o arquivo gerado.
   const rowMeta = (worksheet["!rows"] ?? []) as { hpt?: number; hpx?: number }[];
 
+  // Última linha com algum conteúdo — referência para identificar o
+  // "total geral" tanto por estilo quanto por posição.
+  const lastContentRow = (() => {
+    for (let r = range.e.r; r >= range.s.r; r--) {
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const cell = worksheet[XLSX.utils.encode_cell({ r, c })] as
+          | XLSX.CellObject
+          | undefined;
+        if (cell && cell.v != null && cell.v !== "") return r;
+      }
+    }
+    return range.e.r;
+  })();
+
   return (
     <table className="w-full border-collapse text-xs font-mono tabular-nums">
       <colgroup>
@@ -567,16 +681,20 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
             range.s.c,
             range.e.c,
             mergeMap.hidden,
+            lastContentRow,
           );
+          // Realce visual por tipo. Reforçamos cabeçalho e total com
+          // borda extra para que o usuário escaneie a tabela mesmo
+          // quando o exporter remove cores (modo compatível).
           const rowClass =
             kind === "header"
-              ? "bg-slate-900 text-white"
+              ? "bg-slate-900 text-white uppercase tracking-wide text-[11px] border-b-2 border-slate-700"
               : kind === "total"
-                ? "bg-slate-900 text-white"
+                ? "bg-slate-900 text-white font-semibold border-t-2 border-slate-700"
                 : kind === "subtotal"
-                  ? "bg-slate-100 font-semibold"
+                  ? "bg-slate-100 font-semibold text-slate-900 border-t border-slate-300"
                   : kind === "section"
-                    ? "bg-slate-50 font-semibold text-slate-700"
+                    ? "bg-slate-50 font-semibold text-slate-700 uppercase text-[11px] tracking-wide"
                     : "";
 
           // Altura da linha:
