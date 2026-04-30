@@ -70,8 +70,7 @@ import { INTERNAL_STATUSES, LOCATION_TYPES } from "@/lib/role-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { exportBudgetToXlsx } from "@/lib/budget-xlsx-export";
-import { exportBudgetToPdf } from "@/lib/budget-pdf-export";
+import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 
 function formatBRL(value: number | null | undefined) {
   if (!value) return "R$ 0";
