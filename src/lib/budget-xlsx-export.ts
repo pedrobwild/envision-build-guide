@@ -448,24 +448,27 @@ export async function buildBudgetXlsxBlob(
   };
 
   // Estrutura canônica reusada para subtotais por seção mais abaixo.
-  const calcSectionsAll: (CalcSection & { __id: string })[] = sections.map((sec) => {
-    const secItems: CalcItem[] = items
-      .filter((i) => i.section_id === sec.id)
-      .map((it) => ({
-        qty: it.qty,
-        internal_unit_price: it.internal_unit_price,
-        internal_total: it.internal_total,
-        bdi_percentage: it.bdi_percentage,
-        title: it.title,
-      }));
-    return {
-      __id: sec.id,
+  // IMPORTANTE: aplicamos `normalizeBudgetSections` para que subtotais por
+  // seção e linhas de Detalhamento usem os MESMOS valores normalizados que
+  // alimentam os totais globais (descontos/créditos forçados a negativos,
+  // BDI zerado em créditos). Sem isso, o Subtotal exibido divergiria do
+  // Total geral quando houvesse erro de digitação no editor.
+  const calcSectionsAll: (CalcSection & { __id: string })[] = normalizeBudgetSections(
+    sections.map((sec) => ({
       qty: sec.qty,
       section_price: sec.section_price,
       title: sec.title,
-      items: secItems,
-    };
-  });
+      items: items
+        .filter((i) => i.section_id === sec.id)
+        .map((it) => ({
+          qty: it.qty,
+          internal_unit_price: it.internal_unit_price,
+          internal_total: it.internal_total,
+          bdi_percentage: it.bdi_percentage,
+          title: it.title,
+        })),
+    })),
+  ).map((sec, idx) => ({ ...sec, __id: sections[idx].id }));
 
   // Fonte única dos números globais — mesma função coberta pelos testes.
   const totals = computeBudgetXlsxTotals(
@@ -489,6 +492,15 @@ export async function buildBudgetXlsxBlob(
   const totalVenda = totals.sale;
   const totalAjustes = totals.adjustments;
   const margemRatio = totals.marginRatio;
+
+  // Loga avisos de auditoria — não bloqueia o export, mas deixa rastro
+  // para que o time identifique seções de Desconto/Crédito mal preenchidas.
+  if (totals.warnings.length > 0) {
+    logger.warn(
+      `[xlsx-export] ${totals.warnings.length} aviso(s) de estrutura no orçamento ${b.sequential_code ?? b.id}:`,
+      totals.warnings,
+    );
+  }
 
   // ── Aba 1: Resumo ─────────────────────────────────────────────────────
   // Coluna A = rótulo, Coluna B = valor (já no tipo correto).
