@@ -1124,7 +1124,15 @@ function XlsxAuditPanel({
               </div>
               <ul className="text-[11px] text-destructive/90 space-y-0.5 list-disc pl-4">
                 {exportTotals.warnings.slice(0, 6).map((w, i) => (
-                  <li key={i}>{w.message}</li>
+                  <li key={i}>
+                    <span className="font-semibold">{w.sectionTitle}</span>
+                    {w.itemTitle ? ` › ${w.itemTitle}` : ""} —{" "}
+                    {w.kind === "abatement_positive_value"
+                      ? "valor positivo em abatimento (normalizado para negativo)"
+                      : w.kind === "negative_in_productive_section"
+                      ? "item negativo em seção produtiva"
+                      : "BDI aplicado em crédito (zerado)"}
+                  </li>
                 ))}
                 {exportTotals.warnings.length > 6 && (
                   <li>… e mais {exportTotals.warnings.length - 6}.</li>
