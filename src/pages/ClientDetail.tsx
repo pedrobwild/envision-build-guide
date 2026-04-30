@@ -516,6 +516,26 @@ export default function ClientDetail() {
                   </Button>
                 </>
               )}
+              {budgets.some((b) => !["contrato_fechado", "perdido", "lost", "archived"].includes(b.internal_status ?? "")) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  title="Cria um orçamento paralelo (coexistente) para o mesmo cliente — útil para comparar escopos diferentes (ex.: simples vs. completo). Os orçamentos só são consolidados ao fechar contrato."
+                  onClick={() => {
+                    const params = new URLSearchParams({
+                      client_id: client.id,
+                      name: client.name,
+                      variant: "1",
+                      ...(client.email ? { email: client.email } : {}),
+                      ...(client.phone ? { phone: client.phone } : {}),
+                    });
+                    navigate(`/admin/solicitacoes/nova?${params.toString()}`);
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" /> Nova versão (escopo alternativo)
+                </Button>
+              )}
               <Button
                 size="sm"
                 className="gap-1.5"

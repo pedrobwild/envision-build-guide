@@ -160,6 +160,7 @@ export default function NewBudgetRequest() {
 
   // Pré-preenche a partir de ?client_id=&name=&email=&phone= (vindo do CRM)
   const prefillClientId = searchParams.get("client_id");
+  const isVariant = searchParams.get("variant") === "1";
   const [linkedClientId, setLinkedClientId] = useState<string | null>(prefillClientId);
   const [linkedClientValidated, setLinkedClientValidated] = useState<boolean>(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("__new__");
@@ -413,7 +414,7 @@ export default function NewBudgetRequest() {
           client_id: resolvedClientId,
           property_id: resolvedPropertyId,
           client_name: clientName.trim(),
-          project_name: projectName || clientName.trim(),
+          project_name: (projectName || clientName.trim()) + (isVariant ? " — Variante" : ""),
           lead_email: clientEmail.trim() || null,
           client_phone: clientPhone.trim() || null,
           condominio: condominio.trim() || null,
@@ -621,6 +622,18 @@ export default function NewBudgetRequest() {
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto px-4 sm:px-6 py-6"
       >
+        {isVariant && (
+          <div className="mb-6 px-4 py-3 rounded-lg bg-primary/5 border border-primary/20">
+            <p className="text-xs font-display font-semibold text-primary uppercase tracking-wider mb-1">
+              Nova versão (escopo alternativo)
+            </p>
+            <p className="text-xs text-muted-foreground font-body leading-relaxed">
+              Este orçamento será criado em paralelo aos demais do cliente. Use para comparar escopos diferentes (ex.: simples vs. completo).
+              A consolidação só ocorre ao fechar contrato — os outros orçamentos serão arquivados automaticamente nesse momento.
+            </p>
+          </div>
+        )}
+
         {/* Mode toggle */}
         <div className="flex items-center gap-2 mb-6 p-1 rounded-xl bg-muted/50 border border-border/30">
           <button
