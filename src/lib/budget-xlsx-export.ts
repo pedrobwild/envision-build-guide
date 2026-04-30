@@ -410,6 +410,16 @@ export async function buildBudgetXlsxBlob(
       alignment: { vertical: "center", wrapText: true },
     };
   });
+  // Header rows do Resumo são mescladas A:B; passa o set para o cálculo
+  // considerar a largura combinada das duas colunas.
+  const resumoMergedRows = new Set<number>(
+    (wsResumo["!merges"] ?? []).map((m) => m.s.r),
+  );
+  const resumoCols = wsResumo["!cols"] as { wch: number }[];
+  autoFitRowHeights(wsResumo, resumoAoa, resumoCols, {
+    mergedRows: resumoMergedRows,
+    mergedTotalWidth: resumoCols.reduce((s, k) => s + (k.wch || 0), 0),
+  });
   XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
 
   // ── Aba 2: Detalhamento (mesma estrutura visual da página do cliente) ─
