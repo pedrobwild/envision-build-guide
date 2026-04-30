@@ -208,24 +208,55 @@ export default function BudgetEditorV2() {
     queryKey: ["budget-editor-sections", budgetId],
     queryFn: async () => {
       if (!budgetId) return [] as EditorSection[];
-      const { data, error } = await supabase
+      const { data: sectionsRows, error: sectionsError } = await supabase
         .from("sections")
-        .select("*, items(*, item_images(*))")
+        .select("id, budget_id, title, subtitle, order_index, qty, section_price, cover_image_url, tags, included_bullets, excluded_bullets, notes, is_optional, addendum_action")
         .eq("budget_id", budgetId)
         .order("order_index", { ascending: true });
-      if (error) throw error;
-      return (data || []).map((s) => ({
-        ...s,
-        items: (s.items || [])
-          .sort(
-            (a: Record<string, unknown>, b: Record<string, unknown>) =>
-              ((a.order_index as number) || 0) - ((b.order_index as number) || 0),
-          )
-          .map((item: Record<string, unknown>) => ({
-            ...item,
-            images: (item as Record<string, unknown>).item_images || [],
-          })),
-      })) as unknown as EditorSection[];
+      if (sectionsError) throw sectionsError;
+
+      const sections = (sectionsRows ?? []) as EditorSection[];
+      const sectionIds = sections.map((section) => section.id);
+
+      const { data: itemsRows, error: itemsError } = await supabase
+        .from("items")
+        .select("id, section_id, title, description, reference_url, qty, unit, internal_unit_price, internal_total, bdi_percentage, order_index, catalog_item_id, catalog_snapshot, notes, addendum_action")
+        .in("section_id", sectionIds.length ? sectionIds : ["__none__"])
+        .order("order_index", { ascending: true });
+
+      if (itemsError) throw itemsError;
+
+      const items = (itemsRows ?? []) as EditorSection["items"];
+      const itemIds = items.map((item) => item.id);
+
+      const { data: imageRows, error: imagesError } = await supabase
+        .from("item_images")
+        .select("id, item_id, url, is_primary")
+        .in("item_id", itemIds.length ? itemIds : ["__none__"]);
+
+      if (imagesError) throw imagesError;
+
+      const imagesByItemId = new Map<string, { id?: string; item_id?: string; url: string; is_primary?: boolean | null }[]>();
+      for (const image of imageRows ?? []) {
+        const bucket = imagesByItemId.get(image.item_id) ?? [];
+        bucket.push(image);
+        imagesByItemId.set(image.item_id, bucket);
+      }
+
+      const itemsBySectionId = new Map<string, EditorSection["items"]>();
+      for (const item of items) {
+        const bucket = itemsBySectionId.get(item.section_id ?? "") ?? [];
+        bucket.push({
+          ...item,
+          images: imagesByItemId.get(item.id) ?? [],
+        });
+        itemsBySectionId.set(item.section_id ?? "", bucket);
+      }
+
+      return sections.map((section) => ({
+        ...section,
+        items: itemsBySectionId.get(section.id) ?? [],
+      }));
     },
     enabled: !!budgetId,
   });
