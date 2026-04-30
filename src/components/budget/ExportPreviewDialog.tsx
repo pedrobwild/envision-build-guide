@@ -937,3 +937,203 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
     </table>
   );
 }
+
+// ── Painel de auditoria do XLSX ─────────────────────────────────────────
+// Mostra, por seção, os valores de custo/venda usados no arquivo gerado
+// (totals do `buildBudgetXlsxBlob`, já normalizados) ao lado dos valores
+// crus do editor (mesma fórmula, dados sem normalização). Diferenças
+// destacadas em cor de aviso revelam onde a normalização agiu — quase
+// sempre por causa de descontos/créditos digitados com sinal trocado.
+
+const fmtBRL = (n: number) =>
+  n.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+// Considera "igual" diferenças menores que 1 centavo para evitar ruído
+// de ponto flutuante.
+const isClose = (a: number, b: number) => Math.abs(a - b) < 0.005;
+
+function XlsxAuditPanel({
+  exportTotals,
+  editor,
+  loading,
+}: {
+  exportTotals: BudgetXlsxTotals;
+  editor: EditorAuditTotals | null;
+  loading: boolean;
+}) {
+  // Indexa o editor por id para alinhar com as seções do export.
+  const editorById = new Map(editor?.sections.map((s) => [s.id, s]) ?? []);
+  const rows = exportTotals.sections.map((exp) => {
+    const ed = editorById.get(exp.id);
+    return {
+      id: exp.id,
+      title: exp.title,
+      isCredit: exp.isCredit,
+      expCost: exp.cost,
+      expSale: exp.sale,
+      edCost: ed?.cost ?? null,
+      edSale: ed?.sale ?? null,
+    };
+  });
+
+  return (
+    <>
+      <div>
+        <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Auditoria do export
+        </h4>
+        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+          Compara, por seção, os valores enviados ao arquivo (export) com os
+          valores crus do editor. Δ destacado indica que a normalização
+          ajustou sinais ou BDI.
+        </p>
+      </div>
+
+      {loading || !editor ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Carregando dados do editor…
+        </div>
+      ) : (
+        <>
+          <div className="rounded-md border bg-muted/30 p-3">
+            <div className="grid grid-cols-3 gap-2 text-[11px]">
+              <div>
+                <div className="text-muted-foreground">Custo</div>
+                <div className="font-mono font-semibold">
+                  {fmtBRL(exportTotals.cost)}
+                </div>
+                <div
+                  className={
+                    isClose(exportTotals.cost, editor.cost)
+                      ? "text-muted-foreground"
+                      : "text-destructive font-semibold"
+                  }
+                >
+                  Editor: {fmtBRL(editor.cost)}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Venda</div>
+                <div className="font-mono font-semibold">
+                  {fmtBRL(exportTotals.sale)}
+                </div>
+                <div
+                  className={
+                    isClose(exportTotals.sale, editor.sale)
+                      ? "text-muted-foreground"
+                      : "text-destructive font-semibold"
+                  }
+                >
+                  Editor: {fmtBRL(editor.sale)}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Margem</div>
+                <div className="font-mono font-semibold">
+                  {(exportTotals.marginRatio * 100).toFixed(2)}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full text-[11px] border-collapse">
+              <thead>
+                <tr className="text-left text-muted-foreground border-b">
+                  <th className="py-1.5 px-1 font-medium">Seção</th>
+                  <th className="py-1.5 px-1 font-medium text-right">Export</th>
+                  <th className="py-1.5 px-1 font-medium text-right">Editor</th>
+                  <th className="py-1.5 px-1 font-medium text-right">Δ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => {
+                  const deltaCost = r.edCost == null ? null : r.expCost - r.edCost;
+                  const deltaSale = r.edSale == null ? null : r.expSale - r.edSale;
+                  const costDiff = deltaCost != null && !isClose(deltaCost, 0);
+                  const saleDiff = deltaSale != null && !isClose(deltaSale, 0);
+                  return (
+                    <tr key={r.id} className="border-b last:border-0 align-top">
+                      <td className="py-1.5 px-1">
+                        <div className="font-medium truncate" title={r.title}>
+                          {r.title}
+                        </div>
+                        {r.isCredit && (
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            crédito
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-1.5 px-1 text-right font-mono">
+                        <div>{fmtBRL(r.expCost)}</div>
+                        <div className="text-muted-foreground">
+                          {fmtBRL(r.expSale)}
+                        </div>
+                      </td>
+                      <td className="py-1.5 px-1 text-right font-mono">
+                        <div>{r.edCost == null ? "—" : fmtBRL(r.edCost)}</div>
+                        <div className="text-muted-foreground">
+                          {r.edSale == null ? "—" : fmtBRL(r.edSale)}
+                        </div>
+                      </td>
+                      <td className="py-1.5 px-1 text-right font-mono">
+                        <div
+                          className={
+                            costDiff
+                              ? "text-destructive font-semibold"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {deltaCost == null
+                            ? "—"
+                            : isClose(deltaCost, 0)
+                            ? "0,00"
+                            : fmtBRL(deltaCost)}
+                        </div>
+                        <div
+                          className={
+                            saleDiff
+                              ? "text-destructive font-semibold"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {deltaSale == null
+                            ? "—"
+                            : isClose(deltaSale, 0)
+                            ? "0,00"
+                            : fmtBRL(deltaSale)}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {exportTotals.warnings.length > 0 && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2.5">
+              <div className="text-[11px] font-semibold text-destructive mb-1">
+                {exportTotals.warnings.length} aviso(s) de estrutura
+              </div>
+              <ul className="text-[11px] text-destructive/90 space-y-0.5 list-disc pl-4">
+                {exportTotals.warnings.slice(0, 6).map((w, i) => (
+                  <li key={i}>{w.message}</li>
+                ))}
+                {exportTotals.warnings.length > 6 && (
+                  <li>… e mais {exportTotals.warnings.length - 6}.</li>
+                )}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+}
