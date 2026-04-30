@@ -1125,12 +1125,31 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       insertPayload.catalog_snapshot = itemData?.catalog_snapshot || null;
     }
 
-    const { data, error: insertError } = await dbFrom(cfg.itemTable)
+    let { data, error: insertError } = await dbFrom(cfg.itemTable)
       .insert(insertPayload)
       .select()
       .single();
+    // RLS code 42501 — pode ser sessão expirada silenciosamente.
+    // Tenta recuperar a sessão e reexecutar uma vez antes de mostrar erro.
+    if (insertError && (insertError.code === "42501" || /row-level security/i.test(insertError.message || ""))) {
+      try {
+        const mod = await import("@/lib/auth-session-recovery");
+        await mod.triggerAuthSessionRecovery();
+        const retry = await dbFrom(cfg.itemTable)
+          .insert(insertPayload)
+          .select()
+          .single();
+        data = retry.data;
+        insertError = retry.error;
+      } catch {
+        /* fallback para o toast original abaixo */
+      }
+    }
     if (insertError) {
-      toast.error(`Erro ao adicionar item: ${insertError.message}`);
+      const friendly = (insertError.code === "42501" || /row-level security/i.test(insertError.message || ""))
+        ? "Sua sessão expirou. Recarregue a página e entre novamente para continuar editando."
+        : `Erro ao adicionar item: ${insertError.message}`;
+      toast.error(friendly, { duration: 8000 });
       return null;
     }
     if (data) {
