@@ -305,6 +305,21 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
     const addr = XLSX.utils.encode_cell({ r: idx, c: 1 });
     setCellFormat(wsResumo, addr, e.fmt, e.value instanceof Date ? "d" : "n");
   });
+  // Bordas + fonte base em todo o bloco do Resumo.
+  applyBaseGrid(wsResumo, 0, resumoEntries.length - 1, 0, 1);
+  // Coluna A em negrito para diferenciar dos valores.
+  resumoEntries.forEach((e, idx) => {
+    if (e.isHeader) return;
+    const addr = XLSX.utils.encode_cell({ r: idx, c: 0 });
+    const cell = wsResumo[addr] as (XLSX.CellObject & { s?: Record<string, unknown> }) | undefined;
+    if (!cell) return;
+    const existing = (cell.s ?? {}) as Record<string, unknown>;
+    cell.s = {
+      ...existing,
+      font: { ...FONT_BASE, bold: true },
+      alignment: { vertical: "center", wrapText: true },
+    };
+  });
   XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
 
   // ── Aba 2: Detalhamento (mesma estrutura visual da página do cliente) ─
