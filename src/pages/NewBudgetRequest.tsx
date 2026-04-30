@@ -414,7 +414,7 @@ export default function NewBudgetRequest() {
           client_id: resolvedClientId,
           property_id: resolvedPropertyId,
           client_name: clientName.trim(),
-          project_name: projectName || clientName.trim(),
+          project_name: (projectName || clientName.trim()) + (isVariant ? " — Variante" : ""),
           lead_email: clientEmail.trim() || null,
           client_phone: clientPhone.trim() || null,
           condominio: condominio.trim() || null,
