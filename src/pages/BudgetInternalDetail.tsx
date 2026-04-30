@@ -234,8 +234,14 @@ export default function BudgetInternalDetail() {
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
   const [resolvedBudgetId, setResolvedBudgetId] = useState<string | null>(null);
   const [resolvedSeqCode, setResolvedSeqCode] = useState<string | null>(null);
-  const [exportingXlsx, setExportingXlsx] = useState(false);
-  const [exportingPdf, setExportingPdf] = useState(false);
+  // Pré-visualização de export antes do download. Os flags `exportingXlsx`
+  // e `exportingPdf` são derivados do estado para preservar o spinner nos
+  // botões enquanto o diálogo gera o preview.
+  const [previewExport, setPreviewExport] = useState<
+    { budgetId: string; kind: "pdf" | "xlsx" } | null
+  >(null);
+  const exportingXlsx = previewExport?.kind === "xlsx";
+  const exportingPdf = previewExport?.kind === "pdf";
   const handleResolvedBudgetId = useCallback(
     (id: string, info: { isCurrent: boolean; versionNumber: number | null; sequentialCode: string | null }) => {
       setResolvedBudgetId(id);
