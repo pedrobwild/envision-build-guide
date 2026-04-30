@@ -6,7 +6,12 @@
 // orçamentos visíveis ao usuário, então não há vazamento de dados sensíveis
 // para fora da base de usuários autorizados.
 
-import * as XLSX from "xlsx";
+// Usamos `xlsx-js-style` (fork drop-in do `xlsx` oficial) porque o pacote
+// `xlsx` puro IGNORA o atributo `s` das células — o que fazia o arquivo
+// exportado sair sem cores, sem fonte em negrito e sem realces de seção/
+// subtotal/total. Com o fork, mantemos a mesma API mas os estilos são
+// efetivamente gravados no .xlsx.
+import * as XLSX from "xlsx-js-style";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 
@@ -175,18 +180,47 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
     cell.z = fmt;
   };
 
-  // Estilo simples de cabeçalho (negrito) — funciona com xlsx-js-style. O
-  // xlsx oficial ignora `s`, mas não quebra; mantemos para futura troca.
+  // Estilos base — agora efetivamente aplicados graças ao `xlsx-js-style`.
+  const FONT_BASE = { name: "Calibri", sz: 11 };
+  const THIN_BORDER = {
+    top: { style: "thin", color: { rgb: "D1D5DB" } },
+    bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+    left: { style: "thin", color: { rgb: "D1D5DB" } },
+    right: { style: "thin", color: { rgb: "D1D5DB" } },
+  };
   const HEADER_STYLE = {
-    font: { bold: true, color: { rgb: "FFFFFF" } },
-    fill: { fgColor: { rgb: "0F172A" } },
+    font: { ...FONT_BASE, bold: true, color: { rgb: "FFFFFF" } },
+    fill: { patternType: "solid", fgColor: { rgb: "0F172A" } },
     alignment: { vertical: "center", horizontal: "center", wrapText: true },
+    border: THIN_BORDER,
   };
   const styleHeaderRow = (ws: XLSX.WorkSheet, row: number, lastCol: number) => {
     for (let c = 0; c < lastCol; c++) {
       const addr = XLSX.utils.encode_cell({ r: row, c });
       const cell = ws[addr] as XLSX.CellObject | undefined;
       if (cell) (cell as XLSX.CellObject & { s?: unknown }).s = HEADER_STYLE;
+    }
+  };
+  // Aplica borda + fonte base a todas as células de uma faixa retangular.
+  const applyBaseGrid = (
+    ws: XLSX.WorkSheet,
+    startRow: number,
+    endRow: number,
+    startCol: number,
+    endCol: number,
+  ) => {
+    for (let r = startRow; r <= endRow; r++) {
+      for (let c = startCol; c <= endCol; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        const cell = ws[addr] as (XLSX.CellObject & { s?: Record<string, unknown> }) | undefined;
+        if (!cell) continue;
+        const existing = (cell.s ?? {}) as Record<string, unknown>;
+        cell.s = {
+          font: { ...FONT_BASE, ...((existing.font as object) ?? {}) },
+          border: THIN_BORDER,
+          ...existing,
+        };
+      }
     }
   };
 
@@ -270,6 +304,21 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
     if (!e.fmt) return;
     const addr = XLSX.utils.encode_cell({ r: idx, c: 1 });
     setCellFormat(wsResumo, addr, e.fmt, e.value instanceof Date ? "d" : "n");
+  });
+  // Bordas + fonte base em todo o bloco do Resumo.
+  applyBaseGrid(wsResumo, 0, resumoEntries.length - 1, 0, 1);
+  // Coluna A em negrito para diferenciar dos valores.
+  resumoEntries.forEach((e, idx) => {
+    if (e.isHeader) return;
+    const addr = XLSX.utils.encode_cell({ r: idx, c: 0 });
+    const cell = wsResumo[addr] as (XLSX.CellObject & { s?: Record<string, unknown> }) | undefined;
+    if (!cell) return;
+    const existing = (cell.s ?? {}) as Record<string, unknown>;
+    cell.s = {
+      ...existing,
+      font: { ...FONT_BASE, bold: true },
+      alignment: { vertical: "center", wrapText: true },
+    };
   });
   XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
 
@@ -469,21 +518,26 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
   wsDet["!freeze"] = { xSplit: 0, ySplit: 1 };
   wsDet["!merges"] = detMerges;
 
-  // Estilos de seção/subtotal/total
+  // Estilos de seção/subtotal/total — `patternType: "solid"` é obrigatório
+  // para que o Excel renderize a cor de fundo (sem isso, o `fgColor` é
+  // ignorado mesmo no `xlsx-js-style`).
   const SECTION_STYLE = {
-    font: { bold: true, color: { rgb: "0F172A" } },
-    fill: { fgColor: { rgb: "E5E7EB" } },
-    alignment: { vertical: "center", horizontal: "left" },
+    font: { ...FONT_BASE, bold: true, color: { rgb: "0F172A" } },
+    fill: { patternType: "solid", fgColor: { rgb: "E5E7EB" } },
+    alignment: { vertical: "center", horizontal: "left", wrapText: true },
+    border: THIN_BORDER,
   };
   const SUBTOTAL_STYLE = {
-    font: { bold: true },
-    fill: { fgColor: { rgb: "F3F4F6" } },
-    border: { top: { style: "thin", color: { rgb: "D1D5DB" } } },
+    font: { ...FONT_BASE, bold: true },
+    fill: { patternType: "solid", fgColor: { rgb: "F3F4F6" } },
+    alignment: { vertical: "center", wrapText: true },
+    border: THIN_BORDER,
   };
   const TOTAL_STYLE = {
-    font: { bold: true, color: { rgb: "FFFFFF" } },
-    fill: { fgColor: { rgb: "0F172A" } },
-    alignment: { vertical: "center", horizontal: "left" },
+    font: { ...FONT_BASE, bold: true, color: { rgb: "FFFFFF" } },
+    fill: { patternType: "solid", fgColor: { rgb: "0F172A" } },
+    alignment: { vertical: "center", horizontal: "left", wrapText: true },
+    border: THIN_BORDER,
   };
 
   for (let r = 0; r < detRowMeta.length; r++) {
@@ -519,6 +573,9 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
       }
     }
   }
+  // Garante bordas em todas as células do Detalhamento (mantém estilos
+  // específicos já aplicados acima — `applyBaseGrid` preserva `existing`).
+  applyBaseGrid(wsDet, 0, detRows.length - 1, 0, detLastCol);
   XLSX.utils.book_append_sheet(wb, wsDet, "Detalhamento");
 
   // ── Aba 3: Resumo por seção ───────────────────────────────────────────
@@ -593,6 +650,7 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
       cell.s = isFinal ? TOTAL_STYLE : SUBTOTAL_STYLE;
     }
   }
+  applyBaseGrid(wsSec, 0, secRows.length - 1, 0, secHeader.length - 1);
   XLSX.utils.book_append_sheet(wb, wsSec, "Resumo por seção");
 
 
@@ -618,6 +676,7 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
       setCellFormat(wsAdj, XLSX.utils.encode_cell({ r, c: 2 }), FMT.BRL);
       setCellFormat(wsAdj, XLSX.utils.encode_cell({ r, c: 3 }), FMT.BRL);
     }
+    applyBaseGrid(wsAdj, 0, adjRows.length - 1, 0, adjHeader.length - 1);
     XLSX.utils.book_append_sheet(wb, wsAdj, "Ajustes");
   }
 
