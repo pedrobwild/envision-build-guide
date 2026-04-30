@@ -206,6 +206,8 @@ export async function buildBudgetXlsxBlob(
     }
   };
   // Aplica borda + fonte base a todas as células de uma faixa retangular.
+  // Também garante `wrapText: true` no alinhamento para que textos longos
+  // quebrem dentro da célula em vez de ficarem cortados.
   const applyBaseGrid = (
     ws: XLSX.WorkSheet,
     startRow: number,
@@ -219,13 +221,94 @@ export async function buildBudgetXlsxBlob(
         const cell = ws[addr] as (XLSX.CellObject & { s?: Record<string, unknown> }) | undefined;
         if (!cell) continue;
         const existing = (cell.s ?? {}) as Record<string, unknown>;
+        const existingAlign = (existing.alignment as Record<string, unknown> | undefined) ?? {};
         cell.s = {
           font: { ...FONT_BASE, ...((existing.font as object) ?? {}) },
           border: THIN_BORDER,
           ...existing,
+          alignment: {
+            vertical: "center",
+            wrapText: true,
+            ...existingAlign,
+            // Força wrapText mesmo se o existing.alignment vier sem ele.
+            ...(existingAlign && (existingAlign as { wrapText?: boolean }).wrapText === false
+              ? {}
+              : { wrapText: true }),
+          },
         };
       }
     }
+  };
+
+  // Calcula largura ideal por coluna a partir do conteúdo real do AOA.
+  // - Considera a maior linha de cada célula (após split em "\n") para evitar
+  //   superdimensionar colunas que contenham textos com quebras.
+  // - Aplica min/max por coluna para evitar colunas estreitas demais
+  //   (cabeçalhos cortados) ou largas demais (rolagem horizontal).
+  // - Datas e números formatados ficam com largura mínima maior.
+  const autoFitColumns = (
+    aoa: (string | number | Date | null | undefined)[][],
+    opts?: { min?: number[]; max?: number[]; defaultMin?: number; defaultMax?: number },
+  ): { wch: number }[] => {
+    const defaultMin = opts?.defaultMin ?? 8;
+    const defaultMax = opts?.defaultMax ?? 60;
+    const colCount = aoa.reduce((m, row) => Math.max(m, row.length), 0);
+    const widths: number[] = new Array(colCount).fill(0);
+    for (const row of aoa) {
+      for (let c = 0; c < row.length; c++) {
+        const v = row[c];
+        if (v == null || v === "") continue;
+        const text = v instanceof Date ? "00/00/0000" : String(v);
+        // Considera só a maior linha quando há \n (texto multi-linha).
+        const longest = text.split(/\r?\n/).reduce((m, l) => Math.max(m, l.length), 0);
+        if (longest > widths[c]) widths[c] = longest;
+      }
+    }
+    return widths.map((w, c) => {
+      const min = opts?.min?.[c] ?? defaultMin;
+      const max = opts?.max?.[c] ?? defaultMax;
+      // +2 de folga para padding/borda; clamp em [min, max].
+      const wch = Math.min(Math.max(w + 2, min), max);
+      return { wch };
+    });
+  };
+
+  // Calcula altura sugerida da linha quando há texto que pode quebrar
+  // (descrição longa, título de seção mesclado, etc.). Isso evita que o
+  // wrapText "esconda" linhas porque a altura padrão é 15pt.
+  const autoFitRowHeights = (
+    ws: XLSX.WorkSheet,
+    aoa: (string | number | Date | null | undefined)[][],
+    cols: { wch: number }[],
+    opts?: { mergedRows?: Set<number>; mergedTotalWidth?: number },
+  ) => {
+    const rows: { hpt: number }[] = [];
+    for (let r = 0; r < aoa.length; r++) {
+      const row = aoa[r];
+      let maxLines = 1;
+      const isMerged = opts?.mergedRows?.has(r);
+      for (let c = 0; c < row.length; c++) {
+        const v = row[c];
+        if (v == null || v === "") continue;
+        const text = String(v);
+        const explicit = text.split(/\r?\n/).length;
+        // Largura disponível: célula isolada → wch da coluna; mesclada →
+        // soma de todas as colunas (passada via mergedTotalWidth).
+        const widthChars = isMerged
+          ? (opts?.mergedTotalWidth ?? cols.reduce((s, k) => s + (k.wch || 0), 0))
+          : (cols[c]?.wch ?? 10);
+        const longestLine = text
+          .split(/\r?\n/)
+          .reduce((m, l) => Math.max(m, l.length), 0);
+        const wrapped = Math.max(1, Math.ceil(longestLine / Math.max(widthChars - 1, 1)));
+        const lines = Math.max(explicit, wrapped);
+        if (lines > maxLines) maxLines = lines;
+      }
+      // 15pt é a altura padrão de uma linha; ~14pt por linha extra.
+      const hpt = Math.min(Math.max(15, maxLines * 15), 220);
+      rows.push({ hpt });
+    }
+    ws["!rows"] = rows;
   };
 
   // ── Totais ────────────────────────────────────────────────────────────
@@ -290,7 +373,10 @@ export async function buildBudgetXlsxBlob(
     e.isHeader ? [e.label, ""] : [e.label, e.value as string | number | Date | null],
   );
   const wsResumo = XLSX.utils.aoa_to_sheet(resumoAoa, { cellDates: true });
-  wsResumo["!cols"] = [{ wch: 34 }, { wch: 36 }];
+  wsResumo["!cols"] = autoFitColumns(resumoAoa, {
+    min: [28, 24],
+    max: [50, 60],
+  });
   // Aplica formato em B
   resumoEntries.forEach((e, idx) => {
     if (e.isHeader) {
@@ -323,6 +409,16 @@ export async function buildBudgetXlsxBlob(
       font: { ...FONT_BASE, bold: true },
       alignment: { vertical: "center", wrapText: true },
     };
+  });
+  // Header rows do Resumo são mescladas A:B; passa o set para o cálculo
+  // considerar a largura combinada das duas colunas.
+  const resumoMergedRows = new Set<number>(
+    (wsResumo["!merges"] ?? []).map((m) => m.s.r),
+  );
+  const resumoCols = wsResumo["!cols"] as { wch: number }[];
+  autoFitRowHeights(wsResumo, resumoAoa, resumoCols, {
+    mergedRows: resumoMergedRows,
+    mergedTotalWidth: resumoCols.reduce((s, k) => s + (k.wch || 0), 0),
   });
   XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
 
@@ -508,17 +604,12 @@ export async function buildBudgetXlsxBlob(
   }
 
   const wsDet = XLSX.utils.aoa_to_sheet(detRows);
-  wsDet["!cols"] = [
-    { wch: 38 }, // Item
-    { wch: 60 }, // Descrição
-    { wch: 10 }, // Qtd
-    { wch: 8 },  // Un.
-    { wch: 16 }, // Custo unit.
-    { wch: 18 }, // Custo total
-    { wch: 10 }, // BDI
-    { wch: 16 }, // Venda unit.
-    { wch: 18 }, // Venda total
-  ];
+  // Largura mínima por coluna garante que cabeçalhos e valores monetários
+  // sempre apareçam por inteiro; máxima evita "Descrição" gigantesca.
+  wsDet["!cols"] = autoFitColumns(detRows, {
+    min: [24, 32, 8, 6, 14, 16, 8, 14, 16],
+    max: [50, 70, 12, 10, 20, 22, 12, 20, 22],
+  });
   wsDet["!freeze"] = { xSplit: 0, ySplit: 1 };
   wsDet["!merges"] = detMerges;
 
@@ -580,6 +671,16 @@ export async function buildBudgetXlsxBlob(
   // Garante bordas em todas as células do Detalhamento (mantém estilos
   // específicos já aplicados acima — `applyBaseGrid` preserva `existing`).
   applyBaseGrid(wsDet, 0, detRows.length - 1, 0, detLastCol);
+  // Linhas com cabeçalho de seção e subtotal são mescladas em A:E (ou A:H
+  // nos totais); o auto-fit precisa considerar a largura combinada para
+  // calcular quantas linhas a quebra de texto realmente ocupa.
+  const detMergedRows = new Set<number>(detMerges.map((m) => m.s.r));
+  const detColsArr = wsDet["!cols"] as { wch: number }[];
+  const detMergedTotalWidth = detColsArr.reduce((s, k) => s + (k.wch || 0), 0);
+  autoFitRowHeights(wsDet, detRows, detColsArr, {
+    mergedRows: detMergedRows,
+    mergedTotalWidth: detMergedTotalWidth,
+  });
   XLSX.utils.book_append_sheet(wb, wsDet, "Detalhamento");
 
   // ── Aba 3: Resumo por seção ───────────────────────────────────────────
@@ -627,10 +728,10 @@ export async function buildBudgetXlsxBlob(
   secRows.push(["", "Total geral", "", "", "", "", totalVenda + totalAjustes, "", ""]);
 
   const wsSec = XLSX.utils.aoa_to_sheet(secRows);
-  wsSec["!cols"] = [
-    { wch: 5 }, { wch: 28 }, { wch: 28 }, { wch: 12 }, { wch: 8 },
-    { wch: 16 }, { wch: 16 }, { wch: 12 }, { wch: 10 },
-  ];
+  wsSec["!cols"] = autoFitColumns(secRows, {
+    min: [4, 22, 22, 10, 6, 14, 14, 10, 8],
+    max: [6, 50, 50, 14, 10, 20, 20, 14, 12],
+  });
   wsSec["!freeze"] = { xSplit: 0, ySplit: 1 };
   styleHeaderRow(wsSec, 0, secHeader.length);
   for (let r = 1; r < secTotalsStartRow; r++) {
@@ -655,6 +756,7 @@ export async function buildBudgetXlsxBlob(
     }
   }
   applyBaseGrid(wsSec, 0, secRows.length - 1, 0, secHeader.length - 1);
+  autoFitRowHeights(wsSec, secRows, wsSec["!cols"] as { wch: number }[]);
   XLSX.utils.book_append_sheet(wb, wsSec, "Resumo por seção");
 
 
@@ -673,7 +775,10 @@ export async function buildBudgetXlsxBlob(
       ]);
     }
     const wsAdj = XLSX.utils.aoa_to_sheet(adjRows);
-    wsAdj["!cols"] = [{ wch: 36 }, { wch: 8 }, { wch: 16 }, { wch: 16 }];
+    wsAdj["!cols"] = autoFitColumns(adjRows, {
+      min: [28, 6, 14, 14],
+      max: [60, 8, 20, 20],
+    });
     wsAdj["!freeze"] = { xSplit: 0, ySplit: 1 };
     styleHeaderRow(wsAdj, 0, adjHeader.length);
     for (let r = 1; r < adjRows.length; r++) {
@@ -681,6 +786,7 @@ export async function buildBudgetXlsxBlob(
       setCellFormat(wsAdj, XLSX.utils.encode_cell({ r, c: 3 }), FMT.BRL);
     }
     applyBaseGrid(wsAdj, 0, adjRows.length - 1, 0, adjHeader.length - 1);
+    autoFitRowHeights(wsAdj, adjRows, wsAdj["!cols"] as { wch: number }[]);
     XLSX.utils.book_append_sheet(wb, wsAdj, "Ajustes");
   }
 
