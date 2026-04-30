@@ -765,7 +765,10 @@ export async function buildBudgetXlsxBlob(
       ]);
     }
     const wsAdj = XLSX.utils.aoa_to_sheet(adjRows);
-    wsAdj["!cols"] = [{ wch: 36 }, { wch: 8 }, { wch: 16 }, { wch: 16 }];
+    wsAdj["!cols"] = autoFitColumns(adjRows, {
+      min: [28, 6, 14, 14],
+      max: [60, 8, 20, 20],
+    });
     wsAdj["!freeze"] = { xSplit: 0, ySplit: 1 };
     styleHeaderRow(wsAdj, 0, adjHeader.length);
     for (let r = 1; r < adjRows.length; r++) {
@@ -773,6 +776,7 @@ export async function buildBudgetXlsxBlob(
       setCellFormat(wsAdj, XLSX.utils.encode_cell({ r, c: 3 }), FMT.BRL);
     }
     applyBaseGrid(wsAdj, 0, adjRows.length - 1, 0, adjHeader.length - 1);
+    autoFitRowHeights(wsAdj, adjRows, wsAdj["!cols"] as { wch: number }[]);
     XLSX.utils.book_append_sheet(wb, wsAdj, "Ajustes");
   }
 
