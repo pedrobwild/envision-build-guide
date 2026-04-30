@@ -676,6 +676,7 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
       setCellFormat(wsAdj, XLSX.utils.encode_cell({ r, c: 2 }), FMT.BRL);
       setCellFormat(wsAdj, XLSX.utils.encode_cell({ r, c: 3 }), FMT.BRL);
     }
+    applyBaseGrid(wsAdj, 0, adjRows.length - 1, 0, adjHeader.length - 1);
     XLSX.utils.book_append_sheet(wb, wsAdj, "Ajustes");
   }
 
