@@ -597,6 +597,20 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
   // presente, respeitamos para bater 1:1 com o arquivo gerado.
   const rowMeta = (worksheet["!rows"] ?? []) as { hpt?: number; hpx?: number }[];
 
+  // Última linha com algum conteúdo — referência para identificar o
+  // "total geral" tanto por estilo quanto por posição.
+  const lastContentRow = (() => {
+    for (let r = range.e.r; r >= range.s.r; r--) {
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const cell = worksheet[XLSX.utils.encode_cell({ r, c })] as
+          | XLSX.CellObject
+          | undefined;
+        if (cell && cell.v != null && cell.v !== "") return r;
+      }
+    }
+    return range.e.r;
+  })();
+
   return (
     <table className="w-full border-collapse text-xs font-mono tabular-nums">
       <colgroup>
@@ -621,16 +635,20 @@ function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
             range.s.c,
             range.e.c,
             mergeMap.hidden,
+            lastContentRow,
           );
+          // Realce visual por tipo. Reforçamos cabeçalho e total com
+          // borda extra para que o usuário escaneie a tabela mesmo
+          // quando o exporter remove cores (modo compatível).
           const rowClass =
             kind === "header"
-              ? "bg-slate-900 text-white"
+              ? "bg-slate-900 text-white uppercase tracking-wide text-[11px] border-b-2 border-slate-700"
               : kind === "total"
-                ? "bg-slate-900 text-white"
+                ? "bg-slate-900 text-white font-semibold border-t-2 border-slate-700"
                 : kind === "subtotal"
-                  ? "bg-slate-100 font-semibold"
+                  ? "bg-slate-100 font-semibold text-slate-900 border-t border-slate-300"
                   : kind === "section"
-                    ? "bg-slate-50 font-semibold text-slate-700"
+                    ? "bg-slate-50 font-semibold text-slate-700 uppercase text-[11px] tracking-wide"
                     : "";
 
           // Altura da linha:
