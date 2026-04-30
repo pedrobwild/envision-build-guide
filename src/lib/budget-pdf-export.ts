@@ -413,5 +413,30 @@ export async function buildBudgetPdfBlob(
   // Nome do arquivo
   const codePart = b.sequential_code || b.id.slice(0, 8);
   const namePart = sanitizeFileName(b.project_name || b.client_name || "orcamento");
-  doc.save(`${codePart}_${namePart}.pdf`);
+  const fileName = `${codePart}_${namePart}.pdf`;
+  // `doc.output("blob")` devolve o mesmo conteúdo que `doc.save` gravaria,
+  // permitindo pré-visualização em iframe antes do download.
+  const blob = doc.output("blob");
+  return { blob, fileName };
+}
+
+/**
+ * Wrapper de compatibilidade — gera o PDF e dispara o download imediato.
+ * Mantido para os call sites que ainda não usam a pré-visualização.
+ */
+export async function exportBudgetToPdf(budgetId: string): Promise<void> {
+  const { blob, fileName } = await buildBudgetPdfBlob(budgetId);
+  triggerBlobDownload(blob, fileName);
+}
+
+function triggerBlobDownload(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Revoga depois para garantir que o download começou.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
