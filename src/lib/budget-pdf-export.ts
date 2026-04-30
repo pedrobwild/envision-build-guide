@@ -11,6 +11,52 @@ import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 
+/**
+ * Disclaimer padrão impresso no rodapé do PDF quando o caller não passa
+ * um texto customizado. Editável pelo usuário no diálogo de pré-visualização.
+ */
+export const DEFAULT_BUDGET_PDF_DISCLAIMER =
+  "Este orçamento é uma estimativa baseada nas informações fornecidas e está sujeito " +
+  "a alterações após visita técnica e validação de escopo. Os valores apresentados " +
+  "incluem custos diretos, BDI e impostos aplicáveis e têm validade conforme o prazo " +
+  "indicado no cabeçalho. A contratação dos serviços está condicionada à assinatura " +
+  "de contrato específico entre as partes.";
+
+export interface BuildBudgetPdfOptions {
+  /**
+   * Quando `true` (padrão), inclui o logo da Bwild no canto superior direito.
+   * Pode ser desativado para versões "neutras" (white-label) do orçamento.
+   */
+  includeLogo?: boolean;
+  /**
+   * Texto livre exibido como disclaimer no rodapé do PDF. Quando `null`
+   * ou string vazia, nada é impresso. Quando `undefined`, usa o
+   * `DEFAULT_BUDGET_PDF_DISCLAIMER`.
+   */
+  disclaimer?: string | null;
+}
+
+// Carrega o logo dark da Bwild como dataURL para embutir no PDF sem
+// depender de fetch externo na hora da exportação. Usa o mesmo asset já
+// adotado em FinancialHistory/AppSidebar para manter consistência visual.
+async function loadBwildLogoDataUrl(): Promise<string | null> {
+  try {
+    const mod = await import("@/assets/logo-bwild-dark.png");
+    const url = mod.default as string;
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    logger.error("[pdf-export] failed to load logo:", e);
+    return null;
+  }
+}
+
 interface BudgetHeader {
   id: string;
   sequential_code: string | null;
@@ -96,7 +142,14 @@ const sanitizeFileName = (s: string) =>
  */
 export async function buildBudgetPdfBlob(
   budgetId: string,
+  options: BuildBudgetPdfOptions = {},
 ): Promise<{ blob: Blob; fileName: string }> {
+  const includeLogo = options.includeLogo !== false;
+  // `disclaimer === undefined` → default; `null` ou "" → omite.
+  const disclaimerText =
+    options.disclaimer === undefined
+      ? DEFAULT_BUDGET_PDF_DISCLAIMER
+      : (options.disclaimer ?? "");
   // 1) Cabeçalho
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
@@ -164,6 +217,28 @@ export async function buildBudgetPdfBlob(
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const marginX = 12;
+
+  // Logo Bwild no canto superior direito — não desloca o cabeçalho do
+  // cliente (mesma posição/textos), apenas convive na lateral livre.
+  const logoDataUrl = includeLogo ? await loadBwildLogoDataUrl() : null;
+  if (logoDataUrl) {
+    try {
+      // Aspecto ~3:1 (logo dark/white compartilham proporções). 30x10mm
+      // dá presença suficiente em landscape sem competir com o título.
+      const logoW = 30;
+      const logoH = 10;
+      doc.addImage(
+        logoDataUrl,
+        "PNG",
+        pageWidth - marginX - logoW,
+        8,
+        logoW,
+        logoH,
+      );
+    } catch (e) {
+      logger.error("[pdf-export] failed to draw logo:", e);
+    }
+  }
 
   // Cabeçalho
   doc.setFont("helvetica", "bold");
@@ -410,6 +485,37 @@ export async function buildBudgetPdfBlob(
     },
   });
 
+  // ── Disclaimer (editável) ─────────────────────────────────────────────
+  // Texto livre no rodapé do documento. Quebra automaticamente em linhas
+  // dentro da margem útil; se não couber na página atual, força nova
+  // página antes de imprimir para evitar texto cortado.
+  if (disclaimerText.trim()) {
+    const usableWidth = pageWidth - marginX * 2;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(90);
+    const lines = doc.splitTextToSize(disclaimerText.trim(), usableWidth) as string[];
+    const lineH = 3.6;
+    const blockH = lines.length * lineH + 8;
+    const lastY =
+      (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 100;
+    const pageH = doc.internal.pageSize.getHeight();
+    let startY = lastY + 10;
+    if (startY + blockH > pageH - 10) {
+      doc.addPage();
+      startY = 18;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(110);
+    doc.text("OBSERVAÇÕES", marginX, startY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(70);
+    doc.text(lines, marginX, startY + 5);
+    doc.setTextColor(0);
+  }
+
   // Nome do arquivo
   const codePart = b.sequential_code || b.id.slice(0, 8);
   const namePart = sanitizeFileName(b.project_name || b.client_name || "orcamento");
@@ -424,8 +530,11 @@ export async function buildBudgetPdfBlob(
  * Wrapper de compatibilidade — gera o PDF e dispara o download imediato.
  * Mantido para os call sites que ainda não usam a pré-visualização.
  */
-export async function exportBudgetToPdf(budgetId: string): Promise<void> {
-  const { blob, fileName } = await buildBudgetPdfBlob(budgetId);
+export async function exportBudgetToPdf(
+  budgetId: string,
+  options: BuildBudgetPdfOptions = {},
+): Promise<void> {
+  const { blob, fileName } = await buildBudgetPdfBlob(budgetId, options);
   triggerBlobDownload(blob, fileName);
 }
 

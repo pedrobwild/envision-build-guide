@@ -84,8 +84,19 @@ const sanitizeFileName = (s: string) =>
  * possa renderizar cada planilha como tabela HTML sem reler o arquivo.
  * Lança erro caso a query falhe.
  */
+export interface BuildXlsxOptions {
+  /**
+   * Quando `true`, gera um arquivo "compatível" — sem cores, bordas,
+   * mesclagens, wrapText ou estilos avançados. Mantém apenas valores,
+   * formatos numéricos/data e larguras de coluna. Útil para versões
+   * antigas do Excel ou visualizadores que renderizam estilos errado.
+   */
+  simple?: boolean;
+}
+
 export async function buildBudgetXlsxBlob(
   budgetId: string,
+  options: BuildXlsxOptions = {},
 ): Promise<{ blob: Blob; fileName: string; workbook: XLSX.WorkBook }> {
   // 1) Cabeçalho do orçamento
   const { data: budget, error: budgetErr } = await supabase
@@ -790,10 +801,39 @@ export async function buildBudgetXlsxBlob(
     XLSX.utils.book_append_sheet(wb, wsAdj, "Ajustes");
   }
 
-  // Nome do arquivo
+  // Modo simples (compatibilidade): remove tudo que é "estilo" — cores,
+  // bordas, mesclagens, freeze pane, alturas customizadas e wrapText.
+  // Mantém valores, formatos numéricos/data e larguras de coluna, que
+  // são suportados por qualquer leitor de .xlsx (inclusive Excel antigo,
+  // Numbers, Google Sheets e visualizadores embarcados).
+  if (options.simple) {
+    for (const sheetName of wb.SheetNames) {
+      const ws = wb.Sheets[sheetName];
+      if (!ws) continue;
+      delete (ws as Record<string, unknown>)["!merges"];
+      delete (ws as Record<string, unknown>)["!rows"];
+      delete (ws as Record<string, unknown>)["!freeze"];
+      const ref = ws["!ref"];
+      if (!ref) continue;
+      const range = XLSX.utils.decode_range(ref);
+      for (let r = range.s.r; r <= range.e.r; r++) {
+        for (let c = range.s.c; c <= range.e.c; c++) {
+          const addr = XLSX.utils.encode_cell({ r, c });
+          const cell = ws[addr] as
+            | (XLSX.CellObject & { s?: unknown })
+            | undefined;
+          if (cell && cell.s) delete cell.s;
+        }
+      }
+    }
+  }
+
+  // Nome do arquivo — sufixo "_simples" deixa explícito qual versão foi
+  // baixada quando o usuário gera as duas para comparar.
   const codePart = b.sequential_code || b.id.slice(0, 8);
   const namePart = sanitizeFileName(b.project_name || b.client_name || "orcamento");
-  const fileName = `${codePart}_${namePart}.xlsx`;
+  const suffix = options.simple ? "_simples" : "";
+  const fileName = `${codePart}_${namePart}${suffix}.xlsx`;
 
   // `XLSX.write` em vez de `XLSX.writeFile`: gera o conteúdo em memória,
   // permitindo pré-visualização antes de oferecer o download.
@@ -807,8 +847,11 @@ export async function buildBudgetXlsxBlob(
 /**
  * Wrapper de compatibilidade — gera o XLSX e dispara o download imediato.
  */
-export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
-  const { blob, fileName } = await buildBudgetXlsxBlob(budgetId);
+export async function exportBudgetToXlsx(
+  budgetId: string,
+  options: BuildXlsxOptions = {},
+): Promise<void> {
+  const { blob, fileName } = await buildBudgetXlsxBlob(budgetId, options);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

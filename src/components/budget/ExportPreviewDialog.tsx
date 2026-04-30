@@ -28,9 +28,15 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
-import { buildBudgetPdfBlob } from "@/lib/budget-pdf-export";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  buildBudgetPdfBlob,
+  DEFAULT_BUDGET_PDF_DISCLAIMER,
+} from "@/lib/budget-pdf-export";
 import { buildBudgetXlsxBlob } from "@/lib/budget-xlsx-export";
 
 export type ExportPreviewKind = "pdf" | "xlsx";
@@ -70,6 +76,37 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
   const [error, setError] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<PdfPreview | null>(null);
   const [xlsxPreview, setXlsxPreview] = useState<XlsxPreview | null>(null);
+  // Modo compatível: gera o XLSX sem cores, bordas, mesclagens nem
+  // wrapText. Útil quando o cliente abre o arquivo num leitor que
+  // renderiza errado a formatação avançada (Excel antigo, alguns
+  // visualizadores embarcados, planilha do celular sem suporte etc.).
+  const [simpleXlsx, setSimpleXlsx] = useState(false);
+  // Personalizações do PDF: logo da Bwild (on/off) e texto livre que vai
+  // ao rodapé como "Observações". Default carrega o disclaimer padrão da
+  // empresa, e o usuário pode editar/limpar antes de baixar.
+  const [includeLogo, setIncludeLogo] = useState(true);
+  const [disclaimer, setDisclaimer] = useState<string>(DEFAULT_BUDGET_PDF_DISCLAIMER);
+  // Versão "debounced" do disclaimer — só dispara nova geração depois de
+  // 600ms parado, evitando regerar o PDF a cada tecla pressionada.
+  const [disclaimerDebounced, setDisclaimerDebounced] = useState<string>(
+    DEFAULT_BUDGET_PDF_DISCLAIMER,
+  );
+
+  // Reseta toggles ao trocar de alvo/tipo para não carregar preferência
+  // de um orçamento anterior sem o usuário perceber.
+  useEffect(() => {
+    setSimpleXlsx(false);
+    setIncludeLogo(true);
+    setDisclaimer(DEFAULT_BUDGET_PDF_DISCLAIMER);
+    setDisclaimerDebounced(DEFAULT_BUDGET_PDF_DISCLAIMER);
+  }, [budgetId, kind]);
+
+  // Debounce do textarea: aguarda 600ms sem digitação para regerar.
+  useEffect(() => {
+    if (kind !== "pdf") return;
+    const t = setTimeout(() => setDisclaimerDebounced(disclaimer), 600);
+    return () => clearTimeout(t);
+  }, [disclaimer, kind]);
 
   // Limpa estado quando o diálogo abre/fecha ou o alvo muda.
   useEffect(() => {
@@ -83,12 +120,18 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
     (async () => {
       try {
         if (kind === "pdf") {
-          const { blob, fileName } = await buildBudgetPdfBlob(budgetId);
+          const { blob, fileName } = await buildBudgetPdfBlob(budgetId, {
+            includeLogo,
+            disclaimer: disclaimerDebounced,
+          });
           if (cancelled) return;
           const url = URL.createObjectURL(blob);
           setPdfPreview({ blob, fileName, url });
         } else {
-          const { blob, fileName, workbook } = await buildBudgetXlsxBlob(budgetId);
+          const { blob, fileName, workbook } = await buildBudgetXlsxBlob(
+            budgetId,
+            { simple: simpleXlsx },
+          );
           if (cancelled) return;
           setXlsxPreview({ blob, fileName, workbook });
         }
@@ -105,7 +148,7 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
     return () => {
       cancelled = true;
     };
-  }, [open, budgetId, kind]);
+  }, [open, budgetId, kind, simpleXlsx, includeLogo, disclaimerDebounced]);
 
   // Revoga o object URL do PDF quando o preview é descartado/refeito.
   useEffect(() => {
@@ -135,7 +178,7 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[min(1100px,95vw)] h-[85vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-[min(1200px,95vw)] h-[85vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 pt-5 pb-3 border-b">
           <DialogTitle className="text-base">
             Pré-visualização do {kind === "pdf" ? "PDF" : "Excel"}
@@ -146,27 +189,98 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-hidden bg-muted/30">
-          {loading ? (
-            <PreviewLoadingState kind={kind} />
-          ) : error ? (
-            <PreviewErrorState message={error} />
-          ) : kind === "pdf" && pdfPreview ? (
-            <iframe
-              title="Pré-visualização do PDF"
-              src={pdfPreview.url}
-              className="w-full h-full border-0 bg-white"
-            />
-          ) : kind === "xlsx" && xlsxPreview ? (
-            <XlsxWorkbookPreview workbook={xlsxPreview.workbook} />
-          ) : null}
+        <div className="flex-1 min-h-0 overflow-hidden bg-muted/30 flex">
+          <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
+            {loading ? (
+              <PreviewLoadingState kind={kind} />
+            ) : error ? (
+              <PreviewErrorState message={error} />
+            ) : kind === "pdf" && pdfPreview ? (
+              <iframe
+                title="Pré-visualização do PDF"
+                src={pdfPreview.url}
+                className="w-full h-full border-0 bg-white"
+              />
+            ) : kind === "xlsx" && xlsxPreview ? (
+              <XlsxWorkbookPreview workbook={xlsxPreview.workbook} />
+            ) : null}
+          </div>
+
+          {kind === "pdf" && (
+            <aside className="hidden md:flex w-[280px] shrink-0 flex-col gap-4 border-l bg-background p-4 overflow-y-auto">
+              <div>
+                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                  Personalização do PDF
+                </h4>
+                <div className="flex items-center justify-between gap-2 py-1">
+                  <Label
+                    htmlFor="pdf-include-logo"
+                    className="text-xs cursor-pointer"
+                  >
+                    Incluir logo Bwild
+                  </Label>
+                  <Switch
+                    id="pdf-include-logo"
+                    checked={includeLogo}
+                    onCheckedChange={setIncludeLogo}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 min-h-0">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="pdf-disclaimer" className="text-xs">
+                    Observações no rodapé
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setDisclaimer(DEFAULT_BUDGET_PDF_DISCLAIMER)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                    disabled={loading || disclaimer === DEFAULT_BUDGET_PDF_DISCLAIMER}
+                  >
+                    Restaurar padrão
+                  </button>
+                </div>
+                <Textarea
+                  id="pdf-disclaimer"
+                  value={disclaimer}
+                  onChange={(e) => setDisclaimer(e.target.value)}
+                  placeholder="Texto livre a ser impresso no fim do PDF (deixe em branco para omitir)."
+                  className="min-h-[180px] text-xs leading-relaxed resize-none"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  A pré-visualização atualiza após uma breve pausa na digitação.
+                </p>
+              </div>
+            </aside>
+          )}
         </div>
 
         <DialogFooter className="px-6 py-3 border-t flex-row items-center justify-between gap-3 sm:justify-between">
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground truncate">
-            {fileName ?? "—"}
-          </span>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground truncate">
+              {fileName ?? "—"}
+            </span>
+            {kind === "xlsx" && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="xlsx-simple-mode"
+                  checked={simpleXlsx}
+                  onCheckedChange={setSimpleXlsx}
+                  disabled={loading}
+                />
+                <Label
+                  htmlFor="xlsx-simple-mode"
+                  className="text-xs text-muted-foreground cursor-pointer"
+                  title="Gera o arquivo sem cores, bordas, mesclagens nem quebra de texto. Use quando o Excel do destinatário não renderiza bem a formatação."
+                >
+                  Modo compatível (sem estilos avançados)
+                </Label>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="ghost"
               size="sm"
