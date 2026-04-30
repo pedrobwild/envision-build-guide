@@ -1025,7 +1025,7 @@ export async function buildBudgetXlsxBlob(
   const blob = new Blob([arrayBuffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
-  return { blob, fileName, workbook: wb };
+  return { blob, fileName, workbook: wb, totals };
 }
 
 /**
