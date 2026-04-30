@@ -11,6 +11,52 @@ import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 
+/**
+ * Disclaimer padrão impresso no rodapé do PDF quando o caller não passa
+ * um texto customizado. Editável pelo usuário no diálogo de pré-visualização.
+ */
+export const DEFAULT_BUDGET_PDF_DISCLAIMER =
+  "Este orçamento é uma estimativa baseada nas informações fornecidas e está sujeito " +
+  "a alterações após visita técnica e validação de escopo. Os valores apresentados " +
+  "incluem custos diretos, BDI e impostos aplicáveis e têm validade conforme o prazo " +
+  "indicado no cabeçalho. A contratação dos serviços está condicionada à assinatura " +
+  "de contrato específico entre as partes.";
+
+export interface BuildBudgetPdfOptions {
+  /**
+   * Quando `true` (padrão), inclui o logo da Bwild no canto superior direito.
+   * Pode ser desativado para versões "neutras" (white-label) do orçamento.
+   */
+  includeLogo?: boolean;
+  /**
+   * Texto livre exibido como disclaimer no rodapé do PDF. Quando `null`
+   * ou string vazia, nada é impresso. Quando `undefined`, usa o
+   * `DEFAULT_BUDGET_PDF_DISCLAIMER`.
+   */
+  disclaimer?: string | null;
+}
+
+// Carrega o logo dark da Bwild como dataURL para embutir no PDF sem
+// depender de fetch externo na hora da exportação. Usa o mesmo asset já
+// adotado em FinancialHistory/AppSidebar para manter consistência visual.
+async function loadBwildLogoDataUrl(): Promise<string | null> {
+  try {
+    const mod = await import("@/assets/logo-bwild-dark.png");
+    const url = mod.default as string;
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    logger.error("[pdf-export] failed to load logo:", e);
+    return null;
+  }
+}
+
 interface BudgetHeader {
   id: string;
   sequential_code: string | null;
