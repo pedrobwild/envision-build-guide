@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { MobileSwipeableKanban } from "@/components/admin/MobileSwipeableKanban";
 import { CompactKanbanCard } from "@/components/admin/CompactKanbanCard";
 import { VersionBadge } from "@/components/admin/VersionBadge";
