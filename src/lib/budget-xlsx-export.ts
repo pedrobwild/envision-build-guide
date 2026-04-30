@@ -14,6 +14,16 @@
 import * as XLSX from "xlsx-js-style";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import {
+  calcItemCostTotal,
+  calcItemSaleTotal,
+  calcSectionCostTotal,
+  calcSectionSaleTotal,
+  calcGrandTotals,
+  isCreditSection,
+  type CalcSection,
+  type CalcItem,
+} from "@/lib/budget-calc";
 
 interface BudgetHeader {
   id: string;
