@@ -746,6 +746,7 @@ export async function buildBudgetXlsxBlob(
     }
   }
   applyBaseGrid(wsSec, 0, secRows.length - 1, 0, secHeader.length - 1);
+  autoFitRowHeights(wsSec, secRows, wsSec["!cols"] as { wch: number }[]);
   XLSX.utils.book_append_sheet(wb, wsSec, "Resumo por seção");
 
 
