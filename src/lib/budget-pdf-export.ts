@@ -485,6 +485,37 @@ export async function buildBudgetPdfBlob(
     },
   });
 
+  // ── Disclaimer (editável) ─────────────────────────────────────────────
+  // Texto livre no rodapé do documento. Quebra automaticamente em linhas
+  // dentro da margem útil; se não couber na página atual, força nova
+  // página antes de imprimir para evitar texto cortado.
+  if (disclaimerText.trim()) {
+    const usableWidth = pageWidth - marginX * 2;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(90);
+    const lines = doc.splitTextToSize(disclaimerText.trim(), usableWidth) as string[];
+    const lineH = 3.6;
+    const blockH = lines.length * lineH + 8;
+    const lastY =
+      (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 100;
+    const pageH = doc.internal.pageSize.getHeight();
+    let startY = lastY + 10;
+    if (startY + blockH > pageH - 10) {
+      doc.addPage();
+      startY = 18;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(110);
+    doc.text("OBSERVAÇÕES", marginX, startY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(70);
+    doc.text(lines, marginX, startY + 5);
+    doc.setTextColor(0);
+  }
+
   // Nome do arquivo
   const codePart = b.sequential_code || b.id.slice(0, 8);
   const namePart = sanitizeFileName(b.project_name || b.client_name || "orcamento");
