@@ -78,10 +78,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
+    // Timeout de segurança: se getSession() travar (refresh_token preso,
+    // storage corrompido, rede offline sem evento), liberamos a UI como
+    // "sem sessão" para o usuário poder navegar / refazer login em vez
+    // de ficar preso em "Carregando..." para sempre.
+    const safetyTimer = window.setTimeout(() => {
+      if (!active || authHydratedRef.current) return;
+      console.warn("[useAuth] getSession timeout — liberando UI sem sessão");
+      authHydratedRef.current = true;
+      currentUserIdRef.current = null;
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+    }, 8000);
+
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
         if (!active) return;
+        window.clearTimeout(safetyTimer);
 
         authHydratedRef.current = true;
         currentUserIdRef.current = session?.user?.id ?? null;
@@ -91,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         if (!active) return;
+        window.clearTimeout(safetyTimer);
 
         authHydratedRef.current = true;
         currentUserIdRef.current = null;
@@ -101,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       active = false;
+      window.clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
