@@ -218,6 +218,28 @@ export async function buildBudgetPdfBlob(
   const pageWidth = doc.internal.pageSize.getWidth();
   const marginX = 12;
 
+  // Logo Bwild no canto superior direito — não desloca o cabeçalho do
+  // cliente (mesma posição/textos), apenas convive na lateral livre.
+  const logoDataUrl = includeLogo ? await loadBwildLogoDataUrl() : null;
+  if (logoDataUrl) {
+    try {
+      // Aspecto ~3:1 (logo dark/white compartilham proporções). 30x10mm
+      // dá presença suficiente em landscape sem competir com o título.
+      const logoW = 30;
+      const logoH = 10;
+      doc.addImage(
+        logoDataUrl,
+        "PNG",
+        pageWidth - marginX - logoW,
+        8,
+        logoW,
+        logoH,
+      );
+    } catch (e) {
+      logger.error("[pdf-export] failed to draw logo:", e);
+    }
+  }
+
   // Cabeçalho
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
