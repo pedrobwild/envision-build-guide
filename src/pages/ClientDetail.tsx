@@ -248,13 +248,8 @@ export default function ClientDetail() {
     return { cost, total, margin };
   }, [selectedExportBudget]);
 
-  // Em vez de gerar e baixar direto, abrimos o diálogo de pré-visualização
-  // com o `budgetId` + `kind`. O download só ocorre depois que o usuário
-  // confere o conteúdo e confirma — evita arquivos errados sendo enviados
-  // ao cliente sem revisão.
-  const [previewExport, setPreviewExport] = useState<
-    { budgetId: string; kind: "pdf" | "xlsx" } | null
-  >(null);
+  // Os handlers abaixo apenas abrem o diálogo de pré-visualização —
+  // a geração efetiva e o download acontecem dentro do componente.
 
   const handleExportBudget = (budgetId: string, _code: string | null) => {
     if (exportingBudgetId) return;
