@@ -90,10 +90,13 @@ const sanitizeFileName = (s: string) =>
     .slice(0, 80) || "orcamento";
 
 /**
- * Gera e dispara o download do .pdf do orçamento.
+ * Constrói o .pdf do orçamento em memória e devolve `{ blob, fileName }`.
+ * Não dispara download — útil para pré-visualização antes do save.
  * Lança erro caso a query falhe — chame de dentro de try/catch e use toast.
  */
-export async function exportBudgetToPdf(budgetId: string): Promise<void> {
+export async function buildBudgetPdfBlob(
+  budgetId: string,
+): Promise<{ blob: Blob; fileName: string }> {
   // 1) Cabeçalho
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
