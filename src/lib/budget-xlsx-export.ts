@@ -21,6 +21,9 @@ import {
   calcSectionSaleTotal,
   calcGrandTotals,
   isCreditSection,
+  isDiscountSection,
+  normalizeBudgetSections,
+  validateBudgetCalcStructure,
   type CalcSection,
   type CalcItem,
 } from "@/lib/budget-calc";
