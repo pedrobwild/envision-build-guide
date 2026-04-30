@@ -414,11 +414,6 @@ const TOTAL_RE = /^\s*(tot(al|ais)?|tot)\b/;
 const SECTION_RE =
   /^\s*(se[cç]ao|categoria|grupo|ambiente|etapa|fase|m[oó]dulo|escopo)\b/;
 
-  // 1) Sinais de TOTAL — texto explícito vence qualquer outro sinal,
-  //    pois é o que o usuário lê primeiro ao escanear a tabela.
-  //    Movido para dentro de `detectRowKind` (mantém helper acima).
-}
-
 function detectTextualKind(rawText: string): RowKind | null {
   if (!rawText) return null;
   const text = normalizeRowLabel(rawText);
@@ -431,7 +426,7 @@ function detectTextualKind(rawText: string): RowKind | null {
   return null;
 }
 
-function detectRowKindInner(
+function detectRowKind(
   ws: XLSX.WorkSheet,
   row: number,
   startCol: number,
