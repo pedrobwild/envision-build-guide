@@ -249,36 +249,16 @@ export default function BudgetInternalDetail() {
     },
     []
   );
-  const handleExportXlsx = useCallback(async () => {
+  const handleExportXlsx = useCallback(() => {
     const id = resolvedBudgetId ?? budgetId;
     if (!id || exportingXlsx) return;
-    setExportingXlsx(true);
-    const tId = toast.loading(`Gerando .xlsx${resolvedSeqCode ? ` (${resolvedSeqCode})` : ""}…`);
-    try {
-      await exportBudgetToXlsx(id);
-      toast.success("Planilha exportada.", { id: tId });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Falha ao exportar planilha.";
-      toast.error(msg, { id: tId });
-    } finally {
-      setExportingXlsx(false);
-    }
-  }, [resolvedBudgetId, budgetId, exportingXlsx, resolvedSeqCode]);
-  const handleExportPdf = useCallback(async () => {
+    setPreviewExport({ budgetId: id, kind: "xlsx" });
+  }, [resolvedBudgetId, budgetId, exportingXlsx]);
+  const handleExportPdf = useCallback(() => {
     const id = resolvedBudgetId ?? budgetId;
     if (!id || exportingPdf) return;
-    setExportingPdf(true);
-    const tId = toast.loading(`Gerando .pdf${resolvedSeqCode ? ` (${resolvedSeqCode})` : ""}…`);
-    try {
-      await exportBudgetToPdf(id);
-      toast.success("PDF exportado.", { id: tId });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Falha ao exportar PDF.";
-      toast.error(msg, { id: tId });
-    } finally {
-      setExportingPdf(false);
-    }
-  }, [resolvedBudgetId, budgetId, exportingPdf, resolvedSeqCode]);
+    setPreviewExport({ budgetId: id, kind: "pdf" });
+  }, [resolvedBudgetId, budgetId, exportingPdf]);
   const hub = useBudgetHub(budgetId);
 
   // Sync activeModule with URL ?module=
