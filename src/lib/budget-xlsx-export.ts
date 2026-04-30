@@ -594,17 +594,12 @@ export async function buildBudgetXlsxBlob(
   }
 
   const wsDet = XLSX.utils.aoa_to_sheet(detRows);
-  wsDet["!cols"] = [
-    { wch: 38 }, // Item
-    { wch: 60 }, // Descrição
-    { wch: 10 }, // Qtd
-    { wch: 8 },  // Un.
-    { wch: 16 }, // Custo unit.
-    { wch: 18 }, // Custo total
-    { wch: 10 }, // BDI
-    { wch: 16 }, // Venda unit.
-    { wch: 18 }, // Venda total
-  ];
+  // Largura mínima por coluna garante que cabeçalhos e valores monetários
+  // sempre apareçam por inteiro; máxima evita "Descrição" gigantesca.
+  wsDet["!cols"] = autoFitColumns(detRows, {
+    min: [24, 32, 8, 6, 14, 16, 8, 14, 16],
+    max: [50, 70, 12, 10, 20, 22, 12, 20, 22],
+  });
   wsDet["!freeze"] = { xSplit: 0, ySplit: 1 };
   wsDet["!merges"] = detMerges;
 
