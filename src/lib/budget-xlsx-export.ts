@@ -650,6 +650,7 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
       cell.s = isFinal ? TOTAL_STYLE : SUBTOTAL_STYLE;
     }
   }
+  applyBaseGrid(wsSec, 0, secRows.length - 1, 0, secHeader.length - 1);
   XLSX.utils.book_append_sheet(wb, wsSec, "Resumo por seção");
 
 
