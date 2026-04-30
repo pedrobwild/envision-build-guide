@@ -43,6 +43,7 @@ import {
   calcSectionCostTotal,
   calcSectionSaleTotal,
   isCreditSection,
+  isDiscountSection,
   type CalcSection,
 } from "@/lib/budget-calc";
 
