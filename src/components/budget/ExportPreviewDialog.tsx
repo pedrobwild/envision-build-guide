@@ -385,20 +385,37 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
               {fileName ?? "—"}
             </span>
             {kind === "xlsx" && (
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="xlsx-simple-mode"
-                  checked={simpleXlsx}
-                  onCheckedChange={setSimpleXlsx}
-                  disabled={loading}
-                />
-                <Label
-                  htmlFor="xlsx-simple-mode"
-                  className="text-xs text-muted-foreground cursor-pointer"
-                  title="Gera o arquivo sem cores, bordas, mesclagens nem quebra de texto. Use quando o Excel do destinatário não renderiza bem a formatação."
-                >
-                  Modo compatível (sem estilos avançados)
-                </Label>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="xlsx-simple-mode"
+                    checked={simpleXlsx}
+                    onCheckedChange={setSimpleXlsx}
+                    disabled={loading}
+                  />
+                  <Label
+                    htmlFor="xlsx-simple-mode"
+                    className="text-xs text-muted-foreground cursor-pointer"
+                    title="Gera o arquivo sem cores, bordas, mesclagens nem quebra de texto. Use quando o Excel do destinatário não renderiza bem a formatação."
+                  >
+                    Modo compatível (sem estilos avançados)
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="xlsx-audit-mode"
+                    checked={auditMode}
+                    onCheckedChange={setAuditMode}
+                    disabled={loading}
+                  />
+                  <Label
+                    htmlFor="xlsx-audit-mode"
+                    className="text-xs text-muted-foreground cursor-pointer"
+                    title="Mostra um painel lateral comparando, por seção, custo/venda usados no export com o resumo do editor."
+                  >
+                    Modo auditoria
+                  </Label>
+                </div>
               </div>
             )}
           </div>
