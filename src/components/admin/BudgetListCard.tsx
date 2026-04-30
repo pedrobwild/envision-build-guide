@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
