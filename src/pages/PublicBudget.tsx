@@ -251,9 +251,27 @@ export default function PublicBudget() {
         setBudget(partial as BudgetData);
         setLoading(false);
       })
-        .then((data) => {
+        .then(async (data) => {
           // Phase 2: hydrate with item images. If first paint never fired
-          // (e.g. RPC returned no budget), fall back to the resolved value.
+          // (e.g. RPC returned no budget), tenta resolver para a versão publicada
+          // do mesmo grupo de versionamento — link antigo continua funcionando.
+          if (!firstPaintDone && !data) {
+            try {
+              const { data: resolved } = await supabase.rpc(
+                'resolve_published_public_id',
+                { p_public_id: publicId },
+              );
+              if (resolved && typeof resolved === 'string' && resolved !== publicId) {
+                // Redireciona preservando query string (ex: ?utm_*).
+                const search = window.location.search || '';
+                const hash = window.location.hash || '';
+                window.location.replace(`/o/${resolved}${search}${hash}`);
+                return;
+              }
+            } catch {
+              // segue para o estado de "não encontrado" abaixo.
+            }
+          }
           if (data) {
             setBudget(data as BudgetData);
           }
