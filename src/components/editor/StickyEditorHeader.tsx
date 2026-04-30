@@ -16,6 +16,7 @@ import { formatBRL } from "@/lib/formatBRL";
 import { calcGrandTotals, type CalcSection } from "@/lib/budget-calc";
 import { cn } from "@/lib/utils";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { toast } from "sonner";
 import type { BudgetRow } from "@/types/budget-common";
