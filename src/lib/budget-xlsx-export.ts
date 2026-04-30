@@ -785,7 +785,6 @@ export async function buildBudgetXlsxBlob(
         });
       }
     }
-    }
 
     // 3) Subtotal da seção (mesmo formato do PDF):
     //    "Subtotal da seção  ·  margem X%" mesclado A:E
