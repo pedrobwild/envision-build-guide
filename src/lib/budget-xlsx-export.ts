@@ -373,7 +373,10 @@ export async function buildBudgetXlsxBlob(
     e.isHeader ? [e.label, ""] : [e.label, e.value as string | number | Date | null],
   );
   const wsResumo = XLSX.utils.aoa_to_sheet(resumoAoa, { cellDates: true });
-  wsResumo["!cols"] = [{ wch: 34 }, { wch: 36 }];
+  wsResumo["!cols"] = autoFitColumns(resumoAoa, {
+    min: [28, 24],
+    max: [50, 60],
+  });
   // Aplica formato em B
   resumoEntries.forEach((e, idx) => {
     if (e.isHeader) {
