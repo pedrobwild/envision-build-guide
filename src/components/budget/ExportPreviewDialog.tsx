@@ -412,13 +412,23 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
             </aside>
           )}
 
-          {kind === "xlsx" && auditMode && xlsxPreview && (
-            <aside className="hidden md:flex w-[360px] shrink-0 flex-col gap-3 border-l bg-background p-4 overflow-y-auto">
-              <XlsxAuditPanel
-                exportTotals={xlsxPreview.totals}
-                editor={auditEditor}
+          {kind === "xlsx" && xlsxPreview && (
+            <aside className="hidden md:flex w-[360px] shrink-0 flex-col gap-4 border-l bg-background p-4 overflow-y-auto">
+              <CanonicalRulesChecklist
+                rules={auditEditor?.rules ?? null}
+                warnings={xlsxPreview.totals.warnings}
                 loading={auditLoading}
               />
+              {auditMode && (
+                <>
+                  <div className="border-t -mx-4" />
+                  <XlsxAuditPanel
+                    exportTotals={xlsxPreview.totals}
+                    editor={auditEditor}
+                    loading={auditLoading}
+                  />
+                </>
+              )}
             </aside>
           )}
         </div>
