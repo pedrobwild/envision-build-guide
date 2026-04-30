@@ -193,6 +193,120 @@ export async function fetchPublicBudget(publicId: string): Promise<BudgetData | 
   };
 }
 
+/**
+ * Streaming version of fetchPublicBudget — emits an early "first paint" payload
+ * (budget + sections + items, without item images) so the public page can render
+ * immediately, then resolves with the fully hydrated data once images load.
+ *
+ * - `onFirstPaint`: called as soon as the primary content is ready (typically <500ms).
+ *   The page can flip out of the skeleton state at this point.
+ * - The returned promise resolves with the same shape as `fetchPublicBudget`.
+ *
+ * Used by the public budget page to avoid 10s skeletons while item images / tours
+ * resolve in parallel.
+ */
+export async function fetchPublicBudgetStreaming(
+  publicId: string,
+  onFirstPaint?: (data: BudgetData) => void,
+): Promise<BudgetData | null> {
+  const { data: budget, error: budgetError } = await supabase
+    .rpc('get_public_budget', { p_public_id: publicId });
+
+  if (budgetError) {
+    logger.error('RPC get_public_budget failed:', budgetError.message);
+    return null;
+  }
+  if (!budget) return null;
+
+  const budgetRow = budget as unknown as RpcBudgetRow;
+
+  const [sectionsRes, adjustmentsRes, roomsRes] = await Promise.all([
+    supabase
+      .from('sections')
+      .select(PUBLIC_SECTION_SELECT)
+      .eq('budget_id', budgetRow.id)
+      .order('order_index'),
+    supabase
+      .from('adjustments')
+      .select(PUBLIC_ADJUSTMENT_SELECT)
+      .eq('budget_id', budgetRow.id),
+    supabase
+      .from('rooms')
+      .select(PUBLIC_ROOM_SELECT)
+      .eq('budget_id', budgetRow.id)
+      .order('order_index'),
+  ]);
+
+  if (sectionsRes.error) logger.error('Failed to fetch sections:', sectionsRes.error.message);
+  if (adjustmentsRes.error) logger.error('Failed to fetch adjustments:', adjustmentsRes.error.message);
+  if (roomsRes.error) logger.error('Failed to fetch rooms:', roomsRes.error.message);
+
+  const sections = (sectionsRes.data ?? []) as unknown as SectionRow[];
+  const adjustments = (adjustmentsRes.data ?? []) as unknown as AdjustmentRow[];
+  const rooms = (roomsRes.data ?? []) as unknown as RoomRow[];
+
+  const sectionIds = sections.map(s => s.id);
+
+  const { data: itemsRaw, error: itemsError } = await supabase
+    .from('items')
+    .select(PUBLIC_ITEM_SELECT)
+    .in('section_id', sectionIds.length ? sectionIds : ['__none__'])
+    .order('order_index');
+
+  if (itemsError) logger.error('Failed to fetch items:', itemsError.message);
+  const items = (itemsRaw ?? []) as unknown as ItemRow[];
+
+  const baseRooms: BudgetRoom[] = rooms.map((r) => ({
+    id: r.id,
+    name: r.name,
+    polygon: Array.isArray(r.polygon) ? r.polygon as number[][] : [],
+  }));
+
+  // Phase 1: render-ready payload WITHOUT item images
+  const sectionsNoImages: BudgetSection[] = sections.map(section => ({
+    ...section,
+    items: items
+      .filter(i => i.section_id === section.id)
+      .map(item => ({ ...item, images: [] as BudgetItemImage[] })),
+  }));
+
+  const firstPaintPayload: BudgetData = {
+    ...budgetRow,
+    sections: sectionsNoImages,
+    adjustments: adjustments as BudgetAdjustment[],
+    rooms: baseRooms,
+  } as BudgetData;
+
+  try { onFirstPaint?.(firstPaintPayload); } catch { /* swallow paint errors */ }
+
+  // Phase 2: enrich with item images
+  const itemIds = items.map(i => i.id);
+  const { data: itemImagesRaw, error: imagesError } = await supabase
+    .from('item_images')
+    .select(PUBLIC_ITEM_IMAGE_SELECT)
+    .in('item_id', itemIds.length ? itemIds : ['__none__']);
+
+  if (imagesError) logger.error('Failed to fetch item_images:', imagesError.message);
+  const itemImages = (itemImagesRaw ?? []) as unknown as ItemImageRow[];
+
+  const enrichedSections: BudgetSection[] = sections.map(section => ({
+    ...section,
+    items: items
+      .filter(i => i.section_id === section.id)
+      .map(item => ({
+        ...item,
+        images: itemImages.filter(img => img.item_id === item.id) as BudgetItemImage[],
+      })),
+  }));
+
+  return {
+    ...budgetRow,
+    sections: enrichedSections,
+    adjustments: adjustments as BudgetAdjustment[],
+    rooms: baseRooms,
+  } as BudgetData;
+}
+
 interface SectionLike {
   items?: ItemLike[];
   qty?: number | null;
