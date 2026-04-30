@@ -134,6 +134,7 @@ export function StickyEditorHeader({
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(projectName);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   // Pré-visualização do export antes do download. O estado é único; o
   // botão correspondente mostra spinner enquanto o diálogo está aberto
   // (gerando ou exibindo o preview).
