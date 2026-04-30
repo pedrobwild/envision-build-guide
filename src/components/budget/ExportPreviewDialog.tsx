@@ -37,7 +37,14 @@ import {
   buildBudgetPdfBlob,
   DEFAULT_BUDGET_PDF_DISCLAIMER,
 } from "@/lib/budget-pdf-export";
-import { buildBudgetXlsxBlob } from "@/lib/budget-xlsx-export";
+import { buildBudgetXlsxBlob, type BudgetXlsxTotals } from "@/lib/budget-xlsx-export";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  calcSectionCostTotal,
+  calcSectionSaleTotal,
+  isCreditSection,
+  type CalcSection,
+} from "@/lib/budget-calc";
 
 export type ExportPreviewKind = "pdf" | "xlsx";
 
@@ -58,6 +65,21 @@ interface XlsxPreview {
   blob: Blob;
   fileName: string;
   workbook: XLSX.WorkBook;
+  totals: BudgetXlsxTotals;
+}
+
+interface EditorSectionTotal {
+  id: string;
+  title: string;
+  cost: number;
+  sale: number;
+  isCredit: boolean;
+}
+
+interface EditorAuditTotals {
+  sections: EditorSectionTotal[];
+  cost: number;
+  sale: number;
 }
 
 function triggerDownload(blob: Blob, fileName: string) {
