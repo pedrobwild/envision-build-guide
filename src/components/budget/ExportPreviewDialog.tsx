@@ -129,7 +129,89 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
     setIncludeLogo(true);
     setDisclaimer(DEFAULT_BUDGET_PDF_DISCLAIMER);
     setDisclaimerDebounced(DEFAULT_BUDGET_PDF_DISCLAIMER);
+    setAuditMode(false);
+    setAuditEditor(null);
   }, [budgetId, kind]);
+
+  // Carrega o "resumo do editor" — dados crus do banco passados pelo
+  // mesmo motor de cálculo do editor (`calcSection*`), SEM normalização
+  // de descontos/créditos. Comparar este número com `xlsxPreview.totals`
+  // (que já é o que vai pro arquivo) revela divergências introduzidas
+  // pela normalização (descontos com sinal errado, BDI em crédito etc.).
+  useEffect(() => {
+    if (!open || !budgetId || kind !== "xlsx" || !auditMode) return;
+    let cancelled = false;
+    setAuditLoading(true);
+    (async () => {
+      try {
+        const { data: secsRaw, error: secErr } = await supabase
+          .from("sections")
+          .select("id, title, qty, section_price, order_index")
+          .eq("budget_id", budgetId)
+          .order("order_index", { ascending: true });
+        if (secErr) throw secErr;
+        const secs = secsRaw ?? [];
+        const ids = secs.map((s) => s.id);
+        let itemsRaw: Array<{
+          section_id: string;
+          qty: number | null;
+          internal_unit_price: number | null;
+          internal_total: number | null;
+          bdi_percentage: number | null;
+          title: string | null;
+        }> = [];
+        if (ids.length > 0) {
+          const { data: itData, error: itErr } = await supabase
+            .from("items")
+            .select(
+              "section_id, qty, internal_unit_price, internal_total, bdi_percentage, title",
+            )
+            .in("section_id", ids);
+          if (itErr) throw itErr;
+          itemsRaw = itData ?? [];
+        }
+        if (cancelled) return;
+        const sectionsAudit: EditorSectionTotal[] = secs.map((s) => {
+          const calc: CalcSection = {
+            qty: s.qty,
+            section_price: s.section_price,
+            title: s.title,
+            items: itemsRaw
+              .filter((i) => i.section_id === s.id)
+              .map((i) => ({
+                qty: i.qty,
+                internal_unit_price: i.internal_unit_price,
+                internal_total: i.internal_total,
+                bdi_percentage: i.bdi_percentage,
+                title: i.title,
+              })),
+          };
+          return {
+            id: s.id,
+            title: (s.title ?? "").trim() || "Sem título",
+            cost: calcSectionCostTotal(calc),
+            sale: calcSectionSaleTotal(calc),
+            isCredit: isCreditSection(calc),
+          };
+        });
+        const cost = sectionsAudit
+          .filter((s) => !s.isCredit)
+          .reduce((a, s) => a + s.cost, 0);
+        const sale = sectionsAudit.reduce((a, s) => a + s.sale, 0);
+        setAuditEditor({ sections: sectionsAudit, cost, sale });
+      } catch (e) {
+        if (cancelled) return;
+        logger.error("[ExportPreviewDialog] audit fetch failed:", e);
+        toast.error("Falha ao carregar dados do editor para auditoria.");
+        setAuditEditor(null);
+      } finally {
+        if (!cancelled) setAuditLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, budgetId, kind, auditMode]);
 
   // Debounce do textarea: aguarda 600ms sem digitação para regerar.
   useEffect(() => {
