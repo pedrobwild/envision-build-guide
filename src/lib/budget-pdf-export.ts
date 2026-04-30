@@ -530,8 +530,11 @@ export async function buildBudgetPdfBlob(
  * Wrapper de compatibilidade — gera o PDF e dispara o download imediato.
  * Mantido para os call sites que ainda não usam a pré-visualização.
  */
-export async function exportBudgetToPdf(budgetId: string): Promise<void> {
-  const { blob, fileName } = await buildBudgetPdfBlob(budgetId);
+export async function exportBudgetToPdf(
+  budgetId: string,
+  options: BuildBudgetPdfOptions = {},
+): Promise<void> {
+  const { blob, fileName } = await buildBudgetPdfBlob(budgetId, options);
   triggerBlobDownload(blob, fileName);
 }
 
