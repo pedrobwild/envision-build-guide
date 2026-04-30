@@ -46,6 +46,8 @@ interface VersionMeta {
   created_at: string | null;
   change_reason: string | null;
   version_group_id: string | null;
+  client_id: string | null;
+  sequential_code: string | null;
 }
 
 type DiffStatus = "added" | "removed" | "changed" | "unchanged";
@@ -66,7 +68,7 @@ interface SectionDiff {
 async function loadVersion(budgetId: string): Promise<{ meta: VersionMeta; sections: CompareSection[]; adjustments: CompareAdjustment[] }> {
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
-    .select("id, version_number, versao, project_name, client_name, status, created_at, change_reason, version_group_id")
+    .select("id, version_number, versao, project_name, client_name, status, created_at, change_reason, version_group_id, client_id, sequential_code")
     .eq("id", budgetId)
     .single();
 
@@ -183,11 +185,15 @@ export default function VersionCompare() {
     setLoading(true);
     Promise.all([loadVersion(leftId), loadVersion(rightId)])
       .then(async ([l, r]) => {
-        // Validate versions belong to same group
-        const lGroup = (l.meta as VersionMeta & { version_group_id?: string | null }).version_group_id;
-        const rGroup = (r.meta as VersionMeta & { version_group_id?: string | null }).version_group_id;
-        if (lGroup && rGroup && lGroup !== rGroup) {
-          toast.error("Estas versões não pertencem ao mesmo orçamento.");
+        // Validate compatibility:
+        // - mesma família de versões (version_group_id) → comparação de versões
+        // - OU mesmo cliente → comparação de orçamentos coexistentes
+        const lGroup = l.meta.version_group_id;
+        const rGroup = r.meta.version_group_id;
+        const sameGroup = !!lGroup && !!rGroup && lGroup === rGroup;
+        const sameClient = !!l.meta.client_id && l.meta.client_id === r.meta.client_id;
+        if (!sameGroup && !sameClient) {
+          toast.error("Só é possível comparar orçamentos da mesma versão ou do mesmo cliente.");
           return;
         }
         setLeftData(l);
@@ -239,6 +245,19 @@ export default function VersionCompare() {
   const leftItemCount = leftData ? totalItems(leftData.sections) : 0;
   const rightItemCount = rightData ? totalItems(rightData.sections) : 0;
 
+  const isCoexisting =
+    !!leftData && !!rightData &&
+    (!leftData.meta.version_group_id ||
+      !rightData.meta.version_group_id ||
+      leftData.meta.version_group_id !== rightData.meta.version_group_id) &&
+    leftData.meta.client_id === rightData.meta.client_id;
+
+  const sideLabel = (d: typeof leftData, idx: number) => {
+    if (!d) return idx === 0 ? "Anterior" : "Nova";
+    if (isCoexisting) return d.meta.sequential_code ?? `Orçamento ${idx + 1}`;
+    return `V${d.meta.version_number ?? "?"}`;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -248,7 +267,9 @@ export default function VersionCompare() {
             <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <span className="font-display font-bold text-sm text-foreground">Comparação de Versões</span>
+            <span className="font-display font-bold text-sm text-foreground">
+              {isCoexisting ? "Comparação de orçamentos" : "Comparação de versões"}
+            </span>
             {clientView && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body font-medium">
                 Visão do cliente
@@ -283,8 +304,8 @@ export default function VersionCompare() {
         {/* Executive Summary */}
         {!clientView && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <SummaryCard label="Total Anterior" value={formatBRL(leftTotal)} />
-            <SummaryCard label="Total Nova" value={formatBRL(rightTotal)} />
+            <SummaryCard label={isCoexisting ? `Total ${sideLabel(leftData, 0)}` : "Total Anterior"} value={formatBRL(leftTotal)} />
+            <SummaryCard label={isCoexisting ? `Total ${sideLabel(rightData, 1)}` : "Total Nova"} value={formatBRL(rightTotal)} />
             <SummaryCard
               label="Variação"
               value={`${delta >= 0 ? "+" : ""}${formatBRL(delta)}`}
@@ -318,12 +339,12 @@ export default function VersionCompare() {
         <div className="grid grid-cols-2 gap-4">
           {[leftData, rightData].map((d, idx) => (
             <div key={idx} className="rounded-lg border border-border bg-card p-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-display font-bold text-sm text-foreground">
-                  V{d?.meta.version_number || "?"}
+                  {sideLabel(d, idx)}
                 </span>
                 <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-body">
-                  {idx === 0 ? "Anterior" : "Nova"}
+                  {isCoexisting ? (idx === 0 ? "Lado A" : "Lado B") : (idx === 0 ? "Anterior" : "Nova")}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground font-body mt-1">

@@ -231,6 +231,8 @@ export default function ClientDetail() {
 
   // Filtro da tabela: mostrar apenas o or\u00e7amento selecionado.
   const [budgetsFilterOnlySelected, setBudgetsFilterOnlySelected] = useState(false);
+  const [compareLeftId, setCompareLeftId] = useState<string>("");
+  const [compareRightId, setCompareRightId] = useState<string>("");
   const visibleBudgets = useMemo(() => {
     if (budgetsFilterOnlySelected && selectedExportBudget) {
       return budgets.filter((b) => b.id === selectedExportBudget.id);
@@ -861,7 +863,88 @@ export default function ClientDetail() {
         </TabsContent>
 
         <TabsContent value="budgets" className="mt-4 space-y-4">
-          {/* Painel de detalhes do or\u00e7amento selecionado + seletor + filtro */}
+          {/* Comparação entre orçamentos coexistentes */}
+          {budgets.length >= 2 && (
+            <Card className="p-4 space-y-3">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-xs font-display font-bold uppercase tracking-wider text-muted-foreground">
+                  Comparar orçamentos
+                </h3>
+                <p className="text-[11px] text-muted-foreground font-body">
+                  Veja lado a lado quais seções e itens mudaram entre dois orçamentos deste cliente.
+                </p>
+              </div>
+              <div className="flex flex-col md:flex-row md:items-end gap-3">
+                <div className="flex-1 space-y-1">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Lado A
+                  </Label>
+                  <Select value={compareLeftId} onValueChange={setCompareLeftId}>
+                    <SelectTrigger className="h-9 text-xs" aria-label="Selecionar primeiro orçamento">
+                      <SelectValue placeholder="Selecionar orçamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {budgets.map((b) => {
+                        const code = b.sequential_code ?? b.id.slice(0, 8);
+                        const name = b.project_name?.trim() || "Sem nome";
+                        return (
+                          <SelectItem
+                            key={b.id}
+                            value={b.id}
+                            disabled={b.id === compareRightId}
+                            className="text-xs"
+                          >
+                            <span className="font-mono mr-2">{code}</span>
+                            <span className="text-muted-foreground">{name}</span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Lado B
+                  </Label>
+                  <Select value={compareRightId} onValueChange={setCompareRightId}>
+                    <SelectTrigger className="h-9 text-xs" aria-label="Selecionar segundo orçamento">
+                      <SelectValue placeholder="Selecionar orçamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {budgets.map((b) => {
+                        const code = b.sequential_code ?? b.id.slice(0, 8);
+                        const name = b.project_name?.trim() || "Sem nome";
+                        return (
+                          <SelectItem
+                            key={b.id}
+                            value={b.id}
+                            disabled={b.id === compareLeftId}
+                            className="text-xs"
+                          >
+                            <span className="font-mono mr-2">{code}</span>
+                            <span className="text-muted-foreground">{name}</span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  size="sm"
+                  className="gap-1.5 md:self-end"
+                  disabled={!compareLeftId || !compareRightId || compareLeftId === compareRightId}
+                  onClick={() =>
+                    navigate(`/admin/comparar?left=${compareLeftId}&right=${compareRightId}`)
+                  }
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  Comparar
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Painel de detalhes do orçamento selecionado + seletor + filtro */}
           {budgets.length > 0 && selectedExportBudget && (
             <Card className="p-4 space-y-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
