@@ -331,28 +331,79 @@ function PreviewErrorState({ message }: { message: string }) {
 }
 
 // ── Renderização do XLSX ────────────────────────────────────────────────
-// Usamos `sheet_to_html` do `xlsx-js-style` para preservar merges e a
-// estrutura visual de cada planilha. Aplicamos um wrapper estilizado para
-// integrar com o tema do app sem reinventar tabelas.
+// `sheet_to_html` é prático, mas mostra os valores BRUTOS (12345.67) e
+// ignora o formato de célula (`R$ 12.345,67`, `%`, datas pt-BR), o que
+// fazia o preview parecer infiel ao arquivo gerado. Reimplementamos a
+// renderização lendo célula a célula e aplicando `XLSX.utils.format_cell`,
+// que devolve a mesma string que o Excel mostraria. Também respeitamos
+// merges (rowSpan/colSpan), larguras de coluna (`!cols`) e destacamos
+// linhas de header/seção/subtotal/total a partir do estilo das células.
+
+interface MergeMap {
+  // r:c → { rowSpan, colSpan } na célula âncora (canto sup. esq. da merge).
+  spans: Map<string, { rowSpan: number; colSpan: number }>;
+  // Conjunto de células "cobertas" por uma merge — devem ser puladas.
+  hidden: Set<string>;
+}
+
+function buildMergeMap(merges: XLSX.Range[] | undefined): MergeMap {
+  const spans = new Map<string, { rowSpan: number; colSpan: number }>();
+  const hidden = new Set<string>();
+  if (!merges) return { spans, hidden };
+  for (const m of merges) {
+    const rowSpan = m.e.r - m.s.r + 1;
+    const colSpan = m.e.c - m.s.c + 1;
+    spans.set(`${m.s.r}:${m.s.c}`, { rowSpan, colSpan });
+    for (let r = m.s.r; r <= m.e.r; r++) {
+      for (let c = m.s.c; c <= m.e.c; c++) {
+        if (r === m.s.r && c === m.s.c) continue;
+        hidden.add(`${r}:${c}`);
+      }
+    }
+  }
+  return { spans, hidden };
+}
+
+// Heurística leve de "tipo da linha" baseada nos estilos que o exporter
+// já aplica. Mantém a tabela legível e parecida com o que o Excel mostra
+// (header escuro, seção cinza, total destacado). Não mexe em valores.
+type RowKind = "header" | "section" | "subtotal" | "total" | "default";
+function detectRowKind(
+  ws: XLSX.WorkSheet,
+  row: number,
+  startCol: number,
+  endCol: number,
+  hidden: Set<string>,
+): RowKind {
+  let hasDarkFill = false;
+  let hasLightFill = false;
+  let hasBold = false;
+  for (let c = startCol; c <= endCol; c++) {
+    if (hidden.has(`${row}:${c}`)) continue;
+    const addr = XLSX.utils.encode_cell({ r: row, c });
+    const cell = ws[addr] as
+      | (XLSX.CellObject & {
+          s?: {
+            fill?: { fgColor?: { rgb?: string } };
+            font?: { bold?: boolean; color?: { rgb?: string } };
+          };
+        })
+      | undefined;
+    if (!cell?.s) continue;
+    const rgb = cell.s.fill?.fgColor?.rgb?.toUpperCase();
+    if (rgb === "0F172A") hasDarkFill = true;
+    else if (rgb === "E5E7EB" || rgb === "F3F4F6") hasLightFill = true;
+    if (cell.s.font?.bold) hasBold = true;
+  }
+  if (row === 0 || hasDarkFill) return hasBold ? (row === 0 ? "header" : "total") : "header";
+  if (hasLightFill && hasBold) return "subtotal";
+  if (hasLightFill) return "section";
+  return "default";
+}
 
 function XlsxWorkbookPreview({ workbook }: { workbook: XLSX.WorkBook }) {
   const sheetNames = workbook.SheetNames;
   const [active, setActive] = useState(sheetNames[0] ?? "");
-
-  // Cache do HTML gerado por planilha, para evitar reprocessar a cada toque.
-  const htmlBySheet = useMemo(() => {
-    const out: Record<string, string> = {};
-    for (const name of sheetNames) {
-      const ws = workbook.Sheets[name];
-      try {
-        out[name] = XLSX.utils.sheet_to_html(ws, { id: `sheet-${name}` });
-      } catch (e) {
-        logger.error("[ExportPreviewDialog] sheet_to_html failed:", e);
-        out[name] = `<p style="padding:16px;color:#64748b">Não foi possível renderizar esta planilha.</p>`;
-      }
-    }
-    return out;
-  }, [workbook, sheetNames]);
 
   if (sheetNames.length === 0) {
     return (
@@ -384,15 +435,131 @@ function XlsxWorkbookPreview({ workbook }: { workbook: XLSX.WorkBook }) {
           className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden"
         >
           <ScrollArea className="h-full">
-            <div
-              className="xlsx-preview p-4 bg-white text-foreground"
-              // sheet_to_html devolve markup confiável gerado pela própria
-              // lib a partir do workbook que acabamos de construir.
-              dangerouslySetInnerHTML={{ __html: htmlBySheet[name] ?? "" }}
-            />
+            <div className="p-4 bg-white">
+              <XlsxSheetTable worksheet={workbook.Sheets[name]} />
+            </div>
           </ScrollArea>
         </TabsContent>
       ))}
     </Tabs>
+  );
+}
+
+function XlsxSheetTable({ worksheet }: { worksheet: XLSX.WorkSheet }) {
+  const { rows, cols, mergeMap, range } = useMemo(() => {
+    const ref = worksheet["!ref"];
+    if (!ref) {
+      return {
+        rows: [] as number[],
+        cols: [] as number[],
+        mergeMap: { spans: new Map(), hidden: new Set() } as MergeMap,
+        range: null as XLSX.Range | null,
+      };
+    }
+    const rng = XLSX.utils.decode_range(ref);
+    const rs: number[] = [];
+    const cs: number[] = [];
+    for (let r = rng.s.r; r <= rng.e.r; r++) rs.push(r);
+    for (let c = rng.s.c; c <= rng.e.c; c++) cs.push(c);
+    return {
+      rows: rs,
+      cols: cs,
+      mergeMap: buildMergeMap(worksheet["!merges"]),
+      range: rng,
+    };
+  }, [worksheet]);
+
+  if (!range) {
+    return (
+      <p className="text-xs text-muted-foreground p-3">
+        Planilha vazia.
+      </p>
+    );
+  }
+
+  const colWidths = (worksheet["!cols"] ?? []) as { wch?: number }[];
+
+  return (
+    <table className="w-full border-collapse text-xs font-mono tabular-nums">
+      <colgroup>
+        {cols.map((c, idx) => {
+          const wch = colWidths[c]?.wch;
+          // ~7px por "char" do Excel é uma aproximação razoável que mantém
+          // proporção entre as colunas no preview HTML.
+          const widthPx = wch ? Math.round(wch * 7) : undefined;
+          return (
+            <col
+              key={`col-${idx}`}
+              style={widthPx ? { width: `${widthPx}px` } : undefined}
+            />
+          );
+        })}
+      </colgroup>
+      <tbody>
+        {rows.map((r) => {
+          const kind = detectRowKind(
+            worksheet,
+            r,
+            range.s.c,
+            range.e.c,
+            mergeMap.hidden,
+          );
+          const rowClass =
+            kind === "header"
+              ? "bg-slate-900 text-white"
+              : kind === "total"
+                ? "bg-slate-900 text-white"
+                : kind === "subtotal"
+                  ? "bg-slate-100 font-semibold"
+                  : kind === "section"
+                    ? "bg-slate-50 font-semibold text-slate-700"
+                    : "";
+          return (
+            <tr key={`row-${r}`} className={rowClass}>
+              {cols.map((c) => {
+                const key = `${r}:${c}`;
+                if (mergeMap.hidden.has(key)) return null;
+                const span = mergeMap.spans.get(key);
+                const addr = XLSX.utils.encode_cell({ r, c });
+                const cell = worksheet[addr] as XLSX.CellObject | undefined;
+                // `format_cell` é a função canônica do xlsx para devolver
+                // o valor JÁ FORMATADO (BRL, %, data dd/mm/yyyy, etc.) —
+                // ou seja, a mesma string que o Excel renderizaria.
+                let display = "";
+                let isNumeric = false;
+                if (cell) {
+                  try {
+                    display = XLSX.utils.format_cell(cell);
+                  } catch {
+                    display = String(cell.v ?? "");
+                  }
+                  isNumeric = cell.t === "n";
+                }
+                const styled = cell as
+                  | (XLSX.CellObject & {
+                      s?: { alignment?: { horizontal?: string } };
+                    })
+                  | undefined;
+                const explicitAlign = styled?.s?.alignment?.horizontal;
+                const align =
+                  explicitAlign ??
+                  (isNumeric ? "right" : undefined);
+                return (
+                  <td
+                    key={`cell-${r}-${c}`}
+                    rowSpan={span?.rowSpan}
+                    colSpan={span?.colSpan}
+                    className="border border-slate-200 px-2 py-1 align-middle whitespace-pre-wrap break-words"
+                    style={align ? { textAlign: align as "left" | "right" | "center" } : undefined}
+                  >
+                    {display}
+                  </td>
+                );
+              })}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
