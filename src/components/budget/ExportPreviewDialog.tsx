@@ -161,7 +161,7 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
   // (que já é o que vai pro arquivo) revela divergências introduzidas
   // pela normalização (descontos com sinal errado, BDI em crédito etc.).
   useEffect(() => {
-    if (!open || !budgetId || kind !== "xlsx" || !auditMode) return;
+    if (!open || !budgetId || kind !== "xlsx") return;
     let cancelled = false;
     setAuditLoading(true);
     (async () => {
@@ -220,7 +220,29 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
           .filter((s) => !s.isCredit)
           .reduce((a, s) => a + s.cost, 0);
         const sale = sectionsAudit.reduce((a, s) => a + s.sale, 0);
-        setAuditEditor({ sections: sectionsAudit, cost, sale });
+
+        // Detecta quais regras canônicas foram acionadas
+        const rules: CanonicalRuleFlags = {
+          hasBdiMinus100: itemsRaw.some(
+            (i) => Number(i.bdi_percentage) === -100,
+          ),
+          hasCreditSection: secs.some((s) => isCreditSection({ title: s.title })),
+          hasDiscountSection: secs.some((s) =>
+            isDiscountSection({ title: s.title }),
+          ),
+          usedSectionPriceFallback: secs.some((s) => {
+            const sectionItems = itemsRaw.filter((i) => i.section_id === s.id);
+            const hasContribution = sectionItems.some((i) => {
+              const up = Number(i.internal_unit_price) || 0;
+              if (up !== 0) return true;
+              return (Number(i.internal_total) || 0) !== 0;
+            });
+            return !hasContribution && (Number(s.section_price) || 0) !== 0;
+          }),
+          hasSectionMultiplier: secs.some((s) => (Number(s.qty) || 1) > 1),
+          hadAbatementNormalization: false, // preenchido abaixo
+        };
+        setAuditEditor({ sections: sectionsAudit, cost, sale, rules });
       } catch (e) {
         if (cancelled) return;
         logger.error("[ExportPreviewDialog] audit fetch failed:", e);
@@ -233,7 +255,7 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
     return () => {
       cancelled = true;
     };
-  }, [open, budgetId, kind, auditMode]);
+  }, [open, budgetId, kind]);
 
   // Debounce do textarea: aguarda 600ms sem digitação para regerar.
   useEffect(() => {
