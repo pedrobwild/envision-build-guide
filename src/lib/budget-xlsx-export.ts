@@ -84,8 +84,19 @@ const sanitizeFileName = (s: string) =>
  * possa renderizar cada planilha como tabela HTML sem reler o arquivo.
  * Lança erro caso a query falhe.
  */
+export interface BuildXlsxOptions {
+  /**
+   * Quando `true`, gera um arquivo "compatível" — sem cores, bordas,
+   * mesclagens, wrapText ou estilos avançados. Mantém apenas valores,
+   * formatos numéricos/data e larguras de coluna. Útil para versões
+   * antigas do Excel ou visualizadores que renderizam estilos errado.
+   */
+  simple?: boolean;
+}
+
 export async function buildBudgetXlsxBlob(
   budgetId: string,
+  options: BuildXlsxOptions = {},
 ): Promise<{ blob: Blob; fileName: string; workbook: XLSX.WorkBook }> {
   // 1) Cabeçalho do orçamento
   const { data: budget, error: budgetErr } = await supabase
