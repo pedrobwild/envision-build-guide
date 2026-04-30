@@ -3,7 +3,7 @@ import { Download } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
-import { fetchPublicBudget, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
+import { fetchPublicBudget, fetchPublicBudgetStreaming, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
 import { isCreditSection, aggregateAbatementsByLabel } from "@/lib/budget-calc";
 import { AddendumDeltaCard } from "@/components/budget/AddendumDeltaCard";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
