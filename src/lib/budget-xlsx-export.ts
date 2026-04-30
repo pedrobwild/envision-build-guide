@@ -180,18 +180,47 @@ export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
     cell.z = fmt;
   };
 
-  // Estilo simples de cabeçalho (negrito) — funciona com xlsx-js-style. O
-  // xlsx oficial ignora `s`, mas não quebra; mantemos para futura troca.
+  // Estilos base — agora efetivamente aplicados graças ao `xlsx-js-style`.
+  const FONT_BASE = { name: "Calibri", sz: 11 };
+  const THIN_BORDER = {
+    top: { style: "thin", color: { rgb: "D1D5DB" } },
+    bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+    left: { style: "thin", color: { rgb: "D1D5DB" } },
+    right: { style: "thin", color: { rgb: "D1D5DB" } },
+  };
   const HEADER_STYLE = {
-    font: { bold: true, color: { rgb: "FFFFFF" } },
-    fill: { fgColor: { rgb: "0F172A" } },
+    font: { ...FONT_BASE, bold: true, color: { rgb: "FFFFFF" } },
+    fill: { patternType: "solid", fgColor: { rgb: "0F172A" } },
     alignment: { vertical: "center", horizontal: "center", wrapText: true },
+    border: THIN_BORDER,
   };
   const styleHeaderRow = (ws: XLSX.WorkSheet, row: number, lastCol: number) => {
     for (let c = 0; c < lastCol; c++) {
       const addr = XLSX.utils.encode_cell({ r: row, c });
       const cell = ws[addr] as XLSX.CellObject | undefined;
       if (cell) (cell as XLSX.CellObject & { s?: unknown }).s = HEADER_STYLE;
+    }
+  };
+  // Aplica borda + fonte base a todas as células de uma faixa retangular.
+  const applyBaseGrid = (
+    ws: XLSX.WorkSheet,
+    startRow: number,
+    endRow: number,
+    startCol: number,
+    endCol: number,
+  ) => {
+    for (let r = startRow; r <= endRow; r++) {
+      for (let c = startCol; c <= endCol; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        const cell = ws[addr] as (XLSX.CellObject & { s?: Record<string, unknown> }) | undefined;
+        if (!cell) continue;
+        const existing = (cell.s ?? {}) as Record<string, unknown>;
+        cell.s = {
+          font: { ...FONT_BASE, ...((existing.font as object) ?? {}) },
+          border: THIN_BORDER,
+          ...existing,
+        };
+      }
     }
   };
 
