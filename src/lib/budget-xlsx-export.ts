@@ -689,6 +689,27 @@ export async function buildBudgetXlsxBlob(
   const namePart = sanitizeFileName(b.project_name || b.client_name || "orcamento");
   const fileName = `${codePart}_${namePart}.xlsx`;
 
-  XLSX.writeFile(wb, fileName);
+  // `XLSX.write` em vez de `XLSX.writeFile`: gera o conteúdo em memória,
+  // permitindo pré-visualização antes de oferecer o download.
+  const arrayBuffer = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  return { blob, fileName, workbook: wb };
+}
+
+/**
+ * Wrapper de compatibilidade — gera o XLSX e dispara o download imediato.
+ */
+export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
+  const { blob, fileName } = await buildBudgetXlsxBlob(budgetId);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
