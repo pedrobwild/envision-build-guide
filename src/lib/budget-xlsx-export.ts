@@ -341,20 +341,47 @@ export async function buildBudgetXlsxBlob(
     CreatedDate: new Date(),
   };
 
-  const totalCusto = items.reduce(
-    (acc, it) => acc + (Number(it.internal_total) || 0),
-    0,
-  );
-  const totalVenda = items.reduce((acc, it) => {
-    const cost = Number(it.internal_total) || 0;
-    const bdi = Number(it.bdi_percentage) || 0;
-    return acc + cost * (1 + bdi / 100);
-  }, 0);
+  // Monta a estrutura canônica usada por `budget-calc` para garantir que
+  // os totais aqui batam EXATAMENTE com o que o editor e o resumo público
+  // mostram. Isso considera:
+  //   - internal_unit_price * qty (e não só internal_total)
+  //   - BDI por item aplicado sobre o custo correto
+  //   - quantidade da seção (`sec.qty`) multiplicando o subtotal
+  //   - seções de "Créditos" excluídas da margem (mas somadas no total)
+  //   - itens com valor negativo (descontos) tratados corretamente
+  const calcSectionsAll: (CalcSection & { __id: string })[] = sections.map((sec) => {
+    const secItems: CalcItem[] = items
+      .filter((i) => i.section_id === sec.id)
+      .map((it) => ({
+        qty: it.qty,
+        internal_unit_price: it.internal_unit_price,
+        internal_total: it.internal_total,
+        bdi_percentage: it.bdi_percentage,
+        title: it.title,
+      }));
+    return {
+      __id: sec.id,
+      qty: sec.qty,
+      section_price: sec.section_price,
+      title: sec.title,
+      items: secItems,
+    };
+  });
+
+  const grand = calcGrandTotals(calcSectionsAll);
+  const totalCusto = grand.cost;
+  // Venda das seções que entram na margem (exclui créditos).
+  const totalVendaMargem = grand.sale;
+  // Créditos abatem o total mostrado ao cliente, mas não a margem.
+  const creditTotal = calcSectionsAll
+    .filter((s) => isCreditSection(s))
+    .reduce((acc, s) => acc + calcSectionSaleTotal(s), 0);
+  const totalVenda = totalVendaMargem + creditTotal;
   const totalAjustes = adjustments.reduce(
     (acc, a) => acc + (Number(a.amount) || 0) * (Number(a.sign) || 1),
     0,
   );
-  const margemRatio = totalVenda > 0 ? (totalVenda - totalCusto) / totalVenda : 0;
+  const margemRatio = grand.marginPercent / 100;
 
   // ── Aba 1: Resumo ─────────────────────────────────────────────────────
   // Coluna A = rótulo, Coluna B = valor (já no tipo correto).
