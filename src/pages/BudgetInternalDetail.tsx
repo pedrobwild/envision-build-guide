@@ -1453,6 +1453,15 @@ export default function BudgetInternalDetail() {
           ]);
         }}
       />
+
+      <ExportPreviewDialog
+        open={!!previewExport}
+        onOpenChange={(open) => {
+          if (!open) setPreviewExport(null);
+        }}
+        budgetId={previewExport?.budgetId ?? null}
+        kind={previewExport?.kind ?? "pdf"}
+      />
     </div>
   );
 }
