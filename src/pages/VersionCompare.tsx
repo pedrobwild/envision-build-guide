@@ -304,8 +304,8 @@ export default function VersionCompare() {
         {/* Executive Summary */}
         {!clientView && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <SummaryCard label="Total Anterior" value={formatBRL(leftTotal)} />
-            <SummaryCard label="Total Nova" value={formatBRL(rightTotal)} />
+            <SummaryCard label={isCoexisting ? `Total ${sideLabel(leftData, 0)}` : "Total Anterior"} value={formatBRL(leftTotal)} />
+            <SummaryCard label={isCoexisting ? `Total ${sideLabel(rightData, 1)}` : "Total Nova"} value={formatBRL(rightTotal)} />
             <SummaryCard
               label="Variação"
               value={`${delta >= 0 ? "+" : ""}${formatBRL(delta)}`}
