@@ -176,6 +176,7 @@ export function StickyEditorHeader({
     : "text-destructive";
 
   return (
+    <>
     <div className="sticky top-0 z-50 bg-card/85 backdrop-blur-xl border-b border-border/40 shadow-sm">
       {/* Layer 1 — Breadcrumb + status + action + auto-save */}
       <div className="max-w-[1200px] mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between gap-2 sm:gap-3">
