@@ -244,10 +244,22 @@ export default function PublicBudget() {
     }
     if (publicId) {
       setLoadError(null);
-      fetchPublicBudget(publicId)
+      let firstPaintDone = false;
+      fetchPublicBudgetStreaming(publicId, (partial) => {
+        // Phase 1: render immediately with budget + sections + items (no item images yet).
+        firstPaintDone = true;
+        setBudget(partial as BudgetData);
+        setLoading(false);
+      })
         .then((data) => {
-          setBudget(data as BudgetData | null);
-          setLoading(false);
+          // Phase 2: hydrate with item images. If first paint never fired
+          // (e.g. RPC returned no budget), fall back to the resolved value.
+          if (data) {
+            setBudget(data as BudgetData);
+          }
+          if (!firstPaintDone) {
+            setLoading(false);
+          }
           if (data && !viewTracked.current) {
             viewTracked.current = true;
             supabase.rpc('increment_view_count', { p_public_id: publicId }).then(({ error }) => {
@@ -261,9 +273,10 @@ export default function PublicBudget() {
           }
         })
         .catch((err) => {
-          
-          setLoadError('Não foi possível carregar o orçamento. Tente novamente.');
-          setLoading(false);
+          if (!firstPaintDone) {
+            setLoadError('Não foi possível carregar o orçamento. Tente novamente.');
+            setLoading(false);
+          }
         });
     }
   }, [publicId]);
