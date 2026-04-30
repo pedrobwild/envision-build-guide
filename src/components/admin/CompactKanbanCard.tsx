@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motio
 import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { PRIORITIES, INTERNAL_STATUSES, type Priority, type InternalStatus } from "@/lib/role-constants";
 import { differenceInCalendarDays, isPast, isToday, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
