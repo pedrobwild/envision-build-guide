@@ -718,10 +718,10 @@ export async function buildBudgetXlsxBlob(
   secRows.push(["", "Total geral", "", "", "", "", totalVenda + totalAjustes, "", ""]);
 
   const wsSec = XLSX.utils.aoa_to_sheet(secRows);
-  wsSec["!cols"] = [
-    { wch: 5 }, { wch: 28 }, { wch: 28 }, { wch: 12 }, { wch: 8 },
-    { wch: 16 }, { wch: 16 }, { wch: 12 }, { wch: 10 },
-  ];
+  wsSec["!cols"] = autoFitColumns(secRows, {
+    min: [4, 22, 22, 10, 6, 14, 14, 10, 8],
+    max: [6, 50, 50, 14, 10, 20, 20, 14, 12],
+  });
   wsSec["!freeze"] = { xSplit: 0, ySplit: 1 };
   styleHeaderRow(wsSec, 0, secHeader.length);
   for (let r = 1; r < secTotalsStartRow; r++) {
