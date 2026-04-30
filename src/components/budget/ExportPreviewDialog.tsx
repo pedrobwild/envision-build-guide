@@ -15,7 +15,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx-js-style";
-import { Download, Loader2, X } from "lucide-react";
+import { Check, Download, Loader2, Minus, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
