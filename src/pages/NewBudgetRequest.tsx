@@ -160,6 +160,7 @@ export default function NewBudgetRequest() {
 
   // Pré-preenche a partir de ?client_id=&name=&email=&phone= (vindo do CRM)
   const prefillClientId = searchParams.get("client_id");
+  const isVariant = searchParams.get("variant") === "1";
   const [linkedClientId, setLinkedClientId] = useState<string | null>(prefillClientId);
   const [linkedClientValidated, setLinkedClientValidated] = useState<boolean>(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("__new__");
