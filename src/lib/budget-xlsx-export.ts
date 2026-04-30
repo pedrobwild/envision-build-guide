@@ -183,6 +183,13 @@ export function computeBudgetXlsxTotals(
     (acc, a) => acc + (Number(a.amount) || 0) * (Number(a.sign) || 1),
     0,
   );
+  const sectionTotals: BudgetXlsxSectionTotal[] = calcSections.map((s, idx) => ({
+    id: sections[idx].id,
+    title: (s.title ?? sections[idx].title ?? "Sem título").trim() || "Sem título",
+    cost: calcSectionCostTotal(s),
+    sale: calcSectionSaleTotal(s),
+    isCredit: isCreditSection(s),
+  }));
   return {
     cost: grand.cost,
     sale,
@@ -191,6 +198,7 @@ export function computeBudgetXlsxTotals(
     adjustments: adjustmentsTotal,
     grandTotal: sale + adjustmentsTotal,
     marginRatio: grand.marginPercent / 100,
+    sections: sectionTotals,
     warnings,
   };
 }
