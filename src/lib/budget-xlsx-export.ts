@@ -757,13 +757,12 @@ export async function buildBudgetXlsxBlob(
   const secRows: (string | number | null)[][] = [secHeader];
   sections.forEach((sec, idx) => {
     const secItems = items.filter((i) => i.section_id === sec.id);
-    const cost = secItems.reduce((acc, it) => acc + (Number(it.internal_total) || 0), 0);
-    const venda = secItems.reduce((acc, it) => {
-      const c = Number(it.internal_total) || 0;
-      const bdi = Number(it.bdi_percentage) || 0;
-      return acc + c * (1 + bdi / 100);
-    }, 0);
-    const margem = venda > 0 ? (venda - cost) / venda : 0;
+    const calcSec = calcSectionsAll.find((s) => s.__id === sec.id) as CalcSection;
+    const cost = calcSectionCostTotal(calcSec);
+    const venda = calcSectionSaleTotal(calcSec);
+    const margem = !isCreditSection(calcSec) && venda > 0
+      ? (venda - cost) / venda
+      : 0;
     secRows.push([
       idx + 1,
       sec.title ?? "",
