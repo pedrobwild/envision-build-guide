@@ -179,10 +179,29 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
         </div>
 
         <DialogFooter className="px-6 py-3 border-t flex-row items-center justify-between gap-3 sm:justify-between">
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground truncate">
-            {fileName ?? "—"}
-          </span>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground truncate">
+              {fileName ?? "—"}
+            </span>
+            {kind === "xlsx" && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="xlsx-simple-mode"
+                  checked={simpleXlsx}
+                  onCheckedChange={setSimpleXlsx}
+                  disabled={loading}
+                />
+                <Label
+                  htmlFor="xlsx-simple-mode"
+                  className="text-xs text-muted-foreground cursor-pointer"
+                  title="Gera o arquivo sem cores, bordas, mesclagens nem quebra de texto. Use quando o Excel do destinatário não renderiza bem a formatação."
+                >
+                  Modo compatível (sem estilos avançados)
+                </Label>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="ghost"
               size="sm"
