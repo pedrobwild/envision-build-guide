@@ -142,7 +142,14 @@ const sanitizeFileName = (s: string) =>
  */
 export async function buildBudgetPdfBlob(
   budgetId: string,
+  options: BuildBudgetPdfOptions = {},
 ): Promise<{ blob: Blob; fileName: string }> {
+  const includeLogo = options.includeLogo !== false;
+  // `disclaimer === undefined` → default; `null` ou "" → omite.
+  const disclaimerText =
+    options.disclaimer === undefined
+      ? DEFAULT_BUDGET_PDF_DISCLAIMER
+      : (options.disclaimer ?? "");
   // 1) Cabeçalho
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
