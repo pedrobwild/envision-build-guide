@@ -79,10 +79,14 @@ const sanitizeFileName = (s: string) =>
     .slice(0, 80) || "orcamento";
 
 /**
- * Gera e dispara o download do .xlsx do orçamento.
- * Lança erro caso a query falhe — chame de dentro de try/catch e use toast.
+ * Constrói o .xlsx do orçamento em memória e devolve `{ blob, fileName, workbook }`.
+ * Não dispara download — o `workbook` é exposto para que a UI de pré-visualização
+ * possa renderizar cada planilha como tabela HTML sem reler o arquivo.
+ * Lança erro caso a query falhe.
  */
-export async function exportBudgetToXlsx(budgetId: string): Promise<void> {
+export async function buildBudgetXlsxBlob(
+  budgetId: string,
+): Promise<{ blob: Blob; fileName: string; workbook: XLSX.WorkBook }> {
   // 1) Cabeçalho do orçamento
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
