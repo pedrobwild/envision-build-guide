@@ -267,7 +267,9 @@ export default function VersionCompare() {
             <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <span className="font-display font-bold text-sm text-foreground">Comparação de Versões</span>
+            <span className="font-display font-bold text-sm text-foreground">
+              {isCoexisting ? "Comparação de orçamentos" : "Comparação de versões"}
+            </span>
             {clientView && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-body font-medium">
                 Visão do cliente
