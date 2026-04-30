@@ -660,18 +660,23 @@ export async function buildBudgetXlsxBlob(
 
     // 2) Itens da seção
     if (secItems.length === 0) {
-      // Sem itens: fallback é section_price * sec.qty (mesma regra de calcSectionCostTotal).
-      const fallback = (Number(sec.section_price) || 0) * secQty;
+      // Sem itens: o valor exibido na linha do "fallback" precisa bater
+      // EXATAMENTE com o subtotal logo abaixo. Em vez de recomputar
+      // (`section_price * sec.qty`), reusamos `secCost` / `secVenda` —
+      // que já vêm de `calcSectionCostTotal` / `calcSectionSaleTotal`
+      // sobre `calcSec` (estrutura canônica normalizada). Assim, qualquer
+      // mudança em `sec.qty` ou na regra de fallback se propaga para
+      // ambas as linhas sem risco de divergência.
       detRows.push([
         "(seção sem itens)",
         "",
         "",
         "",
         "",
-        fallback || null,
+        secCost || null,
         "",
         "",
-        fallback || null,
+        secVenda || null,
       ]);
       const emptyRowIdx = detRows.length - 1;
       detRowMeta.push([
