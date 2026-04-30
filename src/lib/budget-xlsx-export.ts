@@ -77,6 +77,93 @@ interface AdjustmentRow {
   sign: number;
 }
 
+/**
+ * Calcula os totais financeiros do orçamento exatamente como exibidos no Excel.
+ * Função pura — espelha a lógica do editor (`budget-calc`) e é a fonte única
+ * de verdade dos números mostrados na aba "Resumo" e nas linhas de TOTAIS da
+ * aba "Detalhamento".
+ *
+ * Regras:
+ *   - `cost` / `saleMargin` vêm de `calcGrandTotals` (excluem seções de Crédito).
+ *   - `creditTotal` soma o valor das seções de Crédito (abatem o total final
+ *     mas não impactam a margem).
+ *   - `sale` = saleMargin + creditTotal (créditos têm sale negativo, então
+ *     subtraem do total mostrado ao cliente).
+ *   - `adjustments` = soma de `amount * sign` dos ajustes globais.
+ *   - `grandTotal` = sale + adjustments (o que aparece como "Total geral").
+ *   - `marginRatio` = `marginPercent` em fração [0,1].
+ */
+export interface BudgetXlsxTotals {
+  cost: number;
+  sale: number;
+  saleMargin: number;
+  creditTotal: number;
+  adjustments: number;
+  grandTotal: number;
+  marginRatio: number;
+}
+
+export interface BudgetXlsxSectionInput {
+  id: string;
+  title: string | null;
+  qty: number | null;
+  section_price: number | null;
+}
+
+export interface BudgetXlsxItemInput {
+  section_id: string;
+  qty: number | null;
+  internal_unit_price: number | null;
+  internal_total: number | null;
+  bdi_percentage: number | null;
+  title?: string | null;
+}
+
+export interface BudgetXlsxAdjustmentInput {
+  amount: number | null;
+  sign: number | null;
+}
+
+export function computeBudgetXlsxTotals(
+  sections: BudgetXlsxSectionInput[],
+  items: BudgetXlsxItemInput[],
+  adjustments: BudgetXlsxAdjustmentInput[],
+): BudgetXlsxTotals {
+  const calcSections: CalcSection[] = sections.map((sec) => ({
+    qty: sec.qty,
+    section_price: sec.section_price,
+    title: sec.title,
+    items: items
+      .filter((i) => i.section_id === sec.id)
+      .map((it) => ({
+        qty: it.qty,
+        internal_unit_price: it.internal_unit_price,
+        internal_total: it.internal_total,
+        bdi_percentage: it.bdi_percentage,
+        title: it.title,
+      })),
+  }));
+
+  const grand = calcGrandTotals(calcSections);
+  const creditTotal = calcSections
+    .filter((s) => isCreditSection(s))
+    .reduce((acc, s) => acc + calcSectionSaleTotal(s), 0);
+  const sale = grand.sale + creditTotal;
+  const adjustmentsTotal = adjustments.reduce(
+    (acc, a) => acc + (Number(a.amount) || 0) * (Number(a.sign) || 1),
+    0,
+  );
+  return {
+    cost: grand.cost,
+    sale,
+    saleMargin: grand.sale,
+    creditTotal,
+    adjustments: adjustmentsTotal,
+    grandTotal: sale + adjustmentsTotal,
+    marginRatio: grand.marginPercent / 100,
+  };
+}
+
 // (helpers de formato BR ficam definidos dentro de exportBudgetToXlsx)
 
 
@@ -341,14 +428,7 @@ export async function buildBudgetXlsxBlob(
     CreatedDate: new Date(),
   };
 
-  // Monta a estrutura canônica usada por `budget-calc` para garantir que
-  // os totais aqui batam EXATAMENTE com o que o editor e o resumo público
-  // mostram. Isso considera:
-  //   - internal_unit_price * qty (e não só internal_total)
-  //   - BDI por item aplicado sobre o custo correto
-  //   - quantidade da seção (`sec.qty`) multiplicando o subtotal
-  //   - seções de "Créditos" excluídas da margem (mas somadas no total)
-  //   - itens com valor negativo (descontos) tratados corretamente
+  // Estrutura canônica reusada para subtotais por seção mais abaixo.
   const calcSectionsAll: (CalcSection & { __id: string })[] = sections.map((sec) => {
     const secItems: CalcItem[] = items
       .filter((i) => i.section_id === sec.id)
@@ -368,20 +448,28 @@ export async function buildBudgetXlsxBlob(
     };
   });
 
-  const grand = calcGrandTotals(calcSectionsAll);
-  const totalCusto = grand.cost;
-  // Venda das seções que entram na margem (exclui créditos).
-  const totalVendaMargem = grand.sale;
-  // Créditos abatem o total mostrado ao cliente, mas não a margem.
-  const creditTotal = calcSectionsAll
-    .filter((s) => isCreditSection(s))
-    .reduce((acc, s) => acc + calcSectionSaleTotal(s), 0);
-  const totalVenda = totalVendaMargem + creditTotal;
-  const totalAjustes = adjustments.reduce(
-    (acc, a) => acc + (Number(a.amount) || 0) * (Number(a.sign) || 1),
-    0,
+  // Fonte única dos números globais — mesma função coberta pelos testes.
+  const totals = computeBudgetXlsxTotals(
+    sections.map((s) => ({
+      id: s.id,
+      title: s.title,
+      qty: s.qty,
+      section_price: s.section_price,
+    })),
+    items.map((i) => ({
+      section_id: i.section_id,
+      qty: i.qty,
+      internal_unit_price: i.internal_unit_price,
+      internal_total: i.internal_total,
+      bdi_percentage: i.bdi_percentage,
+      title: i.title,
+    })),
+    adjustments,
   );
-  const margemRatio = grand.marginPercent / 100;
+  const totalCusto = totals.cost;
+  const totalVenda = totals.sale;
+  const totalAjustes = totals.adjustments;
+  const margemRatio = totals.marginRatio;
 
   // ── Aba 1: Resumo ─────────────────────────────────────────────────────
   // Coluna A = rótulo, Coluna B = valor (já no tipo correto).
