@@ -245,6 +245,19 @@ export default function VersionCompare() {
   const leftItemCount = leftData ? totalItems(leftData.sections) : 0;
   const rightItemCount = rightData ? totalItems(rightData.sections) : 0;
 
+  const isCoexisting =
+    !!leftData && !!rightData &&
+    (!leftData.meta.version_group_id ||
+      !rightData.meta.version_group_id ||
+      leftData.meta.version_group_id !== rightData.meta.version_group_id) &&
+    leftData.meta.client_id === rightData.meta.client_id;
+
+  const sideLabel = (d: typeof leftData, idx: number) => {
+    if (!d) return idx === 0 ? "Anterior" : "Nova";
+    if (isCoexisting) return d.meta.sequential_code ?? `Orçamento ${idx + 1}`;
+    return `V${d.meta.version_number ?? "?"}`;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
