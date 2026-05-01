@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 import type { BudgetRow, EditorSection } from "@/types/budget-common";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { sendBudgetPublishedNotification } from "@/lib/digisac-notify";
-import { enqueueOfflineSave, flushOfflineQueue, hasPending } from "@/lib/offline-save-queue";
+import { enqueueOfflineSave, flushOfflineQueue, hasPending, discardOfflineQueue } from "@/lib/offline-save-queue";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
