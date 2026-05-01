@@ -328,9 +328,9 @@ export default function BudgetEditorV2() {
     if (!budgetId) return;
     setSectionsLoading(true);
     try {
-      await queryClient.invalidateQueries({
-        queryKey: ["budget-editor-sections", budgetId],
-      });
+      await queryClient.invalidateQueries({ queryKey: ["budget-editor-sections-rows", budgetId] });
+      await queryClient.invalidateQueries({ queryKey: ["budget-editor-items-rows", budgetId] });
+      await queryClient.invalidateQueries({ queryKey: ["budget-editor-image-rows", budgetId] });
       await refetchSections();
     } finally {
       setSectionsLoading(false);
