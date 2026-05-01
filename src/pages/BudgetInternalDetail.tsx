@@ -73,6 +73,7 @@ import { toast } from "sonner";
 import { BlockingDialog } from "@/components/editor/BlockingDialog";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
@@ -215,6 +216,9 @@ export default function BudgetInternalDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin, isComercial } = useUserProfile();
+  const { members: comerciais } = useTeamMembers("comercial");
+  const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const canEditOwners = isAdmin || isComercial;
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [budget, setBudget] = useState<BudgetDetail | null>(null);
@@ -455,6 +459,47 @@ export default function BudgetInternalDetail() {
       setBudget((prev) => (prev ? { ...prev, prazo_dias_uteis: previous } : prev));
       toast.error("Não foi possível salvar o prazo. Tente novamente.");
     }
+  }
+
+  /**
+   * Persiste o responsável (Comercial ou Orçamentista) com update otimista.
+   * Reverte o estado local em caso de erro e registra evento de auditoria.
+   */
+  async function saveOwner(
+    field: "commercial_owner_id" | "estimator_owner_id",
+    nextId: string | null,
+  ) {
+    if (!budget) return;
+    const previous = (budget[field] ?? null) as string | null;
+    if (previous === nextId) return;
+
+    setBudget((prev) => (prev ? { ...prev, [field]: nextId } : prev));
+
+    const { error } = await supabase
+      .from("budgets")
+      .update({ [field]: nextId, updated_at: new Date().toISOString() })
+      .eq("id", budget.id);
+
+    if (error) {
+      setBudget((prev) => (prev ? { ...prev, [field]: previous } : prev));
+      toast.error("Não foi possível salvar o responsável. Tente novamente.");
+      return;
+    }
+
+    if (user) {
+      await supabase.from("budget_events").insert({
+        budget_id: budget.id,
+        user_id: user.id,
+        event_type: field === "commercial_owner_id" ? "commercial_owner_changed" : "estimator_owner_changed",
+        note:
+          field === "commercial_owner_id"
+            ? `Comercial alterado para ${nextId ? getProfileName(nextId) : "—"}`
+            : `Orçamentista alterado para ${nextId ? getProfileName(nextId) : "—"}`,
+        metadata: { field, from: previous, to: nextId },
+      });
+    }
+
+    toast.success(field === "commercial_owner_id" ? "Comercial atualizado" : "Orçamentista atualizado");
   }
 
   async function changeStatus(newStatus: InternalStatus, note?: string) {
@@ -932,9 +977,29 @@ export default function BudgetInternalDetail() {
               custom={
                 <div className="flex items-center gap-2 mt-1.5 min-w-0">
                   <Avatar name={getProfileName(budget.commercial_owner_id)} tone="rose" />
-                  <span className="text-sm font-display font-medium text-foreground truncate">
-                    {budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : "—"}
-                  </span>
+                  {canEditOwners ? (
+                    <Select
+                      value={budget.commercial_owner_id ?? "__none__"}
+                      onValueChange={(v) => saveOwner("commercial_owner_id", v === "__none__" ? null : v)}
+                    >
+                      <SelectTrigger
+                        className="h-8 px-2 border-transparent hover:border-border bg-transparent shadow-none focus:ring-1 focus:ring-primary/20 text-sm font-display font-medium text-foreground truncate min-w-0 flex-1"
+                        aria-label="Selecionar comercial responsável"
+                      >
+                        <SelectValue placeholder="Não atribuído" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Não atribuído</SelectItem>
+                        {comerciais.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm font-display font-medium text-foreground truncate">
+                      {budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : "—"}
+                    </span>
+                  )}
                 </div>
               }
             />
@@ -944,9 +1009,29 @@ export default function BudgetInternalDetail() {
               custom={
                 <div className="flex items-center gap-2 mt-1.5 min-w-0">
                   <Avatar name={getProfileName(budget.estimator_owner_id)} tone="amber" />
-                  <span className="text-sm font-display font-medium text-foreground truncate">
-                    {budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : "—"}
-                  </span>
+                  {canEditOwners ? (
+                    <Select
+                      value={budget.estimator_owner_id ?? "__none__"}
+                      onValueChange={(v) => saveOwner("estimator_owner_id", v === "__none__" ? null : v)}
+                    >
+                      <SelectTrigger
+                        className="h-8 px-2 border-transparent hover:border-border bg-transparent shadow-none focus:ring-1 focus:ring-primary/20 text-sm font-display font-medium text-foreground truncate min-w-0 flex-1"
+                        aria-label="Selecionar orçamentista responsável"
+                      >
+                        <SelectValue placeholder="Não atribuído" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Não atribuído</SelectItem>
+                        {orcamentistas.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm font-display font-medium text-foreground truncate">
+                      {budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : "—"}
+                    </span>
+                  )}
                 </div>
               }
             />
