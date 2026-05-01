@@ -159,6 +159,12 @@ interface SectionsEditorProps {
    * the parent can intercept and create a draft version transparently.
    */
   onProtectedEditAttempt?: () => void;
+  /**
+   * Reporta o estado do auto-save inline (campos via debounce + drag&drop)
+   * para o pai exibir um único indicador centralizado no header.
+   * Status possíveis: "saving" | "saved" | "error".
+   */
+  onSaveStatusChange?: (status: "saving" | "saved" | "error") => void;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
