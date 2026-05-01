@@ -1,22 +1,20 @@
 /**
- * AdminHome — cockpit executivo (papel "admin").
+ * OperationsHealthPage — visão dedicada de saúde da operação.
  *
- * Linguagem visual: enterprise operacional (Atlassian/Stripe).
+ * Reúne em uma única página os indicadores executivos que antes ficavam
+ * empilhados no header do AdminHome: health-score (gauge semicircular),
+ * KPIs de pilotagem, carga da equipe e funil dual.
  *
- * 4 zonas:
- *   1. HERO — saudação + health-score visual + período + CTA.
- *   2. INBOX DE DECISÕES — alertas críticos com ação direta.
- *   3. KPIs DE PILOTAGEM — 4 MetricTiles (não 8).
- *   4. CARGA DA EQUIPE + FUNIL — onde está travando, em quem.
- *
- * Mantém todos os hooks/queries/lógica originais. Só refatora apresentação.
+ * Reaproveita os mesmos hooks/queries do AdminHome para garantir
+ * paridade de números — apenas isola a apresentação em uma rota
+ * separada acessada sob demanda.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { subDays } from "date-fns";
-import { Plus, Activity, AlertTriangle, Users, GitBranch, Inbox, Sparkles, HeartPulse } from "lucide-react";
+import { Activity, AlertTriangle, ArrowLeft, GitBranch, Sparkles, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,7 +29,6 @@ import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBloc
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
 import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
-import { ClientForm } from "@/components/crm/ClientForm";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,10 +43,7 @@ const anim = (delay: number) => ({
   transition: { duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 });
 
-/* ───────────────────── HealthScoreGauge ─────────────────────
- * Gauge SVG semicircular sóbrio (não festivo) para o health-score
- * da operação. Exibe número grande, status semântico e mini-legenda.
- */
+/* ───────────────────── HealthScoreGauge ───────────────────── */
 function HealthScoreGauge({
   value,
   status,
@@ -60,13 +54,10 @@ function HealthScoreGauge({
   loading: boolean;
 }) {
   if (loading || value === null || !status) {
-    return <Skeleton className="h-[110px] w-full rounded-2xl" />;
+    return <Skeleton className="h-[140px] w-full rounded-2xl" />;
   }
 
-  // Semicírculo de 0 a 180°.
   const radius = 60;
-  const cx = 70;
-  const cy = 70;
   const circumference = Math.PI * radius;
   const filled = (value / 100) * circumference;
   const colorVar =
@@ -82,11 +73,17 @@ function HealthScoreGauge({
       ? "warn"
       : "danger";
   const statusLabel =
-    status === "excellent" ? "Excelente" : status === "healthy" ? "Saudável" : status === "warning" ? "Atenção" : "Crítico";
+    status === "excellent"
+      ? "Excelente"
+      : status === "healthy"
+      ? "Saudável"
+      : status === "warning"
+      ? "Atenção"
+      : "Crítico";
 
   return (
-    <div className="flex items-center gap-5">
-      <svg width={140} height={86} viewBox="0 0 140 86" className="shrink-0" aria-hidden>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+      <svg width={160} height={96} viewBox="0 0 140 86" className="shrink-0" aria-hidden>
         <path
           d={`M 10 70 A 60 60 0 0 1 130 70`}
           fill="none"
@@ -104,27 +101,31 @@ function HealthScoreGauge({
           style={{ transition: "stroke-dasharray 600ms ease" }}
         />
       </svg>
-      <div>
+      <div className="min-w-0">
         <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-soft font-body">
           Saúde da operação
         </p>
         <div className="flex items-baseline gap-1.5 mt-1">
-          <span className="font-mono font-semibold text-[36px] text-ink-strong tabular-nums leading-none">
+          <span className="font-mono font-semibold text-[44px] text-ink-strong tabular-nums leading-none">
             {Math.round(value)}
           </span>
-          <span className="font-mono text-[14px] text-ink-soft tabular-nums">/100</span>
+          <span className="font-mono text-[16px] text-ink-soft tabular-nums">/100</span>
         </div>
-        <div className="mt-2">
+        <div className="mt-2.5">
           <StatusChip tone={tone as "success" | "warn" | "danger"} size="md">
             {statusLabel}
           </StatusChip>
         </div>
+        <p className="text-[12px] text-ink-soft mt-3 max-w-md">
+          Composição: SLA no prazo, taxa de conversão, margem bruta e backlog
+          ativo no período selecionado.
+        </p>
       </div>
     </div>
   );
 }
 
-export default function AdminHome() {
+export default function OperationsHealthPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -133,7 +134,6 @@ export default function AdminHome() {
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [deliveryTimestamps, setDeliveryTimestamps] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [clientFormOpen, setClientFormOpen] = useState(false);
 
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
@@ -186,7 +186,7 @@ export default function AdminHome() {
       });
       setDeliveryTimestamps(deliveryMap);
     } catch {
-      toast.error("Erro ao carregar dados do painel.");
+      toast.error("Erro ao carregar dados da saúde da operação.");
     } finally {
       setLoading(false);
     }
@@ -205,41 +205,48 @@ export default function AdminHome() {
   const criticalAlerts = metrics?.alerts.filter((a) => a.severity === "critical").length ?? 0;
   const totalAlerts = metrics?.alerts.length ?? 0;
   const subtitle = loading
-    ? "Carregando indicadores da operação..."
+    ? "Carregando saúde da operação..."
     : criticalAlerts > 0
-    ? `${criticalAlerts} ${criticalAlerts === 1 ? "decisão crítica precisa" : "decisões críticas precisam"} da sua atenção agora.`
+    ? `${criticalAlerts} ${criticalAlerts === 1 ? "ponto crítico" : "pontos críticos"} no período.`
     : metrics
-    ? `Operação rodando. ${totalAlerts === 0 ? "Sem alertas no período." : `${totalAlerts} ponto${totalAlerts > 1 ? "s" : ""} para acompanhar.`}`
+    ? `${totalAlerts === 0 ? "Sem alertas no período." : `${totalAlerts} ponto${totalAlerts > 1 ? "s" : ""} para acompanhar.`}`
     : "";
 
   let step = 0;
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-8 lg:space-y-10">
-      {/* ───── 1. HERO ───── */}
+      {/* HEADER */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <PainelHeader
+          title="Saúde da operação"
           subtitle={subtitle}
           actions={
             <>
-              <PeriodFilter value={dateRange} onChange={setDateRange} />
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 className="gap-1.5 h-9 px-3"
-                onClick={() => navigate("/admin/saude-operacao")}
+                onClick={() => navigate("/painel/admin")}
               >
-                <HeartPulse className="h-3.5 w-3.5" /> Saúde da operação
+                <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao painel
               </Button>
-              <Button size="sm" className="gap-1.5 h-9 px-3.5" onClick={() => setClientFormOpen(true)}>
-                <Plus className="h-3.5 w-3.5" /> Novo cliente
-              </Button>
+              <PeriodFilter value={dateRange} onChange={setDateRange} />
             </>
+          }
+          meta={
+            <Surface variant="raised" padding="md" className="!p-5">
+              <HealthScoreGauge
+                value={metrics?.healthScore.value ?? null}
+                status={metrics?.healthScore.status ?? null}
+                loading={loading}
+              />
+            </Surface>
           }
         />
       </motion.div>
 
-      {/* ───── 2. INBOX DE DECISÕES ───── */}
+      {/* INBOX DE DECISÕES */}
       <motion.section {...anim(step++ * SECTION_DELAY)}>
         <SectionHeader
           eyebrow={criticalAlerts > 0 ? "Ação imediata" : "Monitoramento"}
@@ -266,7 +273,7 @@ export default function AdminHome() {
         )}
       </motion.section>
 
-      {/* ───── 3. KPIs DE PILOTAGEM ───── */}
+      {/* KPIs DE PILOTAGEM */}
       <motion.section {...anim(step++ * SECTION_DELAY)}>
         <SectionHeader
           eyebrow="Indicadores"
@@ -314,7 +321,7 @@ export default function AdminHome() {
         </div>
       </motion.section>
 
-      {/* ───── 4a. CARGA DA EQUIPE ───── */}
+      {/* CARGA DA EQUIPE */}
       <motion.section {...anim(step++ * SECTION_DELAY)}>
         <SectionHeader
           eyebrow="Equipe"
@@ -327,7 +334,7 @@ export default function AdminHome() {
         </Surface>
       </motion.section>
 
-      {/* ───── 4b. FUNIL ───── */}
+      {/* FUNIL */}
       <motion.section {...anim(step++ * SECTION_DELAY)}>
         <SectionHeader
           eyebrow="Conversão"
@@ -343,16 +350,6 @@ export default function AdminHome() {
           />
         </Surface>
       </motion.section>
-
-      {/* MODAL */}
-      <ClientForm
-        open={clientFormOpen}
-        onOpenChange={setClientFormOpen}
-        onSaved={(client) => {
-          setClientFormOpen(false);
-          if (client?.id) navigate(`/admin/crm/${client.id}`);
-        }}
-      />
     </div>
   );
 }
