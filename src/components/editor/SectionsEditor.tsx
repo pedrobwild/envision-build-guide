@@ -965,7 +965,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     }
 
     return updated;
-  }, [debouncedSave]);
+  }, [debouncedSave, readOnly, cfg.disableTaxRecalc]);
 
   // Keep a mutable ref to sections so rapid-fire updateItem calls (e.g. from MobileItemEditor batch save) accumulate correctly
   const sectionsRef = useRef(sections);
