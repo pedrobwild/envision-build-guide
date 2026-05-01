@@ -41,19 +41,21 @@ export function ProjectSecurity({ prazoDiasUteis }: { prazoDiasUteis?: number })
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Highlights */}
           <div className="grid grid-cols-2 gap-3">
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3 }}
-              className="rounded-xl bg-muted/30 p-4 flex flex-col items-center text-center gap-2"
-            >
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                <Clock className="h-4.5 w-4.5 text-primary" />
-              </div>
-              <span className="text-2xl font-display font-bold text-primary">{prazoDiasUteis}</span>
-              <span className="text-xs text-muted-foreground font-body leading-snug">dias úteis</span>
-            </motion.div>
+            {hasPrazo && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3 }}
+                className="rounded-xl bg-muted/30 p-4 flex flex-col items-center text-center gap-2"
+              >
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Clock className="h-4.5 w-4.5 text-primary" />
+                </div>
+                <span className="text-2xl font-display font-bold text-primary">{prazoDiasUteis}</span>
+                <span className="text-xs text-muted-foreground font-body leading-snug">dias úteis</span>
+              </motion.div>
+            )}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
