@@ -2,7 +2,7 @@
  * FilaCard — cartão de "fila de trabalho" das homes.
  *
  * Redesign enterprise (Atlassian/Stripe):
- *   • Layout em 4 zonas verticais: ícone + chip de prioridade · número
+ *   • Layout em zonas verticais: ícone + chip de prioridade · número
  *     grande · descrição curta · CTA de resolução.
  *   • Tipografia maior e mais legível: contagem 28px mono, label 13px.
  *   • Cor é só reforço — sempre acompanhada de chip textual.
@@ -28,11 +28,44 @@ interface FilaCardProps {
   loading?: boolean;
 }
 
-const PRIORITY_TONE: Record<FilaPriority, { tone: "danger" | "warn" | "info" | "success"; chip: string; rail: string }> = {
-  critical: { tone: "danger", chip: "Urgente", rail: "bg-danger" },
-  warning: { tone: "warn", chip: "Atenção", rail: "bg-warn" },
-  info: { tone: "info", chip: "A fazer", rail: "bg-info" },
-  ok: { tone: "success", chip: "Em dia", rail: "bg-[hsl(var(--success))]" },
+const PRIORITY_TONE: Record<
+  FilaPriority,
+  {
+    tone: "danger" | "warn" | "info" | "success";
+    chip: string;
+    rail: string;
+    iconWrap: string;
+    iconColor: string;
+  }
+> = {
+  critical: {
+    tone: "danger",
+    chip: "Urgente",
+    rail: "bg-danger",
+    iconWrap: "bg-danger-bg border-danger-border",
+    iconColor: "text-danger",
+  },
+  warning: {
+    tone: "warn",
+    chip: "Atenção",
+    rail: "bg-warn",
+    iconWrap: "bg-warn-bg border-warn-border",
+    iconColor: "text-warn",
+  },
+  info: {
+    tone: "info",
+    chip: "A fazer",
+    rail: "bg-info",
+    iconWrap: "bg-info-bg border-info-border",
+    iconColor: "text-info",
+  },
+  ok: {
+    tone: "success",
+    chip: "Em dia",
+    rail: "bg-[hsl(var(--success))]",
+    iconWrap: "bg-success-bg border-success-border",
+    iconColor: "text-[hsl(var(--success))]",
+  },
 };
 
 export function FilaCard({
@@ -66,17 +99,26 @@ export function FilaCard({
         !empty && "hover:border-hairline-strong hover:shadow-raised",
       )}
     >
-      {/* Rail vertical de prioridade — não-cromático */}
-      <span className={cn("absolute left-0 top-5 bottom-5 w-[3px] rounded-r-full", empty ? "bg-hairline" : cfg.rail)} aria-hidden />
+      {/* Rail vertical de prioridade — reforço não-cromático */}
+      <span
+        className={cn(
+          "absolute left-0 top-5 bottom-5 w-[3px] rounded-r-full",
+          empty ? "bg-hairline" : cfg.rail,
+        )}
+        aria-hidden
+      />
 
       <div className="flex items-start justify-between gap-2">
         <div
           className={cn(
             "h-9 w-9 rounded-lg flex items-center justify-center border",
-            empty ? "bg-neutral-bg border-hairline" : `bg-${cfg.tone === "success" ? "success-bg" : cfg.tone === "warn" ? "warn-bg" : cfg.tone === "danger" ? "danger-bg" : "info-bg"} border-${cfg.tone === "success" ? "success-border" : cfg.tone === "warn" ? "warn-bg" : cfg.tone === "danger" ? "danger-border" : "info-border"}`,
+            empty ? "bg-neutral-bg border-hairline" : cfg.iconWrap,
           )}
         >
-          <Icon className={cn("h-[18px] w-[18px]", empty ? "text-ink-faint" : `text-${cfg.tone === "success" ? "[hsl(var(--success))]" : cfg.tone}`)} aria-hidden />
+          <Icon
+            className={cn("h-[18px] w-[18px]", empty ? "text-ink-faint" : cfg.iconColor)}
+            aria-hidden
+          />
         </div>
         <StatusChip tone={empty ? "neutral" : cfg.tone} size="sm">
           {empty ? "Em dia" : cfg.chip}
@@ -84,7 +126,12 @@ export function FilaCard({
       </div>
 
       <div>
-        <div className={cn("font-mono font-semibold text-[28px] tabular-nums leading-none", empty ? "text-ink-faint" : "text-ink-strong")}>
+        <div
+          className={cn(
+            "font-mono font-semibold text-[28px] tabular-nums leading-none",
+            empty ? "text-ink-faint" : "text-ink-strong",
+          )}
+        >
           {count}
         </div>
         <p className="text-[13px] font-semibold text-ink-strong font-body mt-2 leading-tight">
