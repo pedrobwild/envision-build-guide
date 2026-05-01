@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { fetchPublicBudget, fetchPublicBudgetStreaming, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
 import { resolveBudgetGrandTotal } from "@/lib/budget-total";
-import { aggregateAbatementsByLabel } from "@/lib/budget-calc";
+import { computePublicAbatements, assertPublicAbatementParity } from "@/lib/public-abatements";
 import { buildPublicScopeGroups } from "@/lib/public-scope";
 import { AddendumDeltaCard } from "@/components/budget/AddendumDeltaCard";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
