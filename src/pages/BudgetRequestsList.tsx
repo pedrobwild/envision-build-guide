@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { safeDeleteBudget } from "@/lib/budget-delete";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
@@ -111,12 +112,12 @@ export default function BudgetRequestsList() {
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await supabase.from("budgets").delete().eq("id", deleteTarget.id);
-    if (error) {
-      toast.error("Erro ao excluir solicitação");
-    } else {
+    const result = await safeDeleteBudget(deleteTarget.id);
+    if (result.ok) {
       toast.success("Solicitação excluída com sucesso");
       setBudgets((prev) => prev.filter((b) => b.id !== deleteTarget.id));
+    } else {
+      toast.error(result.reason);
     }
     setDeleting(false);
     setDeleteTarget(null);
