@@ -69,6 +69,7 @@ const COMERCIAL_ITEMS: NavItem[] = [
   { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial", "orcamentista"] },
   { title: "KPIs de Vendas", url: "/admin/comercial/kpis", icon: BarChart3, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Conversão", url: "/admin/comercial/conversao", icon: GitBranch, roles: ["admin", "comercial", "orcamentista"] },
+  { title: "KPIs de Vendas", url: "/admin/comercial/kpis", icon: BarChart3, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Agenda", url: "/admin/agenda", icon: CalendarClock, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Insights por Consultor", url: "/admin/insights", icon: Brain, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Clientes", url: "/admin/crm", icon: Users, roles: ["admin", "comercial", "orcamentista"] },
@@ -96,6 +97,7 @@ const ANALISE_ITEMS: NavItem[] = [
 ];
 
 const FERRAMENTAS_ITEMS: NavItem[] = [
+  { title: "KPIs de Vendas", url: "/admin/comercial/kpis", icon: BarChart3, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Leads (Integrações)", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Regras de Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
   { title: "Digisac", url: "/admin/digisac", icon: MessageCircle, roles: ["admin"] },
