@@ -10,6 +10,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import { resolveBudgetGrandTotal } from "@/lib/budget-total";
 
 /**
  * Disclaimer padrão impresso no rodapé do PDF quando o caller não passa

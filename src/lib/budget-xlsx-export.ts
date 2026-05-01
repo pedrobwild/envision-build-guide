@@ -14,6 +14,7 @@
 import * as XLSX from "xlsx-js-style";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import { resolveBudgetGrandTotal } from "@/lib/budget-total";
 import {
   calcItemCostTotal,
   calcItemSaleTotal,
