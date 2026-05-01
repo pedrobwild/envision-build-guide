@@ -69,6 +69,7 @@ interface BudgetHeader {
   metragem: string | null;
   date: string | null;
   validity_days: number | null;
+  prazo_dias_uteis: number | null;
   internal_status: string;
   status: string;
   manual_total: number | null;
