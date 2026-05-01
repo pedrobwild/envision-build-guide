@@ -1201,6 +1201,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       });
       updated = recalcTaxItem(updated);
       onSectionsChange(updated);
+      // Garante que o item recém-adicionado fique visível mesmo em seções paginadas
+      const updatedSection = updated.find(s => s.id === sectionId);
+      if (updatedSection) {
+        setVisibleCounts(prev => ({ ...prev, [sectionId]: updatedSection.items.length }));
+      }
       const origin = itemData?.catalog_item_id ? "Item do catálogo adicionado" : "Item manual adicionado";
       toast.success(origin);
       return data.id as string;
