@@ -17,7 +17,12 @@ interface PublicBudgetFallbackProps {
 export function PublicBudgetFallback({ budget, errorMessage }: PublicBudgetFallbackProps) {
   const sections = budget.sections || [];
   const adjustments = budget.adjustments || [];
-  const total = calculateBudgetTotal(sections, adjustments);
+  const computedTotal = calculateBudgetTotal(sections, adjustments);
+  // Mirror PublicBudget/BudgetInternalDetail: prefer manual_total when defined.
+  const manualTotalRaw = (budget as { manual_total?: number | null }).manual_total;
+  const total = (manualTotalRaw != null && Number.isFinite(Number(manualTotalRaw)))
+    ? Number(manualTotalRaw)
+    : computedTotal;
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
   const formatDate = (iso?: string | null) => {
