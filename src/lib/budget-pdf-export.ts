@@ -156,7 +156,7 @@ export async function buildBudgetPdfBlob(
   const { data: budget, error: budgetErr } = await supabase
     .from("budgets")
     .select(
-      "id, sequential_code, project_name, client_name, condominio, bairro, city, metragem, date, validity_days, internal_status, status, manual_total, internal_cost, versao, version_number, created_at, updated_at",
+      "id, sequential_code, project_name, client_name, condominio, bairro, city, metragem, date, validity_days, prazo_dias_uteis, internal_status, status, manual_total, internal_cost, versao, version_number, created_at, updated_at",
     )
     .eq("id", budgetId)
     .maybeSingle();
