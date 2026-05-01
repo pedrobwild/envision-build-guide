@@ -209,52 +209,69 @@ export async function fetchPublicBudgetStreaming(
   publicId: string,
   onFirstPaint?: (data: BudgetData) => void,
 ): Promise<BudgetData | null> {
-  const { data: budget, error: budgetError } = await supabase
-    .rpc('get_public_budget', { p_public_id: publicId });
+  // Single round-trip: budget + sections + items + adjustments + rooms.
+  // Collapses the previous 3-step chain (budget → sections/adj/rooms → items)
+  // into one network call, eliminating the window where the public page could
+  // momentarily compute totals from partial data.
+  const { data: full, error: fullError } = await supabase
+    .rpc('get_public_budget_full', { p_public_id: publicId });
 
-  if (budgetError) {
-    logger.error('RPC get_public_budget failed:', budgetError.message);
-    return null;
+  let budgetRow: RpcBudgetRow | null = null;
+  let sections: SectionRow[] = [];
+  let adjustments: AdjustmentRow[] = [];
+  let rooms: RoomRow[] = [];
+  let items: ItemRow[] = [];
+
+  if (!fullError && full) {
+    const payload = full as {
+      budget?: RpcBudgetRow;
+      sections?: SectionRow[];
+      items?: ItemRow[];
+      adjustments?: AdjustmentRow[];
+      rooms?: RoomRow[];
+    };
+    if (!payload.budget) return null;
+    budgetRow = payload.budget;
+    sections = (payload.sections ?? []) as SectionRow[];
+    items = (payload.items ?? []) as ItemRow[];
+    adjustments = (payload.adjustments ?? []) as AdjustmentRow[];
+    rooms = (payload.rooms ?? []) as RoomRow[];
+  } else {
+    // Fallback path — keeps the page working if the new RPC is unavailable
+    // (e.g. during a rolling deploy). Same logic as the previous chain.
+    if (fullError) logger.error('RPC get_public_budget_full failed:', fullError.message);
+    const { data: budget, error: budgetError } = await supabase
+      .rpc('get_public_budget', { p_public_id: publicId });
+    if (budgetError) {
+      logger.error('RPC get_public_budget failed:', budgetError.message);
+      return null;
+    }
+    if (!budget) return null;
+    budgetRow = budget as unknown as RpcBudgetRow;
+
+    const [sectionsRes, adjustmentsRes, roomsRes] = await Promise.all([
+      supabase.from('sections').select(PUBLIC_SECTION_SELECT).eq('budget_id', budgetRow.id).order('order_index'),
+      supabase.from('adjustments').select(PUBLIC_ADJUSTMENT_SELECT).eq('budget_id', budgetRow.id),
+      supabase.from('rooms').select(PUBLIC_ROOM_SELECT).eq('budget_id', budgetRow.id).order('order_index'),
+    ]);
+    if (sectionsRes.error) logger.error('Failed to fetch sections:', sectionsRes.error.message);
+    if (adjustmentsRes.error) logger.error('Failed to fetch adjustments:', adjustmentsRes.error.message);
+    if (roomsRes.error) logger.error('Failed to fetch rooms:', roomsRes.error.message);
+    sections = (sectionsRes.data ?? []) as unknown as SectionRow[];
+    adjustments = (adjustmentsRes.data ?? []) as unknown as AdjustmentRow[];
+    rooms = (roomsRes.data ?? []) as unknown as RoomRow[];
+
+    const sectionIds = sections.map(s => s.id);
+    const { data: itemsRaw, error: itemsError } = await supabase
+      .from('items')
+      .select(PUBLIC_ITEM_SELECT)
+      .in('section_id', sectionIds.length ? sectionIds : ['__none__'])
+      .order('order_index');
+    if (itemsError) logger.error('Failed to fetch items:', itemsError.message);
+    items = (itemsRaw ?? []) as unknown as ItemRow[];
   }
-  if (!budget) return null;
 
-  const budgetRow = budget as unknown as RpcBudgetRow;
-
-  const [sectionsRes, adjustmentsRes, roomsRes] = await Promise.all([
-    supabase
-      .from('sections')
-      .select(PUBLIC_SECTION_SELECT)
-      .eq('budget_id', budgetRow.id)
-      .order('order_index'),
-    supabase
-      .from('adjustments')
-      .select(PUBLIC_ADJUSTMENT_SELECT)
-      .eq('budget_id', budgetRow.id),
-    supabase
-      .from('rooms')
-      .select(PUBLIC_ROOM_SELECT)
-      .eq('budget_id', budgetRow.id)
-      .order('order_index'),
-  ]);
-
-  if (sectionsRes.error) logger.error('Failed to fetch sections:', sectionsRes.error.message);
-  if (adjustmentsRes.error) logger.error('Failed to fetch adjustments:', adjustmentsRes.error.message);
-  if (roomsRes.error) logger.error('Failed to fetch rooms:', roomsRes.error.message);
-
-  const sections = (sectionsRes.data ?? []) as unknown as SectionRow[];
-  const adjustments = (adjustmentsRes.data ?? []) as unknown as AdjustmentRow[];
-  const rooms = (roomsRes.data ?? []) as unknown as RoomRow[];
-
-  const sectionIds = sections.map(s => s.id);
-
-  const { data: itemsRaw, error: itemsError } = await supabase
-    .from('items')
-    .select(PUBLIC_ITEM_SELECT)
-    .in('section_id', sectionIds.length ? sectionIds : ['__none__'])
-    .order('order_index');
-
-  if (itemsError) logger.error('Failed to fetch items:', itemsError.message);
-  const items = (itemsRaw ?? []) as unknown as ItemRow[];
+  if (!budgetRow) return null;
 
   const baseRooms: BudgetRoom[] = rooms.map((r) => ({
     id: r.id,
