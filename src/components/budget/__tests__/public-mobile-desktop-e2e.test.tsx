@@ -21,7 +21,6 @@ import { InvestmentSummaryCard } from "@/components/budget/summary/InvestmentSum
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
 import { computePublicAbatements } from "@/lib/public-abatements";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
-import { resolveBudgetGrandTotal } from "@/lib/budget-total";
 import { formatBRL } from "@/lib/formatBRL";
 import {
   MIXED_SECTION_FIXTURES,
@@ -78,11 +77,7 @@ function parseBRL(value: string): number {
 
 // ─── Fixture totals (single source of truth) ─────────────────────────────
 function computeReferenceTotals(sections: BudgetSection[]) {
-  const total = resolveBudgetGrandTotal({
-    sections,
-    adjustments: [],
-    manual_total: null as unknown as number,
-  } as Parameters<typeof resolveBudgetGrandTotal>[0]) ?? calculateBudgetTotal(sections, []);
+  const total = calculateBudgetTotal(sections as never, []);
   const breakdown = computePublicAbatements(sections);
   const subtotal = total + breakdown.discountTotal + breakdown.creditTotal;
   return {
