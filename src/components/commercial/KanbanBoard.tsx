@@ -895,6 +895,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
   // Mobile: swipeable single-column view
   if (isMobile) {
     return (
+      <KanbanRefreshContext.Provider value={onRefresh}>
       <MobileSwipeableKanban
         columns={mobileColumns}
         activeIndex={mobileColIndex}
