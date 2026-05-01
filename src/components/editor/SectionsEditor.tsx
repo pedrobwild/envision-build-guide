@@ -739,7 +739,7 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, readOnly = false, isAddendum = false, onProtectedEditAttempt }: SectionsEditorProps) {
+export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, loadingStage, readOnly = false, isAddendum = false, onProtectedEditAttempt }: SectionsEditorProps) {
   // Centralised guard so any mutation attempted while in readOnly mode can be
   // intercepted by the parent (e.g. to auto-fork a published version into a
   // new draft instead of silently no-op'ing the user's action).
