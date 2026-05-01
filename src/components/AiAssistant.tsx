@@ -593,12 +593,13 @@ export function AiAssistant() {
 
   const suggestions = isAdmin
     ? [
-        "Qual a média de orçamentos por dia nos últimos 7 dias?",
-        "Top 10 clientes por receita nos últimos 90 dias",
-        "Como está nossa taxa de conversão na última semana?",
-        "Leads recebidos por origem nos últimos 30 dias",
+        "Comparar receita dos últimos 30 dias vs 30 dias anteriores",
+        "Qual a taxa de conversão entre as etapas do funil?",
+        "Projete o faturamento para os próximos 14 dias",
+        "Ticket médio por dia da semana — onde fechamos mais?",
+        "Top 5 motivos de perda por receita perdida (R$)",
+        "Ranking de comerciais por taxa de conversão",
         "Como o Houzz monetiza? Compare com o nosso modelo",
-        "Tendências de software de gestão de obras em 2026",
       ]
     : [
         "Como melhorar a taxa de conversão do pipeline?",
