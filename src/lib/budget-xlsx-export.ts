@@ -978,7 +978,7 @@ export async function buildBudgetXlsxBlob(
   if (totalAjustes !== 0) {
     secRows.push(["", "Ajustes globais", "", "", "", "", totalAjustes, "", ""]);
   }
-  secRows.push(["", "Total geral", "", "", "", "", totalVenda + totalAjustes, "", ""]);
+  secRows.push(["", totalGeralLabel, "", "", "", "", effectiveGrandTotal, "", ""]);
 
   const wsSec = XLSX.utils.aoa_to_sheet(secRows);
   wsSec["!cols"] = autoFitColumns(secRows, {
