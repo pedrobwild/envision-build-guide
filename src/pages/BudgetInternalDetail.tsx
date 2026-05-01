@@ -944,8 +944,8 @@ export default function BudgetInternalDetail() {
             <PipelineProgress stages={PIPELINE_STAGES} currentIndex={pipeline.index} isLost={pipeline.isLost} />
           </div>
 
-          {/* KPIs */}
-          <div className="border-t border-border/60 mt-6 pt-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+          {/* KPIs financeiros/operacionais (hierarquia primária) */}
+          <div className="border-t border-border/60 mt-6 pt-5 grid grid-cols-1 sm:grid-cols-3 gap-5">
             <KpiBlock
               label="Valor"
               value={formatBRL(totalDisplay)}
@@ -971,69 +971,27 @@ export default function BudgetInternalDetail() {
               }
               subTone={overdue ? "destructive" : dueToday ? "warning" : "muted"}
             />
-            <KpiBlock
+          </div>
+
+          {/* Responsáveis (hierarquia secundária — separados visualmente dos KPIs) */}
+          <div className="mt-4 pt-4 border-t border-dashed border-border/50 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3">
+            <OwnerField
               label="Comercial"
-              value=""
-              custom={
-                <div className="flex items-center gap-2 mt-1.5 min-w-0">
-                  <Avatar name={getProfileName(budget.commercial_owner_id)} tone="rose" />
-                  {canEditOwners ? (
-                    <Select
-                      value={budget.commercial_owner_id ?? "__none__"}
-                      onValueChange={(v) => saveOwner("commercial_owner_id", v === "__none__" ? null : v)}
-                    >
-                      <SelectTrigger
-                        className="h-8 px-2 border-transparent hover:border-border bg-transparent shadow-none focus:ring-1 focus:ring-primary/20 text-sm font-display font-medium text-foreground truncate min-w-0 flex-1"
-                        aria-label="Selecionar comercial responsável"
-                      >
-                        <SelectValue placeholder="Não atribuído" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">Não atribuído</SelectItem>
-                        {comerciais.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span className="text-sm font-display font-medium text-foreground truncate">
-                      {budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : "—"}
-                    </span>
-                  )}
-                </div>
-              }
+              ownerId={budget.commercial_owner_id}
+              ownerName={budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : null}
+              tone="rose"
+              canEdit={canEditOwners}
+              options={comerciais}
+              onChange={(v) => saveOwner("commercial_owner_id", v)}
             />
-            <KpiBlock
+            <OwnerField
               label="Orçamentista"
-              value=""
-              custom={
-                <div className="flex items-center gap-2 mt-1.5 min-w-0">
-                  <Avatar name={getProfileName(budget.estimator_owner_id)} tone="amber" />
-                  {canEditOwners ? (
-                    <Select
-                      value={budget.estimator_owner_id ?? "__none__"}
-                      onValueChange={(v) => saveOwner("estimator_owner_id", v === "__none__" ? null : v)}
-                    >
-                      <SelectTrigger
-                        className="h-8 px-2 border-transparent hover:border-border bg-transparent shadow-none focus:ring-1 focus:ring-primary/20 text-sm font-display font-medium text-foreground truncate min-w-0 flex-1"
-                        aria-label="Selecionar orçamentista responsável"
-                      >
-                        <SelectValue placeholder="Não atribuído" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">Não atribuído</SelectItem>
-                        {orcamentistas.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span className="text-sm font-display font-medium text-foreground truncate">
-                      {budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : "—"}
-                    </span>
-                  )}
-                </div>
-              }
+              ownerId={budget.estimator_owner_id}
+              ownerName={budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : null}
+              tone="amber"
+              canEdit={canEditOwners}
+              options={orcamentistas}
+              onChange={(v) => saveOwner("estimator_owner_id", v)}
             />
           </div>
         </section>
