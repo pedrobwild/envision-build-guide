@@ -64,6 +64,39 @@
     --shadow-lg: 0 4px 12px hsl(0 0% 0% / 0.06), 0 2px 4px hsl(0 0% 0% / 0.04);
     --shadow-xl: 0 8px 24px hsl(0 0% 0% / 0.08), 0 4px 8px hsl(0 0% 0% / 0.04);
 
+    /* ── Painel Enterprise — tokens aditivos (não tocam nos existentes) ── */
+    /* Hierarquia de superfícies: canvas → surface-1 (cards) → surface-2 (cards aninhados) */
+    --canvas: 0 0% 98.5%;
+    --surface-1: 0 0% 100%;
+    --surface-2: 0 0% 97%;
+    --surface-3: 0 0% 94%;
+    --hairline: 0 0% 91%;
+    --hairline-strong: 0 0% 84%;
+
+    /* Tinta tipográfica — 3 níveis de hierarquia */
+    --ink-strong: 0 0% 6%;
+    --ink-medium: 0 0% 32%;
+    --ink-soft: 0 0% 48%;
+    --ink-faint: 0 0% 64%;
+
+    /* Cores semânticas operacionais (Atlassian/Stripe-like) */
+    --info: 212 100% 48%;
+    --info-bg: 212 100% 96%;
+    --info-border: 212 80% 86%;
+    --success-bg: 152 60% 95%;
+    --success-border: 152 50% 80%;
+    --warn: 32 95% 44%;
+    --warn-bg: 38 100% 95%;
+    --warn-border: 38 90% 82%;
+    --danger: 0 72% 47%;
+    --danger-bg: 0 80% 96%;
+    --danger-border: 0 70% 88%;
+    --neutral-bg: 0 0% 95%;
+    --neutral-border: 0 0% 88%;
+
+    --shadow-card: 0 0 0 1px hsl(0 0% 0% / 0.04), 0 1px 2px hsl(0 0% 0% / 0.04);
+    --shadow-raised: 0 0 0 1px hsl(0 0% 0% / 0.05), 0 2px 6px hsl(0 0% 0% / 0.05), 0 8px 24px hsl(0 0% 0% / 0.04);
+
     --font-display: 'Sora', sans-serif;
     --font-body: 'Inter', sans-serif;
     --font-mono: 'Geist Mono', 'SF Mono', 'Menlo', monospace;
@@ -103,6 +136,36 @@
     --shadow-md: 0 2px 4px hsl(0 0% 0% / 0.20), 0 1px 2px hsl(0 0% 0% / 0.15);
     --shadow-lg: 0 4px 12px hsl(0 0% 0% / 0.25), 0 2px 4px hsl(0 0% 0% / 0.15);
     --shadow-xl: 0 8px 24px hsl(0 0% 0% / 0.30), 0 4px 8px hsl(0 0% 0% / 0.15);
+
+    /* ── Painel Enterprise (dark) ── */
+    --canvas: 0 0% 4%;
+    --surface-1: 0 0% 7%;
+    --surface-2: 0 0% 10%;
+    --surface-3: 0 0% 13%;
+    --hairline: 0 0% 16%;
+    --hairline-strong: 0 0% 22%;
+
+    --ink-strong: 0 0% 96%;
+    --ink-medium: 0 0% 70%;
+    --ink-soft: 0 0% 55%;
+    --ink-faint: 0 0% 40%;
+
+    --info: 212 100% 60%;
+    --info-bg: 212 80% 14%;
+    --info-border: 212 70% 25%;
+    --success-bg: 152 50% 12%;
+    --success-border: 152 40% 22%;
+    --warn: 38 95% 55%;
+    --warn-bg: 38 60% 12%;
+    --warn-border: 38 50% 22%;
+    --danger: 0 72% 58%;
+    --danger-bg: 0 60% 14%;
+    --danger-border: 0 50% 24%;
+    --neutral-bg: 0 0% 11%;
+    --neutral-border: 0 0% 20%;
+
+    --shadow-card: 0 0 0 1px hsl(0 0% 100% / 0.05), 0 1px 2px hsl(0 0% 0% / 0.4);
+    --shadow-raised: 0 0 0 1px hsl(0 0% 100% / 0.06), 0 4px 12px hsl(0 0% 0% / 0.4), 0 16px 32px hsl(0 0% 0% / 0.3);
   }
 }
 

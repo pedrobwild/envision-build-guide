@@ -19,16 +19,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <GlobalLoadingBar />
       <CommandPalette />
       <ShortcutsBridge />
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-canvas">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center justify-between border-b border-border/50 bg-card/60 glass shrink-0 px-3 lg:hidden">
+          {/* Header mobile — sticky para sempre dar contexto */}
+          <header className="sticky top-0 z-30 h-12 flex items-center justify-between border-b border-hairline bg-surface-1/85 backdrop-blur-md shrink-0 px-3 lg:hidden">
             <SidebarTrigger />
             <CommandPaletteTrigger />
           </header>
-          <div className="hidden lg:flex items-center justify-end gap-2 px-4 pt-3">
+          {/* Header desktop — sticky com hairline sutil; aloja o command-trigger */}
+          <header className="hidden lg:flex sticky top-0 z-30 h-12 items-center justify-end gap-2 px-6 bg-canvas/85 backdrop-blur-md border-b border-hairline/80">
             <CommandPaletteTrigger />
-          </div>
+          </header>
           <AdminBreadcrumb />
           <main className="flex-1 pb-16 lg:pb-0">{children}</main>
         </div>
