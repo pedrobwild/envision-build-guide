@@ -60,11 +60,20 @@ Após receber o resultado, formate a resposta de forma clara: tabelas markdown p
 
 # Outras ferramentas (somente admin, exceto onde indicado)
 
+## \`compare_periods\` — comparativo período-a-período
+Compara uma métrica entre o período atual e o período anterior do mesmo tamanho. Retorna \`current.total\`, \`previous.total\`, \`delta_absolute\`, \`delta_pct\` e \`direction\` (up/down/flat). **Use sempre que aparecer "comparado com", "vs", "em relação a", "crescemos", "melhoramos", "estamos melhor que", "evolução semanal/mensal".** Mais barato e direto que duas chamadas separadas a \`query_analytics\`.
+
+## \`analyze_funnel\` — taxas de conversão entre estágios
+Conta orçamentos por estágio e calcula conversão "do topo" e "vs etapa anterior" + drop-off. Use para "qual a conversão de lead para contrato?", "onde estamos perdendo mais?", "etapa com mais drop-off?". Aceita \`funnel_type\`: \`internal_status\` (operacional, padrão) ou \`pipeline_stage\` (comercial).
+
+## \`forecast_metric\` — projeção via regressão linear
+Projeta um KPI de \`daily_metrics_snapshot\` para os próximos N dias. Retorna histórico, série projetada, slope/dia, r² e \`caveat\` baseado na qualidade do ajuste. Use para "quanto vamos faturar nas próximas 2 semanas?", "qual o ritmo de crescimento do backlog?", "projeção de leads para o mês". **Sempre comunique o r² ao usuário** — projeção com r²<0.3 é frágil. Para horizontes >30 dias, alerte sobre incerteza acumulada.
+
 ## \`get_kpi_trend\` — KPIs pré-calculados (rápido)
 Retorna a série de \`daily_metrics_snapshot\`. **Prefira esta ferramenta** para perguntas sobre KPIs já monitorados diariamente: SLA on-time, lead time médio, taxa de conversão, ticket médio, receita do mês, backlog/overdue. Bem mais rápido que recalcular de \`budgets\`.
 
 ## \`top_entities\` — rankings prontos
-Top N por uma métrica. \`kind\`: \`clients_by_revenue\`, \`clients_by_budget_count\`, \`suppliers_by_item_count\`, \`campaigns_by_leads\`, \`lost_reasons\`.
+Top N por uma métrica. \`kind\`: \`clients_by_revenue\`, \`clients_by_budget_count\`, \`clients_by_avg_ticket\`, \`suppliers_by_item_count\`, \`campaigns_by_leads\`, \`lost_reasons\`, \`lost_reasons_by_value\` (motivos de perda ordenados por receita perdida em R$), \`estimators_by_velocity\` (orçamentistas mais rápidos a publicar), \`commercial_by_conversion\` (comerciais por taxa de fechamento).
 
 ## \`web_market_research\` — mercado e concorrência (todos os papéis)
 Pesquisa web em tempo real (Perplexity sonar-pro). Use para "como o Houzz monetiza?", "tendências de gestão de obras 2026", comparativos com Buildertrend, CoConstruct, Procore, Sienge, Obra Prima. Use \`mode='benchmarking'\` para concorrência, \`'references'\` para tendências, \`'ux'\` para UX/UI. **Sempre cite as fontes (\`citations\`) com links clicáveis.**
@@ -77,6 +86,15 @@ Filtra por status, severidade, área e período. Útil para "quais bugs crítico
 
 # Regras de uso combinado
 - **Pergunta híbrida** ("nossa taxa de conversão está abaixo do mercado?") → chame \`get_kpi_trend\` E \`web_market_research\` em sequência, depois sintetize com comparativo.
+- **Diagnóstico de queda/alta** ("por que caiu a receita?") → \`compare_periods\` para confirmar a queda, depois \`analyze_funnel\` para localizar a etapa do drop-off, e finalmente \`top_entities\` (\`commercial_by_conversion\` ou \`lost_reasons_by_value\`) para identificar a causa.
+- **Planejamento futuro** ("vou bater a meta?") → \`forecast_metric\` para projeção, comparada com a meta declarada pelo usuário. Se r²<0.3, recomende monitorar e reavaliar antes de decisões.
+- **Análise multidimensional** — quando precisar de números reais e tendência: \`query_analytics\` (com group_by="weekday" para padrões de dia da semana, ou "quarter" para sazonalidade) e depois interprete.
+
+# Heurísticas analíticas
+- Sempre que reportar um total, ofereça contexto: "vs período anterior?" → use \`compare_periods\`.
+- Para perguntas sobre **distribuição** (ticket médio, valor mediano), prefira \`median_manual_total\` em vez de \`avg_manual_total\` — mais robusto a outliers.
+- Para **clientes únicos**, use \`count_distinct_clients\` em vez de \`count\`.
+- Quando o usuário fizer pergunta vaga ("como estamos?"), responda com 3 KPIs: volume (received_count), conversão (conversion_rate_pct), receita (revenue_brl), comparando com período anterior.
 
 Hoje é ${TODAY_HINT()} (use como referência para "hoje", "ontem", "esta semana").
 
@@ -111,9 +129,20 @@ const ANALYTICS_TOOL = {
       properties: {
         metric: {
           type: "string",
-          enum: ["count", "sum_internal_cost", "sum_manual_total", "avg_internal_cost"],
+          enum: [
+            "count",
+            "count_distinct_clients",
+            "sum_internal_cost",
+            "sum_manual_total",
+            "avg_internal_cost",
+            "avg_manual_total",
+            "median_manual_total",
+            "p90_manual_total",
+            "min_manual_total",
+            "max_manual_total",
+          ],
           description:
-            "count = contagem de orçamentos. sum_* / avg_* = somatório/média do campo numérico.",
+            "count = contagem de orçamentos. count_distinct_clients = clientes únicos. sum_* / avg_* / median_* / p90_* / min_* / max_* = estatísticas do campo numérico.",
         },
         group_by: {
           type: "string",
@@ -122,6 +151,9 @@ const ANALYTICS_TOOL = {
             "day",
             "week",
             "month",
+            "quarter",
+            "year",
+            "weekday",
             "internal_status",
             "pipeline_stage",
             "commercial_owner",
@@ -129,7 +161,7 @@ const ANALYTICS_TOOL = {
             "lead_source",
           ],
           description:
-            "Agrupamento. 'none' = total único. 'day'/'week'/'month' = série temporal por data. 'commercial_owner'/'estimator_owner' retornam nome do responsável.",
+            "Agrupamento. 'none' = total único. 'day'/'week'/'month'/'quarter'/'year' = série temporal. 'weekday' = dia da semana (descobre padrões: segundas vs sextas). 'commercial_owner'/'estimator_owner' retornam nome do responsável.",
         },
         date_field: {
           type: "string",
@@ -209,8 +241,19 @@ const TOP_ENTITIES_TOOL = {
       properties: {
         kind: {
           type: "string",
-          enum: ["clients_by_revenue","clients_by_budget_count","suppliers_by_item_count","campaigns_by_leads","lost_reasons"],
-          description: "Tipo de ranking.",
+          enum: [
+            "clients_by_revenue",
+            "clients_by_budget_count",
+            "clients_by_avg_ticket",
+            "suppliers_by_item_count",
+            "campaigns_by_leads",
+            "lost_reasons",
+            "lost_reasons_by_value",
+            "estimators_by_velocity",
+            "commercial_by_conversion",
+          ],
+          description:
+            "Tipo de ranking. clients_by_avg_ticket = clientes ordenados por ticket médio. lost_reasons_by_value = motivos de perda ordenados por receita perdida (não nº de casos). estimators_by_velocity = orçamentistas ordenados por menor tempo médio de publicação. commercial_by_conversion = comerciais ordenados por taxa de conversão (fechados / atribuídos).",
         },
         days: { type: "number", description: "Janela em dias (padrão 90)." },
         limit: { type: "number", description: "Top N (padrão 10, máx 50)." },
@@ -287,6 +330,100 @@ const QUERY_BUG_REPORTS_TOOL = {
         group_by: { type: "string", enum: ["none","area","severity","status","day","week"] },
         limit: { type: "number", description: "Limite (padrão 25, máx 100)." },
       },
+    },
+  },
+};
+
+const COMPARE_PERIODS_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "compare_periods",
+    description:
+      "Compara uma métrica entre dois períodos consecutivos do mesmo tamanho (período atual vs período anterior) e retorna delta absoluto, delta % e direção (up/down/flat). Use sempre que o admin perguntar 'crescemos?', 'estamos melhor?', 'comparado com a semana/mês passado', 'evolução vs período anterior'. Aceita os mesmos filtros do query_analytics.",
+    parameters: {
+      type: "object",
+      properties: {
+        metric: {
+          type: "string",
+          enum: [
+            "count",
+            "count_distinct_clients",
+            "sum_internal_cost",
+            "sum_manual_total",
+            "avg_internal_cost",
+            "avg_manual_total",
+            "median_manual_total",
+          ],
+        },
+        date_field: {
+          type: "string",
+          enum: ["created_at", "approved_at", "closed_at", "due_at"],
+          description: "Mesma semântica do query_analytics. Padrão: created_at.",
+        },
+        days: {
+          type: "number",
+          description:
+            "Tamanho da janela em dias para CADA período. Ex.: 7 = compara últimos 7 dias com os 7 dias anteriores.",
+        },
+        internal_statuses: { type: "array", items: { type: "string" } },
+        pipeline_stages: { type: "array", items: { type: "string" } },
+      },
+      required: ["metric", "days"],
+    },
+  },
+};
+
+const ANALYZE_FUNNEL_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "analyze_funnel",
+    description:
+      "Analisa o funil de orçamentos: quantos chegaram a cada estágio e a taxa de conversão entre estágios. Use para 'qual é a taxa de conversão de lead para contrato?', 'onde estamos perdendo mais?', 'qual etapa do pipeline tem mais drop-off?'. Conta orçamentos únicos por estágio máximo atingido.",
+    parameters: {
+      type: "object",
+      properties: {
+        funnel_type: {
+          type: "string",
+          enum: ["internal_status", "pipeline_stage"],
+          description:
+            "internal_status = funil operacional (novo→em_analise→...→contrato_fechado). pipeline_stage = funil comercial (lead→briefing→visita→proposta→negociacao). Padrão: internal_status.",
+        },
+        date_field: {
+          type: "string",
+          enum: ["created_at", "approved_at"],
+          description: "Campo de data para janela. Padrão: created_at.",
+        },
+        days: { type: "number", description: "Janela em dias (padrão 30, máx 365)." },
+        commercial_owner_id: { type: "string", description: "Filtra pelo dono comercial (UUID)." },
+      },
+    },
+  },
+};
+
+const FORECAST_METRIC_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "forecast_metric",
+    description:
+      "Projeta um KPI já registrado em daily_metrics_snapshot para os próximos N dias usando regressão linear simples. Retorna histórico, série projetada, slope (tendência diária), intercept e r² (qualidade do ajuste). Use para 'quanto vamos faturar nas próximas 2 semanas?', 'qual a projeção de leads para o próximo mês?', 'a que ritmo o backlog está crescendo?'.",
+    parameters: {
+      type: "object",
+      properties: {
+        kpi: {
+          type: "string",
+          enum: [
+            "received_count","backlog_count","overdue_count","closed_count",
+            "in_analysis_count","delivered_to_sales_count","published_count",
+            "sla_on_time_pct","sla_at_risk_count","sla_breach_48h_count",
+            "avg_lead_time_days","median_lead_time_days",
+            "avg_time_in_analysis_days","avg_time_in_review_days","avg_time_to_publish_days",
+            "conversion_rate_pct","portfolio_value_brl","revenue_brl","avg_ticket_brl",
+          ],
+        },
+        lookback_days: { type: "number", description: "Histórico considerado (padrão 30, mín 7, máx 180)." },
+        forecast_days: { type: "number", description: "Quantos dias projetar à frente (padrão 7, máx 90)." },
+      },
+      required: ["kpi"],
     },
   },
 };
@@ -414,6 +551,7 @@ async function runAnalytics(
 
   const selectFields = [
     "id",
+    "client_id",
     "created_at",
     "approved_at",
     "closed_at",
@@ -460,13 +598,20 @@ async function runAnalytics(
     }
   }
 
+  const usesManualTotal = metric === "sum_manual_total" || metric === "avg_manual_total"
+    || metric === "median_manual_total" || metric === "p90_manual_total"
+    || metric === "min_manual_total" || metric === "max_manual_total";
+  const usesInternalCost = metric === "sum_internal_cost" || metric === "avg_internal_cost";
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const valueOf = (r: any): number => {
-    if (metric === "count") return 1;
-    if (metric === "sum_internal_cost" || metric === "avg_internal_cost") return Number(r.internal_cost ?? 0);
-    if (metric === "sum_manual_total") return Number(r.manual_total ?? 0);
+    if (metric === "count" || metric === "count_distinct_clients") return 1;
+    if (usesInternalCost) return Number(r.internal_cost ?? 0);
+    if (usesManualTotal) return Number(r.manual_total ?? 0);
     return 0;
   };
+
+  const WEEKDAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const keyOf = (r: any): string => {
@@ -481,6 +626,15 @@ async function runAnalytics(
     const d = new Date(raw);
     if (groupBy === "day") return d.toISOString().slice(0, 10);
     if (groupBy === "month") return d.toISOString().slice(0, 7);
+    if (groupBy === "year") return String(d.getUTCFullYear());
+    if (groupBy === "quarter") {
+      const q = Math.floor(d.getUTCMonth() / 3) + 1;
+      return `${d.getUTCFullYear()}-Q${q}`;
+    }
+    if (groupBy === "weekday") {
+      const idx = d.getUTCDay();
+      return `${idx}-${WEEKDAY_NAMES[idx]}`;
+    }
     if (groupBy === "week") {
       // ISO week start (Monday)
       const dt = new Date(d);
@@ -491,38 +645,76 @@ async function runAnalytics(
     return "—";
   };
 
-  // Aggregate
-  const buckets = new Map<string, { sum: number; n: number }>();
+  // Aggregate (track per-bucket distinct client_ids and value samples for percentiles/min/max)
+  type Bucket = {
+    sum: number;
+    n: number;
+    clients: Set<string>;
+    samples: number[];
+  };
+  const buckets = new Map<string, Bucket>();
+  const needsSamples = metric === "median_manual_total" || metric === "p90_manual_total"
+    || metric === "min_manual_total" || metric === "max_manual_total";
   for (const r of rows) {
     const k = keyOf(r);
     const v = valueOf(r);
-    const b = buckets.get(k) ?? { sum: 0, n: 0 };
+    const b = buckets.get(k) ?? { sum: 0, n: 0, clients: new Set<string>(), samples: [] };
     b.sum += v;
     b.n += 1;
+    if (metric === "count_distinct_clients" && r.client_id) b.clients.add(r.client_id);
+    if (needsSamples) b.samples.push(Number(r.manual_total ?? 0));
     buckets.set(k, b);
   }
 
-  const finalize = (sum: number, n: number) => {
-    if (metric === "count") return n;
-    if (metric === "avg_internal_cost") return n > 0 ? Math.round((sum / n) * 100) / 100 : 0;
-    return Math.round(sum * 100) / 100;
+  const percentile = (arr: number[], p: number): number => {
+    if (arr.length === 0) return 0;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const idx = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * p)));
+    return sorted[idx];
   };
 
-  let series = Array.from(buckets.entries()).map(([key, { sum, n }]) => ({
+  const finalize = (b: Bucket): number => {
+    if (metric === "count") return b.n;
+    if (metric === "count_distinct_clients") return b.clients.size;
+    if (metric === "avg_internal_cost" || metric === "avg_manual_total")
+      return b.n > 0 ? Math.round((b.sum / b.n) * 100) / 100 : 0;
+    if (metric === "median_manual_total")
+      return Math.round(percentile(b.samples, 0.5) * 100) / 100;
+    if (metric === "p90_manual_total")
+      return Math.round(percentile(b.samples, 0.9) * 100) / 100;
+    if (metric === "min_manual_total")
+      return b.samples.length ? Math.round(Math.min(...b.samples) * 100) / 100 : 0;
+    if (metric === "max_manual_total")
+      return b.samples.length ? Math.round(Math.max(...b.samples) * 100) / 100 : 0;
+    return Math.round(b.sum * 100) / 100;
+  };
+
+  let series = Array.from(buckets.entries()).map(([key, b]) => ({
     key,
-    value: finalize(sum, n),
-    rows: n,
+    value: finalize(b),
+    rows: b.n,
   }));
 
   // Order: temporal asc, otherwise value desc
-  if (["day", "week", "month"].includes(groupBy)) {
+  if (["day", "week", "month", "quarter", "year"].includes(groupBy)) {
     series.sort((a, b) => a.key.localeCompare(b.key));
+  } else if (groupBy === "weekday") {
+    // Sort by weekday index encoded as prefix "0-Domingo".."6-Sábado"
+    series.sort((a, b) => a.key.localeCompare(b.key));
+    series = series.map((s) => ({ ...s, key: s.key.split("-").slice(1).join("-") || s.key }));
   } else {
     series.sort((a, b) => b.value - a.value);
   }
   series = series.slice(0, limit);
 
-  const grandSum = rows.reduce((acc, r) => acc + valueOf(r), 0);
+  // Build a synthetic "grand bucket" so finalize() handles all metrics consistently.
+  const grandBucket: Bucket = {
+    sum: rows.reduce((acc, r) => acc + valueOf(r), 0),
+    n: rows.length,
+    clients: new Set<string>(rows.map((r) => r.client_id).filter(Boolean) as string[]),
+    samples: needsSamples ? rows.map((r) => Number(r.manual_total ?? 0)) : [],
+  };
+  const grandTotal = finalize(grandBucket);
   const totalRows = rows.length;
 
   // For temporal groupings, compute average using the requested period length
@@ -536,7 +728,7 @@ async function runAnalytics(
           ? Math.max(1, Math.round(days / 30))
           : series.length || 1;
   const avgPerPeriodUnit =
-    Math.round(((finalize(grandSum, totalRows) as number) / denominator) * 100) / 100;
+    Math.round((grandTotal / denominator) * 100) / 100;
 
   const result = {
     metric,
@@ -546,8 +738,8 @@ async function runAnalytics(
     days,
     filters: { from, to, internal_statuses: internalStatuses, pipeline_stages: pipelineStages },
     total_rows_matched: totalRows,
-    total_in_period: finalize(grandSum, totalRows),
-    grand_total: finalize(grandSum, totalRows),
+    total_in_period: grandTotal,
+    grand_total: grandTotal,
     avg_per_bucket:
       series.length > 0
         ? Math.round((series.reduce((a, b) => a + b.value, 0) / series.length) * 100) / 100
@@ -560,6 +752,261 @@ async function runAnalytics(
   setAnalyticsCache(cacheKey, result);
 
   return { ok: true, result: { ...result, cache: "miss" } };
+}
+
+// =============== Tool: compare_periods ===============
+async function runComparePeriods(
+  args: Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const days = Math.max(1, Math.min(Number(args.days ?? 7) || 7, 365));
+  const metric = String(args.metric ?? "count");
+  const dateField = String(args.date_field ?? "created_at");
+  const today = new Date();
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+  const currentTo = fmt(today);
+  const currentFrom = fmt(new Date(today.getTime() - days * 86400_000));
+  const previousTo = fmt(new Date(today.getTime() - days * 86400_000 - 1));
+  const previousFrom = fmt(new Date(today.getTime() - 2 * days * 86400_000));
+
+  const baseArgs: Record<string, unknown> = {
+    metric,
+    group_by: "none",
+    date_field: dateField,
+    internal_statuses: args.internal_statuses,
+    pipeline_stages: args.pipeline_stages,
+  };
+
+  const [currRes, prevRes] = await Promise.all([
+    runAnalytics({ ...baseArgs, date_from: currentFrom, date_to: currentTo }, admin),
+    runAnalytics({ ...baseArgs, date_from: previousFrom, date_to: previousTo }, admin),
+  ]);
+
+  if (!currRes.ok) return { ok: false, error: currRes.error ?? "Falha no período atual" };
+  if (!prevRes.ok) return { ok: false, error: prevRes.error ?? "Falha no período anterior" };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const currentTotal = Number((currRes.result as any)?.total_in_period ?? 0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const previousTotal = Number((prevRes.result as any)?.total_in_period ?? 0);
+  const deltaAbs = Math.round((currentTotal - previousTotal) * 100) / 100;
+  const deltaPct = previousTotal !== 0
+    ? Math.round(((currentTotal - previousTotal) / Math.abs(previousTotal)) * 10000) / 100
+    : null;
+  const direction = deltaAbs > 0 ? "up" : deltaAbs < 0 ? "down" : "flat";
+
+  return {
+    ok: true,
+    result: {
+      metric,
+      date_field: dateField,
+      window_days: days,
+      current: {
+        period_label: `Atual: ${formatBrDate(currentFrom)} a ${formatBrDate(currentTo)}`,
+        from: currentFrom, to: currentTo, total: currentTotal,
+      },
+      previous: {
+        period_label: `Anterior: ${formatBrDate(previousFrom)} a ${formatBrDate(previousTo)}`,
+        from: previousFrom, to: previousTo, total: previousTotal,
+      },
+      delta_absolute: deltaAbs,
+      delta_pct: deltaPct,
+      direction,
+    },
+  };
+}
+
+// =============== Tool: analyze_funnel ===============
+async function runAnalyzeFunnel(
+  args: Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const funnelType = String(args.funnel_type ?? "internal_status");
+  const dateField = String(args.date_field ?? "created_at");
+  const days = Math.max(1, Math.min(Number(args.days ?? 30) || 30, 365));
+  const fromIso = new Date(Date.now() - days * 86400_000).toISOString();
+  const ownerId = typeof args.commercial_owner_id === "string" ? args.commercial_owner_id : null;
+
+  // Canonical stage ordering
+  const STATUS_ORDER = [
+    "novo", "em_analise", "waiting_info", "em_revisao", "revision_requested",
+    "delivered_to_sales", "published", "minuta_solicitada", "contrato_fechado",
+  ];
+  const PIPELINE_ORDER = ["lead", "briefing", "visita", "proposta", "negociacao"];
+  const order = funnelType === "pipeline_stage" ? PIPELINE_ORDER : STATUS_ORDER;
+  const column = funnelType === "pipeline_stage" ? "pipeline_stage" : "internal_status";
+
+  let q = admin
+    .from("budgets")
+    .select(`id, ${column}, manual_total, internal_cost, lost_at, created_at, approved_at`)
+    .gte(dateField, fromIso)
+    .limit(5000);
+  if (ownerId) q = q.eq("commercial_owner_id", ownerId);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = (await q) as any;
+  if (error) return { ok: false, error: error.message };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = (data ?? []) as any[];
+  const total = rows.length;
+
+  // Bucket by current stage
+  const counts = new Map<string, { count: number; value: number }>();
+  for (const r of rows) {
+    const key = r[column] ?? "—";
+    const acc = counts.get(key) ?? { count: 0, value: 0 };
+    acc.count += 1;
+    acc.value += Number(r.manual_total ?? r.internal_cost ?? 0);
+    counts.set(key, acc);
+  }
+
+  // For internal_status funnel: cumulative-from-current is "reached at least this stage"
+  // (assumes monotonic progression — which the system enforces in practice).
+  const stages = order.map((stage, idx) => {
+    const reached = order.slice(idx).reduce((acc, st) => {
+      const c = counts.get(st);
+      return c ? acc + c.count : acc;
+    }, 0);
+    const here = counts.get(stage)?.count ?? 0;
+    const value = counts.get(stage)?.value ?? 0;
+    return { stage, current_at_stage: here, reached_or_passed: reached, value_brl: Math.round(value * 100) / 100 };
+  });
+
+  // Lost / dropped (only meaningful for internal_status)
+  const lostCount = funnelType === "internal_status" ? counts.get("perdido")?.count ?? 0 : 0;
+
+  // Conversion rates: relative to first stage (received) and step-to-step
+  const received = stages[0]?.reached_or_passed ?? 0;
+  const enriched = stages.map((s, i) => {
+    const prev = i > 0 ? stages[i - 1].reached_or_passed : received;
+    const conversion_from_top_pct = received > 0
+      ? Math.round((s.reached_or_passed / received) * 10000) / 100
+      : 0;
+    const conversion_from_prev_pct = prev > 0
+      ? Math.round((s.reached_or_passed / prev) * 10000) / 100
+      : 0;
+    const drop_off_pct = prev > 0
+      ? Math.round(((prev - s.reached_or_passed) / prev) * 10000) / 100
+      : 0;
+    return { ...s, conversion_from_top_pct, conversion_from_prev_pct, drop_off_pct };
+  });
+
+  return {
+    ok: true,
+    result: {
+      funnel_type: funnelType,
+      period_label: `Últimos ${days} dias`,
+      date_field: dateField,
+      total_budgets_in_window: total,
+      lost_count: lostCount,
+      stages: enriched,
+      truncated: total >= 5000,
+    },
+  };
+}
+
+// =============== Tool: forecast_metric ===============
+async function runForecastMetric(
+  args: Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+): Promise<{ ok: boolean; result?: unknown; error?: string }> {
+  const kpi = String(args.kpi ?? "");
+  if (!kpi) return { ok: false, error: "kpi é obrigatório" };
+  const lookback = Math.max(7, Math.min(Number(args.lookback_days ?? 30) || 30, 180));
+  const horizon = Math.max(1, Math.min(Number(args.forecast_days ?? 7) || 7, 90));
+  const fromIso = new Date(Date.now() - lookback * 86400_000).toISOString().slice(0, 10);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = (await admin
+    .from("daily_metrics_snapshot")
+    .select(`snapshot_date, ${kpi}`)
+    .gte("snapshot_date", fromIso)
+    .order("snapshot_date", { ascending: true })) as any;
+  if (error) return { ok: false, error: error.message };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = (data ?? []) as any[];
+  if (rows.length < 3) {
+    return {
+      ok: false,
+      error: `Dados insuficientes para projeção (${rows.length} pontos). Mínimo: 3 dias com snapshot.`,
+    };
+  }
+
+  // Linear regression: y = a + b*x where x is days since first point
+  const baseDate = new Date(rows[0].snapshot_date + "T00:00:00Z").getTime();
+  const xs: number[] = [];
+  const ys: number[] = [];
+  for (const r of rows) {
+    const t = new Date(r.snapshot_date + "T00:00:00Z").getTime();
+    const x = (t - baseDate) / 86400_000;
+    const y = Number(r[kpi] ?? 0);
+    if (Number.isFinite(y)) {
+      xs.push(x);
+      ys.push(y);
+    }
+  }
+  const n = xs.length;
+  const meanX = xs.reduce((a, b) => a + b, 0) / n;
+  const meanY = ys.reduce((a, b) => a + b, 0) / n;
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - meanX) * (ys[i] - meanY);
+    den += (xs[i] - meanX) ** 2;
+  }
+  const slope = den > 0 ? num / den : 0;
+  const intercept = meanY - slope * meanX;
+
+  // r²
+  let ssTot = 0;
+  let ssRes = 0;
+  for (let i = 0; i < n; i++) {
+    const yhat = intercept + slope * xs[i];
+    ssTot += (ys[i] - meanY) ** 2;
+    ssRes += (ys[i] - yhat) ** 2;
+  }
+  const r2 = ssTot > 0 ? Math.max(0, Math.min(1, 1 - ssRes / ssTot)) : 0;
+
+  const lastX = xs[xs.length - 1];
+  const round2 = (v: number) => Math.round(v * 100) / 100;
+  const history = rows.map((r) => ({ date: r.snapshot_date, value: Number(r[kpi] ?? 0) }));
+  const projection: { date: string; value: number }[] = [];
+  for (let i = 1; i <= horizon; i++) {
+    const x = lastX + i;
+    const t = new Date(baseDate + x * 86400_000).toISOString().slice(0, 10);
+    projection.push({ date: t, value: round2(intercept + slope * x) });
+  }
+  const projectedTotal = round2(projection.reduce((a, b) => a + b.value, 0));
+  const lastValue = ys[ys.length - 1];
+  const projectedEnd = projection[projection.length - 1]?.value ?? lastValue;
+
+  return {
+    ok: true,
+    result: {
+      kpi,
+      lookback_days: lookback,
+      forecast_days: horizon,
+      points_used: n,
+      slope_per_day: round2(slope),
+      intercept: round2(intercept),
+      r_squared: Math.round(r2 * 1000) / 1000,
+      trend: slope > 0.01 ? "growing" : slope < -0.01 ? "declining" : "flat",
+      last_observed: round2(lastValue),
+      projected_end_value: projectedEnd,
+      projected_period_total: projectedTotal,
+      history,
+      projection,
+      caveat:
+        r2 < 0.3
+          ? "r² baixo: tendência linear não explica bem a variação. Use a projeção como referência grosseira."
+          : r2 < 0.6
+            ? "r² moderado: projeção razoável, mas sujeita a ruído."
+            : "r² alto: tendência consistente.",
+    },
+  };
 }
 
 // =============== Tool: get_kpi_trend ===============
@@ -614,7 +1061,11 @@ async function runTopEntities(
   const from = new Date(Date.now() - days * 86400_000).toISOString();
   const periodLabel = `Últimos ${days} dias`;
 
-  if (kind === "clients_by_revenue" || kind === "clients_by_budget_count") {
+  if (
+    kind === "clients_by_revenue" ||
+    kind === "clients_by_budget_count" ||
+    kind === "clients_by_avg_ticket"
+  ) {
     // deno-lint-ignore no-explicit-any
     const { data, error } = (await admin
       .from("budgets")
@@ -637,8 +1088,18 @@ async function runTopEntities(
       : { data: [] };
     const nameMap = Object.fromEntries((clients ?? []).map((c: { id: string; name: string }) => [c.id, c.name]));
     const sorted = Array.from(agg.entries())
-      .map(([id, v]) => ({ id, name: nameMap[id] ?? "—", count: v.count, revenue: Math.round(v.revenue * 100) / 100 }))
-      .sort((a, b) => (kind === "clients_by_revenue" ? b.revenue - a.revenue : b.count - a.count))
+      .map(([id, v]) => ({
+        id,
+        name: nameMap[id] ?? "—",
+        count: v.count,
+        revenue: Math.round(v.revenue * 100) / 100,
+        avg_ticket: v.count > 0 ? Math.round((v.revenue / v.count) * 100) / 100 : 0,
+      }))
+      .sort((a, b) => {
+        if (kind === "clients_by_revenue") return b.revenue - a.revenue;
+        if (kind === "clients_by_avg_ticket") return b.avg_ticket - a.avg_ticket;
+        return b.count - a.count;
+      })
       .slice(0, limit);
     return { ok: true, result: { kind, period_label: periodLabel, days, top: sorted } };
   }
@@ -662,18 +1123,149 @@ async function runTopEntities(
     return { ok: true, result: { kind, period_label: periodLabel, days, top } };
   }
 
-  if (kind === "lost_reasons") {
+  if (kind === "lost_reasons" || kind === "lost_reasons_by_value") {
     // deno-lint-ignore no-explicit-any
     const { data, error } = (await admin
       .from("budget_lost_reasons")
-      .select("reason_category")
+      .select("reason_category, budget_id")
       .gte("lost_at", from)) as any;
     if (error) return { ok: false, error: error.message };
-    const agg = new Map<string, number>();
-    for (const r of data ?? []) agg.set(r.reason_category ?? "—", (agg.get(r.reason_category ?? "—") ?? 0) + 1);
+    type LostRow = { reason_category: string | null; budget_id: string | null };
+    const lostRows = (data ?? []) as LostRow[];
+
+    let valueByBudget = new Map<string, number>();
+    if (kind === "lost_reasons_by_value") {
+      const budgetIds = Array.from(new Set(lostRows.map((r) => r.budget_id).filter(Boolean) as string[]));
+      if (budgetIds.length > 0) {
+        // deno-lint-ignore no-explicit-any
+        const { data: bdata } = (await admin
+          .from("budgets")
+          .select("id, manual_total, internal_cost")
+          .in("id", budgetIds)) as any;
+        valueByBudget = new Map(
+          (bdata ?? []).map((b: { id: string; manual_total: number | null; internal_cost: number | null }) => [
+            b.id,
+            Number(b.manual_total ?? b.internal_cost ?? 0),
+          ]),
+        );
+      }
+    }
+
+    const agg = new Map<string, { count: number; value: number }>();
+    for (const r of lostRows) {
+      const k = r.reason_category ?? "—";
+      const acc = agg.get(k) ?? { count: 0, value: 0 };
+      acc.count += 1;
+      if (kind === "lost_reasons_by_value" && r.budget_id) {
+        acc.value += valueByBudget.get(r.budget_id) ?? 0;
+      }
+      agg.set(k, acc);
+    }
     const top = Array.from(agg.entries())
-      .map(([reason, count]) => ({ reason, count }))
-      .sort((a, b) => b.count - a.count)
+      .map(([reason, v]) => ({
+        reason,
+        count: v.count,
+        lost_value_brl: Math.round(v.value * 100) / 100,
+      }))
+      .sort((a, b) =>
+        kind === "lost_reasons_by_value" ? b.lost_value_brl - a.lost_value_brl : b.count - a.count,
+      )
+      .slice(0, limit);
+    return { ok: true, result: { kind, period_label: periodLabel, days, top } };
+  }
+
+  if (kind === "estimators_by_velocity") {
+    // Average days from created_at → published_at (or first_publication_at) per estimator.
+    // deno-lint-ignore no-explicit-any
+    const { data, error } = (await admin
+      .from("budgets")
+      .select("estimator_owner_id, created_at, first_publication_at, internal_status")
+      .gte("created_at", from)
+      .in("internal_status", ["published", "minuta_solicitada", "contrato_fechado", "delivered_to_sales"])) as any;
+    if (error) return { ok: false, error: error.message };
+    type Row = {
+      estimator_owner_id: string | null;
+      created_at: string;
+      first_publication_at: string | null;
+    };
+    const agg = new Map<string, { sumDays: number; n: number }>();
+    for (const r of (data ?? []) as Row[]) {
+      if (!r.estimator_owner_id || !r.first_publication_at) continue;
+      const days = (new Date(r.first_publication_at).getTime() - new Date(r.created_at).getTime()) / 86400_000;
+      if (!Number.isFinite(days) || days < 0) continue;
+      const acc = agg.get(r.estimator_owner_id) ?? { sumDays: 0, n: 0 };
+      acc.sumDays += days;
+      acc.n += 1;
+      agg.set(r.estimator_owner_id, acc);
+    }
+    const ids = Array.from(agg.keys()).slice(0, 200);
+    // deno-lint-ignore no-explicit-any
+    const { data: profs } = ids.length
+      ? ((await admin.from("profiles").select("id, full_name").in("id", ids)) as any)
+      : { data: [] };
+    const nameMap = Object.fromEntries(
+      (profs ?? []).map((p: { id: string; full_name: string | null }) => [p.id, p.full_name || "—"]),
+    );
+    const top = Array.from(agg.entries())
+      .map(([id, v]) => ({
+        id,
+        name: nameMap[id] ?? "—",
+        budgets_published: v.n,
+        avg_days_to_publish: Math.round((v.sumDays / v.n) * 100) / 100,
+      }))
+      .filter((r) => r.budgets_published >= 2) // exclude noise from one-off cases
+      .sort((a, b) => a.avg_days_to_publish - b.avg_days_to_publish)
+      .slice(0, limit);
+    return { ok: true, result: { kind, period_label: periodLabel, days, top } };
+  }
+
+  if (kind === "commercial_by_conversion") {
+    // deno-lint-ignore no-explicit-any
+    const { data, error } = (await admin
+      .from("budgets")
+      .select("commercial_owner_id, internal_status, manual_total, created_at")
+      .gte("created_at", from)) as any;
+    if (error) return { ok: false, error: error.message };
+    type Row = {
+      commercial_owner_id: string | null;
+      internal_status: string | null;
+      manual_total: number | null;
+    };
+    const WON = new Set(["contrato_fechado", "minuta_solicitada"]);
+    const CLOSED = new Set(["contrato_fechado", "minuta_solicitada", "perdido"]);
+    const agg = new Map<string, { assigned: number; closed: number; won: number; revenue: number }>();
+    for (const r of (data ?? []) as Row[]) {
+      if (!r.commercial_owner_id) continue;
+      const acc = agg.get(r.commercial_owner_id) ?? { assigned: 0, closed: 0, won: 0, revenue: 0 };
+      acc.assigned += 1;
+      if (r.internal_status && CLOSED.has(r.internal_status)) acc.closed += 1;
+      if (r.internal_status && WON.has(r.internal_status)) {
+        acc.won += 1;
+        acc.revenue += Number(r.manual_total ?? 0);
+      }
+      agg.set(r.commercial_owner_id, acc);
+    }
+    const ids = Array.from(agg.keys()).slice(0, 200);
+    // deno-lint-ignore no-explicit-any
+    const { data: profs } = ids.length
+      ? ((await admin.from("profiles").select("id, full_name").in("id", ids)) as any)
+      : { data: [] };
+    const nameMap = Object.fromEntries(
+      (profs ?? []).map((p: { id: string; full_name: string | null }) => [p.id, p.full_name || "—"]),
+    );
+    const top = Array.from(agg.entries())
+      .map(([id, v]) => ({
+        id,
+        name: nameMap[id] ?? "—",
+        assigned: v.assigned,
+        closed: v.closed,
+        won: v.won,
+        revenue_brl: Math.round(v.revenue * 100) / 100,
+        conversion_pct:
+          v.closed > 0 ? Math.round((v.won / v.closed) * 10000) / 100 : 0,
+      }))
+      .filter((r) => r.closed >= 2) // need at least 2 closed deals to compute meaningful conversion
+      .sort((a, b) => b.conversion_pct - a.conversion_pct)
       .slice(0, limit);
     return { ok: true, result: { kind, period_label: periodLabel, days, top } };
   }
@@ -1228,7 +1820,17 @@ serve(async (req) => {
     // ===== Tool-calling loop (max 4 rounds) =====
     const conversation = [...baseMessages];
     const tools = isAdmin
-      ? [ANALYTICS_TOOL, KPI_TREND_TOOL, TOP_ENTITIES_TOOL, WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL, QUERY_BUG_REPORTS_TOOL]
+      ? [
+          ANALYTICS_TOOL,
+          COMPARE_PERIODS_TOOL,
+          ANALYZE_FUNNEL_TOOL,
+          FORECAST_METRIC_TOOL,
+          KPI_TREND_TOOL,
+          TOP_ENTITIES_TOOL,
+          WEB_RESEARCH_TOOL,
+          SUBMIT_BUG_REPORT_TOOL,
+          QUERY_BUG_REPORTS_TOOL,
+        ]
       : [WEB_RESEARCH_TOOL, SUBMIT_BUG_REPORT_TOOL];
 
     for (let round = 0; round < 4; round++) {
@@ -1274,6 +1876,18 @@ serve(async (req) => {
           toolOutput = isAdmin
             ? await runAnalytics(argsObj, admin)
             : { ok: false, error: "Apenas administradores podem consultar analytics." };
+        } else if (name === "compare_periods") {
+          toolOutput = isAdmin
+            ? await runComparePeriods(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem comparar períodos." };
+        } else if (name === "analyze_funnel") {
+          toolOutput = isAdmin
+            ? await runAnalyzeFunnel(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem analisar funil." };
+        } else if (name === "forecast_metric") {
+          toolOutput = isAdmin
+            ? await runForecastMetric(argsObj, admin)
+            : { ok: false, error: "Apenas administradores podem projetar métricas." };
         } else if (name === "get_kpi_trend") {
           toolOutput = isAdmin
             ? await runKpiTrend(argsObj, admin)
