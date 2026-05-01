@@ -761,6 +761,19 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   const [highlightItemId, setHighlightItemId] = useState<string | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  // Pagination progressiva por seção: quantos itens estão visíveis em cada uma.
+  // Mantém DnD e edição inline funcionais (apenas reduz nodes DOM em seções grandes).
+  const ITEMS_PAGE_SIZE = 25;
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
+  const showMoreItems = useCallback((sectionId: string, total: number) => {
+    setVisibleCounts(prev => ({
+      ...prev,
+      [sectionId]: Math.min((prev[sectionId] ?? ITEMS_PAGE_SIZE) + ITEMS_PAGE_SIZE, total),
+    }));
+  }, []);
+  const showAllItems = useCallback((sectionId: string, total: number) => {
+    setVisibleCounts(prev => ({ ...prev, [sectionId]: total }));
+  }, []);
   const densityKey = `budget-item-density-${budgetId}`;
   const [compactMode, setCompactMode] = useState(() => {
     try { return localStorage.getItem(densityKey) !== "expanded"; } catch { return true; }
