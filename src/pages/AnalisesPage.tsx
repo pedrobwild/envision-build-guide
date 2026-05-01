@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { subDays } from "date-fns";
-import { BarChart3, Hammer, Briefcase } from "lucide-react";
+import { BarChart3, Brain, Hammer, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -13,9 +13,11 @@ import { TimeInStageChart } from "@/components/dashboard/TimeInStageChart";
 import { SnapshotComparisonPanel } from "@/components/dashboard/SnapshotComparisonPanel";
 import { IntelligentAlertsPanel } from "@/components/dashboard/IntelligentAlertsPanel";
 import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
+import { AiAnalysisPanel } from "@/components/ai-analysis/AiAnalysisPanel";
 import { computeDashboardMetrics, OPERATIONS_START_DATE, type DateRange } from "@/hooks/useDashboardMetrics";
 import { useOperationsInsights } from "@/hooks/useOperationsInsights";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const SECTION_DELAY = 0.05;
 const anim = (delay: number) => ({
@@ -24,16 +26,17 @@ const anim = (delay: number) => ({
   transition: { duration: 0.4, delay },
 });
 
-type PipelineTab = "orcamentos" | "comercial";
+type PipelineTab = "ia" | "orcamentos" | "comercial";
 
 export default function AnalisesPage() {
   const { user } = useAuth();
+  const { isAdmin } = useUserProfile();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgets, setBudgets] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [deliveryTimestamps, setDeliveryTimestamps] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<PipelineTab>("orcamentos");
+  const [tab, setTab] = useState<PipelineTab>("ia");
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
     to: new Date(),
@@ -114,6 +117,10 @@ export default function AnalisesPage() {
       <motion.div {...anim(SECTION_DELAY)}>
         <Tabs value={tab} onValueChange={(v) => setTab(v as PipelineTab)}>
           <TabsList className="h-11 p-1 w-full sm:w-auto">
+            <TabsTrigger value="ia" className="gap-2 px-4 sm:px-6 text-sm flex-1 sm:flex-initial">
+              <Brain className="h-4 w-4" />
+              Inteligência IA
+            </TabsTrigger>
             <TabsTrigger value="orcamentos" className="gap-2 px-4 sm:px-6 text-sm flex-1 sm:flex-initial">
               <Hammer className="h-4 w-4" />
               Pipeline Orçamentos
@@ -123,6 +130,20 @@ export default function AnalisesPage() {
               Pipeline Comercial
             </TabsTrigger>
           </TabsList>
+
+          {/* IA — análise unificada com NL e insights ranqueados */}
+          <TabsContent value="ia" className="space-y-6 mt-6">
+            <motion.div {...anim(0)}>
+              <AiAnalysisPanel
+                budgets={filteredBudgets}
+                profiles={profiles}
+                range={dateRange}
+                loading={loading}
+                role={isAdmin ? "admin" : undefined}
+                screen="/admin/analises"
+              />
+            </motion.div>
+          </TabsContent>
 
           {/* ORÇAMENTOS — operações, SLA, throughput, tempo em estágio */}
           <TabsContent value="orcamentos" className="space-y-6 mt-6">
