@@ -366,11 +366,12 @@ export default function PublicBudget() {
   const categorizedGroups = categorizeSections(visibleSections);
   const scopeTotal = visibleSections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
 
-  // Split abatements by item label — mesma fonte de verdade do desktop
-  // (BudgetSummary). Antes o mobile recalculava por seção via
-  // calculateSectionSubtotal e ignorava descontos dentro de seções com saldo
-  // positivo, gerando subtotal/desconto inconsistentes entre desktop e mobile.
-  const abatementBreakdown = aggregateAbatementsByLabel(visibleSections);
+  // Split abatements by item label — fonte ÚNICA compartilhada com o desktop
+  // (BudgetSummary). NÃO recalcular manualmente aqui: a asserção em DEV
+  // abaixo lança imediatamente se alguém quebrar o contrato.
+  // Ver: src/lib/public-abatements.ts e src/lib/__tests__/mixed-section-mobile-bug.test.ts
+  const abatementBreakdown = computePublicAbatements(visibleSections);
+  assertPublicAbatementParity(visibleSections, abatementBreakdown, "mobile");
   const publicDiscountTotal = abatementBreakdown.discountTotal;
   const publicCreditTotal = abatementBreakdown.creditTotal;
   const publicSubtotalBeforeAbatements = total + publicDiscountTotal + publicCreditTotal;
