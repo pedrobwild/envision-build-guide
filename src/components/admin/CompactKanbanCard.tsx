@@ -60,6 +60,8 @@ interface CompactKanbanCardProps {
   onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink" | "nextAction") => void;
   /** Callback opcional para abrir o histórico/comunicação do negócio. */
   onOpenHistory?: () => void;
+  /** Slot opcional renderizado no canto superior direito (ex.: menu de ações com excluir). */
+  actionsSlot?: React.ReactNode;
 }
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
