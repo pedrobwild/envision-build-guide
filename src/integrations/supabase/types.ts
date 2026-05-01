@@ -3356,6 +3356,7 @@ export type Database = {
         Returns: string
       }
       get_public_budget: { Args: { p_public_id: string }; Returns: Json }
+      get_public_budget_total: { Args: { p_public_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
