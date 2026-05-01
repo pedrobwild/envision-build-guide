@@ -900,7 +900,7 @@ export default function BudgetInternalDetail() {
           </div>
 
           {/* KPIs */}
-          <div className="border-t border-border/60 mt-6 pt-5 grid grid-cols-2 md:grid-cols-4 gap-5">
+          <div className="border-t border-border/60 mt-6 pt-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
             <KpiBlock
               label="Valor"
               value={formatBRL(totalDisplay)}
