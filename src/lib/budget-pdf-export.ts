@@ -212,6 +212,14 @@ export async function buildBudgetPdfBlob(
     0,
   );
   const margemPct = totalVenda > 0 ? ((totalVenda - totalCusto) / totalVenda) * 100 : 0;
+  // Mirror PublicBudget/BudgetInternalDetail: prefer manual_total when defined.
+  // Falls back to computed (venda + ajustes) when manual_total is null.
+  const computedGrandTotal = totalVenda + totalAjustes;
+  const manualTotalNum = b.manual_total != null && Number.isFinite(Number(b.manual_total))
+    ? Number(b.manual_total)
+    : null;
+  const effectiveGrandTotal = manualTotalNum ?? computedGrandTotal;
+  const totalGeralLabel = manualTotalNum != null ? "Total geral (manual)" : "Total geral";
 
   // ── Documento ─────────────────────────────────────────────────────────
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -272,7 +280,7 @@ export async function buildBudgetPdfBlob(
     ["Custo total (interno)", brl(totalCusto)],
     ["Venda (custo + BDI)", brl(totalVenda)],
     ["Ajustes globais", brl(totalAjustes)],
-    ["Total geral", brl(totalVenda + totalAjustes)],
+    [totalGeralLabel, brl(effectiveGrandTotal)],
     ["Margem média", `${num(margemPct, 2)}%`],
     ["Total manual (orçamento)", brl(b.manual_total)],
     ["Custo registrado", brl(b.internal_cost)],
@@ -473,8 +481,8 @@ export async function buildBudgetPdfBlob(
       ["Ajustes globais", brl(totalAjustes)],
       ["Margem média", `${num(margemPct, 2)}%`],
       [
-        { content: "Total geral", styles: { fontStyle: "bold", textColor: 0 } } as unknown as string,
-        { content: brl(totalVenda + totalAjustes), styles: { fontStyle: "bold", textColor: 0 } } as unknown as string,
+        { content: totalGeralLabel, styles: { fontStyle: "bold", textColor: 0 } } as unknown as string,
+        { content: brl(effectiveGrandTotal), styles: { fontStyle: "bold", textColor: 0 } } as unknown as string,
       ],
     ],
     theme: "plain",

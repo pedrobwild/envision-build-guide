@@ -512,6 +512,13 @@ export async function buildBudgetXlsxBlob(
   const totalVenda = totals.sale;
   const totalAjustes = totals.adjustments;
   const margemRatio = totals.marginRatio;
+  // Mirror PublicBudget/BudgetInternalDetail: prefer manual_total when defined.
+  const computedGrandTotal = totalVenda + totalAjustes;
+  const manualTotalNum = b.manual_total != null && Number.isFinite(Number(b.manual_total))
+    ? Number(b.manual_total)
+    : null;
+  const effectiveGrandTotal = manualTotalNum ?? computedGrandTotal;
+  const totalGeralLabel = manualTotalNum != null ? "Total geral (manual)" : "Total geral";
 
   // Loga avisos de auditoria — não bloqueia o export, mas deixa rastro
   // para que o time identifique seções de Desconto/Crédito mal preenchidas.
@@ -550,7 +557,7 @@ export async function buildBudgetXlsxBlob(
     { label: "Custo total (interno)", value: totalCusto, fmt: FMT.BRL },
     { label: "Venda (custo + BDI por item)", value: totalVenda, fmt: FMT.BRL },
     { label: "Ajustes globais", value: totalAjustes, fmt: FMT.BRL },
-    { label: "Total geral", value: totalVenda + totalAjustes, fmt: FMT.BRL },
+    { label: totalGeralLabel, value: effectiveGrandTotal, fmt: FMT.BRL },
     { label: "Margem média", value: margemRatio, fmt: FMT.PCT },
     { label: "Total manual (orçamento)", value: b.manual_total ?? null, fmt: FMT.BRL },
     { label: "Custo registrado", value: b.internal_cost ?? null, fmt: FMT.BRL },
@@ -832,10 +839,10 @@ export async function buildBudgetXlsxBlob(
     { label: "Venda (BDI)", value: totalVenda, fmt: FMT.BRL },
     { label: "Ajustes globais", value: totalAjustes, fmt: FMT.BRL },
     { label: "Margem média", value: margemRatio, fmt: FMT.PCT },
-    { label: "Total geral", value: totalVenda + totalAjustes, fmt: FMT.BRL },
+    { label: totalGeralLabel, value: effectiveGrandTotal, fmt: FMT.BRL },
   ];
   for (const t of totalsRows) {
-    const isFinal = t.label === "Total geral";
+    const isFinal = t.label.startsWith("Total geral");
     detRows.push([t.label, "", "", "", "", "", "", "", t.value]);
     detRowMeta.push([
       { total: isFinal, bold: true, align: "right" },
@@ -971,7 +978,7 @@ export async function buildBudgetXlsxBlob(
   if (totalAjustes !== 0) {
     secRows.push(["", "Ajustes globais", "", "", "", "", totalAjustes, "", ""]);
   }
-  secRows.push(["", "Total geral", "", "", "", "", totalVenda + totalAjustes, "", ""]);
+  secRows.push(["", totalGeralLabel, "", "", "", "", effectiveGrandTotal, "", ""]);
 
   const wsSec = XLSX.utils.aoa_to_sheet(secRows);
   wsSec["!cols"] = autoFitColumns(secRows, {
