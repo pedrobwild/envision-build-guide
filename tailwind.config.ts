@@ -80,12 +80,47 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // ── Painel Enterprise (aditivo) ──
+        canvas: "hsl(var(--canvas))",
+        "surface-1": "hsl(var(--surface-1))",
+        "surface-2": "hsl(var(--surface-2))",
+        "surface-3": "hsl(var(--surface-3))",
+        hairline: "hsl(var(--hairline))",
+        "hairline-strong": "hsl(var(--hairline-strong))",
+        "ink-strong": "hsl(var(--ink-strong))",
+        "ink-medium": "hsl(var(--ink-medium))",
+        "ink-soft": "hsl(var(--ink-soft))",
+        "ink-faint": "hsl(var(--ink-faint))",
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          bg: "hsl(var(--info-bg))",
+          border: "hsl(var(--info-border))",
+        },
+        "success-bg": "hsl(var(--success-bg))",
+        "success-border": "hsl(var(--success-border))",
+        warn: {
+          DEFAULT: "hsl(var(--warn))",
+          bg: "hsl(var(--warn-bg))",
+          border: "hsl(var(--warn-border))",
+        },
+        danger: {
+          DEFAULT: "hsl(var(--danger))",
+          bg: "hsl(var(--danger-bg))",
+          border: "hsl(var(--danger-border))",
+        },
+        "neutral-bg": "hsl(var(--neutral-bg))",
+        "neutral-border": "hsl(var(--neutral-border))",
       },
       borderRadius: {
+        "2xl": "calc(var(--radius) + 8px)",
         xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        card: "var(--shadow-card)",
+        raised: "var(--shadow-raised)",
       },
       keyframes: {
         "accordion-down": {
