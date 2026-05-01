@@ -66,11 +66,11 @@ const DASHBOARD_ITEM: NavItem = {
 };
 
 const COMERCIAL_ITEMS: NavItem[] = [
-  { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial"] },
-  { title: "Conversão", url: "/admin/comercial/conversao", icon: GitBranch, roles: ["admin", "comercial"] },
-  { title: "Agenda", url: "/admin/agenda", icon: CalendarClock, roles: ["admin", "comercial"] },
-  { title: "Insights por Consultor", url: "/admin/insights", icon: Brain, roles: ["admin", "comercial"] },
-  { title: "Clientes", url: "/admin/crm", icon: Users, roles: ["admin", "comercial"] },
+  { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial", "orcamentista"] },
+  { title: "Conversão", url: "/admin/comercial/conversao", icon: GitBranch, roles: ["admin", "comercial", "orcamentista"] },
+  { title: "Agenda", url: "/admin/agenda", icon: CalendarClock, roles: ["admin", "comercial", "orcamentista"] },
+  { title: "Insights por Consultor", url: "/admin/insights", icon: Brain, roles: ["admin", "comercial", "orcamentista"] },
+  { title: "Clientes", url: "/admin/crm", icon: Users, roles: ["admin", "comercial", "orcamentista"] },
   // Removido: "Solicitações" — agora a criação de solicitação acontece dentro do
   // card do cliente (botão "Novo orçamento" em /admin/crm/:id), evitando
   // duplicidade. As rotas /admin/solicitacoes* permanecem ativas para compatibilidade.
@@ -95,7 +95,7 @@ const ANALISE_ITEMS: NavItem[] = [
 ];
 
 const FERRAMENTAS_ITEMS: NavItem[] = [
-  { title: "Leads (Integrações)", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial"] },
+  { title: "Leads (Integrações)", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Regras de Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
   { title: "Digisac", url: "/admin/digisac", icon: MessageCircle, roles: ["admin"] },
   { title: "Avaliação QA", url: "/qa", icon: Shield, roles: ["admin"] },

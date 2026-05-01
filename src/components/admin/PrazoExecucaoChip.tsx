@@ -34,6 +34,13 @@ export interface PrazoExecucaoChipProps {
    *  - "dark": para fundos escuros (header público, futuro uso)
    */
   tone?: "light" | "dark";
+  /**
+   * Tamanho:
+   *  - "md" (default): tamanho normal, ideal abaixo do H1
+   *  - "sm": compacto, casa com Badge do shadcn em barras de status
+   *    (omite a aproximação de semanas para economizar espaço).
+   */
+  size?: "sm" | "md";
   /** Classes extras aplicadas ao container raiz. */
   className?: string;
 }
@@ -48,6 +55,7 @@ export function PrazoExecucaoChip({
   onChange,
   readOnly = false,
   tone = "light",
+  size = "md",
   className,
 }: PrazoExecucaoChipProps) {
   const [editing, setEditing] = useState(false);
@@ -104,16 +112,23 @@ export function PrazoExecucaoChip({
     ? "bg-white/5 text-white/70 hover:bg-white/10 border-white/15 border-dashed"
     : "bg-primary/5 text-primary hover:bg-primary/10 border-primary/30 border-dashed";
 
+  // Tokens de tamanho — "sm" pareia com Badge do shadcn (text-[10px], px-2 py-0.5).
+  const sizing =
+    size === "sm" ? "px-2 py-0.5 text-[10px] gap-1" : "px-2 py-1 text-xs gap-1.5";
+  const iconSize = size === "sm" ? "h-2.5 w-2.5" : "h-3 w-3";
+  const inputWidth = size === "sm" ? "w-10" : "w-14";
+
   if (editing) {
     return (
       <div
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-body",
+          "inline-flex items-center rounded-md border font-body",
+          sizing,
           baseChip,
           className,
         )}
       >
-        <Clock className="h-3 w-3 opacity-60" aria-hidden />
+        <Clock className={cn(iconSize, "opacity-60")} aria-hidden />
         <input
           ref={inputRef}
           type="number"
@@ -129,7 +144,8 @@ export function PrazoExecucaoChip({
           }}
           aria-label="Dias úteis de execução da obra"
           className={cn(
-            "w-14 bg-transparent outline-none border-none p-0 m-0",
+            inputWidth,
+            "bg-transparent outline-none border-none p-0 m-0",
             "[&::-webkit-inner-spin-button]:appearance-none",
             "[&::-webkit-outer-spin-button]:appearance-none",
             "[appearance:textfield]",
@@ -147,25 +163,31 @@ export function PrazoExecucaoChip({
         type="button"
         onClick={() => setEditing(true)}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-body font-medium transition-colors",
+          "inline-flex items-center rounded-md border font-body font-medium transition-colors",
+          sizing,
           baseEmpty,
           className,
         )}
       >
-        <Plus className="h-3 w-3" aria-hidden />
-        Definir prazo de execução
+        <Plus className={iconSize} aria-hidden />
+        {size === "sm" ? "Definir prazo" : "Definir prazo de execução"}
       </button>
     );
   }
 
-  // Valor preenchido — chip clicável (ou apenas leitura).
+  // Valor preenchido — chip clicável (ou apenas leitura). Em "sm" omitimos a
+  // aproximação de semanas para caber em barras de status.
   const content = (
     <>
-      <Clock className="h-3 w-3 opacity-60" aria-hidden />
+      <Clock className={cn(iconSize, "opacity-60")} aria-hidden />
       <span className="budget-numeric font-medium">{value}</span>
       <span>dias úteis</span>
-      <span className="opacity-50">·</span>
-      <span className="opacity-70">≈ {approxWeeks(value)} sem</span>
+      {size === "md" && (
+        <>
+          <span className="opacity-50">·</span>
+          <span className="opacity-70">≈ {approxWeeks(value)} sem</span>
+        </>
+      )}
     </>
   );
 
@@ -173,7 +195,8 @@ export function PrazoExecucaoChip({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-body",
+          "inline-flex items-center rounded-md border font-body",
+          sizing,
           baseChip,
           className,
         )}
@@ -189,7 +212,8 @@ export function PrazoExecucaoChip({
       type="button"
       onClick={() => setEditing(true)}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-body transition-colors",
+        "inline-flex items-center rounded-md border font-body transition-colors",
+        sizing,
         baseChip,
         className,
       )}
