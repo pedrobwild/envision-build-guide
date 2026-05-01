@@ -69,15 +69,18 @@ export default function ComercialHome() {
   const overview = useSalesOverview({ range: "30d" }, ownerId);
 
   // Lê dado do mês corrente para a meta (a RPC já considera o período).
+  // `endDate` precisa ser memoizado, caso contrário cada render gera nova
+  // string e muda a queryKey de useSalesOverview, disparando refetch contínuo
+  // da RPC sales_kpis_dashboard.
+  const monthRange = useMemo(() => {
+    const now = new Date();
+    return {
+      startDate: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
+      endDate: now.toISOString(),
+    };
+  }, []);
   const overviewMTD = useSalesOverview(
-    {
-      range: "custom",
-      startDate: useMemo(() => {
-        const now = new Date();
-        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      }, []),
-      endDate: new Date().toISOString(),
-    },
+    { range: "custom", startDate: monthRange.startDate, endDate: monthRange.endDate },
     ownerId,
   );
 

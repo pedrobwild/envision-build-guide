@@ -15,6 +15,7 @@
  * já são SECURITY INVOKER, então RLS de budgets é respeitada.
  */
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -78,7 +79,19 @@ export interface SalesOverview {
 }
 
 export function useSalesOverview(period: SalesPeriod, ownerId?: string | null) {
-  const { start, end } = rangeToBounds(period);
+  // Para ranges relativos (30d/90d/ytd e custom sem endDate) `rangeToBounds`
+  // chama `new Date()`, produzindo uma string ISO com ms diferente a cada
+  // render. Sem memoização isso mudaria a queryKey continuamente e dispararia
+  // refetch infinito do RPC.
+  // Deps são os campos primitivos do `period` (não o objeto inteiro): callers
+  // tipicamente passam o período como objeto inline, então usar `[period]`
+  // quebraria a memoização.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { start, end } = useMemo(() => rangeToBounds(period), [
+    period.range,
+    period.startDate,
+    period.endDate,
+  ]);
   return useQuery({
     queryKey: ["sales-kpis", "overview", start, end, ownerId ?? null],
     queryFn: async (): Promise<SalesOverview> => {
