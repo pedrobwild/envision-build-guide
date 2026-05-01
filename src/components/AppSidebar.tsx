@@ -251,7 +251,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useUserProfile();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
 
   const userRoles = profile?.roles ?? [];
 
