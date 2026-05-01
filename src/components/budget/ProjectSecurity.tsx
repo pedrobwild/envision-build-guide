@@ -18,7 +18,9 @@ const deliveryBullets = [
   "Suporte pós-obra",
 ];
 
-export function ProjectSecurity({ prazoDiasUteis = 55 }: { prazoDiasUteis?: number }) {
+export function ProjectSecurity({ prazoDiasUteis }: { prazoDiasUteis?: number }) {
+  // Sem fallback fictício: só renderiza o badge de prazo quando a orçamentista preencheu.
+  const hasPrazo = Number.isFinite(Number(prazoDiasUteis)) && Number(prazoDiasUteis) > 0;
   return (
     <Card className="border-border overflow-hidden">
       <CardContent className="p-4 sm:p-5 md:p-6 space-y-4">
