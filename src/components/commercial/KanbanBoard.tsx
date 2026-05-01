@@ -1015,6 +1015,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
 
   // Desktop: horizontal scroll with drag & drop
   return (
+    <KanbanRefreshContext.Provider value={onRefresh}>
     <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
         {KANBAN_COLUMNS.map((col) => (
@@ -1043,5 +1044,6 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
         )}
       </DragOverlay>
     </DndContext>
+    </KanbanRefreshContext.Provider>
   );
 }
