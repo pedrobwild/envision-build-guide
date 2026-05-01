@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
+import { recalcTaxIfAllowed } from "@/lib/tax-recalc";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
