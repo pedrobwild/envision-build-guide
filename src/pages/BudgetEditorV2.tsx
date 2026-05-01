@@ -35,6 +35,7 @@ import type { BudgetRow, EditorSection } from "@/types/budget-common";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { sendBudgetPublishedNotification } from "@/lib/digisac-notify";
 import { enqueueOfflineSave, flushOfflineQueue, hasPending } from "@/lib/offline-save-queue";
+import { PrazoExecucaoChip } from "@/components/admin/PrazoExecucaoChip";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -1132,6 +1133,16 @@ export default function BudgetEditorV2() {
                   {budget.bairro && <span>{budget.bairro}</span>}
                   {budget.metragem && <span className="text-muted-foreground/40">·</span>}
                   {budget.metragem && <span>{budget.metragem}</span>}
+                </div>
+                {/* Prazo de execução — chip inline editável (espelha o campo em Metadados → Prazo da obra) */}
+                <div className="pt-2 px-1">
+                  <PrazoExecucaoChip
+                    value={budget.prazo_dias_uteis ?? null}
+                    onChange={(next) => {
+                      setBudget({ ...budget, prazo_dias_uteis: next });
+                      autoSaveBudgetField("prazo_dias_uteis", next);
+                    }}
+                  />
                 </div>
               </div>
 
