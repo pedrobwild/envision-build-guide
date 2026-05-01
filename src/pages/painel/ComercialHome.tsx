@@ -112,21 +112,12 @@ export default function ComercialHome() {
             </Button>
           }
           meta={
-            <Surface variant="raised" padding="md">
-              <div className="flex items-center gap-2 mb-3">
-                <Target className="h-4 w-4 text-info" aria-hidden />
-                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-soft font-body">
-                  Meta do mês
-                </span>
-              </div>
-              <MetaProgressBar
-                current={overviewMTD.data?.revenue_won ?? 0}
-                target={DEFAULT_MONTHLY_TARGET_BRL}
-                label="Meta do mês"
-                format="currency"
-                loading={overviewMTD.isLoading}
-              />
-            </Surface>
+            <EditableMetaCard
+              computedRevenue={overviewMTD.data?.revenue_won ?? 0}
+              computedLoading={overviewMTD.isLoading}
+              canEdit={isAdmin}
+              ownerId={null}
+            />
           }
         />
       </motion.div>
