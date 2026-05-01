@@ -51,6 +51,9 @@ const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 const DigisacPage = lazy(() => import("./pages/DigisacPage"));
 const BudgetDiagnosticsPage = lazy(() => import("./pages/BudgetDiagnosticsPage"));
 const BugReportsPage = lazy(() => import("./pages/BugReportsPage"));
+const ComercialHome = lazy(() => import("./pages/painel/ComercialHome"));
+const OrcamentistaHome = lazy(() => import("./pages/painel/OrcamentistaHome"));
+const AdminHome = lazy(() => import("./pages/painel/AdminHome"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -103,6 +106,10 @@ const App = () => (
                     <Route path="/login" element={<Login />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
+                    <Route path="/painel" element={<RoleRedirect />} />
+                    <Route path="/painel/comercial" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><ComercialHome /></RoleGuard></AdminPage>} />
+                    <Route path="/painel/orcamentista" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><OrcamentistaHome /></RoleGuard></AdminPage>} />
+                    <Route path="/painel/admin" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AdminHome /></RoleGuard></AdminPage>} />
                     <Route path="/admin/budget/:budgetId" element={<AdminPage><BudgetEditorV2 /></AdminPage>} />
                     <Route path="/admin/budget/:budgetId/legacy" element={<LegacyBudgetRedirect />} />
                     <Route path="/admin/financeiro" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><FinancialHistory /></RoleGuard></AdminPage>} />
