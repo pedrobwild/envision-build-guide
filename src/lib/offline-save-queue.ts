@@ -84,3 +84,14 @@ export async function flushOfflineQueue(budgetId: string): Promise<boolean> {
   writeQueue(budgetId, {});
   return true;
 }
+
+/**
+ * Descarta a fila offline sem flushar. Usado quando o orçamento que estava
+ * recebendo edições offline foi publicado (ou virou versão pública), caso
+ * em que a fila NUNCA deve ser aplicada in-place — sob pena de alterar o
+ * snapshot que o cliente vê. Idempotente.
+ */
+export function discardOfflineQueue(budgetId: string): void {
+  if (!budgetId) return;
+  writeQueue(budgetId, {});
+}

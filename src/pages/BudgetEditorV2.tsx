@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 import type { BudgetRow, EditorSection } from "@/types/budget-common";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { sendBudgetPublishedNotification } from "@/lib/digisac-notify";
-import { enqueueOfflineSave, flushOfflineQueue, hasPending } from "@/lib/offline-save-queue";
+import { enqueueOfflineSave, flushOfflineQueue, hasPending, discardOfflineQueue } from "@/lib/offline-save-queue";
 
 export default function BudgetEditorV2() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -586,9 +586,24 @@ export default function BudgetEditorV2() {
   // carregam) sejam persistidas assim que possível.
   useEffect(() => {
     if (!budgetId) return;
+    // Aguarda saber se este orçamento é a versão publicada antes de flushar.
+    // Sem este guard, edições antigas em fila offline (de uma sessão anterior)
+    // podem ser silenciosamente gravadas DIRETO na versão publicada — alterando
+    // o que o cliente vê sem passar pelo fluxo de fork-em-rascunho.
+    if (budget == null) return;
 
     const tryFlush = async () => {
       if (!hasPending(budgetId)) return;
+
+      // Proteção crítica: nunca flushar offline queue diretamente em versão publicada.
+      // Em vez disso, descartamos silenciosamente — a versão publicada é imutável
+      // do ponto de vista do auto-save. Edições legítimas pós-publicação devem
+      // passar por forkPublishedThenEdit (cria rascunho).
+      if (isPublishedVersion) {
+        discardOfflineQueue(budgetId);
+        return;
+      }
+
       const ok = await flushOfflineQueue(budgetId);
       if (ok) {
         if (errorToastId.current) { toast.dismiss(errorToastId.current); errorToastId.current = null; }
@@ -602,7 +617,7 @@ export default function BudgetEditorV2() {
     void tryFlush();
     window.addEventListener("online", tryFlush);
     return () => window.removeEventListener("online", tryFlush);
-  }, [budgetId]);
+  }, [budgetId, budget, isPublishedVersion]);
 
   const retrySave = useCallback(() => {
     if (lastSavePayload.current) {

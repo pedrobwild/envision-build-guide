@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { SCOPE_CATEGORIES } from "@/lib/scope-categories";
 import { TAX_ITEM_TITLE, TAX_RATE } from "@/lib/default-budget-sections";
+import { recalcTaxIfAllowed } from "@/lib/tax-recalc";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, GripVertical,
   Package, DollarSign, Hash, FileText, FileSpreadsheet, Loader2, ImagePlus, X, Star, ToggleRight, Pencil,
@@ -917,52 +918,12 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   };
 
   const recalcTaxItem = useCallback((currentSections: SectionData[]): SectionData[] => {
-    if (cfg.disableTaxRecalc) return currentSections;
-    let taxSectionId: string | null = null;
-    let taxItemId: string | null = null;
-
-    for (const s of currentSections) {
-      for (const i of s.items) {
-        if (i.title === TAX_ITEM_TITLE) {
-          taxSectionId = s.id;
-          taxItemId = i.id;
-          break;
-        }
-      }
-      if (taxItemId) break;
-    }
-
-    if (!taxItemId || !taxSectionId) return currentSections;
-
-    let totalExcludingTax = 0;
-    for (const s of currentSections) {
-      for (const i of s.items) {
-        if (i.id === taxItemId) continue;
-        const saleTotal = calcItemSaleTotal(i);
-        totalExcludingTax += saleTotal > 0 ? saleTotal : calcItemCostTotal(i);
-      }
-    }
-
-    const taxValue = Math.round(totalExcludingTax * TAX_RATE * 100) / 100;
-
-    const updated = currentSections.map(s => {
-      if (s.id !== taxSectionId) return s;
-      const newItems = s.items.map(i => {
-        if (i.id !== taxItemId) return i;
-        return { ...i, internal_total: taxValue, internal_unit_price: taxValue, qty: 1, bdi_percentage: 0 };
-      });
-      const newSaleTotal = newItems.reduce((sum, i) => sum + calcItemSaleTotal(i), 0);
-      return { ...s, items: newItems, section_price: newSaleTotal };
+    return recalcTaxIfAllowed(currentSections, {
+      readOnly,
+      disableTaxRecalc: cfg.disableTaxRecalc,
+      persist: (table, id, updates) => debouncedSave(table, id, updates),
     });
-
-    debouncedSave("items", taxItemId, { internal_total: taxValue, internal_unit_price: taxValue, qty: 1, bdi_percentage: 0 });
-    const taxSection = updated.find(s => s.id === taxSectionId);
-    if (taxSection) {
-      debouncedSave("sections", taxSectionId, { section_price: taxSection.section_price });
-    }
-
-    return updated;
-  }, [debouncedSave]);
+  }, [debouncedSave, readOnly, cfg.disableTaxRecalc]);
 
   // Keep a mutable ref to sections so rapid-fire updateItem calls (e.g. from MobileItemEditor batch save) accumulate correctly
   const sectionsRef = useRef(sections);
