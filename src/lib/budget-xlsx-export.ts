@@ -512,6 +512,13 @@ export async function buildBudgetXlsxBlob(
   const totalVenda = totals.sale;
   const totalAjustes = totals.adjustments;
   const margemRatio = totals.marginRatio;
+  // Mirror PublicBudget/BudgetInternalDetail: prefer manual_total when defined.
+  const computedGrandTotal = totalVenda + totalAjustes;
+  const manualTotalNum = b.manual_total != null && Number.isFinite(Number(b.manual_total))
+    ? Number(b.manual_total)
+    : null;
+  const effectiveGrandTotal = manualTotalNum ?? computedGrandTotal;
+  const totalGeralLabel = manualTotalNum != null ? "Total geral (manual)" : "Total geral";
 
   // Loga avisos de auditoria — não bloqueia o export, mas deixa rastro
   // para que o time identifique seções de Desconto/Crédito mal preenchidas.
