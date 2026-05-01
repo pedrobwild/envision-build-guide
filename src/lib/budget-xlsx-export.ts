@@ -839,10 +839,10 @@ export async function buildBudgetXlsxBlob(
     { label: "Venda (BDI)", value: totalVenda, fmt: FMT.BRL },
     { label: "Ajustes globais", value: totalAjustes, fmt: FMT.BRL },
     { label: "Margem média", value: margemRatio, fmt: FMT.PCT },
-    { label: "Total geral", value: totalVenda + totalAjustes, fmt: FMT.BRL },
+    { label: totalGeralLabel, value: effectiveGrandTotal, fmt: FMT.BRL },
   ];
   for (const t of totalsRows) {
-    const isFinal = t.label === "Total geral";
+    const isFinal = t.label.startsWith("Total geral");
     detRows.push([t.label, "", "", "", "", "", "", "", t.value]);
     detRowMeta.push([
       { total: isFinal, bold: true, align: "right" },
