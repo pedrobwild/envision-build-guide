@@ -1,18 +1,19 @@
 /**
  * Hooks de KPIs de operação de vendas (macro → micro).
  *
- * Consome as views/funções criadas na migration
- * 20260501041500_sales_kpis_godmode.sql:
- *   - v_sales_kpis_overview          (resumo macro)
- *   - v_sales_cycle_by_owner         (por vendedora)
- *   - v_sales_time_in_stage          (tempo médio em cada etapa)
- *   - v_sales_cohort_monthly         (coortes mensais)
- *   - v_sales_lost_reasons_ranked    (motivos de perda)
- *   - sales_conversion_by_segment()  (segmentação dinâmica)
- *   - sales_kpis_dashboard()         (RPC consolidada com filtros)
+ * Consome as views/funções criadas em
+ * 20260501041500_sales_kpis_godmode.sql + filtros em
+ * 20260501230000_sales_kpis_filtered.sql:
+ *   - sales_kpis_dashboard()        — overview macro
+ *   - sales_kpis_by_owner()         — performance por vendedora
+ *   - sales_kpis_time_in_stage()    — tempo médio em cada etapa
+ *   - sales_kpis_cohorts()          — coortes mensais
+ *   - sales_kpis_lost_reasons()     — ranking de motivos de perda
+ *   - sales_conversion_by_segment() — segmentação dinâmica
  *
- * Cada hook expõe o mínimo necessário para o dashboard. As views
- * já são SECURITY INVOKER, então RLS de budgets é respeitada.
+ * Todos os RPCs aceitam (start, end, owner) e respeitam RLS via
+ * SECURITY INVOKER, então cada usuário enxerga apenas os
+ * orçamentos a que tem acesso.
  */
 
 import { useMemo } from "react";
@@ -128,14 +129,24 @@ export interface OwnerPerformanceRow {
   pipeline_open_value: number;
 }
 
-export function useSalesByOwner() {
+/**
+ * O filtro de owner é deliberadamente ignorado — esta tabela é o
+ * breakdown por vendedora; filtrar reduziria a uma única linha.
+ * O filtro de período sim é aplicado.
+ */
+export function useSalesByOwner(period?: SalesPeriod) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { start, end } = useMemo(
+    () => (period ? rangeToBounds(period) : { start: null, end: null }),
+    [period?.range, period?.startDate, period?.endDate]
+  );
   return useQuery({
-    queryKey: ["sales-kpis", "by-owner"],
+    queryKey: ["sales-kpis", "by-owner", start, end],
     queryFn: async (): Promise<OwnerPerformanceRow[]> => {
-      const { data, error } = await sb
-        .from("v_sales_cycle_by_owner")
-        .select("*")
-        .order("revenue_won", { ascending: false });
+      const { data, error } = await sb.rpc("sales_kpis_by_owner", {
+        _start_date: start,
+        _end_date: end,
+      });
       if (error) throw error;
       return (data ?? []) as OwnerPerformanceRow[];
     },
@@ -156,14 +167,20 @@ export interface TimeInStageRow {
   max_days: number | null;
 }
 
-export function useTimeInStageGodMode() {
+export function useTimeInStageGodMode(period?: SalesPeriod, ownerId?: string | null) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { start, end } = useMemo(
+    () => (period ? rangeToBounds(period) : { start: null, end: null }),
+    [period?.range, period?.startDate, period?.endDate]
+  );
   return useQuery({
-    queryKey: ["sales-kpis", "time-in-stage"],
+    queryKey: ["sales-kpis", "time-in-stage", start, end, ownerId ?? null],
     queryFn: async (): Promise<TimeInStageRow[]> => {
-      const { data, error } = await sb
-        .from("v_sales_time_in_stage")
-        .select("*")
-        .order("avg_days", { ascending: false });
+      const { data, error } = await sb.rpc("sales_kpis_time_in_stage", {
+        _start_date: start,
+        _end_date: end,
+        _owner_id: ownerId ?? null,
+      });
       if (error) throw error;
       return (data ?? []) as TimeInStageRow[];
     },
@@ -194,12 +211,24 @@ export interface SegmentRow {
   revenue_won: number;
 }
 
-export function useSalesBySegment(dimension: SegmentDimension) {
+export function useSalesBySegment(
+  dimension: SegmentDimension,
+  period?: SalesPeriod,
+  ownerId?: string | null
+) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { start, end } = useMemo(
+    () => (period ? rangeToBounds(period) : { start: null, end: null }),
+    [period?.range, period?.startDate, period?.endDate]
+  );
   return useQuery({
-    queryKey: ["sales-kpis", "by-segment", dimension],
+    queryKey: ["sales-kpis", "by-segment", dimension, start, end, ownerId ?? null],
     queryFn: async (): Promise<SegmentRow[]> => {
       const { data, error } = await sb.rpc("sales_conversion_by_segment", {
         _dimension: dimension,
+        _start_date: start,
+        _end_date: end,
+        _owner_id: ownerId ?? null,
       });
       if (error) throw error;
       return (data ?? []) as SegmentRow[];
@@ -222,14 +251,20 @@ export interface CohortRow {
   revenue_won: number;
 }
 
-export function useSalesCohorts() {
+export function useSalesCohorts(period?: SalesPeriod, ownerId?: string | null) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { start, end } = useMemo(
+    () => (period ? rangeToBounds(period) : { start: null, end: null }),
+    [period?.range, period?.startDate, period?.endDate]
+  );
   return useQuery({
-    queryKey: ["sales-kpis", "cohorts"],
+    queryKey: ["sales-kpis", "cohorts", start, end, ownerId ?? null],
     queryFn: async (): Promise<CohortRow[]> => {
-      const { data, error } = await sb
-        .from("v_sales_cohort_monthly")
-        .select("*")
-        .order("cohort_month", { ascending: false });
+      const { data, error } = await sb.rpc("sales_kpis_cohorts", {
+        _start_date: start,
+        _end_date: end,
+        _owner_id: ownerId ?? null,
+      });
       if (error) throw error;
       return (data ?? []) as CohortRow[];
     },
@@ -263,13 +298,20 @@ export function lostReasonLabel(key: string): string {
   return LOST_REASON_LABELS[key] ?? key;
 }
 
-export function useLostReasonsRanked() {
+export function useLostReasonsRanked(period?: SalesPeriod, ownerId?: string | null) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { start, end } = useMemo(
+    () => (period ? rangeToBounds(period) : { start: null, end: null }),
+    [period?.range, period?.startDate, period?.endDate]
+  );
   return useQuery({
-    queryKey: ["sales-kpis", "lost-reasons"],
+    queryKey: ["sales-kpis", "lost-reasons", start, end, ownerId ?? null],
     queryFn: async (): Promise<LostReasonRow[]> => {
-      const { data, error } = await sb
-        .from("v_sales_lost_reasons_ranked")
-        .select("*");
+      const { data, error } = await sb.rpc("sales_kpis_lost_reasons", {
+        _start_date: start,
+        _end_date: end,
+        _owner_id: ownerId ?? null,
+      });
       if (error) throw error;
       return (data ?? []) as LostReasonRow[];
     },

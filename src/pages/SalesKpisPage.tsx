@@ -265,8 +265,8 @@ function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: stri
 // ============================================================
 // 3. Time in stage
 // ============================================================
-function TimeInStageBlock() {
-  const { data, isLoading } = useTimeInStageGodMode();
+function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
+  const { data, isLoading } = useTimeInStageGodMode(period, ownerId);
   const chartData = useMemo(
     () =>
       (data ?? [])
@@ -345,8 +345,14 @@ function TimeInStageBlock() {
 // ============================================================
 // 4. Performance por vendedora
 // ============================================================
-function OwnerTableBlock({ onSelectOwner }: { onSelectOwner: (id: string | null) => void }) {
-  const { data, isLoading } = useSalesByOwner();
+function OwnerTableBlock({
+  period,
+  onSelectOwner,
+}: {
+  period: SalesPeriod;
+  onSelectOwner: (id: string | null) => void;
+}) {
+  const { data, isLoading } = useSalesByOwner(period);
   const rows = data ?? [];
 
   return (
@@ -445,9 +451,9 @@ const SEGMENT_TABS: { value: SegmentDimension; label: string; description: strin
   { value: "lead_source", label: "Fonte do lead", description: "Origem do contato." },
 ];
 
-function SegmentBlock() {
+function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
   const [dim, setDim] = useState<SegmentDimension>("metragem");
-  const { data, isLoading } = useSalesBySegment(dim);
+  const { data, isLoading } = useSalesBySegment(dim, period, ownerId);
   const rows = data ?? [];
 
   return (
@@ -520,8 +526,8 @@ function SegmentBlock() {
 // ============================================================
 // 6. Lost reasons
 // ============================================================
-function LostReasonsBlock() {
-  const { data, isLoading } = useLostReasonsRanked();
+function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
+  const { data, isLoading } = useLostReasonsRanked(period, ownerId);
   const rows = data ?? [];
 
   return (
@@ -569,8 +575,8 @@ function LostReasonsBlock() {
 // ============================================================
 // 7. Cohorts mensais
 // ============================================================
-function CohortBlock() {
-  const { data, isLoading } = useSalesCohorts();
+function CohortBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
+  const { data, isLoading } = useSalesCohorts(period, ownerId);
   const rows = (data ?? []).slice(0, 12);
 
   return (
@@ -660,6 +666,8 @@ export default function SalesKpisPage() {
 
   const period: SalesPeriod = useMemo(() => ({ range }), [range]);
   const bounds = rangeToBounds(period);
+  // Lista global de vendedoras para o filtro — sem período/owner para nunca
+  // esvaziar o seletor (o bloco da tabela usa sua própria query filtrada).
   const { data: owners } = useSalesByOwner();
 
   return (
@@ -746,26 +754,26 @@ export default function SalesKpisPage() {
 
       {/* 2. Tempo em etapa + 3. Performance */}
       <section className="grid gap-4 lg:grid-cols-2">
-        <TimeInStageBlock />
-        <LostReasonsBlock />
+        <TimeInStageBlock period={period} ownerId={ownerId} />
+        <LostReasonsBlock period={period} ownerId={ownerId} />
       </section>
 
       {/* 4. Owner table */}
       <section aria-labelledby="kpis-owners">
         <h2 id="kpis-owners" className="sr-only">Performance por vendedora</h2>
-        <OwnerTableBlock onSelectOwner={(id) => setOwnerId(id)} />
+        <OwnerTableBlock period={period} onSelectOwner={(id) => setOwnerId(id)} />
       </section>
 
       {/* 5. Segments */}
       <section aria-labelledby="kpis-segments">
         <h2 id="kpis-segments" className="sr-only">Conversão por segmento</h2>
-        <SegmentBlock />
+        <SegmentBlock period={period} ownerId={ownerId} />
       </section>
 
       {/* 6. Cohorts */}
       <section aria-labelledby="kpis-cohorts">
         <h2 id="kpis-cohorts" className="sr-only">Coortes mensais</h2>
-        <CohortBlock />
+        <CohortBlock period={period} ownerId={ownerId} />
       </section>
     </div>
   );
