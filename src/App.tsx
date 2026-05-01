@@ -55,6 +55,7 @@ const BugReportsPage = lazy(() => import("./pages/BugReportsPage"));
 const ComercialHome = lazy(() => import("./pages/painel/ComercialHome"));
 const OrcamentistaHome = lazy(() => import("./pages/painel/OrcamentistaHome"));
 const AdminHome = lazy(() => import("./pages/painel/AdminHome"));
+const OperationsHealthPage = lazy(() => import("./pages/admin/OperationsHealthPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
