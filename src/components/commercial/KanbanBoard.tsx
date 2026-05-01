@@ -227,6 +227,8 @@ interface KanbanBoardProps {
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   /** Callback para abrir o drawer de comunicação/histórico. */
   onOpenHistory?: (budget: BudgetRow) => void;
+  /** Callback após mutações (ex.: exclusão) para o pai recarregar a lista. */
+  onRefresh?: () => void;
 }
 
 function getColumnForBudget(internalStatus: string) {
