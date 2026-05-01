@@ -233,6 +233,38 @@ export function MetadataStep({ budget, onFieldChange }: MetadataStepProps) {
         </PropertyRow>
       </div>
 
+      {/* ═══ PRAZO DA OBRA (obrigatório) ═══ */}
+      <SectionHeader icon={Clock} title="Prazo da obra" />
+      <div className="space-y-0">
+        <PropertyRow
+          icon={Clock}
+          label={
+            <>
+              Prazo de execução <span className="text-destructive ml-0.5" aria-label="obrigatório">*</span>
+            </>
+          }
+          hint="Em dias úteis. Obrigatório para publicar — define a previsão exibida ao cliente e o cronograma."
+        >
+          <div className="flex items-center gap-2">
+            <NotionInput
+              value={budget.prazo_dias_uteis?.toString() || ""}
+              onChange={(v) => onFieldChange("prazo_dias_uteis", v ? Number(v) : null)}
+              placeholder="Ex: 55"
+              type="number"
+              className={cn(
+                !budget.prazo_dias_uteis && "border-destructive/40 focus:border-destructive"
+              )}
+            />
+            <span className="text-xs text-muted-foreground font-body shrink-0">dias úteis</span>
+          </div>
+          {budget.prazo_dias_uteis ? (
+            <p className="text-[11px] text-muted-foreground/60 font-body mt-1 ml-0.5 tabular-nums">
+              ≈ {Math.ceil(Number(budget.prazo_dias_uteis) / 5)} semanas
+            </p>
+          ) : null}
+        </PropertyRow>
+      </div>
+
       {/* ═══ CONTEXTO DA DEMANDA ═══ */}
       <SectionHeader icon={FileText} title="Contexto da Demanda" />
       <div className="space-y-0">
