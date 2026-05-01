@@ -25,7 +25,7 @@ function PropertyRow({
   hint,
 }: {
   icon: React.ComponentType<{ className?: string }>;
-  label: string;
+  label: React.ReactNode;
   children: React.ReactNode;
   hint?: string;
 }) {
