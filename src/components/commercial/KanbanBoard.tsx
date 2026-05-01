@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, createContext, useContext } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
@@ -6,6 +6,46 @@ import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { MobileSwipeableKanban } from "@/components/admin/MobileSwipeableKanban";
 import { CompactKanbanCard } from "@/components/admin/CompactKanbanCard";
 import { VersionBadge } from "@/components/admin/VersionBadge";
+import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
+import { Button } from "@/components/ui/button";
+import { MoreVertical } from "lucide-react";
+
+/**
+ * Context para propagar o callback de refresh do board até cada card,
+ * evitando passar `onRefresh` por todos os componentes intermediários.
+ */
+const KanbanRefreshContext = createContext<(() => void) | undefined>(undefined);
+
+/** Slot de ações (menu de 3 pontinhos) renderizado no canto sup. direito do card. */
+function CardActionsSlot({ budget }: { budget: BudgetRow }) {
+  const onRefresh = useContext(KanbanRefreshContext);
+  return (
+    <BudgetActionsMenu
+      budget={{
+        id: budget.id,
+        project_name: budget.project_name,
+        public_id: budget.public_id,
+        status: budget.status,
+        internal_status: budget.internal_status,
+        version_group_id: budget.version_group_id,
+        version_number: budget.version_number,
+      }}
+      onRefresh={onRefresh}
+      align="end"
+      trigger={
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 opacity-60 hover:opacity-100 transition-opacity"
+          aria-label="Ações do orçamento"
+        >
+          <MoreVertical className="h-3.5 w-3.5" />
+        </Button>
+      }
+    />
+  );
+}
+
 import {
   DndContext,
   DragOverlay,
