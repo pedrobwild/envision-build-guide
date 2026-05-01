@@ -34,7 +34,8 @@ export type FieldKind =
   | "datetime"
   | "duration_days"
   | "json"
-  | "geo";
+  | "geo"
+  | "score";
 
 export interface FieldDefinition {
   name: string;

@@ -493,7 +493,7 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
                           <span className="text-sm font-bold text-primary tabular-nums text-center">{row.a}{row.suffix || ""}</span>
                           <span className="text-sm font-bold text-foreground tabular-nums text-center">{row.b}{row.suffix || ""}</span>
                           <div className="flex justify-center">
-                            <DeltaIndicator a={row.a} b={row.b} suffix={row.suffix} />
+                            <DeltaIndicator a={row.a ?? 0} b={row.b ?? 0} suffix={row.suffix} />
                           </div>
                         </div>
                       ))}

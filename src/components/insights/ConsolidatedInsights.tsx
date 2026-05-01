@@ -436,16 +436,16 @@ function mergeCacheEntries(caches: ElephantInsightsCacheRow[]): ConsolidatedData
   }
 
   // Deduplicate qualitative data
-  const personalityProfiles = deduplicateByKey(allProfiles, (p) => p.type || "");
-  const objections = deduplicateByKey(allObjections, (o) => o.objection || "");
-  const hiddenObjections = deduplicateByKey(allHiddenObjections, (h) => h.objection || "");
-  const topQuestions = deduplicateByKey(allQuestions, (q) => q.question || "");
-  const buyingSignals = deduplicateByKey(allBuyingSignals, (s) => s.signal || "");
-  const closingArguments = deduplicateByKey(allClosingArguments, (a) => a.argument || "");
-  const actionItems = deduplicateByKey(allActionItems, (a) => a.action || "");
+  const personalityProfiles = deduplicateByKey(allProfiles, (p: any) => p.type || "");
+  const objections = deduplicateByKey(allObjections, (o: any) => o.objection || "");
+  const hiddenObjections = deduplicateByKey(allHiddenObjections, (h: any) => h.objection || "");
+  const topQuestions = deduplicateByKey(allQuestions, (q: any) => q.question || "");
+  const buyingSignals = deduplicateByKey(allBuyingSignals, (s: any) => s.signal || "");
+  const closingArguments = deduplicateByKey(allClosingArguments, (a: any) => a.argument || "");
+  const actionItems = deduplicateByKey(allActionItems, (a: any) => a.action || "");
 
   // Pick the richest buyer persona
-  const buyerPersona = buyerPersonas.sort((a, b) =>
+  const buyerPersona = buyerPersonas.sort((a: any, b: any) =>
     (Array.isArray(b.motivations) ? b.motivations.length : 0) -
     (Array.isArray(a.motivations) ? a.motivations.length : 0)
   )[0] || null;
@@ -461,7 +461,7 @@ function mergeCacheEntries(caches: ElephantInsightsCacheRow[]): ConsolidatedData
     buyerPersona,
     sentimentSummary: sentimentSummaries[0] || null,
     metrics: { avgSentiment, reasonsByType: allReasonsByType, competitors, answerScores },
-    leadScores: allLeads.sort((a, b) => b.score - a.score),
+    leadScores: allLeads.sort((a: any, b: any) => b.score - a.score),
     trends: mergedTrends,
   };
 
