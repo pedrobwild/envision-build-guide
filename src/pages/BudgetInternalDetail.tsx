@@ -73,6 +73,14 @@ import { toast } from "sonner";
 import { BlockingDialog } from "@/components/editor/BlockingDialog";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
