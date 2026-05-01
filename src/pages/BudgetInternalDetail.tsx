@@ -216,6 +216,9 @@ export default function BudgetInternalDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin, isComercial } = useUserProfile();
+  const { members: comerciais } = useTeamMembers("comercial");
+  const { members: orcamentistas } = useTeamMembers("orcamentista");
+  const canEditOwners = isAdmin || isComercial;
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [budget, setBudget] = useState<BudgetDetail | null>(null);
