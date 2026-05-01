@@ -60,6 +60,8 @@ interface CompactKanbanCardProps {
   onQuickAction?: (action: "open" | "whatsapp" | "advance" | "copyLink" | "nextAction") => void;
   /** Callback opcional para abrir o histórico/comunicação do negócio. */
   onOpenHistory?: () => void;
+  /** Slot opcional renderizado no canto superior direito (ex.: menu de ações com excluir). */
+  actionsSlot?: React.ReactNode;
 }
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
@@ -129,6 +131,7 @@ export function CompactKanbanCard({
   onClick,
   onQuickAction,
   onOpenHistory,
+  actionsSlot,
 }: CompactKanbanCardProps) {
   const prio = PRIORITIES[priority as Priority] ?? PRIORITIES.normal;
   const statusMeta = INTERNAL_STATUSES[internalStatus as InternalStatus];
@@ -214,6 +217,15 @@ export function CompactKanbanCard({
           "active:scale-[0.99]"
         )}
       >
+        {actionsSlot && (
+          <div
+            className="absolute top-1 right-1 z-10"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {actionsSlot}
+          </div>
+        )}
         {/* Avatar */}
         <div className="relative shrink-0">
           <div className={cn(

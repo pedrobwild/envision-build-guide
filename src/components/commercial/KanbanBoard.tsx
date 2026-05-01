@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, createContext, useContext } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
@@ -6,6 +6,46 @@ import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
 import { MobileSwipeableKanban } from "@/components/admin/MobileSwipeableKanban";
 import { CompactKanbanCard } from "@/components/admin/CompactKanbanCard";
 import { VersionBadge } from "@/components/admin/VersionBadge";
+import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
+import { Button } from "@/components/ui/button";
+import { MoreVertical } from "lucide-react";
+
+/**
+ * Context para propagar o callback de refresh do board até cada card,
+ * evitando passar `onRefresh` por todos os componentes intermediários.
+ */
+const KanbanRefreshContext = createContext<(() => void) | undefined>(undefined);
+
+/** Slot de ações (menu de 3 pontinhos) renderizado no canto sup. direito do card. */
+function CardActionsSlot({ budget }: { budget: BudgetRow }) {
+  const onRefresh = useContext(KanbanRefreshContext);
+  return (
+    <BudgetActionsMenu
+      budget={{
+        id: budget.id,
+        project_name: budget.project_name,
+        public_id: budget.public_id,
+        status: budget.status,
+        internal_status: budget.internal_status,
+        version_group_id: budget.version_group_id,
+        version_number: budget.version_number,
+      }}
+      onRefresh={onRefresh}
+      align="end"
+      trigger={
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 opacity-60 hover:opacity-100 transition-opacity"
+          aria-label="Ações do orçamento"
+        >
+          <MoreVertical className="h-3.5 w-3.5" />
+        </Button>
+      }
+    />
+  );
+}
+
 import {
   DndContext,
   DragOverlay,
@@ -227,6 +267,8 @@ interface KanbanBoardProps {
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   /** Callback para abrir o drawer de comunicação/histórico. */
   onOpenHistory?: (budget: BudgetRow) => void;
+  /** Callback após mutações (ex.: exclusão) para o pai recarregar a lista. */
+  onRefresh?: () => void;
 }
 
 function getColumnForBudget(internalStatus: string) {
@@ -422,6 +464,7 @@ function SubSectionGroup({
                       toast.error("Orçamento sem link público");
                     }
                   }}
+                  actionsSlot={<CardActionsSlot budget={b} />}
                 />
               ) : (
                 <DraggableCard
@@ -779,7 +822,7 @@ function KanbanCard({
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, leadScoreMap, onNextAction, onOpenHistory }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, leadScoreMap, onNextAction, onOpenHistory, onRefresh }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
@@ -852,6 +895,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
   // Mobile: swipeable single-column view
   if (isMobile) {
     return (
+      <KanbanRefreshContext.Provider value={onRefresh}>
       <MobileSwipeableKanban
         columns={mobileColumns}
         activeIndex={mobileColIndex}
@@ -950,6 +994,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                                 }
                               }
                             }}
+                            actionsSlot={<CardActionsSlot budget={b} />}
                           />
                         </div>
                       );
@@ -964,11 +1009,13 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
           );
         }}
       </MobileSwipeableKanban>
+      </KanbanRefreshContext.Provider>
     );
   }
 
   // Desktop: horizontal scroll with drag & drop
   return (
+    <KanbanRefreshContext.Provider value={onRefresh}>
     <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
         {KANBAN_COLUMNS.map((col) => (
@@ -997,5 +1044,6 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
         )}
       </DragOverlay>
     </DndContext>
+    </KanbanRefreshContext.Provider>
   );
 }

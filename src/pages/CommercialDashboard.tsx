@@ -1192,6 +1192,7 @@ export default function CommercialDashboard() {
               leadScoreMap={leadScoreMap}
               onNextAction={handleNextActionClick}
               onOpenHistory={(b) => setHistoryBudget(b as unknown as BudgetRow)}
+              onRefresh={loadData}
             />
           )}
 
