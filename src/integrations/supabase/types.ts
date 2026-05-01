@@ -3323,6 +3323,10 @@ export type Database = {
         Args: { p_date_a: string; p_date_b: string }
         Returns: Json
       }
+      consolidate_orphan_version_group: {
+        Args: { _budget_id: string; _target_version_group_id: string }
+        Returns: Json
+      }
       count_eligible_budgets: {
         Args: {
           p_created_from?: string
@@ -3430,6 +3434,23 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      list_orphan_version_groups: {
+        Args: never
+        Returns: {
+          budget_code: string
+          budget_id: string
+          client_id: string
+          client_name: string
+          created_at: string
+          current_version_group_id: string
+          internal_status: string
+          project_name: string
+          property_id: string
+          property_label: string
+          target_group_size: number
+          target_version_group_id: string
+        }[]
       }
       mark_budget_as_manual_baseline: {
         Args: { p_budget_id: string; p_reason?: string }
