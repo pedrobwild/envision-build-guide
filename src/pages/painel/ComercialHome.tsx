@@ -39,7 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { PainelHeader } from "@/components/dashboard/PainelHeader";
-import { MetaProgressBar } from "@/components/dashboard/MetaProgressBar";
+import { EditableMetaCard } from "@/components/dashboard/EditableMetaCard";
 import { FilaCard } from "@/components/dashboard/FilaCard";
 import { TimelineItem } from "@/components/dashboard/TimelineItem";
 import { Surface } from "@/components/dashboard/Surface";
