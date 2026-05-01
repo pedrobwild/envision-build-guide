@@ -976,14 +976,14 @@ export default function BudgetEditorV2() {
                       </Button>
                     </div>
                   )}
-                  {sections.length > 0 && (itemsInitialLoading || imagesInitialLoading) && !itemsRowsError && !imagesRowsError && (
+                  {sections.length > 0 && (itemsInitialLoading || imagesInitialLoading) && !Boolean(itemsRowsError) && !Boolean(imagesRowsError) && (
                     <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-md border border-border/60 bg-muted/30 text-xs text-muted-foreground font-body" role="status" aria-live="polite">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       {itemsInitialLoading ? "Carregando itens das seções…" : "Carregando imagens dos itens…"}
                     </div>
                   )}
                   {/* Banners de erro com retry manual — não bloqueiam edição do que já carregou */}
-                  {sectionsRowsError && (
+                  {Boolean(sectionsRowsError) && (
                     <div className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-md border border-destructive/40 bg-destructive/5 text-xs font-body" role="alert">
                       <div className="flex items-center gap-2 min-w-0">
                         <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
