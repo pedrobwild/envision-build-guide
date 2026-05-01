@@ -839,12 +839,20 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     return map;
   }, [normalizedQuery, sections]);
 
-  // Auto-expand matching sections on search
+  // Auto-expand matching sections on search e revela todos os itens dessas seções
   useEffect(() => {
     if (sectionMatchMap && sectionMatchMap.size > 0) {
       setExpandedSections(new Set(sectionMatchMap.keys()));
+      setVisibleCounts(prev => {
+        const next = { ...prev };
+        for (const sid of sectionMatchMap.keys()) {
+          const sec = sections.find(s => s.id === sid);
+          if (sec) next[sid] = sec.items.length;
+        }
+        return next;
+      });
     }
-  }, [sectionMatchMap]);
+  }, [sectionMatchMap, sections]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
