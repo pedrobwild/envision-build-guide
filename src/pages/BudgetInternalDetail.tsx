@@ -461,6 +461,47 @@ export default function BudgetInternalDetail() {
     }
   }
 
+  /**
+   * Persiste o responsável (Comercial ou Orçamentista) com update otimista.
+   * Reverte o estado local em caso de erro e registra evento de auditoria.
+   */
+  async function saveOwner(
+    field: "commercial_owner_id" | "estimator_owner_id",
+    nextId: string | null,
+  ) {
+    if (!budget) return;
+    const previous = (budget[field] ?? null) as string | null;
+    if (previous === nextId) return;
+
+    setBudget((prev) => (prev ? { ...prev, [field]: nextId } : prev));
+
+    const { error } = await supabase
+      .from("budgets")
+      .update({ [field]: nextId, updated_at: new Date().toISOString() })
+      .eq("id", budget.id);
+
+    if (error) {
+      setBudget((prev) => (prev ? { ...prev, [field]: previous } : prev));
+      toast.error("Não foi possível salvar o responsável. Tente novamente.");
+      return;
+    }
+
+    if (user) {
+      await supabase.from("budget_events").insert({
+        budget_id: budget.id,
+        user_id: user.id,
+        event_type: field === "commercial_owner_id" ? "commercial_owner_changed" : "estimator_owner_changed",
+        note:
+          field === "commercial_owner_id"
+            ? `Comercial alterado para ${nextId ? getProfileName(nextId) : "—"}`
+            : `Orçamentista alterado para ${nextId ? getProfileName(nextId) : "—"}`,
+        metadata: { field, from: previous, to: nextId },
+      });
+    }
+
+    toast.success(field === "commercial_owner_id" ? "Comercial atualizado" : "Orçamentista atualizado");
+  }
+
   async function changeStatus(newStatus: InternalStatus, note?: string) {
     if (!budget || !user) return;
     const oldStatus = budget.internal_status;
