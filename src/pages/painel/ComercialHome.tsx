@@ -39,6 +39,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { PainelHeader } from "@/components/dashboard/PainelHeader";
 import { EditableMetaCard } from "@/components/dashboard/EditableMetaCard";
+import { MetaAchievementChip } from "@/components/dashboard/MetaAchievementChip";
 import { FilaCard } from "@/components/dashboard/FilaCard";
 import { TimelineItem } from "@/components/dashboard/TimelineItem";
 import { Surface } from "@/components/dashboard/Surface";
