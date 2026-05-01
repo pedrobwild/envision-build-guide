@@ -1350,8 +1350,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   const marginPercent = grandTotalSale > 0 ? (grandMargin / grandTotalSale) * 100 : 0;
 
   if (loading) {
+    const stageLabel =
+      loadingStage === "items"
+        ? "Carregando itens das seções…"
+        : loadingStage === "images"
+          ? "Carregando imagens dos itens…"
+          : "Carregando seções do orçamento…";
     return (
-      <div className="mt-6 pb-20 space-y-3">
+      <div className="mt-6 pb-20 space-y-3" aria-busy="true" aria-live="polite">
         <div className="flex items-center justify-between mb-4 px-1">
           <div className="h-4 w-32 rounded bg-muted animate-pulse" />
           <div className="h-8 w-24 rounded-lg bg-muted animate-pulse" />
@@ -1365,14 +1371,18 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
             </div>
             <div className="space-y-2 pl-7">
               {[1, 2].map(j => (
-                <div key={j} className="h-9 w-full rounded bg-muted/50 animate-pulse" />
+                <div key={j} className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded bg-muted/60 animate-pulse" />
+                  <div className="flex-1 h-9 rounded bg-muted/50 animate-pulse" />
+                  <div className="h-9 w-20 rounded bg-muted/40 animate-pulse" />
+                </div>
               ))}
             </div>
           </div>
         ))}
         <div className="flex items-center justify-center gap-2 py-6 text-xs text-muted-foreground font-body">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Carregando seções do template…
+          {stageLabel}
         </div>
       </div>
     );
