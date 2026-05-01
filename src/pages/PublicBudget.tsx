@@ -250,6 +250,21 @@ export default function PublicBudget() {
     }
     if (publicId) {
       setLoadError(null);
+      setServerTotal(null);
+      // Authoritative total fetch — runs in parallel with the streaming
+      // payload so we always have a server-validated number to fall back to
+      // even if items load slowly, fail RLS, or arrive partially.
+      supabase
+        .rpc('get_public_budget_total', { p_public_id: publicId })
+        .then(({ data, error }) => {
+          if (error || !data) return;
+          const payload = data as { total?: number | string | null } | null;
+          const raw = payload?.total;
+          const num = typeof raw === 'string' ? Number(raw) : raw;
+          if (typeof num === 'number' && Number.isFinite(num)) {
+            setServerTotal(num);
+          }
+        });
       let firstPaintDone = false;
       fetchPublicBudgetStreaming(publicId, (partial) => {
         // Phase 1: render immediately with budget + sections + items (no item images yet).
