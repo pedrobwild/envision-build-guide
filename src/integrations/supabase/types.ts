@@ -3386,6 +3386,21 @@ export type Database = {
           sequential_code: string
         }[]
       }
+      list_duplicate_properties: {
+        Args: never
+        Returns: {
+          bairro_norm: string
+          budget_counts: number[]
+          client_id: string
+          client_name: string
+          empreendimento_norm: string
+          metragem_norm: string
+          primary_property_id: string
+          property_count: number
+          property_ids: string[]
+          property_labels: string[]
+        }[]
+      }
       list_failed_lead_sources: {
         Args: { p_limit?: number }
         Returns: {
@@ -3419,6 +3434,10 @@ export type Database = {
       mark_budget_as_manual_baseline: {
         Args: { p_budget_id: string; p_reason?: string }
         Returns: string
+      }
+      merge_duplicate_properties: {
+        Args: { _duplicate_ids: string[]; _primary_id: string }
+        Returns: Json
       }
       normalize_phone: { Args: { p_phone: string }; Returns: string }
       purge_budget: { Args: { p_budget_id: string }; Returns: undefined }
