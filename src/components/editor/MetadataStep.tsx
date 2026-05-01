@@ -416,19 +416,13 @@ export function MetadataStep({ budget, onFieldChange }: MetadataStepProps) {
                 type="number"
               />
             </PropertyRow>
-            <PropertyRow icon={Clock} label="Prazo execução (dias)">
-              <NotionInput
-                value={budget.prazo_dias_uteis?.toString() || ""}
-                onChange={(v) => onFieldChange("prazo_dias_uteis", v ? Number(v) : null)}
-                placeholder="55"
-                type="number"
-              />
-            </PropertyRow>
-            <PropertyRow icon={Timer} label="Prazo (semanas)">
+            {/* Prazo de execução foi promovido para a seção "Prazo da obra" (sempre visível e obrigatório).
+                Mantemos apenas "Prazo (semanas)" como override opcional para casos especiais. */}
+            <PropertyRow icon={Timer} label="Prazo (semanas) — opcional">
               <NotionInput
                 value={budget.estimated_weeks?.toString() || ""}
                 onChange={(v) => onFieldChange("estimated_weeks", v ? Number(v) : null)}
-                placeholder="8"
+                placeholder="Auto: derivado dos dias úteis"
                 type="number"
               />
             </PropertyRow>
