@@ -96,6 +96,7 @@ const ANALISE_ITEMS: NavItem[] = [
 ];
 
 const FERRAMENTAS_ITEMS: NavItem[] = [
+  { title: "KPIs de Vendas", url: "/admin/comercial/kpis", icon: BarChart3, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Leads (Integrações)", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Regras de Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
   { title: "Digisac", url: "/admin/digisac", icon: MessageCircle, roles: ["admin"] },
