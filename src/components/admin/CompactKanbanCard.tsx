@@ -131,6 +131,7 @@ export function CompactKanbanCard({
   onClick,
   onQuickAction,
   onOpenHistory,
+  actionsSlot,
 }: CompactKanbanCardProps) {
   const prio = PRIORITIES[priority as Priority] ?? PRIORITIES.normal;
   const statusMeta = INTERNAL_STATUSES[internalStatus as InternalStatus];
