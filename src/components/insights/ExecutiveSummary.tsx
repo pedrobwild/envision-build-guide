@@ -37,21 +37,23 @@ export default function ExecutiveSummary({ dashboardData }: ExecutiveSummaryProp
   }, [dashboardData]);
 
   const generate = async () => {
+    if (!dashboardData) return;
     setLoading(true);
     try {
+      const dd: any = dashboardData;
       const { data, error } = await supabase.functions.invoke("elephant-insights", {
         body: {
           action: "executive-summary",
           dashboardData: {
-            personalityProfiles: dashboardData.personalityProfiles?.slice(0, 5),
-            objections: dashboardData.objections?.slice(0, 8),
-            hiddenObjections: dashboardData.hiddenObjections?.slice(0, 5),
-            topQuestions: dashboardData.topQuestions?.slice(0, 8),
-            buyingSignals: dashboardData.buyingSignals?.slice(0, 8),
-            closingArguments: dashboardData.closingArguments?.slice(0, 5),
-            buyerPersona: dashboardData.buyerPersona,
-            sentimentSummary: dashboardData.sentimentSummary,
-            metrics: dashboardData.metrics,
+            personalityProfiles: dd.personalityProfiles?.slice(0, 5),
+            objections: dd.objections?.slice(0, 8),
+            hiddenObjections: dd.hiddenObjections?.slice(0, 5),
+            topQuestions: dd.topQuestions?.slice(0, 8),
+            buyingSignals: dd.buyingSignals?.slice(0, 8),
+            closingArguments: dd.closingArguments?.slice(0, 5),
+            buyerPersona: dd.buyerPersona,
+            sentimentSummary: dd.sentimentSummary,
+            metrics: dd.metrics,
           },
         },
       });

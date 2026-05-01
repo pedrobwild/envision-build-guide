@@ -40,9 +40,9 @@ export default function QualitativeHighlights({ data }: { data: QualitativeHighl
   if (!data) return null;
 
   const hasProfiles = Array.isArray(data.personalityProfiles) && data.personalityProfiles.length > 0;
-  const hasObjections = Array.isArray(data.objections) && data.objections.length > 0;
-  const hasQuestions = Array.isArray(data.topQuestions) && data.topQuestions.length > 0;
-  const hasBuyingSignals = Array.isArray(data.buyingSignals) && data.buyingSignals.length > 0;
+  const hasObjections = Array.isArray(data.objections) && ((data.objections?.length) ?? 0) > 0;
+  const hasQuestions = Array.isArray(data.topQuestions) && ((data.topQuestions?.length) ?? 0) > 0;
+  const hasBuyingSignals = Array.isArray(data.buyingSignals) && ((data.buyingSignals?.length) ?? 0) > 0;
   const hasBuyerPersona = !!data.buyerPersona;
 
   if (!hasProfiles && !hasObjections && !hasQuestions && !hasBuyingSignals && !hasBuyerPersona) {
@@ -100,7 +100,7 @@ export default function QualitativeHighlights({ data }: { data: QualitativeHighl
             <div className="bg-muted/30 border-b border-border/40 px-4 py-3 flex items-center gap-2">
               <ShieldAlert className="h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">Top Objeções</p>
-              <Badge variant="outline" className="ml-auto text-[10px]">{data.objections.length}</Badge>
+              <Badge variant="outline" className="ml-auto text-[10px]">{((data.objections?.length) ?? 0)}</Badge>
             </div>
             <CardContent className="p-4 space-y-2.5">
               {data.objections!.slice(0, 4).map((o, i: number) => (
@@ -124,7 +124,7 @@ export default function QualitativeHighlights({ data }: { data: QualitativeHighl
             <div className="bg-muted/30 border-b border-border/40 px-4 py-3 flex items-center gap-2">
               <MessageCircleQuestion className="h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">Perguntas Frequentes</p>
-              <Badge variant="outline" className="ml-auto text-[10px]">{data.topQuestions.length}</Badge>
+              <Badge variant="outline" className="ml-auto text-[10px]">{((data.topQuestions?.length) ?? 0)}</Badge>
             </div>
             <CardContent className="p-4 space-y-2.5">
               {data.topQuestions!.slice(0, 4).map((q, i: number) => (
@@ -149,7 +149,7 @@ export default function QualitativeHighlights({ data }: { data: QualitativeHighl
           <div className="bg-muted/30 border-b border-border/40 px-4 py-3 flex items-center gap-2">
             <Eye className="h-4 w-4 text-primary" />
             <p className="text-sm font-semibold text-foreground">Sinais de Compra Identificados</p>
-            <Badge variant="outline" className="ml-auto text-[10px]">{data.buyingSignals.length}</Badge>
+            <Badge variant="outline" className="ml-auto text-[10px]">{((data.buyingSignals?.length) ?? 0)}</Badge>
           </div>
           <CardContent className="p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
