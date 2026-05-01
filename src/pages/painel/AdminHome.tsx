@@ -228,15 +228,6 @@ export default function AdminHome() {
               </Button>
             </>
           }
-          meta={
-            <Surface variant="raised" padding="md" className="!p-5">
-              <HealthScoreGauge
-                value={metrics?.healthScore.value ?? null}
-                status={metrics?.healthScore.status ?? null}
-                loading={loading}
-              />
-            </Surface>
-          }
         />
       </motion.div>
 
