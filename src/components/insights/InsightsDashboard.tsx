@@ -130,7 +130,7 @@ const reasonTypeLabels: Record<string, { label: string; color: string }> = {
   score_conversion: { label: "Score de Conversão", color: "bg-primary" },
 };
 
-export default function InsightsDashboard({ data, scopeLabel }: { data: InsightsDashboardViewData | null | undefined; scopeLabel?: string }) {
+export default function InsightsDashboard({ data, scopeLabel }: { data: any; scopeLabel?: string }) {
   if (!data) return null;
 
   const metrics = data.metrics;
