@@ -1856,6 +1856,7 @@ export type Database = {
           id: string
           notes: string | null
           owner_id: string | null
+          revenue_override_brl: number | null
           revenue_target_brl: number
           target_month: string
           updated_at: string
@@ -1867,6 +1868,7 @@ export type Database = {
           id?: string
           notes?: string | null
           owner_id?: string | null
+          revenue_override_brl?: number | null
           revenue_target_brl?: number
           target_month: string
           updated_at?: string
@@ -1878,6 +1880,7 @@ export type Database = {
           id?: string
           notes?: string | null
           owner_id?: string | null
+          revenue_override_brl?: number | null
           revenue_target_brl?: number
           target_month?: string
           updated_at?: string

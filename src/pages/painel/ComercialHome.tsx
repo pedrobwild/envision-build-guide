@@ -28,7 +28,6 @@ import {
   Calendar,
   FileSignature,
   Send,
-  Target,
   TrendingUp,
   Activity,
   ListChecks,
@@ -39,7 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { PainelHeader } from "@/components/dashboard/PainelHeader";
-import { MetaProgressBar } from "@/components/dashboard/MetaProgressBar";
+import { EditableMetaCard } from "@/components/dashboard/EditableMetaCard";
 import { FilaCard } from "@/components/dashboard/FilaCard";
 import { TimelineItem } from "@/components/dashboard/TimelineItem";
 import { Surface } from "@/components/dashboard/Surface";
@@ -58,8 +57,6 @@ const anim = (delay: number) => ({
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 });
-
-const DEFAULT_MONTHLY_TARGET_BRL = 250_000;
 
 export default function ComercialHome() {
   const navigate = useNavigate();
@@ -112,21 +109,12 @@ export default function ComercialHome() {
             </Button>
           }
           meta={
-            <Surface variant="raised" padding="md">
-              <div className="flex items-center gap-2 mb-3">
-                <Target className="h-4 w-4 text-info" aria-hidden />
-                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-soft font-body">
-                  Meta do mês
-                </span>
-              </div>
-              <MetaProgressBar
-                current={overviewMTD.data?.revenue_won ?? 0}
-                target={DEFAULT_MONTHLY_TARGET_BRL}
-                label="Meta do mês"
-                format="currency"
-                loading={overviewMTD.isLoading}
-              />
-            </Surface>
+            <EditableMetaCard
+              computedRevenue={overviewMTD.data?.revenue_won ?? 0}
+              computedLoading={overviewMTD.isLoading}
+              canEdit={isAdmin}
+              ownerId={null}
+            />
           }
         />
       </motion.div>
