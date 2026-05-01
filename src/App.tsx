@@ -106,7 +106,8 @@ const App = () => (
                     <Route path="/" element={<RoleRedirect />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/admin" element={<AdminPage><AdminDashboard /></AdminPage>} />
+                    <Route path="/admin" element={<RoleRedirect />} />
+                    <Route path="/admin/legacy" element={<AdminPage><AdminDashboard /></AdminPage>} />
                     <Route path="/painel" element={<RoleRedirect />} />
                     <Route path="/painel/comercial" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><ComercialHome /></RoleGuard></AdminPage>} />
                     <Route path="/painel/orcamentista" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><OrcamentistaHome /></RoleGuard></AdminPage>} />
