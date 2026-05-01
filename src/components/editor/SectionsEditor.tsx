@@ -1363,6 +1363,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       return { ...s, items: reordered };
     });
     onSectionsChange(updated);
+    onSaveStatusChange?.("saving");
 
     try {
       const targetSection = updated.find(s => s.id === sectionId);
@@ -1373,8 +1374,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
           )
         );
       }
+      onSaveStatusChange?.("saved");
     } catch {
       onSectionsChange(previousSections);
+      onSaveStatusChange?.("error");
       toast.error("Erro ao salvar a ordem dos itens.");
     }
   };
