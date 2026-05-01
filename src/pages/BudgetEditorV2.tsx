@@ -200,66 +200,109 @@ export default function BudgetEditorV2() {
   // resultado em cache por budgetId. Após import/template, o `invalidateQueries`
   // disparado por `reloadSections` garante refetch sem requests duplicados
   // simultâneos.
+  // Stage 1: sections (estrutura básica)
   const {
-    data: sectionsData,
-    isLoading: sectionsInitialLoading,
-    refetch: refetchSections,
+    data: sectionsRowsData,
+    isLoading: sectionsRowsLoading,
+    refetch: refetchSectionsRows,
   } = useQuery({
-    queryKey: ["budget-editor-sections", budgetId],
+    queryKey: ["budget-editor-sections-rows", budgetId],
     queryFn: async () => {
       if (!budgetId) return [] as EditorSection[];
-      const { data: sectionsRows, error: sectionsError } = await supabase
+      const { data, error } = await supabase
         .from("sections")
         .select("id, budget_id, title, subtitle, order_index, qty, section_price, cover_image_url, tags, included_bullets, excluded_bullets, notes, is_optional, addendum_action")
         .eq("budget_id", budgetId)
         .order("order_index", { ascending: true });
-      if (sectionsError) throw sectionsError;
-
-      const sections = (sectionsRows ?? []) as EditorSection[];
-      const sectionIds = sections.map((section) => section.id);
-
-      const { data: itemsRows, error: itemsError } = await supabase
-        .from("items")
-        .select("id, section_id, title, description, reference_url, qty, unit, internal_unit_price, internal_total, bdi_percentage, order_index, catalog_item_id, catalog_snapshot, notes, addendum_action")
-        .in("section_id", sectionIds.length ? sectionIds : ["__none__"])
-        .order("order_index", { ascending: true });
-
-      if (itemsError) throw itemsError;
-
-      const items = (itemsRows ?? []) as EditorSection["items"];
-      const itemIds = items.map((item) => item.id);
-
-      const { data: imageRows, error: imagesError } = await supabase
-        .from("item_images")
-        .select("id, item_id, url, is_primary")
-        .in("item_id", itemIds.length ? itemIds : ["__none__"]);
-
-      if (imagesError) throw imagesError;
-
-      const imagesByItemId = new Map<string, { id?: string; item_id?: string; url: string; is_primary?: boolean | null }[]>();
-      for (const image of imageRows ?? []) {
-        const bucket = imagesByItemId.get(image.item_id) ?? [];
-        bucket.push(image);
-        imagesByItemId.set(image.item_id, bucket);
-      }
-
-      const itemsBySectionId = new Map<string, EditorSection["items"]>();
-      for (const item of items) {
-        const bucket = itemsBySectionId.get(item.section_id ?? "") ?? [];
-        bucket.push({
-          ...item,
-          images: imagesByItemId.get(item.id) ?? [],
-        });
-        itemsBySectionId.set(item.section_id ?? "", bucket);
-      }
-
-      return sections.map((section) => ({
-        ...section,
-        items: itemsBySectionId.get(section.id) ?? [],
-      }));
+      if (error) throw error;
+      return (data ?? []) as EditorSection[];
     },
     enabled: !!budgetId,
   });
+
+  const sectionIdsKey = (sectionsRowsData ?? []).map((s) => s.id).join(",");
+
+  // Stage 2: items das seções
+  const {
+    data: itemsRowsData,
+    isLoading: itemsRowsLoading,
+    refetch: refetchItemsRows,
+  } = useQuery({
+    queryKey: ["budget-editor-items-rows", budgetId, sectionIdsKey],
+    queryFn: async () => {
+      const sectionIds = (sectionsRowsData ?? []).map((s) => s.id);
+      if (!sectionIds.length) return [] as EditorSection["items"];
+      const { data, error } = await supabase
+        .from("items")
+        .select("id, section_id, title, description, reference_url, qty, unit, internal_unit_price, internal_total, bdi_percentage, order_index, catalog_item_id, catalog_snapshot, notes, addendum_action")
+        .in("section_id", sectionIds)
+        .order("order_index", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as EditorSection["items"];
+    },
+    enabled: !!budgetId && !!sectionsRowsData,
+  });
+
+  const itemIdsKey = (itemsRowsData ?? []).map((i) => i.id).join(",");
+
+  // Stage 3: imagens dos itens
+  const {
+    data: imageRowsData,
+    isLoading: imagesRowsLoading,
+    refetch: refetchImagesRows,
+  } = useQuery({
+    queryKey: ["budget-editor-image-rows", budgetId, itemIdsKey],
+    queryFn: async () => {
+      const itemIds = (itemsRowsData ?? []).map((i) => i.id);
+      if (!itemIds.length) return [] as { id?: string; item_id?: string; url: string; is_primary?: boolean | null }[];
+      const { data, error } = await supabase
+        .from("item_images")
+        .select("id, item_id, url, is_primary")
+        .in("item_id", itemIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!budgetId && !!itemsRowsData,
+  });
+
+  // Compose nested structure progressively (sections show up before items/images)
+  const sectionsData = useMemo<EditorSection[] | undefined>(() => {
+    if (!sectionsRowsData) return undefined;
+    const items = itemsRowsData ?? [];
+    const images = imageRowsData ?? [];
+
+    const imagesByItemId = new Map<string, typeof images>();
+    for (const image of images) {
+      const bucket = imagesByItemId.get(image.item_id!) ?? [];
+      bucket.push(image);
+      imagesByItemId.set(image.item_id!, bucket);
+    }
+
+    const itemsBySectionId = new Map<string, EditorSection["items"]>();
+    for (const item of items) {
+      const bucket = itemsBySectionId.get(item.section_id ?? "") ?? [];
+      bucket.push({
+        ...item,
+        images: imagesByItemId.get(item.id) ?? [],
+      });
+      itemsBySectionId.set(item.section_id ?? "", bucket);
+    }
+
+    return sectionsRowsData.map((section) => ({
+      ...section,
+      items: itemsBySectionId.get(section.id) ?? [],
+    }));
+  }, [sectionsRowsData, itemsRowsData, imageRowsData]);
+
+  const sectionsInitialLoading = sectionsRowsLoading;
+  const itemsInitialLoading = itemsRowsLoading;
+  const imagesInitialLoading = imagesRowsLoading;
+
+  const refetchSections = useCallback(async () => {
+    await refetchSectionsRows();
+    await refetchItemsRows();
+    await refetchImagesRows();
+  }, [refetchSectionsRows, refetchItemsRows, refetchImagesRows]);
 
   // Sync remote → local mutable state. Mantemos `setSections` para edição
   // local rápida (drag/drop, inline edits) sem reescrever o cache a cada keystroke.
@@ -285,9 +328,9 @@ export default function BudgetEditorV2() {
     if (!budgetId) return;
     setSectionsLoading(true);
     try {
-      await queryClient.invalidateQueries({
-        queryKey: ["budget-editor-sections", budgetId],
-      });
+      await queryClient.invalidateQueries({ queryKey: ["budget-editor-sections-rows", budgetId] });
+      await queryClient.invalidateQueries({ queryKey: ["budget-editor-items-rows", budgetId] });
+      await queryClient.invalidateQueries({ queryKey: ["budget-editor-image-rows", budgetId] });
       await refetchSections();
     } finally {
       setSectionsLoading(false);
@@ -890,11 +933,20 @@ export default function BudgetEditorV2() {
                       </Button>
                     </div>
                   )}
+                  {sections.length > 0 && (itemsInitialLoading || imagesInitialLoading) && (
+                    <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-md border border-border/60 bg-muted/30 text-xs text-muted-foreground font-body" role="status" aria-live="polite">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {itemsInitialLoading ? "Carregando itens das seções…" : "Carregando imagens dos itens…"}
+                    </div>
+                  )}
                   <SectionsEditor
                     budgetId={budgetId!}
                     sections={sections}
                     onSectionsChange={setSections}
                     loading={sectionsLoading || (sectionsInitialLoading && sections.length === 0)}
+                    loadingStage={
+                      sectionsInitialLoading ? "sections" : itemsInitialLoading ? "items" : imagesInitialLoading ? "images" : null
+                    }
                     readOnly={isPublishedVersion}
                     isAddendum={budget.is_addendum === true}
                     onProtectedEditAttempt={isPublishedVersion ? forkPublishedForStructuralEdit : undefined}
