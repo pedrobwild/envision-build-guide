@@ -147,7 +147,6 @@ export function useBulkOperations() {
         const maxWaitMs = 15 * 60 * 1000; // 15 min de teto
         const start = Date.now();
 
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           if (cancelRef.current[operationId]) {
             throw new Error("Polling cancelado pelo usuário.");

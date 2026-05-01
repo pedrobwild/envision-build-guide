@@ -121,12 +121,12 @@ export default function ScriptBuilder({ profiles, dashboardData }: ScriptBuilder
           }
         }
       }
-    } catch (err: any) {
-      if (err.name === "AbortError") return;
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return;
       logger.error("Script generation error:", err);
       toast({
         title: "Erro ao gerar roteiro",
-        description: err.message || "Tente novamente.",
+        description: err instanceof Error ? err.message : "Tente novamente.",
         variant: "destructive",
       });
     } finally {

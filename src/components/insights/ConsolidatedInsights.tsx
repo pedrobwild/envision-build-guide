@@ -102,9 +102,10 @@ export default function ConsolidatedInsights() {
 
       await loadFromCache();
       toast({ title: "Insights consolidados atualizados", description: `${consultores.length} consultores processados.` });
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Consolidated fetch error:", err);
-      toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: "Erro ao atualizar", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
     }

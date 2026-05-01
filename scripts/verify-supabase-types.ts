@@ -33,13 +33,11 @@ const REQUIRED_TABLES = [
 ] as const;
 
 function fail(message: string): never {
-  // eslint-disable-next-line no-console
   console.error(`\n❌ verify-supabase-types: ${message}\n`);
   process.exit(1);
 }
 
 function ok(message: string): void {
-  // eslint-disable-next-line no-console
   console.log(`✅ verify-supabase-types: ${message}`);
 }
 

@@ -522,7 +522,7 @@ export async function getPublishedVersion(groupId: string) {
     .eq("version_group_id", groupId)
     .eq("is_published_version", true)
     .limit(1)
-    .single();
+    .maybeSingle();
 
   return data;
 }

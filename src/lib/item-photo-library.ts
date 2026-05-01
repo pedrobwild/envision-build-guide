@@ -39,7 +39,7 @@ export async function lookupPhotoFromLibrary(itemName: string): Promise<string |
     .eq("item_name_normalized", normalized)
     .order("updated_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   return data?.url || null;
 }

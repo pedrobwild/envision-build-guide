@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/formatBRL";
 import { calcItemSaleTotal, calcItemCostTotal } from "@/lib/budget-calc";
@@ -160,7 +161,7 @@ export default function TemplateEditorPage() {
         .update({
           name: tpl.name,
           description: tpl.description,
-          media_config: tpl.media_config as any,
+          media_config: tpl.media_config as unknown as Json,
           default_discount_amount: Math.max(0, Number(tpl.default_discount_amount) || 0),
         })
         .eq("id", tpl.id);

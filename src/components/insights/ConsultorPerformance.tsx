@@ -100,8 +100,9 @@ export default function ConsultorPerformance() {
           description: res.cached ? `Atualizado há ${res.cacheAge} minutos.` : "Dados processados com sucesso.",
         });
       }
-    } catch (err: any) {
-      toast({ title: "Erro ao buscar insights", description: err.message || "Tente novamente.", variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Tente novamente.";
+      toast({ title: "Erro ao buscar insights", description: msg, variant: "destructive" });
     } finally { setLoading(false); }
   };
 

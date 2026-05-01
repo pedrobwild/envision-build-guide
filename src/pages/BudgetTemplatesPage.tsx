@@ -525,7 +525,7 @@ export default function BudgetTemplatesPage() {
         ...(srcTpl?.default_discount_amount != null
           ? { default_discount_amount: srcTpl.default_discount_amount }
           : {}),
-      } as any)
+      })
       .select("id")
       .single();
     if (tplErr || !newTpl) { toast.error("Erro ao duplicar"); return; }

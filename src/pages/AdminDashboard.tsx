@@ -69,7 +69,6 @@ export default function AdminDashboard() {
     if (profileLoading) return;
     if (profile && !isAdmin && (isComercial || isOrcamentista)) return;
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profileLoading, profile, isAdmin, isComercial, isOrcamentista]);
 
   const loadData = async () => {

@@ -37,7 +37,7 @@ const optionalIdSchema = z
   .string()
   .trim()
   .max(128, "Identificador muito longo.")
-  .regex(/^[A-Za-z0-9._\-]*$/, "Identificador contém caracteres inválidos.")
+  .regex(/^[A-Za-z0-9._-]*$/, "Identificador contém caracteres inválidos.")
   .optional();
 
 interface DigisacConfigRow {

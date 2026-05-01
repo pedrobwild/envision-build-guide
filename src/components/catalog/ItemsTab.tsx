@@ -115,12 +115,12 @@ export function ItemsTab({
   // Sync advanced filters back to URL
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
-    advanced.supplierIds.length ? next.set("sup", advanced.supplierIds.join(",")) : next.delete("sup");
-    advanced.priceMin ? next.set("pmin", advanced.priceMin) : next.delete("pmin");
-    advanced.priceMax ? next.set("pmax", advanced.priceMax) : next.delete("pmax");
-    advanced.leadMin ? next.set("lmin", advanced.leadMin) : next.delete("lmin");
-    advanced.leadMax ? next.set("lmax", advanced.leadMax) : next.delete("lmax");
-    advanced.onlyAlerts ? next.set("alerts", "1") : next.delete("alerts");
+    if (advanced.supplierIds.length) next.set("sup", advanced.supplierIds.join(",")); else next.delete("sup");
+    if (advanced.priceMin) next.set("pmin", advanced.priceMin); else next.delete("pmin");
+    if (advanced.priceMax) next.set("pmax", advanced.priceMax); else next.delete("pmax");
+    if (advanced.leadMin) next.set("lmin", advanced.leadMin); else next.delete("lmin");
+    if (advanced.leadMax) next.set("lmax", advanced.leadMax); else next.delete("lmax");
+    if (advanced.onlyAlerts) next.set("alerts", "1"); else next.delete("alerts");
     setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [advanced]);
