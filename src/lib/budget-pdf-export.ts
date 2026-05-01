@@ -278,6 +278,7 @@ export async function buildBudgetPdfBlob(
     ["Metragem", b.metragem ?? "—"],
     ["Data", b.date ?? "—"],
     ["Validade (dias)", b.validity_days != null ? String(b.validity_days) : "—"],
+    ["Prazo de execução", b.prazo_dias_uteis != null ? `${b.prazo_dias_uteis} dias úteis` : "—"],
   ];
   const resumoRight: [string, string][] = [
     ["Custo total (interno)", brl(totalCusto)],
