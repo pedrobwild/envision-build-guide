@@ -217,6 +217,15 @@ export function CompactKanbanCard({
           "active:scale-[0.99]"
         )}
       >
+        {actionsSlot && (
+          <div
+            className="absolute top-1 right-1 z-10"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {actionsSlot}
+          </div>
+        )}
         {/* Avatar */}
         <div className="relative shrink-0">
           <div className={cn(
