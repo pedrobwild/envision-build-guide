@@ -302,4 +302,3 @@ describe("E2E público — paridade mobile↔desktop dos valores renderizados", 
     }
   });
 });
-});
