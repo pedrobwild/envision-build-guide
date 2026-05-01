@@ -223,6 +223,14 @@ export default function AdminHome() {
           actions={
             <>
               <PeriodFilter value={dateRange} onChange={setDateRange} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 h-9 px-3"
+                onClick={() => navigate("/admin/saude-operacao")}
+              >
+                <HeartPulse className="h-3.5 w-3.5" /> Saúde da operação
+              </Button>
               <Button size="sm" className="gap-1.5 h-9 px-3.5" onClick={() => setClientFormOpen(true)}>
                 <Plus className="h-3.5 w-3.5" /> Novo cliente
               </Button>
