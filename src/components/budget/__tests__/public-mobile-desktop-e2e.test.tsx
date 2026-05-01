@@ -13,9 +13,28 @@
  * seções com saldo positivo, divergindo do que o desktop mostrava.
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll, vi } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+
+// Polyfill mínimo de IntersectionObserver para jsdom (framer-motion `whileInView`).
+beforeAll(() => {
+  if (typeof globalThis.IntersectionObserver === "undefined") {
+    class IO {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords() { return []; }
+      root = null;
+      rootMargin = "";
+      thresholds = [];
+    }
+    // @ts-expect-error — jsdom polyfill
+    globalThis.IntersectionObserver = IO;
+    // @ts-expect-error — jsdom polyfill
+    window.IntersectionObserver = IO;
+  }
+});
 
 import { InvestmentSummaryCard } from "@/components/budget/summary/InvestmentSummaryCard";
 import { BudgetSummary } from "@/components/budget/BudgetSummary";
