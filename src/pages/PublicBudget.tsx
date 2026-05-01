@@ -169,6 +169,10 @@ import type { BudgetData, BudgetSection, BudgetItem, BudgetAdjustment, BudgetRoo
 export default function PublicBudget() {
   const { publicId } = useParams<{ projectId?: string; publicId?: string }>();
   const [budget, setBudget] = useState<BudgetData | null>(null);
+  // Authoritative server-side total — used as a fallback when client-side
+  // calculation returns 0 (e.g., items not yet hydrated, partial RLS, or
+  // network errors on the items fetch).
+  const [serverTotal, setServerTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
