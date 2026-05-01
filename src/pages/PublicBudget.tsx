@@ -169,6 +169,10 @@ import type { BudgetData, BudgetSection, BudgetItem, BudgetAdjustment, BudgetRoo
 export default function PublicBudget() {
   const { publicId } = useParams<{ projectId?: string; publicId?: string }>();
   const [budget, setBudget] = useState<BudgetData | null>(null);
+  // Authoritative server-side total — used as a fallback when client-side
+  // calculation returns 0 (e.g., items not yet hydrated, partial RLS, or
+  // network errors on the items fetch).
+  const [serverTotal, setServerTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
@@ -246,6 +250,21 @@ export default function PublicBudget() {
     }
     if (publicId) {
       setLoadError(null);
+      setServerTotal(null);
+      // Authoritative total fetch — runs in parallel with the streaming
+      // payload so we always have a server-validated number to fall back to
+      // even if items load slowly, fail RLS, or arrive partially.
+      supabase
+        .rpc('get_public_budget_total', { p_public_id: publicId })
+        .then(({ data, error }) => {
+          if (error || !data) return;
+          const payload = data as { total?: number | string | null } | null;
+          const raw = payload?.total;
+          const num = typeof raw === 'string' ? Number(raw) : raw;
+          if (typeof num === 'number' && Number.isFinite(num)) {
+            setServerTotal(num);
+          }
+        });
       let firstPaintDone = false;
       fetchPublicBudgetStreaming(publicId, (partial) => {
         // Phase 1: render immediately with budget + sections + items (no item images yet).
@@ -347,10 +366,22 @@ export default function PublicBudget() {
   const computedTotal = calculateBudgetTotal(sections, adjustments);
   // Fonte da verdade unificada: público ↔ fallback ↔ interno ↔ PDF ↔ XLSX.
   // Ver src/lib/budget-total.ts e mem://logic/budget/manual-total-source-of-truth.
-  const { total } = resolveBudgetGrandTotal({
-    manualTotal: (budget as { manual_total?: number | string | null }).manual_total,
+  const manualTotalRaw = (budget as { manual_total?: number | string | null }).manual_total;
+  const { total: resolvedTotal } = resolveBudgetGrandTotal({
+    manualTotal: manualTotalRaw,
     computedTotal,
   });
+  // Fallback adicional: se não há manual_total e o cálculo client-side resultou
+  // em zero (items ainda não hidratados, RLS parcial, ou erro silencioso na
+  // query de items), usa o total autoritativo do servidor (RPC
+  // `get_public_budget_total`). Isso evita exibir "R$ 0" para o cliente.
+  const hasManualTotal =
+    manualTotalRaw !== null && manualTotalRaw !== undefined &&
+    Number.isFinite(typeof manualTotalRaw === 'string' ? Number(manualTotalRaw) : manualTotalRaw);
+  const total =
+    !hasManualTotal && resolvedTotal === 0 && serverTotal && serverTotal > 0
+      ? serverTotal
+      : resolvedTotal;
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
   // Visible sections: filter out items/sections removed by an addendum.
