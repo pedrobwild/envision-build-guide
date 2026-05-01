@@ -21,6 +21,7 @@ import {
   TrendingUp,
   MessageCircle,
   Stethoscope,
+  HeartPulse,
   Bug,
   GitBranch,
   Trash2,
