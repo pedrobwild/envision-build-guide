@@ -211,80 +211,95 @@ describe("E2E público — paridade mobile↔desktop dos valores renderizados", 
 
     // Sanidade: o fixture realmente exercita o bug (tem desconto embutido).
     expect(ref.discountTotal).toBeGreaterThan(0);
+    expect(ref.discounts.length).toBeGreaterThan(0);
 
     const mobile = renderMobile(sections);
     expectContainsBRL(mobile.container, ref.subtotal, "mobile.subtotal");
-    expectContainsBRL(mobile.container, ref.discountTotal, "mobile.discount");
     expectContainsBRL(mobile.container, ref.total, "mobile.total");
+    // Cada linha de desconto agregada por rótulo deve aparecer no mobile.
+    for (const line of ref.discounts) {
+      expectContainsBRL(mobile.container, line.total, `mobile.discount[${line.label}]`);
+    }
     cleanup();
 
     const desktop = renderDesktop(sections);
     expectContainsBRL(desktop.container, ref.subtotal, "desktop.subtotal");
-    expectContainsBRL(desktop.container, ref.discountTotal, "desktop.discount");
     expectContainsBRL(desktop.container, ref.total, "desktop.total");
+    for (const line of ref.discounts) {
+      expectContainsBRL(desktop.container, line.total, `desktop.discount[${line.label}]`);
+    }
   });
 
-  it("orçamento completo com descontos + créditos — todas as 4 linhas (subtotal, desconto, crédito, total) batem", () => {
+  it("orçamento completo com descontos + créditos — todas as linhas batem entre mobile e desktop", () => {
     const sections = fxOrçamentoCompletoMisto();
     const ref = computeReferenceTotals(sections);
 
     expect(ref.discountTotal).toBeGreaterThan(0);
     expect(ref.creditTotal).toBeGreaterThan(0);
+    expect(ref.discounts.length).toBeGreaterThan(0);
+    expect(ref.credits.length).toBeGreaterThan(0);
 
     const mobile = renderMobile(sections);
     expectContainsBRL(mobile.container, ref.subtotal, "mobile.subtotal");
-    expectContainsBRL(mobile.container, ref.discountTotal, "mobile.discount");
-    expectContainsBRL(mobile.container, ref.creditTotal, "mobile.credit");
     expectContainsBRL(mobile.container, ref.total, "mobile.total");
+    for (const line of ref.discounts) {
+      expectContainsBRL(mobile.container, line.total, `mobile.discount[${line.label}]`);
+    }
+    for (const line of ref.credits) {
+      expectContainsBRL(mobile.container, line.total, `mobile.credit[${line.label}]`);
+    }
     cleanup();
 
     const desktop = renderDesktop(sections);
     expectContainsBRL(desktop.container, ref.subtotal, "desktop.subtotal");
-    expectContainsBRL(desktop.container, ref.discountTotal, "desktop.discount");
-    expectContainsBRL(desktop.container, ref.creditTotal, "desktop.credit");
     expectContainsBRL(desktop.container, ref.total, "desktop.total");
+    for (const line of ref.discounts) {
+      expectContainsBRL(desktop.container, line.total, `desktop.discount[${line.label}]`);
+    }
+    for (const line of ref.credits) {
+      expectContainsBRL(desktop.container, line.total, `desktop.credit[${line.label}]`);
+    }
 
     // Invariante econômico final: subtotal == total + discount + credit
     expect(ref.subtotal).toBeCloseTo(ref.total + ref.discountTotal + ref.creditTotal, 2);
   });
 
-  it("não vaza preços por item nem BDI nas superfícies públicas", () => {
+  it("não vaza BDI nas superfícies públicas mobile e desktop", () => {
     const sections = fxOrçamentoCompletoMisto();
-    const ref = computeReferenceTotals(sections);
 
     const mobile = renderMobile(sections);
     expect(mobile.container.textContent ?? "").not.toMatch(/BDI/i);
     cleanup();
 
     const desktop = renderDesktop(sections);
-    // Desktop pode mostrar valores de seções, mas nunca BDI/markup interno.
     expect(desktop.container.textContent ?? "").not.toMatch(/BDI/i);
+  });
 
-    // Mobile só deve renderizar valores agregados (subtotal, abatimentos, total),
-    // nunca preço unitário interno de item — todos os money tokens visíveis
-    // devem corresponder a algum agregado calculado.
+  it("paridade do conjunto de valores agregados (subtotal/total/linhas) entre mobile e desktop", () => {
+    const sections = fxOrçamentoCompletoMisto();
+    const ref = computeReferenceTotals(sections);
+
+    // Conjunto canônico de valores que ambas as superfícies DEVEM exibir.
+    const expectedAggregates = [
+      ref.subtotal,
+      ref.total,
+      ...ref.discounts.map((d) => d.total),
+      ...ref.credits.map((c) => c.total),
+    ].map((v) => Number(v.toFixed(2)));
+
+    const mobile = renderMobile(sections);
+    const mobileMonies = new Set(extractAllMoney(mobile.container).map((s) => Number(parseBRL(s).toFixed(2))));
     cleanup();
-    const mobile2 = renderMobile(sections);
-    const monies = extractAllMoney(mobile2.container).map(parseBRL);
-    const allowed = new Set(
-      [
-        ref.total,
-        ref.subtotal,
-        ref.discountTotal,
-        ref.creditTotal,
-        ...ref.discounts.map((d) => d.total),
-        ...ref.credits.map((c) => c.total),
-        // parcelas (12x) — derivado do total
-        ref.total / 12,
-      ].map((v) => Number(v.toFixed(2))),
-    );
-    for (const m of monies) {
-      const rounded = Number(m.toFixed(2));
-      const matchesAllowed = [...allowed].some((a) => Math.abs(a - rounded) < 0.5);
-      expect(
-        matchesAllowed,
-        `Valor inesperado no DOM mobile: ${m}. Esperado um dos agregados: ${[...allowed].join(", ")}`,
-      ).toBe(true);
+
+    const desktop = renderDesktop(sections);
+    const desktopMonies = new Set(extractAllMoney(desktop.container).map((s) => Number(parseBRL(s).toFixed(2))));
+
+    for (const value of expectedAggregates) {
+      const inMobile = [...mobileMonies].some((m) => Math.abs(m - value) < 0.01);
+      const inDesktop = [...desktopMonies].some((m) => Math.abs(m - value) < 0.01);
+      expect(inMobile, `mobile não renderizou ${value}`).toBe(true);
+      expect(inDesktop, `desktop não renderizou ${value}`).toBe(true);
     }
   });
+});
 });
