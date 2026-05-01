@@ -200,10 +200,28 @@ export default function BudgetEditorV2() {
   // resultado em cache por budgetId. Após import/template, o `invalidateQueries`
   // disparado por `reloadSections` garante refetch sem requests duplicados
   // simultâneos.
+  // Retry com backoff exponencial: tenta até 3 vezes em erros transitórios
+  // (5xx, network, timeout). Não retenta em 4xx (auth/permissão) — o usuário
+  // precisa intervir. Backoff: 500ms, 1.5s, 4.5s.
+  const isTransientError = (err: unknown): boolean => {
+    if (!err) return false;
+    const e = err as { status?: number; code?: string; message?: string };
+    if (typeof e.status === "number" && e.status >= 400 && e.status < 500) return false;
+    const msg = (e.message ?? "").toLowerCase();
+    if (/jwt|permission|denied|row-level security|unauthorized|forbidden/.test(msg)) return false;
+    return true;
+  };
+  const queryRetryConfig = {
+    retry: (failureCount: number, error: unknown) => isTransientError(error) && failureCount < 3,
+    retryDelay: (attemptIndex: number) => Math.min(500 * 3 ** attemptIndex, 5000),
+  } as const;
+
   // Stage 1: sections (estrutura básica)
   const {
     data: sectionsRowsData,
     isLoading: sectionsRowsLoading,
+    error: sectionsRowsError,
+    isFetching: sectionsRowsFetching,
     refetch: refetchSectionsRows,
   } = useQuery({
     queryKey: ["budget-editor-sections-rows", budgetId],
@@ -218,6 +236,7 @@ export default function BudgetEditorV2() {
       return (data ?? []) as EditorSection[];
     },
     enabled: !!budgetId,
+    ...queryRetryConfig,
   });
 
   const sectionIdsKey = (sectionsRowsData ?? []).map((s) => s.id).join(",");
@@ -226,6 +245,8 @@ export default function BudgetEditorV2() {
   const {
     data: itemsRowsData,
     isLoading: itemsRowsLoading,
+    error: itemsRowsError,
+    isFetching: itemsRowsFetching,
     refetch: refetchItemsRows,
   } = useQuery({
     queryKey: ["budget-editor-items-rows", budgetId, sectionIdsKey],
@@ -241,14 +262,17 @@ export default function BudgetEditorV2() {
       return (data ?? []) as EditorSection["items"];
     },
     enabled: !!budgetId && !!sectionsRowsData,
+    ...queryRetryConfig,
   });
 
   const itemIdsKey = (itemsRowsData ?? []).map((i) => i.id).join(",");
 
-  // Stage 3: imagens dos itens
+  // Stage 3: imagens dos itens — fallback graceful (itens aparecem sem imagens)
   const {
     data: imageRowsData,
     isLoading: imagesRowsLoading,
+    error: imagesRowsError,
+    isFetching: imagesRowsFetching,
     refetch: refetchImagesRows,
   } = useQuery({
     queryKey: ["budget-editor-image-rows", budgetId, itemIdsKey],
@@ -263,9 +287,28 @@ export default function BudgetEditorV2() {
       return data ?? [];
     },
     enabled: !!budgetId && !!itemsRowsData,
+    ...queryRetryConfig,
   });
 
-  // Compose nested structure progressively (sections show up before items/images)
+  // Toast inicial quando uma query crítica falhar mesmo após os retries
+  useEffect(() => {
+    if (sectionsRowsError) {
+      toast.error("Falha ao carregar seções. Use 'Tentar novamente' para reconectar.");
+    }
+  }, [sectionsRowsError]);
+  useEffect(() => {
+    if (itemsRowsError) {
+      toast.error("Falha ao carregar itens. Use 'Tentar novamente' para reconectar.");
+    }
+  }, [itemsRowsError]);
+  useEffect(() => {
+    if (imagesRowsError) {
+      toast.warning("Algumas imagens não carregaram — exibindo itens sem fotos.");
+    }
+  }, [imagesRowsError]);
+
+  // Compose nested structure progressively (sections show up before items/images).
+  // Em caso de erro nos itens ou imagens, segue mostrando o que conseguiu carregar.
   const sectionsData = useMemo<EditorSection[] | undefined>(() => {
     if (!sectionsRowsData) return undefined;
     const items = itemsRowsData ?? [];
