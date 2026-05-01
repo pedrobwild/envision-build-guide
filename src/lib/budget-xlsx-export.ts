@@ -557,7 +557,7 @@ export async function buildBudgetXlsxBlob(
     { label: "Custo total (interno)", value: totalCusto, fmt: FMT.BRL },
     { label: "Venda (custo + BDI por item)", value: totalVenda, fmt: FMT.BRL },
     { label: "Ajustes globais", value: totalAjustes, fmt: FMT.BRL },
-    { label: "Total geral", value: totalVenda + totalAjustes, fmt: FMT.BRL },
+    { label: totalGeralLabel, value: effectiveGrandTotal, fmt: FMT.BRL },
     { label: "Margem média", value: margemRatio, fmt: FMT.PCT },
     { label: "Total manual (orçamento)", value: b.manual_total ?? null, fmt: FMT.BRL },
     { label: "Custo registrado", value: b.internal_cost ?? null, fmt: FMT.BRL },
