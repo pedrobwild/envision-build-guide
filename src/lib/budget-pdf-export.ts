@@ -280,7 +280,7 @@ export async function buildBudgetPdfBlob(
     ["Custo total (interno)", brl(totalCusto)],
     ["Venda (custo + BDI)", brl(totalVenda)],
     ["Ajustes globais", brl(totalAjustes)],
-    ["Total geral", brl(totalVenda + totalAjustes)],
+    [totalGeralLabel, brl(effectiveGrandTotal)],
     ["Margem média", `${num(margemPct, 2)}%`],
     ["Total manual (orçamento)", brl(b.manual_total)],
     ["Custo registrado", brl(b.internal_cost)],
