@@ -542,9 +542,9 @@ export function AppSidebar() {
                   <div className="text-[12px] font-medium truncate">
                     {profile.full_name || "Usuário"}
                   </div>
-                  {profile.email && (
+                  {user?.email && (
                     <div className="text-[11px] text-muted-foreground font-normal truncate">
-                      {profile.email}
+                      {user.email}
                     </div>
                   )}
                 </DropdownMenuLabel>
