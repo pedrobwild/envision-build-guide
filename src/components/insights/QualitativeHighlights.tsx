@@ -18,7 +18,25 @@ const freqColor: Record<string, string> = {
   baixa: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
 };
 
-export default function QualitativeHighlights({ data }: { data: any }) {
+interface PersonalityProfileItem {
+  type?: unknown;
+  frequency?: unknown;
+  description?: unknown;
+  approachStrategy?: unknown;
+}
+interface ObjectionItem { objection?: unknown; rebuttal?: unknown; }
+interface QuestionItem { question?: unknown; idealAnswer?: unknown; }
+interface BuyingSignalItem { signal?: unknown; action?: unknown; }
+
+interface QualitativeHighlightsData {
+  personalityProfiles?: PersonalityProfileItem[];
+  objections?: ObjectionItem[];
+  topQuestions?: QuestionItem[];
+  buyingSignals?: BuyingSignalItem[];
+  buyerPersona?: unknown;
+}
+
+export default function QualitativeHighlights({ data }: { data: QualitativeHighlightsData | null | undefined }) {
   if (!data) return null;
 
   const hasProfiles = Array.isArray(data.personalityProfiles) && data.personalityProfiles.length > 0;
@@ -45,7 +63,7 @@ export default function QualitativeHighlights({ data }: { data: any }) {
       {/* Personality Profiles - top-level highlight */}
       {hasProfiles && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {data.personalityProfiles.slice(0, 3).map((p: any, i: number) => (
+          {data.personalityProfiles!.slice(0, 3).map((p, i: number) => (
             <Card key={i} className="border-border/60 overflow-hidden">
               <CardContent className="p-0">
                 <div className="bg-primary/5 border-b border-border/40 px-4 py-3 flex items-center justify-between">
@@ -85,7 +103,7 @@ export default function QualitativeHighlights({ data }: { data: any }) {
               <Badge variant="outline" className="ml-auto text-[10px]">{data.objections.length}</Badge>
             </div>
             <CardContent className="p-4 space-y-2.5">
-              {data.objections.slice(0, 4).map((o: any, i: number) => (
+              {data.objections!.slice(0, 4).map((o, i: number) => (
                 <div key={i} className="flex items-start gap-2.5">
                   <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -109,7 +127,7 @@ export default function QualitativeHighlights({ data }: { data: any }) {
               <Badge variant="outline" className="ml-auto text-[10px]">{data.topQuestions.length}</Badge>
             </div>
             <CardContent className="p-4 space-y-2.5">
-              {data.topQuestions.slice(0, 4).map((q: any, i: number) => (
+              {data.topQuestions!.slice(0, 4).map((q, i: number) => (
                 <div key={i} className="flex items-start gap-2.5">
                   <HelpCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -135,7 +153,7 @@ export default function QualitativeHighlights({ data }: { data: any }) {
           </div>
           <CardContent className="p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {data.buyingSignals.slice(0, 6).map((s: any, i: number) => (
+              {data.buyingSignals!.slice(0, 6).map((s, i: number) => (
                 <div key={i} className="flex items-start gap-2 rounded-md border border-border/40 p-2.5">
                   <span className="inline-block h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
                   <div className="min-w-0">

@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Brain, ShieldAlert, Target, Eye, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { InsightsDashboardData } from "@/types/insights-dashboard";
 
 import { logger } from "@/lib/logger";
 
@@ -21,7 +22,7 @@ interface Takeaway {
 }
 
 interface ExecutiveSummaryProps {
-  dashboardData: any;
+  dashboardData: InsightsDashboardData | null | undefined;
 }
 
 export default function ExecutiveSummary({ dashboardData }: ExecutiveSummaryProps) {

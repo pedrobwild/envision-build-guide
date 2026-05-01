@@ -85,7 +85,7 @@ export default function ConsolidatedInsights() {
 
       // Processa todos os consultores em paralelo
       const results = await Promise.allSettled(
-        consultores.map((user: any) =>
+        consultores.map((user: { id: string }) =>
           supabase.functions.invoke("elephant-insights", {
             body: { userId: user.id, refresh: "true" },
           })
@@ -254,21 +254,21 @@ function mergeCacheEntries(caches: ElephantInsightsCacheRow[]): ConsolidatedData
   let noShowCount = 0;
   let scheduledCount = 0;
 
-  const allLeads: any[] = [];
+  const allLeads: unknown[] = [];
   const sentimentTotals: Record<string, number[]> = {};
-  const allReasonsByType: Record<string, { count: number; examples: any[] }> = {};
+  const allReasonsByType: Record<string, { count: number; examples: unknown[] }> = {};
   const allCompetitors: Record<string, number> = {};
   const allAnswerScores: Record<string, { scores: number[]; count: number }> = {};
 
   // Qualitative data collectors
-  const allProfiles: any[] = [];
-  const allObjections: any[] = [];
-  const allHiddenObjections: any[] = [];
-  const allQuestions: any[] = [];
-  const allBuyingSignals: any[] = [];
-  const allClosingArguments: any[] = [];
-  const allActionItems: any[] = [];
-  const buyerPersonas: any[] = [];
+  const allProfiles: unknown[] = [];
+  const allObjections: unknown[] = [];
+  const allHiddenObjections: unknown[] = [];
+  const allQuestions: unknown[] = [];
+  const allBuyingSignals: unknown[] = [];
+  const allClosingArguments: unknown[] = [];
+  const allActionItems: unknown[] = [];
+  const buyerPersonas: unknown[] = [];
   const sentimentSummaries: string[] = [];
 
   // Trend aggregation across all consultores
@@ -320,7 +320,7 @@ function mergeCacheEntries(caches: ElephantInsightsCacheRow[]): ConsolidatedData
     if (d.trends?.delta30vs60) {
       deltaAgg.meetings += d.trends.delta30vs60.meetings || 0;
       // Deltas: simple sum is misleading; track contribution weighted by recent meetings count
-      const w30 = d.trends.windows?.find((w: any) => w.windowDays === 30);
+      const w30 = d.trends.windows?.find((w: { windowDays?: number; meetings?: number }) => w.windowDays === 30);
       const recentWeight = (w30?.meetings || 0) || 1;
       deltaAgg.scoreSum += (d.trends.delta30vs60.avgScore || 0) * recentWeight;
       deltaAgg.scoreCount += recentWeight;
@@ -348,7 +348,7 @@ function mergeCacheEntries(caches: ElephantInsightsCacheRow[]): ConsolidatedData
       }
     }
     if (d.metrics?.reasonsByType) {
-      for (const [type, data] of Object.entries(d.metrics.reasonsByType) as any) {
+      for (const [type, data] of Object.entries(d.metrics.reasonsByType) as Array<[string, { count?: number; examples?: unknown[] }]>) {
         if (!allReasonsByType[type]) allReasonsByType[type] = { count: 0, examples: [] };
         allReasonsByType[type].count += data.count || 0;
         if (data.examples) allReasonsByType[type].examples.push(...data.examples);

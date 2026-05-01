@@ -12,6 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Loader2, Copy, Check, Brain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { InsightsDashboardData } from "@/types/insights-dashboard";
 
 import { logger } from "@/lib/logger";
 
@@ -25,7 +26,7 @@ interface ProfileOption {
 
 interface ScriptBuilderProps {
   profiles: ProfileOption[];
-  dashboardData: any;
+  dashboardData: InsightsDashboardData | null | undefined;
 }
 
 export default function ScriptBuilder({ profiles, dashboardData }: ScriptBuilderProps) {

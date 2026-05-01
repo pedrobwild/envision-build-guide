@@ -115,11 +115,11 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
   // Extract comparable metrics from dashboard data
   const getLeadStats = (data: ConsultorData | null) => {
     if (!data?.dashboard?.leadScores) return { hot: 0, warm: 0, cold: 0, avgScore: 0 };
-    const leads = data.dashboard.leadScores as any[];
-    const hot = leads.filter((l: any) => l.score >= 75).length;
-    const warm = leads.filter((l: any) => l.score >= 50 && l.score < 75).length;
-    const cold = leads.filter((l: any) => l.score < 50).length;
-    const avgScore = leads.length ? Math.round(leads.reduce((s: number, l: any) => s + l.score, 0) / leads.length) : 0;
+    const leads = data.dashboard.leadScores as Array<{ score: number }>;
+    const hot = leads.filter((l) => l.score >= 75).length;
+    const warm = leads.filter((l) => l.score >= 50 && l.score < 75).length;
+    const cold = leads.filter((l) => l.score < 50).length;
+    const avgScore = leads.length ? Math.round(leads.reduce((s: number, l) => s + l.score, 0) / leads.length) : 0;
     return { hot, warm, cold, avgScore };
   };
 
@@ -132,9 +132,9 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
   };
 
   const getAvgAnswerScore = (data: ConsultorData | null) => {
-    const scores = data?.dashboard?.metrics?.answerScores;
+    const scores = data?.dashboard?.metrics?.answerScores as Array<{ avg: number }> | undefined;
     if (!Array.isArray(scores) || !scores.length) return 0;
-    return +(scores.reduce((s: number, item: any) => s + item.avg, 0) / scores.length).toFixed(1);
+    return +(scores.reduce((s: number, item) => s + item.avg, 0) / scores.length).toFixed(1);
   };
 
   const leadsA = getLeadStats(dataA);
@@ -351,13 +351,14 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
               </CardHeader>
               <CardContent className="pt-4 space-y-3">
                 {(() => {
-                  const scoresA = dataA.dashboard.metrics.answerScores as any[];
-                  const scoresB = dataB.dashboard.metrics.answerScores as any[];
+                  type AnswerScoreEntry = { question: string; avg: number };
+                  const scoresA = dataA.dashboard.metrics.answerScores as AnswerScoreEntry[];
+                  const scoresB = dataB.dashboard.metrics.answerScores as AnswerScoreEntry[];
                   // Merge by question
-                  const allQuestions = [...new Set([...scoresA.map((s: any) => s.question), ...scoresB.map((s: any) => s.question)])];
+                  const allQuestions = [...new Set([...scoresA.map((s) => s.question), ...scoresB.map((s) => s.question)])];
                   return allQuestions.map((q, i) => {
-                    const sA = scoresA.find((s: any) => s.question === q);
-                    const sB = scoresB.find((s: any) => s.question === q);
+                    const sA = scoresA.find((s) => s.question === q);
+                    const sB = scoresB.find((s) => s.question === q);
                     const avgA = sA?.avg ?? 0;
                     const avgB = sB?.avg ?? 0;
                     return (
@@ -393,8 +394,9 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
 
           {/* Distribuição de Objeções compartilhadas */}
           {(() => {
-            const objA = (dataA.dashboard?.objections as any[]) || [];
-            const objB = (dataB.dashboard?.objections as any[]) || [];
+            type ObjectionEntry = { objection?: string; evidenceCount?: number };
+            const objA = (dataA.dashboard?.objections as ObjectionEntry[]) || [];
+            const objB = (dataB.dashboard?.objections as ObjectionEntry[]) || [];
             if (objA.length === 0 && objB.length === 0) return null;
 
             // Build map: objection text -> {a, b} counts (using evidenceCount as proxy)
@@ -475,8 +477,9 @@ export default function ConsultorComparison({ consultores, loadingUsers }: Consu
               </CardHeader>
               <CardContent className="pt-4">
                 {(() => {
-                  const tA = dataA.dashboard.trends.windows?.find((w: any) => w.windowDays === 30);
-                  const tB = dataB.dashboard.trends.windows?.find((w: any) => w.windowDays === 30);
+                  type TrendWindow = { windowDays?: number; meetings?: number; avgScore?: number; positiveSentimentPct?: number };
+                  const tA = (dataA.dashboard.trends.windows as TrendWindow[] | undefined)?.find((w) => w.windowDays === 30);
+                  const tB = (dataB.dashboard.trends.windows as TrendWindow[] | undefined)?.find((w) => w.windowDays === 30);
                   if (!tA || !tB) return <p className="text-xs text-muted-foreground">Sem dados nos últimos 30 dias.</p>;
                   return (
                     <div className="space-y-3">

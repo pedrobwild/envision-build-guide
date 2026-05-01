@@ -152,7 +152,20 @@ export const __memoInternals = {
 };
 
 
-function CompareTooltip({ active, payload, label, series, metric }: any) {
+interface CompareTooltipPayloadItem {
+  dataKey?: string | number;
+  value?: number | string | null;
+}
+
+interface CompareTooltipProps {
+  active?: boolean;
+  payload?: CompareTooltipPayloadItem[];
+  label?: string;
+  series: BrokerSeries[];
+  metric: Metric;
+}
+
+function CompareTooltip({ active, payload, label, series, metric }: CompareTooltipProps) {
   if (!active || !payload?.length) return null;
   const unit = metric === "meetings" ? "reuniões" : "/ 100";
   return (
@@ -162,7 +175,7 @@ function CompareTooltip({ active, payload, label, series, metric }: any) {
       </p>
       <div className="space-y-1">
         {series.map((s: BrokerSeries, idx: number) => {
-          const value = payload.find((p: any) => p.dataKey === `${metric}_${idx}`)?.value;
+          const value = payload.find((p) => p.dataKey === `${metric}_${idx}`)?.value;
           const display = value == null ? "—" : metric === "avgScore" ? `${value} ${unit}` : `${value} ${unit}`;
           return (
             <div key={idx} className="flex items-center justify-between gap-3">

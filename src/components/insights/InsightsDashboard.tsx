@@ -56,6 +56,71 @@ const sentimentConfig: Record<string, { label: string; color: string; icon: type
   mixed: { label: "Misto", color: "text-amber-600", icon: Activity },
 };
 
+interface AnswerScoreItem {
+  question?: unknown;
+  count?: number;
+  avg: number;
+}
+interface CompetitorItem { name?: unknown; mentions?: number; }
+interface ReasonExample { description?: unknown; [key: string]: unknown; }
+interface ReasonsByTypeBucket { count: number; examples?: ReasonExample[]; }
+interface MetricsBlock {
+  avgSentiment?: Record<string, number>;
+  reasonsByType?: Record<string, ReasonsByTypeBucket>;
+  answerScores?: AnswerScoreItem[];
+  competitors?: CompetitorItem[];
+  noShowCount?: number;
+  scheduledCount?: number;
+  totalForFrequency?: number;
+}
+interface PersonalityProfileItem {
+  type?: unknown;
+  frequency?: unknown;
+  description?: unknown;
+  approachStrategy?: unknown;
+  pitfalls?: unknown;
+}
+interface QuestionItem {
+  question?: unknown;
+  idealAnswer?: unknown;
+  frequency?: unknown;
+  evidenceCount?: number;
+  frequencyPct?: number;
+  evidence?: unknown[];
+}
+interface ObjectionItem {
+  objection?: unknown;
+  rebuttal?: unknown;
+  frequency?: unknown;
+  evidenceCount?: number;
+  frequencyPct?: number;
+  evidence?: unknown[];
+}
+interface HiddenObjectionItem {
+  objection?: unknown;
+  signals?: unknown;
+  approach?: unknown;
+  evidenceCount?: number;
+  evidence?: unknown[];
+}
+interface ClosingArgumentItem { argument?: unknown; context?: unknown; }
+interface BuyingSignalItem { signal?: unknown; action?: unknown; evidence?: unknown[]; }
+interface ActionItem { priority?: unknown; [key: string]: unknown; }
+
+interface InsightsDashboardViewData {
+  metrics?: MetricsBlock;
+  totalMeetings?: number;
+  trends?: unknown;
+  personalityProfiles?: PersonalityProfileItem[];
+  topQuestions?: QuestionItem[];
+  objections?: ObjectionItem[];
+  hiddenObjections?: HiddenObjectionItem[];
+  closingArguments?: ClosingArgumentItem[];
+  buyingSignals?: BuyingSignalItem[];
+  actionItems?: ActionItem[];
+  [key: string]: unknown;
+}
+
 const reasonTypeLabels: Record<string, { label: string; color: string }> = {
   objection: { label: "Objeções", color: "bg-red-500" },
   positive_point: { label: "Pontos Positivos", color: "bg-emerald-500" },
@@ -65,7 +130,7 @@ const reasonTypeLabels: Record<string, { label: string; color: string }> = {
   score_conversion: { label: "Score de Conversão", color: "bg-primary" },
 };
 
-export default function InsightsDashboard({ data, scopeLabel }: { data: any; scopeLabel?: string }) {
+export default function InsightsDashboard({ data, scopeLabel }: { data: InsightsDashboardViewData | null | undefined; scopeLabel?: string }) {
   if (!data) return null;
 
   const metrics = data.metrics;
@@ -94,9 +159,9 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
           </CardHeader>
           <CardContent className="pt-4">
             <div className="space-y-2.5">
-              {Object.entries(metrics.avgSentiment)
-                .sort(([, a]: any, [, b]: any) => b - a)
-                .map(([key, pct]: [string, any]) => {
+              {(Object.entries(metrics.avgSentiment) as Array<[string, number]>)
+                .sort(([, a], [, b]) => b - a)
+                .map(([key, pct]) => {
                   const config = sentimentConfig[key] || { label: key, color: "text-muted-foreground", icon: Minus };
                   const Icon = config.icon;
                   return (
@@ -132,9 +197,9 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
           </CardHeader>
           <CardContent className="pt-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-              {Object.entries(metrics.reasonsByType)
-                .sort(([, a]: any, [, b]: any) => b.count - a.count)
-                .map(([type, data]: [string, any]) => {
+              {(Object.entries(metrics.reasonsByType) as Array<[string, ReasonsByTypeBucket]>)
+                .sort(([, a], [, b]) => b.count - a.count)
+                .map(([type, data]) => {
                   const config = reasonTypeLabels[type] || { label: type, color: "bg-muted-foreground" };
                   return (
                     <div key={type} className="rounded-lg border border-border/60 p-3 text-center">
@@ -149,7 +214,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
             {metrics.reasonsByType.objection?.examples?.length > 0 && (
               <div className="space-y-2 pt-2 border-t border-border/40">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">Top objeções reais</p>
-                {metrics.reasonsByType.objection.examples.map((ex: any, i: number) => (
+                {metrics.reasonsByType.objection.examples!.map((ex, i: number) => (
                   <div key={i} className="flex items-start gap-2">
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
                     <p className="text-xs text-muted-foreground leading-relaxed">{safeText(ex.description)}</p>
@@ -172,7 +237,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-3">
-            {metrics.answerScores.map((item: any, i: number) => (
+            {metrics.answerScores.map((item, i: number) => (
               <div key={i} className="space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs text-muted-foreground leading-snug flex-1 min-w-0 truncate">{safeText(item.question)}</p>
@@ -207,7 +272,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
           </CardHeader>
           <CardContent className="pt-4">
             <div className="flex flex-wrap gap-2">
-              {metrics.competitors.map((c: any, i: number) => (
+              {metrics.competitors.map((c, i: number) => (
                 <Badge key={i} variant="secondary" className="text-xs gap-1.5 py-1.5 px-3">
                   {safeText(c.name)}
                   <span className="text-[10px] font-bold text-muted-foreground">{c.mentions}x</span>
@@ -277,7 +342,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-3">
-            {data.personalityProfiles.map((p: any, i: number) => (
+            {data.personalityProfiles!.map((p, i: number) => (
               <div key={i} className="rounded-lg border border-border/60 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-semibold text-foreground">{safeText(p.type)}</p>
@@ -326,7 +391,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-3">
-            {data.topQuestions.map((q: any, i: number) => (
+            {data.topQuestions!.map((q, i: number) => (
               <div key={i} className="rounded-lg border border-border/60 p-4 space-y-2.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2.5">
@@ -373,7 +438,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-3">
-            {data.objections.map((o: any, i: number) => (
+            {data.objections!.map((o, i: number) => (
               <div key={i} className="rounded-lg border border-border/60 p-4 space-y-2.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2.5">
@@ -415,7 +480,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-3">
-            {data.hiddenObjections.map((h: any, i: number) => (
+            {data.hiddenObjections!.map((h, i: number) => (
               <div key={i} className="rounded-lg border border-border/60 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-medium text-foreground">{safeText(h.objection)}</p>
@@ -463,7 +528,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-3">
-              {data.closingArguments.map((a: any, i: number) => (
+              {data.closingArguments!.map((a, i: number) => (
                 <div key={i} className="rounded-lg border border-border/60 p-3 space-y-1.5">
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
@@ -488,7 +553,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-3">
-              {data.buyingSignals.map((s: any, i: number) => (
+              {data.buyingSignals!.map((s, i: number) => (
                 <div key={i} className="rounded-lg border border-border/60 p-3 space-y-1.5">
                   <p className="text-sm font-medium text-foreground flex items-start gap-2">
                     <span className="inline-block h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
@@ -523,7 +588,7 @@ export default function InsightsDashboard({ data, scopeLabel }: { data: any; sco
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-2">
-            {data.actionItems.map((a: any, i: number) => (
+            {data.actionItems!.map((a, i: number) => (
               <div key={i} className="flex items-start gap-3 rounded-lg border border-border/60 p-3.5">
                 <Badge variant="outline" className={`shrink-0 text-[10px] uppercase tracking-wider mt-0.5 ${priorityColor[safeText(a.priority)] || ""}`}>
                   {safeText(a.priority)}
