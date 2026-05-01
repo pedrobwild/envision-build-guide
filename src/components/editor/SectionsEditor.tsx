@@ -876,6 +876,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
+    onSaveStatusChange?.("saving");
 
     timers.current[key] = setTimeout(async () => {
       const actualTable = logicalTable === "sections" ? cfg.sectionTable : cfg.itemTable;
@@ -884,8 +885,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       delete pendingUpdates.current[key];
       delete timers.current[key];
 
+      let saveError: unknown = null;
       if (mergedUpdates && Object.keys(mergedUpdates).length > 0) {
-        await dbFrom(actualTable).update(mergedUpdates).eq("id", id);
+        const { error } = await dbFrom(actualTable).update(mergedUpdates).eq("id", id);
+        saveError = error;
       }
 
       setSavingIds(prev => {
@@ -893,8 +896,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
         next.delete(id);
         return next;
       });
+
+      if (saveError) {
+        onSaveStatusChange?.("error");
+      } else {
+        // Só sinaliza "saved" quando não há nenhum outro item ainda em debounce/saving
+        const stillPending = Object.keys(timers.current).length > 0;
+        if (!stillPending) onSaveStatusChange?.("saved");
+      }
     }, 600);
-  }, [cfg, readOnly]);
+  }, [cfg, readOnly, onSaveStatusChange]);
 
   const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
     if (blockedByReadOnly()) return;
