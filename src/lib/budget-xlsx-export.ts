@@ -14,6 +14,7 @@
 import * as XLSX from "xlsx-js-style";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import { resolveBudgetGrandTotal } from "@/lib/budget-total";
 import {
   calcItemCostTotal,
   calcItemSaleTotal,
@@ -512,13 +513,15 @@ export async function buildBudgetXlsxBlob(
   const totalVenda = totals.sale;
   const totalAjustes = totals.adjustments;
   const margemRatio = totals.marginRatio;
-  // Mirror PublicBudget/BudgetInternalDetail: prefer manual_total when defined.
+  // Fonte da verdade unificada — ver src/lib/budget-total.ts.
   const computedGrandTotal = totalVenda + totalAjustes;
-  const manualTotalNum = b.manual_total != null && Number.isFinite(Number(b.manual_total))
-    ? Number(b.manual_total)
-    : null;
-  const effectiveGrandTotal = manualTotalNum ?? computedGrandTotal;
-  const totalGeralLabel = manualTotalNum != null ? "Total geral (manual)" : "Total geral";
+  const resolvedTotal = resolveBudgetGrandTotal({
+    manualTotal: b.manual_total,
+    computedTotal: computedGrandTotal,
+  });
+  const manualTotalNum = resolvedTotal.source === "manual" ? resolvedTotal.total : null;
+  const effectiveGrandTotal = resolvedTotal.total;
+  const totalGeralLabel = resolvedTotal.label;
 
   // Loga avisos de auditoria — não bloqueia o export, mas deixa rastro
   // para que o time identifique seções de Desconto/Crédito mal preenchidas.

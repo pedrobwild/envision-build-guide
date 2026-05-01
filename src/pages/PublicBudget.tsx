@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { fetchPublicBudget, fetchPublicBudgetStreaming, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
+import { resolveBudgetGrandTotal } from "@/lib/budget-total";
 import { isCreditSection, aggregateAbatementsByLabel } from "@/lib/budget-calc";
 import { AddendumDeltaCard } from "@/components/budget/AddendumDeltaCard";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
@@ -343,13 +344,12 @@ export default function PublicBudget() {
   const adjustments: BudgetAdjustment[] = budget.adjustments || [];
   const rooms: BudgetRoom[] = budget.rooms || [];
   const computedTotal = calculateBudgetTotal(sections, adjustments);
-  // Use manual_total when defined (PDF/Excel imports or manual override).
-  // Mirrors BudgetInternalDetail/StickyEditorHeader so public ↔ internal stay in sync.
-  // Fallback to computed when manual_total is null/undefined.
-  const manualTotalRaw = (budget as { manual_total?: number | null }).manual_total;
-  const total = (manualTotalRaw != null && Number.isFinite(Number(manualTotalRaw)))
-    ? Number(manualTotalRaw)
-    : computedTotal;
+  // Fonte da verdade unificada: público ↔ fallback ↔ interno ↔ PDF ↔ XLSX.
+  // Ver src/lib/budget-total.ts e mem://logic/budget/manual-total-source-of-truth.
+  const { total } = resolveBudgetGrandTotal({
+    manualTotal: (budget as { manual_total?: number | string | null }).manual_total,
+    computedTotal,
+  });
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
   // Visible sections: filter out items/sections removed by an addendum.
