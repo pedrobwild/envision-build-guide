@@ -366,10 +366,22 @@ export default function PublicBudget() {
   const computedTotal = calculateBudgetTotal(sections, adjustments);
   // Fonte da verdade unificada: público ↔ fallback ↔ interno ↔ PDF ↔ XLSX.
   // Ver src/lib/budget-total.ts e mem://logic/budget/manual-total-source-of-truth.
-  const { total } = resolveBudgetGrandTotal({
-    manualTotal: (budget as { manual_total?: number | string | null }).manual_total,
+  const manualTotalRaw = (budget as { manual_total?: number | string | null }).manual_total;
+  const { total: resolvedTotal } = resolveBudgetGrandTotal({
+    manualTotal: manualTotalRaw,
     computedTotal,
   });
+  // Fallback adicional: se não há manual_total e o cálculo client-side resultou
+  // em zero (items ainda não hidratados, RLS parcial, ou erro silencioso na
+  // query de items), usa o total autoritativo do servidor (RPC
+  // `get_public_budget_total`). Isso evita exibir "R$ 0" para o cliente.
+  const hasManualTotal =
+    manualTotalRaw !== null && manualTotalRaw !== undefined &&
+    Number.isFinite(typeof manualTotalRaw === 'string' ? Number(manualTotalRaw) : manualTotalRaw);
+  const total =
+    !hasManualTotal && resolvedTotal === 0 && serverTotal && serverTotal > 0
+      ? serverTotal
+      : resolvedTotal;
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
   // Visible sections: filter out items/sections removed by an addendum.
