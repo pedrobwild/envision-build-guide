@@ -184,20 +184,24 @@ describe("E2E público — paridade mobile↔desktop dos valores renderizados", 
     "[%s] mobile e desktop renderizam o MESMO total final no DOM",
     ({ build }) => {
       const sections = build();
+      const ref = computeReferenceTotals(sections);
+      const expectedTotalBRL = formatBRL(ref.total).replace(/\s+/g, " ").trim();
 
       const mobile = renderMobile(sections);
       const mobileMoney = extractAllMoney(mobile.container);
+      const mobileHasTotal = mobileMoney.some(
+        (v) => Math.abs(parseBRL(v) - parseBRL(expectedTotalBRL)) < 0.01,
+      );
       cleanup();
 
       const desktop = renderDesktop(sections);
       const desktopMoney = extractAllMoney(desktop.container);
+      const desktopHasTotal = desktopMoney.some(
+        (v) => Math.abs(parseBRL(v) - parseBRL(expectedTotalBRL)) < 0.01,
+      );
 
-      // Total final precisa aparecer nas duas superfícies.
-      expectContainsBRL(mobile.container, mobile.ref.total, "mobile.total");
-      expectContainsBRL(desktop.container, desktop.ref.total, "desktop.total");
-
-      // E os totais de referência têm que bater.
-      expect(mobile.ref.total).toBeCloseTo(desktop.ref.total, 2);
+      expect(mobileHasTotal, `mobile não renderizou ${expectedTotalBRL}. Renderizado: ${JSON.stringify(mobileMoney)}`).toBe(true);
+      expect(desktopHasTotal, `desktop não renderizou ${expectedTotalBRL}. Renderizado: ${JSON.stringify(desktopMoney)}`).toBe(true);
 
       // Sanity: pelo menos um valor monetário em cada surface.
       expect(mobileMoney.length).toBeGreaterThan(0);
