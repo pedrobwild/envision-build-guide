@@ -1,6 +1,7 @@
 import { AlertTriangle, RefreshCw, MessageCircle } from "lucide-react";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
+import { resolveBudgetGrandTotal } from "@/lib/budget-total";
 import type { BudgetData } from "@/types/budget";
 
 interface PublicBudgetFallbackProps {
@@ -18,11 +19,11 @@ export function PublicBudgetFallback({ budget, errorMessage }: PublicBudgetFallb
   const sections = budget.sections || [];
   const adjustments = budget.adjustments || [];
   const computedTotal = calculateBudgetTotal(sections, adjustments);
-  // Mirror PublicBudget/BudgetInternalDetail: prefer manual_total when defined.
-  const manualTotalRaw = (budget as { manual_total?: number | null }).manual_total;
-  const total = (manualTotalRaw != null && Number.isFinite(Number(manualTotalRaw)))
-    ? Number(manualTotalRaw)
-    : computedTotal;
+  // Fonte da verdade unificada — ver src/lib/budget-total.ts.
+  const { total } = resolveBudgetGrandTotal({
+    manualTotal: (budget as { manual_total?: number | string | null }).manual_total,
+    computedTotal,
+  });
   const validity = getValidityInfo(budget.date, budget.validity_days || 30);
 
   const formatDate = (iso?: string | null) => {
