@@ -310,6 +310,12 @@ export async function duplicateBudgetAsVersion(
  * Safety: refuses to delete the current version, the published version,
  * any version not in 'draft' status, or the last remaining version.
  * Cleans up dependent rows (sections/items/images, adjustments, rooms, tours).
+ *
+ * Audit: `budget_events.budget_id` has ON DELETE CASCADE, so we cannot log on
+ * the deleted version itself (the event would be wiped along with the row).
+ * Instead, we log a `version_deleted` event on a SURVIVING sibling in the same
+ * group (lowest version_number) — this preserves the audit trail in the group.
+ * See issue #14.
  */
 export async function deleteDraftVersion(
   budgetId: string,
@@ -317,7 +323,7 @@ export async function deleteDraftVersion(
 ): Promise<void> {
   const { data: target, error: loadErr } = await supabase
     .from("budgets")
-    .select("id, status, is_current_version, is_published_version, version_group_id, version_number, public_id")
+    .select("id, status, is_current_version, is_published_version, version_group_id, version_number, public_id, parent_budget_id, change_reason")
     .eq("id", budgetId)
     .single();
 
@@ -326,12 +332,39 @@ export async function deleteDraftVersion(
   if (target.is_current_version) throw new Error("Não é possível excluir a versão atual");
   if (target.is_published_version) throw new Error("Não é possível excluir uma versão publicada");
 
+  // Find a surviving sibling we can attach the audit event to (any other budget
+  // in the same group). Also enforces "not the only version of the group".
+  let auditTargetId: string | null = null;
   if (target.version_group_id) {
-    const { count } = await supabase
+    const { data: siblings } = await supabase
       .from("budgets")
-      .select("id", { count: "exact", head: true })
-      .eq("version_group_id", target.version_group_id);
-    if ((count ?? 0) <= 1) throw new Error("Não é possível excluir a única versão do grupo");
+      .select("id, version_number")
+      .eq("version_group_id", target.version_group_id)
+      .neq("id", budgetId)
+      .order("version_number", { ascending: true })
+      .limit(1);
+
+    if (!siblings || siblings.length === 0) {
+      throw new Error("Não é possível excluir a única versão do grupo");
+    }
+    auditTargetId = siblings[0].id;
+  }
+
+  // Audit BEFORE deletion: log on a sibling so the event survives the CASCADE.
+  if (auditTargetId) {
+    await logVersionEvent({
+      event_type: "version_deleted",
+      budget_id: auditTargetId,
+      user_id: userId ?? null,
+      metadata: {
+        deleted_budget_id: budgetId,
+        deleted_version_number: target.version_number,
+        deleted_public_id: target.public_id,
+        deleted_parent_budget_id: target.parent_budget_id,
+        deleted_change_reason: target.change_reason,
+        version_group_id: target.version_group_id,
+      },
+    });
   }
 
   // Cascade clean-up: items/images via sections, adjustments, rooms, tours.
@@ -360,9 +393,6 @@ export async function deleteDraftVersion(
 
   const { error: delErr } = await supabase.from("budgets").delete().eq("id", budgetId);
   if (delErr) throw new Error(`Falha ao excluir versão: ${delErr.message}`);
-
-  // Note: no audit event is logged here because the budget row (FK target) was deleted.
-  void userId;
 }
 
 /**
