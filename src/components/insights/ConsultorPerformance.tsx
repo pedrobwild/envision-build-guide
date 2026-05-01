@@ -120,7 +120,7 @@ export default function ConsultorPerformance() {
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-3 shrink-0">
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="shrink-0">
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "individual" | "comparativo")} className="shrink-0">
             <TabsList className="h-10">
               <TabsTrigger value="individual" className="text-xs gap-1.5 px-3">
                 <UserCircle className="h-3.5 w-3.5" /> Individual

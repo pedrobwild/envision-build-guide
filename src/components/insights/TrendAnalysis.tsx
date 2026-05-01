@@ -160,12 +160,24 @@ function fmtScore(value: unknown): string {
   return `${nfInt.format(n)} / 100`;
 }
 
-function SparkTooltip({ active, payload, label, mode }: any) {
+interface SparkTooltipPayloadItem {
+  dataKey?: string | number;
+  value?: number | string | null;
+}
+
+interface SparkTooltipProps {
+  active?: boolean;
+  payload?: SparkTooltipPayloadItem[];
+  label?: string;
+  mode: MeetingsMode;
+}
+
+function SparkTooltip({ active, payload, label, mode }: SparkTooltipProps) {
   if (!active || !payload?.length) return null;
-  const meetings = payload.find((p: any) => p.dataKey === "meetings")?.value;
-  const meetingsAvg = payload.find((p: any) => p.dataKey === "meetingsAvg4")?.value;
-  const score = payload.find((p: any) => p.dataKey === "avgScore")?.value;
-  const ma = payload.find((p: any) => p.dataKey === "scoreMA4")?.value;
+  const meetings = payload.find((p) => p.dataKey === "meetings")?.value;
+  const meetingsAvg = payload.find((p) => p.dataKey === "meetingsAvg4")?.value;
+  const score = payload.find((p) => p.dataKey === "avgScore")?.value;
+  const ma = payload.find((p) => p.dataKey === "scoreMA4")?.value;
 
   const meetingsValue = mode === "avg" ? meetingsAvg : meetings;
   const meetingsLabel = mode === "avg" ? "Média / sem." : "Total";
@@ -322,7 +334,7 @@ function WeeklySparkline({ weekly }: { weekly: WeeklyPoint[] }) {
           <ComposedChart
             data={data}
             margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
-            onClick={(state: any) => {
+            onClick={(state: { activeTooltipIndex?: number } | undefined) => {
               const idx = state?.activeTooltipIndex;
               if (typeof idx !== "number") return;
               setPinnedIndex((prev) => (prev === idx ? null : idx));
@@ -406,7 +418,7 @@ function WeeklySparkline({ weekly }: { weekly: WeeklyPoint[] }) {
               <>
                 <ReferenceDot
                   x={pinned.label}
-                  y={(pinned as any)[meetingsKey] ?? 0}
+                  y={(pinned as unknown as Record<string, number | null | undefined>)[meetingsKey] ?? 0}
                   yAxisId="left"
                   r={4}
                   fill="hsl(var(--primary))"

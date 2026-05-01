@@ -42,8 +42,15 @@ const clientsFixture = [
 ];
 
 vi.mock("@/integrations/supabase/client", () => {
+  type MockBuilder = {
+    select: ReturnType<typeof vi.fn>;
+    or: ReturnType<typeof vi.fn>;
+    eq: ReturnType<typeof vi.fn>;
+    order: ReturnType<typeof vi.fn>;
+    limit: ReturnType<typeof vi.fn>;
+  };
   const buildBudgetsBuilder = () => {
-    const builder: any = {};
+    const builder = {} as MockBuilder;
     builder.select = vi.fn().mockReturnValue(builder);
     builder.or = vi.fn().mockReturnValue(builder);
     builder.eq = vi.fn().mockReturnValue(builder);
@@ -52,7 +59,7 @@ vi.mock("@/integrations/supabase/client", () => {
     return builder;
   };
   const buildClientsBuilder = () => {
-    const builder: any = {};
+    const builder = {} as MockBuilder;
     builder.select = vi.fn().mockReturnValue(builder);
     builder.or = vi.fn().mockReturnValue(builder);
     builder.eq = vi.fn().mockReturnValue(builder);
