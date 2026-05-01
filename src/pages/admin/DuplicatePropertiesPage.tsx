@@ -78,7 +78,7 @@ export default function DuplicatePropertiesPage() {
       title: "Mesclar imóveis?",
       description: `Vou re-apontar ${totalBudgets} orçamento(s) para o imóvel primário e remover ${dups.length} duplicata(s). Esta ação não pode ser desfeita.`,
       confirmText: "Mesclar agora",
-      variant: "destructive",
+      destructive: true,
     });
     if (!ok) return;
 
