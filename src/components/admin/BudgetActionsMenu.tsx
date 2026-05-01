@@ -34,6 +34,7 @@ import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { createAddendumFromBudget } from "@/lib/budget-addendum";
+import { safeDeleteBudget } from "@/lib/budget-delete";
 
 interface BudgetActionsMenuProps {
   budget: {
@@ -305,24 +306,12 @@ export function BudgetActionsMenu({
 
   const deleteBudget = async () => {
     setDeleting(true);
-    try {
-      // Delete items, sections, adjustments, then budget
-      const { data: sections } = await supabase
-        .from("sections")
-        .select("id")
-        .eq("budget_id", budget.id);
-
-      if (sections && sections.length > 0) {
-        const sectionIds = sections.map((s) => s.id);
-        await supabase.from("items").delete().in("section_id", sectionIds);
-        await supabase.from("sections").delete().eq("budget_id", budget.id);
-      }
-      await supabase.from("adjustments").delete().eq("budget_id", budget.id);
-      await supabase.from("budgets").delete().eq("id", budget.id);
+    const result = await safeDeleteBudget(budget.id);
+    if (result.ok) {
       toast.success("Orçamento excluído");
       onRefresh?.();
-    } catch {
-      toast.error("Erro ao excluir");
+    } else {
+      toast.error(result.reason);
     }
     setDeleting(false);
     setDeleteOpen(false);
