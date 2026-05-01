@@ -78,6 +78,7 @@ import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
 import { BudgetTasksPanel } from "@/components/admin/BudgetTasksPanel";
+import { PrazoExecucaoChip } from "@/components/admin/PrazoExecucaoChip";
 import { DemandSidebarNav } from "@/components/demanda/DemandSidebarNav";
 import { MODULE_ACTIVITY_CONTEXT } from "@/lib/activity-templates";
 import { formatBRL } from "@/lib/formatBRL";
@@ -120,6 +121,7 @@ interface BudgetDetail {
   lead_source: string | null;
   payment_method: string | null;
   payment_installments: number | null;
+  prazo_dias_uteis: number | null;
   version_group_id?: string | null;
   is_current_version?: boolean | null;
   version_number?: number | null;
@@ -297,7 +299,7 @@ export default function BudgetInternalDetail() {
         supabase
           .from("budgets")
           .select(
-            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, is_current_version, version_group_id, version_number"
+            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, prazo_dias_uteis, is_current_version, version_group_id, version_number"
           )
           .eq("id", id)
           .single(),
@@ -432,6 +434,26 @@ export default function BudgetInternalDetail() {
       toast.error(`Erro ao sincronizar: ${msg}`);
     } finally {
       setSyncing(false);
+    }
+  }
+
+  /**
+   * Persiste o prazo de execução em dias úteis. É chamado pelo chip do
+   * cabeçalho. Faz update otimista no estado local e reverte em caso de erro
+   * (assim a orçamentista não fica vendo um valor que não foi salvo).
+   */
+  async function savePrazoDiasUteis(next: number | null) {
+    if (!budget) return;
+    const previous = budget.prazo_dias_uteis ?? null;
+    if (previous === next) return;
+    setBudget((prev) => (prev ? { ...prev, prazo_dias_uteis: next } : prev));
+    const { error } = await supabase
+      .from("budgets")
+      .update({ prazo_dias_uteis: next, updated_at: new Date().toISOString() })
+      .eq("id", budget.id);
+    if (error) {
+      setBudget((prev) => (prev ? { ...prev, prazo_dias_uteis: previous } : prev));
+      toast.error("Não foi possível salvar o prazo. Tente novamente.");
     }
   }
 
@@ -832,6 +854,13 @@ export default function BudgetInternalDetail() {
               {subtitle && (
                 <p className="text-sm text-muted-foreground font-body mt-1">{subtitle}</p>
               )}
+              {/* Prazo de execução — mesmo chip editável do BudgetEditor; salva direto no banco. */}
+              <div className="mt-2">
+                <PrazoExecucaoChip
+                  value={budget.prazo_dias_uteis ?? null}
+                  onChange={savePrazoDiasUteis}
+                />
+              </div>
             </div>
 
             {/* Quick status change */}
