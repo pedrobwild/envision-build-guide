@@ -1,28 +1,32 @@
 /**
- * AdminHome — home executiva (papel ativo "admin").
+ * AdminHome — cockpit executivo (papel "admin").
  *
- * Foco: pilotagem da operação inteira. NÃO é detalhe de pipeline
- * comercial (isso vive em /painel/comercial) — aqui são decisões
- * que cruzam pessoas, capacidade, SLA e financeiro.
+ * Linguagem visual: enterprise operacional (Atlassian/Stripe).
  *
- * Layout em 4 zonas (skill god-mode):
- *   1. HEADER INTELIGENTE — saudação + score de saúde + período.
+ * 4 zonas:
+ *   1. HERO — saudação + health-score visual + período + CTA.
  *   2. INBOX DE DECISÕES — alertas críticos com ação direta.
- *   3. KPIs DE PILOTAGEM — 4 KPIs (não 8) que importam para o CEO.
+ *   3. KPIs DE PILOTAGEM — 4 MetricTiles (não 8).
  *   4. CARGA DA EQUIPE + FUNIL — onde está travando, em quem.
+ *
+ * Mantém todos os hooks/queries/lógica originais. Só refatora apresentação.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { subDays } from "date-fns";
-import { Plus, Activity, AlertTriangle } from "lucide-react";
+import { Plus, Activity, AlertTriangle, Users, GitBranch, Inbox, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { PainelHeader } from "@/components/dashboard/PainelHeader";
-import { KpiCard } from "@/components/dashboard/KpiCard";
+import { MetricTile } from "@/components/dashboard/MetricTile";
+import { SectionHeader } from "@/components/dashboard/SectionHeader";
+import { Surface } from "@/components/dashboard/Surface";
+import { StatusChip } from "@/components/dashboard/StatusChip";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import { TeamPerformanceBlock } from "@/components/dashboard/TeamPerformanceBlock";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DualFunnel } from "@/components/dashboard/DualFunnel";
@@ -33,13 +37,92 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { computeDashboardMetrics, OPERATIONS_START_DATE, type DateRange } from "@/hooks/useDashboardMetrics";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-const SECTION_DELAY = 0.05;
+const SECTION_DELAY = 0.06;
 const anim = (delay: number) => ({
-  initial: { opacity: 0, y: 12 },
+  initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, delay },
+  transition: { duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 });
+
+/* ───────────────────── HealthScoreGauge ─────────────────────
+ * Gauge SVG semicircular sóbrio (não festivo) para o health-score
+ * da operação. Exibe número grande, status semântico e mini-legenda.
+ */
+function HealthScoreGauge({
+  value,
+  status,
+  loading,
+}: {
+  value: number | null;
+  status: "excellent" | "healthy" | "warning" | "critical" | null;
+  loading: boolean;
+}) {
+  if (loading || value === null || !status) {
+    return <Skeleton className="h-[110px] w-full rounded-2xl" />;
+  }
+
+  // Semicírculo de 0 a 180°.
+  const radius = 60;
+  const cx = 70;
+  const cy = 70;
+  const circumference = Math.PI * radius;
+  const filled = (value / 100) * circumference;
+  const colorVar =
+    status === "excellent" || status === "healthy"
+      ? "hsl(var(--success))"
+      : status === "warning"
+      ? "hsl(var(--warn))"
+      : "hsl(var(--danger))";
+  const tone =
+    status === "excellent" || status === "healthy"
+      ? "success"
+      : status === "warning"
+      ? "warn"
+      : "danger";
+  const statusLabel =
+    status === "excellent" ? "Excelente" : status === "healthy" ? "Saudável" : status === "warning" ? "Atenção" : "Crítico";
+
+  return (
+    <div className="flex items-center gap-5">
+      <svg width={140} height={86} viewBox="0 0 140 86" className="shrink-0" aria-hidden>
+        <path
+          d={`M 10 70 A 60 60 0 0 1 130 70`}
+          fill="none"
+          stroke="hsl(var(--hairline))"
+          strokeWidth={10}
+          strokeLinecap="round"
+        />
+        <path
+          d={`M 10 70 A 60 60 0 0 1 130 70`}
+          fill="none"
+          stroke={colorVar}
+          strokeWidth={10}
+          strokeLinecap="round"
+          strokeDasharray={`${filled} ${circumference}`}
+          style={{ transition: "stroke-dasharray 600ms ease" }}
+        />
+      </svg>
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-soft font-body">
+          Saúde da operação
+        </p>
+        <div className="flex items-baseline gap-1.5 mt-1">
+          <span className="font-mono font-semibold text-[36px] text-ink-strong tabular-nums leading-none">
+            {Math.round(value)}
+          </span>
+          <span className="font-mono text-[14px] text-ink-soft tabular-nums">/100</span>
+        </div>
+        <div className="mt-2">
+          <StatusChip tone={tone as "success" | "warn" | "danger"} size="md">
+            {statusLabel}
+          </StatusChip>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminHome() {
   const navigate = useNavigate();
@@ -60,6 +143,7 @@ export default function AdminHome() {
   useEffect(() => {
     if (!user) return;
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   async function loadData() {
@@ -118,117 +202,148 @@ export default function AdminHome() {
     return computeDashboardMetrics(filteredBudgets, dateRange, profiles, deliveryTimestamps);
   }, [filteredBudgets, dateRange, profiles, deliveryTimestamps, loading]);
 
-  // Subtítulo dinâmico — quantidade de alertas críticos.
   const criticalAlerts = metrics?.alerts.filter((a) => a.severity === "critical").length ?? 0;
+  const totalAlerts = metrics?.alerts.length ?? 0;
   const subtitle = loading
-    ? "Carregando indicadores..."
-    : criticalAlerts === 0
-    ? metrics
-      ? `Saúde da operação: ${metrics.healthScore.value}/100 (${metrics.healthScore.status === "excellent" ? "excelente" : metrics.healthScore.status === "healthy" ? "saudável" : metrics.healthScore.status === "warning" ? "atenção" : "crítico"}).`
-      : ""
-    : `${criticalAlerts} ${criticalAlerts === 1 ? "decisão crítica precisa" : "decisões críticas precisam"} da sua atenção.`;
+    ? "Carregando indicadores da operação..."
+    : criticalAlerts > 0
+    ? `${criticalAlerts} ${criticalAlerts === 1 ? "decisão crítica precisa" : "decisões críticas precisam"} da sua atenção agora.`
+    : metrics
+    ? `Operação rodando. ${totalAlerts === 0 ? "Sem alertas no período." : `${totalAlerts} ponto${totalAlerts > 1 ? "s" : ""} para acompanhar.`}`
+    : "";
 
   let step = 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8">
-      {/* ───── 1. HEADER ───── */}
+    <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-8 lg:space-y-10">
+      {/* ───── 1. HERO ───── */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <PainelHeader
           subtitle={subtitle}
           actions={
             <>
               <PeriodFilter value={dateRange} onChange={setDateRange} />
-              <Button size="sm" className="gap-1.5 h-8" onClick={() => setClientFormOpen(true)}>
+              <Button size="sm" className="gap-1.5 h-9 px-3.5" onClick={() => setClientFormOpen(true)}>
                 <Plus className="h-3.5 w-3.5" /> Novo cliente
               </Button>
             </>
           }
+          meta={
+            <Surface variant="raised" padding="md" className="!p-5">
+              <HealthScoreGauge
+                value={metrics?.healthScore.value ?? null}
+                status={metrics?.healthScore.status ?? null}
+                loading={loading}
+              />
+            </Surface>
+          }
         />
       </motion.div>
 
-      {/* ───── 2. INBOX DE DECISÕES (alertas) ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <div className="flex items-center gap-2 mb-3">
-          <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-          <h2 className="text-sm font-semibold font-display text-foreground tracking-tight">
-            Inbox de decisões
-          </h2>
-        </div>
+      {/* ───── 2. INBOX DE DECISÕES ───── */}
+      <motion.section {...anim(step++ * SECTION_DELAY)}>
+        <SectionHeader
+          eyebrow={criticalAlerts > 0 ? "Ação imediata" : "Monitoramento"}
+          tone={criticalAlerts > 0 ? "danger" : "neutral"}
+          icon={AlertTriangle}
+          title="Inbox de decisões"
+          description="Eventos que cruzam capacidade, prazo, financeiro e SLA. Ordenados por severidade."
+          count={metrics?.alerts.length ?? null}
+        />
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
           </div>
+        ) : (metrics?.alerts.length ?? 0) === 0 ? (
+          <Surface variant="raised" padding="none">
+            <EmptyState
+              icon={Sparkles}
+              title="Tudo sob controle"
+              description="Nenhum alerta crítico no período. Aproveite para revisar a estratégia."
+            />
+          </Surface>
         ) : (
           <AlertsPanel alerts={metrics?.alerts ?? []} />
         )}
-      </motion.div>
+      </motion.section>
 
-      {/* ───── 3. KPIs DE PILOTAGEM (4, não 8) ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <div className="flex items-center gap-2 mb-3">
-          <Activity className="h-3.5 w-3.5 text-primary" />
-          <h2 className="text-sm font-semibold font-display text-foreground tracking-tight">
-            Indicadores de pilotagem
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard
+      {/* ───── 3. KPIs DE PILOTAGEM ───── */}
+      <motion.section {...anim(step++ * SECTION_DELAY)}>
+        <SectionHeader
+          eyebrow="Indicadores"
+          icon={Activity}
+          title="Pilotagem"
+          description="Os 4 sinais que importam para decisão executiva."
+        />
+        <div className={cn("grid gap-4", "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4")}>
+          <MetricTile
             label="SLA no prazo"
             kpi={metrics?.slaOnTime ?? { value: null, change: null, trend: null }}
             meta={metrics?.kpiMeta.slaOnTime}
             format="percent"
-            tooltip="% de orçamentos ativos dentro do prazo"
+            tooltip="% de orçamentos ativos dentro do prazo de produção"
             loading={loading}
             onClick={() => navigate("/admin/operacoes")}
           />
-          <KpiCard
+          <MetricTile
             label="Taxa de conversão"
             kpi={metrics?.conversionRate ?? { value: null, change: null, trend: null }}
             meta={metrics?.kpiMeta.conversionRate}
             format="percent"
-            tooltip="Contratos fechados ÷ propostas enviadas"
+            tooltip="Contratos fechados ÷ propostas enviadas no período"
             loading={loading}
             onClick={() => navigate("/painel/comercial")}
           />
-          <KpiCard
+          <MetricTile
             label="Margem bruta"
             kpi={metrics?.grossMargin ?? { value: null, change: null, trend: null }}
             meta={metrics?.kpiMeta.grossMargin}
             format="percent"
-            tooltip="(Receita − Custo) ÷ Receita dos contratos do período"
+            tooltip="(Receita − Custo) ÷ Receita dos contratos fechados"
             loading={loading}
             onClick={() => navigate("/admin/financeiro")}
           />
-          <KpiCard
+          <MetricTile
             label="Backlog ativo"
             kpi={metrics?.backlog ?? { value: null, change: null, trend: null }}
             meta={metrics?.kpiMeta.backlog}
             tooltip="Orçamentos em produção (capacidade ideal: ≤ 8)"
             loading={loading}
+            invertTrend
             onClick={() => navigate("/admin/operacoes")}
           />
         </div>
-      </motion.div>
+      </motion.section>
 
-      {/* ───── 4. CARGA DA EQUIPE + FUNIL ───── */}
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-3">
-          Carga e gargalos da equipe
-        </h2>
-        <TeamPerformanceBlock data={metrics?.teamMetrics ?? []} loading={loading} />
-      </motion.div>
-
-      <motion.div {...anim(step++ * SECTION_DELAY)}>
-        <h2 className="text-sm font-semibold font-display text-foreground tracking-tight mb-3">
-          Funil operacional e comercial
-        </h2>
-        <DualFunnel
-          operationalFunnel={metrics?.operationalFunnel ?? []}
-          commercialFunnel={metrics?.commercialFunnel ?? []}
-          loading={loading}
+      {/* ───── 4a. CARGA DA EQUIPE ───── */}
+      <motion.section {...anim(step++ * SECTION_DELAY)}>
+        <SectionHeader
+          eyebrow="Equipe"
+          icon={Users}
+          title="Carga e gargalos"
+          description="Distribuição de orçamentos por orçamentista. Identifique sobrecarga e ociosidade."
         />
-      </motion.div>
+        <Surface variant="raised" padding="md">
+          <TeamPerformanceBlock data={metrics?.teamMetrics ?? []} loading={loading} />
+        </Surface>
+      </motion.section>
+
+      {/* ───── 4b. FUNIL ───── */}
+      <motion.section {...anim(step++ * SECTION_DELAY)}>
+        <SectionHeader
+          eyebrow="Conversão"
+          icon={GitBranch}
+          title="Funil operacional & comercial"
+          description="Onde os negócios estão parando. Compare produção e vendas."
+        />
+        <Surface variant="raised" padding="md">
+          <DualFunnel
+            operationalFunnel={metrics?.operationalFunnel ?? []}
+            commercialFunnel={metrics?.commercialFunnel ?? []}
+            loading={loading}
+          />
+        </Surface>
+      </motion.section>
 
       {/* MODAL */}
       <ClientForm
