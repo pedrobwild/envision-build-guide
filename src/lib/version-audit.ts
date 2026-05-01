@@ -10,6 +10,7 @@ export type VersionEventType =
   | "version_superseded"
   | "version_compared"
   | "version_activated"
+  | "version_deleted"
   | "change_reason_updated"
   | "revision_requested"
   | "addendum_created"
@@ -70,6 +71,8 @@ function buildNote(
       return `Comparação entre V${meta.left_version ?? "?"} e V${meta.right_version ?? "?"}`;
     case "version_activated":
       return `Versão V${meta.version_number ?? "?"} definida como atual`;
+    case "version_deleted":
+      return `Versão V${meta.deleted_version_number ?? "?"} excluída (rascunho)`;
     case "change_reason_updated":
       return `Motivo atualizado: ${meta.change_reason ?? "—"}`;
     case "revision_requested":
