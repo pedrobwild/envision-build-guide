@@ -430,20 +430,34 @@ export default function CommercialDashboard() {
   );
 
   /**
-   * Deduplica orçamentos do mesmo cliente+imóvel quando foram criados como
+   * Deduplica orçamentos do mesmo negócio quando foram criados como
    * orçamentos novos (version_group_id distinto) em vez de versões. Mantém
    * apenas o mais recente (created_at desc) e expõe os ids dos demais em
    * `sibling_budget_ids` para o card mostrar um badge "+N versões".
+   *
+   * Chave de agrupamento (em ordem de prioridade), sempre escopada ao mesmo
+   * pipeline_id para não juntar negócios de pipelines diferentes:
+   *   1. version_group_id (versões formais do mesmo orçamento)
+   *   2. client_id + property_id (mesmo imóvel do mesmo cliente)
+   *   3. client_id (fallback quando property_id está ausente em algum)
    */
   const dedupedBudgets = useMemo<BudgetRow[]>(() => {
     const groups = new Map<string, BudgetRow[]>();
     const ungrouped: BudgetRow[] = [];
     for (const b of budgets) {
-      if (!b.client_id || !b.property_id) {
+      const pipelineKey = b.pipeline_id ?? "no-pipeline";
+      let key: string | null = null;
+      if (b.version_group_id) {
+        key = `vg::${pipelineKey}::${b.version_group_id}`;
+      } else if (b.client_id && b.property_id) {
+        key = `cp::${pipelineKey}::${b.client_id}::${b.property_id}`;
+      } else if (b.client_id) {
+        key = `c::${pipelineKey}::${b.client_id}`;
+      }
+      if (!key) {
         ungrouped.push(b);
         continue;
       }
-      const key = `${b.client_id}::${b.property_id}`;
       const list = groups.get(key);
       if (list) list.push(b);
       else groups.set(key, [b]);
