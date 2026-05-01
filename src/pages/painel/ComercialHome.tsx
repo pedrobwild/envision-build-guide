@@ -28,7 +28,7 @@ import {
   Calendar,
   FileSignature,
   Send,
-  Target,
+  TrendingUp as _TrendingUpUnused,
   TrendingUp,
   Activity,
   ListChecks,
