@@ -1655,6 +1655,62 @@ function Avatar({ name, tone }: { name: string; tone: "rose" | "amber" | "emeral
   );
 }
 
+/**
+ * OwnerField — bloco compacto e consistente para Comercial/Orçamentista.
+ * Linha única (label + avatar + nome/select) para preservar hierarquia
+ * abaixo dos KPIs primários, sem competir visualmente com eles.
+ */
+function OwnerField({
+  label,
+  ownerId,
+  ownerName,
+  tone,
+  canEdit,
+  options,
+  onChange,
+}: {
+  label: string;
+  ownerId: string | null;
+  ownerName: string | null;
+  tone: "rose" | "amber" | "emerald";
+  canEdit: boolean;
+  options: Array<{ id: string; full_name: string }>;
+  onChange: (next: string | null) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <span className="text-[10px] uppercase tracking-wider font-body text-muted-foreground w-[88px] shrink-0">
+        {label}
+      </span>
+      <Avatar name={ownerName ?? ""} tone={tone} />
+      {canEdit ? (
+        <Select
+          value={ownerId ?? "__none__"}
+          onValueChange={(v) => onChange(v === "__none__" ? null : v)}
+        >
+          <SelectTrigger
+            className="h-8 px-2 border-transparent hover:border-border bg-transparent shadow-none focus:ring-1 focus:ring-primary/20 text-sm font-display font-medium text-foreground truncate min-w-0 flex-1"
+            aria-label={`Selecionar ${label.toLowerCase()} responsável`}
+          >
+            <SelectValue placeholder="Não atribuído" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">Não atribuído</SelectItem>
+            {options.map((m) => (
+              <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <span className="text-sm font-display font-medium text-foreground truncate flex-1" title={ownerName ?? "—"}>
+          {ownerName ?? "—"}
+        </span>
+      )}
+    </div>
+  );
+}
+
+
 function BriefingPanel({
   briefing,
   demandContext,
