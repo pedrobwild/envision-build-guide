@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   LayoutDashboard,
-  Plus,
   Hammer,
   Briefcase,
   Settings,
@@ -27,9 +26,11 @@ import {
   Trash2,
   Copy,
   ChevronDown,
+  Search,
+  ChevronsUpDown,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@/hooks/useAuth";
 import logoDark from "@/assets/logo-bwild-dark.png";
@@ -37,21 +38,32 @@ import logoDark from "@/assets/logo-bwild-dark.png";
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarFooter,
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import type { AppRole } from "@/lib/role-constants";
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Tipos                                                                      */
+/* ────────────────────────────────────────────────────────────────────────── */
 
 interface NavItem {
   title: string;
@@ -59,129 +71,179 @@ interface NavItem {
   icon: React.ElementType;
   roles: AppRole[] | "all";
   end?: boolean;
-  actionUrl?: string;
-  actionLabel?: string;
 }
 
-interface NavSubGroup {
+interface NavSection {
+  /** id estável para chave React */
+  id: string;
+  /** label opcional. Se ausente, vira só whitespace (estilo Linear) */
+  label?: string;
+  items: NavItem[];
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Estrutura — agrupamentos pensados para hierarquia plana, não rotulada      */
+/* (estilo Linear / Vercel / Attio: less labels, more whitespace)             */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+const PRIMARY_SECTION: NavSection = {
+  id: "primary",
+  items: [
+    { title: "Painel", url: "/admin", icon: LayoutDashboard, roles: "all", end: true },
+  ],
+};
+
+const COMERCIAL_SECTION: NavSection = {
+  id: "comercial",
+  label: "Comercial",
+  items: [
+    { title: "Pipeline", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial", "orcamentista"] },
+    { title: "Conversão", url: "/admin/comercial/conversao", icon: GitBranch, roles: ["admin", "comercial", "orcamentista"] },
+    { title: "KPIs", url: "/admin/comercial/kpis", icon: BarChart3, roles: ["admin", "comercial", "orcamentista"] },
+    { title: "Agenda", url: "/admin/agenda", icon: CalendarClock, roles: ["admin", "comercial", "orcamentista"] },
+    { title: "Insights", url: "/admin/insights", icon: Brain, roles: ["admin", "comercial", "orcamentista"] },
+    { title: "Clientes", url: "/admin/crm", icon: Users, roles: ["admin", "comercial", "orcamentista"] },
+  ],
+};
+
+const PRODUCAO_SECTION: NavSection = {
+  id: "producao",
+  label: "Produção",
+  items: [
+    { title: "Pipeline Orçamentos", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
+    { title: "Templates", url: "/admin/templates", icon: LayoutTemplate, roles: ["admin", "orcamentista"] },
+    { title: "Catálogo", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
+    { title: "Biblioteca de fotos", url: "/admin/biblioteca-fotos", icon: ImagePlus, roles: ["admin", "orcamentista"] },
+  ],
+};
+
+const ADMIN_SECTION: NavSection = {
+  id: "admin",
+  label: "Administração",
+  items: [
+    { title: "Operações", url: "/admin/operacoes", icon: Settings, roles: ["admin"] },
+    { title: "Análises", url: "/admin/analises", icon: BarChart3, roles: ["admin"] },
+    { title: "Forecast", url: "/admin/forecast", icon: TrendingUp, roles: ["admin"] },
+    { title: "Financeiro", url: "/admin/financeiro", icon: DollarSign, roles: ["admin"] },
+    { title: "Usuários", url: "/admin/usuarios", icon: Users, roles: ["admin", "orcamentista"] },
+  ],
+};
+
+interface ToolGroup {
+  id: string;
   label: string;
   items: NavItem[];
 }
 
-const DASHBOARD_ITEM: NavItem = {
-  title: "Painel Geral", url: "/admin", icon: LayoutDashboard, roles: "all", end: true,
-};
-
-const COMERCIAL_ITEMS: NavItem[] = [
-  { title: "Pipeline Comercial", url: "/admin/comercial", icon: Briefcase, roles: ["admin", "comercial", "orcamentista"] },
-  { title: "KPIs de Vendas", url: "/admin/comercial/kpis", icon: BarChart3, roles: ["admin", "comercial", "orcamentista"] },
-  { title: "Conversão", url: "/admin/comercial/conversao", icon: GitBranch, roles: ["admin", "comercial", "orcamentista"] },
-  { title: "Agenda", url: "/admin/agenda", icon: CalendarClock, roles: ["admin", "comercial", "orcamentista"] },
-  { title: "Insights por Consultor", url: "/admin/insights", icon: Brain, roles: ["admin", "comercial", "orcamentista"] },
-  { title: "Clientes", url: "/admin/crm", icon: Users, roles: ["admin", "comercial", "orcamentista"] },
-];
-
-const PROJETOS_ITEMS: NavItem[] = [
-  { title: "Pipeline Orçamentos", url: "/admin/producao", icon: Hammer, roles: ["admin", "orcamentista"] },
-];
-
-const DADOS_MESTRES_ITEMS: NavItem[] = [
-  { title: "Templates", url: "/admin/templates", icon: LayoutTemplate, roles: ["admin", "orcamentista"] },
-  { title: "Catálogo", url: "/admin/catalogo", icon: Package, roles: ["admin", "orcamentista"] },
-  { title: "Biblioteca de Fotos", url: "/admin/biblioteca-fotos", icon: ImagePlus, roles: ["admin", "orcamentista"] },
-  { title: "Usuários", url: "/admin/usuarios", icon: Users, roles: ["admin", "orcamentista"] },
-];
-
-const ANALISE_ITEMS: NavItem[] = [
-  { title: "Operações", url: "/admin/operacoes", icon: Settings, roles: ["admin"] },
-  { title: "Análises e Relatórios", url: "/admin/analises", icon: BarChart3, roles: ["admin"] },
-  { title: "Forecast & Previsibilidade", url: "/admin/forecast", icon: TrendingUp, roles: ["admin"] },
-  { title: "Financeiro", url: "/admin/financeiro", icon: DollarSign, roles: ["admin"] },
-];
-
-// Ferramentas — sub-agrupado para reduzir carga visual
-const FERRAMENTAS_SUBGROUPS: NavSubGroup[] = [
+const TOOL_GROUPS: ToolGroup[] = [
   {
+    id: "integracoes",
     label: "Integrações",
     items: [
       { title: "Leads", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial", "orcamentista"] },
-      { title: "Regras de Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
+      { title: "Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
       { title: "Digisac", url: "/admin/digisac", icon: MessageCircle, roles: ["admin"] },
     ],
   },
   {
+    id: "diagnostico",
     label: "Diagnóstico",
     items: [
-      { title: "Diagnóstico de Orçamento", url: "/admin/diagnostico", icon: Stethoscope, roles: ["admin", "comercial", "orcamentista"] },
-      { title: "Avaliação QA", url: "/qa", icon: Shield, roles: ["admin"] },
-      { title: "Bug Reports", url: "/admin/bug-reports", icon: Bug, roles: ["admin", "comercial", "orcamentista"] },
+      { title: "Diagnóstico", url: "/admin/diagnostico", icon: Stethoscope, roles: ["admin", "comercial", "orcamentista"] },
+      { title: "QA", url: "/qa", icon: Shield, roles: ["admin"] },
+      { title: "Bug reports", url: "/admin/bug-reports", icon: Bug, roles: ["admin", "comercial", "orcamentista"] },
     ],
   },
   {
+    id: "sistema",
     label: "Sistema",
     items: [
       { title: "Sistema", url: "/admin/sistema", icon: Wrench, roles: ["admin"] },
-      { title: "Saneamento de Dados", url: "/admin/imoveis-duplicados", icon: Copy, roles: ["admin"] },
+      { title: "Saneamento", url: "/admin/imoveis-duplicados", icon: Copy, roles: ["admin"] },
       { title: "Lixeira", url: "/admin/lixeira", icon: Trash2, roles: ["admin"] },
     ],
   },
 ];
 
-const ROLE_TONE: Record<string, string> = {
-  admin: "bg-sidebar-primary/15 text-sidebar-primary ring-sidebar-primary/30",
-  comercial: "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30",
-  orcamentista: "bg-amber-500/15 text-amber-400 ring-amber-500/30",
-};
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Item de navegação — densidade Linear/Vercel                                */
+/* ────────────────────────────────────────────────────────────────────────── */
 
-function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
-  const inner = (
-    <SidebarMenuItem className="group/action">
-      <SidebarMenuButton asChild>
-        <NavLink
-          to={item.url}
-          end={item.end}
+function NavRow({
+  item,
+  collapsed,
+  isActive,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  isActive: boolean;
+}) {
+  const Icon = item.icon;
+
+  const link = (
+    <NavLink
+      to={item.url}
+      end={item.end}
+      className={cn(
+        "group relative flex items-center gap-2.5 rounded-md text-[13px] font-body transition-colors duration-100 outline-none",
+        "focus-visible:ring-1 focus-visible:ring-sidebar-ring",
+        collapsed ? "h-8 w-8 mx-auto justify-center" : "h-7 px-2",
+        isActive
+          ? "bg-sidebar-accent text-sidebar-foreground"
+          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+      )}
+      activeClassName=""
+    >
+      {/* indicador ativo lateral super-discreto (Linear-style) */}
+      {!collapsed && (
+        <span
+          aria-hidden
           className={cn(
-            "group/nav relative flex items-center gap-2.5 rounded-md px-2 py-[7px] text-[12.5px] font-body text-sidebar-foreground/65",
-            "hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-colors duration-150",
-            "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-[2px] before:rounded-r-full before:bg-sidebar-primary before:transition-all before:duration-200 hover:before:h-3.5",
-            collapsed && "justify-center px-0"
+            "absolute left-0 top-1/2 -translate-y-1/2 h-3.5 w-[2px] rounded-r-full bg-sidebar-primary transition-opacity",
+            isActive ? "opacity-100" : "opacity-0",
           )}
-          activeClassName="!text-sidebar-foreground font-medium bg-sidebar-primary/10 before:!h-5 [&_svg]:!text-sidebar-primary"
-        >
-          <item.icon className="h-[15px] w-[15px] shrink-0 text-sidebar-foreground/55 group-hover/nav:text-sidebar-foreground/85 transition-colors" />
-          {!collapsed && <span className="flex-1 tracking-tight truncate">{item.title}</span>}
-          {!collapsed && item.actionUrl && (
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    to={item.actionUrl}
-                    onClick={(e) => e.stopPropagation()}
-                    className="opacity-0 group-hover/action:opacity-100 transition-opacity h-5 w-5 flex items-center justify-center rounded bg-sidebar-primary/10 text-sidebar-primary hover:bg-sidebar-primary/20 ring-1 ring-sidebar-primary/20"
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right"><p>{item.actionLabel}</p></TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </NavLink>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+        />
+      )}
+      <Icon
+        className={cn(
+          "h-[15px] w-[15px] shrink-0 transition-colors",
+          isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/55 group-hover:text-sidebar-foreground/80",
+        )}
+        strokeWidth={isActive ? 2 : 1.75}
+      />
+      {!collapsed && (
+        <span className="truncate leading-none">{item.title}</span>
+      )}
+    </NavLink>
   );
 
-  if (!collapsed) return inner;
+  if (!collapsed) return link;
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>{inner}</TooltipTrigger>
-        <TooltipContent side="right" className="text-xs font-body">{item.title}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right" sideOffset={8} className="text-xs font-body py-1 px-2">
+        {item.title}
+      </TooltipContent>
+    </Tooltip>
   );
 }
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Sidebar                                                                    */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: "Administrador",
+  comercial: "Comercial",
+  orcamentista: "Orçamentista",
+};
+
+const ROLE_DOT: Record<string, string> = {
+  admin: "bg-sidebar-primary",
+  comercial: "bg-emerald-400",
+  orcamentista: "bg-amber-400",
+};
 
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
@@ -189,7 +251,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useUserProfile();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
 
   const userRoles = profile?.roles ?? [];
 
@@ -198,8 +260,12 @@ export function AppSidebar() {
     return (item.roles as AppRole[]).some((r) => userRoles.includes(r));
   };
 
+  const isItemActive = (item: NavItem) =>
+    item.end ? location.pathname === item.url : location.pathname.startsWith(item.url);
+
   const isBudgetEditor = /^\/admin\/budget\//.test(location.pathname);
 
+  // Auto-colapsa a sidebar no editor de orçamento em telas médias
   useEffect(() => {
     if (isBudgetEditor && !collapsed && window.innerWidth < 1280) {
       toggleSidebar();
@@ -207,116 +273,41 @@ export function AppSidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBudgetEditor]);
 
-  const comercialItems = COMERCIAL_ITEMS.filter(canSee);
-  const projetosItems = PROJETOS_ITEMS.filter(canSee);
-  const dadosMestresItems = DADOS_MESTRES_ITEMS.filter(canSee);
-  const analiseItems = ANALISE_ITEMS.filter(canSee);
+  const sections = useMemo(() => {
+    return [PRIMARY_SECTION, COMERCIAL_SECTION, PRODUCAO_SECTION, ADMIN_SECTION]
+      .map((s) => ({ ...s, items: s.items.filter(canSee) }))
+      .filter((s) => s.items.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userRoles.join(",")]);
 
-  const ferramentasSubgroups = FERRAMENTAS_SUBGROUPS
-    .map((g) => ({ ...g, items: g.items.filter(canSee) }))
-    .filter((g) => g.items.length > 0);
+  const toolGroups = useMemo(() => {
+    return TOOL_GROUPS.map((g) => ({ ...g, items: g.items.filter(canSee) })).filter(
+      (g) => g.items.length > 0,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userRoles.join(",")]);
 
-  const ferramentasHasActive = ferramentasSubgroups.some((g) =>
-    g.items.some((it) => location.pathname.startsWith(it.url))
-  );
-  const [toolsOpen, setToolsOpen] = useState<boolean>(ferramentasHasActive);
-
+  const toolsActive = toolGroups.some((g) => g.items.some(isItemActive));
+  const [toolsOpen, setToolsOpen] = useState<boolean>(toolsActive);
   useEffect(() => {
-    if (ferramentasHasActive) setToolsOpen(true);
-  }, [ferramentasHasActive]);
+    if (toolsActive) setToolsOpen(true);
+  }, [toolsActive]);
 
   async function handleSignOut() {
     await signOut();
     navigate("/login");
   }
 
-  const renderGroup = (label: string, items: NavItem[]) => {
-    if (items.length === 0) return null;
-    return (
-      <SidebarGroup className="px-1">
-        {!collapsed ? (
-          <SidebarGroupLabel className="text-[9.5px] uppercase tracking-[0.16em] text-sidebar-foreground/35 font-body font-semibold px-2 mb-1 mt-3 flex items-center justify-between">
-            <span>{label}</span>
-            <span className="text-sidebar-foreground/25 font-mono normal-case tracking-normal text-[9px]">
-              {items.length}
-            </span>
-          </SidebarGroupLabel>
-        ) : (
-          <div className="mx-2.5 my-2 h-px bg-sidebar-border/60" />
-        )}
-        <SidebarGroupContent>
-          <SidebarMenu className="gap-px">
-            {items.map((item) => (
-              <NavItemRow key={item.url} item={item} collapsed={collapsed} />
-            ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-    );
-  };
-
-  const renderToolsGroup = () => {
-    if (ferramentasSubgroups.length === 0) return null;
-
-    if (collapsed) {
-      // Modo colapsado: lista flat de todos os tools com tooltip
-      const flat = ferramentasSubgroups.flatMap((g) => g.items);
-      return (
-        <SidebarGroup className="px-1">
-          <div className="mx-2.5 my-2 h-px bg-sidebar-border/60" />
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-px">
-              {flat.map((item) => (
-                <NavItemRow key={item.url} item={item} collapsed />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      );
-    }
-
-    return (
-      <SidebarGroup className="px-1">
-        <Collapsible open={toolsOpen} onOpenChange={setToolsOpen}>
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="w-full group flex items-center justify-between px-2 mt-3 mb-1 text-[9.5px] uppercase tracking-[0.16em] text-sidebar-foreground/35 font-body font-semibold hover:text-sidebar-foreground/60 transition-colors"
-            >
-              <span className="flex items-center gap-1.5">
-                <Wrench className="h-3 w-3" />
-                Ferramentas
-              </span>
-              <ChevronDown
-                className={cn(
-                  "h-3 w-3 text-sidebar-foreground/30 transition-transform duration-200",
-                  toolsOpen && "rotate-180"
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
-            <div className="space-y-2 mt-1">
-              {ferramentasSubgroups.map((subgroup) => (
-                <div key={subgroup.label}>
-                  <p className="text-[9px] uppercase tracking-[0.14em] text-sidebar-foreground/25 font-body font-medium px-2 mb-0.5">
-                    {subgroup.label}
-                  </p>
-                  <SidebarGroupContent>
-                    <SidebarMenu className="gap-px">
-                      {subgroup.items.map((item) => (
-                        <NavItemRow key={item.url} item={item} collapsed={false} />
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </div>
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </SidebarGroup>
-    );
-  };
+  function openCommandPalette() {
+    // Dispara o atalho global Cmd/Ctrl+K — captado por useGlobalShortcuts
+    const event = new KeyboardEvent("keydown", {
+      key: "k",
+      metaKey: true,
+      ctrlKey: true,
+      bubbles: true,
+    });
+    window.dispatchEvent(event);
+  }
 
   const initials = (profile?.full_name || "U")
     .split(/\s+/)
@@ -327,111 +318,256 @@ export function AppSidebar() {
   const primaryRole = userRoles[0];
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border/60">
-      <SidebarHeader className={cn("pt-4 pb-3", collapsed ? "px-2" : "px-4")}>
-        <div className="flex items-center justify-center">
-          <img
-            src={logoDark}
-            alt="Bwild"
-            className={collapsed ? "h-5 object-contain" : "h-7 object-contain"}
-          />
-        </div>
-      </SidebarHeader>
+    <TooltipProvider delayDuration={250}>
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border/60 bg-sidebar">
+        {/* Header — logo + dispositivo de busca/comando */}
+        <SidebarHeader className={cn("pt-3 pb-2", collapsed ? "px-2" : "px-3")}>
+          <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-start px-1 h-7")}>
+            <img
+              src={logoDark}
+              alt="Bwild"
+              className={collapsed ? "h-4 object-contain" : "h-5 object-contain"}
+            />
+          </div>
 
-      <div className="mx-3 h-px bg-sidebar-border/60" />
-
-      <SidebarContent className="py-1.5 px-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-sidebar-border [&::-webkit-scrollbar-thumb]:rounded-full">
-        <SidebarGroup className="px-1 pt-1">
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-px">
-              <NavItemRow item={DASHBOARD_ITEM} collapsed={collapsed} />
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {renderGroup("Comercial", comercialItems)}
-        {renderGroup("Gestão de Projetos", projetosItems)}
-        {renderGroup("Dados Mestres", dadosMestresItems)}
-        {renderGroup("Análise & Relatórios", analiseItems)}
-        {renderToolsGroup()}
-      </SidebarContent>
-
-      <SidebarFooter className="p-2.5 border-t border-sidebar-border/60">
-        {collapsed && isBudgetEditor && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-full h-8 mb-1 text-sidebar-foreground/60 hover:text-sidebar-foreground"
-            onClick={toggleSidebar}
+          {/* Search trigger — abre command palette (Cmd+K) */}
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            className={cn(
+              "mt-2.5 group flex items-center rounded-md transition-colors",
+              "bg-sidebar-accent/40 hover:bg-sidebar-accent/70 text-sidebar-foreground/55 hover:text-sidebar-foreground/85",
+              "ring-1 ring-sidebar-border/40 hover:ring-sidebar-border",
+              collapsed ? "h-8 w-8 mx-auto justify-center" : "h-7 w-full px-2 gap-2",
+            )}
+            aria-label="Buscar (Cmd+K)"
           >
-            <PanelLeftOpen className="h-4 w-4" />
-          </Button>
-        )}
-        {!collapsed && profile ? (
-          <div className="flex items-center gap-2.5 px-2 py-2 mb-1.5 rounded-lg bg-sidebar-accent/40 ring-1 ring-sidebar-border/40 hover:bg-sidebar-accent/60 transition-colors">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-sidebar-primary/35 to-sidebar-primary/10 ring-1 ring-sidebar-primary/30 flex items-center justify-center text-[11px] font-display font-bold text-sidebar-primary-foreground shrink-0">
-              {initials}
+            <Search className="h-[14px] w-[14px] shrink-0" strokeWidth={2} />
+            {!collapsed && (
+              <>
+                <span className="text-[12.5px] font-body flex-1 text-left">Buscar…</span>
+                <kbd className="hidden md:inline-flex items-center gap-0.5 text-[10px] font-mono text-sidebar-foreground/40 bg-sidebar-background/60 ring-1 ring-sidebar-border/60 rounded px-1 py-px leading-none">
+                  ⌘K
+                </kbd>
+              </>
+            )}
+          </button>
+        </SidebarHeader>
+
+        {/* Conteúdo — navegação */}
+        <SidebarContent
+          className={cn(
+            "py-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-sidebar-border/50 [&::-webkit-scrollbar-thumb]:rounded-full",
+            collapsed ? "px-1.5" : "px-2",
+          )}
+        >
+          {sections.map((section, idx) => (
+            <div
+              key={section.id}
+              className={cn(
+                idx > 0 && "mt-3",
+                // separador discreto no modo colapsado entre seções (após a primeira)
+                collapsed && idx > 0 && "pt-3 border-t border-sidebar-border/40 mx-1",
+              )}
+            >
+              {!collapsed && section.label && (
+                <div className="px-2 mb-1 flex items-center">
+                  <span className="text-[10.5px] uppercase tracking-[0.08em] text-sidebar-foreground/35 font-body font-medium">
+                    {section.label}
+                  </span>
+                </div>
+              )}
+              <ul className="space-y-px">
+                {section.items.map((item) => (
+                  <li key={item.url}>
+                    <NavRow
+                      item={item}
+                      collapsed={collapsed}
+                      isActive={isItemActive(item)}
+                    />
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold font-body text-sidebar-foreground truncate tracking-tight leading-tight">
-                {profile.full_name || "Usuário"}
-              </p>
-              {primaryRole && (
-                <span
-                  className={cn(
-                    "inline-flex items-center mt-0.5 text-[8.5px] font-body font-semibold uppercase tracking-wider px-1.5 py-px rounded ring-1 leading-none",
-                    ROLE_TONE[primaryRole] ?? "bg-sidebar-accent text-sidebar-foreground/60 ring-sidebar-border"
+          ))}
+
+          {/* Ferramentas — collapsible, sempre por último */}
+          {toolGroups.length > 0 && (
+            <div
+              className={cn(
+                "mt-3",
+                collapsed && "pt-3 border-t border-sidebar-border/40 mx-1",
+              )}
+            >
+              {collapsed ? (
+                // Colapsado: lista flat (todas as ferramentas como ícones)
+                <ul className="space-y-px">
+                  {toolGroups.flatMap((g) =>
+                    g.items.map((item) => (
+                      <li key={item.url}>
+                        <NavRow item={item} collapsed isActive={isItemActive(item)} />
+                      </li>
+                    )),
                   )}
-                >
-                  {primaryRole}
-                </span>
+                </ul>
+              ) : (
+                <Collapsible open={toolsOpen} onOpenChange={setToolsOpen}>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        "w-full group flex items-center justify-between px-2 py-1 rounded-md",
+                        "text-[10.5px] uppercase tracking-[0.08em] font-body font-medium",
+                        "text-sidebar-foreground/35 hover:text-sidebar-foreground/65 transition-colors",
+                      )}
+                    >
+                      <span>Ferramentas</span>
+                      <ChevronDown
+                        className={cn(
+                          "h-3 w-3 transition-transform duration-150",
+                          toolsOpen && "rotate-180",
+                        )}
+                        strokeWidth={2}
+                      />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                    <div className="mt-1 space-y-2.5">
+                      {toolGroups.map((group) => (
+                        <div key={group.id}>
+                          <div className="px-2 mb-0.5 text-[10px] text-sidebar-foreground/30 font-body font-medium tracking-wide">
+                            {group.label}
+                          </div>
+                          <ul className="space-y-px">
+                            {group.items.map((item) => (
+                              <li key={item.url}>
+                                <NavRow
+                                  item={item}
+                                  collapsed={false}
+                                  isActive={isItemActive(item)}
+                                />
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
             </div>
-          </div>
-        ) : collapsed && profile ? (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="h-8 w-8 mx-auto mb-1.5 rounded-full bg-gradient-to-br from-sidebar-primary/35 to-sidebar-primary/10 ring-1 ring-sidebar-primary/30 flex items-center justify-center text-[11px] font-display font-bold text-sidebar-primary-foreground cursor-default">
-                  {initials}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p className="font-medium text-xs">{profile.full_name || "Usuário"}</p>
-                <p className="text-[10px] opacity-70 uppercase tracking-wider">{userRoles.join(", ")}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ) : null}
+          )}
+        </SidebarContent>
 
-        {collapsed ? (
-          <TooltipProvider delayDuration={200}>
+        {/* Footer — perfil compacto com menu (Vercel/Linear style) */}
+        <SidebarFooter
+          className={cn(
+            "border-t border-sidebar-border/60",
+            collapsed ? "p-1.5" : "p-2",
+          )}
+        >
+          {collapsed && isBudgetEditor && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-full h-8 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/70"
-                  onClick={handleSignOut}
+                  className="w-8 h-8 mx-auto mb-1 text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+                  onClick={toggleSidebar}
                 >
-                  <LogOut className="h-3.5 w-3.5" />
+                  <PanelLeftOpen className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right" className="text-xs">Sair</TooltipContent>
+              <TooltipContent side="right" className="text-xs">
+                Expandir
+              </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/70 text-[12px] font-body rounded-md transition-colors h-8"
-            onClick={handleSignOut}
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Sair
-          </Button>
-        )}
-      </SidebarFooter>
-    </Sidebar>
+          )}
+
+          {profile && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "group flex items-center rounded-md transition-colors outline-none",
+                    "hover:bg-sidebar-accent/60 focus-visible:ring-1 focus-visible:ring-sidebar-ring",
+                    collapsed ? "h-8 w-8 mx-auto justify-center" : "w-full h-9 px-1.5 gap-2",
+                  )}
+                  aria-label="Conta"
+                >
+                  <span className="relative shrink-0">
+                    <span
+                      className={cn(
+                        "h-6 w-6 rounded-full bg-gradient-to-br from-sidebar-primary/40 to-sidebar-primary/15",
+                        "ring-1 ring-sidebar-primary/25 flex items-center justify-center",
+                        "text-[10.5px] font-display font-semibold text-sidebar-foreground",
+                      )}
+                    >
+                      {initials}
+                    </span>
+                    {primaryRole && (
+                      <span
+                        className={cn(
+                          "absolute -bottom-px -right-px h-2 w-2 rounded-full ring-2 ring-sidebar",
+                          ROLE_DOT[primaryRole] ?? "bg-sidebar-foreground/40",
+                        )}
+                      />
+                    )}
+                  </span>
+                  {!collapsed && (
+                    <>
+                      <span className="min-w-0 flex-1 text-left">
+                        <span className="block text-[12.5px] font-body font-medium text-sidebar-foreground truncate leading-tight">
+                          {profile.full_name || "Usuário"}
+                        </span>
+                        {primaryRole && (
+                          <span className="block text-[10.5px] font-body text-sidebar-foreground/45 truncate leading-tight">
+                            {ROLE_LABEL[primaryRole] ?? primaryRole}
+                          </span>
+                        )}
+                      </span>
+                      <ChevronsUpDown className="h-3 w-3 text-sidebar-foreground/35 shrink-0" />
+                    </>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side={collapsed ? "right" : "top"}
+                align="start"
+                sideOffset={8}
+                className="w-56"
+              >
+                <DropdownMenuLabel className="font-body">
+                  <div className="text-[12px] font-medium truncate">
+                    {profile.full_name || "Usuário"}
+                  </div>
+                  {user?.email && (
+                    <div className="text-[11px] text-muted-foreground font-normal truncate">
+                      {user.email}
+                    </div>
+                  )}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/admin/usuarios")} className="text-[12.5px]">
+                  <Users className="h-3.5 w-3.5 mr-2" />
+                  Usuários
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={openCommandPalette} className="text-[12.5px]">
+                  <Search className="h-3.5 w-3.5 mr-2" />
+                  Buscar
+                  <kbd className="ml-auto text-[10px] font-mono text-muted-foreground">⌘K</kbd>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-[12.5px] text-destructive focus:text-destructive">
+                  <LogOut className="h-3.5 w-3.5 mr-2" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </SidebarFooter>
+      </Sidebar>
+    </TooltipProvider>
   );
 }
