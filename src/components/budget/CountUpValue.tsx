@@ -13,12 +13,27 @@ export function CountUpValue({ value, duration = 1.2, className, style }: CountU
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.5 });
   const [display, setDisplay] = useState(formatBRL(0));
+  // Garantia de que o cliente nunca veja "R$ 0,00" preso quando a animação
+  // não dispara — IntersectionObserver pode falhar no Safari mobile com
+  // ancestrais transformados (motion.div com scale), em prefers-reduced-motion
+  // ou com viewports baixas. Sem o fallback, o orçamento público mobile ficava
+  // exibindo R$ 0,00 indefinidamente.
+  const settledRef = useRef(false);
 
   useEffect(() => {
-    if (!isInView) return;
+    const id = setTimeout(() => {
+      if (settledRef.current) return;
+      settledRef.current = true;
+      setDisplay(formatBRL(value));
+    }, 800);
+    return () => clearTimeout(id);
+  }, [value]);
+
+  useEffect(() => {
+    if (!isInView || settledRef.current) return;
+    settledRef.current = true;
 
     const start = performance.now();
-    const end = start + duration * 1000;
 
     function tick(now: number) {
       const progress = Math.min((now - start) / (duration * 1000), 1);
