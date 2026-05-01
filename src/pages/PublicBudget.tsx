@@ -496,7 +496,7 @@ export default function PublicBudget() {
 
         {/* ═══ TRUST STRIP — scannable confidence chips ═══ */}
         <div className="mt-3" data-pdf-section>
-          <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? 55} />
+          <TrustStrip prazoDiasUteis={budget.prazo_dias_uteis ?? undefined} />
         </div>
 
 
