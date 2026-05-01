@@ -167,6 +167,7 @@ export async function getVersionAuditEvents(budgetIds: string[]) {
     "version_activated",
     "change_reason_updated",
     "revision_requested",
+    "budget_deleted",
   ];
 
   const { data, error } = await supabase
