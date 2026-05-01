@@ -212,6 +212,14 @@ export async function buildBudgetPdfBlob(
     0,
   );
   const margemPct = totalVenda > 0 ? ((totalVenda - totalCusto) / totalVenda) * 100 : 0;
+  // Mirror PublicBudget/BudgetInternalDetail: prefer manual_total when defined.
+  // Falls back to computed (venda + ajustes) when manual_total is null.
+  const computedGrandTotal = totalVenda + totalAjustes;
+  const manualTotalNum = b.manual_total != null && Number.isFinite(Number(b.manual_total))
+    ? Number(b.manual_total)
+    : null;
+  const effectiveGrandTotal = manualTotalNum ?? computedGrandTotal;
+  const totalGeralLabel = manualTotalNum != null ? "Total geral (manual)" : "Total geral";
 
   // ── Documento ─────────────────────────────────────────────────────────
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
