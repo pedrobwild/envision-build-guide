@@ -219,8 +219,6 @@ export default function OperationsHealthPage() {
       {/* HEADER */}
       <motion.div {...anim(step++ * SECTION_DELAY)}>
         <PainelHeader
-          eyebrow="Diagnóstico"
-          icon={HeartPulse}
           title="Saúde da operação"
           subtitle={subtitle}
           actions={
