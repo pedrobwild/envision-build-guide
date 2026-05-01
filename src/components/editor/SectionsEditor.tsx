@@ -148,6 +148,8 @@ interface SectionsEditorProps {
   onSectionsChange: (sections: SectionData[]) => void;
   tableConfig?: TableConfig;
   loading?: boolean;
+  /** Estágio de carregamento progressivo, controla a label e o nível de skeleton */
+  loadingStage?: "sections" | "items" | "images" | null;
   readOnly?: boolean;
   /** When true, shows addendum controls (mark item/section as add/remove) */
   isAddendum?: boolean;
