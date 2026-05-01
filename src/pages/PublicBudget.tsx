@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { fetchPublicBudget, fetchPublicBudgetStreaming, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
 import { resolveBudgetGrandTotal } from "@/lib/budget-total";
-import { isCreditSection, aggregateAbatementsByLabel } from "@/lib/budget-calc";
+import { aggregateAbatementsByLabel } from "@/lib/budget-calc";
 import { buildPublicScopeGroups } from "@/lib/public-scope";
 import { AddendumDeltaCard } from "@/components/budget/AddendumDeltaCard";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
@@ -366,20 +366,13 @@ export default function PublicBudget() {
   const categorizedGroups = categorizeSections(visibleSections);
   const scopeTotal = visibleSections.reduce((sum, s) => sum + calculateSectionSubtotal(s), 0);
 
-  // Split abatements by section title for the public summary breakdown.
-  // Same logic as BudgetSummary so mobile + desktop stay in sync.
-  // Totals (mantidos para o cálculo do subtotal) — somam abatimentos por seção.
-  let publicDiscountTotal = 0;
-  let publicCreditTotal = 0;
-  for (const s of visibleSections) {
-    const sub = calculateSectionSubtotal(s);
-    if (sub >= 0) continue;
-    const abs = Math.abs(sub);
-    if (isCreditSection(s)) publicCreditTotal += abs;
-    else publicDiscountTotal += abs;
-  }
-  // Breakdown agrupado por rótulo do item (sem expor valores por item).
+  // Split abatements by item label — mesma fonte de verdade do desktop
+  // (BudgetSummary). Antes o mobile recalculava por seção via
+  // calculateSectionSubtotal e ignorava descontos dentro de seções com saldo
+  // positivo, gerando subtotal/desconto inconsistentes entre desktop e mobile.
   const abatementBreakdown = aggregateAbatementsByLabel(visibleSections);
+  const publicDiscountTotal = abatementBreakdown.discountTotal;
+  const publicCreditTotal = abatementBreakdown.creditTotal;
   const publicSubtotalBeforeAbatements = total + publicDiscountTotal + publicCreditTotal;
 
   // Meta for mobile hero
