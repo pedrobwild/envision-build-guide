@@ -1331,15 +1331,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
     const withNewOrder = reordered.map((s, i) => ({ ...s, order_index: i }));
     onSectionsChange(withNewOrder);
+    onSaveStatusChange?.("saving");
     try {
       await Promise.all(
         withNewOrder.map(s =>
           dbFrom(cfg.sectionTable).update({ order_index: s.order_index }).eq("id", s.id)
         )
       );
-      toast.success("Ordem das seções atualizada");
+      onSaveStatusChange?.("saved");
     } catch {
       onSectionsChange(previousOrder);
+      onSaveStatusChange?.("error");
       toast.error("Erro ao salvar a ordem. Tente novamente.");
     }
   };
