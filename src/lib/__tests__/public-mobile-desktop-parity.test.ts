@@ -21,11 +21,17 @@ import type { BudgetSection, BudgetAdjustment } from "@/types/budget";
  * `aggregateAbatementsByLabel` e produzir os mesmos números para o mesmo dataset.
  */
 
-type SectionFixture = Pick<BudgetSection, "id" | "title" | "items">;
+type ItemFixture = {
+  id?: string;
+  title?: string;
+  qty?: number;
+  unit?: string;
+  internal_unit_price?: number;
+  internal_total?: number | null;
+  bdi_percentage?: number;
+};
 
-function makeSection(
-  partial: Partial<SectionFixture> & { items?: Array<Partial<BudgetSection["items"][number]>> },
-): BudgetSection {
+function makeSection(partial: { id?: string; title?: string; items?: ItemFixture[] }): BudgetSection {
   return {
     id: partial.id ?? `s-${Math.random().toString(36).slice(2, 8)}`,
     title: partial.title ?? "Seção",
@@ -39,20 +45,19 @@ function makeSection(
     addendum_action: null,
     items: (partial.items ?? []).map((it, idx) => ({
       id: it.id ?? `i-${idx}-${Math.random().toString(36).slice(2, 6)}`,
-      section_id: it.section_id ?? "",
-      order_index: it.order_index ?? idx,
+      order_index: idx,
       title: it.title ?? "Item",
-      description: it.description ?? null,
+      description: null,
       qty: it.qty ?? 1,
       unit: it.unit ?? "un",
       internal_unit_price: it.internal_unit_price ?? null,
       internal_total: it.internal_total ?? null,
       bdi_percentage: it.bdi_percentage ?? 0,
-      coverage_type: it.coverage_type ?? "geral",
-      included_rooms: it.included_rooms ?? null,
-      addendum_action: it.addendum_action ?? null,
-    })) as BudgetSection["items"],
-  } as BudgetSection;
+      coverage_type: "geral",
+      included_rooms: null,
+      addendum_action: null,
+    })),
+  } as unknown as BudgetSection;
 }
 
 /** Replica a lógica do desktop (`BudgetSummary`). */
