@@ -1785,9 +1785,6 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                               </DndContext>
                             );
                           })()}
-                              </div>
-                            </SortableContext>
-                          </DndContext>
 
                           {/* Add item */}
                           <div className="px-3 py-1.5 border-t border-border/30">
