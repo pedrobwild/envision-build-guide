@@ -1,20 +1,25 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserProfile } from "@/hooks/useUserProfile";
+import { useActiveRole, homePathForRole } from "@/hooks/useActiveRole";
 import { Loader2 } from "lucide-react";
 
 /**
- * Smart redirect based on user role.
- * - Not logged in → /login
- * - comercial → /admin/comercial
- * - orcamentista → /admin/producao
- * - admin (or fallback) → /admin
+ * Redireciona o usuário para a home do papel ativo.
+ *
+ * Regras:
+ *   • Não autenticado → /login
+ *   • Sem papel resolvido (ex.: usuário inativo ou sem roles) → /admin
+ *     (rota protegida que renderiza fallback adequado)
+ *   • Caso contrário → /painel/<papel-ativo>
+ *
+ * O papel ativo vem de `profiles.active_role` (persistido) com
+ * fallback admin > comercial > orcamentista quando NULL ou inválido.
  */
 export function RoleRedirect() {
   const { user, loading: authLoading } = useAuth();
-  const { profile, loading: profileLoading, isAdmin, isComercial, isOrcamentista } = useUserProfile();
+  const { activeRole, loading: roleLoading } = useActiveRole();
 
-  if (authLoading || profileLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -24,8 +29,5 @@ export function RoleRedirect() {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (!isAdmin && isComercial) return <Navigate to="/admin/comercial" replace />;
-  if (!isAdmin && isOrcamentista) return <Navigate to="/admin/producao" replace />;
-
-  return <Navigate to="/admin" replace />;
+  return <Navigate to={homePathForRole(activeRole)} replace />;
 }
