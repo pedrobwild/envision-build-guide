@@ -977,9 +977,29 @@ export default function BudgetInternalDetail() {
               custom={
                 <div className="flex items-center gap-2 mt-1.5 min-w-0">
                   <Avatar name={getProfileName(budget.commercial_owner_id)} tone="rose" />
-                  <span className="text-sm font-display font-medium text-foreground truncate">
-                    {budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : "—"}
-                  </span>
+                  {canEditOwners ? (
+                    <Select
+                      value={budget.commercial_owner_id ?? "__none__"}
+                      onValueChange={(v) => saveOwner("commercial_owner_id", v === "__none__" ? null : v)}
+                    >
+                      <SelectTrigger
+                        className="h-8 px-2 border-transparent hover:border-border bg-transparent shadow-none focus:ring-1 focus:ring-primary/20 text-sm font-display font-medium text-foreground truncate min-w-0 flex-1"
+                        aria-label="Selecionar comercial responsável"
+                      >
+                        <SelectValue placeholder="Não atribuído" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Não atribuído</SelectItem>
+                        {comerciais.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm font-display font-medium text-foreground truncate">
+                      {budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : "—"}
+                    </span>
+                  )}
                 </div>
               }
             />
@@ -989,9 +1009,29 @@ export default function BudgetInternalDetail() {
               custom={
                 <div className="flex items-center gap-2 mt-1.5 min-w-0">
                   <Avatar name={getProfileName(budget.estimator_owner_id)} tone="amber" />
-                  <span className="text-sm font-display font-medium text-foreground truncate">
-                    {budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : "—"}
-                  </span>
+                  {canEditOwners ? (
+                    <Select
+                      value={budget.estimator_owner_id ?? "__none__"}
+                      onValueChange={(v) => saveOwner("estimator_owner_id", v === "__none__" ? null : v)}
+                    >
+                      <SelectTrigger
+                        className="h-8 px-2 border-transparent hover:border-border bg-transparent shadow-none focus:ring-1 focus:ring-primary/20 text-sm font-display font-medium text-foreground truncate min-w-0 flex-1"
+                        aria-label="Selecionar orçamentista responsável"
+                      >
+                        <SelectValue placeholder="Não atribuído" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Não atribuído</SelectItem>
+                        {orcamentistas.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm font-display font-medium text-foreground truncate">
+                      {budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : "—"}
+                    </span>
+                  )}
                 </div>
               }
             />
