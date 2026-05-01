@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useConfirm } from "@/hooks/useConfirm";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import OrphanVersionGroupsPanel from "./OrphanVersionGroupsPanel";
 import { Building2, Merge, RefreshCw, ExternalLink, ShieldCheck } from "lucide-react";
 
 type DuplicateGroup = {
@@ -102,18 +104,29 @@ export default function DuplicatePropertiesPage() {
 
   return (
     <div className="container max-w-5xl py-6 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-display tracking-tight">Imóveis duplicados</h1>
-          <p className="text-sm text-muted-foreground font-body">
-            Detecta imóveis do mesmo cliente com mesmo empreendimento, bairro e metragem. Mesclar elimina cards duplicados no funil.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Recarregar
-        </Button>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-display tracking-tight">Saneamento de dados</h1>
+        <p className="text-sm text-muted-foreground font-body">
+          Resolve inconsistências legadas que geram cards duplicados ou orçamentos isolados no funil.
+        </p>
       </div>
+
+      <Tabs defaultValue="properties" className="w-full">
+        <TabsList>
+          <TabsTrigger value="properties">Imóveis duplicados</TabsTrigger>
+          <TabsTrigger value="orphans">Órfãos de versão</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="properties" className="space-y-6 mt-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <p className="text-sm text-muted-foreground font-body">
+              Imóveis do mesmo cliente com mesmo empreendimento, bairro e metragem. Mesclar elimina cards duplicados no funil.
+            </p>
+            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Recarregar
+            </Button>
+          </div>
 
       <Card>
         <CardHeader className="pb-3">
@@ -208,6 +221,12 @@ export default function DuplicatePropertiesPage() {
           })}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="orphans" className="mt-4">
+          <OrphanVersionGroupsPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
