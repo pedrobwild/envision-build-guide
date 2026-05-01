@@ -1007,7 +1007,7 @@ export default function BudgetEditorV2() {
                       </Button>
                     </div>
                   )}
-                  {!sectionsRowsError && !itemsRowsError && imagesRowsError && (
+                  {!sectionsRowsError && !itemsRowsError && Boolean(imagesRowsError) && (
                     <div className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-md border border-warning/40 bg-warning/5 text-xs font-body" role="status">
                       <div className="flex items-center gap-2 min-w-0">
                         <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
