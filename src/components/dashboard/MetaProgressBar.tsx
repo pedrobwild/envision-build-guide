@@ -90,7 +90,7 @@ export function MetaProgressBar({
           <span className="text-sm font-semibold text-foreground">{fmt(current, format)}</span>
           <span className="text-[11px] text-muted-foreground/60">/ {fmt(target, format)}</span>
           <span
-            className={`text-[10px] ml-1 ${
+            className={`text-base font-bold ml-1.5 ${
               wayBehind ? "text-destructive" : onTrack ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
             }`}
           >
