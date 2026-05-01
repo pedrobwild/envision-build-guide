@@ -139,7 +139,7 @@ export function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { profile } = useUserProfile();
-  const userRoles = profile?.roles ?? [];
+  const userRoles = useMemo<AppRole[]>(() => profile?.roles ?? [], [profile?.roles]);
 
   // Global shortcut Cmd/Ctrl + K + custom event para mobile
   useEffect(() => {

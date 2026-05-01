@@ -25,7 +25,7 @@ import { toast } from "sonner";
  * Os valores podem ser sobrescritos em runtime via `setAuthRetryConfig({...})`
  * (útil para testes ou para ajustar dinamicamente conforme telemetria).
  */
-const env = (import.meta as any).env ?? {};
+const env = (import.meta as ImportMeta).env ?? {};
 
 function num(value: unknown, fallback: number, min = 0): number {
   const n = Number(value);

@@ -289,7 +289,8 @@ function BugReportDetail({ bugId }: { bugId: string }) {
     setLoading(false);
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [bugId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [bugId]);
 
   async function changeStatus(newStatus: string) {
     if (!bug) return;

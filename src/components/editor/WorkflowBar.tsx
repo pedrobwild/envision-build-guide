@@ -300,7 +300,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
       .eq("event_type", "revision_requested")
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
     if (data?.metadata) {
       const m = data.metadata as { instructions?: string; change_types?: string[]; requested_by_name?: string } | null;
       setRevisionInstructions({

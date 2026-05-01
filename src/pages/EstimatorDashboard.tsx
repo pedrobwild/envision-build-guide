@@ -115,7 +115,6 @@ export default function EstimatorDashboard() {
   useEffect(() => {
     if (!user || profileLoading) return;
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profileLoading, location.key]);
 
   async function loadData() {
@@ -369,7 +368,7 @@ export default function EstimatorDashboard() {
           label: "Desfazer",
           onClick: async () => {
             const rollback: Record<string, unknown> = {};
-            for (const k of fields) rollback[k] = (previous as any)[k] ?? null;
+            for (const k of fields) rollback[k] = (previous as Record<string, unknown>)[k] ?? null;
             const { error: rbErr } = await supabase
               .from("budgets")
               .update({ ...rollback, updated_at: new Date().toISOString() })

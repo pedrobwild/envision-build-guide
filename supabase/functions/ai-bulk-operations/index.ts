@@ -938,7 +938,7 @@ serve(async (req) => {
       }
 
       let rows: PlanRow[] = [];
-      let extra: Record<string, unknown> = {};
+      const extra: Record<string, unknown> = {};
 
       if (parsed.action_type === "financial_adjustment") {
         const p = parsed.params as { mode?: Mode; value?: number; direction?: "increase" | "decrease" };
@@ -1434,7 +1434,7 @@ serve(async (req) => {
 
       // Modo background: devolve imediatamente; cliente faz polling em /status.
       if (runInBackground) {
-        // @ts-ignore EdgeRuntime existe no runtime Deno do Supabase
+        // @ts-expect-error EdgeRuntime existe no runtime Deno do Supabase
         const ert = (globalThis as { EdgeRuntime?: { waitUntil: (p: Promise<unknown>) => void } }).EdgeRuntime;
         const work = doApply();
         if (ert?.waitUntil) ert.waitUntil(work); else void work;

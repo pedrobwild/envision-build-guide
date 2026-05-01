@@ -52,7 +52,6 @@ export async function sendBudgetPublishedNotification(
     return { success: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    // eslint-disable-next-line no-console
     logger.warn("[digisac] notificação automática falhou:", msg);
     return { success: false, error: msg };
   }

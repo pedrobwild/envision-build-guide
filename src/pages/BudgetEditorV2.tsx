@@ -88,7 +88,9 @@ export default function BudgetEditorV2() {
     queryKey: ["current-version", budget?.version_group_id],
     queryFn: async () => {
       // Guard: budget e version_group_id são exigidos pelo `enabled` abaixo,
-      // mas reasseguramos aqui para o type-checker e para resiliência em race conditions
+      // mas reasseguramos aqui para o type-checker e para resiliência em race conditions.
+      // `maybeSingle()` evita exception quando o group não tem versão current
+      // (estado intermediário durante fork/discard) — retornamos null e a UI segue.
       if (!budget?.version_group_id) return null;
       const { data } = await supabase
         .from("budgets")
@@ -96,7 +98,7 @@ export default function BudgetEditorV2() {
         .eq("version_group_id", budget.version_group_id)
         .eq("is_current_version", true)
         .limit(1)
-        .single();
+        .maybeSingle();
       return data?.id ?? null;
     },
     enabled: !!budget?.version_group_id && budget?.is_current_version === false,
@@ -127,7 +129,9 @@ export default function BudgetEditorV2() {
 
   const [discardingDraft, setDiscardingDraft] = useState(false);
 
-  // Fetch latest revision request when status is revision_requested
+  // Fetch latest revision request when status is revision_requested.
+  // `maybeSingle()` evita exception se ainda não houver evento registrado
+  // (race com transição de status) — retornamos `null` e a UI segue.
   const { data: revisionRequest } = useQuery({
     queryKey: ["revision-request", budgetId],
     queryFn: async () => {
@@ -138,7 +142,7 @@ export default function BudgetEditorV2() {
         .eq("event_type", "revision_requested")
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       return data ?? null;
     },
     enabled: budget?.internal_status === "revision_requested",
@@ -422,15 +426,15 @@ export default function BudgetEditorV2() {
   // Após o navigate para a nova versão (rascunho), libera o lock do source
   // publicado — assim qualquer ação futura no mesmo source criaria um fork
   // novo, mas dentro desta sessão de edição reaproveita o rascunho recém-criado.
+  const budgetParentId = (budget as { parent_budget_id?: string | null } | null)?.parent_budget_id ?? null;
   useEffect(() => {
-    const parentId = (budget as { parent_budget_id?: string | null } | null)?.parent_budget_id;
-    if (parentId && budget?.id) {
+    if (budgetParentId && budget?.id) {
       // pequeno delay para garantir que outros mutations em flight também
       // tenham tempo de hit no lock antes de removê-lo.
-      const t = setTimeout(() => releaseForkLock(parentId), 1500);
+      const t = setTimeout(() => releaseForkLock(budgetParentId), 1500);
       return () => clearTimeout(t);
     }
-  }, [budget?.id]);
+  }, [budget?.id, budgetParentId]);
 
   // Quando o usuário edita uma versão publicada, criamos automaticamente uma nova
   // versão (rascunho) para que as alterações não fiquem visíveis ao cliente até
@@ -1004,7 +1008,7 @@ export default function BudgetEditorV2() {
                       </Button>
                     </div>
                   )}
-                  {sections.length > 0 && (itemsInitialLoading || imagesInitialLoading) && !Boolean(itemsRowsError) && !Boolean(imagesRowsError) && (
+                  {sections.length > 0 && (itemsInitialLoading || imagesInitialLoading) && !itemsRowsError && !imagesRowsError && (
                     <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-md border border-border/60 bg-muted/30 text-xs text-muted-foreground font-body" role="status" aria-live="polite">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       {itemsInitialLoading ? "Carregando itens das seções…" : "Carregando imagens dos itens…"}

@@ -17,7 +17,6 @@ export default function ResetPassword() {
 
   useEffect(() => {
     let cancelled = false;
-    let timeoutId: number | undefined;
 
     const hash = window.location.hash;
     if (hash.includes("type=recovery") || hash.includes("access_token")) {
@@ -26,7 +25,7 @@ export default function ResetPassword() {
     }
 
     // If we already have a recovery session, allow.
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(() => {
       if (cancelled) return;
       // We can't reliably detect recovery from getSession, so keep waiting for the event.
     });
@@ -37,7 +36,7 @@ export default function ResetPassword() {
     });
 
     // Safety net: if no recovery event arrives in 6s, assume the link is expired/invalid.
-    timeoutId = window.setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       if (!cancelled) {
         setStatus((prev) => (prev === "checking" ? "expired" : prev));
       }
@@ -46,7 +45,7 @@ export default function ResetPassword() {
     return () => {
       cancelled = true;
       subscription.unsubscribe();
-      if (timeoutId) window.clearTimeout(timeoutId);
+      window.clearTimeout(timeoutId);
     };
   }, []);
 

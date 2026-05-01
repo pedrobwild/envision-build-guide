@@ -76,11 +76,11 @@ export default function EventsCalendar({ onDataLoaded }: { onDataLoaded?: (data:
           ? `Cache de ${res.cacheAgeHours}h atrás.`
           : "Pesquisa concluída com dados atualizados.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Events error:", err);
       toast({
         title: "Erro ao buscar eventos",
-        description: err.message || "Tente novamente.",
+        description: err instanceof Error ? err.message : "Tente novamente.",
         variant: "destructive",
       });
     } finally {

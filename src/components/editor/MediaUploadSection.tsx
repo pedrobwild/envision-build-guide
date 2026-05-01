@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -281,7 +282,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     };
     await supabase
       .from("budgets")
-      .update({ media_config: mediaConfig as any })
+      .update({ media_config: mediaConfig as unknown as Json })
       .eq("id", budgetId);
   }, [budgetId]);
 

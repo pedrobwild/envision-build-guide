@@ -70,7 +70,7 @@ export function useLostReasons(options: UseLostReasonsOptions = {}) {
       const list = (reasons ?? []) as LostReasonRow[];
       const budgetIds = [...new Set(list.map((r) => r.budget_id))];
 
-      let budgetMap = new Map<string, {
+      const budgetMap = new Map<string, {
         client_name: string;
         project_name: string;
         sequential_code: string | null;

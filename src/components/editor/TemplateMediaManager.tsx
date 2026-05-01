@@ -90,8 +90,9 @@ export default function TemplateMediaManager({ templateId, mediaConfig, onChange
       }
       onChange(updated);
       toast.success(`${urls.length} arquivo(s) enviado(s)`);
-    } catch (err: any) {
-      toast.error(`Erro no upload: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Erro no upload: ${msg}`);
     } finally {
       setUploading(null);
     }
