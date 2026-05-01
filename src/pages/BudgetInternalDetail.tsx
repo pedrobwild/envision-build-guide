@@ -1716,61 +1716,320 @@ function OwnerField({
 
 
 function BriefingPanel({
+  budgetId,
   briefing,
   demandContext,
   internalNotes,
   links,
+  onChange,
 }: {
+  budgetId: string;
   briefing: string | null;
   demandContext: string | null;
   internalNotes: string | null;
   links: string[];
+  onChange: (patch: {
+    briefing?: string | null;
+    demand_context?: string | null;
+    internal_notes?: string | null;
+    reference_links?: string[];
+  }) => void;
 }) {
-  const hasAny = briefing || demandContext || internalNotes || links.length > 0;
-  if (!hasAny) {
-    return (
-      <div className="py-10 flex flex-col items-center text-center">
-        <FileText className="h-8 w-8 text-muted-foreground mb-3" />
-        <p className="text-sm text-muted-foreground font-body">
-          Nenhum briefing ou instrução cadastrada para esta demanda.
-        </p>
-      </div>
-    );
-  }
   return (
     <div className="space-y-5">
-      {briefing && (
-        <Section title="Briefing">
-          <p className="text-sm font-body text-foreground whitespace-pre-wrap leading-relaxed">{briefing}</p>
-        </Section>
-      )}
-      {demandContext && (
-        <Section title="Contexto da Demanda">
-          <p className="text-sm font-body text-foreground whitespace-pre-wrap leading-relaxed">{demandContext}</p>
-        </Section>
-      )}
-      {internalNotes && (
-        <Section title="Observações Internas" tone="warning">
-          <p className="text-sm font-body text-foreground whitespace-pre-wrap leading-relaxed">{internalNotes}</p>
-        </Section>
-      )}
-      {links.length > 0 && (
-        <Section title="Links de Referência">
-          <div className="space-y-1.5">
-            {links.map((link, i) => (
-              <a
-                key={i}
-                href={link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-primary hover:underline font-body truncate"
-              >
-                <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                {link}
-              </a>
-            ))}
+      <p className="text-[11px] text-muted-foreground font-body">
+        Edite qualquer campo a qualquer momento — as alterações são salvas automaticamente e ficam visíveis para o time.
+      </p>
+
+      <EditableSection
+        title="Briefing"
+        value={briefing}
+        placeholder="Descreva o briefing combinado com o cliente: escopo, expectativas, restrições, prazos…"
+        onSave={async (next) => {
+          const { error } = await supabase
+            .from("budgets")
+            .update({ briefing: next, updated_at: new Date().toISOString() })
+            .eq("id", budgetId);
+          if (error) throw error;
+          onChange({ briefing: next });
+        }}
+      />
+
+      <EditableSection
+        title="Contexto da Demanda"
+        value={demandContext}
+        placeholder="Como a demanda chegou, perfil do cliente, urgência, contexto comercial…"
+        onSave={async (next) => {
+          const { error } = await supabase
+            .from("budgets")
+            .update({ demand_context: next, updated_at: new Date().toISOString() })
+            .eq("id", budgetId);
+          if (error) throw error;
+          onChange({ demand_context: next });
+        }}
+      />
+
+      <EditableSection
+        title="Observações Internas"
+        tone="warning"
+        value={internalNotes}
+        placeholder="Notas privadas do time. Não aparecem para o cliente."
+        onSave={async (next) => {
+          const { error } = await supabase
+            .from("budgets")
+            .update({ internal_notes: next, updated_at: new Date().toISOString() })
+            .eq("id", budgetId);
+          if (error) throw error;
+          onChange({ internal_notes: next });
+        }}
+      />
+
+      <EditableLinksSection
+        links={links}
+        onSave={async (next) => {
+          const { error } = await supabase
+            .from("budgets")
+            .update({ reference_links: next, updated_at: new Date().toISOString() })
+            .eq("id", budgetId);
+          if (error) throw error;
+          onChange({ reference_links: next });
+        }}
+      />
+    </div>
+  );
+}
+
+function EditableSection({
+  title,
+  value,
+  placeholder,
+  tone,
+  onSave,
+}: {
+  title: string;
+  value: string | null;
+  placeholder: string;
+  tone?: "warning";
+  onSave: (next: string | null) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!editing) setDraft(value ?? "");
+  }, [value, editing]);
+
+  async function handleSave() {
+    const trimmed = draft.trim();
+    const next = trimmed.length > 0 ? trimmed : null;
+    if (next === (value ?? null)) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(next);
+      toast.success(`${title} atualizado`);
+      setEditing(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error(`Não foi possível salvar: ${msg}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className={`rounded-lg border p-4 ${
+        tone === "warning" ? "border-warning/20 bg-warning/5" : "border-border bg-muted/20"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <h4
+          className={`text-[11px] font-display font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
+            tone === "warning" ? "text-warning" : "text-muted-foreground"
+          }`}
+        >
+          {tone === "warning" && <AlertTriangle className="h-3 w-3" />}
+          {title}
+        </h4>
+        {!editing && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-[11px] gap-1"
+            onClick={() => setEditing(true)}
+          >
+            <Edit3 className="h-3 w-3" />
+            {value ? "Editar" : "Adicionar"}
+          </Button>
+        )}
+      </div>
+
+      {editing ? (
+        <div className="space-y-2">
+          <Textarea
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={placeholder}
+            rows={5}
+            className="text-sm"
+            disabled={saving}
+          />
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => {
+                setDraft(value ?? "");
+                setEditing(false);
+              }}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving && <Loader2 className="h-3 w-3 animate-spin" />}
+              Salvar
+            </Button>
           </div>
-        </Section>
+        </div>
+      ) : value ? (
+        <p className="text-sm font-body text-foreground whitespace-pre-wrap leading-relaxed">{value}</p>
+      ) : (
+        <p className="text-sm font-body text-muted-foreground/70 italic">{placeholder}</p>
+      )}
+    </div>
+  );
+}
+
+function EditableLinksSection({
+  links,
+  onSave,
+}: {
+  links: string[];
+  onSave: (next: string[]) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(links.join("\n"));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!editing) setDraft(links.join("\n"));
+  }, [links, editing]);
+
+  async function handleSave() {
+    const next = draft
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    const same =
+      next.length === links.length && next.every((l, i) => l === links[i]);
+    if (same) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(next);
+      toast.success("Links atualizados");
+      setEditing(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error(`Não foi possível salvar: ${msg}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/20 p-4">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <h4 className="text-[11px] font-display font-semibold uppercase tracking-wider text-muted-foreground">
+          Links de Referência
+        </h4>
+        {!editing && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-[11px] gap-1"
+            onClick={() => setEditing(true)}
+          >
+            <Edit3 className="h-3 w-3" />
+            {links.length > 0 ? "Editar" : "Adicionar"}
+          </Button>
+        )}
+      </div>
+
+      {editing ? (
+        <div className="space-y-2">
+          <Textarea
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={"Um link por linha\nhttps://exemplo.com/referencia"}
+            rows={4}
+            className="text-sm font-mono"
+            disabled={saving}
+          />
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => {
+                setDraft(links.join("\n"));
+                setEditing(false);
+              }}
+              disabled={saving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving && <Loader2 className="h-3 w-3 animate-spin" />}
+              Salvar
+            </Button>
+          </div>
+        </div>
+      ) : links.length > 0 ? (
+        <div className="space-y-1.5">
+          {links.map((link, i) => (
+            <a
+              key={i}
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-primary hover:underline font-body truncate"
+            >
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+              {link}
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm font-body text-muted-foreground/70 italic">
+          Adicione URLs de referência (Pinterest, Drive, fotos, plantas…). Um link por linha.
+        </p>
       )}
     </div>
   );
