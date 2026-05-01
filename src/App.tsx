@@ -123,6 +123,7 @@ const App = () => (
                     <Route path="/admin/comercial/conversao" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><ConversionDashboard /></RoleGuard></AdminPage>} />
                     <Route path="/admin/comercial/kpis" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><SalesKpisPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/operacoes" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AdminOperationsDashboard /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/saude-operacao" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><OperationsHealthPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/analises" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AnalisesPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/forecast" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><ForecastPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/usuarios" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><UserManagement /></RoleGuard></AdminPage>} />
