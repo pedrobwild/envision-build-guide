@@ -89,7 +89,7 @@ export function UnifiedActivityPanel({ budgetId, getProfileName }: Props) {
         await Promise.all([
           supabase
             .from("budget_events")
-            .select("id, event_type, from_status, to_status, note, user_id, created_at")
+            .select("id, event_type, from_status, to_status, note, user_id, created_at, metadata")
             .eq("budget_id", budgetId)
             .order("created_at", { ascending: false })
             .limit(200),
@@ -121,13 +121,40 @@ export function UnifiedActivityPanel({ budgetId, getProfileName }: Props) {
 
       const unified: UnifiedItem[] = [];
 
+      const EVENT_LABELS: Record<string, string> = {
+        status_change: "Mudança de etapa",
+        budget_created: "Orçamento criado",
+        budget_sent_to_client: "Enviado ao cliente",
+        budget_closed_won: "Contrato fechado",
+        version_created: "Nova versão criada",
+        version_published: "Versão publicada",
+        version_superseded: "Versão substituída",
+        version_activated: "Versão ativada",
+        version_cloned_from_previous: "Clonado de versão anterior",
+        version_compared: "Versões comparadas",
+        version_healed_current: "Versão atual restaurada",
+        version_group_consolidation: "Grupo de versão consolidado",
+        pipeline_moved: "Movido no funil",
+        pipeline_consolidation: "Funil consolidado",
+        revision_requested: "Revisão solicitada",
+        data_corrected: "Dados corrigidos",
+        estimator_auto_assigned: "Orçamentista atribuído",
+        imported_ready: "Importado pronto",
+        comment: "Comentário",
+      };
       for (const e of eventsRes.data ?? []) {
+        const meta = (e.metadata ?? {}) as Record<string, unknown>;
+        const source = typeof meta.source === "string" ? meta.source : null;
+        const baseTitle = EVENT_LABELS[e.event_type] ?? e.event_type;
+        const title = source && e.event_type === "budget_created"
+          ? `${baseTitle} · ${source}`
+          : baseTitle;
         unified.push({
           id: `e-${e.id}`,
           kind: "event",
           created_at: e.created_at,
           user_id: e.user_id,
-          title: e.event_type === "status_change" ? "Mudança de etapa" : e.event_type,
+          title,
           detail: e.note,
           meta: { from_status: e.from_status, to_status: e.to_status },
         });
