@@ -847,6 +847,12 @@ export default function BudgetInternalDetail() {
                       : `${format(dueDate, "dd MMM", { locale: ptBR })}`}
                   </span>
                 )}
+                {/* Prazo de execução — mini-chip na barra de status, casa com Badges. */}
+                <PrazoExecucaoChip
+                  size="sm"
+                  value={budget.prazo_dias_uteis ?? null}
+                  onChange={savePrazoDiasUteis}
+                />
               </div>
               <h1 className="text-xl sm:text-2xl font-display font-semibold tracking-tight leading-tight text-foreground">
                 {budget.project_name} · {budget.client_name}

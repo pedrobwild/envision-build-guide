@@ -137,4 +137,19 @@ describe("PrazoExecucaoChip", () => {
     // Sem button: é um span estático
     expect(queryByRole("button")).toBeNull();
   });
+
+  it("size='sm' usa label compacto e omite a aproximação de semanas", () => {
+    const { rerender, getByRole } = render(
+      <PrazoExecucaoChip value={null} onChange={() => {}} size="sm" />,
+    );
+    // Vazio: label compacto
+    expect(getByRole("button").textContent).toMatch(/Definir prazo$/);
+    expect(getByRole("button").textContent).not.toMatch(/de execução/);
+
+    // Preenchido: sem "≈ X sem"
+    rerender(<PrazoExecucaoChip value={30} onChange={() => {}} size="sm" />);
+    expect(getByRole("button").textContent).toMatch(/30/);
+    expect(getByRole("button").textContent).toMatch(/dias úteis/);
+    expect(getByRole("button").textContent).not.toMatch(/sem/);
+  });
 });
