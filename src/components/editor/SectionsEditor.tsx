@@ -761,6 +761,19 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   const [highlightItemId, setHighlightItemId] = useState<string | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  // Pagination progressiva por seção: quantos itens estão visíveis em cada uma.
+  // Mantém DnD e edição inline funcionais (apenas reduz nodes DOM em seções grandes).
+  const ITEMS_PAGE_SIZE = 25;
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
+  const showMoreItems = useCallback((sectionId: string, total: number) => {
+    setVisibleCounts(prev => ({
+      ...prev,
+      [sectionId]: Math.min((prev[sectionId] ?? ITEMS_PAGE_SIZE) + ITEMS_PAGE_SIZE, total),
+    }));
+  }, []);
+  const showAllItems = useCallback((sectionId: string, total: number) => {
+    setVisibleCounts(prev => ({ ...prev, [sectionId]: total }));
+  }, []);
   const densityKey = `budget-item-density-${budgetId}`;
   const [compactMode, setCompactMode] = useState(() => {
     try { return localStorage.getItem(densityKey) !== "expanded"; } catch { return true; }
@@ -826,12 +839,20 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     return map;
   }, [normalizedQuery, sections]);
 
-  // Auto-expand matching sections on search
+  // Auto-expand matching sections on search e revela todos os itens dessas seções
   useEffect(() => {
     if (sectionMatchMap && sectionMatchMap.size > 0) {
       setExpandedSections(new Set(sectionMatchMap.keys()));
+      setVisibleCounts(prev => {
+        const next = { ...prev };
+        for (const sid of sectionMatchMap.keys()) {
+          const sec = sections.find(s => s.id === sid);
+          if (sec) next[sid] = sec.items.length;
+        }
+        return next;
+      });
     }
-  }, [sectionMatchMap]);
+  }, [sectionMatchMap, sections]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -1180,6 +1201,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       });
       updated = recalcTaxItem(updated);
       onSectionsChange(updated);
+      // Garante que o item recém-adicionado fique visível mesmo em seções paginadas
+      const updatedSection = updated.find(s => s.id === sectionId);
+      if (updatedSection) {
+        setVisibleCounts(prev => ({ ...prev, [sectionId]: updatedSection.items.length }));
+      }
       const origin = itemData?.catalog_item_id ? "Item do catálogo adicionado" : "Item manual adicionado";
       toast.success(origin);
       return data.id as string;
@@ -1679,52 +1705,86 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                             </div>
                           )}
 
-                          {/* Items with DnD */}
-                          <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleItemDragEnd(section.id)}
-                          >
-                            <SortableContext
-                              items={section.items.map(i => i.id)}
-                              strategy={verticalListSortingStrategy}
-                            >
-                              <div>
-                                {section.items.length === 0 ? (
-                                  <button
-                                    onClick={() => addItem(section.id)}
-                                    className="w-full py-6 text-sm font-body text-muted-foreground/40 hover:text-foreground hover:bg-muted/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                                  >
-                                    <Plus className="h-3.5 w-3.5" />
-                                    Adicionar primeiro item
-                                  </button>
-                                ) : (
-                                  section.items.map((item) => (
-                                    <SortableItemRow
-                                      key={item.id}
-                                      item={item}
-                                      sectionId={section.id}
-                                      sectionTitle={section.title}
-                                      budgetId={budgetId}
-                                      isItemSaving={savingIds.has(item.id)}
-                                      searchMatch={matchingItemIds?.has(item.id)}
-                                      highlight={highlightItemId === item.id}
-                                      compact={compactMode}
-                                      onUpdate={updateItem}
-                                      onDelete={deleteItem}
-                                      onImagesChange={handleImagesChange}
-                                      suppliers={suppliers}
-                                      onPromoteToCatalog={promoteToCatalog}
-                                      disableImages={cfg.disableImages}
-                                      disableCatalog={cfg.disableCatalog}
-                                      isAddendum={isAddendum}
-                                      sectionAddendumAction={section.addendum_action ?? null}
-                                    />
-                                  ))
-                                )}
-                              </div>
-                            </SortableContext>
-                          </DndContext>
+                          {/* Items with DnD — paginação progressiva por seção para performance em listas longas */}
+                          {(() => {
+                            const totalItems = section.items.length;
+                            const visibleCount = Math.min(visibleCounts[section.id] ?? ITEMS_PAGE_SIZE, totalItems);
+                            const visibleItems = totalItems > visibleCount ? section.items.slice(0, visibleCount) : section.items;
+                            const hiddenCount = totalItems - visibleCount;
+                            return (
+                              <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleItemDragEnd(section.id)}
+                              >
+                                <SortableContext
+                                  items={visibleItems.map(i => i.id)}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  <div>
+                                    {totalItems === 0 ? (
+                                      <button
+                                        onClick={() => addItem(section.id)}
+                                        className="w-full py-6 text-sm font-body text-muted-foreground/40 hover:text-foreground hover:bg-muted/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                        Adicionar primeiro item
+                                      </button>
+                                    ) : (
+                                      <>
+                                        {visibleItems.map((item) => (
+                                          <SortableItemRow
+                                            key={item.id}
+                                            item={item}
+                                            sectionId={section.id}
+                                            sectionTitle={section.title}
+                                            budgetId={budgetId}
+                                            isItemSaving={savingIds.has(item.id)}
+                                            searchMatch={matchingItemIds?.has(item.id)}
+                                            highlight={highlightItemId === item.id}
+                                            compact={compactMode}
+                                            onUpdate={updateItem}
+                                            onDelete={deleteItem}
+                                            onImagesChange={handleImagesChange}
+                                            suppliers={suppliers}
+                                            onPromoteToCatalog={promoteToCatalog}
+                                            disableImages={cfg.disableImages}
+                                            disableCatalog={cfg.disableCatalog}
+                                            isAddendum={isAddendum}
+                                            sectionAddendumAction={section.addendum_action ?? null}
+                                          />
+                                        ))}
+                                        {hiddenCount > 0 && (
+                                          <div className="flex items-center justify-between gap-3 px-3 py-2 border-t border-dashed border-border/50 bg-muted/20">
+                                            <span className="text-[11px] font-body text-muted-foreground tabular-nums">
+                                              Mostrando {visibleCount} de {totalItems} itens
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                type="button"
+                                                onClick={() => showMoreItems(section.id, totalItems)}
+                                                className="text-[11px] font-body font-medium text-primary hover:underline"
+                                              >
+                                                Mostrar mais {Math.min(ITEMS_PAGE_SIZE, hiddenCount)}
+                                              </button>
+                                              <span className="text-muted-foreground/40" aria-hidden>·</span>
+                                              <button
+                                                type="button"
+                                                onClick={() => showAllItems(section.id, totalItems)}
+                                                className="text-[11px] font-body text-muted-foreground hover:text-foreground hover:underline"
+                                              >
+                                                Mostrar todos
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </SortableContext>
+                              </DndContext>
+                            );
+                          })()}
 
                           {/* Add item */}
                           <div className="px-3 py-1.5 border-t border-border/30">
