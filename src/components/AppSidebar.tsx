@@ -24,6 +24,7 @@ import {
   Stethoscope,
   Bug,
   GitBranch,
+  Trash2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate, Link } from "react-router-dom";
@@ -101,6 +102,7 @@ const FERRAMENTAS_ITEMS: NavItem[] = [
   { title: "Diagnóstico de Orçamento", url: "/admin/diagnostico", icon: Stethoscope, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Bug Reports", url: "/admin/bug-reports", icon: Bug, roles: ["admin", "comercial", "orcamentista"] },
   { title: "Sistema", url: "/admin/sistema", icon: Wrench, roles: ["admin"] },
+  { title: "Lixeira", url: "/admin/lixeira", icon: Trash2, roles: ["admin"] },
 ];
 
 function renderNavItem(item: NavItem, collapsed: boolean) {

@@ -35,6 +35,7 @@ const UserManagement = lazy(() => import("./pages/UserManagement"));
 const VersionCompare = lazy(() => import("./pages/VersionCompare"));
 const CatalogPage = lazy(() => import("./pages/CatalogPage"));
 const SystemToolsPage = lazy(() => import("./pages/SystemToolsPage"));
+const TrashPage = lazy(() => import("./pages/TrashPage"));
 const PhotoLibraryUpload = lazy(() => import("./pages/PhotoLibraryUpload"));
 const BudgetTemplatesPage = lazy(() => import("./pages/BudgetTemplatesPage"));
 const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
@@ -117,6 +118,7 @@ const App = () => (
                     <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
                     <Route path="/admin/catalogo" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><CatalogPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/sistema" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><SystemToolsPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/lixeira" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><TrashPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/biblioteca-fotos" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><PhotoLibraryUpload /></RoleGuard></AdminPage>} />
                     <Route path="/admin/templates" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><BudgetTemplatesPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/templates/:templateId/editar" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><TemplateEditorPage /></RoleGuard></AdminPage>} />

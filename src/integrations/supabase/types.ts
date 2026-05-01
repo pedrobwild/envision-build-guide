@@ -841,6 +841,8 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           date: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           demand_context: string | null
           disclaimer: string | null
           due_at: string | null
@@ -934,6 +936,8 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           date?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           demand_context?: string | null
           disclaimer?: string | null
           due_at?: string | null
@@ -1027,6 +1031,8 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           date?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           demand_context?: string | null
           disclaimer?: string | null
           due_at?: string | null
@@ -3365,6 +3371,19 @@ export type Database = {
         Args: { _status: string }
         Returns: boolean
       }
+      list_deleted_budgets: {
+        Args: { p_limit?: number }
+        Returns: {
+          client_name: string
+          created_at: string
+          deleted_at: string
+          deleted_by: string
+          id: string
+          internal_status: string
+          project_name: string
+          sequential_code: string
+        }[]
+      }
       list_failed_lead_sources: {
         Args: { p_limit?: number }
         Returns: {
@@ -3400,6 +3419,7 @@ export type Database = {
         Returns: string
       }
       normalize_phone: { Args: { p_phone: string }; Returns: string }
+      purge_budget: { Args: { p_budget_id: string }; Returns: undefined }
       reactivate_or_addendum_budget: {
         Args: { _client_id: string; _property_id?: string }
         Returns: string
@@ -3426,6 +3446,7 @@ export type Database = {
         Args: { p_public_id: string }
         Returns: string
       }
+      restore_budget: { Args: { p_budget_id: string }; Returns: string }
       run_reengagement_sweep: {
         Args: never
         Returns: {
