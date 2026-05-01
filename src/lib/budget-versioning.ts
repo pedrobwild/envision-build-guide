@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { logVersionEvent } from "@/lib/version-audit";
+import { logBudgetDeletion, logVersionEvent } from "@/lib/version-audit";
 
 /**
  * Ensure a budget has a version_group_id. If it doesn't, set it to its own id.
@@ -317,7 +317,7 @@ export async function deleteDraftVersion(
 ): Promise<void> {
   const { data: target, error: loadErr } = await supabase
     .from("budgets")
-    .select("id, status, is_current_version, is_published_version, version_group_id, version_number, public_id")
+    .select("id, status, is_current_version, is_published_version, version_group_id, version_number, parent_budget_id, public_id")
     .eq("id", budgetId)
     .single();
 
@@ -332,6 +332,22 @@ export async function deleteDraftVersion(
       .select("id", { count: "exact", head: true })
       .eq("version_group_id", target.version_group_id);
     if ((count ?? 0) <= 1) throw new Error("Não é possível excluir a única versão do grupo");
+  }
+
+  // Defesa em profundidade: também recusa quando este é o "raiz" do grupo
+  // (version_group_id == self.id) e ainda existem outros membros — apagar a
+  // raiz tornaria os filhos órfãos via version_group_id. Esse caminho não
+  // deveria ser alcançável (raízes são V1 com is_current_version=true até
+  // alguém promover outra), mas serve como rede de segurança.
+  if (target.version_group_id && target.version_group_id === budgetId) {
+    const { count: groupChildren } = await supabase
+      .from("budgets")
+      .select("id", { count: "exact", head: true })
+      .eq("version_group_id", target.version_group_id)
+      .neq("id", budgetId);
+    if ((groupChildren ?? 0) > 0) {
+      throw new Error("Não é possível excluir a raiz do grupo de versões enquanto houver outras versões");
+    }
   }
 
   // Cascade clean-up: items/images via sections, adjustments, rooms, tours.
@@ -361,8 +377,25 @@ export async function deleteDraftVersion(
   const { error: delErr } = await supabase.from("budgets").delete().eq("id", budgetId);
   if (delErr) throw new Error(`Falha ao excluir versão: ${delErr.message}`);
 
-  // Note: no audit event is logged here because the budget row (FK target) was deleted.
-  void userId;
+  // Audit obrigatório (issue #14): registra a exclusão num registro sobrevivente
+  // (parent ou irmão do mesmo grupo) já que budget_events.budget_id tem
+  // FK ON DELETE CASCADE. Best-effort — não reverte a deleção em caso de falha.
+  try {
+    await logBudgetDeletion({
+      deletedBudgetId: budgetId,
+      userId: userId ?? null,
+      source: "deleteDraftVersion",
+      parentBudgetId: target.parent_budget_id ?? null,
+      versionGroupId: target.version_group_id ?? null,
+      versionNumber: target.version_number ?? null,
+      publicId: target.public_id ?? null,
+      isCurrentVersion: target.is_current_version ?? false,
+      isPublishedVersion: target.is_published_version ?? false,
+      status: target.status ?? null,
+    });
+  } catch {
+    /* audit é best-effort */
+  }
 }
 
 /**

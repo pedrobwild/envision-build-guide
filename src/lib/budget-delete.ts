@@ -12,10 +12,13 @@
  * **antes** de remover o budget, mantendo a integridade do versionamento.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { logBudgetDeletion } from "@/lib/version-audit";
 
 export interface SafeDeleteOptions {
   /** Pular checagem de current/published (caso o caller já tenha forçado outro current). NÃO use sem motivo. */
   force?: boolean;
+  /** Usuário que iniciou a exclusão — usado no audit log. */
+  userId?: string | null;
 }
 
 export interface SafeDeleteFailure {
@@ -36,7 +39,7 @@ export async function safeDeleteBudget(
   // 1) Carrega o alvo
   const { data: target, error: loadErr } = await supabase
     .from("budgets")
-    .select("id, status, is_current_version, is_published_version, version_group_id")
+    .select("id, status, is_current_version, is_published_version, version_group_id, version_number, parent_budget_id, public_id")
     .eq("id", budgetId)
     .maybeSingle();
 
@@ -101,6 +104,25 @@ export async function safeDeleteBudget(
   // 5) Finalmente, deleta o budget
   const { error: delErr } = await supabase.from("budgets").delete().eq("id", budgetId);
   if (delErr) return { ok: false, reason: `Falha ao excluir orçamento: ${delErr.message}` };
+
+  // 6) Audit log obrigatório (issue #14): registra a exclusão num registro
+  // sobrevivente do mesmo grupo/parent. Tolerante a falhas — não reverte a deleção.
+  try {
+    await logBudgetDeletion({
+      deletedBudgetId: budgetId,
+      userId: options.userId ?? null,
+      source: "safeDeleteBudget",
+      parentBudgetId: target.parent_budget_id ?? null,
+      versionGroupId: target.version_group_id ?? null,
+      versionNumber: target.version_number ?? null,
+      publicId: target.public_id ?? null,
+      isCurrentVersion: target.is_current_version ?? false,
+      isPublishedVersion: target.is_published_version ?? false,
+      status: target.status ?? null,
+    });
+  } catch {
+    /* audit é best-effort */
+  }
 
   return { ok: true };
 }

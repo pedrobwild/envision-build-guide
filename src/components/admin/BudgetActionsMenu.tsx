@@ -306,7 +306,7 @@ export function BudgetActionsMenu({
 
   const deleteBudget = async () => {
     setDeleting(true);
-    const result = await safeDeleteBudget(budget.id);
+    const result = await safeDeleteBudget(budget.id, { userId: user?.id ?? null });
     if (result.ok) {
       toast.success("Orçamento excluído");
       onRefresh?.();

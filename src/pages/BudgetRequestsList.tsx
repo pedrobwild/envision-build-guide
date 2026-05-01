@@ -112,7 +112,7 @@ export default function BudgetRequestsList() {
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
-    const result = await safeDeleteBudget(deleteTarget.id);
+    const result = await safeDeleteBudget(deleteTarget.id, { userId: user?.id ?? null });
     if (result.ok) {
       toast.success("Solicitação excluída com sucesso");
       setBudgets((prev) => prev.filter((b) => b.id !== deleteTarget.id));
