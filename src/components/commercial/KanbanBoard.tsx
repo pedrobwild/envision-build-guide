@@ -464,6 +464,7 @@ function SubSectionGroup({
                       toast.error("Orçamento sem link público");
                     }
                   }}
+                  actionsSlot={<CardActionsSlot budget={b} />}
                 />
               ) : (
                 <DraggableCard
