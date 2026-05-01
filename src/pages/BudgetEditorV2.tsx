@@ -200,10 +200,28 @@ export default function BudgetEditorV2() {
   // resultado em cache por budgetId. Após import/template, o `invalidateQueries`
   // disparado por `reloadSections` garante refetch sem requests duplicados
   // simultâneos.
+  // Retry com backoff exponencial: tenta até 3 vezes em erros transitórios
+  // (5xx, network, timeout). Não retenta em 4xx (auth/permissão) — o usuário
+  // precisa intervir. Backoff: 500ms, 1.5s, 4.5s.
+  const isTransientError = (err: unknown): boolean => {
+    if (!err) return false;
+    const e = err as { status?: number; code?: string; message?: string };
+    if (typeof e.status === "number" && e.status >= 400 && e.status < 500) return false;
+    const msg = (e.message ?? "").toLowerCase();
+    if (/jwt|permission|denied|row-level security|unauthorized|forbidden/.test(msg)) return false;
+    return true;
+  };
+  const queryRetryConfig = {
+    retry: (failureCount: number, error: unknown) => isTransientError(error) && failureCount < 3,
+    retryDelay: (attemptIndex: number) => Math.min(500 * 3 ** attemptIndex, 5000),
+  } as const;
+
   // Stage 1: sections (estrutura básica)
   const {
     data: sectionsRowsData,
     isLoading: sectionsRowsLoading,
+    error: sectionsRowsError,
+    isFetching: sectionsRowsFetching,
     refetch: refetchSectionsRows,
   } = useQuery({
     queryKey: ["budget-editor-sections-rows", budgetId],
@@ -218,6 +236,7 @@ export default function BudgetEditorV2() {
       return (data ?? []) as EditorSection[];
     },
     enabled: !!budgetId,
+    ...queryRetryConfig,
   });
 
   const sectionIdsKey = (sectionsRowsData ?? []).map((s) => s.id).join(",");
@@ -226,6 +245,8 @@ export default function BudgetEditorV2() {
   const {
     data: itemsRowsData,
     isLoading: itemsRowsLoading,
+    error: itemsRowsError,
+    isFetching: itemsRowsFetching,
     refetch: refetchItemsRows,
   } = useQuery({
     queryKey: ["budget-editor-items-rows", budgetId, sectionIdsKey],
@@ -241,14 +262,17 @@ export default function BudgetEditorV2() {
       return (data ?? []) as EditorSection["items"];
     },
     enabled: !!budgetId && !!sectionsRowsData,
+    ...queryRetryConfig,
   });
 
   const itemIdsKey = (itemsRowsData ?? []).map((i) => i.id).join(",");
 
-  // Stage 3: imagens dos itens
+  // Stage 3: imagens dos itens — fallback graceful (itens aparecem sem imagens)
   const {
     data: imageRowsData,
     isLoading: imagesRowsLoading,
+    error: imagesRowsError,
+    isFetching: imagesRowsFetching,
     refetch: refetchImagesRows,
   } = useQuery({
     queryKey: ["budget-editor-image-rows", budgetId, itemIdsKey],
@@ -263,9 +287,28 @@ export default function BudgetEditorV2() {
       return data ?? [];
     },
     enabled: !!budgetId && !!itemsRowsData,
+    ...queryRetryConfig,
   });
 
-  // Compose nested structure progressively (sections show up before items/images)
+  // Toast inicial quando uma query crítica falhar mesmo após os retries
+  useEffect(() => {
+    if (sectionsRowsError) {
+      toast.error("Falha ao carregar seções. Use 'Tentar novamente' para reconectar.");
+    }
+  }, [sectionsRowsError]);
+  useEffect(() => {
+    if (itemsRowsError) {
+      toast.error("Falha ao carregar itens. Use 'Tentar novamente' para reconectar.");
+    }
+  }, [itemsRowsError]);
+  useEffect(() => {
+    if (imagesRowsError) {
+      toast.warning("Algumas imagens não carregaram — exibindo itens sem fotos.");
+    }
+  }, [imagesRowsError]);
+
+  // Compose nested structure progressively (sections show up before items/images).
+  // Em caso de erro nos itens ou imagens, segue mostrando o que conseguiu carregar.
   const sectionsData = useMemo<EditorSection[] | undefined>(() => {
     if (!sectionsRowsData) return undefined;
     const items = itemsRowsData ?? [];
@@ -933,10 +976,47 @@ export default function BudgetEditorV2() {
                       </Button>
                     </div>
                   )}
-                  {sections.length > 0 && (itemsInitialLoading || imagesInitialLoading) && (
+                  {sections.length > 0 && (itemsInitialLoading || imagesInitialLoading) && !Boolean(itemsRowsError) && !Boolean(imagesRowsError) && (
                     <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-md border border-border/60 bg-muted/30 text-xs text-muted-foreground font-body" role="status" aria-live="polite">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       {itemsInitialLoading ? "Carregando itens das seções…" : "Carregando imagens dos itens…"}
+                    </div>
+                  )}
+                  {/* Banners de erro com retry manual — não bloqueiam edição do que já carregou */}
+                  {Boolean(sectionsRowsError) && (
+                    <div className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-md border border-destructive/40 bg-destructive/5 text-xs font-body" role="alert">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                        <span className="text-foreground truncate">Falha ao carregar seções do orçamento.</span>
+                      </div>
+                      <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs shrink-0" disabled={sectionsRowsFetching} onClick={() => refetchSectionsRows()}>
+                        {sectionsRowsFetching ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
+                        Tentar novamente
+                      </Button>
+                    </div>
+                  )}
+                  {!sectionsRowsError && Boolean(itemsRowsError) && (
+                    <div className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-md border border-destructive/40 bg-destructive/5 text-xs font-body" role="alert">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                        <span className="text-foreground truncate">Falha ao carregar itens. Seções aparecem sem conteúdo.</span>
+                      </div>
+                      <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs shrink-0" disabled={itemsRowsFetching} onClick={() => refetchItemsRows()}>
+                        {itemsRowsFetching ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
+                        Tentar novamente
+                      </Button>
+                    </div>
+                  )}
+                  {!sectionsRowsError && !itemsRowsError && Boolean(imagesRowsError) && (
+                    <div className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-md border border-warning/40 bg-warning/5 text-xs font-body" role="status">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
+                        <span className="text-foreground truncate">Algumas imagens não carregaram. Itens estão visíveis sem fotos.</span>
+                      </div>
+                      <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs shrink-0" disabled={imagesRowsFetching} onClick={() => refetchImagesRows()}>
+                        {imagesRowsFetching ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
+                        Recarregar imagens
+                      </Button>
                     </div>
                   )}
                   <SectionsEditor
