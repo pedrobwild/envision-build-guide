@@ -368,7 +368,7 @@ export default function EstimatorDashboard() {
           label: "Desfazer",
           onClick: async () => {
             const rollback: Record<string, unknown> = {};
-            for (const k of fields) rollback[k] = (previous as Record<string, unknown>)[k] ?? null;
+            for (const k of fields) rollback[k] = (previous as unknown as Record<string, unknown>)[k] ?? null;
             const { error: rbErr } = await supabase
               .from("budgets")
               .update({ ...rollback, updated_at: new Date().toISOString() })
