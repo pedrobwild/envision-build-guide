@@ -224,7 +224,7 @@ export default function ComercialHome() {
               description="Nenhum negócio ativo. Comece criando um lead ou atendendo a um existente."
               size="sm"
             />
-          ) : (
+          ) : pipelineView === "lista" ? (
             <div className="space-y-5">
               {data.pipelinePorEtapa.map((group) => (
                 <div key={group.stage}>
@@ -246,6 +246,58 @@ export default function ComercialHome() {
                         className="text-[12px] font-body text-ink-soft hover:text-info py-1.5 transition-colors"
                       >
                         Ver mais {group.deals.length - 5} →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {data.pipelinePorEtapa.map((group) => (
+                <div
+                  key={group.stage}
+                  className="rounded-lg border border-hairline/60 bg-neutral-bg/40 p-3 flex flex-col min-h-[200px]"
+                >
+                  <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-hairline/60">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-soft font-body truncate">
+                      {stageLabel(group.stage)}
+                    </span>
+                    <StatusChip tone="neutral" size="sm" dot={false}>
+                      {group.deals.length}
+                    </StatusChip>
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    {group.deals.slice(0, 6).map((d) => (
+                      <button
+                        key={d.id}
+                        onClick={() => navigate(`/admin/budget/${d.id}`)}
+                        className="w-full text-left rounded-md border border-hairline/50 bg-surface-1 hover:bg-surface-2 hover:border-hairline transition-colors p-2.5"
+                      >
+                        <div className="flex items-baseline justify-between gap-2 mb-1">
+                          <p className="text-[12.5px] font-body font-semibold text-ink-strong truncate">
+                            {d.client_name}
+                          </p>
+                          <span className="text-[11.5px] font-mono text-ink-medium tabular-nums shrink-0">
+                            {formatCurrencyBRL(d.total_value ?? 0)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-ink-soft font-body truncate">
+                          → {nextActionForDeal(d)}
+                        </p>
+                      </button>
+                    ))}
+                    {group.deals.length === 0 && (
+                      <p className="text-[11.5px] text-ink-soft font-body italic py-2">
+                        Sem negócios nesta etapa.
+                      </p>
+                    )}
+                    {group.deals.length > 6 && (
+                      <button
+                        onClick={() => navigate(`/admin/comercial?stage=${group.stage}`)}
+                        className="text-[11.5px] font-body text-ink-soft hover:text-info py-1 transition-colors"
+                      >
+                        Ver mais {group.deals.length - 6} →
                       </button>
                     )}
                   </div>
