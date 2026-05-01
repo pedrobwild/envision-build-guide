@@ -933,11 +933,20 @@ export default function BudgetEditorV2() {
                       </Button>
                     </div>
                   )}
+                  {sections.length > 0 && (itemsInitialLoading || imagesInitialLoading) && (
+                    <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-md border border-border/60 bg-muted/30 text-xs text-muted-foreground font-body" role="status" aria-live="polite">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {itemsInitialLoading ? "Carregando itens das seções…" : "Carregando imagens dos itens…"}
+                    </div>
+                  )}
                   <SectionsEditor
                     budgetId={budgetId!}
                     sections={sections}
                     onSectionsChange={setSections}
                     loading={sectionsLoading || (sectionsInitialLoading && sections.length === 0)}
+                    loadingStage={
+                      sectionsInitialLoading ? "sections" : itemsInitialLoading ? "items" : imagesInitialLoading ? "images" : null
+                    }
                     readOnly={isPublishedVersion}
                     isAddendum={budget.is_addendum === true}
                     onProtectedEditAttempt={isPublishedVersion ? forkPublishedForStructuralEdit : undefined}
