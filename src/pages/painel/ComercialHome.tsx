@@ -58,8 +58,6 @@ const anim = (delay: number) => ({
   transition: { duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 });
 
-const DEFAULT_MONTHLY_TARGET_BRL = 250_000;
-
 export default function ComercialHome() {
   const navigate = useNavigate();
   const { user } = useAuth();
