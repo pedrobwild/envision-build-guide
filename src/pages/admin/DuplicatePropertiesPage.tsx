@@ -221,6 +221,12 @@ export default function DuplicatePropertiesPage() {
           })}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="orphans" className="mt-4">
+          <OrphanVersionGroupsPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
