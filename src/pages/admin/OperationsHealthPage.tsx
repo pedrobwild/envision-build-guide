@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { subDays } from "date-fns";
-import { Activity, AlertTriangle, ArrowLeft, GitBranch, HeartPulse, Sparkles, Users } from "lucide-react";
+import { Activity, AlertTriangle, ArrowLeft, GitBranch, Sparkles, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
