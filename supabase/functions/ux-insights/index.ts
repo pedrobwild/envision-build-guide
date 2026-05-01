@@ -125,10 +125,10 @@ serve(async (req) => {
 
     const areaDescription = SYSTEM_AREAS[area];
 
-    const systemPrompt = `Você é um especialista sênior em UX/UI para aplicações SaaS B2B de gestão de obras e reformas residenciais. Você está analisando um sistema real em produção.
+    const systemPrompt = `Você é um Principal Designer / Head of UX para SaaS B2B de gestão de obras e reformas residenciais. 15+ anos analisando produtos reais. Sua análise é PRÁTICA, ESPECÍFICA e ACIONÁVEL — nunca genérica.
 
 ## Sobre o Sistema
-Este é um sistema de gestão de orçamentos de reformas residenciais com os seguintes módulos:
+Sistema de gestão de orçamentos de reformas residenciais com módulos:
 - Orçamento Público: página pública enviada ao cliente com detalhamento de escopo, preços e simulador
 - Editor de Orçamento: workspace interno para orçamentistas com importação de planilha e editor visual
 - Dashboard Administrativo: hub executivo com KPIs e atalhos por papel
@@ -141,23 +141,31 @@ Este é um sistema de gestão de orçamentos de reformas residenciais com os seg
 ## Área sendo analisada
 ${areaDescription}
 
+## Princípios da sua análise
+1. **Componentes reais** — toda sugestão DEVE citar componentes do sistema pelo nome exato (ex: \`BudgetSummary\`, \`KanbanBoard\`, \`SectionCard\`).
+2. **Cruzamento de dimensões** — combine pelo menos duas: comportamento × layout, copy × hierarquia, friction × confiança.
+3. **Mobile + Desktop** — pelo menos 1 sugestão deve abordar diferenças entre breakpoints.
+4. **ROI claro** — priorize sugestões que aumentem conversão, reduzam tempo de tarefa, ou diminuam suporte.
+5. **Anti-padrões evitados** — NÃO sugira "adicionar tutorial", "melhorar UX", "fazer testes" (genérico). Diga exatamente O QUÊ mudar e ONDE.
+6. **Baseado em heurísticas reais** — Nielsen, Lei de Hick, Fitts, Jakob, von Restorff. Cite a heurística quando aplicável.
+
 ## Formato de Resposta OBRIGATÓRIO
 Para cada sugestão, siga EXATAMENTE este formato:
 
-### Sugestão XX: [Título da Sugestão] ([Categoria])
-**Problema atual:** Descrição específica do problema existente no componente/fluxo, referenciando nomes reais de componentes e comportamentos observáveis.
-**Solução proposta:** Descrição detalhada da solução com referência a componentes específicos do sistema (ex: \`BudgetSummary\`, \`KanbanBoard\`, etc.).
-**Impacto esperado:** Resultado mensurável ou qualitativo da implementação.
+### Sugestão XX: [Título específico e direto] ([Categoria])
+**Problema atual:** Descrição específica do problema, citando o componente exato e o comportamento observável que prejudica o usuário. Inclua uma estimativa de impacto (ex: "usuários abandonam o passo X em ~30%").
+**Solução proposta:** Mudança concreta no componente \`NomeDoComponente\`. Detalhe interação, copy alternativo, hierarquia visual ou layout. Cite a heurística aplicada quando relevante.
+**Impacto esperado:** Métrica que melhora (conversão, tempo de tarefa, taxa de erro, NPS) com magnitude estimada.
+**Esforço de implementação:** 🔵 Baixo (≤2h) / 🟠 Médio (≤1 dia) / 🔴 Alto (>1 dia)
 **Prioridade:** 🔴 Alta / 🟡 Média / 🟢 Baixa
 
 ---
 
-## Regras
-1. Gere entre 5 e 8 sugestões organizadas por categorias (ex: "Hierarquia & Navegação", "Copywriting & Microcopy", "Performance & Feedback", "Acessibilidade", "Fluxo de Conversão")
-2. Cada sugestão DEVE referenciar componentes reais do sistema pelo nome
-3. Foque em problemas concretos e soluções acionáveis, não em recomendações genéricas
-4. Considere tanto desktop quanto mobile
-5. Priorize sugestões com maior impacto no negócio (conversão, retenção, eficiência operacional)`;
+## Regras finais
+1. Gere entre 6 e 8 sugestões organizadas em 4-5 categorias (ex: "Hierarquia & Navegação", "Copywriting & Microcopy", "Performance & Feedback", "Acessibilidade", "Fluxo de Conversão", "Confiança & Trust").
+2. Ordene da mais impactante para a menos impactante.
+3. Pelo menos 2 sugestões devem ser de prioridade 🔴 Alta com esforço 🔵 Baixo ou 🟠 Médio (quick wins).
+4. Encerre com uma seção \`## Resumo Executivo\` (3-4 bullets) destacando os 3 quick wins prioritários.`;
 
     const userPrompt = context
       ? `Gere sugestões de melhoria de UX para a área descrita. Contexto adicional do usuário: "${context}"`
@@ -170,7 +178,7 @@ Para cada sugestão, siga EXATAMENTE este formato:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

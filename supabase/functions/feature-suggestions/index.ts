@@ -50,10 +50,12 @@ serve(async (req) => {
 
   try {
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
 
-    if (!ANTHROPIC_API_KEY) {
-      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }), {
+    // Either Anthropic direct or Lovable Gateway fallback is acceptable.
+    if (!ANTHROPIC_API_KEY && !LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "Nenhuma chave de IA configurada (ANTHROPIC_API_KEY ou LOVABLE_API_KEY)." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -96,11 +98,11 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Use Claude (Anthropic) to generate contextual suggestions
-    const systemPrompt = `Você é um Product Manager sênior especializado em software de gestão de obras e reformas residenciais. Você está analisando um sistema REAL em produção para sugerir NOVAS FUNCIONALIDADES baseadas em benchmarking de concorrentes.
+    // Step 2: Generate contextual suggestions
+    const systemPrompt = `Você é um Principal Product Manager / Head of Product para SaaS B2B de gestão de obras e reformas residenciais. 12+ anos lançando features que movem KPI de negócio. Sua análise é PRÁTICA e ESPECÍFICA.
 
 ## Sistema Atual
-Este é um sistema de gestão de orçamentos de reformas residenciais com módulos: Orçamento Público, Editor de Orçamento, Dashboard Admin, Pipeline Comercial, Catálogo, Gestão de Usuários, Workspace de Produção, Financeiro.
+Sistema de gestão de orçamentos de reformas residenciais com módulos: Orçamento Público, Editor de Orçamento, Dashboard Admin, Pipeline Comercial, Catálogo, Gestão de Usuários, Workspace de Produção, Financeiro. Stack: React + TypeScript + Supabase (Postgres + Edge Functions Deno).
 
 ## Área Sendo Analisada
 ${areaDescription}
@@ -108,72 +110,123 @@ ${areaDescription}
 ${benchmarkData ? `## Pesquisa de Benchmarking (dados reais de concorrentes)
 ${benchmarkData}` : ""}
 
-## Formato de Resposta OBRIGATÓRIO
-Para cada sugestão, siga EXATAMENTE este formato:
+## Princípios da sua análise
+1. **Diferenciação competitiva** — priorize features que CRIAM vantagem, não só paridade.
+2. **ROI quantificável** — toda sugestão deve apontar a métrica que melhora (conversão, ticket, retenção, NPS, churn, custo/orçamento).
+3. **Componentes reais** — cite componentes do sistema pelo nome exato e onde a feature se encaixa.
+4. **Stack realista** — só sugira features implementáveis com React + Supabase + Edge Functions. Cite a tabela / função / componente que precisaria mudar.
+5. **Benchmark concreto** — quando citar concorrente, diga o software, a feature equivalente, e o que pode ser MELHOR aqui.
+6. **Anti-padrão** — NÃO sugira "adicionar IA" genérico. Diga exatamente: o INPUT, o MODELO, o OUTPUT, o COMPONENTE de UI.
 
-### Sugestão XX: [Título da Funcionalidade] ([Categoria])
-**Problema atual:** O que falta no sistema atual ou qual dor do usuário não está sendo atendida. Referencie componentes reais.
-**Solução proposta:** Descrição detalhada da nova funcionalidade, referenciando onde ela se encaixaria no sistema atual (componentes, fluxos, telas).
-**Benchmark:** Qual software concorrente já implementa algo similar e como.
-**Impacto esperado:** Resultado mensurável ou qualitativo para o negócio.
+## Formato de Resposta OBRIGATÓRIO
+### Sugestão XX: [Título específico e direto] ([Categoria])
+**Problema atual:** Dor concreta do usuário ou gap competitivo. Cite o componente atual e o atrito observável.
+**Solução proposta:** Descrição da feature com 3-5 frases. Cite componentes \`NomeComponente\`, tabelas, edge functions e fluxos exatos onde se encaixa.
+**Benchmark:** [Concorrente específico] — como implementa hoje. O que podemos fazer DIFERENTE/MELHOR.
+**Impacto esperado:** Métrica de negócio + magnitude estimada (ex: "+8-12% conversão de orçamento → contrato").
+**Esforço de engenharia:** 🔵 1-2 dias / 🟠 1 semana / 🔴 2+ semanas
 **Prioridade:** 🔴 Alta / 🟡 Média / 🟢 Baixa
-**Complexidade de implementação:** 🔵 Simples / 🟠 Moderada / 🔴 Complexa
 
 ---
 
-## Regras
-1. Gere entre 5 e 8 sugestões de NOVAS funcionalidades (não melhorias de UX)
-2. Organize por categorias: "Automação & IA", "Experiência do Cliente", "Gestão Financeira", "Comunicação & Colaboração", "Relatórios & Analytics", "Integrações"
-3. Cada sugestão DEVE referenciar componentes reais do sistema e indicar onde a funcionalidade seria implementada
-4. Inclua benchmarks reais de concorrentes quando possível
-5. Priorize funcionalidades com ROI claro e diferenciação competitiva
-6. Considere a arquitetura existente (React + Supabase + Edge Functions)`;
+## Regras finais
+1. Entre 6 e 8 sugestões de NOVAS funcionalidades (não melhorias cosméticas de UX).
+2. Organize em 4-5 categorias: "Automação & IA", "Experiência do Cliente", "Gestão Financeira", "Comunicação & Colaboração", "Relatórios & Analytics", "Integrações".
+3. Pelo menos 2 sugestões devem ser quick wins (esforço 🔵 1-2 dias com prioridade 🔴 Alta).
+4. Encerre com \`## Roadmap sugerido\` priorizando 3 features para os próximos 30 dias com base em ROI/esforço.`;
 
     const userPrompt = context
-      ? `Gere sugestões de novas funcionalidades para a área descrita. Contexto adicional: "${context}"`
+      ? `Gere sugestões de novas funcionalidades para a área descrita. Contexto adicional do solicitante: "${context}"`
       : `Gere sugestões de novas funcionalidades para a área descrita, baseando-se em benchmarking de concorrentes.`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 4096,
-        system: systemPrompt,
-        messages: [
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
+    let content = "";
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("Claude API error:", response.status, errText);
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em alguns segundos." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402 || response.status === 403) {
-        return new Response(JSON.stringify({ error: "Créditos de IA esgotados ou chave inválida." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: "Erro na API Claude", detail: errText }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (ANTHROPIC_API_KEY) {
+      // Preferred path — Anthropic direct (richer reasoning).
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5",
+          max_tokens: 6000,
+          system: systemPrompt,
+          messages: [
+            { role: "user", content: userPrompt },
+          ],
+        }),
       });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Claude API error:", response.status, errText);
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em alguns segundos." }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402 || response.status === 403) {
+          // Fall through to Lovable Gateway if available, otherwise surface error.
+          if (!LOVABLE_API_KEY) {
+            return new Response(JSON.stringify({ error: "Créditos de IA esgotados ou chave inválida." }), {
+              status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        } else {
+          return new Response(JSON.stringify({ error: "Erro na API Claude", detail: errText }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        const data = await response.json();
+        content = data.content
+          ?.filter((block: any) => block.type === "text")
+          .map((block: any) => block.text)
+          .join("\n") ?? "";
+      }
     }
 
-    const data = await response.json();
-    // Claude returns content as an array of content blocks
-    const content = data.content
-      ?.filter((block: any) => block.type === "text")
-      .map((block: any) => block.text)
-      .join("\n") ?? "";
+    if (!content && LOVABLE_API_KEY) {
+      // Fallback — Lovable AI Gateway (Gemini Pro for stronger reasoning).
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-pro",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Lovable Gateway error:", response.status, errText);
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em alguns segundos." }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ error: "Erro na API de IA", detail: errText }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      content = data.choices?.[0]?.message?.content ?? "";
+    }
 
     return new Response(JSON.stringify({ content }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

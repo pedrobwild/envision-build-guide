@@ -487,51 +487,65 @@ function processMeetings(transcribes: any[]) {
 
 // ─── AI PROMPT (now requires evidence) ──────────────────────────
 
-const STRUCTURED_PROMPT = `Você é um analista de inteligência comercial da BWild, empresa de reformas de studios para investimento (Airbnb/short stay).
+const STRUCTURED_PROMPT = `Você é um Head of Sales Intelligence da BWild — empresa de reformas de studios para investimento (Airbnb/short stay). Sua expertise: extrair padrões acionáveis de reuniões com investidores, identificar objeções reais e ocultas, mapear sinais de compra que convertem.
 
-Analise as transcrições e retorne um JSON com esta estrutura. RETORNE APENAS O JSON, sem markdown.
+MISSÃO
+Analise as transcrições e devolva inteligência comercial estruturada em JSON. Esta análise alimenta o playbook que os consultores usam diariamente.
 
-CRÍTICO: para cada objeção, pergunta, objeção oculta e sinal de compra você DEVE incluir um array "evidence" com pelo menos 1 trecho LITERAL extraído das reuniões. NUNCA invente citações. Cada item de evidência tem o formato:
-{ "meetingTitle": "título exato da reunião", "quote": "trecho literal de no máximo 200 caracteres" }
+REGRAS CRÍTICAS DE QUALIDADE
+1. EVIDÊNCIA LITERAL OBRIGATÓRIA — para cada objeção, pergunta, objeção oculta e sinal de compra, INCLUA \`evidence\`: array com 1+ trechos LITERAIS extraídos das reuniões. JAMAIS invente citações. Use o título exato da reunião.
+2. ESPECIFICIDADE — "Preço alto" é raso. "Preço alto comparado ao Airbnb antigo dele" é específico. SEMPRE traga o contexto.
+3. ACIONABILIDADE — \`rebuttal\`, \`approach\`, \`action\` devem ser scripts USÁVEIS pelo consultor na próxima reunião. Verbo no imperativo, exemplo concreto.
+4. PRIORIZE PADRÕES REAIS — se uma objeção apareceu 5x, ela importa MUITO mais que uma que apareceu 1x. Reflita isso na ordem.
+5. DIFERENCIE OBJEÇÃO ABERTA × OCULTA — aberta = cliente verbalizou ("é caro"). Oculta = cliente NÃO verbalizou mas o consultor deveria identificar (silêncio, evasiva, mudança de assunto, comparação implícita).
+6. SINAIS DE COMPRA — sinais comportamentais reais, não óbvios. "Perguntou sobre prazo" > "Perguntou sobre o investimento". Detalhe exatamente o que fazer NA HORA.
+7. ARGUMENTOS DE FECHAMENTO — só inclua os que TÊM evidência de funcionar (o consultor usou e cliente avançou).
+
+Formato JSON OBRIGATÓRIO (RETORNE APENAS O JSON, sem markdown, sem backticks):
 
 {
   "buyerPersona": {
-    "summary": "2-3 frases sobre o perfil típico",
-    "ageRange": "Faixa etária",
-    "professions": ["Prof1", "Prof2"],
-    "motivations": ["Mot1", "Mot2"],
-    "avgTicket": "Ex: R$ 60k - R$ 80k"
+    "summary": "3-4 frases sobre o perfil típico, citando dores e motivações específicas",
+    "ageRange": "Faixa etária observada",
+    "professions": ["Prof1 (com freq)", "Prof2"],
+    "motivations": ["Mot1 específica", "Mot2 específica"],
+    "avgTicket": "Ex: R$ 60k - R$ 80k",
+    "decisionStyle": "Como decidem (analítico/emocional/social/avesso a risco)"
   },
   "personalityProfiles": [
-    {"type": "Nome", "description": "Como se comporta", "frequency": "alta/média/baixa", "approachStrategy": "Como atender", "pitfalls": "O que evitar"}
+    {"type": "Nome do perfil", "description": "Comportamento observável em 1-2 frases", "frequency": "alta/média/baixa", "approachStrategy": "Script/abordagem específica", "pitfalls": "Erro fatal a evitar"}
   ],
   "topQuestions": [
-    {"question": "Pergunta", "idealAnswer": "Resposta", "context": "Quando surge", "evidence": [{"meetingTitle": "...", "quote": "..."}]}
+    {"question": "Pergunta literal mais comum", "idealAnswer": "Resposta-modelo de 2-3 frases que move a venda", "context": "Em qual momento da reunião surge", "evidence": [{"meetingTitle": "...", "quote": "..."}]}
   ],
   "objections": [
-    {"objection": "Objeção", "rebuttal": "Argumento", "evidence": [{"meetingTitle": "...", "quote": "..."}]}
+    {"objection": "Objeção verbalizada", "rebuttal": "Script de resposta acionável (2-3 frases, verbo no imperativo)", "evidence": [{"meetingTitle": "...", "quote": "..."}]}
   ],
   "hiddenObjections": [
-    {"objection": "Objeção oculta", "signals": "Como identificar", "approach": "Como resolver", "evidence": [{"meetingTitle": "...", "quote": "..."}]}
+    {"objection": "O que o cliente realmente está pensando", "signals": "3+ sinais comportamentais para identificar", "approach": "Pergunta-chave para fazer + como conduzir", "evidence": [{"meetingTitle": "...", "quote": "..."}]}
   ],
   "closingArguments": [
-    {"argument": "Argumento", "effectiveness": "alta/média", "context": "Quando usar"}
+    {"argument": "Argumento que funcionou", "effectiveness": "alta/média", "context": "Quando exatamente usar"}
   ],
   "buyingSignals": [
-    {"signal": "Sinal", "action": "O que fazer", "evidence": [{"meetingTitle": "...", "quote": "..."}]}
+    {"signal": "Sinal comportamental específico", "action": "O que fazer NA HORA (script)", "evidence": [{"meetingTitle": "...", "quote": "..."}]}
   ],
   "actionItems": [
-    {"action": "Ação", "priority": "alta/média/baixa", "impact": "Impacto"}
+    {"action": "Ação concreta para o time comercial", "priority": "alta/média/baixa", "impact": "Métrica que melhora"}
   ],
-  "sentimentSummary": "Resumo de 1-2 frases sobre sentimento geral"
+  "sentimentSummary": "Resumo qualitativo de 2-3 frases citando padrões emocionais observados"
 }
 
-REGRAS:
-- APENAS JSON, sem texto antes/depois, sem backticks
-- Dados concretos das reuniões, nunca invente
-- Mínimo 3 objeções, 3 argumentos, 3 sinais, 2 perfis, 3 perguntas, 2 ocultas
-- TODA objeção, pergunta, objeção oculta e sinal precisa de pelo menos 1 evidência literal
-- Português do Brasil, direto e acionável`;
+QUOTAS MÍNIMAS
+- 3+ objeções abertas (priorize as recorrentes)
+- 3+ argumentos de fechamento
+- 3+ sinais de compra
+- 3+ perguntas frequentes
+- 2+ perfis de personalidade
+- 2+ objeções ocultas (com sinais claros)
+- 4+ action items priorizados
+
+Português do Brasil. Direto, sem jargão de consultoria. Foque em ACIONABILIDADE.`;
 
 // ─── EVIDENCE POST-PROCESSING ───────────────────────────────────
 
@@ -651,21 +665,29 @@ serve(async (req) => {
       const dashboardData = bodyParams.dashboardData;
       if (!dashboardData) return new Response(JSON.stringify({ success: false, error: "dashboardData is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-      const summaryPrompt = `Você é um analista de inteligência comercial da BWild, empresa de reformas de studios para investimento (Airbnb/short stay).
+      const summaryPrompt = `Você é Head of Sales Intelligence da BWild — empresa de reformas de studios para investimento (Airbnb/short stay).
 
-Com base nos dados consolidados de reuniões com investidores, gere exatamente 3 takeaways executivos — os insights mais importantes e acionáveis para o time comercial.
+Com base nos dados consolidados de reuniões com investidores, gere EXATAMENTE 3 takeaways executivos — os insights mais importantes e acionáveis para o time comercial nesta SEMANA.
 
-RETORNE APENAS um JSON array com 3 objetos, sem markdown:
+RETORNE APENAS um JSON array com 3 objetos, sem markdown, sem backticks:
 [
-  {"icon": "brain|shield|target|eye|sparkles", "title": "Título curto (max 8 palavras)", "insight": "Insight acionável em 1-2 frases"},
-  ...
+  {"icon": "brain|shield|target|eye|sparkles", "title": "Título curto e específico (max 8 palavras)", "insight": "Insight acionável em 2-3 frases citando número/padrão concreto + ação imediata"}
 ]
 
-REGRAS:
-- Cada takeaway deve ser concreto, baseado nos dados reais, não genérico
-- Use "icon" como: "brain" para perfil/comportamento, "shield" para objeções/riscos, "target" para oportunidades, "eye" para sinais, "sparkles" para recomendações
-- Português do Brasil, direto e acionável
-- APENAS o JSON array, nada mais`;
+REGRAS DE QUALIDADE
+1. ESPECIFICIDADE — cada takeaway cita um número, percentual ou nome de padrão. "Objeção de preço apareceu em 7 das últimas 12 reuniões" > "preço é uma preocupação".
+2. CRUZAMENTO — combine ao menos duas dimensões (ex: "objeção × perfil", "sinal × momento").
+3. AÇÃO IMEDIATA — última frase tem verbo no imperativo, escopo desta semana.
+4. NÃO REPITA o que já é óbvio nas métricas (sentimento positivo predominante etc).
+
+ÍCONES
+- "brain" → perfil/comportamento do investidor
+- "shield" → objeções/riscos
+- "target" → oportunidades de fechamento
+- "eye" → sinais de compra observáveis
+- "sparkles" → recomendação de processo/script
+
+Português do Brasil, direto, sem jargão de consultoria. APENAS o JSON array, nada mais.`;
 
       const dataStr = typeof dashboardData === "string" ? dashboardData : JSON.stringify(dashboardData);
 
@@ -673,10 +695,10 @@ REGRAS:
         method: "POST",
         headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-pro",
           messages: [
             { role: "system", content: summaryPrompt },
-            { role: "user", content: `Dados consolidados:\n${dataStr.substring(0, 8000)}` },
+            { role: "user", content: `Dados consolidados:\n${dataStr.substring(0, 12000)}` },
           ],
         }),
       });
@@ -799,7 +821,7 @@ REGRAS:
         method: "POST",
         headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-pro",
           messages: [
             { role: "system", content: STRUCTURED_PROMPT },
             { role: "user", content: `${filteredTranscribes.length} transcrições de ${targetUserName}. Use o TÍTULO exato de cada reunião ao gerar evidence:\n\n${meetingSummaries}` },
