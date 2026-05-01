@@ -39,6 +39,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { PainelHeader } from "@/components/dashboard/PainelHeader";
 import { EditableMetaCard } from "@/components/dashboard/EditableMetaCard";
+import { MetaAchievementChip } from "@/components/dashboard/MetaAchievementChip";
 import { FilaCard } from "@/components/dashboard/FilaCard";
 import { TimelineItem } from "@/components/dashboard/TimelineItem";
 import { Surface } from "@/components/dashboard/Surface";
@@ -104,9 +105,16 @@ export default function ComercialHome() {
         <PainelHeader
           subtitle={subtitle}
           actions={
-            <Button size="sm" className="gap-1.5 h-9 px-3.5" onClick={() => navigate("/admin/crm")}>
-              <Sparkles className="h-3.5 w-3.5" /> Novo lead
-            </Button>
+            <>
+              <MetaAchievementChip
+                computedRevenue={overviewMTD.data?.revenue_won ?? 0}
+                loading={overviewMTD.isLoading}
+                ownerId={ownerId}
+              />
+              <Button size="sm" className="gap-1.5 h-9 px-3.5" onClick={() => navigate("/admin/crm")}>
+                <Sparkles className="h-3.5 w-3.5" /> Novo lead
+              </Button>
+            </>
           }
           meta={
             <EditableMetaCard
