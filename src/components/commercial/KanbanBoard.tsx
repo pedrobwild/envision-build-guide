@@ -1009,6 +1009,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
           );
         }}
       </MobileSwipeableKanban>
+      </KanbanRefreshContext.Provider>
     );
   }
 
