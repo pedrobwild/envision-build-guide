@@ -1330,10 +1330,14 @@ export default function BudgetInternalDetail() {
 
                   {activeModule === "briefing" && (
                     <BriefingPanel
+                      budgetId={budget.id}
                       briefing={budget.briefing}
                       demandContext={budget.demand_context}
                       internalNotes={budget.internal_notes}
                       links={links as string[]}
+                      onChange={(patch) =>
+                        setBudget((prev) => (prev ? { ...prev, ...patch } : prev))
+                      }
                     />
                   )}
 
