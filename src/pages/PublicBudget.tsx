@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { fetchPublicBudget, fetchPublicBudgetStreaming, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
 import { isCreditSection, aggregateAbatementsByLabel } from "@/lib/budget-calc";
+import { buildPublicScopeGroups } from "@/lib/public-scope";
 import { AddendumDeltaCard } from "@/components/budget/AddendumDeltaCard";
 import { formatBRL, getValidityInfo } from "@/lib/formatBRL";
 import { BudgetHeader } from "@/components/budget/BudgetHeader";
@@ -566,22 +567,19 @@ export default function PublicBudget() {
             />
             </div>
 
-            {/* ─── Escopo técnico detalhado — only items with photos, no values ─── */}
+            {/* ─── Escopo técnico detalhado — todos os itens da seção ─── */}
+            {/*
+              Antes este bloco filtrava itens sem imagem fora do export, fazendo
+              com que o cliente visse o valor cheio do orçamento mas pouquíssimos
+              itens (ou nenhum). Agora exibimos sempre todos os itens; o
+              ProductShowcaseCard já tem fallback visual para itens sem imagem.
+              Ver: https://github.com/pedrobwild/envision-build-guide/pull/(este PR)
+            */}
             {!DEMO_PORTFOLIO_IDS.includes(publicId || "") && (
               <div id="mobile-scope" className="scroll-mt-20 mt-4 sm:mt-6">
                 {visibleSections.length > 0 && (() => {
-                  // Filter ALL categories to only show items with images
-                  const photoGroups = categorizedGroups
-                    .map(group => ({
-                      ...group,
-                      sections: group.sections.map(section => ({
-                        ...section,
-                        items: exporting
-                          ? (section.items || [])
-                          : (section.items || []).filter((item) => item.images && item.images.length > 0),
-                      })).filter(section => section.items.length > 0),
-                    }))
-                    .filter(group => group.sections.length > 0);
+                  // Mostra TODOS os itens das seções, com ou sem imagem.
+                  const photoGroups = buildPublicScopeGroups(categorizedGroups);
 
                   if (photoGroups.length === 0) return null;
 
