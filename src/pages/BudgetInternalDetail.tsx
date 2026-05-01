@@ -900,7 +900,7 @@ export default function BudgetInternalDetail() {
           </div>
 
           {/* KPIs */}
-          <div className="border-t border-border/60 mt-6 pt-5 grid grid-cols-2 md:grid-cols-4 gap-5">
+          <div className="border-t border-border/60 mt-6 pt-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
             <KpiBlock
               label="Valor"
               value={formatBRL(totalDisplay)}
@@ -927,19 +927,25 @@ export default function BudgetInternalDetail() {
               subTone={overdue ? "destructive" : dueToday ? "warning" : "muted"}
             />
             <KpiBlock
-              label="Responsáveis"
+              label="Comercial"
               value=""
               custom={
-                <div className="flex items-center gap-2 mt-1.5">
-                  <div className="flex items-center -space-x-2">
-                    <Avatar name={getProfileName(budget.commercial_owner_id)} tone="rose" />
-                    <Avatar name={getProfileName(budget.estimator_owner_id)} tone="amber" />
-                    {budget.created_by && budget.created_by !== budget.commercial_owner_id && (
-                      <Avatar name={getProfileName(budget.created_by)} tone="emerald" />
-                    )}
-                  </div>
-                  <span className="text-xs text-muted-foreground font-body truncate">
-                    {getProfileName(budget.commercial_owner_id).split(" ")[0]}
+                <div className="flex items-center gap-2 mt-1.5 min-w-0">
+                  <Avatar name={getProfileName(budget.commercial_owner_id)} tone="rose" />
+                  <span className="text-sm font-display font-medium text-foreground truncate">
+                    {budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : "—"}
+                  </span>
+                </div>
+              }
+            />
+            <KpiBlock
+              label="Orçamentista"
+              value=""
+              custom={
+                <div className="flex items-center gap-2 mt-1.5 min-w-0">
+                  <Avatar name={getProfileName(budget.estimator_owner_id)} tone="amber" />
+                  <span className="text-sm font-display font-medium text-foreground truncate">
+                    {budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : "—"}
                   </span>
                 </div>
               }
