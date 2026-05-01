@@ -612,6 +612,18 @@ export default function BudgetEditorV2() {
 
   const handleSaveAndPublish = async () => {
     if (!budgetId || !budget) return;
+
+    // Validação obrigatória: prazo de execução deve estar preenchido antes de publicar.
+    // Garante que o cliente sempre veja uma previsão de obra realista, definida pela orçamentista.
+    const prazo = Number(budget.prazo_dias_uteis);
+    if (!Number.isFinite(prazo) || prazo <= 0) {
+      toast.error("Defina o prazo de execução antes de publicar", {
+        description: "Abra Metadados → Prazo da obra e informe os dias úteis.",
+        duration: 6000,
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
