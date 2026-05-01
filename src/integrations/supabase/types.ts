@@ -2867,6 +2867,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_role: Database["public"]["Enums"]["app_role"] | null
           created_at: string | null
           full_name: string | null
           id: string
@@ -2875,6 +2876,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          active_role?: Database["public"]["Enums"]["app_role"] | null
           created_at?: string | null
           full_name?: string | null
           id: string
@@ -2883,6 +2885,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          active_role?: Database["public"]["Enums"]["app_role"] | null
           created_at?: string | null
           full_name?: string | null
           id?: string
@@ -3319,6 +3322,7 @@ export type Database = {
       check_and_create_alerts: { Args: never; Returns: number }
       cleanup_old_digisac_webhook_events: { Args: never; Returns: number }
       cleanup_old_snapshots: { Args: never; Returns: number }
+      clear_active_role: { Args: never; Returns: undefined }
       compare_snapshots: {
         Args: { p_date_a: string; p_date_b: string }
         Returns: Json
@@ -3495,6 +3499,10 @@ export type Database = {
           moved_count: number
           sample: Json
         }[]
+      }
+      set_active_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: undefined
       }
       set_primary_supplier_price: {
         Args: { p_catalog_item_id: string; p_price_id: string }
