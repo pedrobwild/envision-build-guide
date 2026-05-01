@@ -20,7 +20,10 @@ const signals = [
   },
 ];
 
-export function TrustStrip({ prazoDiasUteis = 55 }: TrustStripProps) {
+// `prazoDiasUteis` recebido apenas para compat futura — o badge atual de "Prazo" é exibido
+// pelo BudgetHeader/MobileHeroCard com o valor real (sem fallback). Não usamos default aqui
+// para garantir que ausência de prazo NUNCA seja mascarada por um número fictício.
+export function TrustStrip(_props: TrustStripProps) {
   return (
     <div className="lg:hidden">
       {/* 3×2 grid — all visible at once, no scroll */}
