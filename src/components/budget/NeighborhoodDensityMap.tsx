@@ -4,6 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin, ChevronLeft, ChevronRight, Camera, Building2, MapPinned } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getIndividualProjects, brooklinEmpreendimentos, type IndividualProject } from "@/data/brooklin-projects";
 
 // All individual projects across every bairro (for the vertical carousel)
@@ -168,7 +169,8 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
   const panelRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined;
-  const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
+  // Reage a redimensionamento/orientação (não congela no primeiro render)
+  const isMobileViewport = useIsMobile();
   const styleCandidates = useMemo<(string | maplibregl.StyleSpecification)[]>(() => {
     // Use the same resilient fallback chain for all devices: raster first (most reliable)
     const candidates: (string | maplibregl.StyleSpecification)[] = [
@@ -183,7 +185,7 @@ export function NeighborhoodDensityMap({ clientNeighborhood }: NeighborhoodDensi
     return candidates;
   }, [apiKey, isMobileViewport]);
 
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const isMobile = isMobileViewport;
 
   const filteredProjects = useMemo(() => {
     if (!bairroFilter) return ALL_INDIVIDUAL_PROJECTS;

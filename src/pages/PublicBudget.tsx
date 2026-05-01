@@ -3,6 +3,7 @@ import { Download } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchPublicBudget, fetchPublicBudgetStreaming, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
 import { resolveBudgetGrandTotal } from "@/lib/budget-total";
 import { isCreditSection, aggregateAbatementsByLabel } from "@/lib/budget-calc";
@@ -68,8 +69,10 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
   budgetId: string;
   exporting: boolean;
 }) {
+  // Aberto por padrão em mobile (preserva comportamento anterior); o usuário
+  // pode colapsar tocando no header. useIsMobile reage a resize/orientação.
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(true);
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const showItems = !isMobile || isOpen || exporting;
   const itemCount = allItems.length;
 
