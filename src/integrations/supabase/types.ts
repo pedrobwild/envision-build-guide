@@ -3460,6 +3460,16 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      test_published_budget_immutability: {
+        Args: never
+        Returns: {
+          actual: string
+          detail: string
+          expected: string
+          passed: boolean
+          test_name: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "comercial" | "orcamentista"
