@@ -993,6 +993,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                                 }
                               }
                             }}
+                            actionsSlot={<CardActionsSlot budget={b} />}
                           />
                         </div>
                       );
