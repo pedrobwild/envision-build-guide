@@ -1705,49 +1705,86 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                             </div>
                           )}
 
-                          {/* Items with DnD */}
-                          <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleItemDragEnd(section.id)}
-                          >
-                            <SortableContext
-                              items={section.items.map(i => i.id)}
-                              strategy={verticalListSortingStrategy}
-                            >
-                              <div>
-                                {section.items.length === 0 ? (
-                                  <button
-                                    onClick={() => addItem(section.id)}
-                                    className="w-full py-6 text-sm font-body text-muted-foreground/40 hover:text-foreground hover:bg-muted/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                                  >
-                                    <Plus className="h-3.5 w-3.5" />
-                                    Adicionar primeiro item
-                                  </button>
-                                ) : (
-                                  section.items.map((item) => (
-                                    <SortableItemRow
-                                      key={item.id}
-                                      item={item}
-                                      sectionId={section.id}
-                                      sectionTitle={section.title}
-                                      budgetId={budgetId}
-                                      isItemSaving={savingIds.has(item.id)}
-                                      searchMatch={matchingItemIds?.has(item.id)}
-                                      highlight={highlightItemId === item.id}
-                                      compact={compactMode}
-                                      onUpdate={updateItem}
-                                      onDelete={deleteItem}
-                                      onImagesChange={handleImagesChange}
-                                      suppliers={suppliers}
-                                      onPromoteToCatalog={promoteToCatalog}
-                                      disableImages={cfg.disableImages}
-                                      disableCatalog={cfg.disableCatalog}
-                                      isAddendum={isAddendum}
-                                      sectionAddendumAction={section.addendum_action ?? null}
-                                    />
-                                  ))
-                                )}
+                          {/* Items with DnD — paginação progressiva por seção para performance em listas longas */}
+                          {(() => {
+                            const totalItems = section.items.length;
+                            const visibleCount = Math.min(visibleCounts[section.id] ?? ITEMS_PAGE_SIZE, totalItems);
+                            const visibleItems = totalItems > visibleCount ? section.items.slice(0, visibleCount) : section.items;
+                            const hiddenCount = totalItems - visibleCount;
+                            return (
+                              <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleItemDragEnd(section.id)}
+                              >
+                                <SortableContext
+                                  items={visibleItems.map(i => i.id)}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  <div>
+                                    {totalItems === 0 ? (
+                                      <button
+                                        onClick={() => addItem(section.id)}
+                                        className="w-full py-6 text-sm font-body text-muted-foreground/40 hover:text-foreground hover:bg-muted/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                        Adicionar primeiro item
+                                      </button>
+                                    ) : (
+                                      <>
+                                        {visibleItems.map((item) => (
+                                          <SortableItemRow
+                                            key={item.id}
+                                            item={item}
+                                            sectionId={section.id}
+                                            sectionTitle={section.title}
+                                            budgetId={budgetId}
+                                            isItemSaving={savingIds.has(item.id)}
+                                            searchMatch={matchingItemIds?.has(item.id)}
+                                            highlight={highlightItemId === item.id}
+                                            compact={compactMode}
+                                            onUpdate={updateItem}
+                                            onDelete={deleteItem}
+                                            onImagesChange={handleImagesChange}
+                                            suppliers={suppliers}
+                                            onPromoteToCatalog={promoteToCatalog}
+                                            disableImages={cfg.disableImages}
+                                            disableCatalog={cfg.disableCatalog}
+                                            isAddendum={isAddendum}
+                                            sectionAddendumAction={section.addendum_action ?? null}
+                                          />
+                                        ))}
+                                        {hiddenCount > 0 && (
+                                          <div className="flex items-center justify-between gap-3 px-3 py-2 border-t border-dashed border-border/50 bg-muted/20">
+                                            <span className="text-[11px] font-body text-muted-foreground tabular-nums">
+                                              Mostrando {visibleCount} de {totalItems} itens
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                type="button"
+                                                onClick={() => showMoreItems(section.id, totalItems)}
+                                                className="text-[11px] font-body font-medium text-primary hover:underline"
+                                              >
+                                                Mostrar mais {Math.min(ITEMS_PAGE_SIZE, hiddenCount)}
+                                              </button>
+                                              <span className="text-muted-foreground/40" aria-hidden>·</span>
+                                              <button
+                                                type="button"
+                                                onClick={() => showAllItems(section.id, totalItems)}
+                                                className="text-[11px] font-body text-muted-foreground hover:text-foreground hover:underline"
+                                              >
+                                                Mostrar todos
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </SortableContext>
+                              </DndContext>
+                            );
+                          })()}
                               </div>
                             </SortableContext>
                           </DndContext>
