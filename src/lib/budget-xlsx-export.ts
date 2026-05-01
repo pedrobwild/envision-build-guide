@@ -557,6 +557,7 @@ export async function buildBudgetXlsxBlob(
     { label: "Data do orçamento", value: dataDoc, fmt: FMT.DATE },
     { label: "Última atualização", value: dataAtualizado, fmt: FMT.DATE },
     { label: "Validade (dias)", value: b.validity_days ?? null, fmt: FMT.INT },
+    { label: "Prazo de execução (dias úteis)", value: b.prazo_dias_uteis ?? null, fmt: FMT.INT },
     { label: "RESUMO FINANCEIRO", isHeader: true },
     { label: "Custo total (interno)", value: totalCusto, fmt: FMT.BRL },
     { label: "Venda (custo + BDI por item)", value: totalVenda, fmt: FMT.BRL },
