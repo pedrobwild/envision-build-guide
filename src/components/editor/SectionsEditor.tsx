@@ -159,6 +159,12 @@ interface SectionsEditorProps {
    * the parent can intercept and create a draft version transparently.
    */
   onProtectedEditAttempt?: () => void;
+  /**
+   * Reporta o estado do auto-save inline (campos via debounce + drag&drop)
+   * para o pai exibir um único indicador centralizado no header.
+   * Status possíveis: "saving" | "saved" | "error".
+   */
+  onSaveStatusChange?: (status: "saving" | "saved" | "error") => void;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
@@ -739,7 +745,7 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, loadingStage, readOnly = false, isAddendum = false, onProtectedEditAttempt }: SectionsEditorProps) {
+export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, loadingStage, readOnly = false, isAddendum = false, onProtectedEditAttempt, onSaveStatusChange }: SectionsEditorProps) {
   // Centralised guard so any mutation attempted while in readOnly mode can be
   // intercepted by the parent (e.g. to auto-fork a published version into a
   // new draft instead of silently no-op'ing the user's action).
@@ -870,6 +876,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
     if (timers.current[key]) clearTimeout(timers.current[key]);
     setSavingIds(prev => new Set(prev).add(id));
+    onSaveStatusChange?.("saving");
 
     timers.current[key] = setTimeout(async () => {
       const actualTable = logicalTable === "sections" ? cfg.sectionTable : cfg.itemTable;
@@ -878,8 +885,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       delete pendingUpdates.current[key];
       delete timers.current[key];
 
+      let saveError: unknown = null;
       if (mergedUpdates && Object.keys(mergedUpdates).length > 0) {
-        await dbFrom(actualTable).update(mergedUpdates).eq("id", id);
+        const { error } = await dbFrom(actualTable).update(mergedUpdates).eq("id", id);
+        saveError = error;
       }
 
       setSavingIds(prev => {
@@ -887,8 +896,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
         next.delete(id);
         return next;
       });
+
+      if (saveError) {
+        onSaveStatusChange?.("error");
+      } else {
+        // Só sinaliza "saved" quando não há nenhum outro item ainda em debounce/saving
+        const stillPending = Object.keys(timers.current).length > 0;
+        if (!stillPending) onSaveStatusChange?.("saved");
+      }
     }, 600);
-  }, [cfg, readOnly]);
+  }, [cfg, readOnly, onSaveStatusChange]);
 
   const updateSection = (sectionId: string, field: string, value: string | number | boolean | null) => {
     if (blockedByReadOnly()) return;
@@ -1314,15 +1331,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
     const withNewOrder = reordered.map((s, i) => ({ ...s, order_index: i }));
     onSectionsChange(withNewOrder);
+    onSaveStatusChange?.("saving");
     try {
       await Promise.all(
         withNewOrder.map(s =>
           dbFrom(cfg.sectionTable).update({ order_index: s.order_index }).eq("id", s.id)
         )
       );
-      toast.success("Ordem das seções atualizada");
+      onSaveStatusChange?.("saved");
     } catch {
       onSectionsChange(previousOrder);
+      onSaveStatusChange?.("error");
       toast.error("Erro ao salvar a ordem. Tente novamente.");
     }
   };
@@ -1344,6 +1363,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       return { ...s, items: reordered };
     });
     onSectionsChange(updated);
+    onSaveStatusChange?.("saving");
 
     try {
       const targetSection = updated.find(s => s.id === sectionId);
@@ -1354,8 +1374,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
           )
         );
       }
+      onSaveStatusChange?.("saved");
     } catch {
       onSectionsChange(previousSections);
+      onSaveStatusChange?.("error");
       toast.error("Erro ao salvar a ordem dos itens.");
     }
   };

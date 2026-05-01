@@ -1030,6 +1030,13 @@ export default function BudgetEditorV2() {
                     readOnly={isPublishedVersion}
                     isAddendum={budget.is_addendum === true}
                     onProtectedEditAttempt={isPublishedVersion ? forkPublishedForStructuralEdit : undefined}
+                    onSaveStatusChange={(status) => {
+                      setSaveStatus(status);
+                      if (status === "saved") {
+                        setLastSavedAt(new Date());
+                        setTimeout(() => setSaveStatus(prev => prev === "saved" ? "idle" : prev), 2000);
+                      }
+                    }}
                   />
                 </div>
 
