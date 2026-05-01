@@ -20,16 +20,16 @@ import { MemoryRouter } from "react-router-dom";
 // `CountUpValue` anima de 0 → total; em jsdom isso significa que o DOM
 // inicial mostra "R$ 0,00". Para um teste E2E baseado em DOM precisamos do
 // valor final estável — mockamos o componente para renderizar `value` direto.
-vi.mock("@/components/budget/CountUpValue", () => ({
-  CountUpValue: ({ value, className, style }: { value: number; className?: string; style?: React.CSSProperties }) => {
-    const { formatBRL } = require("@/lib/formatBRL");
-    return (
+vi.mock("@/components/budget/CountUpValue", async () => {
+  const { formatBRL } = await import("@/lib/formatBRL");
+  return {
+    CountUpValue: ({ value, className, style }: { value: number; className?: string; style?: React.CSSProperties }) => (
       <span className={className} style={style} data-testid="countup-final">
         {formatBRL(value)}
       </span>
-    );
-  },
-}));
+    ),
+  };
+});
 
 // Polyfill mínimo de IntersectionObserver para jsdom (framer-motion `whileInView`).
 beforeAll(() => {
