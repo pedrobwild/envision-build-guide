@@ -126,10 +126,10 @@ export function MetaProgressBar({
           </span>
         </div>
         <div className="flex flex-col items-end gap-0.5 font-mono tabular-nums shrink-0">
-          <span className="text-sm font-semibold text-foreground leading-none">
+          <span className="text-base sm:text-lg font-semibold text-foreground leading-none">
             {fmt(current, format)}
           </span>
-          <span className="text-[10.5px] text-muted-foreground/70 leading-none">
+          <span className="text-[13px] font-semibold text-muted-foreground leading-none">
             de {fmt(target, format)}
           </span>
         </div>
