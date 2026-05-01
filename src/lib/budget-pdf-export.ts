@@ -481,8 +481,8 @@ export async function buildBudgetPdfBlob(
       ["Ajustes globais", brl(totalAjustes)],
       ["Margem média", `${num(margemPct, 2)}%`],
       [
-        { content: "Total geral", styles: { fontStyle: "bold", textColor: 0 } } as unknown as string,
-        { content: brl(totalVenda + totalAjustes), styles: { fontStyle: "bold", textColor: 0 } } as unknown as string,
+        { content: totalGeralLabel, styles: { fontStyle: "bold", textColor: 0 } } as unknown as string,
+        { content: brl(effectiveGrandTotal), styles: { fontStyle: "bold", textColor: 0 } } as unknown as string,
       ],
     ],
     theme: "plain",
