@@ -274,6 +274,16 @@ export default function CommercialDashboard() {
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
   const [pipelineFilter, setPipelineFilter] = useState<string>("all");
+  // Fila vinda da home do comercial via ?fila=prontos|sem-vis|esfriando.
+  // Quando ativa, sobrepõe statusFilter e força viewMode = "list" para
+  // o usuário ver imediatamente os negócios qualificados pela regra.
+  const [queueFilter, setQueueFilter] = useState<"prontos" | "sem-vis" | "esfriando" | null>(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const f = params.get("fila");
+    if (f === "prontos" || f === "sem-vis" || f === "esfriando") return f;
+    return null;
+  });
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
   const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
