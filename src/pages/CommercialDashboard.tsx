@@ -190,6 +190,41 @@ interface ProfileRow { id: string; full_name: string; }
 
 const DELIVERED_FINISHED = new Set(["delivered_to_sales", "sent_to_client", "minuta_solicitada", "lost", "archived", "contrato_fechado"]);
 
+// Thresholds das filas — manter idêntico ao usado em useComercialQueues e no
+// filtro `filtered` para evitar divergência entre contagem e lista.
+const QUEUE_COOLDOWN_DAYS: Record<string, number> = {
+  sent_to_client: 5,
+  minuta_solicitada: 10,
+  waiting_info: 3,
+};
+const QUEUE_HOUR_MS = 1000 * 60 * 60;
+const QUEUE_DAY_MS = QUEUE_HOUR_MS * 24;
+
+type QueueBudgetLike = {
+  internal_status: string;
+  view_count: number | null;
+  generated_at: string | null;
+  updated_at: string | null;
+};
+
+function matchesQueue(b: QueueBudgetLike, queue: "prontos" | "sem-vis" | "esfriando", now: number): boolean {
+  if (queue === "prontos") {
+    return b.internal_status === "delivered_to_sales";
+  }
+  if (queue === "sem-vis") {
+    if (b.internal_status !== "sent_to_client") return false;
+    if ((b.view_count ?? 0) > 0) return false;
+    const ref = b.generated_at ?? b.updated_at;
+    if (!ref) return false;
+    return (now - new Date(ref).getTime()) / QUEUE_HOUR_MS >= 48;
+  }
+  // esfriando
+  const threshold = QUEUE_COOLDOWN_DAYS[b.internal_status];
+  if (!threshold) return false;
+  if (!b.updated_at) return false;
+  return (now - new Date(b.updated_at).getTime()) / QUEUE_DAY_MS >= threshold;
+}
+
 function getDueInfo(dueAt: string | null, internalStatus?: string) {
   if (!dueAt) return { label: null, variant: "default" as const };
   const dueDate = new Date(dueAt);
