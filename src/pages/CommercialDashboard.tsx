@@ -190,6 +190,41 @@ interface ProfileRow { id: string; full_name: string; }
 
 const DELIVERED_FINISHED = new Set(["delivered_to_sales", "sent_to_client", "minuta_solicitada", "lost", "archived", "contrato_fechado"]);
 
+// Thresholds das filas — manter idêntico ao usado em useComercialQueues e no
+// filtro `filtered` para evitar divergência entre contagem e lista.
+const QUEUE_COOLDOWN_DAYS: Record<string, number> = {
+  sent_to_client: 5,
+  minuta_solicitada: 10,
+  waiting_info: 3,
+};
+const QUEUE_HOUR_MS = 1000 * 60 * 60;
+const QUEUE_DAY_MS = QUEUE_HOUR_MS * 24;
+
+type QueueBudgetLike = {
+  internal_status: string;
+  view_count: number | null;
+  generated_at: string | null;
+  updated_at: string | null;
+};
+
+function matchesQueue(b: QueueBudgetLike, queue: "prontos" | "sem-vis" | "esfriando", now: number): boolean {
+  if (queue === "prontos") {
+    return b.internal_status === "delivered_to_sales";
+  }
+  if (queue === "sem-vis") {
+    if (b.internal_status !== "sent_to_client") return false;
+    if ((b.view_count ?? 0) > 0) return false;
+    const ref = b.generated_at ?? b.updated_at;
+    if (!ref) return false;
+    return (now - new Date(ref).getTime()) / QUEUE_HOUR_MS >= 48;
+  }
+  // esfriando
+  const threshold = QUEUE_COOLDOWN_DAYS[b.internal_status];
+  if (!threshold) return false;
+  if (!b.updated_at) return false;
+  return (now - new Date(b.updated_at).getTime()) / QUEUE_DAY_MS >= threshold;
+}
+
 function getDueInfo(dueAt: string | null, internalStatus?: string) {
   if (!dueAt) return { label: null, variant: "default" as const };
   const dueDate = new Date(dueAt);
@@ -536,16 +571,25 @@ export default function CommercialDashboard() {
     return pipelines.find((p) => p.slug === pipelineFilter)?.id ?? null;
   }, [pipelineFilter, pipelines]);
 
+  // Contagens das filas usando exatamente a mesma regra de matchesQueue.
+  // Aplica os mesmos pré-filtros estruturais de `filtered` (comercial e pipeline)
+  // — só ignora `search`, para refletir o universo total da fila e não a busca textual.
+  const queueCounts = useMemo(() => {
+    const now = Date.now();
+    const base = dedupedBudgets.filter(b => {
+      if (commercialFilter !== "all" && b.commercial_owner_id !== commercialFilter) return false;
+      if (activePipelineId !== null && b.pipeline_id !== activePipelineId) return false;
+      return true;
+    });
+    return {
+      prontos: base.filter(b => matchesQueue(b, "prontos", now)).length,
+      "sem-vis": base.filter(b => matchesQueue(b, "sem-vis", now)).length,
+      esfriando: base.filter(b => matchesQueue(b, "esfriando", now)).length,
+    } as const;
+  }, [dedupedBudgets, commercialFilter, activePipelineId]);
+
   const filtered = useMemo(() => {
     const now = Date.now();
-    const HOUR = 1000 * 60 * 60;
-    // Mesmas thresholds usadas em useComercialQueues — mantém o card da home
-    // e a tela do pipeline mostrando exatamente o mesmo conjunto.
-    const COOLDOWN_DAYS: Record<string, number> = {
-      sent_to_client: 5,
-      minuta_solicitada: 10,
-      waiting_info: 3,
-    };
     const result = dedupedBudgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
@@ -558,23 +602,7 @@ export default function CommercialDashboard() {
 
       // Filtro de fila vindo da home do comercial. Tem prioridade sobre statusFilter.
       if (queueFilter) {
-        if (queueFilter === "prontos") {
-          if (b.internal_status !== "delivered_to_sales") return false;
-        } else if (queueFilter === "sem-vis") {
-          // Enviado ao cliente, sem nenhuma abertura, há mais de 48h.
-          if (b.internal_status !== "sent_to_client") return false;
-          if ((b.view_count ?? 0) > 0) return false;
-          const ref = b.generated_at ?? b.updated_at;
-          if (!ref) return false;
-          const hours = (now - new Date(ref).getTime()) / HOUR;
-          if (hours < 48) return false;
-        } else if (queueFilter === "esfriando") {
-          const threshold = COOLDOWN_DAYS[b.internal_status];
-          if (!threshold) return false;
-          if (!b.updated_at) return false;
-          const days = (now - new Date(b.updated_at).getTime()) / (HOUR * 24);
-          if (days < threshold) return false;
-        }
+        if (!matchesQueue(b, queueFilter, now)) return false;
         return matchSearch;
       }
 
@@ -1068,6 +1096,36 @@ export default function CommercialDashboard() {
                 >
                   Limpar filtro
                 </Button>
+              </div>
+
+              {/* Contagens das três filas — mesma regra usada na lista filtrada */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {([
+                  { id: "prontos" as const, label: "Prontos", icon: CheckCircle2 },
+                  { id: "sem-vis" as const, label: "Sem visualização >48h", icon: Eye },
+                  { id: "esfriando" as const, label: "Esfriando", icon: Clock },
+                ]).map(({ id, label, icon: Icon }) => {
+                  const active = queueFilter === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => navigate(`/admin/comercial?fila=${id}`, { replace: true })}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background hover:bg-muted text-foreground"
+                      }`}
+                      aria-pressed={active}
+                    >
+                      <Icon className="h-3 w-3" />
+                      <span>{label}</span>
+                      <span className={`font-mono tabular-nums ${active ? "opacity-90" : "text-muted-foreground"}`}>
+                        {queueCounts[id]}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {queueFilter === "sem-vis" && (
