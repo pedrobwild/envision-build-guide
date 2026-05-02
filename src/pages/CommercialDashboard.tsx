@@ -571,6 +571,23 @@ export default function CommercialDashboard() {
     return pipelines.find((p) => p.slug === pipelineFilter)?.id ?? null;
   }, [pipelineFilter, pipelines]);
 
+  // Contagens das filas usando exatamente a mesma regra de matchesQueue.
+  // Aplica os mesmos pré-filtros estruturais de `filtered` (comercial e pipeline)
+  // — só ignora `search`, para refletir o universo total da fila e não a busca textual.
+  const queueCounts = useMemo(() => {
+    const now = Date.now();
+    const base = dedupedBudgets.filter(b => {
+      if (commercialFilter !== "all" && b.commercial_owner_id !== commercialFilter) return false;
+      if (activePipelineId !== null && b.pipeline_id !== activePipelineId) return false;
+      return true;
+    });
+    return {
+      prontos: base.filter(b => matchesQueue(b, "prontos", now)).length,
+      "sem-vis": base.filter(b => matchesQueue(b, "sem-vis", now)).length,
+      esfriando: base.filter(b => matchesQueue(b, "esfriando", now)).length,
+    } as const;
+  }, [dedupedBudgets, commercialFilter, activePipelineId]);
+
   const filtered = useMemo(() => {
     const now = Date.now();
     const result = dedupedBudgets.filter(b => {
