@@ -306,6 +306,21 @@ export default function CommercialDashboard() {
     }
   }, [search, statusFilter, sortBy, viewMode]);
 
+  // Sincroniza ?fila=… vindo da home do comercial. Ao chegar com fila,
+  // forçamos a lista (mais legível pra cobrar/abrir cada deal) e zeramos
+  // statusFilter para não conflitar com o filtro de fila.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const f = params.get("fila");
+    const next = (f === "prontos" || f === "sem-vis" || f === "esfriando") ? f : null;
+    setQueueFilter(next);
+    if (next) {
+      setViewMode("list");
+      setStatusFilter("all");
+      setDueFilter("all");
+    }
+  }, [location.search]);
+
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
   const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
