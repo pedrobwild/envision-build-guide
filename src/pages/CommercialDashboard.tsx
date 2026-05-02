@@ -160,6 +160,9 @@ interface BudgetRow {
   due_at: string | null;
   created_at: string | null;
   updated_at: string | null;
+  generated_at: string | null;
+  last_viewed_at: string | null;
+  view_count: number | null;
   commercial_owner_id: string | null;
   estimator_owner_id: string | null;
   public_id: string | null;
@@ -271,6 +274,16 @@ export default function CommercialDashboard() {
   const [dueFilter, setDueFilter] = useState<DueFilter>("all");
   const [commercialFilter, setCommercialFilter] = useState<string>("all");
   const [pipelineFilter, setPipelineFilter] = useState<string>("all");
+  // Fila vinda da home do comercial via ?fila=prontos|sem-vis|esfriando.
+  // Quando ativa, sobrepõe statusFilter e força viewMode = "list" para
+  // o usuário ver imediatamente os negócios qualificados pela regra.
+  const [queueFilter, setQueueFilter] = useState<"prontos" | "sem-vis" | "esfriando" | null>(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const f = params.get("fila");
+    if (f === "prontos" || f === "sem-vis" || f === "esfriando") return f;
+    return null;
+  });
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
   const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
@@ -292,6 +305,21 @@ export default function CommercialDashboard() {
       // storage cheio/bloqueado: silenciosamente ignora — não é crítico.
     }
   }, [search, statusFilter, sortBy, viewMode]);
+
+  // Sincroniza ?fila=… vindo da home do comercial. Ao chegar com fila,
+  // forçamos a lista (mais legível pra cobrar/abrir cada deal) e zeramos
+  // statusFilter para não conflitar com o filtro de fila.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const f = params.get("fila");
+    const next = (f === "prontos" || f === "sem-vis" || f === "esfriando") ? f : null;
+    setQueueFilter(next);
+    if (next) {
+      setViewMode("list");
+      setStatusFilter("all");
+      setDueFilter("all");
+    }
+  }, [location.search]);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
@@ -345,7 +373,7 @@ export default function CommercialDashboard() {
     const isAdmin = profile?.roles.includes("admin");
     let budgetQuery = supabase
       .from("budgets")
-      .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
+      .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, generated_at, last_viewed_at, view_count, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
       .order("created_at", { ascending: false });
 
     if (!isAdmin) {
@@ -509,6 +537,15 @@ export default function CommercialDashboard() {
   }, [pipelineFilter, pipelines]);
 
   const filtered = useMemo(() => {
+    const now = Date.now();
+    const HOUR = 1000 * 60 * 60;
+    // Mesmas thresholds usadas em useComercialQueues — mantém o card da home
+    // e a tela do pipeline mostrando exatamente o mesmo conjunto.
+    const COOLDOWN_DAYS: Record<string, number> = {
+      sent_to_client: 5,
+      minuta_solicitada: 10,
+      waiting_info: 3,
+    };
     const result = dedupedBudgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
@@ -517,6 +554,28 @@ export default function CommercialDashboard() {
 
       if (activePipelineId !== null) {
         if (b.pipeline_id !== activePipelineId) return false;
+      }
+
+      // Filtro de fila vindo da home do comercial. Tem prioridade sobre statusFilter.
+      if (queueFilter) {
+        if (queueFilter === "prontos") {
+          if (b.internal_status !== "delivered_to_sales") return false;
+        } else if (queueFilter === "sem-vis") {
+          // Enviado ao cliente, sem nenhuma abertura, há mais de 48h.
+          if (b.internal_status !== "sent_to_client") return false;
+          if ((b.view_count ?? 0) > 0) return false;
+          const ref = b.generated_at ?? b.updated_at;
+          if (!ref) return false;
+          const hours = (now - new Date(ref).getTime()) / HOUR;
+          if (hours < 48) return false;
+        } else if (queueFilter === "esfriando") {
+          const threshold = COOLDOWN_DAYS[b.internal_status];
+          if (!threshold) return false;
+          if (!b.updated_at) return false;
+          const days = (now - new Date(b.updated_at).getTime()) / (HOUR * 24);
+          if (days < threshold) return false;
+        }
+        return matchSearch;
       }
 
       if (dueFilter !== "all") {
@@ -551,7 +610,7 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId]);
+  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId, queueFilter]);
 
   // Counts per pipeline (for the PipelineSwitcher tabs)
   const pipelineCounts = useMemo(() => {
@@ -985,6 +1044,31 @@ export default function CommercialDashboard() {
         </header>
 
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-5 pb-24 lg:pb-6">
+          {queueFilter && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] uppercase tracking-wide text-primary/70 font-medium">
+                  Filtro de fila ativo
+                </p>
+                <p className="text-sm font-medium text-foreground truncate">
+                  {queueFilter === "prontos" && `Prontos para enviar — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} entregue${filtered.length !== 1 ? "s" : ""} pelo orçamentista, aguardando envio ao cliente`}
+                  {queueFilter === "sem-vis" && `Sem visualização há mais de 48h — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} enviado${filtered.length !== 1 ? "s" : ""} ao cliente sem nenhuma abertura`}
+                  {queueFilter === "esfriando" && `Esfriando — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} parado${filtered.length !== 1 ? "s" : ""} além do tempo máximo da etapa`}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0"
+                onClick={() => {
+                  setQueueFilter(null);
+                  navigate("/admin/comercial", { replace: true });
+                }}
+              >
+                Limpar filtro
+              </Button>
+            </div>
+          )}
           {/* Compact summary strip — desktop */}
           <div className="hidden lg:flex items-center gap-4 px-3 py-2 rounded-lg bg-muted/30 border border-border/50 text-xs font-body text-muted-foreground">
             {counts.needsAction > 0 && (
