@@ -160,6 +160,9 @@ interface BudgetRow {
   due_at: string | null;
   created_at: string | null;
   updated_at: string | null;
+  generated_at: string | null;
+  last_viewed_at: string | null;
+  view_count: number | null;
   commercial_owner_id: string | null;
   estimator_owner_id: string | null;
   public_id: string | null;
