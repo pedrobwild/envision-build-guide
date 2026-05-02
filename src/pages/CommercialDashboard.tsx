@@ -573,14 +573,6 @@ export default function CommercialDashboard() {
 
   const filtered = useMemo(() => {
     const now = Date.now();
-    const HOUR = 1000 * 60 * 60;
-    // Mesmas thresholds usadas em useComercialQueues — mantém o card da home
-    // e a tela do pipeline mostrando exatamente o mesmo conjunto.
-    const COOLDOWN_DAYS: Record<string, number> = {
-      sent_to_client: 5,
-      minuta_solicitada: 10,
-      waiting_info: 3,
-    };
     const result = dedupedBudgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
@@ -593,23 +585,7 @@ export default function CommercialDashboard() {
 
       // Filtro de fila vindo da home do comercial. Tem prioridade sobre statusFilter.
       if (queueFilter) {
-        if (queueFilter === "prontos") {
-          if (b.internal_status !== "delivered_to_sales") return false;
-        } else if (queueFilter === "sem-vis") {
-          // Enviado ao cliente, sem nenhuma abertura, há mais de 48h.
-          if (b.internal_status !== "sent_to_client") return false;
-          if ((b.view_count ?? 0) > 0) return false;
-          const ref = b.generated_at ?? b.updated_at;
-          if (!ref) return false;
-          const hours = (now - new Date(ref).getTime()) / HOUR;
-          if (hours < 48) return false;
-        } else if (queueFilter === "esfriando") {
-          const threshold = COOLDOWN_DAYS[b.internal_status];
-          if (!threshold) return false;
-          if (!b.updated_at) return false;
-          const days = (now - new Date(b.updated_at).getTime()) / (HOUR * 24);
-          if (days < threshold) return false;
-        }
+        if (!matchesQueue(b, queueFilter, now)) return false;
         return matchSearch;
       }
 
