@@ -356,6 +356,35 @@ export default function CommercialDashboard() {
     }
   }, [location.search]);
 
+  // Sincroniza ?stage=… vindo da Home Comercial (linhas e atalhos por etapa).
+  // Mapeia o stage agregado (CommercialWorkflowStage) para os filtros reais
+  // do dashboard, evitando que o usuário caia no Kanban inteiro/primeira etapa.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const stage = params.get("stage");
+    if (!stage) return;
+    // Se há ?fila= ativo, ele tem prioridade — não sobrescrever.
+    if (params.get("fila")) return;
+
+    // CommercialWorkflowStage → { statusFilter?, dueFilter? }
+    const STAGE_TO_FILTER: Record<string, { status?: string; due?: "all" | "overdue" | "due_soon" }> = {
+      action_needed: { status: "entregue" },
+      solicitado: { status: "solicitado" },
+      em_elaboracao: { status: "em_elaboracao" },
+      revisao_solicitada: { status: "revisao_solicitada" },
+      enviado: { status: "enviado" },
+      advanced: { status: "minuta" },
+      overdue: { status: "all", due: "overdue" },
+      closed: { status: "fechado" },
+    };
+    const target = STAGE_TO_FILTER[stage];
+    if (!target) return;
+    setQueueFilter(null);
+    setViewMode("list");
+    if (target.status) setStatusFilter(target.status);
+    setDueFilter(target.due ?? "all");
+  }, [location.search]);
+
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
   const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
