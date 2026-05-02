@@ -385,6 +385,19 @@ export default function CommercialDashboard() {
     setDueFilter(target.due ?? "all");
   }, [location.search]);
 
+  // Sincroniza ?status=… vindo do DualFunnel (passa key direta de PIPELINE_SECTIONS).
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status = params.get("status");
+    if (!status) return;
+    if (params.get("fila") || params.get("stage")) return;
+    if (!(status in PIPELINE_SECTIONS) && status !== "all") return;
+    setQueueFilter(null);
+    setViewMode("list");
+    setStatusFilter(status);
+    setDueFilter("all");
+  }, [location.search]);
+
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
   const { data: pipelineMetaMap } = useBudgetPipelineMeta(budgetIds);
