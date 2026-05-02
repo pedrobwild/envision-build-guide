@@ -148,15 +148,17 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
               </ul>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {allItems.map((item) => (
-                  <ProductShowcaseCard
-                    key={item.id}
-                    item={item}
-                    budgetId={budgetId}
-                    editable={false}
-                    showGallery={false}
-                  />
-                ))}
+                {allItems
+                  .filter((item) => Array.isArray(item.images) && item.images.length > 0)
+                  .map((item) => (
+                    <ProductShowcaseCard
+                      key={item.id}
+                      item={item}
+                      budgetId={budgetId}
+                      editable={false}
+                      showGallery={false}
+                    />
+                  ))}
               </div>
             )}
           </motion.div>
@@ -656,7 +658,9 @@ export default function PublicBudget() {
                       </div>
 
                       {photoGroups.map((group) => {
-                        const allItems = group.sections.flatMap(s => (s.items || []).map((item) => ({ ...item, _sectionTitle: s.title })));
+                        const allItems = group.sections
+                          .flatMap(s => (s.items || []).map((item) => ({ ...item, _sectionTitle: s.title })))
+                          .filter((item) => Array.isArray(item.images) && item.images.length > 0);
                         if (allItems.length === 0) return null;
 
                         return (
