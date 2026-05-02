@@ -1045,28 +1045,52 @@ export default function CommercialDashboard() {
 
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-5 pb-24 lg:pb-6">
           {queueFilter && (
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5">
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] uppercase tracking-wide text-primary/70 font-medium">
-                  Filtro de fila ativo
-                </p>
-                <p className="text-sm font-medium text-foreground truncate">
-                  {queueFilter === "prontos" && `Prontos para enviar — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} entregue${filtered.length !== 1 ? "s" : ""} pelo orçamentista, aguardando envio ao cliente`}
-                  {queueFilter === "sem-vis" && `Sem visualização há mais de 48h — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} enviado${filtered.length !== 1 ? "s" : ""} ao cliente sem nenhuma abertura`}
-                  {queueFilter === "esfriando" && `Esfriando — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} parado${filtered.length !== 1 ? "s" : ""} além do tempo máximo da etapa`}
-                </p>
+            <div className="rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] uppercase tracking-wide text-primary/70 font-medium">
+                    Filtro de fila ativo
+                  </p>
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {queueFilter === "prontos" && `Prontos para enviar — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} entregue${filtered.length !== 1 ? "s" : ""} pelo orçamentista, aguardando envio ao cliente`}
+                    {queueFilter === "sem-vis" && `Sem visualização há mais de 48h — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} enviado${filtered.length !== 1 ? "s" : ""} ao cliente sem nenhuma abertura`}
+                    {queueFilter === "esfriando" && `Esfriando — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} parado${filtered.length !== 1 ? "s" : ""} além do tempo máximo da etapa`}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 shrink-0"
+                  onClick={() => {
+                    setQueueFilter(null);
+                    navigate("/admin/comercial", { replace: true });
+                  }}
+                >
+                  Limpar filtro
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 shrink-0"
-                onClick={() => {
-                  setQueueFilter(null);
-                  navigate("/admin/comercial", { replace: true });
-                }}
-              >
-                Limpar filtro
-              </Button>
+
+              {queueFilter === "sem-vis" && (
+                <div className="rounded-md border border-border/60 bg-background/60 p-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">
+                    Critérios aplicados
+                  </p>
+                  <ul className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-foreground/80">
+                    <li className="flex items-center gap-1.5">
+                      <Send className="h-3 w-3 text-primary shrink-0" />
+                      <span><span className="font-mono text-[11px] text-muted-foreground">internal_status</span> = <span className="font-medium">sent_to_client</span></span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Eye className="h-3 w-3 text-primary shrink-0" />
+                      <span><span className="font-mono text-[11px] text-muted-foreground">view_count</span> = <span className="font-medium">0</span></span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 text-primary shrink-0" />
+                      <span><span className="font-mono text-[11px] text-muted-foreground">generated_at</span> (ou <span className="font-mono text-[11px] text-muted-foreground">updated_at</span>) ≥ <span className="font-medium">48h</span></span>
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
           )}
           {/* Compact summary strip — desktop */}
