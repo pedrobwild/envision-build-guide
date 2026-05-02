@@ -1098,6 +1098,36 @@ export default function CommercialDashboard() {
                 </Button>
               </div>
 
+              {/* Contagens das três filas — mesma regra usada na lista filtrada */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {([
+                  { id: "prontos" as const, label: "Prontos", icon: CheckCircle2 },
+                  { id: "sem-vis" as const, label: "Sem visualização >48h", icon: Eye },
+                  { id: "esfriando" as const, label: "Esfriando", icon: Clock },
+                ]).map(({ id, label, icon: Icon }) => {
+                  const active = queueFilter === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => navigate(`/admin/comercial?fila=${id}`, { replace: true })}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background hover:bg-muted text-foreground"
+                      }`}
+                      aria-pressed={active}
+                    >
+                      <Icon className="h-3 w-3" />
+                      <span>{label}</span>
+                      <span className={`font-mono tabular-nums ${active ? "opacity-90" : "text-muted-foreground"}`}>
+                        {queueCounts[id]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
               {queueFilter === "sem-vis" && (
                 <div className="rounded-md border border-border/60 bg-background/60 p-2.5">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">
