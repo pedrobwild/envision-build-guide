@@ -610,7 +610,7 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId]);
+  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId, queueFilter]);
 
   // Counts per pipeline (for the PipelineSwitcher tabs)
   const pipelineCounts = useMemo(() => {
