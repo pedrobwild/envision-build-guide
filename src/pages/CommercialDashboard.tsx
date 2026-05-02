@@ -1044,6 +1044,31 @@ export default function CommercialDashboard() {
         </header>
 
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-5 pb-24 lg:pb-6">
+          {queueFilter && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] uppercase tracking-wide text-primary/70 font-medium">
+                  Filtro de fila ativo
+                </p>
+                <p className="text-sm font-medium text-foreground truncate">
+                  {queueFilter === "prontos" && `Prontos para enviar — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} entregue${filtered.length !== 1 ? "s" : ""} pelo orçamentista, aguardando envio ao cliente`}
+                  {queueFilter === "sem-vis" && `Sem visualização há mais de 48h — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} enviado${filtered.length !== 1 ? "s" : ""} ao cliente sem nenhuma abertura`}
+                  {queueFilter === "esfriando" && `Esfriando — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} parado${filtered.length !== 1 ? "s" : ""} além do tempo máximo da etapa`}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0"
+                onClick={() => {
+                  setQueueFilter(null);
+                  navigate("/admin/comercial", { replace: true });
+                }}
+              >
+                Limpar filtro
+              </Button>
+            </div>
+          )}
           {/* Compact summary strip — desktop */}
           <div className="hidden lg:flex items-center gap-4 px-3 py-2 rounded-lg bg-muted/30 border border-border/50 text-xs font-body text-muted-foreground">
             {counts.needsAction > 0 && (
