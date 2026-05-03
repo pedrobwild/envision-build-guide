@@ -72,7 +72,7 @@ export function FloorPlanViewer({
           <h3 className="font-display font-bold text-foreground text-sm">Planta do Apartamento</h3>
         </div>
         <div className="relative">
-          <img src={floorPlanUrl} alt="Planta baixa" className="w-full h-auto" />
+          <img loading="lazy" decoding="async" src={floorPlanUrl} alt="Planta baixa" className="w-full h-auto" />
         </div>
       </div>
     );
@@ -94,7 +94,7 @@ export function FloorPlanViewer({
       </div>
 
       <div className="relative">
-        <img src={floorPlanUrl} alt="Planta baixa do apartamento" className="w-full h-auto select-none" />
+        <img loading="lazy" decoding="async" src={floorPlanUrl} alt="Planta baixa do apartamento" className="w-full h-auto select-none" />
         <svg
           className="absolute inset-0 w-full h-full"
           viewBox="0 0 1 1"
