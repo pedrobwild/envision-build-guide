@@ -286,89 +286,10 @@ export default function CommercialDashboard() {
 
   // ─────────────────────────────────────────────────────────────────────
   // URL = source of truth para filtros, visualização e fila.
-  //
-  // Recarregar a página, copiar/colar o link ou voltar via histórico do
-  // navegador restaura exatamente o mesmo estado visual. Substituímos o
-  // sessionStorage anterior por query params para evitar divergência entre
-  // o que o usuário vê e o link que ele compartilha.
-  //
-  // Params suportados:
-  //   q     — texto de busca
-  //   status — chave de PIPELINE_SECTIONS ("all" omitido)
-  //   due    — DueFilter ("all" omitido)
-  //   com    — commercialFilter ("all" omitido)
-  //   pipe   — pipelineFilter ("all" omitido)
-  //   sort   — SortOption ("recente" omitido)
-  //   view   — "list" | "kanban" ("kanban" omitido)
-  //   fila   — "prontos" | "sem-vis" | "esfriando" (zera status/due e força lista)
-  //   stage  — entrada legada da Home: mapeada para status/due no parse
+  // Lógica pura extraída para src/lib/commercial-dashboard-url.ts (testada).
   // ─────────────────────────────────────────────────────────────────────
-  const STAGE_TO_FILTER: Record<string, { status?: string; due?: DueFilter }> = {
-    action_needed: { status: "entregue" },
-    solicitado: { status: "solicitado" },
-    em_elaboracao: { status: "em_elaboracao" },
-    revisao_solicitada: { status: "revisao_solicitada" },
-    enviado: { status: "enviado" },
-    advanced: { status: "minuta" },
-    overdue: { status: "all", due: "overdue" },
-    closed: { status: "fechado" },
-  };
-
-  type ParsedFilters = {
-    queueFilter: "prontos" | "sem-vis" | "esfriando" | null;
-    statusFilter: string;
-    dueFilter: DueFilter;
-    sortBy: SortOption;
-    viewMode: "list" | "kanban";
-    search: string;
-    commercialFilter: string;
-    pipelineFilter: string;
-  };
-
-  const parseFiltersFromSearch = useCallback((searchStr: string): ParsedFilters => {
-    const p = new URLSearchParams(searchStr);
-    const filaRaw = p.get("fila");
-    const queueFilter =
-      filaRaw === "prontos" || filaRaw === "sem-vis" || filaRaw === "esfriando" ? filaRaw : null;
-
-    const stage = p.get("stage");
-    const stageMap = stage ? STAGE_TO_FILTER[stage] : undefined;
-
-    let status = p.get("status") ?? stageMap?.status ?? "all";
-    if (status !== "all" && !(status in PIPELINE_SECTIONS)) status = "all";
-
-    const dueRaw = (p.get("due") ?? stageMap?.due ?? "all") as DueFilter;
-    const due: DueFilter =
-      dueRaw === "overdue" || dueRaw === "due_soon" || dueRaw === "all" ? dueRaw : "all";
-
-    const sortRaw = p.get("sort");
-    const sortBy: SortOption =
-      sortRaw === "urgente" || sortRaw === "recente" || sortRaw === "prazo" ? sortRaw : "recente";
-
-    const viewRaw = p.get("view");
-    // Fila e stage forçam visualização em lista (mais legível para cobrança).
-    const viewMode: "list" | "kanban" =
-      queueFilter || stage
-        ? "list"
-        : viewRaw === "list" || viewRaw === "kanban"
-        ? viewRaw
-        : "kanban";
-
-    return {
-      queueFilter,
-      statusFilter: queueFilter ? "all" : status,
-      dueFilter: queueFilter ? "all" : due,
-      sortBy,
-      viewMode,
-      search: p.get("q") ?? "",
-      commercialFilter: p.get("com") ?? "all",
-      pipelineFilter: p.get("pipe") ?? "all",
-    };
-  }, []);
-
   const initial = useMemo(
-    () => parseFiltersFromSearch(typeof window === "undefined" ? "" : window.location.search),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => parseDashboardSearch(typeof window === "undefined" ? "" : window.location.search),
     [],
   );
 
