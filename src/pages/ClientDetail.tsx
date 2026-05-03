@@ -600,13 +600,17 @@ export default function ClientDetail() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList>
-          <TabsTrigger value="overview">Visão geral</TabsTrigger>
-          <TabsTrigger value="timeline">Atividades</TabsTrigger>
-          <TabsTrigger value="properties">Imóveis ({properties.length})</TabsTrigger>
-          <TabsTrigger value="budgets">Orçamentos ({budgets.length})</TabsTrigger>
-          <TabsTrigger value="notes">Notas</TabsTrigger>
-        </TabsList>
+        <div className="sticky top-[3.25rem] sm:top-0 z-10 -mx-3 sm:mx-0 px-3 sm:px-0 py-1 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+          <div className="overflow-x-auto snap-x-mandatory">
+            <TabsList className="w-max sm:w-auto">
+              <TabsTrigger value="overview" className="snap-start tap-target">Visão geral</TabsTrigger>
+              <TabsTrigger value="timeline" className="snap-start tap-target">Atividades</TabsTrigger>
+              <TabsTrigger value="properties" className="snap-start tap-target">Imóveis ({properties.length})</TabsTrigger>
+              <TabsTrigger value="budgets" className="snap-start tap-target">Orçamentos ({budgets.length})</TabsTrigger>
+              <TabsTrigger value="notes" className="snap-start tap-target">Notas</TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
 
         <TabsContent value="overview" className="mt-4">
           <div className="grid md:grid-cols-2 gap-4">
