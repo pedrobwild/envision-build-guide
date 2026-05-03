@@ -144,7 +144,7 @@ export default function ComercialHome() {
             description="Entregues pelo orçamentista, ainda não enviados ao cliente."
             priority={data && data.prontosParaEnviar.length > 0 ? "info" : "ok"}
             actionLabel="Abrir e enviar"
-            onAction={() => navigate("/admin/comercial?fila=prontos")}
+            onAction={() => navigate(buildDashboardUrlForQueue("prontos"))}
             loading={isLoading}
           />
           <FilaCard
