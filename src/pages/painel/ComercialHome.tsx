@@ -51,7 +51,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useComercialQueues, nextActionForDeal, type DealRow } from "@/hooks/useComercialQueues";
 import { useSalesOverview, formatCurrencyBRL, formatDays, formatPct, stageLabel } from "@/hooks/useSalesKpis";
-import { buildDashboardUrlForQueue, buildDashboardUrlForStage } from "@/lib/commercial-dashboard-url";
+import { buildDashboardUrlForQueue, buildDashboardUrlForInternalStatus } from "@/lib/commercial-dashboard-url";
 
 const SECTION_DELAY = 0.06;
 const anim = (delay: number) => ({
