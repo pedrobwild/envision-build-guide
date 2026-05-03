@@ -291,7 +291,7 @@ export default function ComercialHome() {
                     )}
                     {group.deals.length > 6 && (
                       <button
-                        onClick={() => navigate(`/admin/comercial?stage=${group.stage}`)}
+                        onClick={() => navigate(buildDashboardUrlForInternalStatus(group.stage))}
                         className="text-[11.5px] font-body text-ink-soft hover:text-info py-1 transition-colors"
                       >
                         Ver mais {group.deals.length - 6} →
