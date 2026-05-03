@@ -351,7 +351,7 @@ export function AppSidebar() {
             {!collapsed && (
               <>
                 <span className="text-[12.5px] font-body flex-1 text-left">Buscar…</span>
-                <kbd className="hidden md:inline-flex items-center gap-0.5 text-[10px] font-mono text-sidebar-foreground/40 bg-sidebar-background/60 ring-1 ring-sidebar-border/60 rounded px-1 py-px leading-none">
+                <kbd className="hidden md:inline-flex items-center gap-0.5 text-[10px] font-mono text-white/75 bg-sidebar-background/60 ring-1 ring-sidebar-border/60 rounded px-1 py-px leading-none">
                   ⌘K
                 </kbd>
               </>
