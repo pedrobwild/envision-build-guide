@@ -57,6 +57,7 @@ import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
 import {
   parseDashboardSearch,
+  parseDashboardSearchWithInvalid,
   serializeDashboardFilters,
   buildDashboardUrlForQueue,
   type CommercialWorkflowStage,
@@ -293,10 +294,15 @@ export default function CommercialDashboard() {
   // URL = source of truth para filtros, visualização e fila.
   // Lógica pura extraída para src/lib/commercial-dashboard-url.ts (testada).
   // ─────────────────────────────────────────────────────────────────────
-  const initial = useMemo(
-    () => parseDashboardSearch(typeof window === "undefined" ? "" : window.location.search),
+  const initialParsed = useMemo(
+    () =>
+      parseDashboardSearchWithInvalid(
+        typeof window === "undefined" ? "" : window.location.search,
+      ),
     [],
   );
+  const initial = initialParsed.filters;
+  // O effect URL→estado abaixo já dispara o toast de fallback na montagem.
 
   const [search, setSearch] = useState<string>(initial.search);
   const [statusFilter, setStatusFilter] = useState<string>(initial.statusFilter);
@@ -350,7 +356,13 @@ export default function CommercialDashboard() {
 
   // ─── Aplica URL → estado quando location.search muda externamente ───
   useEffect(() => {
-    const next = parseDashboardSearch(location.search);
+    const { filters: next, invalid } = parseDashboardSearchWithInvalid(location.search);
+    if (invalid.length > 0) {
+      const labels = invalid.map((i) => `${i.key}=${i.value}`).join(", ");
+      toast.warning("Filtro inválido ignorado", {
+        description: `Voltamos para a visualização padrão (${labels}).`,
+      });
+    }
     setQueueFilter((prev) => (prev === next.queueFilter ? prev : next.queueFilter));
     setStatusFilter((prev) => (prev === next.statusFilter ? prev : next.statusFilter));
     setDueFilter((prev) => (prev === next.dueFilter ? prev : next.dueFilter));

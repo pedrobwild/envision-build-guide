@@ -25,6 +25,16 @@ export type ParsedFilters = {
 };
 
 /**
+ * Lista de parâmetros descartados durante o parse por serem inválidos
+ * (ex.: ?stage=foo, ?status=xpto, ?fila=bar). Permite ao consumidor
+ * avisar o usuário e/ou limpar a URL.
+ */
+export type ParseInvalid = {
+  key: "stage" | "status" | "fila" | "due" | "sort" | "view";
+  value: string;
+}[];
+
+/**
  * Chaves válidas de PIPELINE_SECTIONS no CommercialDashboard. Mantida em
  * sincronia manualmente; se mudar lá, atualizar aqui (e os testes pegam).
  */
@@ -146,26 +156,50 @@ export function buildDashboardUrlForInternalStatus(status: string | null | undef
 const PIPELINE_SET = new Set<string>(PIPELINE_SECTION_KEYS);
 
 export function parseDashboardSearch(searchStr: string): ParsedFilters {
+  return parseDashboardSearchWithInvalid(searchStr).filters;
+}
+
+/**
+ * Versão estendida que também devolve a lista de parâmetros descartados
+ * por serem inválidos. Use no CommercialDashboard para sinalizar fallback
+ * ao usuário sem quebrar a UI.
+ */
+export function parseDashboardSearchWithInvalid(
+  searchStr: string,
+): { filters: ParsedFilters; invalid: ParseInvalid } {
   const p = new URLSearchParams(searchStr);
+  const invalid: ParseInvalid = [];
 
   const filaRaw = p.get("fila") ?? "";
   const queueFilter: QueueFilter = isQueueFilter(filaRaw) ? filaRaw : null;
+  if (filaRaw && !queueFilter) invalid.push({ key: "fila", value: filaRaw });
 
   const stageRaw = p.get("stage") ?? "";
   const stage = isCommercialWorkflowStage(stageRaw) ? stageRaw : null;
+  if (stageRaw && !stage) invalid.push({ key: "stage", value: stageRaw });
   const stageMap = stage ? STAGE_TO_FILTER[stage] : undefined;
 
-  let status = p.get("status") ?? stageMap?.status ?? "all";
-  if (!isPipelineStatus(status)) status = "all";
+  const statusRaw = p.get("status");
+  let status = statusRaw ?? stageMap?.status ?? "all";
+  if (!isPipelineStatus(status)) {
+    if (statusRaw) invalid.push({ key: "status", value: statusRaw });
+    status = "all";
+  }
 
-
-  const dueRaw = (p.get("due") ?? stageMap?.due ?? "all") as DueFilter;
+  const dueRawValue = p.get("due") ?? stageMap?.due ?? "all";
+  const dueRaw = dueRawValue as DueFilter;
   const due: DueFilter =
     dueRaw === "overdue" || dueRaw === "due_soon" || dueRaw === "all" ? dueRaw : "all";
+  if (p.get("due") && due === "all" && p.get("due") !== "all") {
+    invalid.push({ key: "due", value: p.get("due") as string });
+  }
 
   const sortRaw = p.get("sort");
   const sortBy: SortOption =
     sortRaw === "urgente" || sortRaw === "recente" || sortRaw === "prazo" ? sortRaw : "recente";
+  if (sortRaw && sortBy === "recente" && sortRaw !== "recente") {
+    invalid.push({ key: "sort", value: sortRaw });
+  }
 
   const viewRaw = p.get("view");
   const viewMode: ViewMode =
@@ -174,8 +208,11 @@ export function parseDashboardSearch(searchStr: string): ParsedFilters {
       : viewRaw === "list" || viewRaw === "kanban"
       ? viewRaw
       : "kanban";
+  if (viewRaw && viewRaw !== "list" && viewRaw !== "kanban") {
+    invalid.push({ key: "view", value: viewRaw });
+  }
 
-  return {
+  const filters: ParsedFilters = {
     queueFilter,
     statusFilter: queueFilter ? "all" : status,
     dueFilter: queueFilter ? "all" : due,
@@ -185,6 +222,7 @@ export function parseDashboardSearch(searchStr: string): ParsedFilters {
     commercialFilter: p.get("com") ?? "all",
     pipelineFilter: p.get("pipe") ?? "all",
   };
+  return { filters, invalid };
 }
 
 export function serializeDashboardFilters(f: Omit<ParsedFilters, never>): string {
