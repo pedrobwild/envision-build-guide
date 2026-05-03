@@ -57,6 +57,7 @@ import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
 import {
   parseDashboardSearch,
+  parseDashboardSearchWithInvalid,
   serializeDashboardFilters,
   buildDashboardUrlForQueue,
   type CommercialWorkflowStage,
