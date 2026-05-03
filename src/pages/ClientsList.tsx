@@ -39,7 +39,16 @@ import {
   Building2,
   Mail,
   Phone,
+  UserCog,
+  X,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
