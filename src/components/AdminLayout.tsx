@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AdminBreadcrumb } from "@/components/AdminBreadcrumb";
 import { GlobalLoadingBar } from "@/components/GlobalLoadingBar";
 import { AdminBottomNav } from "@/components/admin/AdminBottomNav";
+import { MobilePageHeader } from "@/components/admin/MobilePageHeader";
 import { CommandPalette, CommandPaletteTrigger } from "@/components/CommandPalette";
 import { BugReporter } from "@/components/BugReporter";
 import { AiAssistant } from "@/components/AiAssistant";
