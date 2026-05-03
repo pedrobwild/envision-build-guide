@@ -124,11 +124,11 @@
     --ring: 212 100% 55%;
 
     --sidebar-background: 0 0% 3%;
-    --sidebar-foreground: 0 0% 93%;
+    --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 212 100% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 8%;
-    --sidebar-accent-foreground: 0 0% 93%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 10%;
     --sidebar-ring: 212 100% 55%;
 
