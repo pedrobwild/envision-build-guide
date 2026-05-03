@@ -27,8 +27,11 @@ Integração bidirecional entre **Envision Build Guide** (orçamentos) e **Porta
 | Função | Direção | Trigger | Endpoint Destino |
 |--------|---------|---------|-----------------|
 | `sync-supplier-outbound` | Envision → Portal | Auto (trigger DB) + Manual | `POST {PORTAL_BWILD_URL}/functions/v1/sync-supplier-inbound` |
-| `sync-supplier-inbound` | Portal → Envision | Webhook (POST externo) | *(recebe no Envision)* |
+| `sync-suppliers-inbound` (plural) | Portal → Envision | Webhook (POST externo do Portal) | *(recebe no Envision — formato achatado)* |
+| `sync-supplier-inbound` (singular, legado) | Portal → Envision | Webhook (POST externo) | *(recebe no Envision — wrapper `{ fornecedor, source_id }`)* |
 | `sync-project-outbound` | Envision → Portal | Auto (trigger DB on contrato_fechado) | `POST {PORTAL_BWILD_URL}/functions/v1/sync-project-inbound` |
+
+> ⚠️ **Atenção ao naming:** o Portal BWild (`relatorio-carlos`) chama o endpoint **plural** `sync-suppliers-inbound` no Envision, com payload achatado (campos no nível raiz, sem wrapper). O endpoint singular `sync-supplier-inbound` permanece para compatibilidade com chamadas antigas ou de teste que enviem `{ fornecedor: {...}, source_id }`.
 
 ### Protocolo de Comunicação
 - **Outbound**: HTTP POST direto para edge function do sistema destino
@@ -97,7 +100,48 @@ O campo `tipo` é determinado pela `categoria` do fornecedor:
 
 ## 2. Sincronização de Fornecedores (Inbound)
 
-### Endpoint
+### Endpoint **plural** (usado pelo Portal BWild em produção)
+
+O `sync-suppliers-outbound` do Portal envia 1 fornecedor por chamada com o
+payload **achatado** (campos no nível raiz, sem wrapper):
+
+```bash
+POST /functions/v1/sync-suppliers-inbound
+Content-Type: application/json
+x-integration-key: <INTEGRATION_INBOUND_KEY>
+
+{
+  "name": "Marcenaria São Paulo",
+  "razao_social": "Marcenaria SP Ltda",
+  "cnpj_cpf": "12.345.678/0001-90",
+  "categoria": "Prestadores",
+  "supplier_subcategory": "Marcenaria",
+  "endereco": "Rua X, 100",
+  "cidade": "São Paulo",
+  "estado": "SP",
+  "email": "contato@marcenariasp.com",
+  "telefone": "+5511999998888",
+  "site": "https://marcenariasp.com",
+  "condicoes_pagamento": "30/60",
+  "prazo_entrega_dias": 30,
+  "produtos_servicos": "Marcenaria sob medida",
+  "nota": 5,
+  "is_active": true,
+  "_source_system": "portal_bwild",
+  "_source_id": "<uuid-do-fornecedor-no-portal>"
+}
+```
+
+**Resposta esperada pelo Portal:**
+```json
+{ "success": true, "target_id": "<uuid-do-supplier-no-envision>" }
+```
+
+O endpoint plural também aceita batch (`{ "fornecedores": [...] }` ou
+`{ "suppliers": [...] }`) e nesse caso responde com `{ "results": [...] }`.
+
+### Endpoint **singular** (legado / wrapper)
+
 ```bash
 POST /functions/v1/sync-supplier-inbound
 Content-Type: application/json
@@ -184,7 +228,7 @@ Authorization: Bearer <anon_key>
 | `sequential_code` | `budget_code` |
 | `internal_notes` | `notes` |
 | `consultora_comercial` | `consultora_comercial` |
-| — | `status` = "planning" |
+| — | `status` = `"draft"` (sempre — Portal sobrescreve qualquer valor enviado) |
 | `id` | `external_id` |
 | — | `external_system` = "envision" |
 
@@ -231,11 +275,14 @@ total = Σ section_price (seções não-opcionais) + Σ (amount × sign) dos adj
 
 | Secret | Onde | Descrição |
 |--------|------|-----------|
-| `PORTAL_BWILD_SUPABASE_URL` | Envision | URL do projeto Portal BWild |
-| `PORTAL_BWILD_SERVICE_ROLE_KEY` | Envision | Service Role Key do Portal BWild |
-| `INTEGRATION_INBOUND_KEY` | Envision | Chave para autenticar chamadas inbound |
+| `PORTAL_BWILD_SUPABASE_URL` | Envision | URL do projeto Portal BWild (usado pelos outbounds para montar `${PORTAL}/functions/v1/sync-*-inbound`) |
+| `INTEGRATION_INBOUND_KEY` | Envision | Chave compartilhada — usada como `x-integration-key` nos outbounds e validada nos inbounds. **Deve ser igual** ao `INTEGRATION_API_KEY` configurado no Portal BWild |
 | `SUPABASE_URL` | Vault (auto) | URL do próprio projeto (para triggers) |
 | `SUPABASE_ANON_KEY` | Vault (auto) | Anon key (para triggers) |
+
+> **Nota sobre o Portal BWild:** o Portal valida a mesma chave compartilhada
+> sob o nome `INTEGRATION_API_KEY` (e não `INTEGRATION_INBOUND_KEY`). O valor
+> precisa ser idêntico nos dois lados.
 
 ---
 
