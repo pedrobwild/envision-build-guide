@@ -139,17 +139,41 @@ export function EditableMetaCard({
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sb = supabase as any;
-      const { error } = await sb.from("commercial_targets").upsert(
-        {
+
+      // Não usamos upsert+onConflict aqui porque a UNIQUE original
+      // (owner_id, target_month) trata NULLs como distintos (NULLS DISTINCT),
+      // então metas globais (owner_id IS NULL) não disparam o ON CONFLICT e
+      // colidem com o índice parcial commercial_targets_global_month_uniq.
+      const lookup = sb
+        .from("commercial_targets")
+        .select("id")
+        .eq("target_month", targetMonth)
+        .limit(1)
+        .maybeSingle();
+      const { data: existing, error: lookupError } = ownerId
+        ? await lookup.eq("owner_id", ownerId)
+        : await lookup.is("owner_id", null);
+      if (lookupError) throw lookupError;
+
+      if (existing?.id) {
+        const { error } = await sb
+          .from("commercial_targets")
+          .update({
+            revenue_target_brl: targetValue,
+            revenue_override_brl: resultValue,
+          })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from("commercial_targets").insert({
           owner_id: ownerId ?? null,
           target_month: targetMonth,
           revenue_target_brl: targetValue,
           revenue_override_brl: resultValue,
           deals_target: 0,
-        },
-        { onConflict: "owner_id,target_month" },
-      );
-      if (error) throw error;
+        });
+        if (error) throw error;
+      }
 
       toast.success("Meta atualizada.");
       await qc.invalidateQueries({ queryKey });
