@@ -1739,13 +1739,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                           </div>
                         </div>
 
-                        {/* [⋮] menu — always visible on mobile via tap, hover on desktop */}
-                        <div className="w-6 flex-shrink-0 flex items-center justify-center sm:opacity-0 sm:group-hover/section:opacity-100 transition-opacity duration-100">
+                        {/* [⋮] menu — sempre visível no mobile, hover no desktop */}
+                        <div className="w-7 sm:w-6 flex-shrink-0 flex items-center justify-center sm:opacity-0 sm:group-hover/section:opacity-100 transition-opacity duration-100">
                           <SectionContextMenu
                             section={section}
                             onRename={(name) => updateSection(section.id, "title", name)}
                             onDuplicate={() => duplicateSection(section.id)}
                             onDelete={() => deleteSection(section.id)}
+                            onMoveUp={() => moveSection(section.id, -1)}
+                            onMoveDown={() => moveSection(section.id, 1)}
+                            canMoveUp={sectionIdx > 0}
+                            canMoveDown={sectionIdx < sections.length - 1}
                             isAddendum={isAddendum}
                             onToggleAddendumRemove={() => {
                               const next = section.addendum_action === "remove" ? null : "remove";
