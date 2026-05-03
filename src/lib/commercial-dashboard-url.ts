@@ -25,6 +25,16 @@ export type ParsedFilters = {
 };
 
 /**
+ * Lista de parâmetros descartados durante o parse por serem inválidos
+ * (ex.: ?stage=foo, ?status=xpto, ?fila=bar). Permite ao consumidor
+ * avisar o usuário e/ou limpar a URL.
+ */
+export type ParseInvalid = {
+  key: "stage" | "status" | "fila" | "due" | "sort" | "view";
+  value: string;
+}[];
+
+/**
  * Chaves válidas de PIPELINE_SECTIONS no CommercialDashboard. Mantida em
  * sincronia manualmente; se mudar lá, atualizar aqui (e os testes pegam).
  */
