@@ -149,6 +149,8 @@ function BudgetListCardImpl({
   );
 }
 
+export const BudgetListCard = memo(BudgetListCardImpl);
+
 /* Skeleton for loading state */
 export function BudgetListSkeleton() {
   return (
