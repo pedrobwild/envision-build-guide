@@ -179,6 +179,32 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* iOS: respeitar safe areas + remover highlight cinza ao tocar */
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Mobile: rolagem vertical fluida com momentum no iOS, sem rolagem horizontal acidental */
+  @media (max-width: 1023px) {
+    html, body {
+      overscroll-behavior-y: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* Garantir que botões/links toquem com folga (≈44px) */
+    button, [role="button"], a {
+      touch-action: manipulation;
+    }
+  }
+
+  /* Respeito a redução de movimento — desabilita transforms grandes/animations */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   h1, h2, h3, h4 {
