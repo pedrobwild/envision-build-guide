@@ -379,8 +379,14 @@ export default function ClientDetail() {
   const sCfg = CLIENT_STATUSES[getEffectiveClientStatus(client, stats ?? null)];
 
   return (
-    <div className="p-3 sm:p-6 max-w-[1200px] mx-auto space-y-4 sm:space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate("/admin/crm")} className="gap-1.5 h-9">
+    <div className="p-3 sm:p-6 max-w-[1200px] mx-auto space-y-4 sm:space-y-6 scroll-smooth">
+      {/* Voltar — escondido no mobile (MobilePageHeader já oferece back) */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate("/admin/crm")}
+        className="gap-1.5 h-9 hidden sm:inline-flex"
+      >
         <ArrowLeft className="h-3.5 w-3.5" />
         Voltar para clientes
       </Button>
