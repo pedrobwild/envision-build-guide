@@ -119,7 +119,8 @@ export default function ClientsList() {
   const allVisibleSelected =
     visibleIds.length > 0 && visibleIds.every((id) => selectedSet.has(id));
   const someVisibleSelected =
-    const [actionsClient, setActionsClient] = useState<ClientRowWithStats | null>(null);
+    !allVisibleSelected && visibleIds.some((id) => selectedSet.has(id));
+  const [actionsClient, setActionsClient] = useState<ClientRowWithStats | null>(null);
 
   function toggleOne(id: string, checked: boolean) {
     setSelectedIds((prev) => {
