@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { Surface } from "@/components/dashboard/Surface";
 import { MetaProgressBar } from "@/components/dashboard/MetaProgressBar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -65,12 +65,6 @@ function monthLabel(): string {
   return `${capitalized} ${prev.getFullYear()}`;
 }
 
-function parseBRL(input: string): number | null {
-  if (!input.trim()) return null;
-  const normalized = input.replace(/\./g, "").replace(",", ".").replace(/[^0-9.-]/g, "");
-  const v = Number.parseFloat(normalized);
-  return Number.isFinite(v) ? v : null;
-}
 
 export function EditableMetaCard({
   computedRevenue,
@@ -109,29 +103,26 @@ export function EditableMetaCard({
 
   // ─── Dialog state ───
   const [open, setOpen] = useState(false);
-  const [targetInput, setTargetInput] = useState("");
-  const [resultInput, setResultInput] = useState("");
+  const [targetValue, setTargetValue] = useState<number | null>(null);
+  const [resultValue, setResultValue] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setTargetInput(target ? String(target) : "");
-      setResultInput(override !== null && override !== undefined ? String(override) : "");
+      setTargetValue(target ?? null);
+      setResultValue(override ?? null);
     }
   }, [open, target, override]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const targetValue = parseBRL(targetInput);
-      const resultValue = resultInput.trim() === "" ? null : parseBRL(resultInput);
-
       if (targetValue === null || targetValue < 0) {
         toast.error("Informe uma meta válida (em reais).");
         setSaving(false);
         return;
       }
-      if (resultInput.trim() !== "" && (resultValue === null || resultValue < 0)) {
+      if (resultValue !== null && resultValue < 0) {
         toast.error("Resultado manual inválido. Deixe em branco para usar o cálculo automático.");
         setSaving(false);
         return;
@@ -249,12 +240,12 @@ export function EditableMetaCard({
           <div className="space-y-4 pt-1">
             <div className="space-y-1.5">
               <Label htmlFor="meta-target">Meta de receita (R$)</Label>
-              <Input
+              <CurrencyInput
                 id="meta-target"
-                inputMode="decimal"
-                placeholder="250000"
-                value={targetInput}
-                onChange={(e) => setTargetInput(e.target.value)}
+                placeholder="R$ 250.000,00"
+                value={targetValue}
+                onChange={setTargetValue}
+                allowNegative={false}
                 disabled={saving}
               />
               <p className="text-[11px] text-muted-foreground">
@@ -267,16 +258,16 @@ export function EditableMetaCard({
                 Resultado manual (R$){" "}
                 <span className="text-muted-foreground font-normal">— opcional</span>
               </Label>
-              <Input
+              <CurrencyInput
                 id="meta-override"
-                inputMode="decimal"
                 placeholder={`Automático: ${new Intl.NumberFormat("pt-BR", {
                   style: "currency",
                   currency: "BRL",
                   maximumFractionDigits: 0,
                 }).format(computedRevenue)}`}
-                value={resultInput}
-                onChange={(e) => setResultInput(e.target.value)}
+                value={resultValue}
+                onChange={setResultValue}
+                allowNegative={false}
                 disabled={saving}
               />
               <p className="text-[11px] text-muted-foreground">
