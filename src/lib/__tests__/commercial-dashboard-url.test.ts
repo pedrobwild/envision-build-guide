@@ -134,3 +134,37 @@ describe("serialize ⇄ parse roundtrip", () => {
     expect(params.get("due")).toBeNull();
   });
 });
+
+describe("URL builders", () => {
+  it("buildDashboardUrlForStage usa stage agregado", async () => {
+    const { buildDashboardUrlForStage } = await import("../commercial-dashboard-url");
+    expect(buildDashboardUrlForStage("action_needed")).toBe("/admin/comercial?stage=action_needed");
+  });
+
+  it("buildDashboardUrlForStatus aceita só chaves de PIPELINE_SECTIONS", async () => {
+    const { buildDashboardUrlForStatus } = await import("../commercial-dashboard-url");
+    expect(buildDashboardUrlForStatus("enviado")).toBe("/admin/comercial?status=enviado");
+    expect(buildDashboardUrlForStatus("hack")).toBe("/admin/comercial");
+    expect(buildDashboardUrlForStatus("all")).toBe("/admin/comercial");
+  });
+
+  it("buildDashboardUrlForQueue valida queue", async () => {
+    const { buildDashboardUrlForQueue } = await import("../commercial-dashboard-url");
+    expect(buildDashboardUrlForQueue("sem-vis")).toBe("/admin/comercial?fila=sem-vis");
+  });
+
+  it("internalStatusToSection mapeia internal_status para chave de seção", async () => {
+    const { internalStatusToSection } = await import("../commercial-dashboard-url");
+    expect(internalStatusToSection("delivered_to_sales")).toBe("entregue");
+    expect(internalStatusToSection("in_progress")).toBe("em_elaboracao");
+    expect(internalStatusToSection("contrato_fechado")).toBe("fechado");
+    expect(internalStatusToSection(null)).toBe("all");
+    expect(internalStatusToSection("desconhecido")).toBe("all");
+  });
+
+  it("buildDashboardUrlForInternalStatus encadeia mapper + builder", async () => {
+    const { buildDashboardUrlForInternalStatus } = await import("../commercial-dashboard-url");
+    expect(buildDashboardUrlForInternalStatus("delivered_to_sales")).toBe("/admin/comercial?status=entregue");
+    expect(buildDashboardUrlForInternalStatus(null)).toBe("/admin/comercial");
+  });
+});
