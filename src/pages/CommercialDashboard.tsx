@@ -294,10 +294,26 @@ export default function CommercialDashboard() {
   // URL = source of truth para filtros, visualização e fila.
   // Lógica pura extraída para src/lib/commercial-dashboard-url.ts (testada).
   // ─────────────────────────────────────────────────────────────────────
-  const initial = useMemo(
-    () => parseDashboardSearch(typeof window === "undefined" ? "" : window.location.search),
+  const initialParsed = useMemo(
+    () =>
+      parseDashboardSearchWithInvalid(
+        typeof window === "undefined" ? "" : window.location.search,
+      ),
     [],
   );
+  const initial = initialParsed.filters;
+
+  // Avisa o usuário (uma vez) quando a URL trouxe parâmetros inválidos —
+  // o effect de serialização já se encarrega de "limpar" a query.
+  useEffect(() => {
+    if (initialParsed.invalid.length === 0) return;
+    const labels = initialParsed.invalid.map((i) => `${i.key}=${i.value}`).join(", ");
+    toast.warning("Filtro inválido ignorado", {
+      description: `Voltamos para a visualização padrão (${labels}).`,
+    });
+    // Só queremos disparar uma vez, na montagem.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [search, setSearch] = useState<string>(initial.search);
   const [statusFilter, setStatusFilter] = useState<string>(initial.statusFilter);
