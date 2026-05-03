@@ -65,12 +65,6 @@ function monthLabel(): string {
   return `${capitalized} ${prev.getFullYear()}`;
 }
 
-function parseBRL(input: string): number | null {
-  if (!input.trim()) return null;
-  const normalized = input.replace(/\./g, "").replace(",", ".").replace(/[^0-9.-]/g, "");
-  const v = Number.parseFloat(normalized);
-  return Number.isFinite(v) ? v : null;
-}
 
 export function EditableMetaCard({
   computedRevenue,
