@@ -477,7 +477,7 @@ export function AppSidebar() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-8 h-8 mx-auto mb-1 text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+                  className="w-8 h-8 mx-auto mb-1 text-white/85 hover:text-white hover:bg-sidebar-accent/70"
                   onClick={toggleSidebar}
                 >
                   <PanelLeftOpen className="h-3.5 w-3.5" />
