@@ -433,7 +433,8 @@ export default function ClientDetail() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2 flex-wrap">
+            {/* Atalho mobile: edição rápida */}
           {editing ? (
             <>
               <Button
