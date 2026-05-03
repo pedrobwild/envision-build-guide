@@ -380,13 +380,14 @@ function SortableItemRow({
         "flex items-center gap-0",
         compact && !rowExpanded ? "h-11" : "py-2",
       )}>
-        {/* [⋮⋮] drag handle */}
+        {/* [⋮⋮] drag handle — long-press em mobile, hover em desktop */}
         <button
           {...listeners}
-          className="hidden sm:flex w-4 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/item:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
+          aria-label="Arrastar item (segure para mover)"
+          className="flex w-5 sm:w-4 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/40 sm:text-muted-foreground/0 sm:group-hover/item:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical className="h-3 w-3" />
+          <GripVertical className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
         </button>
 
         {/* [▶ expand] — 20px mobile, 24px desktop */}
