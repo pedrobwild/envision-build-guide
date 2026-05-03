@@ -532,7 +532,7 @@ export function AppSidebar() {
                           </span>
                         )}
                       </span>
-                      <ChevronsUpDown className="h-3 w-3 text-sidebar-foreground/35 shrink-0" />
+                      <ChevronsUpDown className="h-3 w-3 text-white/70 shrink-0" />
                     </>
                   )}
                 </button>
