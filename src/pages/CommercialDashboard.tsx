@@ -367,7 +367,13 @@ export default function CommercialDashboard() {
 
   // ─── Aplica URL → estado quando location.search muda externamente ───
   useEffect(() => {
-    const next = parseDashboardSearch(location.search);
+    const { filters: next, invalid } = parseDashboardSearchWithInvalid(location.search);
+    if (invalid.length > 0) {
+      const labels = invalid.map((i) => `${i.key}=${i.value}`).join(", ");
+      toast.warning("Filtro inválido ignorado", {
+        description: `Voltamos para a visualização padrão (${labels}).`,
+      });
+    }
     setQueueFilter((prev) => (prev === next.queueFilter ? prev : next.queueFilter));
     setStatusFilter((prev) => (prev === next.statusFilter ? prev : next.statusFilter));
     setDueFilter((prev) => (prev === next.dueFilter ? prev : next.dueFilter));
