@@ -422,8 +422,8 @@ export function AppSidebar() {
                       type="button"
                       className={cn(
                         "w-full group flex items-center justify-between px-2 py-1 rounded-md",
-                        "text-[10.5px] uppercase tracking-[0.08em] font-body font-medium",
-                        "text-sidebar-foreground/35 hover:text-sidebar-foreground/65 transition-colors",
+                        "text-[10.5px] uppercase tracking-[0.08em] font-body font-semibold",
+                        "text-white/70 hover:text-white transition-colors",
                       )}
                     >
                       <span>Ferramentas</span>
