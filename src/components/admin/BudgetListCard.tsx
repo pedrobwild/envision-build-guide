@@ -24,7 +24,7 @@ interface BudgetListCardProps {
   onRefresh?: () => void;
 }
 
-export function BudgetListCard({
+function BudgetListCardImpl({
   budget,
   total,
   sectionCount,
