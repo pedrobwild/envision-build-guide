@@ -117,21 +117,25 @@ export function AdminBottomNav() {
               key={tab.path}
               role="tab"
               aria-selected={active}
+              aria-current={active ? "page" : undefined}
               onClick={() => navigate(tab.path)}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 py-2 px-3 min-w-[56px] transition-colors",
+                "tap-target press-feedback flex flex-col items-center justify-center gap-0.5 py-1.5 px-2 min-w-[56px] rounded-md transition-colors",
                 active
                   ? "text-primary"
                   : "text-muted-foreground active:text-foreground"
               )}
             >
               <div className="relative">
-                <Icon className="h-5 w-5" />
+                <Icon className={cn("h-5 w-5", active && "stroke-[2.25]")} />
                 {active && (
-                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+                  <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-[3px] rounded-full bg-primary" />
                 )}
               </div>
-              <span className="text-[10px] font-body font-medium leading-tight">
+              <span className={cn(
+                "text-[10px] font-body leading-tight",
+                active ? "font-semibold" : "font-medium"
+              )}>
                 {tab.label}
               </span>
             </button>
