@@ -1,0 +1,1 @@
+UPDATE public.commercial_targets SET revenue_override_brl = NULL WHERE target_month = '2026-05-01' AND owner_id IS NULL;
