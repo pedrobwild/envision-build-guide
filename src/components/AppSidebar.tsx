@@ -377,7 +377,7 @@ export function AppSidebar() {
             >
               {!collapsed && section.label && (
                 <div className="px-2 mb-1 flex items-center">
-                  <span className="text-[10.5px] uppercase tracking-[0.08em] text-sidebar-foreground/35 font-body font-medium">
+                  <span className="text-[10.5px] uppercase tracking-[0.08em] text-white/70 font-body font-semibold">
                     {section.label}
                   </span>
                 </div>
