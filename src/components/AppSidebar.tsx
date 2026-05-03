@@ -440,7 +440,7 @@ export function AppSidebar() {
                     <div className="mt-1 space-y-2.5">
                       {toolGroups.map((group) => (
                         <div key={group.id}>
-                          <div className="px-2 mb-0.5 text-[10px] text-sidebar-foreground/30 font-body font-medium tracking-wide">
+                          <div className="px-2 mb-0.5 text-[10px] uppercase tracking-wide text-white/65 font-body font-semibold">
                             {group.label}
                           </div>
                           <ul className="space-y-px">
