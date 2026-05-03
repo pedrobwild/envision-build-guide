@@ -246,6 +246,40 @@
     -webkit-backdrop-filter: blur(12px) saturate(180%);
   }
 
+  /* ── Mobile UX utilities ─────────────────────────────────────────── */
+  /* Tap target mínimo confortável (WCAG 2.5.5 enhanced) */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  /* Scroll horizontal com snap suave em chips/abas */
+  .snap-x-mandatory {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .snap-x-mandatory::-webkit-scrollbar { display: none; }
+  .snap-start { scroll-snap-align: start; }
+  /* Padding inferior respeitando safe-area do iOS para conteúdo acima do bottom nav */
+  .safe-pb {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+  .safe-pb-nav {
+    /* 4rem da bottom-nav + safe-area */
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  /* Feedback tátil em pressionar (compensa ausência de hover em touch) */
+  .press-feedback {
+    transition: transform 120ms ease, background-color 120ms ease;
+  }
+  .press-feedback:active {
+    transform: scale(0.97);
+  }
+
   /* Linear-inspired label style */
   .label-caps {
     @apply text-[11px] font-medium uppercase tracking-[0.05em] text-muted-foreground;
