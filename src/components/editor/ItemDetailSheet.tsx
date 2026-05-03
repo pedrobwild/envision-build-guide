@@ -252,7 +252,7 @@ export function ItemDetailSheet({ open, onOpenChange, item, sectionId, sectionTi
                     img.is_primary ? "border-primary" : "border-border"
                   )}
                 >
-                  <img loading="lazy" decoding="async" src={img.url} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={img.url} alt="" className="w-full h-full object-cover bg-muted" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <button onClick={() => img.id && setPrimary(img.id)} className="p-1.5 rounded-full bg-background/80 hover:bg-background" title="Principal">
                       <Star className={cn("h-3.5 w-3.5", img.is_primary ? "text-yellow-400 fill-yellow-400" : "text-foreground")} />
