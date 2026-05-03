@@ -187,12 +187,14 @@ function NavRow({
       to={item.url}
       end={item.end}
       className={cn(
-        "group relative flex items-center gap-2.5 rounded-md text-[13px] font-body transition-colors duration-100 outline-none",
+        "group relative flex items-center gap-2.5 rounded-md font-body transition-colors duration-100 outline-none",
         "focus-visible:ring-1 focus-visible:ring-sidebar-ring",
-        collapsed ? "h-8 w-8 mx-auto justify-center" : "h-7 px-2",
+        collapsed
+          ? "h-9 w-9 mx-auto justify-center"
+          : "h-7 px-2 text-[13px]",
         isActive
           ? "bg-sidebar-accent text-white"
-          : "text-white/85 hover:text-white hover:bg-sidebar-accent/50",
+          : "text-white/85 hover:text-white hover:bg-sidebar-accent/60",
       )}
       activeClassName=""
     >
