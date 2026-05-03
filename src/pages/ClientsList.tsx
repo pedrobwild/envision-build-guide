@@ -349,11 +349,11 @@ export default function ClientsList() {
                 <div
                   key={c.id}
                   className={cn(
-                    "w-full p-4 transition-colors flex items-start gap-2",
+                    "w-full px-3 py-2.5 transition-colors flex items-center gap-2 press-feedback",
                     isSelected ? "bg-primary/5" : "active:bg-muted/40",
                   )}
                 >
-                  <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                  <div onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={(v) => toggleOne(c.id, !!v)}
@@ -362,49 +362,49 @@ export default function ClientsList() {
                   </div>
                   <button
                     type="button"
-                    className="flex-1 text-left min-w-0"
+                    className="flex-1 text-left min-w-0 py-1"
                     onClick={() => navigate(`/admin/crm/${c.id}`)}
                   >
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          {c.sequential_code && (
-                            <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
-                              {c.sequential_code}
-                            </span>
-                          )}
-                          <p className="font-medium text-foreground font-body truncate">{c.name}</p>
-                          <LeadScoreBadge score={scoresMap?.get(c.id)} />
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
-                        </p>
-                      </div>
-                      <Badge className={cn("font-normal text-[10px] shrink-0", sCfg.color)}>
-                        {sCfg.label}
-                      </Badge>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {c.sequential_code && (
+                        <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
+                          {c.sequential_code}
+                        </span>
+                      )}
+                      <span className="font-medium text-sm text-foreground font-body truncate">
+                        {c.name}
+                      </span>
+                      <LeadScoreBadge score={scoresMap?.get(c.id)} />
                     </div>
-                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {c.phone && (
-                          <span className="flex items-center gap-1 truncate">
-                            <Phone className="h-3 w-3 shrink-0" /> {c.phone}
-                          </span>
-                        )}
-                        {!c.phone && c.email && (
-                          <span className="flex items-center gap-1 truncate">
-                            <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{c.email}</span>
-                          </span>
-                        )}
+                    <div className="flex items-center justify-between gap-2 mt-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <Badge className={cn("font-normal text-[10px] py-0 h-4 shrink-0", sCfg.color)}>
+                          {sCfg.label}
+                        </Badge>
+                        <span className="truncate">
+                          {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="tabular-nums">{c.stats?.total_budgets ?? 0} orç.</span>
-                        <span className="tabular-nums font-medium text-foreground">
+                      <div className="flex items-center gap-2 shrink-0 tabular-nums">
+                        <span>{c.stats?.total_budgets ?? 0} orç.</span>
+                        <span className="font-medium text-foreground">
                           {formatBRL(c.stats?.pipeline_value)}
                         </span>
                       </div>
                     </div>
                   </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 tap-target"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActionsClient(c);
+                    }}
+                    aria-label={`Ações de ${c.name}`}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
                 </div>
               );
             })
