@@ -55,6 +55,7 @@ import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, 
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
+import { parseDashboardSearch, serializeDashboardFilters } from "@/lib/commercial-dashboard-url";
 
 
 // Pipeline groups for the commercial view
@@ -286,89 +287,10 @@ export default function CommercialDashboard() {
 
   // ─────────────────────────────────────────────────────────────────────
   // URL = source of truth para filtros, visualização e fila.
-  //
-  // Recarregar a página, copiar/colar o link ou voltar via histórico do
-  // navegador restaura exatamente o mesmo estado visual. Substituímos o
-  // sessionStorage anterior por query params para evitar divergência entre
-  // o que o usuário vê e o link que ele compartilha.
-  //
-  // Params suportados:
-  //   q     — texto de busca
-  //   status — chave de PIPELINE_SECTIONS ("all" omitido)
-  //   due    — DueFilter ("all" omitido)
-  //   com    — commercialFilter ("all" omitido)
-  //   pipe   — pipelineFilter ("all" omitido)
-  //   sort   — SortOption ("recente" omitido)
-  //   view   — "list" | "kanban" ("kanban" omitido)
-  //   fila   — "prontos" | "sem-vis" | "esfriando" (zera status/due e força lista)
-  //   stage  — entrada legada da Home: mapeada para status/due no parse
+  // Lógica pura extraída para src/lib/commercial-dashboard-url.ts (testada).
   // ─────────────────────────────────────────────────────────────────────
-  const STAGE_TO_FILTER: Record<string, { status?: string; due?: DueFilter }> = {
-    action_needed: { status: "entregue" },
-    solicitado: { status: "solicitado" },
-    em_elaboracao: { status: "em_elaboracao" },
-    revisao_solicitada: { status: "revisao_solicitada" },
-    enviado: { status: "enviado" },
-    advanced: { status: "minuta" },
-    overdue: { status: "all", due: "overdue" },
-    closed: { status: "fechado" },
-  };
-
-  type ParsedFilters = {
-    queueFilter: "prontos" | "sem-vis" | "esfriando" | null;
-    statusFilter: string;
-    dueFilter: DueFilter;
-    sortBy: SortOption;
-    viewMode: "list" | "kanban";
-    search: string;
-    commercialFilter: string;
-    pipelineFilter: string;
-  };
-
-  const parseFiltersFromSearch = useCallback((searchStr: string): ParsedFilters => {
-    const p = new URLSearchParams(searchStr);
-    const filaRaw = p.get("fila");
-    const queueFilter =
-      filaRaw === "prontos" || filaRaw === "sem-vis" || filaRaw === "esfriando" ? filaRaw : null;
-
-    const stage = p.get("stage");
-    const stageMap = stage ? STAGE_TO_FILTER[stage] : undefined;
-
-    let status = p.get("status") ?? stageMap?.status ?? "all";
-    if (status !== "all" && !(status in PIPELINE_SECTIONS)) status = "all";
-
-    const dueRaw = (p.get("due") ?? stageMap?.due ?? "all") as DueFilter;
-    const due: DueFilter =
-      dueRaw === "overdue" || dueRaw === "due_soon" || dueRaw === "all" ? dueRaw : "all";
-
-    const sortRaw = p.get("sort");
-    const sortBy: SortOption =
-      sortRaw === "urgente" || sortRaw === "recente" || sortRaw === "prazo" ? sortRaw : "recente";
-
-    const viewRaw = p.get("view");
-    // Fila e stage forçam visualização em lista (mais legível para cobrança).
-    const viewMode: "list" | "kanban" =
-      queueFilter || stage
-        ? "list"
-        : viewRaw === "list" || viewRaw === "kanban"
-        ? viewRaw
-        : "kanban";
-
-    return {
-      queueFilter,
-      statusFilter: queueFilter ? "all" : status,
-      dueFilter: queueFilter ? "all" : due,
-      sortBy,
-      viewMode,
-      search: p.get("q") ?? "",
-      commercialFilter: p.get("com") ?? "all",
-      pipelineFilter: p.get("pipe") ?? "all",
-    };
-  }, []);
-
   const initial = useMemo(
-    () => parseFiltersFromSearch(typeof window === "undefined" ? "" : window.location.search),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => parseDashboardSearch(typeof window === "undefined" ? "" : window.location.search),
     [],
   );
 
@@ -392,24 +314,18 @@ export default function CommercialDashboard() {
   const [historyBudget, setHistoryBudget] = useState<BudgetRow | null>(null);
 
   // ─── Escreve estado atual na URL (replace, sem empilhar histórico). ───
-  // Cada mudança de filtro/visualização vira query string, garantindo que
-  // o link copiado/colado ou o reload restaure exatamente o mesmo estado.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const p = new URLSearchParams();
-    if (queueFilter) {
-      p.set("fila", queueFilter);
-    } else {
-      if (statusFilter && statusFilter !== "all") p.set("status", statusFilter);
-      if (dueFilter && dueFilter !== "all") p.set("due", dueFilter);
-    }
-    if (search) p.set("q", search);
-    if (commercialFilter && commercialFilter !== "all") p.set("com", commercialFilter);
-    if (pipelineFilter && pipelineFilter !== "all") p.set("pipe", pipelineFilter);
-    if (sortBy && sortBy !== "recente") p.set("sort", sortBy);
-    if (viewMode && viewMode !== "kanban") p.set("view", viewMode);
-
-    const next = p.toString();
+    const next = serializeDashboardFilters({
+      queueFilter,
+      statusFilter,
+      dueFilter,
+      sortBy,
+      viewMode,
+      search,
+      commercialFilter,
+      pipelineFilter,
+    });
     const current = window.location.search.startsWith("?")
       ? window.location.search.slice(1)
       : window.location.search;
@@ -429,10 +345,8 @@ export default function CommercialDashboard() {
   ]);
 
   // ─── Aplica URL → estado quando location.search muda externamente ───
-  // (deep link, navegação por histórico, click em chip que faz navigate).
-  // Comparações evitam re-set desnecessário (e loops com o effect acima).
   useEffect(() => {
-    const next = parseFiltersFromSearch(location.search);
+    const next = parseDashboardSearch(location.search);
     setQueueFilter((prev) => (prev === next.queueFilter ? prev : next.queueFilter));
     setStatusFilter((prev) => (prev === next.statusFilter ? prev : next.statusFilter));
     setDueFilter((prev) => (prev === next.dueFilter ? prev : next.dueFilter));
@@ -441,7 +355,7 @@ export default function CommercialDashboard() {
     setSearch((prev) => (prev === next.search ? prev : next.search));
     setCommercialFilter((prev) => (prev === next.commercialFilter ? prev : next.commercialFilter));
     setPipelineFilter((prev) => (prev === next.pipelineFilter ? prev : next.pipelineFilter));
-  }, [location.search, parseFiltersFromSearch]);
+  }, [location.search]);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
