@@ -1340,7 +1340,37 @@ export default function ClientDetail() {
         </div>
       )}
 
-      <ExportPreviewDialog
+      {/* FAB mobile: ações rápidas (editar / novo orçamento) */}
+      {!editing && (
+        <div className="sm:hidden fixed right-4 bottom-20 z-30 flex flex-col gap-2 items-end">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 rounded-full shadow-lg bg-background press-feedback tap-target"
+            aria-label="Editar cliente"
+            onClick={() => setEditing(true)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            size="lg"
+            className="h-14 px-5 rounded-full shadow-xl gap-2 press-feedback tap-target"
+            aria-label="Novo orçamento"
+            onClick={() => {
+              const params = new URLSearchParams({
+                client_id: client.id,
+                name: client.name,
+                ...(client.email ? { email: client.email } : {}),
+                ...(client.phone ? { phone: client.phone } : {}),
+              });
+              navigate(`/admin/solicitacoes/nova?${params.toString()}`);
+            }}
+          >
+            <Plus className="h-5 w-5" /> Novo orçamento
+          </Button>
+        </div>
+      )}
+
         open={!!previewExport}
         onOpenChange={(open) => {
           if (!open) setPreviewExport(null);
