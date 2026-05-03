@@ -48,10 +48,10 @@ describe("parseDashboardSearch — stage da Home Comercial", () => {
     expect(r.dueFilter).toBe(target.due ?? "all");
   });
 
-  it("stage desconhecido cai em estado neutro mas ainda força lista", () => {
+  it("stage desconhecido é ignorado (não muda viewMode default)", () => {
     const r = parseDashboardSearch("?stage=foo_bar");
     expect(r.statusFilter).toBe("all");
-    expect(r.viewMode).toBe("list"); // stage presente força lista
+    expect(r.viewMode).toBe("kanban");
   });
 });
 
