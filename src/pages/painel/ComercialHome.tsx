@@ -154,7 +154,7 @@ export default function ComercialHome() {
             description="Enviados há mais de 48h sem nenhuma abertura. Cobre."
             priority={data && data.semVisualizacao48h.length > 0 ? "warning" : "ok"}
             actionLabel="Cobrar abertura"
-            onAction={() => navigate("/admin/comercial?fila=sem-vis")}
+            onAction={() => navigate(buildDashboardUrlForQueue("sem-vis"))}
             loading={isLoading}
           />
           <FilaCard
@@ -170,7 +170,7 @@ export default function ComercialHome() {
                 : "ok"
             }
             actionLabel="Reativar agora"
-            onAction={() => navigate("/admin/comercial?fila=esfriando")}
+            onAction={() => navigate(buildDashboardUrlForQueue("esfriando"))}
             loading={isLoading}
           />
           <FilaCard
