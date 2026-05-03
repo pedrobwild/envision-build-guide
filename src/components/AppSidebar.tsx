@@ -341,7 +341,7 @@ export function AppSidebar() {
             onClick={openCommandPalette}
             className={cn(
               "mt-2.5 group flex items-center rounded-md transition-colors",
-              "bg-sidebar-accent/40 hover:bg-sidebar-accent/70 text-sidebar-foreground/55 hover:text-sidebar-foreground/85",
+              "bg-sidebar-accent/50 hover:bg-sidebar-accent/80 text-white/80 hover:text-white",
               "ring-1 ring-sidebar-border/40 hover:ring-sidebar-border",
               collapsed ? "h-8 w-8 mx-auto justify-center" : "h-7 w-full px-2 gap-2",
             )}
