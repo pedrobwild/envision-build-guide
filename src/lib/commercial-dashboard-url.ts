@@ -108,15 +108,16 @@ const PIPELINE_SET = new Set<string>(PIPELINE_SECTION_KEYS);
 export function parseDashboardSearch(searchStr: string): ParsedFilters {
   const p = new URLSearchParams(searchStr);
 
-  const filaRaw = p.get("fila");
-  const queueFilter: QueueFilter =
-    filaRaw === "prontos" || filaRaw === "sem-vis" || filaRaw === "esfriando" ? filaRaw : null;
+  const filaRaw = p.get("fila") ?? "";
+  const queueFilter: QueueFilter = isQueueFilter(filaRaw) ? filaRaw : null;
 
-  const stage = p.get("stage");
+  const stageRaw = p.get("stage") ?? "";
+  const stage = isCommercialWorkflowStage(stageRaw) ? stageRaw : null;
   const stageMap = stage ? STAGE_TO_FILTER[stage] : undefined;
 
   let status = p.get("status") ?? stageMap?.status ?? "all";
-  if (status !== "all" && !PIPELINE_SET.has(status)) status = "all";
+  if (!isPipelineStatus(status)) status = "all";
+
 
   const dueRaw = (p.get("due") ?? stageMap?.due ?? "all") as DueFilter;
   const due: DueFilter =
