@@ -212,7 +212,7 @@ function NavRow({
         className={cn(
           "shrink-0 transition-colors",
           collapsed ? "h-[17px] w-[17px]" : "h-[15px] w-[15px]",
-          isActive ? "text-white" : "text-white/85 group-hover:text-white",
+          isActive ? "text-white" : "text-white/85 group-hover:text-white group-focus-visible:text-white",
         )}
         strokeWidth={isActive ? 2 : 1.85}
       />
