@@ -188,7 +188,7 @@ function NavRow({
       end={item.end}
       className={cn(
         "group relative flex items-center gap-2.5 rounded-md font-body transition-colors duration-100 outline-none",
-        "focus-visible:ring-1 focus-visible:ring-sidebar-ring",
+        "focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar focus-visible:bg-sidebar-accent focus-visible:text-white",
         collapsed
           ? "h-9 w-9 mx-auto justify-center"
           : "h-7 px-2 text-[13px]",
