@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
