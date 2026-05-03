@@ -1115,7 +1115,7 @@ export default function CommercialDashboard() {
                     <button
                       key={id}
                       type="button"
-                      onClick={() => navigate(`/admin/comercial?fila=${id}`, { replace: true })}
+                      onClick={() => navigate(buildDashboardUrlForQueue(id), { replace: true })}
                       className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
                         active
                           ? "border-primary bg-primary text-primary-foreground"
