@@ -527,7 +527,7 @@ export function AppSidebar() {
                           {profile.full_name || "Usuário"}
                         </span>
                         {primaryRole && (
-                          <span className="block text-[10.5px] font-body text-sidebar-foreground/45 truncate leading-tight">
+                          <span className="block text-[10.5px] font-body text-white/70 truncate leading-tight">
                             {ROLE_LABEL[primaryRole] ?? primaryRole}
                           </span>
                         )}
