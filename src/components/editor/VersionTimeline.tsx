@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Loader2, Plus, GitCompare, ExternalLink, Clock, Copy,
-  FileText, FileSpreadsheet, RotateCcw,
+  FileText, FileSpreadsheet, RotateCcw, Eye,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -122,18 +122,31 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
     setRestoring(false);
   };
 
-  const currentVersionId = versions.find(v => v.is_current_version)?.id;
+  // Defensive: a unique index in the DB enforces "1 current per group", but if
+  // a stale state slips through (e.g. partial update from a previous release)
+  // we still want to show the ATUAL badge on a SINGLE version. Pick the highest
+  // version_number among those flagged as current. Same for PUBLICADA.
+  const pickWinner = (predicate: (v: VersionRow) => boolean): string | undefined => {
+    const candidates = versions.filter(predicate);
+    if (candidates.length === 0) return undefined;
+    const winner = [...candidates].sort(
+      (a, b) => (b.version_number ?? 0) - (a.version_number ?? 0),
+    )[0];
+    return winner.id;
+  };
+  const currentVersionId = pickWinner((v) => !!v.is_current_version);
+  const publishedVersionId = pickWinner((v) => !!v.is_published_version);
 
   const statusBadge = (v: VersionRow) => {
     const badges: React.ReactNode[] = [];
-    if (v.is_current_version) {
+    if (v.id === currentVersionId) {
       badges.push(
         <Badge key="atual" variant="outline" className="text-[10px] h-5 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10">
           ATUAL
         </Badge>
       );
     }
-    if (v.is_published_version) {
+    if (v.id === publishedVersionId) {
       badges.push(
         <Badge key="pub" variant="outline" className="text-[10px] h-5 border-blue-500/50 text-blue-600 dark:text-blue-400 bg-blue-500/10">
           PUBLICADA
@@ -167,7 +180,8 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
 
         <div className="space-y-0">
           {versions.map((v, idx) => {
-            const isCurrent = v.is_current_version;
+            const isCurrent = v.id === currentVersionId;
+            const isPublished = v.id === publishedVersionId;
             const isViewing = v.id === budgetId;
             const reason = revisionReasons[v.id];
 
@@ -218,7 +232,7 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
                   )}
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1.5 mt-2">
+                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                     {!isViewing && (
                       <Button
                         variant="ghost"
@@ -227,9 +241,27 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
                         onClick={() => navigate(`/admin/budget/${v.id}`)}
                       >
                         <ExternalLink className="h-3 w-3" />
-                        Ver orçamento
+                        Ver internamente
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => {
+                        // Versões publicadas têm public_id ativo → abrem o link real
+                        // que o cliente vê. Para as demais, abrimos o preview admin
+                        // que renderiza a UI pública a partir do id da versão.
+                        const url = isPublished && v.public_id
+                          ? `/o/${v.public_id}`
+                          : `/admin/budget/${v.id}/preview-publica`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }}
+                      title="Abrir esta versão na visualização do cliente (em nova aba)"
+                    >
+                      <Eye className="h-3 w-3" />
+                      Ver como cliente
+                    </Button>
                     {currentVersionId && v.id !== currentVersionId && (
                       <Button
                         variant="ghost"
@@ -241,7 +273,7 @@ export function VersionTimeline({ budgetId, onVersionChange }: VersionTimelinePr
                         Comparar com atual
                       </Button>
                     )}
-                    {!v.is_current_version && (
+                    {!isCurrent && (
                       <Button
                         variant="ghost"
                         size="sm"

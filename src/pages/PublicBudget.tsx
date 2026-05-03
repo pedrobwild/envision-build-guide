@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBudgetMedia } from "@/hooks/useBudgetMedia";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { fetchPublicBudget, fetchPublicBudgetStreaming, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
+import { fetchPublicBudget, fetchPublicBudgetStreaming, fetchAdminBudgetForPreview, calculateBudgetTotal, calculateSectionSubtotal, calculateAddendumDelta } from "@/lib/supabase-helpers";
 import { resolveBudgetGrandTotal } from "@/lib/budget-total";
 import { computePublicAbatements, assertPublicAbatementParity } from "@/lib/public-abatements";
 import { buildPublicScopeGroups } from "@/lib/public-scope";
@@ -172,7 +172,15 @@ function CollapsiblePhotoGroup({ group, allItems, budgetId, exporting }: {
 import type { BudgetData, BudgetSection, BudgetItem, BudgetAdjustment, BudgetRoom } from "@/types/budget";
 
 export default function PublicBudget() {
-  const { publicId } = useParams<{ projectId?: string; publicId?: string }>();
+  const { publicId, adminPreviewBudgetId } = useParams<{
+    projectId?: string;
+    publicId?: string;
+    adminPreviewBudgetId?: string;
+  }>();
+  // Admin preview mode: an authorized user is previewing a SPECIFIC version
+  // (any status) using the public-style UI. Read-only — no view counters,
+  // no public-link redirects, no notification side effects.
+  const isAdminPreview = !!adminPreviewBudgetId;
   const [budget, setBudget] = useState<BudgetData | null>(null);
   // Authoritative server-side total — used as a fallback when client-side
   // calculation returns 0 (e.g., items not yet hydrated, partial RLS, or
@@ -185,7 +193,11 @@ export default function PublicBudget() {
   const [exporting, setExporting] = useState(false);
   const viewTracked = useRef(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const { media: budgetMedia, loading: mediaLoading } = useBudgetMedia(publicId, budget?.id);
+  // In admin preview mode the URL doesn't carry a public_id, so derive it from
+  // the loaded budget so existing render paths (galleries, media, demo checks)
+  // keep working. Falls back to undefined until the budget loads.
+  const effectivePublicId = publicId ?? budget?.public_id ?? undefined;
+  const { media: budgetMedia, loading: mediaLoading } = useBudgetMedia(effectivePublicId, budget?.id);
   const hasRealMedia = !mediaLoading && budgetMedia && (
     !!budgetMedia.video3d || budgetMedia.projeto3d.length > 0 || budgetMedia.projetoExecutivo.length > 0 || budgetMedia.fotos.length > 0
   );
@@ -241,6 +253,25 @@ export default function PublicBudget() {
   }, [budget]);
 
   useEffect(() => {
+    if (isAdminPreview && adminPreviewBudgetId) {
+      setLoadError(null);
+      setServerTotal(null);
+      setLoading(true);
+      fetchAdminBudgetForPreview(adminPreviewBudgetId)
+        .then((data) => {
+          if (!data) {
+            setLoadError('Versão não encontrada ou sem permissão de visualização.');
+          } else {
+            setBudget(data);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setLoadError('Não foi possível carregar a pré-visualização.');
+          setLoading(false);
+        });
+      return;
+    }
     const allowDemo = import.meta.env.VITE_ALLOW_DEMO === 'true';
     if (publicId === 'demo') {
       if (allowDemo) {
@@ -323,7 +354,7 @@ export default function PublicBudget() {
           }
         });
     }
-  }, [publicId]);
+  }, [publicId, isAdminPreview, adminPreviewBudgetId]);
 
   const handleExportPdf = async () => {
     setExporting(true);
@@ -439,6 +470,15 @@ export default function PublicBudget() {
       </a>
       <ReadingProgressBar />
       <MobileStepBreadcrumb />
+      {isAdminPreview && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-center text-xs font-body text-amber-900 dark:text-amber-200">
+          Pré-visualização interna · v{budget.version_number ?? "?"} · {budget.status}
+          {" · "}
+          <span className="opacity-70">
+            esta tela é o que o cliente veria; nenhuma visualização é contabilizada.
+          </span>
+        </div>
+      )}
       <BudgetHeader
         budget={budget}
         onExportPdf={handleExportPdf}
@@ -549,7 +589,7 @@ export default function PublicBudget() {
                     categorizedGroups={categorizedGroups}
                     budgetId={budget.id}
                     editable={isAdmin}
-                    allCategoriesOpenSheet={DEMO_PORTFOLIO_IDS.includes(publicId || "")}
+                    allCategoriesOpenSheet={DEMO_PORTFOLIO_IDS.includes(effectivePublicId || "")}
                     forceExpandItems={exporting}
                   />
                 </AnimatedSection>
@@ -580,7 +620,7 @@ export default function PublicBudget() {
                 <div data-pdf-section>
                 <AnimatedSection id="gallery-section" index={0.55}>
                   <Suspense fallback={<LazyFallback />}>
-                    <ProjectGallery publicId={publicId} />
+                    <ProjectGallery publicId={effectivePublicId} />
                   </Suspense>
                 </AnimatedSection>
                 </div>
@@ -612,7 +652,7 @@ export default function PublicBudget() {
               categorizedGroups={categorizedGroups}
               projectName={budget.project_name}
               clientName={budget.client_name}
-              publicId={publicId || "demo"}
+              publicId={effectivePublicId || "demo"}
               budgetId={budget.id}
               discount={publicDiscountTotal}
               credit={publicCreditTotal}
@@ -630,7 +670,7 @@ export default function PublicBudget() {
               ProductShowcaseCard já tem fallback visual para itens sem imagem.
               Ver: https://github.com/pedrobwild/envision-build-guide/pull/(este PR)
             */}
-            {!DEMO_PORTFOLIO_IDS.includes(publicId || "") && (
+            {!DEMO_PORTFOLIO_IDS.includes(effectivePublicId || "") && (
               <div id="mobile-scope" className="scroll-mt-20 mt-4 sm:mt-6">
                 {visibleSections.length > 0 && (() => {
                   // Mostra TODOS os itens das seções, com ou sem imagem.
@@ -760,7 +800,7 @@ export default function PublicBudget() {
               <InstallmentSimulator total={total} />
               <ApprovalCTA
                 budgetId={budget.id}
-                publicId={publicId || "demo"}
+                publicId={effectivePublicId || "demo"}
                 expired={validity.expired}
                 projectName={budget.project_name}
                 clientName={budget.client_name}
@@ -781,7 +821,7 @@ export default function PublicBudget() {
           categorizedGroups={categorizedGroups}
           projectName={budget.project_name}
           clientName={budget.client_name}
-          publicId={publicId || "demo"}
+          publicId={effectivePublicId || "demo"}
           budgetId={budget.id}
           hidden={false}
           activeSection={null}
