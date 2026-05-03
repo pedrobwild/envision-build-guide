@@ -379,8 +379,14 @@ export default function ClientDetail() {
   const sCfg = CLIENT_STATUSES[getEffectiveClientStatus(client, stats ?? null)];
 
   return (
-    <div className="p-3 sm:p-6 max-w-[1200px] mx-auto space-y-4 sm:space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate("/admin/crm")} className="gap-1.5 h-9">
+    <div className="p-3 sm:p-6 max-w-[1200px] mx-auto space-y-4 sm:space-y-6 scroll-smooth">
+      {/* Voltar — escondido no mobile (MobilePageHeader já oferece back) */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate("/admin/crm")}
+        className="gap-1.5 h-9 hidden sm:inline-flex"
+      >
         <ArrowLeft className="h-3.5 w-3.5" />
         Voltar para clientes
       </Button>
@@ -427,7 +433,8 @@ export default function ClientDetail() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2 flex-wrap">
+            {/* Atalho mobile: edição rápida */}
           {editing ? (
             <>
               <Button
@@ -593,13 +600,17 @@ export default function ClientDetail() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList>
-          <TabsTrigger value="overview">Visão geral</TabsTrigger>
-          <TabsTrigger value="timeline">Atividades</TabsTrigger>
-          <TabsTrigger value="properties">Imóveis ({properties.length})</TabsTrigger>
-          <TabsTrigger value="budgets">Orçamentos ({budgets.length})</TabsTrigger>
-          <TabsTrigger value="notes">Notas</TabsTrigger>
-        </TabsList>
+        <div className="sticky top-[3.25rem] sm:top-0 z-10 -mx-3 sm:mx-0 px-3 sm:px-0 py-1 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+          <div className="overflow-x-auto snap-x-mandatory">
+            <TabsList className="w-max sm:w-auto">
+              <TabsTrigger value="overview" className="snap-start tap-target">Visão geral</TabsTrigger>
+              <TabsTrigger value="timeline" className="snap-start tap-target">Atividades</TabsTrigger>
+              <TabsTrigger value="properties" className="snap-start tap-target">Imóveis ({properties.length})</TabsTrigger>
+              <TabsTrigger value="budgets" className="snap-start tap-target">Orçamentos ({budgets.length})</TabsTrigger>
+              <TabsTrigger value="notes" className="snap-start tap-target">Notas</TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
 
         <TabsContent value="overview" className="mt-4">
           <div className="grid md:grid-cols-2 gap-4">
@@ -1326,6 +1337,37 @@ export default function ClientDetail() {
               Salvar
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* FAB mobile: ações rápidas (editar / novo orçamento) */}
+      {!editing && (
+        <div className="sm:hidden fixed right-4 bottom-20 z-30 flex flex-col gap-2 items-end">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 rounded-full shadow-lg bg-background press-feedback tap-target"
+            aria-label="Editar cliente"
+            onClick={() => setEditing(true)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            size="lg"
+            className="h-14 px-5 rounded-full shadow-xl gap-2 press-feedback tap-target"
+            aria-label="Novo orçamento"
+            onClick={() => {
+              const params = new URLSearchParams({
+                client_id: client.id,
+                name: client.name,
+                ...(client.email ? { email: client.email } : {}),
+                ...(client.phone ? { phone: client.phone } : {}),
+              });
+              navigate(`/admin/solicitacoes/nova?${params.toString()}`);
+            }}
+          >
+            <Plus className="h-5 w-5" /> Novo orçamento
+          </Button>
         </div>
       )}
 

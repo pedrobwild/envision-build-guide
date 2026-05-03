@@ -154,16 +154,51 @@ export function ClientTimeline({ clientId }: { clientId: string }) {
 
   return (
     <Card className="overflow-hidden">
-      <div className="px-5 py-3 border-b flex items-center justify-between">
+      <div className="px-4 sm:px-5 py-3 border-b flex items-center justify-between">
         <div>
           <h3 className="text-xs font-display font-bold uppercase tracking-wider text-muted-foreground">
             Linha do tempo do cliente
           </h3>
           <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-            Comercial e produção em ordem cronológica · {events.length} eventos
+            Comercial e produção · {events.length} eventos
           </p>
         </div>
       </div>
+
+      {/* Faixa horizontal de eventos recentes (mobile-first) */}
+      <div className="sm:hidden border-b bg-muted/30">
+        <div className="flex gap-2 overflow-x-auto snap-x-mandatory px-4 py-3">
+          {events.slice(0, 12).map((ev) => {
+            const Icon = iconFor(ev);
+            return (
+              <Link
+                key={`hchip-${ev.id}`}
+                to={ev.budget_id ? `/admin/budget/${ev.budget_id}` : "#"}
+                className={cn(
+                  "snap-start shrink-0 w-[180px] rounded-xl ring-1 px-3 py-2.5 bg-background tap-target press-feedback",
+                  accentFor(ev),
+                )}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="text-[10px] font-mono tabular-nums opacity-70">
+                    {format(new Date(ev.at), "dd/MM HH:mm")}
+                  </span>
+                </div>
+                <p className="text-xs font-medium mt-1 line-clamp-2 text-foreground">
+                  {ev.title}
+                </p>
+                {ev.budget_code && (
+                  <p className="text-[10px] font-mono opacity-60 mt-0.5 truncate">
+                    {ev.budget_code}
+                  </p>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       <ScrollArea className="max-h-[600px]">
         <div className="p-5 space-y-6">
           {days.map((day, di) => {
