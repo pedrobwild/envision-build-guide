@@ -608,7 +608,119 @@ export default function ClientsList() {
           if (!editing) navigate(`/admin/crm/${c.id}`);
         }}
       />
+
+      <Sheet open={!!actionsClient} onOpenChange={(o) => !o && setActionsClient(null)}>
+        <SheetContent side="bottom" className="md:hidden rounded-t-2xl p-0 max-h-[80vh]">
+          {actionsClient && (
+            <>
+              <SheetHeader className="px-4 pt-4 pb-2 text-left">
+                <SheetTitle className="truncate text-base">{actionsClient.name}</SheetTitle>
+                <SheetDescription className="text-xs">
+                  {actionsClient.sequential_code ?? "—"} ·{" "}
+                  {[actionsClient.city, actionsClient.bairro].filter(Boolean).join(" · ") ||
+                    "Sem localização"}
+                </SheetDescription>
+              </SheetHeader>
+              <div className="border-t border-border safe-pb-nav">
+                <SheetActionItem
+                  icon={Eye}
+                  label="Ver detalhe"
+                  onClick={() => {
+                    const id = actionsClient.id;
+                    setActionsClient(null);
+                    navigate(`/admin/crm/${id}`);
+                  }}
+                />
+                <SheetActionItem
+                  icon={Pencil}
+                  label="Editar cliente"
+                  onClick={() => {
+                    const c = actionsClient;
+                    setActionsClient(null);
+                    openEdit(c);
+                  }}
+                />
+                {actionsClient.phone && (
+                  <SheetActionItem
+                    icon={Phone}
+                    label={`Ligar ${actionsClient.phone}`}
+                    onClick={() => {
+                      window.location.href = `tel:${actionsClient.phone}`;
+                    }}
+                  />
+                )}
+                {actionsClient.email && (
+                  <SheetActionItem
+                    icon={Mail}
+                    label={`E-mail ${actionsClient.email}`}
+                    onClick={() => {
+                      window.location.href = `mailto:${actionsClient.email}`;
+                    }}
+                  />
+                )}
+                <SheetActionItem
+                  icon={UserCog}
+                  label="Selecionar para ações em lote"
+                  onClick={() => {
+                    toggleOne(actionsClient.id, true);
+                    setActionsClient(null);
+                  }}
+                />
+                <SheetActionItem
+                  icon={Archive}
+                  label="Arquivar cliente"
+                  destructive
+                  onClick={async () => {
+                    const c = actionsClient;
+                    setActionsClient(null);
+                    const ok = await confirm({
+                      title: "Arquivar cliente",
+                      description: `Arquivar ${c.name}? Ele sai da carteira ativa mas o histórico de orçamentos é preservado.`,
+                      confirmText: "Arquivar",
+                      destructive: true,
+                    });
+                    if (ok) deleteClient.mutate(c.id);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setActionsClient(null)}
+                  className="w-full px-4 py-3 text-sm text-muted-foreground border-t border-border tap-target press-feedback flex items-center justify-center gap-2"
+                >
+                  <X className="h-4 w-4" /> Cancelar
+                </button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
+  );
+}
+
+function SheetActionItem({
+  icon: Icon,
+  label,
+  onClick,
+  destructive,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-3 px-4 py-3.5 text-left text-sm border-t border-border first:border-t-0 tap-target press-feedback transition-colors active:bg-muted/60",
+        destructive && "text-destructive",
+      )}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{label}</span>
+    </button>
   );
 }
 
