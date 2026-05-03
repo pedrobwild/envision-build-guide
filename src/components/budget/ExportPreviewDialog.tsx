@@ -334,7 +334,13 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[min(1200px,95vw)] h-[85vh] flex flex-col p-0 gap-0">
+      <DialogContent
+        className="
+          w-screen h-[100dvh] max-w-none rounded-none
+          sm:w-auto sm:h-[85vh] sm:max-w-[min(1200px,95vw)] sm:rounded-lg
+          flex flex-col p-0 gap-0
+        "
+      >
         <DialogHeader className="px-6 pt-5 pb-3 border-b">
           <DialogTitle className="text-base">
             Pré-visualização do {kind === "pdf" ? "PDF" : "Excel"}
@@ -433,7 +439,10 @@ export function ExportPreviewDialog({ open, onOpenChange, budgetId, kind }: Prop
           )}
         </div>
 
-        <DialogFooter className="px-6 py-3 border-t flex-row items-center justify-between gap-3 sm:justify-between">
+        <DialogFooter
+          className="px-4 sm:px-6 py-3 border-t flex-row items-center justify-between gap-3 sm:justify-between"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))" }}
+        >
           <div className="flex flex-col gap-1 min-w-0">
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground truncate">
               {fileName ?? "—"}

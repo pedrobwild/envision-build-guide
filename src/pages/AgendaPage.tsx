@@ -263,11 +263,12 @@ export default function AgendaPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 px-1.5 text-[10px] gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                aria-label="Marcar como concluída"
+                                className="h-9 w-9 sm:h-6 sm:w-auto sm:px-1.5 text-[10px] gap-1 opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100 transition-opacity shrink-0"
                                 onClick={() => completeMut.mutate({ id: a.id })}
                               >
-                                <CheckCircle2 className="h-3 w-3" />
-                                OK
+                                <CheckCircle2 className="h-4 w-4 sm:h-3 sm:w-3" />
+                                <span className="hidden sm:inline">OK</span>
                               </Button>
                             </div>
                           );
@@ -360,15 +361,16 @@ export default function AgendaPage() {
                               <ArrowRight className="h-3 w-3" />
                             </button>
                           </div>
-                          <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 text-xs gap-1"
+                              aria-label="Marcar atividade como concluída"
+                              className="h-9 w-9 sm:h-7 sm:w-auto sm:px-3 text-xs gap-1"
                               onClick={() => completeMut.mutate({ id: a.id })}
                             >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              Concluir
+                              <CheckCircle2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                              <span className="hidden sm:inline">Concluir</span>
                             </Button>
                           </div>
                         </div>

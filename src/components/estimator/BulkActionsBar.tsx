@@ -145,11 +145,23 @@ export function BulkActionsBar({
 
   return (
     <>
-      {/* Sticky bottom bar */}
-      <div className="fixed inset-x-0 bottom-0 z-30 px-3 pb-3 pointer-events-none">
-        <div className="mx-auto max-w-4xl pointer-events-auto rounded-xl border border-border bg-card shadow-lg">
-          <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
-            <div className="flex items-center gap-2 pr-2 border-r border-border">
+      {/*
+        Sticky bottom bar. Em mobile precisa pairar acima do AdminBottomNav
+        (~4rem) + safe-area do iOS; em desktop cola no rodapé.
+      */}
+      <div
+        className="fixed inset-x-0 bottom-16 lg:bottom-0 z-40 px-2 sm:px-3 pointer-events-none"
+        style={{
+          paddingBottom: "max(0.5rem, env(safe-area-inset-bottom, 0px))",
+        }}
+      >
+        <div
+          className="mx-auto max-w-4xl pointer-events-auto rounded-xl border border-border bg-card/95 backdrop-blur shadow-lg"
+          role="region"
+          aria-label={`${count} orçamento${count === 1 ? "" : "s"} selecionado${count === 1 ? "" : "s"}`}
+        >
+          <div className="flex items-center gap-1.5 px-2.5 py-2 sm:gap-2 sm:px-3 overflow-x-auto scrollbar-none">
+            <div className="flex items-center gap-2 pr-2 border-r border-border shrink-0">
               <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-primary text-primary-foreground text-xs font-mono font-semibold">
                 {count}
               </span>
@@ -161,7 +173,7 @@ export function BulkActionsBar({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 text-xs"
+              className="h-9 sm:h-8 gap-1.5 text-xs shrink-0"
               onClick={() => setStatusOpen(true)}
             >
               <ListChecks className="h-3.5 w-3.5" />
@@ -172,7 +184,7 @@ export function BulkActionsBar({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 text-xs text-warning border-warning/30 hover:bg-warning/10"
+              className="h-9 sm:h-8 gap-1.5 text-xs text-warning border-warning/30 hover:bg-warning/10 shrink-0"
               onClick={() => setRevisionOpen(true)}
             >
               <RotateCcw className="h-3.5 w-3.5" />
@@ -185,7 +197,7 @@ export function BulkActionsBar({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1.5 text-xs"
+                  className="h-9 sm:h-8 gap-1.5 text-xs shrink-0"
                   onClick={() => setAssignOpen("estimator")}
                 >
                   <UserCog className="h-3.5 w-3.5" />
@@ -195,7 +207,7 @@ export function BulkActionsBar({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1.5 text-xs"
+                  className="h-9 sm:h-8 gap-1.5 text-xs shrink-0"
                   onClick={() => setAssignOpen("commercial")}
                 >
                   <Handshake className="h-3.5 w-3.5" />
@@ -205,16 +217,14 @@ export function BulkActionsBar({
               </>
             )}
 
-            <div className="flex-1" />
-
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
+              size="icon"
+              className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 sm:ml-auto"
               onClick={onClear}
+              aria-label="Limpar seleção"
             >
-              <X className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Limpar</span>
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
