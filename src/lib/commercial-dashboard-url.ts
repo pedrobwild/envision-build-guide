@@ -44,7 +44,22 @@ export const PIPELINE_SECTION_KEYS = [
   "perdido",
 ] as const;
 
-export const STAGE_TO_FILTER: Record<string, { status?: string; due?: DueFilter }> = {
+/**
+ * Stages agregados usados na Home Comercial e em outros dashboards de
+ * cabeçalho. Cada um mapeia para 1 combinação concreta de
+ * (statusFilter, dueFilter) entendida pelo CommercialDashboard.
+ */
+export type CommercialWorkflowStage =
+  | "action_needed"
+  | "overdue"
+  | "em_elaboracao"
+  | "revisao_solicitada"
+  | "enviado"
+  | "solicitado"
+  | "advanced"
+  | "closed";
+
+export const STAGE_TO_FILTER: Record<CommercialWorkflowStage, { status?: string; due?: DueFilter }> = {
   action_needed: { status: "entregue" },
   solicitado: { status: "solicitado" },
   em_elaboracao: { status: "em_elaboracao" },
@@ -54,6 +69,39 @@ export const STAGE_TO_FILTER: Record<string, { status?: string; due?: DueFilter 
   overdue: { status: "all", due: "overdue" },
   closed: { status: "fechado" },
 };
+
+export const COMMERCIAL_DASHBOARD_PATH = "/admin/comercial";
+
+/** True se a chave é um stage agregado conhecido. */
+export function isCommercialWorkflowStage(v: string): v is CommercialWorkflowStage {
+  return v in STAGE_TO_FILTER;
+}
+
+/** True se a chave é um status válido do pipeline (ou "all"). */
+export function isPipelineStatus(v: string): boolean {
+  return v === "all" || PIPELINE_SET.has(v);
+}
+
+/** True se a chave de fila é válida. */
+export function isQueueFilter(v: string): v is NonNullable<QueueFilter> {
+  return v === "prontos" || v === "sem-vis" || v === "esfriando";
+}
+
+/* ───────────── Builders de URL — única fonte de verdade ───────────── */
+
+export function buildDashboardUrlForStage(stage: CommercialWorkflowStage): string {
+  return `${COMMERCIAL_DASHBOARD_PATH}?stage=${stage}`;
+}
+
+export function buildDashboardUrlForStatus(status: string): string {
+  if (!isPipelineStatus(status) || status === "all") return COMMERCIAL_DASHBOARD_PATH;
+  return `${COMMERCIAL_DASHBOARD_PATH}?status=${status}`;
+}
+
+export function buildDashboardUrlForQueue(queue: NonNullable<QueueFilter>): string {
+  return `${COMMERCIAL_DASHBOARD_PATH}?fila=${queue}`;
+}
+
 
 const PIPELINE_SET = new Set<string>(PIPELINE_SECTION_KEYS);
 
