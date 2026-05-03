@@ -210,10 +210,11 @@ function NavRow({
       )}
       <Icon
         className={cn(
-          "h-[15px] w-[15px] shrink-0 transition-colors",
-          isActive ? "text-white" : "text-white/80 group-hover:text-white",
+          "shrink-0 transition-colors",
+          collapsed ? "h-[17px] w-[17px]" : "h-[15px] w-[15px]",
+          isActive ? "text-white" : "text-white/85 group-hover:text-white",
         )}
-        strokeWidth={isActive ? 2 : 1.75}
+        strokeWidth={isActive ? 2 : 1.85}
       />
       {!collapsed && (
         <span className="truncate leading-none">{item.title}</span>
