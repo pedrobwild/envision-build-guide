@@ -105,7 +105,7 @@ function getInitials(name: string): string {
 const SWIPE_THRESHOLD = -60;
 const ACTION_WIDTH = 180;
 
-export function CompactKanbanCard({
+function CompactKanbanCardImpl({
   projectName,
   clientName,
   priority,
