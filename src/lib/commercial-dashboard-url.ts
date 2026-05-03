@@ -102,6 +102,46 @@ export function buildDashboardUrlForQueue(queue: NonNullable<QueueFilter>): stri
   return `${COMMERCIAL_DASHBOARD_PATH}?fila=${queue}`;
 }
 
+/**
+ * Mapeia um `internal_status` cru (ex.: "delivered_to_sales") para a chave
+ * de PIPELINE_SECTIONS reconhecida pelo dashboard. Cobre os principais
+ * agrupamentos usados na Home Comercial; status desconhecido cai em "all".
+ */
+const INTERNAL_STATUS_TO_SECTION: Record<string, string> = {
+  delivered_to_sales: "entregue",
+  ready_for_review: "em_revisao",
+  sent_to_client: "enviado",
+  minuta_solicitada: "minuta",
+  contrato_fechado: "fechado",
+  revision_requested: "revisao_solicitada",
+  requested: "solicitado",
+  novo: "solicitado",
+  triage: "em_elaboracao",
+  assigned: "em_elaboracao",
+  in_progress: "em_elaboracao",
+  waiting_info: "em_elaboracao",
+  lost: "perdido",
+  mql: "mql",
+  qualificacao: "qualificacao",
+  lead: "lead",
+  validacao_briefing: "validacao_briefing",
+};
+
+export function internalStatusToSection(status: string | null | undefined): string {
+  if (!status) return "all";
+  return INTERNAL_STATUS_TO_SECTION[status] ?? "all";
+}
+
+/**
+ * URL apropriada para "ver mais negócios desta etapa" a partir de um
+ * `internal_status` cru vindo de um agrupamento (ex.: pipelinePorEtapa).
+ */
+export function buildDashboardUrlForInternalStatus(status: string | null | undefined): string {
+  const section = internalStatusToSection(status);
+  return buildDashboardUrlForStatus(section);
+}
+
+
 
 const PIPELINE_SET = new Set<string>(PIPELINE_SECTION_KEYS);
 
