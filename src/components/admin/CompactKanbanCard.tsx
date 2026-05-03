@@ -431,3 +431,6 @@ function CompactKanbanCardImpl({
     </div>
   );
 }
+
+export const CompactKanbanCard = memo(CompactKanbanCardImpl);
+
