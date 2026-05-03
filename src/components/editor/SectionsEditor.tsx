@@ -1383,6 +1383,30 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     }
   };
 
+  const moveSection = async (sectionId: string, dir: -1 | 1) => {
+    if (blockedByReadOnly()) return;
+    const idx = sections.findIndex(s => s.id === sectionId);
+    if (idx < 0) return;
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= sections.length) return;
+    const previousOrder = [...sections];
+    const reordered = arrayMove(sections, idx, newIdx).map((s, i) => ({ ...s, order_index: i }));
+    onSectionsChange(reordered);
+    onSaveStatusChange?.("saving");
+    try {
+      await Promise.all(
+        reordered.map(s =>
+          dbFrom(cfg.sectionTable).update({ order_index: s.order_index }).eq("id", s.id)
+        )
+      );
+      onSaveStatusChange?.("saved");
+    } catch {
+      onSectionsChange(previousOrder);
+      onSaveStatusChange?.("error");
+      toast.error("Erro ao salvar a ordem. Tente novamente.");
+    }
+  };
+
   const handleItemDragEnd = (sectionId: string) => async (event: DragEndEvent) => {
     if (blockedByReadOnly()) return;
     const { active, over } = event;
