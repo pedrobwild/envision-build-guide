@@ -283,42 +283,105 @@ export default function CommercialDashboard() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [syncedBudgetIds, setSyncedBudgetIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  // Persistimos busca/filtros/visualização em sessionStorage para que o usuário
-  // não perca o contexto ao alternar Kanban/Lista, trocar status ou recarregar
-  // a página dentro da mesma sessão. Chave única do dashboard comercial.
-  const PERSIST_KEY = "commercialDashboard:filters:v1";
-  type PersistedFilters = {
-    search?: string;
-    statusFilter?: string;
-    sortBy?: SortOption;
-    viewMode?: "list" | "kanban";
+
+  // ─────────────────────────────────────────────────────────────────────
+  // URL = source of truth para filtros, visualização e fila.
+  //
+  // Recarregar a página, copiar/colar o link ou voltar via histórico do
+  // navegador restaura exatamente o mesmo estado visual. Substituímos o
+  // sessionStorage anterior por query params para evitar divergência entre
+  // o que o usuário vê e o link que ele compartilha.
+  //
+  // Params suportados:
+  //   q     — texto de busca
+  //   status — chave de PIPELINE_SECTIONS ("all" omitido)
+  //   due    — DueFilter ("all" omitido)
+  //   com    — commercialFilter ("all" omitido)
+  //   pipe   — pipelineFilter ("all" omitido)
+  //   sort   — SortOption ("recente" omitido)
+  //   view   — "list" | "kanban" ("kanban" omitido)
+  //   fila   — "prontos" | "sem-vis" | "esfriando" (zera status/due e força lista)
+  //   stage  — entrada legada da Home: mapeada para status/due no parse
+  // ─────────────────────────────────────────────────────────────────────
+  const STAGE_TO_FILTER: Record<string, { status?: string; due?: DueFilter }> = {
+    action_needed: { status: "entregue" },
+    solicitado: { status: "solicitado" },
+    em_elaboracao: { status: "em_elaboracao" },
+    revisao_solicitada: { status: "revisao_solicitada" },
+    enviado: { status: "enviado" },
+    advanced: { status: "minuta" },
+    overdue: { status: "all", due: "overdue" },
+    closed: { status: "fechado" },
   };
-  const persisted = (() => {
-    if (typeof window === "undefined") return {} as PersistedFilters;
-    try {
-      const raw = window.sessionStorage.getItem(PERSIST_KEY);
-      return raw ? (JSON.parse(raw) as PersistedFilters) : {};
-    } catch {
-      return {} as PersistedFilters;
-    }
-  })();
-  const [search, setSearch] = useState<string>(persisted.search ?? "");
-  const [statusFilter, setStatusFilter] = useState<string>(persisted.statusFilter ?? "all");
-  const [sortBy, setSortBy] = useState<SortOption>(persisted.sortBy ?? "recente");
-  const [viewMode, setViewMode] = useState<"list" | "kanban">(persisted.viewMode ?? "kanban");
-  const [dueFilter, setDueFilter] = useState<DueFilter>("all");
-  const [commercialFilter, setCommercialFilter] = useState<string>("all");
-  const [pipelineFilter, setPipelineFilter] = useState<string>("all");
-  // Fila vinda da home do comercial via ?fila=prontos|sem-vis|esfriando.
-  // Quando ativa, sobrepõe statusFilter e força viewMode = "list" para
-  // o usuário ver imediatamente os negócios qualificados pela regra.
-  const [queueFilter, setQueueFilter] = useState<"prontos" | "sem-vis" | "esfriando" | null>(() => {
-    if (typeof window === "undefined") return null;
-    const params = new URLSearchParams(window.location.search);
-    const f = params.get("fila");
-    if (f === "prontos" || f === "sem-vis" || f === "esfriando") return f;
-    return null;
-  });
+
+  type ParsedFilters = {
+    queueFilter: "prontos" | "sem-vis" | "esfriando" | null;
+    statusFilter: string;
+    dueFilter: DueFilter;
+    sortBy: SortOption;
+    viewMode: "list" | "kanban";
+    search: string;
+    commercialFilter: string;
+    pipelineFilter: string;
+  };
+
+  const parseFiltersFromSearch = useCallback((searchStr: string): ParsedFilters => {
+    const p = new URLSearchParams(searchStr);
+    const filaRaw = p.get("fila");
+    const queueFilter =
+      filaRaw === "prontos" || filaRaw === "sem-vis" || filaRaw === "esfriando" ? filaRaw : null;
+
+    const stage = p.get("stage");
+    const stageMap = stage ? STAGE_TO_FILTER[stage] : undefined;
+
+    let status = p.get("status") ?? stageMap?.status ?? "all";
+    if (status !== "all" && !(status in PIPELINE_SECTIONS)) status = "all";
+
+    const dueRaw = (p.get("due") ?? stageMap?.due ?? "all") as DueFilter;
+    const due: DueFilter =
+      dueRaw === "overdue" || dueRaw === "due_soon" || dueRaw === "all" ? dueRaw : "all";
+
+    const sortRaw = p.get("sort");
+    const sortBy: SortOption =
+      sortRaw === "urgente" || sortRaw === "recente" || sortRaw === "prazo" ? sortRaw : "recente";
+
+    const viewRaw = p.get("view");
+    // Fila e stage forçam visualização em lista (mais legível para cobrança).
+    const viewMode: "list" | "kanban" =
+      queueFilter || stage
+        ? "list"
+        : viewRaw === "list" || viewRaw === "kanban"
+        ? viewRaw
+        : "kanban";
+
+    return {
+      queueFilter,
+      statusFilter: queueFilter ? "all" : status,
+      dueFilter: queueFilter ? "all" : due,
+      sortBy,
+      viewMode,
+      search: p.get("q") ?? "",
+      commercialFilter: p.get("com") ?? "all",
+      pipelineFilter: p.get("pipe") ?? "all",
+    };
+  }, []);
+
+  const initial = useMemo(
+    () => parseFiltersFromSearch(typeof window === "undefined" ? "" : window.location.search),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const [search, setSearch] = useState<string>(initial.search);
+  const [statusFilter, setStatusFilter] = useState<string>(initial.statusFilter);
+  const [sortBy, setSortBy] = useState<SortOption>(initial.sortBy);
+  const [viewMode, setViewMode] = useState<"list" | "kanban">(initial.viewMode);
+  const [dueFilter, setDueFilter] = useState<DueFilter>(initial.dueFilter);
+  const [commercialFilter, setCommercialFilter] = useState<string>(initial.commercialFilter);
+  const [pipelineFilter, setPipelineFilter] = useState<string>(initial.pipelineFilter);
+  const [queueFilter, setQueueFilter] = useState<"prontos" | "sem-vis" | "esfriando" | null>(
+    initial.queueFilter,
+  );
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
   const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
