@@ -391,75 +391,57 @@ export default function CommercialDashboard() {
   const [nextActionPreset, setNextActionPreset] = useState<{ type: string; title: string } | null>(null);
   const [historyBudget, setHistoryBudget] = useState<BudgetRow | null>(null);
 
-  // Persiste busca + filtros básicos + visualização sempre que mudarem.
-  // Usamos sessionStorage para não atravessar abas ou reinícios do navegador,
-  // mantendo a experiência limpa em novas sessões.
+  // ─── Escreve estado atual na URL (replace, sem empilhar histórico). ───
+  // Cada mudança de filtro/visualização vira query string, garantindo que
+  // o link copiado/colado ou o reload restaure exatamente o mesmo estado.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const payload: PersistedFilters = { search, statusFilter, sortBy, viewMode };
-      window.sessionStorage.setItem(PERSIST_KEY, JSON.stringify(payload));
-    } catch {
-      // storage cheio/bloqueado: silenciosamente ignora — não é crítico.
+    const p = new URLSearchParams();
+    if (queueFilter) {
+      p.set("fila", queueFilter);
+    } else {
+      if (statusFilter && statusFilter !== "all") p.set("status", statusFilter);
+      if (dueFilter && dueFilter !== "all") p.set("due", dueFilter);
     }
-  }, [search, statusFilter, sortBy, viewMode]);
+    if (search) p.set("q", search);
+    if (commercialFilter && commercialFilter !== "all") p.set("com", commercialFilter);
+    if (pipelineFilter && pipelineFilter !== "all") p.set("pipe", pipelineFilter);
+    if (sortBy && sortBy !== "recente") p.set("sort", sortBy);
+    if (viewMode && viewMode !== "kanban") p.set("view", viewMode);
 
-  // Sincroniza ?fila=… vindo da home do comercial. Ao chegar com fila,
-  // forçamos a lista (mais legível pra cobrar/abrir cada deal) e zeramos
-  // statusFilter para não conflitar com o filtro de fila.
+    const next = p.toString();
+    const current = window.location.search.startsWith("?")
+      ? window.location.search.slice(1)
+      : window.location.search;
+    if (next === current) return;
+    navigate(`${location.pathname}${next ? `?${next}` : ""}`, { replace: true });
+  }, [
+    search,
+    statusFilter,
+    dueFilter,
+    commercialFilter,
+    pipelineFilter,
+    sortBy,
+    viewMode,
+    queueFilter,
+    navigate,
+    location.pathname,
+  ]);
+
+  // ─── Aplica URL → estado quando location.search muda externamente ───
+  // (deep link, navegação por histórico, click em chip que faz navigate).
+  // Comparações evitam re-set desnecessário (e loops com o effect acima).
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const f = params.get("fila");
-    const next = (f === "prontos" || f === "sem-vis" || f === "esfriando") ? f : null;
-    setQueueFilter(next);
-    if (next) {
-      setViewMode("list");
-      setStatusFilter("all");
-      setDueFilter("all");
-    }
-  }, [location.search]);
-
-  // Sincroniza ?stage=… vindo da Home Comercial (linhas e atalhos por etapa).
-  // Mapeia o stage agregado (CommercialWorkflowStage) para os filtros reais
-  // do dashboard, evitando que o usuário caia no Kanban inteiro/primeira etapa.
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const stage = params.get("stage");
-    if (!stage) return;
-    // Se há ?fila= ativo, ele tem prioridade — não sobrescrever.
-    if (params.get("fila")) return;
-
-    // CommercialWorkflowStage → { statusFilter?, dueFilter? }
-    const STAGE_TO_FILTER: Record<string, { status?: string; due?: "all" | "overdue" | "due_soon" }> = {
-      action_needed: { status: "entregue" },
-      solicitado: { status: "solicitado" },
-      em_elaboracao: { status: "em_elaboracao" },
-      revisao_solicitada: { status: "revisao_solicitada" },
-      enviado: { status: "enviado" },
-      advanced: { status: "minuta" },
-      overdue: { status: "all", due: "overdue" },
-      closed: { status: "fechado" },
-    };
-    const target = STAGE_TO_FILTER[stage];
-    if (!target) return;
-    setQueueFilter(null);
-    setViewMode("list");
-    if (target.status) setStatusFilter(target.status);
-    setDueFilter(target.due ?? "all");
-  }, [location.search]);
-
-  // Sincroniza ?status=… vindo do DualFunnel (passa key direta de PIPELINE_SECTIONS).
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const status = params.get("status");
-    if (!status) return;
-    if (params.get("fila") || params.get("stage")) return;
-    if (!(status in PIPELINE_SECTIONS) && status !== "all") return;
-    setQueueFilter(null);
-    setViewMode("list");
-    setStatusFilter(status);
-    setDueFilter("all");
-  }, [location.search]);
+    const next = parseFiltersFromSearch(location.search);
+    setQueueFilter((prev) => (prev === next.queueFilter ? prev : next.queueFilter));
+    setStatusFilter((prev) => (prev === next.statusFilter ? prev : next.statusFilter));
+    setDueFilter((prev) => (prev === next.dueFilter ? prev : next.dueFilter));
+    setSortBy((prev) => (prev === next.sortBy ? prev : next.sortBy));
+    setViewMode((prev) => (prev === next.viewMode ? prev : next.viewMode));
+    setSearch((prev) => (prev === next.search ? prev : next.search));
+    setCommercialFilter((prev) => (prev === next.commercialFilter ? prev : next.commercialFilter));
+    setPipelineFilter((prev) => (prev === next.pipelineFilter ? prev : next.pipelineFilter));
+  }, [location.search, parseFiltersFromSearch]);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
