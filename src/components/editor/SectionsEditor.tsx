@@ -174,6 +174,10 @@ function SectionContextMenu({
   onRename,
   onDuplicate,
   onDelete,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
   isAddendum = false,
   onToggleAddendumRemove,
 }: {
@@ -181,6 +185,10 @@ function SectionContextMenu({
   onRename: (name: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   isAddendum?: boolean;
   onToggleAddendumRemove?: () => void;
 }) {
@@ -194,10 +202,11 @@ function SectionContextMenu({
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
-          className="p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
+          className="p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0 tap-target"
           title="Configurações da seção"
+          aria-label="Abrir menu da seção"
         >
-          <MoreVertical className="h-3.5 w-3.5" />
+          <MoreVertical className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-60 p-2.5 space-y-1" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
@@ -210,6 +219,26 @@ function SectionContextMenu({
             className="w-full h-8 px-2 rounded border border-input bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
+        {(onMoveUp || onMoveDown) && (
+          <div className="flex items-center gap-1 pb-1 border-b border-border/40">
+            <button
+              onClick={() => { onMoveUp?.(); setOpen(false); }}
+              disabled={!canMoveUp}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:hover:bg-transparent tap-target"
+              title="Mover seção para cima"
+            >
+              <ChevronRight className="h-3 w-3 -rotate-90" /> Subir
+            </button>
+            <button
+              onClick={() => { onMoveDown?.(); setOpen(false); }}
+              disabled={!canMoveDown}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:hover:bg-transparent tap-target"
+              title="Mover seção para baixo"
+            >
+              <ChevronRight className="h-3 w-3 rotate-90" /> Descer
+            </button>
+          </div>
+        )}
         <button
           onClick={() => { onDuplicate(); setOpen(false); }}
           className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs text-foreground hover:bg-muted transition-colors"
