@@ -55,6 +55,7 @@ import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, 
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
+import { parseDashboardSearch, serializeDashboardFilters } from "@/lib/commercial-dashboard-url";
 
 
 // Pipeline groups for the commercial view
