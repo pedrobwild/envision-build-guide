@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowDown, TrendingDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FunnelStage } from "@/hooks/useDashboardMetrics";
+import { buildDashboardUrlForStatus } from "@/lib/commercial-dashboard-url";
 
 interface DualFunnelProps {
   operationalFunnel: FunnelStage[];
