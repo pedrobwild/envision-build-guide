@@ -813,7 +813,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   }, []);
   const densityKey = `budget-item-density-${budgetId}`;
   const [compactMode, setCompactMode] = useState(() => {
-    try { return localStorage.getItem(densityKey) !== "expanded"; } catch { return true; }
+    try {
+      const stored = localStorage.getItem(densityKey);
+      if (stored === "expanded") return false;
+      if (stored === "compact") return true;
+      // Default: compacto em mobile, expandido em desktop
+      if (typeof window !== "undefined") {
+        return window.matchMedia("(max-width: 767px)").matches;
+      }
+      return true;
+    } catch { return true; }
   });
   const searchRef = useRef<HTMLInputElement>(null);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
