@@ -39,19 +39,38 @@ export function ForecastPanel({ ownerFilter, isAdmin = false }: ForecastPanelPro
       const revenue = parseFloat(editRevenue.replace(",", ".")) || 0;
       const deals = parseInt(editDeals, 10) || 0;
 
-      const { error } = await supabase
+      // Evita upsert+onConflict porque a UNIQUE (owner_id, target_month) usa
+      // NULLS DISTINCT — metas globais (owner_id NULL) não conflitam pela
+      // UNIQUE e batem no índice parcial commercial_targets_global_month_uniq.
+      const lookup = supabase
         .from("commercial_targets")
-        .upsert(
-          {
-            owner_id: ownerFilter ?? null,
-            target_month: monthStr,
+        .select("id")
+        .eq("target_month", monthStr)
+        .limit(1)
+        .maybeSingle();
+      const { data: existing, error: lookupError } = ownerFilter
+        ? await lookup.eq("owner_id", ownerFilter)
+        : await lookup.is("owner_id", null);
+      if (lookupError) throw lookupError;
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from("commercial_targets")
+          .update({
             revenue_target_brl: revenue,
             deals_target: deals,
-          },
-          { onConflict: "owner_id,target_month" }
-        );
-
-      if (error) throw error;
+          })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("commercial_targets").insert({
+          owner_id: ownerFilter ?? null,
+          target_month: monthStr,
+          revenue_target_brl: revenue,
+          deals_target: deals,
+        });
+        if (error) throw error;
+      }
       toast.success("Meta atualizada");
       setEditingMonth(null);
       // Forçar refetch via reload do hook (key change)
