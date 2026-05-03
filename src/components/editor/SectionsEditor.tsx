@@ -863,6 +863,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    // Mobile: long-press de 220ms inicia o drag, com tolerância a leves movimentos
+    // (evita conflitar com scroll vertical da página).
+    useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
