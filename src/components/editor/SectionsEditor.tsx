@@ -1623,7 +1623,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       >
         <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
-            {sections.map((section) => {
+            {sections.map((section, sectionIdx) => {
               const isExpanded = expandedSections.has(section.id);
               const sectionCostTotal = calcSectionCostTotal(section);
               const sectionSaleTotal = calcSectionSaleTotal(section);
