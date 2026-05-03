@@ -1371,6 +1371,7 @@ export default function ClientDetail() {
         </div>
       )}
 
+      <ExportPreviewDialog
         open={!!previewExport}
         onOpenChange={(open) => {
           if (!open) setPreviewExport(null);
