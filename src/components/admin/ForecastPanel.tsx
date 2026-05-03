@@ -42,15 +42,16 @@ export function ForecastPanel({ ownerFilter, isAdmin = false }: ForecastPanelPro
       // Evita upsert+onConflict porque a UNIQUE (owner_id, target_month) usa
       // NULLS DISTINCT — metas globais (owner_id NULL) não conflitam pela
       // UNIQUE e batem no índice parcial commercial_targets_global_month_uniq.
-      const lookup = supabase
+      const baseLookup = supabase
         .from("commercial_targets")
         .select("id")
-        .eq("target_month", monthStr)
+        .eq("target_month", monthStr);
+      const filteredLookup = ownerFilter
+        ? baseLookup.eq("owner_id", ownerFilter)
+        : baseLookup.is("owner_id", null);
+      const { data: existing, error: lookupError } = await filteredLookup
         .limit(1)
         .maybeSingle();
-      const { data: existing, error: lookupError } = ownerFilter
-        ? await lookup.eq("owner_id", ownerFilter)
-        : await lookup.is("owner_id", null);
       if (lookupError) throw lookupError;
 
       if (existing?.id) {
