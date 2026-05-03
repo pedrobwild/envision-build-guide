@@ -8,6 +8,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { logRevisionRequestEvent } from "@/lib/version-audit";
 import { toast } from "sonner";
 
@@ -141,6 +150,109 @@ export function RevisionRequestDialog({
     }
   }
 
+  const isMobile = useIsMobile();
+
+  const titleNode = (
+    <div className="flex items-center gap-2 font-display">
+      <div className="p-1.5 rounded-md bg-warning/10">
+        <RotateCcw className="h-4 w-4 text-warning" />
+      </div>
+      Solicitar Revisão
+    </div>
+  );
+
+  const descriptionText = "Descreva as alterações que o cliente solicitou. O orçamentista receberá estas instruções ao abrir o orçamento.";
+
+  const body = (
+    <div className="space-y-5 py-2">
+      {/* Change type checkboxes */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium text-foreground">Tipo de alteração</Label>
+        <div className="space-y-2">
+          {CHANGE_TYPES.map((ct) => (
+            <label
+              key={ct.value}
+              className="flex items-center gap-2.5 cursor-pointer min-h-[40px]"
+            >
+              <Checkbox
+                checked={selectedTypes.includes(ct.value)}
+                onCheckedChange={() => toggleType(ct.value)}
+              />
+              <span className="text-sm font-body text-foreground">{ct.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Instructions textarea */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium text-foreground">
+          Instruções detalhadas
+          <span className="text-destructive ml-0.5">*</span>
+        </Label>
+        <Textarea
+          value={instructions}
+          onChange={(e) => {
+            setInstructions(e.target.value);
+            if (error) setError("");
+          }}
+          placeholder="Ex: O cliente quer remover a seção de marcenaria e incluir um closet no quarto principal."
+          className="min-h-[120px] text-sm font-body resize-y"
+          maxLength={1000}
+        />
+        <div className="flex items-center justify-between">
+          {error && (
+            <p className="text-xs text-destructive font-body">{error}</p>
+          )}
+          <span className="text-xs text-muted-foreground font-body ml-auto">
+            {instructions.length} / 1000
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={submitting ? undefined : onOpenChange}>
+        <DrawerContent
+          className="max-h-[92vh]"
+          onPointerDownOutside={(e) => submitting && e.preventDefault()}
+          onEscapeKeyDown={(e) => submitting && e.preventDefault()}
+        >
+          <DrawerHeader className="text-left">
+            <DrawerTitle>{titleNode}</DrawerTitle>
+            <DrawerDescription className="font-body text-sm">
+              {descriptionText}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 overflow-y-auto">{body}</div>
+          <DrawerFooter
+            className="flex flex-col gap-2 pt-2"
+            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
+          >
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white gap-2"
+            >
+              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Enviar Solicitação
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
+              className="w-full h-10"
+            >
+              Cancelar
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={submitting ? undefined : onOpenChange} modal>
       <DialogContent
@@ -149,63 +261,13 @@ export function RevisionRequestDialog({
         onEscapeKeyDown={(e) => submitting && e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-display">
-            <div className="p-1.5 rounded-md bg-warning/10">
-              <RotateCcw className="h-4 w-4 text-warning" />
-            </div>
-            Solicitar Revisão ao Orçamentista
-          </DialogTitle>
+          <DialogTitle>{titleNode}</DialogTitle>
           <DialogDescription className="font-body">
-            Descreva as alterações que o cliente solicitou. O orçamentista receberá estas instruções ao abrir o orçamento.
+            {descriptionText}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
-          {/* Change type checkboxes */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-foreground">Tipo de alteração</Label>
-            <div className="space-y-2">
-              {CHANGE_TYPES.map((ct) => (
-                <label
-                  key={ct.value}
-                  className="flex items-center gap-2.5 cursor-pointer"
-                >
-                  <Checkbox
-                    checked={selectedTypes.includes(ct.value)}
-                    onCheckedChange={() => toggleType(ct.value)}
-                  />
-                  <span className="text-sm font-body text-foreground">{ct.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Instructions textarea */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">
-              Instruções detalhadas para o orçamentista
-              <span className="text-destructive ml-0.5">*</span>
-            </Label>
-            <Textarea
-              value={instructions}
-              onChange={(e) => {
-                setInstructions(e.target.value);
-                if (error) setError("");
-              }}
-              placeholder="Ex: O cliente quer remover a seção de marcenaria e incluir um closet no quarto principal. Ajustar o valor da seção de elétrica conforme cotação atualizada que enviei por e-mail."
-              className="min-h-[120px] text-sm font-body resize-y"
-              maxLength={1000}
-            />
-            <div className="flex items-center justify-between">
-              {error && (
-                <p className="text-xs text-destructive font-body">{error}</p>
-              )}
-              <span className="text-xs text-muted-foreground font-body ml-auto">
-                {instructions.length} / 1000
-              </span>
-            </div>
-          </div>
-        </div>
+        {body}
 
         <DialogFooter>
           <Button

@@ -7,6 +7,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -19,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateActivity } from "@/hooks/useBudgetActivities";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Loader2 } from "lucide-react";
 
 export interface ActivityInitialValues {
@@ -79,6 +88,7 @@ export function NewBudgetActivityDialog({
   const [description, setDescription] = useState("");
   const [scheduledFor, setScheduledFor] = useState<string>("");
   const create = useCreateActivity();
+  const isMobile = useIsMobile();
 
   // Aplica os valores iniciais sempre que o dialog abre com um template.
   useEffect(() => {
@@ -130,97 +140,141 @@ export function NewBudgetActivityDialog({
     onOpenChange(false);
   }
 
-  return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
-          <DialogTitle>Nova ação</DialogTitle>
-          <DialogDescription>
-            Crie uma tarefa, ligação ou follow-up com prazo para este negócio.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="activity-type" className="text-xs">Tipo</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger id="activity-type" className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ACTIVITY_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="activity-due" className="text-xs">Prazo</Label>
-              <Input
-                id="activity-due"
-                type="datetime-local"
-                value={scheduledFor}
-                onChange={(e) => setScheduledFor(e.target.value)}
-                className="h-9"
-              />
-            </div>
-          </div>
+  const formBody = (
+    <form id="new-budget-activity-form" onSubmit={handleSubmit} className="space-y-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="bact-type" className="text-xs">Tipo</Label>
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger id="bact-type" className="h-10 sm:h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ACTIVITY_TYPES.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="bact-due" className="text-xs">Prazo</Label>
+          <Input
+            id="bact-due"
+            type="datetime-local"
+            value={scheduledFor}
+            onChange={(e) => setScheduledFor(e.target.value)}
+            className="h-10 sm:h-9"
+          />
+        </div>
+      </div>
 
-          <div className="flex gap-1.5 flex-wrap">
-            {QUICK_DATES.map((q) => (
-              <Button
-                key={q.label}
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 text-[10px] px-2"
-                onClick={() => applyQuick(q.offsetHours, q.hour)}
-              >
-                {q.label}
-              </Button>
-            ))}
-          </div>
+      <div className="flex gap-1.5 flex-wrap">
+        {QUICK_DATES.map((q) => (
+          <Button
+            key={q.label}
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-9 sm:h-7 text-[11px] sm:text-[10px] px-2.5 sm:px-2"
+            onClick={() => applyQuick(q.offsetHours, q.hour)}
+          >
+            {q.label}
+          </Button>
+        ))}
+      </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="activity-title" className="text-xs">Título *</Label>
-            <Input
-              id="activity-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex.: Ligar para confirmar visita"
-              required
-              autoFocus
-            />
-          </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="bact-title" className="text-xs">Título *</Label>
+        <Input
+          id="bact-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Ex.: Ligar para confirmar visita"
+          required
+          autoFocus
+          className="h-10 sm:h-9"
+        />
+      </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="activity-desc" className="text-xs">Descrição (opcional)</Label>
-            <Textarea
-              id="activity-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detalhes, contexto, links..."
-              rows={3}
-            />
-          </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="bact-desc" className="text-xs">Descrição (opcional)</Label>
+        <Textarea
+          id="bact-desc"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Detalhes, contexto, links..."
+          rows={3}
+        />
+      </div>
+    </form>
+  );
 
-          <DialogFooter>
+  const titleText = "Nova ação";
+  const descriptionText = "Crie uma tarefa, ligação ou follow-up com prazo para este negócio.";
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
+        <DrawerContent className="max-h-[92vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>{titleText}</DrawerTitle>
+            <DrawerDescription>{descriptionText}</DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 overflow-y-auto">{formBody}</div>
+          <DrawerFooter
+            className="flex flex-col gap-2 pt-2"
+            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
+          >
+            <Button
+              type="submit"
+              form="new-budget-activity-form"
+              disabled={create.isPending || !title.trim()}
+              className="w-full h-11 gap-2"
+            >
+              {create.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Criar ação
+            </Button>
             <Button
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
               disabled={create.isPending}
+              className="w-full h-10"
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={create.isPending || !title.trim()}>
-              {create.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
-              Criar ação
-            </Button>
-          </DialogFooter>
-        </form>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle>{titleText}</DialogTitle>
+          <DialogDescription>{descriptionText}</DialogDescription>
+        </DialogHeader>
+
+        {formBody}
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            disabled={create.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" form="new-budget-activity-form" disabled={create.isPending || !title.trim()}>
+            {create.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+            Criar ação
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

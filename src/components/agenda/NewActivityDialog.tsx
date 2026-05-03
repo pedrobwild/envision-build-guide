@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,8 +8,17 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -21,6 +30,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateActivity } from "@/hooks/useBudgetActivities";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NewActivityDialogProps {
   open: boolean;
@@ -42,13 +52,23 @@ const TYPES = [
   { value: "followup", label: "Follow-up" },
 ];
 
+const QUICK_DATES = [
+  { label: "Hoje 18h", offsetHours: 0, hour: 18 },
+  { label: "Amanhã 9h", offsetHours: 24, hour: 9 },
+  { label: "+2 dias", offsetHours: 48, hour: 9 },
+  { label: "+1 sem.", offsetHours: 168, hour: 9 },
+];
+
+function pad(n: number) { return String(n).padStart(2, "0"); }
+function toLocalInput(d: Date) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function defaultScheduled() {
   const d = new Date();
   d.setMinutes(0, 0, 0);
   d.setHours(d.getHours() + 1);
-  // formato yyyy-MM-ddTHH:mm para input datetime-local
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return toLocalInput(d);
 }
 
 export function NewActivityDialog({ open, onOpenChange, budgetId, presetType, presetTitle }: NewActivityDialogProps) {
@@ -58,6 +78,7 @@ export function NewActivityDialog({ open, onOpenChange, budgetId, presetType, pr
   const [description, setDescription] = useState("");
   const [scheduledFor, setScheduledFor] = useState(defaultScheduled());
   const create = useCreateActivity();
+  const isMobile = useIsMobile();
 
   // Lista de negócios ativos para selecionar (se não pré-selecionado)
   const { data: budgets = [] } = useQuery({
@@ -90,6 +111,15 @@ export function NewActivityDialog({ open, onOpenChange, budgetId, presetType, pr
     [budget, title],
   );
 
+  function applyQuick(offsetHours: number, hour: number) {
+    const d = new Date();
+    d.setHours(d.getHours() + offsetHours);
+    if (offsetHours > 0 || d.getHours() >= hour) {
+      d.setHours(hour, 0, 0, 0);
+    }
+    setScheduledFor(toLocalInput(d));
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSave) return;
@@ -103,96 +133,159 @@ export function NewActivityDialog({ open, onOpenChange, budgetId, presetType, pr
     onOpenChange(false);
   };
 
+  const titleNode = (
+    <span className="flex items-center gap-2 font-display">
+      <Plus className="h-4 w-4 text-primary" />
+      Nova atividade
+    </span>
+  );
+
+  const descriptionText = "Agende uma ligação, reunião ou tarefa para um negócio.";
+
+  const formBody = (
+    <form id="new-activity-form" onSubmit={handleSubmit} className="space-y-3.5">
+      {!budgetId && (
+        <div className="space-y-1.5">
+          <Label className="text-xs">Negócio *</Label>
+          <Select value={budget} onValueChange={setBudget}>
+            <SelectTrigger className="h-10">
+              <SelectValue placeholder="Selecionar negócio" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[60vh] sm:max-h-72">
+              {budgets.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.sequential_code ? `${b.sequential_code} · ` : ""}
+                  {b.project_name || b.client_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Tipo</Label>
+        <Select value={type} onValueChange={setType}>
+          <SelectTrigger className="h-10">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {TYPES.map((t) => (
+              <SelectItem key={t.value} value={t.value}>
+                {t.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="activity-due" className="text-xs">Prazo</Label>
+        <Input
+          id="activity-due"
+          type="datetime-local"
+          value={scheduledFor}
+          onChange={(e) => setScheduledFor(e.target.value)}
+          className="h-10"
+        />
+        <div className="flex gap-1.5 flex-wrap pt-1">
+          {QUICK_DATES.map((q) => (
+            <Button
+              key={q.label}
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-9 text-[11px] px-2.5"
+              onClick={() => applyQuick(q.offsetHours, q.hour)}
+            >
+              {q.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="activity-title" className="text-xs">Título *</Label>
+        <Input
+          id="activity-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Ex: Ligar para apresentar proposta"
+          autoFocus
+          className="h-10"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="activity-desc" className="text-xs">
+          Detalhes (opcional)
+        </Label>
+        <Textarea
+          id="activity-desc"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+          placeholder="Pontos a tratar, contexto, anotações…"
+        />
+      </div>
+    </form>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="max-h-[92vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>{titleNode}</DrawerTitle>
+            <DrawerDescription className="text-xs">{descriptionText}</DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 overflow-y-auto">{formBody}</div>
+          <DrawerFooter
+            className="flex flex-col gap-2 pt-2"
+            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
+          >
+            <Button
+              type="submit"
+              form="new-activity-form"
+              disabled={!canSave || create.isPending}
+              className="w-full h-11 gap-2"
+            >
+              {create.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {create.isPending ? "Criando…" : "Criar atividade"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="w-full h-10"
+            >
+              Cancelar
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-display">
-            <Plus className="h-4 w-4 text-primary" />
-            Nova atividade
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            Agende uma ligação, reunião ou tarefa para um negócio.
-          </DialogDescription>
+          <DialogTitle>{titleNode}</DialogTitle>
+          <DialogDescription className="text-xs">{descriptionText}</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {!budgetId && (
-            <div>
-              <label className="text-xs font-body text-muted-foreground mb-1 block">Negócio *</label>
-              <Select value={budget} onValueChange={setBudget}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar negócio" />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {budgets.map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.sequential_code ? `${b.sequential_code} · ` : ""}
-                      {b.project_name || b.client_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+        {formBody}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-body text-muted-foreground mb-1 block">Tipo</label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs font-body text-muted-foreground mb-1 block">Quando</label>
-              <Input
-                type="datetime-local"
-                value={scheduledFor}
-                onChange={(e) => setScheduledFor(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-body text-muted-foreground mb-1 block">Título *</label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Ligar para apresentar proposta"
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-body text-muted-foreground mb-1 block">
-              Detalhes (opcional)
-            </label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              placeholder="Pontos a tratar, contexto, anotações…"
-            />
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={!canSave || create.isPending}>
-              {create.isPending ? "Criando…" : "Criar atividade"}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="new-activity-form" disabled={!canSave || create.isPending}>
+            {create.isPending && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+            {create.isPending ? "Criando…" : "Criar atividade"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

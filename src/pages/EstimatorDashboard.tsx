@@ -559,43 +559,59 @@ export default function EstimatorDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Header — em mobile, MobilePageHeader (AdminLayout) já cobre o "voltar + título".
+          Aqui mantemos o cabeçalho mais informativo só em ≥sm para não duplicar chrome. */}
       <header className="border-b border-border bg-card sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden sm:inline-flex h-9 w-9"
+              onClick={() => navigate("/admin")}
+              aria-label="Voltar"
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <h1 className="text-lg font-semibold font-display text-foreground">
-                Minha Fila de Orçamentos
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-semibold font-display text-foreground truncate">
+                <span className="hidden sm:inline">Minha Fila de Orçamentos</span>
+                <span className="sm:hidden">Produção</span>
               </h1>
-              <p className="text-sm text-muted-foreground font-body">
-                {profile?.full_name || "Orçamentista"} · {counts.total} demanda{counts.total !== 1 ? "s" : ""}
+              <p className="text-[11px] sm:text-sm text-muted-foreground font-body truncate">
+                <span className="hidden sm:inline">{profile?.full_name || "Orçamentista"} · </span>
+                {counts.total} demanda{counts.total !== 1 ? "s" : ""}
+                {counts.overdue > 0 && (
+                  <span className="text-destructive font-medium"> · {counts.overdue} atrasad{counts.overdue === 1 ? "o" : "os"}</span>
+                )}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {user && <NotificationBell userId={user.id} />}
             {/* CTA "Nova Solicitação" removido: novas solicitações partem do card do cliente em /admin/crm */}
-            <div className="flex items-center gap-1 border border-border rounded-lg p-0.5">
+            <div className="flex items-center gap-0.5 sm:gap-1 border border-border rounded-lg p-0.5">
               <Button
                 variant={viewMode === "list" ? "secondary" : "ghost"}
                 size="sm"
-                className="h-7 px-2.5 gap-1.5 text-xs"
+                className="h-8 sm:h-7 px-2 sm:px-2.5 gap-1 sm:gap-1.5 text-xs"
                 onClick={() => setViewMode("list")}
+                aria-label="Visão em lista"
+                aria-pressed={viewMode === "list"}
               >
                 <LayoutList className="h-3.5 w-3.5" />
-                Lista
+                <span className="hidden sm:inline">Lista</span>
               </Button>
               <Button
                 variant={viewMode === "kanban" ? "secondary" : "ghost"}
                 size="sm"
-                className="h-7 px-2.5 gap-1.5 text-xs"
+                className="h-8 sm:h-7 px-2 sm:px-2.5 gap-1 sm:gap-1.5 text-xs"
                 onClick={() => setViewMode("kanban")}
+                aria-label="Visão em kanban"
+                aria-pressed={viewMode === "kanban"}
               >
                 <Kanban className="h-3.5 w-3.5" />
-                Kanban
+                <span className="hidden sm:inline">Kanban</span>
               </Button>
             </div>
           </div>
