@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
+  PUBLIC_BUDGET_SELECT,
   PUBLIC_SECTION_SELECT,
   PUBLIC_ITEM_SELECT,
   PUBLIC_ITEM_IMAGE_SELECT,
@@ -321,6 +322,74 @@ export async function fetchPublicBudgetStreaming(
     sections: enrichedSections,
     adjustments: adjustments as BudgetAdjustment[],
     rooms: baseRooms,
+  } as BudgetData;
+}
+
+/**
+ * Admin-only preview of any specific budget version using the public-style UI.
+ * Bypasses the published-only filter of `get_public_budget` so that authorized
+ * users can see how a draft / archived / superseded version would render to a
+ * client. Goes through normal RLS — only admin/orçamentista/owner can read.
+ */
+export async function fetchAdminBudgetForPreview(budgetId: string): Promise<BudgetData | null> {
+  const { data: budget, error: budgetError } = await supabase
+    .from('budgets')
+    .select(PUBLIC_BUDGET_SELECT)
+    .eq('id', budgetId)
+    .maybeSingle();
+
+  if (budgetError) {
+    logger.error('fetchAdminBudgetForPreview: budget fetch failed:', budgetError.message);
+    return null;
+  }
+  if (!budget) return null;
+
+  const budgetRow = budget as unknown as RpcBudgetRow;
+
+  const [sectionsRes, adjustmentsRes, roomsRes] = await Promise.all([
+    supabase.from('sections').select(PUBLIC_SECTION_SELECT).eq('budget_id', budgetRow.id).order('order_index'),
+    supabase.from('adjustments').select(PUBLIC_ADJUSTMENT_SELECT).eq('budget_id', budgetRow.id),
+    supabase.from('rooms').select(PUBLIC_ROOM_SELECT).eq('budget_id', budgetRow.id).order('order_index'),
+  ]);
+
+  const sections = (sectionsRes.data ?? []) as unknown as SectionRow[];
+  const adjustments = (adjustmentsRes.data ?? []) as unknown as AdjustmentRow[];
+  const rooms = (roomsRes.data ?? []) as unknown as RoomRow[];
+
+  const sectionIds = sections.map(s => s.id);
+  const { data: itemsRaw } = await supabase
+    .from('items')
+    .select(PUBLIC_ITEM_SELECT)
+    .in('section_id', sectionIds.length ? sectionIds : ['__none__'])
+    .order('order_index');
+  const items = (itemsRaw ?? []) as unknown as ItemRow[];
+
+  const itemIds = items.map(i => i.id);
+  const { data: itemImagesRaw } = await supabase
+    .from('item_images')
+    .select(PUBLIC_ITEM_IMAGE_SELECT)
+    .in('item_id', itemIds.length ? itemIds : ['__none__']);
+  const itemImages = (itemImagesRaw ?? []) as unknown as ItemImageRow[];
+
+  const enrichedSections: BudgetSection[] = sections.map(section => ({
+    ...section,
+    items: items
+      .filter(i => i.section_id === section.id)
+      .map(item => ({
+        ...item,
+        images: itemImages.filter(img => img.item_id === item.id) as BudgetItemImage[],
+      })),
+  }));
+
+  return {
+    ...budgetRow,
+    sections: enrichedSections,
+    adjustments: adjustments as BudgetAdjustment[],
+    rooms: rooms.map((r): BudgetRoom => ({
+      id: r.id,
+      name: r.name,
+      polygon: Array.isArray(r.polygon) ? r.polygon as number[][] : [],
+    })),
   } as BudgetData;
 }
 

@@ -33,7 +33,7 @@ export async function getVersionHistory(budgetId: string) {
 
   const { data, error } = await supabase
     .from("budgets")
-    .select("id, version_number, is_current_version, is_published_version, status, created_at, versao, project_name, client_name, change_reason, parent_budget_id, created_by")
+    .select("id, version_number, is_current_version, is_published_version, status, created_at, versao, project_name, client_name, change_reason, parent_budget_id, created_by, public_id")
     .eq("version_group_id", groupId)
     .order("version_number", { ascending: false });
 
@@ -551,24 +551,32 @@ export async function assignImportedBudgetToGroup(
   const groupId = await ensureVersionGroup(existingBudgetId);
   const nextVersion = await getNextVersionNumber(groupId);
 
-  // 1. Assign the imported budget to this group FIRST (insert/update before demote)
-  // to avoid leaving the group without a current version if the second step fails.
+  // 1. Atribui ao grupo já marcando is_current_version=false. Isso evita
+  // violar o índice único `uniq_current_per_group` (que permite no máximo
+  // uma is_current_version=true por grupo) enquanto o membro anterior ainda
+  // não foi rebaixado.
   await supabase
     .from("budgets")
     .update({
       version_group_id: groupId,
       version_number: nextVersion,
-      is_current_version: true,
+      is_current_version: false,
       is_published_version: false,
       parent_budget_id: existingBudgetId,
       versao: `${nextVersion}`,
     })
     .eq("id", newBudgetId);
 
-  // 2. Demote previous current versions (excluding the one we just promoted)
+  // 2. Rebaixa todos os outros membros do grupo.
   await supabase
     .from("budgets")
     .update({ is_current_version: false })
     .eq("version_group_id", groupId)
     .neq("id", newBudgetId);
+
+  // 3. Promove a versão recém-importada para "atual".
+  await supabase
+    .from("budgets")
+    .update({ is_current_version: true })
+    .eq("id", newBudgetId);
 }

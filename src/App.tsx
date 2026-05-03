@@ -144,6 +144,7 @@ const App = () => (
                     <Route path="/admin/insights" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><InsightsPage /></RoleGuard></AdminPage>}/>
                     <Route path="/admin/digisac" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><DigisacPage /></RoleGuard></AdminPage>}/>
                     <Route path="/o/:publicId" element={<PublicBudget />} />
+                    <Route path="/admin/budget/:adminPreviewBudgetId/preview-publica" element={<ProtectedRoute><RoleGuard allowedRoles={["admin", "orcamentista", "comercial"]}><PublicBudget /></RoleGuard></ProtectedRoute>} />
                     <Route path="/obra/:publicId/orcamento" element={<OrcamentoPage />} />
                     <Route path="/qa" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><QAEvaluator /></RoleGuard></AdminPage>} />
                     <Route path="/admin/diagnostico" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><BudgetDiagnosticsPage /></RoleGuard></AdminPage>} />
