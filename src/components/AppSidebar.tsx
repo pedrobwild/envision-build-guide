@@ -191,8 +191,8 @@ function NavRow({
         "focus-visible:ring-1 focus-visible:ring-sidebar-ring",
         collapsed ? "h-8 w-8 mx-auto justify-center" : "h-7 px-2",
         isActive
-          ? "bg-sidebar-accent text-sidebar-foreground"
-          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+          ? "bg-sidebar-accent text-white"
+          : "text-white/85 hover:text-white hover:bg-sidebar-accent/50",
       )}
       activeClassName=""
     >
@@ -209,7 +209,7 @@ function NavRow({
       <Icon
         className={cn(
           "h-[15px] w-[15px] shrink-0 transition-colors",
-          isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/55 group-hover:text-sidebar-foreground/80",
+          isActive ? "text-white" : "text-white/80 group-hover:text-white",
         )}
         strokeWidth={isActive ? 2 : 1.75}
       />
