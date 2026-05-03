@@ -240,12 +240,12 @@ export function EditableMetaCard({
           <div className="space-y-4 pt-1">
             <div className="space-y-1.5">
               <Label htmlFor="meta-target">Meta de receita (R$)</Label>
-              <Input
+              <CurrencyInput
                 id="meta-target"
-                inputMode="decimal"
-                placeholder="250000"
-                value={targetInput}
-                onChange={(e) => setTargetInput(e.target.value)}
+                placeholder="R$ 250.000,00"
+                value={targetValue}
+                onChange={setTargetValue}
+                allowNegative={false}
                 disabled={saving}
               />
               <p className="text-[11px] text-muted-foreground">
@@ -258,16 +258,16 @@ export function EditableMetaCard({
                 Resultado manual (R$){" "}
                 <span className="text-muted-foreground font-normal">— opcional</span>
               </Label>
-              <Input
+              <CurrencyInput
                 id="meta-override"
-                inputMode="decimal"
                 placeholder={`Automático: ${new Intl.NumberFormat("pt-BR", {
                   style: "currency",
                   currency: "BRL",
                   maximumFractionDigits: 0,
                 }).format(computedRevenue)}`}
-                value={resultInput}
-                onChange={(e) => setResultInput(e.target.value)}
+                value={resultValue}
+                onChange={setResultValue}
+                allowNegative={false}
                 disabled={saving}
               />
               <p className="text-[11px] text-muted-foreground">
