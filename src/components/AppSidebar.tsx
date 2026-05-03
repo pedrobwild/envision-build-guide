@@ -188,7 +188,7 @@ function NavRow({
       end={item.end}
       className={cn(
         "group relative flex items-center gap-2.5 rounded-md font-body transition-colors duration-100 outline-none",
-        "focus-visible:ring-1 focus-visible:ring-sidebar-ring",
+        "focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar focus-visible:bg-sidebar-accent focus-visible:text-white",
         collapsed
           ? "h-9 w-9 mx-auto justify-center"
           : "h-7 px-2 text-[13px]",
@@ -212,7 +212,7 @@ function NavRow({
         className={cn(
           "shrink-0 transition-colors",
           collapsed ? "h-[17px] w-[17px]" : "h-[15px] w-[15px]",
-          isActive ? "text-white" : "text-white/85 group-hover:text-white",
+          isActive ? "text-white" : "text-white/85 group-hover:text-white group-focus-visible:text-white",
         )}
         strokeWidth={isActive ? 2 : 1.85}
       />
