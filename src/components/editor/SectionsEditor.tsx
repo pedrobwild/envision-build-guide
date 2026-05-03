@@ -1595,13 +1595,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                         )}
                         onClick={() => toggleSection(section.id)}
                       >
-                        {/* [⋮⋮] drag — hidden on mobile, visible on hover desktop */}
+                        {/* [⋮⋮] drag — visível no mobile (long-press); hover desktop */}
                         <button
                           {...dragListeners}
-                          className="hidden sm:flex w-5 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/section:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
+                          aria-label="Arrastar seção (segure para mover)"
+                          className="flex w-6 sm:w-5 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/40 sm:text-muted-foreground/0 sm:group-hover/section:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none tap-target"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <GripVertical className="h-3.5 w-3.5" />
+                          <GripVertical className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                         </button>
 
                         {/* [▶/▼] chevron */}
