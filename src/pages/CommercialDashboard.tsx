@@ -313,24 +313,18 @@ export default function CommercialDashboard() {
   const [historyBudget, setHistoryBudget] = useState<BudgetRow | null>(null);
 
   // ─── Escreve estado atual na URL (replace, sem empilhar histórico). ───
-  // Cada mudança de filtro/visualização vira query string, garantindo que
-  // o link copiado/colado ou o reload restaure exatamente o mesmo estado.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const p = new URLSearchParams();
-    if (queueFilter) {
-      p.set("fila", queueFilter);
-    } else {
-      if (statusFilter && statusFilter !== "all") p.set("status", statusFilter);
-      if (dueFilter && dueFilter !== "all") p.set("due", dueFilter);
-    }
-    if (search) p.set("q", search);
-    if (commercialFilter && commercialFilter !== "all") p.set("com", commercialFilter);
-    if (pipelineFilter && pipelineFilter !== "all") p.set("pipe", pipelineFilter);
-    if (sortBy && sortBy !== "recente") p.set("sort", sortBy);
-    if (viewMode && viewMode !== "kanban") p.set("view", viewMode);
-
-    const next = p.toString();
+    const next = serializeDashboardFilters({
+      queueFilter,
+      statusFilter,
+      dueFilter,
+      sortBy,
+      viewMode,
+      search,
+      commercialFilter,
+      pipelineFilter,
+    });
     const current = window.location.search.startsWith("?")
       ? window.location.search.slice(1)
       : window.location.search;
@@ -350,10 +344,8 @@ export default function CommercialDashboard() {
   ]);
 
   // ─── Aplica URL → estado quando location.search muda externamente ───
-  // (deep link, navegação por histórico, click em chip que faz navigate).
-  // Comparações evitam re-set desnecessário (e loops com o effect acima).
   useEffect(() => {
-    const next = parseFiltersFromSearch(location.search);
+    const next = parseDashboardSearch(location.search);
     setQueueFilter((prev) => (prev === next.queueFilter ? prev : next.queueFilter));
     setStatusFilter((prev) => (prev === next.statusFilter ? prev : next.statusFilter));
     setDueFilter((prev) => (prev === next.dueFilter ? prev : next.dueFilter));
@@ -362,7 +354,7 @@ export default function CommercialDashboard() {
     setSearch((prev) => (prev === next.search ? prev : next.search));
     setCommercialFilter((prev) => (prev === next.commercialFilter ? prev : next.commercialFilter));
     setPipelineFilter((prev) => (prev === next.pipelineFilter ? prev : next.pipelineFilter));
-  }, [location.search, parseFiltersFromSearch]);
+  }, [location.search]);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
