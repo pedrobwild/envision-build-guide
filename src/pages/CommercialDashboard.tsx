@@ -151,8 +151,7 @@ const PIPELINE_SECTIONS = {
 
 type SortOption = "urgente" | "recente" | "prazo";
 
-// Workflow groups for commercial list view
-type CommercialWorkflowStage = "action_needed" | "overdue" | "em_elaboracao" | "revisao_solicitada" | "enviado" | "solicitado" | "advanced" | "closed";
+// Workflow groups for commercial list view — tipo central em commercial-dashboard-url
 
 interface BudgetRow {
   id: string;
