@@ -122,7 +122,7 @@ export function DualFunnel({ operationalFunnel, commercialFunnel, loading }: Dua
         subtitle="Do envio ao contrato fechado"
         stages={commercialFunnel}
         accentColor="#10b981"
-        onStageClick={(stage) => navigate(`/admin/comercial?status=${stage.key}`)}
+        onStageClick={(stage) => navigate(buildDashboardUrlForStatus(stage.key))}
       />
     </div>
   );
