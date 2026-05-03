@@ -258,7 +258,7 @@ export default function ClientsList() {
         />
       </div>
 
-      <Card className="p-3">
+      <Card className="p-3 md:static sticky top-[3.25rem] z-20 md:top-auto md:z-auto bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:backdrop-blur-0">
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
           <div className="relative flex-1 sm:min-w-[240px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
