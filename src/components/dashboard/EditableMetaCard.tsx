@@ -103,29 +103,26 @@ export function EditableMetaCard({
 
   // ─── Dialog state ───
   const [open, setOpen] = useState(false);
-  const [targetInput, setTargetInput] = useState("");
-  const [resultInput, setResultInput] = useState("");
+  const [targetValue, setTargetValue] = useState<number | null>(null);
+  const [resultValue, setResultValue] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setTargetInput(target ? String(target) : "");
-      setResultInput(override !== null && override !== undefined ? String(override) : "");
+      setTargetValue(target ?? null);
+      setResultValue(override ?? null);
     }
   }, [open, target, override]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const targetValue = parseBRL(targetInput);
-      const resultValue = resultInput.trim() === "" ? null : parseBRL(resultInput);
-
       if (targetValue === null || targetValue < 0) {
         toast.error("Informe uma meta válida (em reais).");
         setSaving(false);
         return;
       }
-      if (resultInput.trim() !== "" && (resultValue === null || resultValue < 0)) {
+      if (resultValue !== null && resultValue < 0) {
         toast.error("Resultado manual inválido. Deixe em branco para usar o cálculo automático.");
         setSaving(false);
         return;
