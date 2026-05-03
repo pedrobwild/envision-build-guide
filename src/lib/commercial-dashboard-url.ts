@@ -44,7 +44,22 @@ export const PIPELINE_SECTION_KEYS = [
   "perdido",
 ] as const;
 
-export const STAGE_TO_FILTER: Record<string, { status?: string; due?: DueFilter }> = {
+/**
+ * Stages agregados usados na Home Comercial e em outros dashboards de
+ * cabeçalho. Cada um mapeia para 1 combinação concreta de
+ * (statusFilter, dueFilter) entendida pelo CommercialDashboard.
+ */
+export type CommercialWorkflowStage =
+  | "action_needed"
+  | "overdue"
+  | "em_elaboracao"
+  | "revisao_solicitada"
+  | "enviado"
+  | "solicitado"
+  | "advanced"
+  | "closed";
+
+export const STAGE_TO_FILTER: Record<CommercialWorkflowStage, { status?: string; due?: DueFilter }> = {
   action_needed: { status: "entregue" },
   solicitado: { status: "solicitado" },
   em_elaboracao: { status: "em_elaboracao" },
@@ -55,20 +70,94 @@ export const STAGE_TO_FILTER: Record<string, { status?: string; due?: DueFilter 
   closed: { status: "fechado" },
 };
 
+export const COMMERCIAL_DASHBOARD_PATH = "/admin/comercial";
+
+/** True se a chave é um stage agregado conhecido. */
+export function isCommercialWorkflowStage(v: string): v is CommercialWorkflowStage {
+  return v in STAGE_TO_FILTER;
+}
+
+/** True se a chave é um status válido do pipeline (ou "all"). */
+export function isPipelineStatus(v: string): boolean {
+  return v === "all" || PIPELINE_SET.has(v);
+}
+
+/** True se a chave de fila é válida. */
+export function isQueueFilter(v: string): v is NonNullable<QueueFilter> {
+  return v === "prontos" || v === "sem-vis" || v === "esfriando";
+}
+
+/* ───────────── Builders de URL — única fonte de verdade ───────────── */
+
+export function buildDashboardUrlForStage(stage: CommercialWorkflowStage): string {
+  return `${COMMERCIAL_DASHBOARD_PATH}?stage=${stage}`;
+}
+
+export function buildDashboardUrlForStatus(status: string): string {
+  if (!isPipelineStatus(status) || status === "all") return COMMERCIAL_DASHBOARD_PATH;
+  return `${COMMERCIAL_DASHBOARD_PATH}?status=${status}`;
+}
+
+export function buildDashboardUrlForQueue(queue: NonNullable<QueueFilter>): string {
+  return `${COMMERCIAL_DASHBOARD_PATH}?fila=${queue}`;
+}
+
+/**
+ * Mapeia um `internal_status` cru (ex.: "delivered_to_sales") para a chave
+ * de PIPELINE_SECTIONS reconhecida pelo dashboard. Cobre os principais
+ * agrupamentos usados na Home Comercial; status desconhecido cai em "all".
+ */
+const INTERNAL_STATUS_TO_SECTION: Record<string, string> = {
+  delivered_to_sales: "entregue",
+  ready_for_review: "em_revisao",
+  sent_to_client: "enviado",
+  minuta_solicitada: "minuta",
+  contrato_fechado: "fechado",
+  revision_requested: "revisao_solicitada",
+  requested: "solicitado",
+  novo: "solicitado",
+  triage: "em_elaboracao",
+  assigned: "em_elaboracao",
+  in_progress: "em_elaboracao",
+  waiting_info: "em_elaboracao",
+  lost: "perdido",
+  mql: "mql",
+  qualificacao: "qualificacao",
+  lead: "lead",
+  validacao_briefing: "validacao_briefing",
+};
+
+export function internalStatusToSection(status: string | null | undefined): string {
+  if (!status) return "all";
+  return INTERNAL_STATUS_TO_SECTION[status] ?? "all";
+}
+
+/**
+ * URL apropriada para "ver mais negócios desta etapa" a partir de um
+ * `internal_status` cru vindo de um agrupamento (ex.: pipelinePorEtapa).
+ */
+export function buildDashboardUrlForInternalStatus(status: string | null | undefined): string {
+  const section = internalStatusToSection(status);
+  return buildDashboardUrlForStatus(section);
+}
+
+
+
 const PIPELINE_SET = new Set<string>(PIPELINE_SECTION_KEYS);
 
 export function parseDashboardSearch(searchStr: string): ParsedFilters {
   const p = new URLSearchParams(searchStr);
 
-  const filaRaw = p.get("fila");
-  const queueFilter: QueueFilter =
-    filaRaw === "prontos" || filaRaw === "sem-vis" || filaRaw === "esfriando" ? filaRaw : null;
+  const filaRaw = p.get("fila") ?? "";
+  const queueFilter: QueueFilter = isQueueFilter(filaRaw) ? filaRaw : null;
 
-  const stage = p.get("stage");
+  const stageRaw = p.get("stage") ?? "";
+  const stage = isCommercialWorkflowStage(stageRaw) ? stageRaw : null;
   const stageMap = stage ? STAGE_TO_FILTER[stage] : undefined;
 
   let status = p.get("status") ?? stageMap?.status ?? "all";
-  if (status !== "all" && !PIPELINE_SET.has(status)) status = "all";
+  if (!isPipelineStatus(status)) status = "all";
+
 
   const dueRaw = (p.get("due") ?? stageMap?.due ?? "all") as DueFilter;
   const due: DueFilter =

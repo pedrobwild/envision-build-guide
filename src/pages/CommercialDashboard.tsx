@@ -55,7 +55,12 @@ import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, 
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
-import { parseDashboardSearch, serializeDashboardFilters } from "@/lib/commercial-dashboard-url";
+import {
+  parseDashboardSearch,
+  serializeDashboardFilters,
+  buildDashboardUrlForQueue,
+  type CommercialWorkflowStage,
+} from "@/lib/commercial-dashboard-url";
 
 
 // Pipeline groups for the commercial view
@@ -146,8 +151,7 @@ const PIPELINE_SECTIONS = {
 
 type SortOption = "urgente" | "recente" | "prazo";
 
-// Workflow groups for commercial list view
-type CommercialWorkflowStage = "action_needed" | "overdue" | "em_elaboracao" | "revisao_solicitada" | "enviado" | "solicitado" | "advanced" | "closed";
+// Workflow groups for commercial list view — tipo central em commercial-dashboard-url
 
 interface BudgetRow {
   id: string;
@@ -1111,7 +1115,7 @@ export default function CommercialDashboard() {
                     <button
                       key={id}
                       type="button"
-                      onClick={() => navigate(`/admin/comercial?fila=${id}`, { replace: true })}
+                      onClick={() => navigate(buildDashboardUrlForQueue(id), { replace: true })}
                       className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
                         active
                           ? "border-primary bg-primary text-primary-foreground"
@@ -1152,6 +1156,58 @@ export default function CommercialDashboard() {
               )}
             </div>
           )}
+
+          {/* Banner de etapa ativa — aparece quando o usuário chega via
+              ?stage= / ?status= / ?due= (clique na Home Comercial, deep link
+              ou filtro manual). Reduz a confusão "por que estou vendo só
+              esses cards?" e oferece um clique para limpar. Não aparece
+              quando há fila ativa (já tem banner próprio acima). */}
+          {!queueFilter && (statusFilter !== "all" || dueFilter !== "all") && (() => {
+            const section = statusFilter !== "all"
+              ? PIPELINE_SECTIONS[statusFilter as keyof typeof PIPELINE_SECTIONS]
+              : null;
+            const Icon = section?.icon ?? AlertTriangle;
+            const dueLabel =
+              dueFilter === "overdue" ? "Vencidos / Hoje" :
+              dueFilter === "due_soon" ? "Próximos (≤2d)" : null;
+            return (
+              <div
+                className="rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5 flex items-center justify-between gap-3"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="min-w-0 flex-1 flex items-center gap-2.5">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wide text-primary/70 font-medium font-body">
+                      Etapa ativa
+                    </p>
+                    <p className="text-sm font-medium text-foreground truncate font-body">
+                      {section?.label ?? "Todas as etapas"}
+                      {dueLabel && (
+                        <span className="text-muted-foreground"> · prazo: {dueLabel}</span>
+                      )}
+                      <span className="text-muted-foreground font-mono tabular-nums ml-2">
+                        {filtered.length}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 shrink-0 gap-1"
+                  onClick={() => { setStatusFilter("all"); setDueFilter("all"); }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Limpar
+                </Button>
+              </div>
+            );
+          })()}
+
           {/* Compact summary strip — desktop */}
           <div className="hidden lg:flex items-center gap-4 px-3 py-2 rounded-lg bg-muted/30 border border-border/50 text-xs font-body text-muted-foreground">
             {counts.needsAction > 0 && (

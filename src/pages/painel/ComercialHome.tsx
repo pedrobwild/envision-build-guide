@@ -51,6 +51,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useComercialQueues, nextActionForDeal, type DealRow } from "@/hooks/useComercialQueues";
 import { useSalesOverview, formatCurrencyBRL, formatDays, formatPct, stageLabel } from "@/hooks/useSalesKpis";
+import { buildDashboardUrlForQueue, buildDashboardUrlForInternalStatus } from "@/lib/commercial-dashboard-url";
 
 const SECTION_DELAY = 0.06;
 const anim = (delay: number) => ({
@@ -144,7 +145,7 @@ export default function ComercialHome() {
             description="Entregues pelo orçamentista, ainda não enviados ao cliente."
             priority={data && data.prontosParaEnviar.length > 0 ? "info" : "ok"}
             actionLabel="Abrir e enviar"
-            onAction={() => navigate("/admin/comercial?fila=prontos")}
+            onAction={() => navigate(buildDashboardUrlForQueue("prontos"))}
             loading={isLoading}
           />
           <FilaCard
@@ -154,7 +155,7 @@ export default function ComercialHome() {
             description="Enviados há mais de 48h sem nenhuma abertura. Cobre."
             priority={data && data.semVisualizacao48h.length > 0 ? "warning" : "ok"}
             actionLabel="Cobrar abertura"
-            onAction={() => navigate("/admin/comercial?fila=sem-vis")}
+            onAction={() => navigate(buildDashboardUrlForQueue("sem-vis"))}
             loading={isLoading}
           />
           <FilaCard
@@ -170,7 +171,7 @@ export default function ComercialHome() {
                 : "ok"
             }
             actionLabel="Reativar agora"
-            onAction={() => navigate("/admin/comercial?fila=esfriando")}
+            onAction={() => navigate(buildDashboardUrlForQueue("esfriando"))}
             loading={isLoading}
           />
           <FilaCard
@@ -238,7 +239,7 @@ export default function ComercialHome() {
                     ))}
                     {group.deals.length > 5 && (
                       <button
-                        onClick={() => navigate(`/admin/comercial?stage=${group.stage}`)}
+                        onClick={() => navigate(buildDashboardUrlForInternalStatus(group.stage))}
                         className="text-[12px] font-body text-ink-soft hover:text-info py-1.5 transition-colors"
                       >
                         Ver mais {group.deals.length - 5} →
@@ -290,7 +291,7 @@ export default function ComercialHome() {
                     )}
                     {group.deals.length > 6 && (
                       <button
-                        onClick={() => navigate(`/admin/comercial?stage=${group.stage}`)}
+                        onClick={() => navigate(buildDashboardUrlForInternalStatus(group.stage))}
                         className="text-[11.5px] font-body text-ink-soft hover:text-info py-1 transition-colors"
                       >
                         Ver mais {group.deals.length - 6} →
