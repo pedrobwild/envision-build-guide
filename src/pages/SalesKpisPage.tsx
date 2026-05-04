@@ -570,9 +570,12 @@ function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: strin
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <BarChart3 className="h-4 w-4 text-primary" /> Conversão por segmento
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BarChart3 className="h-4 w-4 text-primary" /> Conversão por segmento
+          </CardTitle>
+          <RefreshingIndicator show={refreshing} />
+        </div>
       </CardHeader>
       <CardContent className="pt-0">
         <Tabs value={dim} onValueChange={(v) => setDim(v as SegmentDimension)}>
