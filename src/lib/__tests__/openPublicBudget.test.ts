@@ -18,8 +18,26 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock do supabase client ANTES de importar o módulo sob teste.
 const rpcMock = vi.fn();
+// Fila de respostas para chamadas a `supabase.from(...).maybeSingle()`,
+// consumidas em ordem (camada de fallback consulta budgets duas vezes).
+const fromResponses: Array<{ data: unknown; error?: unknown }> = [];
+function makeFromBuilder() {
+  const builder: Record<string, unknown> = {};
+  const chain = () => builder;
+  ["select", "eq", "or", "in", "not", "order"].forEach((m) => {
+    builder[m] = vi.fn(chain);
+  });
+  builder.limit = vi.fn(() => builder);
+  builder.maybeSingle = vi.fn(() =>
+    Promise.resolve(fromResponses.shift() ?? { data: null, error: null }),
+  );
+  return builder;
+}
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { rpc: (...args: unknown[]) => rpcMock(...args) },
+  supabase: {
+    rpc: (...args: unknown[]) => rpcMock(...args),
+    from: vi.fn(() => makeFromBuilder()),
+  },
 }));
 
 // Silencia toasts (importados pelo módulo).
