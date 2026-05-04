@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import {
   INTERNAL_STATUSES,
-  VALID_INTERNAL_STATUSES,
   type InternalStatus,
 } from "@/lib/role-constants";
 
@@ -59,7 +58,21 @@ const CHANGE_TYPES = [
   { value: "other", label: "Outro" },
 ] as const;
 
-const STATUS_OPTIONS = VALID_INTERNAL_STATUSES.map((s) => ({
+// Status disponíveis em ações em lote no painel de produção do orçamentista.
+// Termina em "delivered_to_sales" — a transição "Enviar ao Cliente" é exclusiva do comercial.
+const ELABORATION_STATUS_OPTIONS_VALUES: InternalStatus[] = [
+  "novo",
+  "requested",
+  "triage",
+  "assigned",
+  "in_progress",
+  "waiting_info",
+  "ready_for_review",
+  "revision_requested",
+  "delivered_to_sales",
+];
+
+const STATUS_OPTIONS = ELABORATION_STATUS_OPTIONS_VALUES.map((s) => ({
   value: s,
   label: `${INTERNAL_STATUSES[s].icon} ${INTERNAL_STATUSES[s].label}`,
 }));

@@ -62,7 +62,10 @@ import { differenceInCalendarDays, isPast, isToday, format, formatDistanceToNow 
 import { ptBR } from "date-fns/locale";
 import { useRevisionRequests, type RevisionRequestInfo } from "@/hooks/useRevisionRequests";
 
-/* ── Columns — mirrors Commercial Kanban, with estimator lock rules ── */
+/* ── Columns — mirrors Commercial Kanban, with estimator lock rules ──
+   Pós-elaboração (Enviado ao Cliente / Minuta / Contrato Fechado / Perdido)
+   ficam visíveis para acompanhamento, mas travadas: a transição "Enviar ao Cliente"
+   e o ciclo comercial são gerenciados pelo time comercial. */
 const ESTIMATOR_COLUMNS = [
   {
     id: "solicitado",
@@ -88,7 +91,7 @@ const ESTIMATOR_COLUMNS = [
   },
   {
     id: "entregue",
-    label: "Entregue",
+    label: "Entregue ao Comercial",
     icon: CheckCircle2,
     statuses: ["delivered_to_sales"] as string[],
     accent: "border-t-success",
@@ -106,7 +109,7 @@ const ESTIMATOR_COLUMNS = [
     headerColor: "text-success",
     bgColor: "bg-success/5",
     targetStatus: "sent_to_client" as InternalStatus,
-    locked: false,
+    locked: true,
   },
   {
     id: "minuta",
@@ -117,7 +120,7 @@ const ESTIMATOR_COLUMNS = [
     headerColor: "text-violet-600",
     bgColor: "bg-violet-50/50",
     targetStatus: "minuta_solicitada" as InternalStatus,
-    locked: false,
+    locked: true,
   },
   {
     id: "fechado",
@@ -128,7 +131,7 @@ const ESTIMATOR_COLUMNS = [
     headerColor: "text-success",
     bgColor: "bg-success/5",
     targetStatus: "contrato_fechado" as InternalStatus,
-    locked: false,
+    locked: true,
   },
   {
     id: "perdido",
@@ -139,7 +142,7 @@ const ESTIMATOR_COLUMNS = [
     headerColor: "text-muted-foreground",
     bgColor: "bg-muted/30",
     targetStatus: "lost" as InternalStatus,
-    locked: false,
+    locked: true,
   },
 ];
 
