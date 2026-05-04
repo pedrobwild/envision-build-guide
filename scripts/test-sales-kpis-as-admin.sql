@@ -23,10 +23,11 @@ SELECT COALESCE(
 
 \echo '— Autenticando como admin:' :admin_id
 
--- 2. Simular sessão autenticada do PostgREST (auth.uid() lê de request.jwt.claims)
+-- 2. Simular sessão autenticada do PostgREST
+--    auth.uid() lê 'sub' de request.jwt.claims, então basta setar o GUC
+--    no escopo da transação. Não trocamos de role para manter compatibilidade
+--    com sandbox/psql (apenas o postgres pode virar `authenticated`).
 BEGIN;
-SET LOCAL ROLE authenticator;
-SET LOCAL ROLE authenticated;
 SELECT set_config(
   'request.jwt.claims',
   json_build_object(
