@@ -918,26 +918,37 @@ export default function BudgetInternalDetail() {
               {subtitle && (
                 <p className="text-sm text-muted-foreground font-body mt-1">{subtitle}</p>
               )}
-              {/* Contato do cliente — visível direto no cabeçalho */}
+              {/* Contato do cliente — chips com ação rápida (copiar + abrir) */}
               {(budget.lead_email || budget.client_phone) && (
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {budget.lead_email && (
-                    <a
+                    <ContactChip
+                      icon={<Mail className="h-3.5 w-3.5" />}
+                      label={budget.lead_email}
                       href={`mailto:${budget.lead_email}`}
-                      className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
-                    >
-                      <span className="opacity-70">✉</span>
-                      {budget.lead_email}
-                    </a>
+                      openLabel="Abrir e-mail"
+                      copyValue={budget.lead_email}
+                      copyToast="E-mail copiado"
+                    />
                   )}
                   {budget.client_phone && (
-                    <a
-                      href={`tel:${budget.client_phone}`}
-                      className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
-                    >
-                      <span className="opacity-70">☎</span>
-                      {budget.client_phone}
-                    </a>
+                    <>
+                      <ContactChip
+                        icon={<Phone className="h-3.5 w-3.5" />}
+                        label={budget.client_phone}
+                        href={`tel:${budget.client_phone}`}
+                        openLabel="Ligar"
+                        copyValue={budget.client_phone}
+                        copyToast="Telefone copiado"
+                      />
+                      <ContactChip
+                        icon={<MessageCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
+                        label="WhatsApp"
+                        href={`https://wa.me/${budget.client_phone.replace(/\D/g, "")}`}
+                        openLabel="Abrir WhatsApp"
+                        external
+                      />
+                    </>
                   )}
                 </div>
               )}
