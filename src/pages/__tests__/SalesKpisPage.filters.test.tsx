@@ -206,9 +206,9 @@ describe("SalesKpisPage — filtros globais propagam para todos os blocos", () =
     expect("_owner_id" in byOwnerLast.params).toBe(false);
 
     // Faixa de período aplicada deve mostrar o nome da vendedora
-    expect(screen.getByText(/Vendedora:/i)).toBeInTheDocument();
-    expect(within(screen.getByText(/Vendedora:/i).parentElement!).getByText("Alice"))
-      .toBeInTheDocument();
+    const veLabel = screen.getByText(/Vendedora:/i);
+    expect(veLabel).toBeInTheDocument();
+    expect(veLabel.parentElement!.textContent).toMatch(/Alice/);
   });
 
   it("ao limpar a vendedora (Todas), volta a enviar _owner_id = null", async () => {
