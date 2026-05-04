@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useClient } from "@/hooks/useClients";
+import { CLIENT_SOURCES } from "@/hooks/useClients";
 import { useClientProperties } from "@/hooks/useClientProperties";
-import { ChevronDown, User, Mail, Phone, MapPin, Building2, Ruler, Home, Tag, Image as ImageIcon, ExternalLink, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  ChevronDown, User, Mail, Phone, MapPin, Building2, Ruler, Home, Tag,
+  Image as ImageIcon, ExternalLink, Calendar, FileText, Globe, Heart, Briefcase, Users as UsersIcon,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
