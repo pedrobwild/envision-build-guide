@@ -65,7 +65,6 @@ import {
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { useOpenMode, OPEN_MODE_LABELS, type OpenMode } from "@/lib/openMode";
-import { ExternalLink } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import type { AppRole } from "@/lib/role-constants";
