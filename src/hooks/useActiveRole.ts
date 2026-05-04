@@ -62,6 +62,13 @@ export function useActiveRole(): UseActiveRoleReturn {
     }
 
     let cancelled = false;
+    const safetyTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      logger.warn("[useActiveRole] timeout — usando fallback por papéis disponíveis");
+      setPersisted(null);
+      setLoading(false);
+    }, 5000);
+
     async function load() {
       try {
         const { data, error } = await supabase
@@ -84,12 +91,14 @@ export function useActiveRole(): UseActiveRoleReturn {
           setPersisted(null);
         }
       } finally {
+        window.clearTimeout(safetyTimer);
         if (!cancelled) setLoading(false);
       }
     }
     load();
     return () => {
       cancelled = true;
+      window.clearTimeout(safetyTimer);
     };
   }, [user]);
 
