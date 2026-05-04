@@ -60,7 +60,7 @@ import {
   FileDown,
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
-import { buildWhatsappUrl } from "@/lib/phone";
+import { buildWhatsappUrl, formatPhoneBR } from "@/lib/phone";
 import { openPublicBudget } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
@@ -934,11 +934,12 @@ export default function BudgetInternalDetail() {
                   )}
                   {budget.client_phone && (() => {
                     const waUrl = buildWhatsappUrl(budget.client_phone);
+                    const phoneDisplay = formatPhoneBR(budget.client_phone);
                     return (
                       <>
                         <ContactChip
                           icon={<Phone className="h-3.5 w-3.5" aria-hidden />}
-                          label={budget.client_phone}
+                          label={phoneDisplay}
                           href={`tel:${budget.client_phone.replace(/[^\d+]/g, "")}`}
                           openLabel="Ligar para o cliente"
                           copyValue={budget.client_phone}

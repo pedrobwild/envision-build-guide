@@ -39,3 +39,31 @@ export function buildWhatsappUrl(raw: string | null | undefined, message?: strin
   const base = `https://wa.me/${num}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
+
+/**
+ * Formata um telefone BR para exibição: "(11) 91234-5678" ou "(11) 1234-5678".
+ * Mantém o valor original se não conseguir reconhecer o formato (ex.: internacional).
+ * Não muta o valor salvo no banco — uso exclusivo de UI.
+ */
+export function formatPhoneBR(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const digits = String(raw).replace(/\D/g, "");
+  // remove DDI 55 se presente para formatar a parte nacional
+  const local =
+    (digits.length === 12 || digits.length === 13) && digits.startsWith("55")
+      ? digits.slice(2)
+      : digits;
+  if (local.length === 11) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  }
+  if (local.length === 10) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  }
+  if (local.length === 9) {
+    return `${local.slice(0, 5)}-${local.slice(5)}`;
+  }
+  if (local.length === 8) {
+    return `${local.slice(0, 4)}-${local.slice(4)}`;
+  }
+  return String(raw);
+}
