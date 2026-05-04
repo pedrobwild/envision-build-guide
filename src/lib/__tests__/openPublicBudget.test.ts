@@ -18,8 +18,26 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock do supabase client ANTES de importar o módulo sob teste.
 const rpcMock = vi.fn();
+// Fila de respostas para chamadas a `supabase.from(...).maybeSingle()`,
+// consumidas em ordem (camada de fallback consulta budgets duas vezes).
+const fromResponses: Array<{ data: unknown; error?: unknown }> = [];
+function makeFromBuilder() {
+  const builder: Record<string, unknown> = {};
+  const chain = () => builder;
+  ["select", "eq", "or", "in", "not", "order"].forEach((m) => {
+    builder[m] = vi.fn(chain);
+  });
+  builder.limit = vi.fn(() => builder);
+  builder.maybeSingle = vi.fn(() =>
+    Promise.resolve(fromResponses.shift() ?? { data: null, error: null }),
+  );
+  return builder;
+}
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { rpc: (...args: unknown[]) => rpcMock(...args) },
+  supabase: {
+    rpc: (...args: unknown[]) => rpcMock(...args),
+    from: vi.fn(() => makeFromBuilder()),
+  },
 }));
 
 // Silencia toasts (importados pelo módulo).
@@ -48,6 +66,7 @@ describe("openPublicBudgetByPublicId — botão Visualizar do card comercial", (
 
   beforeEach(() => {
     rpcMock.mockReset();
+    fromResponses.length = 0;
     openCalls = [];
     stubWin = {
       closed: false,
@@ -104,15 +123,41 @@ describe("openPublicBudgetByPublicId — botão Visualizar do card comercial", (
     );
   });
 
-  it("faz fallback para o public_id original quando a RPC falha", async () => {
-    rpcMock.mockResolvedValue({ data: null, error: { message: "boom" } });
+  it("FALLBACK camada 2: quando RPC retorna null, busca a vencedora publicada do grupo na tabela", async () => {
+    // RPC não resolve (ex: card aponta para draft órfão sem versão publicada cadastrada na RPC).
+    rpcMock.mockResolvedValue({ data: null, error: null });
+    // Fila: 1ª query devolve o registro fonte (com version_group_id),
+    //       2ª query devolve a vencedora publicada do mesmo grupo.
+    fromResponses.push({ data: { id: "src-id", version_group_id: "group-xyz" } });
+    fromResponses.push({ data: { public_id: "winner_v7_pub" } });
 
-    await openPublicBudgetByPublicId("original_id");
+    await openPublicBudgetByPublicId("draft_v6_id");
 
-    expect(stubWin.location.href).toBe(getPublicBudgetUrl("original_id"));
+    expect(stubWin.location.href).toBe(getPublicBudgetUrl("winner_v7_pub"));
   });
 
-  it("faz fallback para o public_id original quando a RPC lança", async () => {
+  it("FALLBACK camada 2: também aciona quando a RPC retorna erro", async () => {
+    rpcMock.mockResolvedValue({ data: null, error: { message: "boom" } });
+    fromResponses.push({ data: { id: "src", version_group_id: "g1" } });
+    fromResponses.push({ data: { public_id: "winner_pub" } });
+
+    await openPublicBudgetByPublicId("any_id");
+
+    expect(stubWin.location.href).toBe(getPublicBudgetUrl("winner_pub"));
+  });
+
+  it("Sem versão publicada em lugar nenhum: fecha o stub e mostra erro (não navega para draft)", async () => {
+    rpcMock.mockResolvedValue({ data: null, error: null });
+    fromResponses.push({ data: { id: "src", version_group_id: "g1" } });
+    fromResponses.push({ data: null }); // nenhuma vencedora
+
+    await openPublicBudgetByPublicId("draft_only");
+
+    expect(stubWin.closed).toBe(true);
+    expect(stubWin.location.href).toBe("about:blank");
+  });
+
+  it("Catch geral: se a RPC lança exceção, navega para o public_id original como último recurso", async () => {
     rpcMock.mockRejectedValue(new Error("network"));
 
     await openPublicBudgetByPublicId("original_id");
