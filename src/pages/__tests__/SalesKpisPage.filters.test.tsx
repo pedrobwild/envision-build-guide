@@ -9,12 +9,24 @@
  *    inspeciona as params da última invocação após cada mudança de filtro.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import SalesKpisPage from "@/pages/SalesKpisPage";
+
+// Radix Select usa APIs de pointer/scroll que jsdom não implementa.
+beforeAll(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (Element.prototype as any).hasPointerCapture = () => false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (Element.prototype as any).releasePointerCapture = () => {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (Element.prototype as any).setPointerCapture = () => {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (Element.prototype as any).scrollIntoView = () => {};
+});
 
 // ---- Recharts: ResponsiveContainer não funciona em jsdom -------------
 vi.mock("recharts", async () => {
