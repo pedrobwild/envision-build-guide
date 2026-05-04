@@ -69,6 +69,86 @@ function outcomeTone(outcome: OpenBudgetDiagnosis["outcome"]): {
   };
 }
 
+/**
+ * Traduz o outcome técnico em um motivo legível, citando os 3 caminhos
+ * mais comuns: RPC resolveu/falhou, popup blocker e ausência de versão
+ * publicada. Retorna título + explicação + sugestão de ação.
+ */
+function describeReason(diag: OpenBudgetDiagnosis): {
+  title: string;
+  explanation: string;
+  hint?: string;
+} {
+  if (diag.popupBlocked && diag.outcome.startsWith("opened_")) {
+    return {
+      title: "Popup bloqueado pelo navegador",
+      explanation:
+        "O navegador impediu a abertura de uma nova aba. Abrimos na mesma aba como fallback.",
+      hint: "Permita popups para este site ou ative 'Sempre na mesma aba' nas preferências.",
+    };
+  }
+  switch (diag.outcome) {
+    case "blocked_no_published":
+      return {
+        title: "Nenhuma versão publicada",
+        explanation:
+          "Este orçamento (ou nenhum dos seus irmãos no mesmo grupo) está com status publicado.",
+        hint: "Publique a versão atual para que o link público fique acessível.",
+      };
+    case "blocked_no_public_id":
+      return {
+        title: "Sem link público gerado",
+        explanation: "Este orçamento ainda não possui um public_id atribuído.",
+        hint: "Salve/publique para gerar um link público.",
+      };
+    case "blocked_rpc_error":
+      return {
+        title: "Erro ao consultar versão publicada",
+        explanation: `A consulta no banco falhou${diag.errorMessage ? `: ${diag.errorMessage}` : "."}`,
+        hint: "Tente novamente. Se persistir, encaminhe o Correlation ID ao suporte.",
+      };
+    case "blocked_publish_error":
+      return {
+        title: "Falha ao publicar automaticamente",
+        explanation: `Não foi possível atualizar o status${diag.errorMessage ? `: ${diag.errorMessage}` : "."}`,
+        hint: "Verifique permissões e validações da versão antes de publicar manualmente.",
+      };
+    case "opened_original":
+      return {
+        title: "Aberto sem validar versão",
+        explanation:
+          "A RPC de resolução falhou; abrimos o link original como fallback. Pode levar a uma versão antiga.",
+        hint: "Confirme qual versão está publicada no grupo antes de compartilhar.",
+      };
+    case "opened_via_rpc":
+      return {
+        title: "Resolvido via RPC",
+        explanation:
+          "A função resolve_published_public_id retornou a versão publicada vencedora do grupo.",
+      };
+    case "opened_via_fallback":
+      return {
+        title: "Resolvido via fallback no cliente",
+        explanation:
+          "A RPC não retornou alvo; localizamos a versão publicada do grupo consultando a tabela diretamente.",
+      };
+    case "opened_direct":
+      return {
+        title: "Aberto direto",
+        explanation: "O orçamento já estava publicado — abrimos a URL pública diretamente.",
+      };
+    case "opened_after_publish":
+      return {
+        title: "Publicado e aberto",
+        explanation: "Publicamos automaticamente este orçamento e abrimos a URL pública.",
+      };
+    default:
+      return {
+        title: diag.outcome,
+        explanation: "Diagnóstico sem descrição adicional.",
+      };
+  }
+
 function copyToClipboard(value: string, label: string) {
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(value).then(
