@@ -597,6 +597,7 @@ function KanbanColumn({
                   leadScoreMap={leadScoreMap}
                   onNextAction={onNextAction}
                   onOpenHistory={onOpenHistory}
+                  onRepublishPublicLink={onRepublishPublicLink}
                 />
               </div>
             ))}
