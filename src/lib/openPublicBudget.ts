@@ -58,28 +58,81 @@ function showDiagnosisToast(message: string, diag: OpenBudgetDiagnosis) {
 }
 
 /**
- * Abre uma janela "stub" SINCRONAMENTE dentro do gesto do usuário para evitar
- * o popup blocker do Chrome/Safari. Reporta status do popup ao trace.
+ * Toast informando que o popup foi bloqueado e oferecendo desligar permanentemente
+ * o modo "nova aba" para este usuário (escreve em localStorage via setOpenMode).
  */
-function openStubWindow(trace: OpenBudgetTrace) {
+function notifyPopupBlocked() {
+  toast.warning("O navegador bloqueou a nova aba — abrimos na mesma aba.", {
+    duration: 7000,
+    action: {
+      label: "Sempre na mesma aba",
+      onClick: () => {
+        setOpenMode("same_tab");
+        toast.success("Preferência salva: orçamentos abrirão na mesma aba.");
+      },
+    },
+  });
+}
+
+/**
+ * Abre uma URL respeitando a preferência do usuário (`OpenMode`).
+ *
+ * - `same_tab`: navega na própria aba (`location.assign`) — sem stub, sem popup.
+ * - `new_tab`:  abre nova aba; se bloqueado, navega na mesma aba como fallback
+ *               e avisa o usuário (toast com opção de mudar a preferência).
+ * - `auto`:     idêntico a `new_tab` mas é o default; comportamento de fallback
+ *               já cobre o caso de bloqueio.
+ *
+ * Quando há trabalho assíncrono (resolução RPC etc.) e o modo é "nova aba",
+ * abrimos um stub `about:blank` SINCRONAMENTE dentro do gesto do usuário para
+ * driblar o popup blocker, e navegamos depois.
+ */
+function openWithMode(trace: OpenBudgetTrace, mode: OpenMode = getOpenMode()) {
+  trace.step("open_mode", { mode });
+
+  if (mode === "same_tab") {
+    return {
+      mode,
+      navigate(url: string) {
+        trace.step("same_tab_navigate", { url });
+        if (typeof window !== "undefined") window.location.assign(url);
+      },
+      close() { /* noop */ },
+    };
+  }
+
+  // new_tab / auto: abre stub agora (dentro do gesto)
   const win = typeof window !== "undefined"
     ? window.open("about:blank", "_blank", "noopener,noreferrer")
     : null;
   trace.setPopupBlocked(!win);
+
   return {
-    win,
+    mode,
     navigate(url: string) {
       if (win && !win.closed) {
         try { win.location.href = url; trace.step("stub_navigated", { url }); return; } catch { /* fallthrough */ }
       }
+      // Stub indisponível: tenta nova aba uma vez
       trace.step("stub_unavailable_retry_open", { url });
-      const retry = window.open(url, "_blank", "noopener,noreferrer");
-      if (!retry) trace.step("retry_open_blocked", { url });
+      const retry = typeof window !== "undefined"
+        ? window.open(url, "_blank", "noopener,noreferrer")
+        : null;
+      if (retry) return;
+      // Bloqueado: fallback para mesma aba + avisa o usuário
+      trace.step("popup_blocked_fallback_same_tab", { url });
+      notifyPopupBlocked();
+      if (typeof window !== "undefined") window.location.assign(url);
     },
     close() {
       if (win && !win.closed) { try { win.close(); trace.step("stub_closed"); } catch { /* noop */ } }
     },
   };
+}
+
+// Backwards-compat: nome antigo continua existindo (usado em código pré-refator).
+function openStubWindow(trace: OpenBudgetTrace) {
+  return openWithMode(trace);
 }
 
 export async function openPublicBudget(
