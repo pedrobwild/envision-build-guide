@@ -312,6 +312,7 @@ export default function CommercialDashboard() {
   const [dueFilter, setDueFilter] = useState<DueFilter>(initial.dueFilter);
   const [commercialFilter, setCommercialFilter] = useState<string>(initial.commercialFilter);
   const [pipelineFilter, setPipelineFilter] = useState<string>(initial.pipelineFilter);
+  const [linkFilter, setLinkFilter] = useState<"all" | "published" | "draft" | "missing">(initial.linkFilter);
   const [queueFilter, setQueueFilter] = useState<"prontos" | "sem-vis" | "esfriando" | null>(
     initial.queueFilter,
   );
