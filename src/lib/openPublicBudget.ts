@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getPublicBudgetUrl } from "./getPublicUrl";
 import { toast } from "sonner";
 import { OpenBudgetTrace, type OpenBudgetDiagnosis } from "./openPublicBudgetTelemetry";
+import { getOpenMode, setOpenMode, type OpenMode } from "./openMode";
 
 interface BudgetRefForPublicOpen {
   id: string;
