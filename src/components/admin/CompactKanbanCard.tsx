@@ -138,6 +138,7 @@ function CompactKanbanCardImpl({
   onQuickAction,
   onOpenHistory,
   actionsSlot,
+  onRepublishPublicLink,
 }: CompactKanbanCardProps) {
   const prio = PRIORITIES[priority as Priority] ?? PRIORITIES.normal;
   const statusMeta = INTERNAL_STATUSES[internalStatus as InternalStatus];
