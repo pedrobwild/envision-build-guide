@@ -87,8 +87,8 @@ SELECT
   ROUND(coh.cohort_revenue, 2) AS cohort_revenue,
   -- Comparação interna do mesmo filtro
   CASE
-    WHEN ((d.payload->'kpis'->>'total_leads'))::bigint = coh.cohort_leads
-     AND ((d.payload->'kpis'->>'deals_won'))::bigint   = coh.cohort_won
+    WHEN ((d.payload->>'total_leads'))::bigint = coh.cohort_leads
+     AND ((d.payload->>'deals_won'))::bigint   = coh.cohort_won
     THEN 'PASS' ELSE 'FAIL'
   END AS dashboard_vs_cohorts
 FROM combos c
@@ -190,9 +190,9 @@ WITH periods(label, start_at, end_at) AS (
 )
 SELECT
   p.label,
-  ((d.payload->'kpis'->>'total_leads'))::bigint AS dashboard_leads,
+  ((d.payload->>'total_leads'))::bigint AS dashboard_leads,
   bo.sum_leads AS by_owner_leads,
-  CASE WHEN ((d.payload->'kpis'->>'total_leads'))::bigint = bo.sum_leads
+  CASE WHEN ((d.payload->>'total_leads'))::bigint = bo.sum_leads
        THEN 'PASS' ELSE 'FAIL' END AS status
 FROM periods p
 CROSS JOIN LATERAL (
