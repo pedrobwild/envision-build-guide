@@ -3592,6 +3592,14 @@ export type Database = {
       get_public_budget: { Args: { p_public_id: string }; Returns: Json }
       get_public_budget_full: { Args: { p_public_id: string }; Returns: Json }
       get_public_budget_total: { Args: { p_public_id: string }; Returns: Json }
+      get_team_members: {
+        Args: { _role?: Database["public"]["Enums"]["app_role"] }
+        Returns: {
+          full_name: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -9,8 +9,9 @@ export interface TeamMember {
 }
 
 /**
- * Fetches team members filtered by role.
- * Joins profiles + user_roles to get name and role.
+ * Fetches team members filtered by role via the SECURITY DEFINER RPC
+ * `get_team_members`. This avoids exposing the full `user_roles` table to
+ * non-admin clients while still allowing assignment dropdowns to populate.
  */
 export function useTeamMembers(role?: AppRole) {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -22,49 +23,28 @@ export function useTeamMembers(role?: AppRole) {
     async function load() {
       setLoading(true);
 
-      // Fetch all user_roles (optionally filtered)
-      let query = supabase.from("user_roles").select("user_id, role");
-      if (role) {
-        query = query.eq("role", role);
-      }
-      const { data: roles } = await query;
-      if (cancelled || !roles || roles.length === 0) {
+      const { data, error } = await supabase.rpc(
+        "get_team_members",
+        role ? { _role: role } : ({} as { _role?: AppRole }),
+      );
+
+      if (cancelled) return;
+
+      if (error || !data) {
         setMembers([]);
         setLoading(false);
         return;
       }
 
-      const userIds = [...new Set(roles.map((r) => r.user_id))];
-
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", userIds)
-        .eq("is_active", true);
-
-      if (cancelled) return;
-
-      const profileMap = new Map(
-        (profiles ?? []).map((p) => [p.id, p.full_name ?? ""])
+      const result: TeamMember[] = (data as Array<{ id: string; full_name: string | null; role: AppRole }>).map(
+        (m) => ({
+          id: m.id,
+          full_name: m.full_name || "(sem nome)",
+          role: m.role,
+        }),
       );
 
-      const result: TeamMember[] = roles
-        .filter((r) => profileMap.has(r.user_id))
-        .map((r) => ({
-          id: r.user_id,
-          full_name: profileMap.get(r.user_id) || "(sem nome)",
-          role: r.role as AppRole,
-        }));
-
-      // Deduplicate by user_id (a user may have multiple roles)
-      const seen = new Set<string>();
-      const deduped = result.filter((m) => {
-        if (seen.has(m.id)) return false;
-        seen.add(m.id);
-        return true;
-      });
-
-      setMembers(deduped);
+      setMembers(result);
       setLoading(false);
     }
 
