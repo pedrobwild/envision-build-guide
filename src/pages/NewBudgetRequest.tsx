@@ -447,6 +447,7 @@ export default function NewBudgetRequest() {
           internal_notes: (isImport && importNotes.trim()) ? importNotes.trim() : (internalNotes.trim() || null),
           reference_links: links.length > 0 ? links : [],
           hubspot_deal_url: hubspotDealUrl.trim() || null,
+          floor_plan_url: floorPlanUrl || null,
           internal_status: isImport ? "delivered_to_sales" : "requested",
           status: "draft",
           commercial_owner_id: commercialOwnerId || user.id,
