@@ -41,6 +41,13 @@ const PUBLISHABLE = new Set(["published", "minuta_solicitada"]);
  */
 function showDiagnosisToast(message: string, diag: OpenBudgetDiagnosis) {
   const shortId = diag.correlationId.slice(0, 8);
+  const isFailure = diag.outcome.startsWith("blocked_") || diag.outcome === "opened_original";
+
+  // Em falhas, abre a modal automaticamente — não depende mais de clicar em "Ver detalhes".
+  if (isFailure) {
+    try { openDiagnosisDialog(diag); } catch { /* noop em ambientes sem DOM */ }
+  }
+
   toast.error(message, {
     duration: 10000,
     description: `ID de rastreamento: ${shortId}`,
