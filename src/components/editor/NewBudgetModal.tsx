@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { upsertClientByContact } from "@/hooks/useClients";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -307,9 +308,81 @@ export function NewBudgetModal({ open, onOpenChange, onSuccess }: NewBudgetModal
     const manualTotal = isImport ? parseManualTotal() : null;
     const publicId = isImport ? crypto.randomUUID().replace(/-/g, "").slice(0, 12) : null;
 
+    let resolvedClientId: string | null = null;
+    try {
+      const client = await upsertClientByContact({
+        name: clientName.trim(),
+        email: clientEmail.trim() || null,
+        phone: clientPhone.trim() || null,
+        createdBy: user.id,
+        extra: {
+          bairro: bairro.trim() || null,
+          condominio_default: condominio.trim() || null,
+          location_type_default: locationType || null,
+          commercial_owner_id: commercialOwnerId || user.id,
+        },
+      });
+      resolvedClientId = client?.id ?? null;
+    } catch (clientErr) {
+      logger.error("[NewBudgetModal] upsertClient falhou:", clientErr);
+      toast.error("Não foi possível vincular o cliente à solicitação.");
+      setLoading(false);
+      return;
+    }
+
+    let resolvedPropertyId: string | null = null;
+    const hasPropertyData = !!(condominio.trim() || bairro.trim() || metragemFormatted || locationType);
+    if (resolvedClientId && hasPropertyData) {
+      try {
+        let existingPropertyQuery = (supabase as any)
+          .from("client_properties")
+          .select("id")
+          .eq("client_id", resolvedClientId)
+          .limit(1);
+
+        if (condominio.trim()) existingPropertyQuery = existingPropertyQuery.eq("empreendimento", condominio.trim());
+        if (bairro.trim()) existingPropertyQuery = existingPropertyQuery.eq("bairro", bairro.trim());
+        if (metragemFormatted) existingPropertyQuery = existingPropertyQuery.eq("metragem", metragemFormatted);
+
+        const { data: existingProperty } = await existingPropertyQuery.maybeSingle();
+        if (existingProperty?.id) {
+          resolvedPropertyId = existingProperty.id;
+        } else {
+          const { count } = await supabase
+            .from("client_properties")
+            .select("id", { count: "exact", head: true })
+            .eq("client_id", resolvedClientId);
+
+          const { data: createdProperty, error: propertyErr } = await (supabase as any)
+            .from("client_properties")
+            .insert({
+              client_id: resolvedClientId,
+              empreendimento: condominio.trim() || null,
+              bairro: bairro.trim() || null,
+              metragem: metragemFormatted,
+              location_type: locationType || null,
+              created_by: user.id,
+              is_primary: (count ?? 0) === 0,
+            })
+            .select("id")
+            .single();
+
+          if (propertyErr) {
+            logger.error("[NewBudgetModal] criar property falhou:", propertyErr);
+          } else {
+            resolvedPropertyId = createdProperty?.id ?? null;
+          }
+        }
+      } catch (propertyErr) {
+        logger.error("[NewBudgetModal] property resolution falhou:", propertyErr);
+      }
+    }
+
     const { data, error } = await supabase
       .from("budgets")
       .insert({
+        client_id: resolvedClientId,
+        property_id: resolvedPropertyId,
         client_name: clientName.trim(),
         project_name: projectName || clientName.trim(),
         lead_email: clientEmail.trim() || null,

@@ -211,6 +211,7 @@ const POST_DELIVERY_STATUSES: Set<string> = new Set([
   ...STATUS_GROUPS.DELIVERED,
   ...STATUS_GROUPS.COMMERCIAL_ADVANCED,
   ...STATUS_GROUPS.FINISHED,
+  "revision_requested",
 ]);
 
 function getDueInfo(dueAt: string | null, internalStatus?: string): { label: string; variant: DueVariant } | null {
@@ -226,6 +227,18 @@ function getDueInfo(dueAt: string | null, internalStatus?: string): { label: str
   if (days <= 2) return { label: isPostDelivery ? format(dueDate, "dd MMM", { locale: ptBR }) : `${days}d`, variant: isPostDelivery ? "default" : "soon" };
   if (days <= 7) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "ok" };
   return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" };
+}
+
+function getRevisionDueInfo(dueAt: string | null, requestedAt?: string): { label: string; variant: DueVariant } | null {
+  if (!dueAt) return null;
+  const dueDate = new Date(dueAt);
+  if (requestedAt) {
+    const requestedDate = new Date(requestedAt);
+    if (dueDate.getTime() < requestedDate.getTime()) {
+      return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" };
+    }
+  }
+  return getDueInfo(dueAt, "revision_requested");
 }
 
 const dueVariantStyles: Record<DueVariant, string> = {
@@ -505,7 +518,9 @@ function EstimatorCard({
   revisionInfo?: RevisionRequestInfo;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-  const due = getDueInfo(b.due_at, b.internal_status);
+  const due = b.internal_status === "revision_requested"
+    ? getRevisionDueInfo(b.due_at, revisionInfo?.requestedAt)
+    : getDueInfo(b.due_at, b.internal_status);
   const highPrio = isHighPriority(b.priority);
   const borderColor = due ? dueBorderStyles[due.variant] : "border-l-transparent";
 
