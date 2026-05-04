@@ -6,6 +6,7 @@ import { installConsoleErrorBuffer } from "./lib/console-error-buffer";
 import { installChunkErrorTelemetry } from "./lib/chunk-telemetry";
 import { installAuthFetchRetry } from "./lib/auth-fetch-retry";
 import { installAuthSessionRecovery } from "./lib/auth-session-recovery";
+import { installOpenBudgetSink } from "./lib/openBudgetSink";
 
 // Retry automático para refresh_token do Supabase em erros de rede
 // ("Failed to fetch"), com aviso visível ao usuário. Deve rodar antes
