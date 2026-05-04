@@ -6,18 +6,14 @@
  * — evitando "Página não encontrada" quando o orçamento atual está em
  * draft mas existe outra versão publicada no mesmo grupo.
  *
- * Estratégia (em ordem):
- *   1. Se o budget passado já estiver publicado → abre direto.
- *   2. Senão, procura no `version_group_id` (ou no próprio id como fallback)
- *      a versão publicada mais recente e abre o public_id dela.
- *   3. Se nada estiver publicado e `autoPublish=true`, publica este budget
- *      (status → 'published') e abre.
- *   4. Se `autoPublish=false` e não houver versão publicada, mostra toast
- *      explicando o motivo e não abre nada.
+ * Telemetria: cada decisão é registrada via OpenBudgetTrace e o diagnóstico
+ * final é exposto em `window.__openBudgetDiag` + console (logger). Em falhas,
+ * o toast inclui um botão "Ver detalhes" que imprime o diagnóstico completo.
  */
 import { supabase } from "@/integrations/supabase/client";
 import { getPublicBudgetUrl } from "./getPublicUrl";
 import { toast } from "sonner";
+import { OpenBudgetTrace, type OpenBudgetDiagnosis } from "./openPublicBudgetTelemetry";
 
 interface BudgetRefForPublicOpen {
   id: string;
@@ -36,27 +32,51 @@ interface OpenPublicBudgetOptions {
 const PUBLISHABLE = new Set(["published", "minuta_solicitada"]);
 
 /**
- * Abre uma janela "stub" SINCRONAMENTE dentro do gesto do usuário para evitar
- * o popup blocker do Chrome/Safari quando precisamos resolver async (RPC, query)
- * antes de saber a URL final. Retorna a janela (ou null se já bloqueada) e um
- * helper para apontá-la depois ou fechá-la em caso de erro.
+ * Mostra um toast de erro com botão "Ver detalhes" que imprime o diagnóstico
+ * completo no console — sem usar alert() nativo (anti-padrão UX).
  */
-function openStubWindow() {
+function showDiagnosisToast(message: string, diag: OpenBudgetDiagnosis) {
+  toast.error(message, {
+    duration: 8000,
+    action: {
+      label: "Ver detalhes",
+      onClick: () => {
+        // eslint-disable-next-line no-console
+        console.group("[openPublicBudget] diagnóstico");
+        // eslint-disable-next-line no-console
+        console.table(diag.steps);
+        // eslint-disable-next-line no-console
+        console.log("Diagnóstico completo:", diag);
+        // eslint-disable-next-line no-console
+        console.log("Disponível em window.__openBudgetDiag");
+        // eslint-disable-next-line no-console
+        console.groupEnd();
+      },
+    },
+  });
+}
+
+/**
+ * Abre uma janela "stub" SINCRONAMENTE dentro do gesto do usuário para evitar
+ * o popup blocker do Chrome/Safari. Reporta status do popup ao trace.
+ */
+function openStubWindow(trace: OpenBudgetTrace) {
   const win = typeof window !== "undefined"
     ? window.open("about:blank", "_blank", "noopener,noreferrer")
     : null;
+  trace.setPopupBlocked(!win);
   return {
     win,
     navigate(url: string) {
       if (win && !win.closed) {
-        try { win.location.href = url; return; } catch { /* fallthrough */ }
+        try { win.location.href = url; trace.step("stub_navigated", { url }); return; } catch { /* fallthrough */ }
       }
-      // Stub bloqueado ou fechado: tenta abrir direto (pode também ser bloqueado,
-      // mas neste ponto já passamos do gesto — é o melhor que dá).
-      window.open(url, "_blank", "noopener,noreferrer");
+      trace.step("stub_unavailable_retry_open", { url });
+      const retry = window.open(url, "_blank", "noopener,noreferrer");
+      if (!retry) trace.step("retry_open_blocked", { url });
     },
     close() {
-      if (win && !win.closed) { try { win.close(); } catch { /* noop */ } }
+      if (win && !win.closed) { try { win.close(); trace.step("stub_closed"); } catch { /* noop */ } }
     },
   };
 }
@@ -66,18 +86,24 @@ export async function openPublicBudget(
   opts: OpenPublicBudgetOptions = {},
 ): Promise<void> {
   const { autoPublish = true, onStatusChanged } = opts;
+  const trace = new OpenBudgetTrace("by_budget_ref", budget.public_id, budget.id, budget.status);
+  trace.step("input", { budget_id: budget.id, status: budget.status, version_group_id: budget.version_group_id ?? null });
 
   // 1) Já publicado: abre direto (síncrono, sem risco de popup blocker).
   if (budget.public_id && PUBLISHABLE.has(budget.status ?? "")) {
-    window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
+    const win = window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
+    trace.setPopupBlocked(!win);
+    trace.setResolved(budget.public_id, "direct");
+    trace.commit("opened_direct");
     return;
   }
 
   // Para os caminhos async, abre stub agora (dentro do gesto) e navega depois.
-  const stub = openStubWindow();
+  const stub = openStubWindow(trace);
 
   // 2) Procura outra versão publicada no mesmo grupo.
   const groupId = budget.version_group_id ?? budget.id;
+  trace.step("fallback_query", { groupId });
   const { data: published, error: pubErr } = await supabase
     .from("budgets")
     .select("id, public_id, status, version_number, created_at")
@@ -90,31 +116,39 @@ export async function openPublicBudget(
 
   if (pubErr) {
     stub.close();
-    toast.error("Erro ao localizar versão publicada: " + pubErr.message);
+    trace.setError(pubErr.message);
+    const diag = trace.commit("blocked_rpc_error");
+    showDiagnosisToast("Erro ao localizar versão publicada: " + pubErr.message, diag);
     return;
   }
 
   const fallback = published?.[0];
   if (fallback?.public_id) {
     stub.navigate(getPublicBudgetUrl(fallback.public_id));
+    trace.setResolved(fallback.public_id, "fallback");
+    trace.commit("opened_via_fallback");
     return;
   }
 
   // 3) Nada publicado: publica este orçamento (se autorizado) e abre.
   if (!budget.public_id) {
     stub.close();
-    toast.error("Link público ainda não foi gerado para este orçamento.");
+    const diag = trace.commit("blocked_no_public_id");
+    showDiagnosisToast("Link público ainda não foi gerado para este orçamento.", diag);
     return;
   }
 
   if (!autoPublish) {
     stub.close();
-    toast.error(
+    const diag = trace.commit("blocked_no_published");
+    showDiagnosisToast(
       "Nenhuma versão publicada disponível. Publique o orçamento para abrir o link público.",
+      diag,
     );
     return;
   }
 
+  trace.step("auto_publish_attempt", { budget_id: budget.id });
   const toastId = toast.loading("Publicando orçamento...");
   const { error: updErr } = await supabase
     .from("budgets")
@@ -124,46 +158,46 @@ export async function openPublicBudget(
 
   if (updErr) {
     stub.close();
-    toast.error("Não foi possível publicar: " + updErr.message);
+    trace.setError(updErr.message);
+    const diag = trace.commit("blocked_publish_error");
+    showDiagnosisToast("Não foi possível publicar: " + updErr.message, diag);
     return;
   }
 
   onStatusChanged?.("published");
   toast.success("Orçamento publicado");
   stub.navigate(getPublicBudgetUrl(budget.public_id));
+  trace.setResolved(budget.public_id, "direct");
+  trace.commit("opened_after_publish");
 }
 
-/**
- * Versão simplificada para chamadores que só têm o `public_id` em mãos
- * (cards de kanban, listas, header do editor). Resolve para a versão publicada
- * mais recente do mesmo grupo via RPC `resolve_published_public_id` antes de
- * abrir — assim o link nunca cai em "Página não encontrada" quando o orçamento
- * apontado é um draft.
- */
 /**
  * Fallback adicional: localiza a versão "vencedora" (publicada mais recente do
  * mesmo version_group_id) consultando direto a tabela `budgets`. Usado quando a
  * RPC `resolve_published_public_id` retorna NULL ou devolve o próprio public_id
  * que já sabemos ser inválido para anônimos (draft).
- *
- * RLS: budgets tem leitura pública apenas em status published/minuta — então
- * essa query devolve só linhas que o anônimo conseguiria abrir, não vaza draft.
  */
 async function findWinningPublishedPublicId(
   sourcePublicId: string,
+  trace: OpenBudgetTrace,
 ): Promise<string | null> {
-  // 1) Descobre o version_group_id do card clicado (pode ser draft).
-  const { data: src } = await supabase
+  trace.step("client_fallback_lookup", { sourcePublicId });
+  const { data: src, error: srcErr } = await supabase
     .from("budgets")
     .select("id, version_group_id")
     .eq("public_id", sourcePublicId)
     .maybeSingle();
 
-  const groupId = src?.version_group_id ?? src?.id;
-  if (!groupId) return null;
+  if (srcErr) trace.step("client_fallback_src_error", { message: srcErr.message });
 
-  // 2) Procura a versão publicada mais recente do mesmo grupo.
-  const { data: winner } = await supabase
+  const groupId = src?.version_group_id ?? src?.id;
+  if (!groupId) {
+    trace.step("client_fallback_no_group", {});
+    return null;
+  }
+  trace.step("client_fallback_group_found", { groupId });
+
+  const { data: winner, error: winErr } = await supabase
     .from("budgets")
     .select("public_id, is_published_version, version_number, created_at")
     .or(`version_group_id.eq.${groupId},id.eq.${groupId}`)
@@ -175,44 +209,65 @@ async function findWinningPublishedPublicId(
     .limit(1)
     .maybeSingle();
 
+  if (winErr) trace.step("client_fallback_winner_error", { message: winErr.message });
+  trace.step("client_fallback_winner", { public_id: winner?.public_id ?? null });
+
   return winner?.public_id ?? null;
 }
 
 export async function openPublicBudgetByPublicId(publicId: string): Promise<void> {
+  const trace = new OpenBudgetTrace("by_public_id", publicId || null);
+
   if (!publicId) {
-    toast.error("Link público ainda não foi gerado para este orçamento.");
+    const diag = trace.commit("blocked_no_public_id");
+    showDiagnosisToast("Link público ainda não foi gerado para este orçamento.", diag);
     return;
   }
-  // Abre stub SINCRONAMENTE no gesto do usuário para escapar do popup blocker.
-  const stub = openStubWindow();
+
+  const stub = openStubWindow(trace);
   try {
     // Camada 1: RPC oficial (security definer, mesmo grupo).
+    trace.step("rpc_call", { p_public_id: publicId });
     const { data: resolved, error } = await supabase.rpc(
       "resolve_published_public_id",
       { p_public_id: publicId },
     );
+    if (error) trace.step("rpc_error", { message: error.message });
     let target =
       !error && typeof resolved === "string" && resolved ? resolved : null;
+    trace.step("rpc_result", { resolved: target });
 
-    // Camada 2: fallback no cliente — se a RPC não resolveu, tenta achar a
-    // versão publicada vencedora do grupo direto na tabela. Isso cobre casos
-    // em que o card aponta para um draft órfão ou a RPC ficou desatualizada.
+    // Camada 2: fallback no cliente.
     if (!target) {
-      target = await findWinningPublishedPublicId(publicId);
+      target = await findWinningPublishedPublicId(publicId, trace);
+      if (target) trace.setResolved(target, "fallback");
+    } else {
+      trace.setResolved(target, "rpc");
     }
 
-    // Camada 3: último recurso — abre o public_id original. Pode dar 404, mas
-    // é melhor que travar a navegação dentro do gesto do usuário.
+    // Camada 3: nada publicado — não navega para draft.
     if (!target) {
-      toast.error(
-        "Nenhuma versão publicada disponível para este orçamento. Publique antes de compartilhar.",
-      );
       stub.close();
+      const diag = trace.commit("blocked_no_published");
+      showDiagnosisToast(
+        "Nenhuma versão publicada disponível para este orçamento. Publique antes de compartilhar.",
+        diag,
+      );
       return;
     }
 
     stub.navigate(getPublicBudgetUrl(target));
-  } catch {
+    trace.commit(target === resolved ? "opened_via_rpc" : "opened_via_fallback");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    trace.setError(msg);
     stub.navigate(getPublicBudgetUrl(publicId));
+    trace.setResolved(publicId, "original");
+    const diag = trace.commit("opened_original");
+    // Aviso silencioso — não bloqueia, mas registra no console.
+    showDiagnosisToast(
+      "Abrimos o link original, mas houve um erro ao validar a versão publicada.",
+      diag,
+    );
   }
 }
