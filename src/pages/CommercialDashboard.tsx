@@ -1390,12 +1390,13 @@ export default function CommercialDashboard() {
 
               <SavedViewsBar
                 entity="budgets"
-                currentFilters={{ search, statusFilter, dueFilter, commercialFilter, sortBy }}
+                currentFilters={{ search, statusFilter, dueFilter, commercialFilter, linkFilter, sortBy }}
                 onApply={(f) => {
                   if (typeof f.search === "string") setSearch(f.search);
                   if (typeof f.statusFilter === "string") setStatusFilter(f.statusFilter);
                   if (typeof f.dueFilter === "string") setDueFilter(f.dueFilter as DueFilter);
                   if (typeof f.commercialFilter === "string") setCommercialFilter(f.commercialFilter);
+                  if (typeof f.linkFilter === "string" && (f.linkFilter === "all" || f.linkFilter === "published" || f.linkFilter === "draft" || f.linkFilter === "missing")) setLinkFilter(f.linkFilter);
                   if (typeof f.sortBy === "string") setSortBy(f.sortBy as SortOption);
                 }}
               />
