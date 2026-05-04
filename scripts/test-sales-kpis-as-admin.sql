@@ -77,10 +77,10 @@ WITH combos(label, start_at, end_at, owner) AS (
 )
 SELECT
   c.label,
-  -- Dashboard (jsonb)
-  ((d.payload->'kpis'->>'total_leads'))::bigint        AS dash_leads,
-  ((d.payload->'kpis'->>'deals_won'))::bigint          AS dash_won,
-  ROUND(((d.payload->'kpis'->>'revenue_won'))::numeric, 2) AS dash_revenue,
+  -- Dashboard (jsonb plano)
+  ((d.payload->>'total_leads'))::bigint        AS dash_leads,
+  ((d.payload->>'deals_won'))::bigint          AS dash_won,
+  ROUND(((d.payload->>'revenue_won'))::numeric, 2) AS dash_revenue,
   -- Cohorts (somatório)
   coh.cohort_leads,
   coh.cohort_won,
