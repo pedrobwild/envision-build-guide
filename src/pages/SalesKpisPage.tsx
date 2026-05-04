@@ -483,6 +483,7 @@ function OwnerTableBlock({
         ) : rows.length === 0 ? (
           <EmptyState message="Ainda não há orçamentos atribuídos." />
         ) : (
+          <Refreshable refreshing={refreshing}>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -543,6 +544,7 @@ function OwnerTableBlock({
               </TableBody>
             </Table>
           </div>
+          </Refreshable>
         )}
       </CardContent>
     </Card>
