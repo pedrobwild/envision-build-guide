@@ -35,17 +35,46 @@ interface OpenPublicBudgetOptions {
 
 const PUBLISHABLE = new Set(["published", "minuta_solicitada"]);
 
+/**
+ * Abre uma janela "stub" SINCRONAMENTE dentro do gesto do usuário para evitar
+ * o popup blocker do Chrome/Safari quando precisamos resolver async (RPC, query)
+ * antes de saber a URL final. Retorna a janela (ou null se já bloqueada) e um
+ * helper para apontá-la depois ou fechá-la em caso de erro.
+ */
+function openStubWindow() {
+  const win = typeof window !== "undefined"
+    ? window.open("about:blank", "_blank", "noopener,noreferrer")
+    : null;
+  return {
+    win,
+    navigate(url: string) {
+      if (win && !win.closed) {
+        try { win.location.href = url; return; } catch { /* fallthrough */ }
+      }
+      // Stub bloqueado ou fechado: tenta abrir direto (pode também ser bloqueado,
+      // mas neste ponto já passamos do gesto — é o melhor que dá).
+      window.open(url, "_blank", "noopener,noreferrer");
+    },
+    close() {
+      if (win && !win.closed) { try { win.close(); } catch { /* noop */ } }
+    },
+  };
+}
+
 export async function openPublicBudget(
   budget: BudgetRefForPublicOpen,
   opts: OpenPublicBudgetOptions = {},
 ): Promise<void> {
   const { autoPublish = true, onStatusChanged } = opts;
 
-  // 1) Já publicado: abre direto.
+  // 1) Já publicado: abre direto (síncrono, sem risco de popup blocker).
   if (budget.public_id && PUBLISHABLE.has(budget.status ?? "")) {
     window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
     return;
   }
+
+  // Para os caminhos async, abre stub agora (dentro do gesto) e navega depois.
+  const stub = openStubWindow();
 
   // 2) Procura outra versão publicada no mesmo grupo.
   const groupId = budget.version_group_id ?? budget.id;
@@ -60,23 +89,26 @@ export async function openPublicBudget(
     .limit(1);
 
   if (pubErr) {
+    stub.close();
     toast.error("Erro ao localizar versão publicada: " + pubErr.message);
     return;
   }
 
   const fallback = published?.[0];
   if (fallback?.public_id) {
-    window.open(getPublicBudgetUrl(fallback.public_id), "_blank", "noopener,noreferrer");
+    stub.navigate(getPublicBudgetUrl(fallback.public_id));
     return;
   }
 
   // 3) Nada publicado: publica este orçamento (se autorizado) e abre.
   if (!budget.public_id) {
+    stub.close();
     toast.error("Link público ainda não foi gerado para este orçamento.");
     return;
   }
 
   if (!autoPublish) {
+    stub.close();
     toast.error(
       "Nenhuma versão publicada disponível. Publique o orçamento para abrir o link público.",
     );
@@ -91,13 +123,14 @@ export async function openPublicBudget(
   toast.dismiss(toastId);
 
   if (updErr) {
+    stub.close();
     toast.error("Não foi possível publicar: " + updErr.message);
     return;
   }
 
   onStatusChanged?.("published");
   toast.success("Orçamento publicado");
-  window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
+  stub.navigate(getPublicBudgetUrl(budget.public_id));
 }
 
 /**
@@ -112,19 +145,17 @@ export async function openPublicBudgetByPublicId(publicId: string): Promise<void
     toast.error("Link público ainda não foi gerado para este orçamento.");
     return;
   }
+  // Abre stub SINCRONAMENTE no gesto do usuário para escapar do popup blocker.
+  const stub = openStubWindow();
   try {
     const { data: resolved, error } = await supabase.rpc(
       "resolve_published_public_id",
       { p_public_id: publicId },
     );
-    if (error) {
-      // RPC indisponível ou erro de rede: abre o link original como fallback.
-      window.open(getPublicBudgetUrl(publicId), "_blank", "noopener,noreferrer");
-      return;
-    }
-    const target = (typeof resolved === "string" && resolved) || publicId;
-    window.open(getPublicBudgetUrl(target), "_blank", "noopener,noreferrer");
+    const target =
+      !error && typeof resolved === "string" && resolved ? resolved : publicId;
+    stub.navigate(getPublicBudgetUrl(target));
   } catch {
-    window.open(getPublicBudgetUrl(publicId), "_blank", "noopener,noreferrer");
+    stub.navigate(getPublicBudgetUrl(publicId));
   }
 }
