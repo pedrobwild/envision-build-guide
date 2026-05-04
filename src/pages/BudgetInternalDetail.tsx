@@ -910,9 +910,21 @@ export default function BudgetInternalDetail() {
                   const client = (budget.client_name || "").trim();
                   if (!proj) return client;
                   if (!client) return proj;
-                  // Evita repetição quando project_name já contém o nome do cliente
-                  if (proj.toLowerCase().includes(client.toLowerCase())) return proj;
-                  if (client.toLowerCase().includes(proj.toLowerCase())) return client;
+                  // Normaliza espaços/pontuação para comparar de forma robusta
+                  // (evita duplicar quando project_name e client_name diferem só por
+                  // espaços extras, hífens ou acentuação).
+                  const norm = (s: string) =>
+                    s
+                      .normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "")
+                      .replace(/[\s·•\-–—|]+/g, " ")
+                      .trim()
+                      .toLowerCase();
+                  const np = norm(proj);
+                  const nc = norm(client);
+                  if (np === nc) return proj;
+                  if (np.includes(nc)) return proj;
+                  if (nc.includes(np)) return client;
                   return `${proj} · ${client}`;
                 })()}
               </h1>
