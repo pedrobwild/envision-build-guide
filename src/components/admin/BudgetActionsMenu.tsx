@@ -28,13 +28,14 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Pencil, Eye, MoreHorizontal, Copy, Handshake,
-  ShoppingBag, Archive, Trash2, GitCompare, Loader2, Layers, Check, FilePlus2,
+  ShoppingBag, Archive, Trash2, GitCompare, Loader2, Layers, Check, FilePlus2, BadgePercent,
 } from "lucide-react";
 import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { createAddendumFromBudget } from "@/lib/budget-addendum";
 import { safeDeleteBudget } from "@/lib/budget-delete";
+import { DiscountVersionDialog } from "@/components/admin/DiscountVersionDialog";
 
 interface BudgetActionsMenuProps {
   budget: {
