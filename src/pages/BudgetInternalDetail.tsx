@@ -78,6 +78,7 @@ import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
+import { BudgetHeaderClientInfo } from "@/components/admin/BudgetHeaderClientInfo";
 import { BudgetTasksPanel } from "@/components/admin/BudgetTasksPanel";
 import { PrazoExecucaoChip } from "@/components/admin/PrazoExecucaoChip";
 import { DemandSidebarNav } from "@/components/demanda/DemandSidebarNav";
@@ -126,6 +127,7 @@ interface BudgetDetail {
   version_group_id?: string | null;
   is_current_version?: boolean | null;
   version_number?: number | null;
+  property_id?: string | null;
 }
 
 interface EventRow {
@@ -303,7 +305,7 @@ export default function BudgetInternalDetail() {
         supabase
           .from("budgets")
           .select(
-            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, prazo_dias_uteis, is_current_version, version_group_id, version_number"
+            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, prazo_dias_uteis, is_current_version, version_group_id, version_number, property_id"
           )
           .eq("id", id)
           .single(),
@@ -944,6 +946,29 @@ export default function BudgetInternalDetail() {
                   onChange={savePrazoDiasUteis}
                 />
               </div>
+
+              {/* Detalhes completos do cliente, imóvel e equipe (colapsável) */}
+              <BudgetHeaderClientInfo
+                clientId={budget.client_id}
+                propertyId={budget.property_id ?? null}
+                fallback={{
+                  client_name: budget.client_name,
+                  client_phone: budget.client_phone,
+                  lead_email: budget.lead_email,
+                  bairro: budget.bairro,
+                  city: budget.city,
+                  condominio: budget.condominio,
+                  metragem: budget.metragem,
+                  property_type: budget.property_type,
+                  unit: budget.unit,
+                  lead_source: budget.lead_source,
+                  created_at: budget.created_at,
+                  updated_at: budget.updated_at,
+                }}
+                createdByName={budget.created_by ? getProfileName(budget.created_by) : null}
+                commercialOwnerName={budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : null}
+                estimatorOwnerName={budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : null}
+              />
             </div>
 
             {/* Quick status change */}
