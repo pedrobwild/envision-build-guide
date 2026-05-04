@@ -19,6 +19,7 @@ import {
   CalendarClock,
   Brain,
   TrendingUp,
+  Target,
   MessageCircle,
   Stethoscope,
   HeartPulse,
