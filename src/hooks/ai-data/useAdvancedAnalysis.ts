@@ -16,8 +16,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { analyze } from "@/lib/data-analysis";
-import { analyzeQuality } from "@/lib/data-quality";
+import { runAnalysis } from "@/lib/data-analysis/worker";
 import { containsPii } from "@/lib/data-analysis-security/pii";
 import {
   checkDatasetSize,
@@ -53,6 +52,8 @@ interface UseAdvancedAnalysisResult {
   /** Se true, há PII no dataset; interpretação por LLM bloqueada por default. */
   piiBlocked: boolean;
   refresh: () => void;
+  /** "worker" | "main" | null — diagnóstico de onde a análise rodou. */
+  ranIn: "worker" | "main" | null;
 }
 
 export function useAdvancedAnalysis(params: Params): UseAdvancedAnalysisResult {
@@ -65,31 +66,47 @@ export function useAdvancedAnalysis(params: Params): UseAdvancedAnalysisResult {
   } = params;
   const [tick, setTick] = useState(0);
 
-  // 1) cálculo síncrono determinístico
-  const computed = useMemo(() => {
-    if (!dataset) return { analysis: null, quality: null, error: null as string | null };
-    const sizeCheck = checkDatasetSize(dataset);
-    if (!sizeCheck.ok) {
-      return { analysis: null, quality: null, error: sizeCheck.reason ?? "Dataset acima do limite" };
-    }
-    try {
-      const analysis = analyze({
-        dataset,
-        question,
-        options: { enableForecast },
-      });
-      const quality = analyzeQuality(dataset);
-      return { analysis, quality, error: null };
-    } catch (e) {
-      return {
-        analysis: null,
-        quality: null,
-        error: e instanceof Error ? e.message : "Falha no cálculo",
-      };
-    }
-    // tick força recompute manual via refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataset, question, enableForecast, tick]);
+  // 1) Tamanho — checagem síncrona antes de enfileirar pro worker
+  const sizeError = useMemo<string | null>(() => {
+    if (!dataset) return null;
+    const c = checkDatasetSize(dataset);
+    return c.ok ? null : c.reason ?? "Dataset acima do limite";
+  }, [dataset]);
+
+  // 2) Análise pelo worker (ou síncrono pra datasets pequenos / SSR)
+  const analysisQ = useQuery({
+    queryKey: [
+      "data-analysis",
+      "compute",
+      dataset?.id ?? null,
+      dataset?.generatedAt ?? null,
+      question ?? "",
+      enableForecast ?? false,
+      tick,
+    ],
+    enabled: !!dataset && !sizeError,
+    staleTime: 30_000,
+    queryFn: async () => {
+      if (!dataset) throw new Error("dataset ausente");
+      return runAnalysis(dataset, { question, enableForecast });
+    },
+  });
+
+  const computed = useMemo(
+    () => ({
+      analysis: (analysisQ.data?.analysis ?? null) as AnalysisResult | null,
+      quality: (analysisQ.data?.quality ?? null) as DataQualityReport | null,
+      error:
+        sizeError ??
+        (analysisQ.error instanceof Error
+          ? analysisQ.error.message
+          : analysisQ.error
+          ? String(analysisQ.error)
+          : null),
+      ranIn: analysisQ.data?.ranIn ?? null,
+    }),
+    [analysisQ.data, analysisQ.error, sizeError],
+  );
 
   // 2) PII gate
   const piiBlocked = useMemo(() => {
@@ -169,10 +186,12 @@ export function useAdvancedAnalysis(params: Params): UseAdvancedAnalysisResult {
     analysis: computed.analysis,
     quality: computed.quality,
     interpretation: interpretQ.data ?? null,
-    loading: false, // cálculo síncrono — não há loading
+    loading: analysisQ.isLoading,
     interpretationLoading: interpretQ.isLoading,
     error: computed.error,
     piiBlocked,
     refresh: () => setTick((t) => t + 1),
+    /** "worker" | "main" | null — diagnóstico de onde rodou. */
+    ranIn: computed.ranIn,
   };
 }
