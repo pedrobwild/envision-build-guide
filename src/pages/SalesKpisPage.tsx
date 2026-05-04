@@ -460,7 +460,10 @@ function OwnerTableBlock({
           <CardTitle className="flex items-center gap-2 text-base">
             <Users className="h-4 w-4 text-primary" /> Performance por vendedora
           </CardTitle>
-          <span className="text-xs text-muted-foreground">clique numa linha para filtrar o dashboard</span>
+          <div className="flex items-center gap-2">
+            <RefreshingIndicator show={refreshing} />
+            <span className="text-xs text-muted-foreground">clique numa linha para filtrar o dashboard</span>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
