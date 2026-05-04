@@ -481,6 +481,15 @@ export function BudgetActionsMenu({
         projectName={budget.project_name || ""}
         onSuccess={handleContractUploadSuccess}
       />
+
+      {/* Discount-only version dialog */}
+      <DiscountVersionDialog
+        open={discountDialogOpen}
+        onOpenChange={setDiscountDialogOpen}
+        budgetId={budget.id}
+        projectName={budget.project_name}
+        onSuccess={onRefresh}
+      />
     </>
   );
 }
