@@ -960,15 +960,22 @@ export default function BudgetInternalDetail() {
                   const frozenLine = frozenEvent
                     ? `Cronômetro pausado em ${fmtDateTime(new Date(frozenEvent.created_at))} (entrada em "${status.label}")`
                     : null;
+                  const fallbackLine = timeMarkersError
+                    ? `Cálculo local (não foi possível sincronizar com o servidor: ${timeMarkersError})`
+                    : timeMarkersFallback
+                    ? "Cálculo local (sincronizando com o servidor…)"
+                    : null;
                   const totalTitle = [
                     "Tempo total desde a criação do negócio.",
                     createdLine,
                     frozenLine,
+                    fallbackLine,
                   ].filter(Boolean).join("\n");
                   const stageTitle = [
                     `Tempo na etapa atual ("${status.label}").`,
                     stageStartLine,
                     frozenLine,
+                    fallbackLine,
                   ].filter(Boolean).join("\n");
                   return (
                     <>
