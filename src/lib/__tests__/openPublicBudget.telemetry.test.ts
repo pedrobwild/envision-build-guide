@@ -122,9 +122,11 @@ describe("openPublicBudget — telemetria + toast Ver detalhes", () => {
     expect(action?.label).toBe("Ver detalhes");
     expect(typeof action?.onClick).toBe("function");
 
-    // Clicar no botão abre a modal com o mesmo diagnóstico.
-    action!.onClick();
+    // A modal abre AUTOMATICAMENTE em falhas (1ª chamada). Clicar em
+    // "Ver detalhes" reabre com o mesmo diagnóstico (2ª chamada).
     expect(openDiagnosisDialogMock).toHaveBeenCalledTimes(1);
+    action!.onClick();
+    expect(openDiagnosisDialogMock).toHaveBeenCalledTimes(2);
     const passed = openDiagnosisDialogMock.mock.calls[0][0] as OpenBudgetDiagnosis;
     expect(passed.outcome).toBe("blocked_no_published");
     expect(passed.correlationId).toBe(diag!.correlationId);
