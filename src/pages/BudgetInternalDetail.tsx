@@ -45,6 +45,8 @@ import {
   X,
   ChevronRight,
   MessageCircle,
+  Mail,
+  Phone,
   Image as ImageIcon,
   History,
   XCircle,
