@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save, Upload, CheckSquare, Square, X, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { uploadWithRetry } from "@/lib/storage-upload-retry";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -221,6 +223,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const [files, setFiles] = useState<Record<StorageTab, MediaFile[]>>({ "3d": [], fotos: [], exec: [], video: [] });
   const [primary, setPrimary] = useState<PrimaryByTab>({});
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
   const [loading, setLoading] = useState(true);
   const [reordering, setReordering] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -372,30 +375,42 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
 
     setUploading(true);
+    const fileArr = Array.from(fileList);
+    setUploadProgress({ done: 0, total: fileArr.length });
     try {
       const folder = folderMap[activeTab as StorageTab];
       const existingCount = files[activeTab as StorageTab].length;
 
       // Parallel uploads (batches of 3 to avoid overwhelming)
-      const fileArr = Array.from(fileList);
       const BATCH_SIZE = 3;
       let count = 0;
 
       for (let batch = 0; batch < fileArr.length; batch += BATCH_SIZE) {
         const chunk = fileArr.slice(batch, batch + BATCH_SIZE);
         const results = await Promise.allSettled(
-          chunk.map((file, idx) => {
+          chunk.map(async (file, idx) => {
             const globalIdx = batch + idx;
             const safeName = sanitizeFileName(file.name);
             const prefixed = addPrefix(existingCount + globalIdx, safeName);
             const path = `${folder}/${prefixed}`;
-            return supabase.storage.from("media").upload(path, file, {
-              upsert: true,
-              contentType: file.type || "application/octet-stream",
-            }).then(({ error }) => {
-              if (error) throw { fileName: file.name, message: error.message };
+            try {
+              await uploadWithRetry({
+                bucket: "media",
+                path,
+                file,
+                upsert: true,
+                contentType: file.type || "application/octet-stream",
+                onRetry: (attempt) => {
+                  toast.message(`Reenviando ${file.name} (tentativa ${attempt}/3)…`);
+                },
+              });
               return true;
-            });
+            } catch (e) {
+              const message = e instanceof Error ? e.message : "Erro desconhecido";
+              throw { fileName: file.name, message };
+            } finally {
+              setUploadProgress((p) => ({ ...p, done: p.done + 1 }));
+            }
           })
         );
 
@@ -425,6 +440,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       toast.error("Erro inesperado no upload. Tente novamente.");
     } finally {
       setUploading(false);
+      setUploadProgress({ done: 0, total: 0 });
     }
   };
 
@@ -783,8 +799,19 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                     className="gap-2"
                   >
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                    {uploading ? "Enviando..." : "Adicionar arquivos"}
+                    {uploading
+                      ? uploadProgress.total > 0
+                        ? `Enviando ${uploadProgress.done}/${uploadProgress.total}…`
+                        : "Enviando..."
+                      : "Adicionar arquivos"}
                   </Button>
+                  {uploading && uploadProgress.total > 0 && (
+                    <Progress
+                      value={(uploadProgress.done / uploadProgress.total) * 100}
+                      className="h-1.5 w-40"
+                      aria-label="Progresso do upload"
+                    />
+                  )}
 
                   {currentFiles.length > 0 && (
                     <>
