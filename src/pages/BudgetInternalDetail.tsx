@@ -2254,3 +2254,63 @@ function LostPanel({
     </div>
   );
 }
+
+/**
+ * Chip compacto de contato no cabeçalho do negócio: mostra ícone + label,
+ * com botão "abrir" (mailto/tel/WhatsApp) e botão "copiar" opcional.
+ */
+function ContactChip({
+  icon,
+  label,
+  href,
+  openLabel,
+  copyValue,
+  copyToast,
+  external,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  openLabel: string;
+  copyValue?: string;
+  copyToast?: string;
+  external?: boolean;
+}) {
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!copyValue) return;
+    try {
+      await navigator.clipboard.writeText(copyValue);
+      toast.success(copyToast ?? "Copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+  return (
+    <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/30 text-xs font-body text-foreground/90 overflow-hidden">
+      <a
+        href={href}
+        target={external ? "_blank" : undefined}
+        rel={external ? "noopener noreferrer" : undefined}
+        title={openLabel}
+        aria-label={openLabel}
+        className="inline-flex items-center gap-1.5 pl-2.5 pr-2 py-1 hover:bg-muted/60 transition-colors max-w-[220px]"
+      >
+        <span className="shrink-0 text-muted-foreground">{icon}</span>
+        <span className="truncate">{label}</span>
+      </a>
+      {copyValue && (
+        <button
+          type="button"
+          onClick={handleCopy}
+          title="Copiar"
+          aria-label="Copiar"
+          className="border-l border-border/60 px-2 py-1 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+        >
+          <Copy className="h-3 w-3" />
+        </button>
+      )}
+    </span>
+  );
+}
