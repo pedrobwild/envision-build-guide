@@ -17,12 +17,52 @@
  */
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 // As views são novas — escapamos do tipo gerado.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
+
+/**
+ * Defaults compartilhados das queries de KPI.
+ * - staleTime alto (5 min) porque os dados agregados não mudam segundo a segundo.
+ * - gcTime ainda maior (15 min) para manter o cache vivo entre navegações.
+ * - placeholderData mantém os dados anteriores enquanto o filtro novo carrega,
+ *   eliminando o flash de skeleton e permitindo o indicador "Atualizando…".
+ * - retry: 1 evita repetir RPCs lentas que falharam por timeout.
+ */
+const KPI_QUERY_DEFAULTS = {
+  staleTime: 5 * 60_000,
+  gcTime: 15 * 60_000,
+  placeholderData: keepPreviousData,
+  retry: 1,
+  refetchOnWindowFocus: false,
+} as const;
+
+/** Mede a duração de um RPC e loga em DEV. Não rouba erros. */
+async function measuredRpc<T>(
+  name: string,
+  params: Record<string, unknown>,
+  exec: () => Promise<{ data: T | null; error: unknown }>,
+): Promise<T> {
+  const t0 = performance.now();
+  try {
+    const { data, error } = await exec();
+    const ms = Math.round(performance.now() - t0);
+    if (error) {
+      logger.warn(`[sales-kpis] ${name} failed in ${ms}ms`, { params, error });
+      throw error;
+    }
+    logger.debug(`[sales-kpis] ${name} ok in ${ms}ms`, params);
+    return (data ?? ([] as unknown as T)) as T;
+  } catch (err) {
+    const ms = Math.round(performance.now() - t0);
+    logger.warn(`[sales-kpis] ${name} threw in ${ms}ms`, { params, err });
+    throw err;
+  }
+}
 
 export type SalesRange = "30d" | "90d" | "ytd" | "all" | "custom";
 
