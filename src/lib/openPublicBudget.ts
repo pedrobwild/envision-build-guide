@@ -56,7 +56,6 @@ function showDiagnosisToast(message: string, diag: OpenBudgetDiagnosis) {
     (window as unknown as { __openBudgetDiag?: OpenBudgetDiagnosis }).__openBudgetDiag = diag;
   }
 }
-}
 
 /**
  * Toast informando que o popup foi bloqueado e oferecendo desligar permanentemente
