@@ -62,6 +62,7 @@ import {
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { buildWhatsappUrl, formatPhoneBR } from "@/lib/phone";
 import { composeBudgetTitle } from "@/lib/budget-title";
+import { computeBudgetTime } from "@/lib/budget-time-in-stage";
 import { openPublicBudget } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
