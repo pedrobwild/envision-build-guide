@@ -709,8 +709,18 @@ export default function BudgetInternalDetail() {
 
   // Tempos do negócio: total desde a criação e tempo na etapa atual.
   // Regra: o cronômetro PARA no PRIMEIRO evento que entra em "contrato_fechado", "lost" ou "archived".
-  // Fonte de verdade: RPC `get_budget_time_markers` (backend). Quando os marcos
-  // ainda não chegaram, caímos no cálculo local sobre `events` para evitar UI vazia.
+  // Fonte de verdade: RPC `get_budget_time_markers` (backend). Se a RPC falhar
+  // ou ainda não tiver respondido, caímos no cálculo local sobre `events` para
+  // evitar UI vazia — `timeMarkersFallback` indica esse estado para o tooltip.
+  const timeMarkersFallback = !timeMarkers;
+  useEffect(() => {
+    if (timeMarkersError) {
+      logger.warn("[BudgetInternalDetail] get_budget_time_markers falhou, usando cálculo local", {
+        budgetId,
+        error: timeMarkersError,
+      });
+    }
+  }, [timeMarkersError, budgetId]);
   const { isFrozen, frozenAt: frozenAtDate, currentStageStart, totalDaysOpen, daysInStage } =
     timeMarkers
       ? budgetTimeFromMarkers(timeMarkers)
