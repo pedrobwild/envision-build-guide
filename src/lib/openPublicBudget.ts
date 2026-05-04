@@ -145,19 +145,17 @@ export async function openPublicBudgetByPublicId(publicId: string): Promise<void
     toast.error("Link público ainda não foi gerado para este orçamento.");
     return;
   }
+  // Abre stub SINCRONAMENTE no gesto do usuário para escapar do popup blocker.
+  const stub = openStubWindow();
   try {
     const { data: resolved, error } = await supabase.rpc(
       "resolve_published_public_id",
       { p_public_id: publicId },
     );
-    if (error) {
-      // RPC indisponível ou erro de rede: abre o link original como fallback.
-      window.open(getPublicBudgetUrl(publicId), "_blank", "noopener,noreferrer");
-      return;
-    }
-    const target = (typeof resolved === "string" && resolved) || publicId;
-    window.open(getPublicBudgetUrl(target), "_blank", "noopener,noreferrer");
+    const target =
+      !error && typeof resolved === "string" && resolved ? resolved : publicId;
+    stub.navigate(getPublicBudgetUrl(target));
   } catch {
-    window.open(getPublicBudgetUrl(publicId), "_blank", "noopener,noreferrer");
+    stub.navigate(getPublicBudgetUrl(publicId));
   }
 }
