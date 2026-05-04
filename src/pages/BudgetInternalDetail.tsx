@@ -254,10 +254,12 @@ export default function BudgetInternalDetail() {
   // Marcos de tempo (criação, início da etapa, congelamento) vindos do backend.
   // Usados como fonte de verdade pelo cabeçalho; recalculados a cada mudança
   // de status do orçamento atual.
-  const { data: timeMarkers, refetch: refetchTimeMarkers } = useBudgetTimeMarkers(
-    budgetId ?? null,
-    budget?.internal_status ?? "_",
-  );
+  const {
+    data: timeMarkers,
+    loading: timeMarkersLoading,
+    error: timeMarkersError,
+    refetch: refetchTimeMarkers,
+  } = useBudgetTimeMarkers(budgetId ?? null, budget?.internal_status ?? "_");
   // Pré-visualização de export antes do download. Os flags `exportingXlsx`
   // e `exportingPdf` são derivados do estado para preservar o spinner nos
   // botões enquanto o diálogo gera o preview.
