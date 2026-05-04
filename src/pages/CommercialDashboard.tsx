@@ -896,9 +896,9 @@ export default function CommercialDashboard() {
   }
 
   // Filter bar state
-  const hasActiveFilters = statusFilter !== "all" || search.length > 0 || dueFilter !== "all" || commercialFilter !== "all";
-  const activeFilterCount = [statusFilter !== "all", dueFilter !== "all", commercialFilter !== "all"].filter(Boolean).length;
-  const clearAllFilters = () => { setSearch(""); setStatusFilter("all"); setDueFilter("all"); setCommercialFilter("all"); };
+  const hasActiveFilters = statusFilter !== "all" || search.length > 0 || dueFilter !== "all" || commercialFilter !== "all" || linkFilter !== "all";
+  const activeFilterCount = [statusFilter !== "all", dueFilter !== "all", commercialFilter !== "all", linkFilter !== "all"].filter(Boolean).length;
+  const clearAllFilters = () => { setSearch(""); setStatusFilter("all"); setDueFilter("all"); setCommercialFilter("all"); setLinkFilter("all"); };
 
   const renderBudgetCard = (b: BudgetRow) => {
     const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
