@@ -265,17 +265,19 @@ export function useSalesBySegment(
   );
   return useQuery({
     queryKey: ["sales-kpis", "by-segment", dimension, start, end, ownerId ?? null],
-    queryFn: async (): Promise<SegmentRow[]> => {
-      const { data, error } = await sb.rpc("sales_conversion_by_segment", {
-        _dimension: dimension,
-        _start_date: start,
-        _end_date: end,
-        _owner_id: ownerId ?? null,
-      });
-      if (error) throw error;
-      return (data ?? []) as SegmentRow[];
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<SegmentRow[]>(
+        `sales_conversion_by_segment[${dimension}]`,
+        { _dimension: dimension, _start_date: start, _end_date: end, _owner_id: ownerId ?? null },
+        () =>
+          sb.rpc("sales_conversion_by_segment", {
+            _dimension: dimension,
+            _start_date: start,
+            _end_date: end,
+            _owner_id: ownerId ?? null,
+          }),
+      ),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
