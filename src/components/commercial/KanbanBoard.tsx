@@ -269,6 +269,8 @@ interface KanbanBoardProps {
   onOpenHistory?: (budget: BudgetRow) => void;
   /** Callback após mutações (ex.: exclusão) para o pai recarregar a lista. */
   onRefresh?: () => void;
+  /** Republica/gera o link público do orçamento (alvo do botão no badge "Rascunho"). */
+  onRepublishPublicLink?: (budget: BudgetRow) => void | Promise<void>;
 }
 
 function getColumnForBudget(internalStatus: string) {
@@ -384,6 +386,7 @@ function SubSectionGroup({
   leadScoreMap,
   onNextAction,
   onOpenHistory,
+  onRepublishPublicLink,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -398,6 +401,7 @@ function SubSectionGroup({
   leadScoreMap?: Map<string, LeadScoreResult>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   onOpenHistory?: (budget: BudgetRow) => void;
+  onRepublishPublicLink?: (budget: BudgetRow) => void | Promise<void>;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
@@ -466,6 +470,7 @@ function SubSectionGroup({
                     }
                   }}
                   actionsSlot={<CardActionsSlot budget={b} />}
+                  onRepublishPublicLink={onRepublishPublicLink ? () => onRepublishPublicLink(b) : undefined}
                 />
               ) : (
                 <DraggableCard
@@ -502,6 +507,7 @@ function KanbanColumn({
   leadScoreMap,
   onNextAction,
   onOpenHistory,
+  onRepublishPublicLink,
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
@@ -515,6 +521,7 @@ function KanbanColumn({
   leadScoreMap?: Map<string, LeadScoreResult>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   onOpenHistory?: (budget: BudgetRow) => void;
+  onRepublishPublicLink?: (budget: BudgetRow) => void | Promise<void>;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
@@ -590,6 +597,7 @@ function KanbanColumn({
                   leadScoreMap={leadScoreMap}
                   onNextAction={onNextAction}
                   onOpenHistory={onOpenHistory}
+                  onRepublishPublicLink={onRepublishPublicLink}
                 />
               </div>
             ))}
@@ -823,7 +831,7 @@ function KanbanCard({
 }
 
 // --- Main Board ---
-export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, leadScoreMap, onNextAction, onOpenHistory, onRefresh }: KanbanBoardProps) {
+export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileName, dueFilter = "all", syncedBudgetIds = new Set(), pipelineMeta, temperatureMap, nextActionMap, leadScoreMap, onNextAction, onOpenHistory, onRefresh, onRepublishPublicLink }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileColIndex, setMobileColIndex] = useState(0);
   const isMobile = useIsMobile();
@@ -939,6 +947,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             nextActionMap={nextActionMap}
                             leadScoreMap={leadScoreMap}
                             onNextAction={onNextAction}
+                            onRepublishPublicLink={onRepublishPublicLink}
                           />
                         </div>
                       ));
@@ -1034,6 +1043,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             nextActionMap={nextActionMap}
             leadScoreMap={leadScoreMap}
             onNextAction={onNextAction}
+            onRepublishPublicLink={onRepublishPublicLink}
           />
         ))}
       </div>

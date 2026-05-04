@@ -65,6 +65,8 @@ interface CompactKanbanCardProps {
   onOpenHistory?: () => void;
   /** Slot opcional renderizado no canto superior direito (ex.: menu de ações com excluir). */
   actionsSlot?: React.ReactNode;
+  /** Handler para regenerar/publicar o link público quando o badge estiver em "Rascunho". */
+  onRepublishPublicLink?: () => void | Promise<void>;
 }
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
@@ -136,6 +138,7 @@ function CompactKanbanCardImpl({
   onQuickAction,
   onOpenHistory,
   actionsSlot,
+  onRepublishPublicLink,
 }: CompactKanbanCardProps) {
   const prio = PRIORITIES[priority as Priority] ?? PRIORITIES.normal;
   const statusMeta = INTERNAL_STATUSES[internalStatus as InternalStatus];
@@ -363,7 +366,11 @@ function CompactKanbanCardImpl({
               <RotBadge daysInStage={daysInStage} />
             )}
             <VersionBadge versionNumber={versionNumber} isCurrent={isCurrentVersion} />
-            <PublicLinkStatusBadge publicId={publicId} status={budgetStatus} />
+            <PublicLinkStatusBadge
+              publicId={publicId}
+              status={budgetStatus}
+              onRepublish={onRepublishPublicLink}
+            />
             {typeof siblingCount === "number" && siblingCount > 0 && (
               <button
                 type="button"
