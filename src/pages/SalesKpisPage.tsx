@@ -164,24 +164,75 @@ function KpiTile({ label, value, hint, icon, tone = "default", loading, tooltip,
 }
 
 // ============================================================
+// Helpers de estado: erro e vazio
+// ============================================================
+function errorReason(error: unknown): string | null {
+  if (!error) return null;
+  if (typeof error === "string") return error;
+  if (typeof error === "object" && error && "message" in error) {
+    const msg = (error as { message?: unknown }).message;
+    if (typeof msg === "string" && msg.length > 0) return msg;
+  }
+  return null;
+}
+
+function BlockError({
+  title,
+  error,
+  onRetry,
+  inline,
+}: {
+  title: string;
+  error: unknown;
+  onRetry?: () => void;
+  inline?: boolean;
+}) {
+  const reason = errorReason(error);
+  const body = (
+    <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-2 text-destructive">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <div className="space-y-0.5">
+          <div>{title}</div>
+          {reason && (
+            <div className="text-xs text-destructive/80 break-words">{reason}</div>
+          )}
+        </div>
+      </div>
+      {onRetry && (
+        <Button size="sm" variant="outline" onClick={onRetry} className="self-start sm:self-auto">
+          <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Tentar novamente
+        </Button>
+      )}
+    </div>
+  );
+  if (inline) {
+    return (
+      <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+        {body}
+      </div>
+    );
+  }
+  return (
+    <Card className="border border-destructive/30">
+      <CardContent className="p-4">{body}</CardContent>
+    </Card>
+  );
+}
+
+// ============================================================
 // 2. Overview block
 // ============================================================
 function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading, isError, refetch } = useSalesOverview(period, ownerId);
+  const { data, isLoading, isError, error, refetch } = useSalesOverview(period, ownerId);
 
   if (isError) {
     return (
-      <Card className="border border-destructive/30">
-        <CardContent className="flex items-center justify-between gap-3 p-4 text-sm">
-          <div className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-4 w-4" />
-            Não foi possível carregar os KPIs macro.
-          </div>
-          <Button size="sm" variant="outline" onClick={() => refetch()}>
-            <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Tentar novamente
-          </Button>
-        </CardContent>
-      </Card>
+      <BlockError
+        title="Não foi possível carregar os KPIs macro."
+        error={error}
+        onRetry={() => refetch()}
+      />
     );
   }
 
@@ -266,7 +317,7 @@ function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: stri
 // 3. Time in stage
 // ============================================================
 function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading } = useTimeInStageGodMode(period, ownerId);
+  const { data, isLoading, isError, error, refetch } = useTimeInStageGodMode(period, ownerId);
   const chartData = useMemo(
     () =>
       (data ?? [])
@@ -295,6 +346,13 @@ function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
       <CardContent className="pt-0">
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
+        ) : isError ? (
+          <BlockError
+            inline
+            title="Não foi possível carregar o tempo em cada etapa."
+            error={error}
+            onRetry={() => refetch()}
+          />
         ) : chartData.length === 0 ? (
           <EmptyState message="Sem histórico suficiente de mudanças de etapa." />
         ) : (
@@ -352,7 +410,7 @@ function OwnerTableBlock({
   period: SalesPeriod;
   onSelectOwner: (id: string | null) => void;
 }) {
-  const { data, isLoading } = useSalesByOwner(period);
+  const { data, isLoading, isError, error, refetch } = useSalesByOwner(period);
   const rows = data ?? [];
 
   return (
@@ -372,6 +430,13 @@ function OwnerTableBlock({
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
+        ) : isError ? (
+          <BlockError
+            inline
+            title="Não foi possível carregar a performance por vendedora."
+            error={error}
+            onRetry={() => refetch()}
+          />
         ) : rows.length === 0 ? (
           <EmptyState message="Ainda não há orçamentos atribuídos." />
         ) : (
@@ -453,7 +518,7 @@ const SEGMENT_TABS: { value: SegmentDimension; label: string; description: strin
 
 function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
   const [dim, setDim] = useState<SegmentDimension>("metragem");
-  const { data, isLoading } = useSalesBySegment(dim, period, ownerId);
+  const { data, isLoading, isError, error, refetch } = useSalesBySegment(dim, period, ownerId);
   const rows = data ?? [];
 
   return (
@@ -477,6 +542,13 @@ function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: strin
               <p className="text-xs text-muted-foreground">{s.description}</p>
               {isLoading ? (
                 <Skeleton className="h-40 w-full" />
+              ) : isError ? (
+                <BlockError
+                  inline
+                  title="Não foi possível carregar a conversão por segmento."
+                  error={error}
+                  onRetry={() => refetch()}
+                />
               ) : rows.length === 0 ? (
                 <EmptyState message="Sem dados nesta dimensão." />
               ) : (
@@ -527,7 +599,7 @@ function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: strin
 // 6. Lost reasons
 // ============================================================
 function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading } = useLostReasonsRanked(period, ownerId);
+  const { data, isLoading, isError, error, refetch } = useLostReasonsRanked(period, ownerId);
   const rows = data ?? [];
 
   return (
@@ -540,6 +612,13 @@ function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
       <CardContent className="pt-0">
         {isLoading ? (
           <Skeleton className="h-32 w-full" />
+        ) : isError ? (
+          <BlockError
+            inline
+            title="Não foi possível carregar os motivos de perda."
+            error={error}
+            onRetry={() => refetch()}
+          />
         ) : rows.length === 0 ? (
           <EmptyState message="Ainda não foram registrados motivos de perda." />
         ) : (
@@ -576,7 +655,7 @@ function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
 // 7. Cohorts mensais
 // ============================================================
 function CohortBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading } = useSalesCohorts(period, ownerId);
+  const { data, isLoading, isError, error, refetch } = useSalesCohorts(period, ownerId);
   const rows = (data ?? []).slice(0, 12);
 
   return (
@@ -589,6 +668,13 @@ function CohortBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string
       <CardContent className="pt-0">
         {isLoading ? (
           <Skeleton className="h-40 w-full" />
+        ) : isError ? (
+          <BlockError
+            inline
+            title="Não foi possível carregar as coortes mensais."
+            error={error}
+            onRetry={() => refetch()}
+          />
         ) : rows.length === 0 ? (
           <EmptyState message="Sem coortes registradas." />
         ) : (
