@@ -383,6 +383,7 @@ export default function CommercialDashboard() {
     setSearch((prev) => (prev === next.search ? prev : next.search));
     setCommercialFilter((prev) => (prev === next.commercialFilter ? prev : next.commercialFilter));
     setPipelineFilter((prev) => (prev === next.pipelineFilter ? prev : next.pipelineFilter));
+    setLinkFilter((prev) => (prev === next.linkFilter ? prev : next.linkFilter));
   }, [location.search]);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
