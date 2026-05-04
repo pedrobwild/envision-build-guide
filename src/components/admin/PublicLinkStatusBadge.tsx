@@ -12,9 +12,11 @@
  *
  * Sem cores extras: usa tokens semânticos do design system.
  */
-import { Eye, EyeOff, Loader2, RefreshCw } from "lucide-react";
+import { Check, Copy, Eye, EyeOff, Loader2, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 
 export type PublicLinkStatus = "published" | "draft" | "missing";
 
@@ -78,12 +80,17 @@ export function PublicLinkStatusBadge({
 }: PublicLinkStatusBadgeProps) {
   const state = derivePublicLinkStatus(publicId, status);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (state === "missing" && !showMissing) return null;
 
   const meta = STATE_META[state];
   const Icon = meta.icon;
   const showRepublish = (state === "draft" || (state === "missing" && showMissing)) && !!onRepublish;
+  // Mostrar copiar sempre que houver public_id — vale tanto pra "Público" (link
+  // ativo) quanto pra "Rascunho" (compartilhar internamente o link que vai
+  // funcionar após publicar).
+  const showCopy = !!publicId;
 
   async function handleRepublish(e: React.MouseEvent) {
     e.stopPropagation();
@@ -94,6 +101,33 @@ export function PublicLinkStatusBadge({
       await onRepublish();
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!publicId) return;
+    const url = getPublicBudgetUrl(publicId);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback simples para ambientes sem Clipboard API.
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      toast.success("Link público copiado");
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error("Não foi possível copiar o link.");
     }
   }
 
@@ -116,6 +150,30 @@ export function PublicLinkStatusBadge({
           />
         )}
       </span>
+      {showCopy && (
+        <button
+          type="button"
+          onClick={handleCopy}
+          className={cn(
+            "inline-flex items-center gap-1 text-[9.5px] font-semibold font-body px-1.5 py-0.5 rounded-md",
+            "bg-muted/60 text-foreground/80 ring-1 ring-border hover:bg-muted transition-colors",
+            copied && "bg-success/15 text-success ring-success/30",
+          )}
+          title={
+            state === "published"
+              ? "Copiar link público para compartilhar"
+              : "Copiar link (ficará ativo após publicar esta versão)"
+          }
+          aria-label="Copiar link público"
+        >
+          {copied ? (
+            <Check className="h-2.5 w-2.5" aria-hidden />
+          ) : (
+            <Copy className="h-2.5 w-2.5" aria-hidden />
+          )}
+          {copied ? "Copiado" : "Copiar"}
+        </button>
+      )}
       {showRepublish && (
         <button
           type="button"
