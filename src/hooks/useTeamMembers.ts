@@ -23,9 +23,10 @@ export function useTeamMembers(role?: AppRole) {
     async function load() {
       setLoading(true);
 
-      const { data, error } = await supabase.rpc("get_team_members", {
-        _role: role ?? null,
-      });
+      const { data, error } = await supabase.rpc(
+        "get_team_members",
+        role ? { _role: role } : ({} as { _role?: AppRole }),
+      );
 
       if (cancelled) return;
 
