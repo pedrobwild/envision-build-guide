@@ -40,6 +40,8 @@ interface CompactKanbanCardProps {
   isSynced?: boolean;
   /** Identificador público do orçamento — habilita o botão direto "Ver pública". */
   publicId?: string | null;
+  /** Status bruto do orçamento (`published` | `minuta_solicitada` | draft etc.) — alimenta o badge "Público/Rascunho". */
+  budgetStatus?: string | null;
   /** Data de criação do negócio. */
   createdAt?: string | null;
   /** Data de última atualização. */
