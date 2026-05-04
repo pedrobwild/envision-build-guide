@@ -76,11 +76,20 @@ export function BudgetActionsMenu({
   const [closingContract, setClosingContract] = useState(false);
   const [contractModalOpen, setContractModalOpen] = useState(false);
   const [creatingAddendum, setCreatingAddendum] = useState(false);
+  const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
   const { data: pipelines = [] } = useDealPipelines();
-  const { isAdmin, isOrcamentista } = useUserProfile();
+  const { isAdmin, isOrcamentista, isComercial } = useUserProfile();
   const { user } = useAuth();
   const canCreateAddendum = (isAdmin || isOrcamentista)
     && ["sent_to_client", "minuta_solicitada", "contrato_fechado"].includes(budget.internal_status || "");
+  // Comercial (e admin) podem criar uma versão "somente desconto" depois que o orçamento
+  // saiu da produção: entregue ao comercial, enviado, ou já com link público publicado.
+  const isAfterDelivery = ["delivered_to_sales", "sent_to_client", "revision_requested", "minuta_solicitada"]
+    .includes(budget.internal_status || "");
+  const canCreateDiscountVersion = (isAdmin || isComercial || isOrcamentista)
+    && (isAfterDelivery || !!budget.is_published_version)
+    && !["contrato_fechado", "lost", "archived"].includes(budget.internal_status || "")
+    && !["contrato_fechado", "lost", "archived"].includes(budget.status || "");
 
   const handleCreateAddendum = async () => {
     if (!user) { toast.error("Sessão expirada"); return; }
