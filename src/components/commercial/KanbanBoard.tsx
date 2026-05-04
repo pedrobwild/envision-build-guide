@@ -444,7 +444,7 @@ function SubSectionGroup({
                   estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                   isSynced={syncedBudgetIds.has(b.id)}
                   publicId={b.public_id}
-                  createdAt={b.created_at}
+                  budgetStatus={b.status}
                   updatedAt={b.updated_at}
                   mode="commercial"
                   daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
