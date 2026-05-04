@@ -386,6 +386,12 @@ export function BudgetActionsMenu({
             </DropdownMenuItem>
           )}
 
+          {canCreateDiscountVersion && (
+            <DropdownMenuItem onClick={() => setDiscountDialogOpen(true)}>
+              <BadgePercent className="h-4 w-4 mr-2 text-primary" />
+              Nova versão com desconto
+            </DropdownMenuItem>
+          )}
           {/* Version compare */}
           {budget.version_group_id && (budget.version_number ?? 1) > 1 && (
             <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${budget.version_group_id}&right=${budget.id}`)}>
