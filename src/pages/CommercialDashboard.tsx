@@ -634,6 +634,11 @@ export default function CommercialDashboard() {
         if (b.pipeline_id !== activePipelineId) return false;
       }
 
+      if (linkFilter !== "all") {
+        const ls = derivePublicLinkStatus(b.public_id, b.status);
+        if (ls !== linkFilter) return false;
+      }
+
       // Filtro de fila vindo da home do comercial. Tem prioridade sobre statusFilter.
       if (queueFilter) {
         if (!matchesQueue(b, queueFilter, now)) return false;
