@@ -101,7 +101,7 @@ function getDueInfo(dueAt: string | null, internalStatus?: string) {
   if (!dueAt) return { label: null, variant: "default" as const };
   const dueDate = new Date(dueAt);
   const days = differenceInCalendarDays(dueDate, new Date());
-  const isDelivered = internalStatus ? HIDDEN_BY_DEFAULT_STATUSES.has(internalStatus) : false;
+  const isDelivered = internalStatus ? HIDDEN_BY_DEFAULT_STATUSES.has(internalStatus) || internalStatus === "revision_requested" : false;
 
   if (isPast(dueDate) && !isToday(dueDate)) {
     if (isDelivered) return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" as const };
