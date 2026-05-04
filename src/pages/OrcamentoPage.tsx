@@ -45,7 +45,14 @@ const sidebarVariants = {
 
 export default function OrcamentoPage() {
   const { publicId } = useParams<{ publicId: string }>();
-  const { data: budget, isLoading, error } = useOrcamentoBudget(publicId);
+  const {
+    data: budget,
+    isLoading,
+    isFetching,
+    error,
+    failureCount,
+    refetch,
+  } = useOrcamentoBudget(publicId);
   const [contractOpen, setContractOpen] = useState(false);
 
   // Demo só é permitido quando explicitamente habilitado por env.
@@ -55,15 +62,27 @@ export default function OrcamentoPage() {
     budget ?? (publicId === "demo" && allowDemo ? mockBudget : null);
 
   if (isLoading && !resolvedBudget) {
+    // Progresso visual baseado em tentativas: tentativa 0 = 25%, 1 = 50%, 2 = 75%, 3 = 90%
+    const attempt = Math.min(failureCount, ORCAMENTO_MAX_RETRIES);
+    const progress = Math.round(25 + (attempt / ORCAMENTO_MAX_RETRIES) * 65);
+    const isRetrying = failureCount > 0;
+
     return (
       <div
-        className="min-h-screen bg-background flex items-center justify-center"
+        className="min-h-screen bg-background flex items-center justify-center px-6"
         role="status"
         aria-live="polite"
         aria-label="Carregando orçamento"
       >
-        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
-        <span className="sr-only">Carregando orçamento…</span>
+        <div className="w-full max-w-sm space-y-4 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" aria-hidden="true" />
+          <Progress value={progress} aria-label="Progresso do carregamento" />
+          <p className="text-sm font-body text-muted-foreground">
+            {isRetrying
+              ? `Tentando novamente… (${failureCount}/${ORCAMENTO_MAX_RETRIES})`
+              : "Carregando orçamento…"}
+          </p>
+        </div>
       </div>
     );
   }
@@ -71,7 +90,7 @@ export default function OrcamentoPage() {
   if (!resolvedBudget) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-6">
-        <div className="text-center space-y-2 max-w-md">
+        <div className="text-center space-y-4 max-w-md">
           <p className="text-lg font-display font-semibold text-foreground">
             Orçamento não encontrado
           </p>
@@ -80,12 +99,27 @@ export default function OrcamentoPage() {
               ? "Não foi possível carregar este orçamento. O link pode ter expirado ou o orçamento ainda não foi publicado. Entre em contato com a equipe comercial."
               : "Verifique o link ou entre em contato com a equipe comercial."}
           </p>
+          {error && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isFetching}
+            >
+              {isFetching ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" />
+                  Tentando…
+                </>
+              ) : (
+                "Tentar novamente"
+              )}
+            </Button>
+          )}
         </div>
       </div>
     );
   }
-
-  const hasScope = resolvedBudget.scope && resolvedBudget.scope.length > 0;
   const projectId = resolvedBudget.meta.projectId;
 
   return (
