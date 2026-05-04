@@ -449,7 +449,8 @@ function OwnerTableBlock({
   period: SalesPeriod;
   onSelectOwner: (id: string | null) => void;
 }) {
-  const { data, isLoading, isError, error, refetch } = useSalesByOwner(period);
+  const { data, isLoading, isFetching, isError, error, refetch } = useSalesByOwner(period);
+  const refreshing = !isLoading && isFetching;
   const rows = data ?? [];
 
   return (
