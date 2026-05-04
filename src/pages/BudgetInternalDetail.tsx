@@ -61,6 +61,7 @@ import {
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { buildWhatsappUrl, formatPhoneBR } from "@/lib/phone";
+import { composeBudgetTitle } from "@/lib/budget-title";
 import { openPublicBudget } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
@@ -905,28 +906,7 @@ export default function BudgetInternalDetail() {
                 />
               </div>
               <h1 className="text-xl sm:text-2xl font-display font-semibold tracking-tight leading-tight text-foreground">
-                {(() => {
-                  const proj = (budget.project_name || "").trim();
-                  const client = (budget.client_name || "").trim();
-                  if (!proj) return client;
-                  if (!client) return proj;
-                  // Normaliza espaços/pontuação para comparar de forma robusta
-                  // (evita duplicar quando project_name e client_name diferem só por
-                  // espaços extras, hífens ou acentuação).
-                  const norm = (s: string) =>
-                    s
-                      .normalize("NFD")
-                      .replace(/[\u0300-\u036f]/g, "")
-                      .replace(/[\s·•\-–—|]+/g, " ")
-                      .trim()
-                      .toLowerCase();
-                  const np = norm(proj);
-                  const nc = norm(client);
-                  if (np === nc) return proj;
-                  if (np.includes(nc)) return proj;
-                  if (nc.includes(np)) return client;
-                  return `${proj} · ${client}`;
-                })()}
+                {composeBudgetTitle(budget.project_name, budget.client_name)}
               </h1>
               {subtitle && (
                 <p className="text-sm text-muted-foreground font-body mt-1">{subtitle}</p>
