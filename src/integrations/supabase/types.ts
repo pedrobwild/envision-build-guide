@@ -2856,6 +2856,78 @@ export type Database = {
           },
         ]
       }
+      open_budget_telemetry: {
+        Row: {
+          correlation_id: string
+          created_at: string
+          deploy_version: string | null
+          duration_ms: number | null
+          error_message: string | null
+          event_id: string
+          id: string
+          input_budget_id: string | null
+          input_public_id: string | null
+          input_status: string | null
+          outcome: string
+          payload: Json
+          popup_blocked: boolean
+          reporter_id: string | null
+          resolved_from: string | null
+          resolved_public_id: string | null
+          route: string | null
+          source: string
+          user_agent: string | null
+          viewport_height: number | null
+          viewport_width: number | null
+        }
+        Insert: {
+          correlation_id: string
+          created_at?: string
+          deploy_version?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          event_id: string
+          id?: string
+          input_budget_id?: string | null
+          input_public_id?: string | null
+          input_status?: string | null
+          outcome: string
+          payload?: Json
+          popup_blocked?: boolean
+          reporter_id?: string | null
+          resolved_from?: string | null
+          resolved_public_id?: string | null
+          route?: string | null
+          source: string
+          user_agent?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+        }
+        Update: {
+          correlation_id?: string
+          created_at?: string
+          deploy_version?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          event_id?: string
+          id?: string
+          input_budget_id?: string | null
+          input_public_id?: string | null
+          input_status?: string | null
+          outcome?: string
+          payload?: Json
+          popup_blocked?: boolean
+          reporter_id?: string | null
+          resolved_from?: string | null
+          resolved_public_id?: string | null
+          route?: string | null
+          source?: string
+          user_agent?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+        }
+        Relationships: []
+      }
       operations_alerts: {
         Row: {
           alert_type: string
