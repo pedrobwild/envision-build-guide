@@ -923,10 +923,10 @@ export default function BudgetInternalDetail() {
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {budget.lead_email && (
                     <ContactChip
-                      icon={<Mail className="h-3.5 w-3.5" />}
+                      icon={<Mail className="h-3.5 w-3.5" aria-hidden />}
                       label={budget.lead_email}
                       href={`mailto:${budget.lead_email}`}
-                      openLabel="Abrir e-mail"
+                      openLabel="Enviar e-mail"
                       copyValue={budget.lead_email}
                       copyToast="E-mail copiado"
                     />
@@ -934,18 +934,18 @@ export default function BudgetInternalDetail() {
                   {budget.client_phone && (
                     <>
                       <ContactChip
-                        icon={<Phone className="h-3.5 w-3.5" />}
+                        icon={<Phone className="h-3.5 w-3.5" aria-hidden />}
                         label={budget.client_phone}
                         href={`tel:${budget.client_phone}`}
-                        openLabel="Ligar"
+                        openLabel="Ligar para o cliente"
                         copyValue={budget.client_phone}
                         copyToast="Telefone copiado"
                       />
                       <ContactChip
-                        icon={<MessageCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
+                        icon={<MessageCircle className="h-3.5 w-3.5" aria-hidden />}
                         label="WhatsApp"
                         href={`https://wa.me/${budget.client_phone.replace(/\D/g, "")}`}
-                        openLabel="Abrir WhatsApp"
+                        openLabel="Abrir conversa no WhatsApp"
                         external
                       />
                     </>
@@ -2288,16 +2288,16 @@ function ContactChip({
     }
   };
   return (
-    <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/30 text-xs font-body text-foreground/90 overflow-hidden">
+    <span className="inline-flex items-stretch rounded-full border border-border bg-background text-[12px] font-body text-foreground overflow-hidden shadow-sm">
       <a
         href={href}
         target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
         title={openLabel}
         aria-label={openLabel}
-        className="inline-flex items-center gap-1.5 pl-2.5 pr-2 py-1 hover:bg-muted/60 transition-colors max-w-[220px]"
+        className="inline-flex items-center gap-1.5 pl-2.5 pr-2 min-h-[28px] sm:min-h-[26px] max-w-[220px] text-foreground hover:bg-muted active:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset transition-colors"
       >
-        <span className="shrink-0 text-muted-foreground">{icon}</span>
+        <span className="shrink-0 text-muted-foreground" aria-hidden>{icon}</span>
         <span className="truncate">{label}</span>
       </a>
       {copyValue && (
@@ -2305,10 +2305,10 @@ function ContactChip({
           type="button"
           onClick={handleCopy}
           title="Copiar"
-          aria-label="Copiar"
-          className="border-l border-border/60 px-2 py-1 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+          aria-label={`Copiar ${label}`}
+          className="inline-flex items-center justify-center border-l border-border px-2 min-h-[28px] sm:min-h-[26px] text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset transition-colors"
         >
-          <Copy className="h-3 w-3" />
+          <Copy className="h-3 w-3" aria-hidden />
         </button>
       )}
     </span>
