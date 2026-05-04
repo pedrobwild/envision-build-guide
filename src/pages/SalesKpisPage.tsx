@@ -393,6 +393,7 @@ function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
         ) : chartData.length === 0 ? (
           <EmptyState message="Sem histórico suficiente de mudanças de etapa." />
         ) : (
+          <Refreshable refreshing={refreshing}>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
@@ -431,6 +432,7 @@ function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
               </BarChart>
             </ResponsiveContainer>
           </div>
+          </Refreshable>
         )}
       </CardContent>
     </Card>
