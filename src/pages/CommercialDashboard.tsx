@@ -37,6 +37,8 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFilterChips";
+import { derivePublicLinkStatus } from "@/components/admin/PublicLinkStatusBadge";
+import { Link2 } from "lucide-react";
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
