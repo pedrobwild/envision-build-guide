@@ -374,7 +374,10 @@ function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
           <CardTitle className="flex items-center gap-2 text-base">
             <Layers className="h-4 w-4 text-primary" /> Tempo médio em cada etapa
           </CardTitle>
-          <span className="text-xs text-muted-foreground">média · p50 · p90 (em dias)</span>
+          <div className="flex items-center gap-2">
+            <RefreshingIndicator show={refreshing} />
+            <span className="text-xs text-muted-foreground">média · p50 · p90 (em dias)</span>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
