@@ -886,7 +886,7 @@ export function CatalogItemDialog({ open, onOpenChange, item, categories, suppli
             />
             {imageUrl ? (
               <div className="relative inline-block">
-                <img src={imageUrl} alt="Preview" className="h-24 w-24 object-cover rounded-lg border border-border" />
+                <img loading="lazy" decoding="async" src={imageUrl} alt="Preview" className="h-24 w-24 object-cover rounded-lg border border-border" />
                 <button
                   type="button"
                   onClick={handleRemoveImage}

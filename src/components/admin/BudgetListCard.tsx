@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatBRL, formatDate } from "@/lib/formatBRL";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
@@ -23,7 +24,7 @@ interface BudgetListCardProps {
   onRefresh?: () => void;
 }
 
-export function BudgetListCard({
+function BudgetListCardImpl({
   budget,
   total,
   sectionCount,
@@ -147,6 +148,8 @@ export function BudgetListCard({
     </div>
   );
 }
+
+export const BudgetListCard = memo(BudgetListCardImpl);
 
 /* Skeleton for loading state */
 export function BudgetListSkeleton() {

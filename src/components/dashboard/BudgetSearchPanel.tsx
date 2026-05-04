@@ -249,7 +249,7 @@ function BudgetSearchRow({
         {/* Value */}
         {total > 0 && (
           <span className="text-xs font-mono tabular-nums text-muted-foreground hidden sm:inline">
-            {total >= 1000 ? `R$ ${(total / 1000).toFixed(0)}k` : formatBRL(total)}
+            {formatBRL(total)}
           </span>
         )}
 

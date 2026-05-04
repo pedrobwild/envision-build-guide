@@ -281,7 +281,7 @@ export function CoverageMappingStep({
 
           {/* Floor plan with rooms */}
           <div className="relative rounded-xl overflow-hidden border border-border bg-muted/20">
-            <img src={floorPlanUrl} alt="Planta" className="w-full select-none pointer-events-none" />
+            <img loading="lazy" decoding="async" src={floorPlanUrl} alt="Planta" className="w-full select-none pointer-events-none" />
             <svg
               className="absolute inset-0 w-full h-full"
               viewBox="0 0 1 1"

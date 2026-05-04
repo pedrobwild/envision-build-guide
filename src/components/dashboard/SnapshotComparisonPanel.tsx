@@ -46,7 +46,7 @@ const LOWER_BETTER = new Set(["overdue_count", "avg_lead_time_days", "backlog_co
 const fmtValue = (key: string, v: number | null) => {
   if (v == null) return "—";
   if (key.endsWith("_pct")) return `${v.toFixed(1)}%`;
-  if (key.endsWith("_brl")) return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  if (key.endsWith("_brl")) return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (key.endsWith("_days")) return `${v.toFixed(1)}d`;
   return Math.round(v).toString();
 };

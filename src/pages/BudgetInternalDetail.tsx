@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom"
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
 import { CrossPipelineStrip } from "@/components/budget/CrossPipelineStrip";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,8 @@ import {
   X,
   ChevronRight,
   MessageCircle,
+  Mail,
+  Phone,
   Image as ImageIcon,
   History,
   XCircle,
@@ -58,6 +61,10 @@ import {
   FileDown,
 } from "lucide-react";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { buildWhatsappUrl, formatPhoneBR } from "@/lib/phone";
+import { composeBudgetTitle } from "@/lib/budget-title";
+import { computeBudgetTime, budgetTimeFromMarkers } from "@/lib/budget-time-in-stage";
+import { useBudgetTimeMarkers } from "@/hooks/useBudgetTimeMarkers";
 import { openPublicBudget } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
@@ -78,6 +85,7 @@ import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
+import { BudgetHeaderClientInfo } from "@/components/admin/BudgetHeaderClientInfo";
 import { BudgetTasksPanel } from "@/components/admin/BudgetTasksPanel";
 import { PrazoExecucaoChip } from "@/components/admin/PrazoExecucaoChip";
 import { DemandSidebarNav } from "@/components/demanda/DemandSidebarNav";
@@ -126,6 +134,7 @@ interface BudgetDetail {
   version_group_id?: string | null;
   is_current_version?: boolean | null;
   version_number?: number | null;
+  property_id?: string | null;
 }
 
 interface EventRow {
@@ -243,6 +252,15 @@ export default function BudgetInternalDetail() {
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
   const [resolvedBudgetId, setResolvedBudgetId] = useState<string | null>(null);
   const [resolvedSeqCode, setResolvedSeqCode] = useState<string | null>(null);
+  // Marcos de tempo (criação, início da etapa, congelamento) vindos do backend.
+  // Usados como fonte de verdade pelo cabeçalho; recalculados a cada mudança
+  // de status do orçamento atual.
+  const {
+    data: timeMarkers,
+    loading: timeMarkersLoading,
+    error: timeMarkersError,
+    refetch: refetchTimeMarkers,
+  } = useBudgetTimeMarkers(budgetId ?? null, budget?.internal_status ?? "_");
   // Pré-visualização de export antes do download. Os flags `exportingXlsx`
   // e `exportingPdf` são derivados do estado para preservar o spinner nos
   // botões enquanto o diálogo gera o preview.
@@ -303,7 +321,7 @@ export default function BudgetInternalDetail() {
         supabase
           .from("budgets")
           .select(
-            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, prazo_dias_uteis, is_current_version, version_group_id, version_number"
+            "id, project_name, client_id, client_name, client_phone, lead_email, lead_name, property_type, city, bairro, metragem, condominio, unit, internal_status, priority, due_at, created_at, updated_at, created_by, commercial_owner_id, estimator_owner_id, briefing, demand_context, internal_notes, reference_links, notes, status, public_id, sequential_code, manual_total, estimated_weeks, pipeline_stage, win_probability, expected_close_at, lead_source, payment_method, payment_installments, prazo_dias_uteis, is_current_version, version_group_id, version_number, property_id"
           )
           .eq("id", id)
           .single(),
@@ -552,6 +570,11 @@ export default function BudgetInternalDetail() {
       },
     ]);
 
+    // Garante que o cabeçalho recalcule "etapa há X dias" usando o novo
+    // status_change recém-inserido — o serializedKey já mudou, mas chamamos
+    // refetch explicitamente para evitar corrida com a inserção do evento.
+    refetchTimeMarkers();
+
     toast.success(`Status → ${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}`);
   }
 
@@ -683,6 +706,34 @@ export default function BudgetInternalDetail() {
   const links = (budget.reference_links ?? []).filter((l: unknown) => typeof l === "string" && (l as string).trim());
 
   const totalDisplay = budget.manual_total ?? budgetTotal ?? 0;
+
+  // Tempos do negócio: total desde a criação e tempo na etapa atual.
+  // Regra: o cronômetro PARA no PRIMEIRO evento que entra em "contrato_fechado", "lost" ou "archived".
+  // Fonte de verdade: RPC `get_budget_time_markers` (backend). Se a RPC falhar
+  // ou ainda não tiver respondido, caímos no cálculo local sobre `events` para
+  // evitar UI vazia — `timeMarkersFallback` indica esse estado para o tooltip.
+  const timeMarkersFallback = !timeMarkers;
+  useEffect(() => {
+    if (timeMarkersError) {
+      logger.warn("[BudgetInternalDetail] get_budget_time_markers falhou, usando cálculo local", {
+        budgetId,
+        error: timeMarkersError,
+      });
+    }
+  }, [timeMarkersError, budgetId]);
+  const { isFrozen, frozenAt: frozenAtDate, currentStageStart, totalDaysOpen, daysInStage } =
+    timeMarkers
+      ? budgetTimeFromMarkers(timeMarkers)
+      : computeBudgetTime({
+          internalStatus: budget.internal_status,
+          createdAt: budget.created_at,
+          events,
+        });
+  const frozenEvent = frozenAtDate ? { created_at: frozenAtDate.toISOString() } : null;
+  const formatOpenedFor = (n: number) =>
+    n === 0 ? "Aberto hoje" : n === 1 ? "Aberto há 1 dia" : `Aberto há ${n} dias`;
+  const formatStageFor = (n: number) =>
+    n === 0 ? "Nesta etapa hoje" : n === 1 ? "Nesta etapa há 1 dia" : `Nesta etapa há ${n} dias`;
   const locationParts = [budget.bairro, budget.city].filter(Boolean).join(", ");
   const subtitle = [
     budget.condominio,
@@ -898,12 +949,124 @@ export default function BudgetInternalDetail() {
                   value={budget.prazo_dias_uteis ?? null}
                   onChange={savePrazoDiasUteis}
                 />
+                {(() => {
+                  const fmtDateTime = (d: Date) => format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+                  // Quando os marcos vêm do backend, usamos exatamente os
+                  // timestamps da RPC `get_budget_time_markers` para evitar
+                  // divergência entre tooltip e cálculo. No fallback local,
+                  // caímos em `budget.created_at` / `currentStageStart` / `frozenEvent`.
+                  const sourceLabel = timeMarkers
+                    ? "Fonte: servidor (get_budget_time_markers)"
+                    : timeMarkersError
+                    ? `Fonte: cálculo local — falha na RPC (${timeMarkersError})`
+                    : "Fonte: cálculo local (sincronizando com o servidor…)";
+                  const createdAtIso = timeMarkers?.created_at ?? budget.created_at;
+                  const stageStartIso = timeMarkers?.current_stage_start
+                    ?? (currentStageStart ? currentStageStart.toISOString() : null);
+                  const frozenAtIso = timeMarkers?.frozen_at
+                    ?? (frozenEvent ? frozenEvent.created_at : null);
+                  const createdLine = createdAtIso
+                    ? `Criado em ${fmtDateTime(new Date(createdAtIso))}`
+                    : null;
+                  const stageStartLine = stageStartIso
+                    ? `Etapa "${status.label}" iniciada em ${fmtDateTime(new Date(stageStartIso))}`
+                    : null;
+                  const frozenLine = frozenAtIso
+                    ? `Cronômetro pausado em ${fmtDateTime(new Date(frozenAtIso))} (entrada em "${status.label}")`
+                    : null;
+                  const totalTitle = [
+                    "Tempo total desde a criação do negócio.",
+                    createdLine,
+                    frozenLine,
+                    sourceLabel,
+                  ].filter(Boolean).join("\n");
+                  const stageTitle = [
+                    `Tempo na etapa atual ("${status.label}").`,
+                    stageStartLine,
+                    frozenLine,
+                    sourceLabel,
+                  ].filter(Boolean).join("\n");
+                  return (
+                    <>
+                      {totalDaysOpen !== null && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
+                          title={totalTitle}
+                        >
+                          <Clock className="h-3 w-3" />
+                          {formatOpenedFor(totalDaysOpen)}
+                          {isFrozen && " (pausado)"}
+                        </span>
+                      )}
+                      {daysInStage !== null && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
+                          title={stageTitle}
+                        >
+                          <Clock className="h-3 w-3" />
+                          {formatStageFor(daysInStage)}
+                        </span>
+                      )}
+                      {timeMarkersError && (
+                        <button
+                          type="button"
+                          onClick={() => refetchTimeMarkers()}
+                          className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-warning/30 bg-warning/5 text-warning uppercase tracking-wide hover:bg-warning/10 transition-colors"
+                          title={`Falha ao carregar tempos do servidor: ${timeMarkersError}\nClique para tentar novamente.`}
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          Tempos: offline
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
               <h1 className="text-xl sm:text-2xl font-display font-semibold tracking-tight leading-tight text-foreground">
-                {budget.project_name} · {budget.client_name}
+                {composeBudgetTitle(budget.project_name, budget.client_name)}
               </h1>
               {subtitle && (
                 <p className="text-sm text-muted-foreground font-body mt-1">{subtitle}</p>
+              )}
+              {/* Contato do cliente — chips com ação rápida (copiar + abrir) */}
+              {(budget.lead_email || budget.client_phone) && (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {budget.lead_email && (
+                    <ContactChip
+                      icon={<Mail className="h-3.5 w-3.5" aria-hidden />}
+                      label={budget.lead_email}
+                      href={`mailto:${budget.lead_email}`}
+                      openLabel="Enviar e-mail"
+                      copyValue={budget.lead_email}
+                      copyToast="E-mail copiado"
+                    />
+                  )}
+                  {budget.client_phone && (() => {
+                    const waUrl = buildWhatsappUrl(budget.client_phone);
+                    const phoneDisplay = formatPhoneBR(budget.client_phone);
+                    return (
+                      <>
+                        <ContactChip
+                          icon={<Phone className="h-3.5 w-3.5" aria-hidden />}
+                          label={phoneDisplay}
+                          href={`tel:${budget.client_phone.replace(/[^\d+]/g, "")}`}
+                          openLabel="Ligar para o cliente"
+                          copyValue={budget.client_phone}
+                          copyToast="Telefone copiado"
+                        />
+                        {waUrl && (
+                          <ContactChip
+                            icon={<MessageCircle className="h-3.5 w-3.5" aria-hidden />}
+                            label="WhatsApp"
+                            href={waUrl}
+                            openLabel="Abrir conversa no WhatsApp"
+                            external
+                          />
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
               )}
               {/* Prazo de execução — mesmo chip editável do BudgetEditor; salva direto no banco. */}
               <div className="mt-2">
@@ -912,6 +1075,29 @@ export default function BudgetInternalDetail() {
                   onChange={savePrazoDiasUteis}
                 />
               </div>
+
+              {/* Detalhes completos do cliente, imóvel e equipe (colapsável) */}
+              <BudgetHeaderClientInfo
+                clientId={budget.client_id}
+                propertyId={budget.property_id ?? null}
+                fallback={{
+                  client_name: budget.client_name,
+                  client_phone: budget.client_phone,
+                  lead_email: budget.lead_email,
+                  bairro: budget.bairro,
+                  city: budget.city,
+                  condominio: budget.condominio,
+                  metragem: budget.metragem,
+                  property_type: budget.property_type,
+                  unit: budget.unit,
+                  lead_source: budget.lead_source,
+                  created_at: budget.created_at,
+                  updated_at: budget.updated_at,
+                }}
+                createdByName={budget.created_by ? getProfileName(budget.created_by) : null}
+                commercialOwnerName={budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : null}
+                estimatorOwnerName={budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : null}
+              />
             </div>
 
             {/* Quick status change */}
@@ -939,37 +1125,12 @@ export default function BudgetInternalDetail() {
             </Select>
           </div>
 
-          {/* Pipeline */}
-          <div className="mt-6">
-            <PipelineProgress stages={PIPELINE_STAGES} currentIndex={pipeline.index} isLost={pipeline.isLost} />
-          </div>
-
-          {/* KPIs financeiros/operacionais (hierarquia primária) */}
-          <div className="border-t border-border/60 mt-6 pt-5 grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {/* KPIs financeiros/operacionais — apenas Valor (probabilidade/previsão e ilustração do pipeline removidos a pedido) */}
+          <div className="border-t border-border/60 mt-6 pt-5">
             <KpiBlock
               label="Valor"
               value={formatBRL(totalDisplay)}
               sub={budget.estimated_weeks ? `${budget.estimated_weeks} semanas` : `${itemsCount} itens · ${sectionsCount} seções`}
-            />
-            <KpiBlock
-              label="Probabilidade"
-              value={`${probability}%`}
-              progress={probability}
-              tone={pipeline.isLost ? "destructive" : "primary"}
-            />
-            <KpiBlock
-              label="Previsão"
-              value={dueDate ? format(dueDate, "dd MMM", { locale: ptBR }) : "—"}
-              sub={
-                dueDate
-                  ? overdue
-                    ? `SLA vencido há ${Math.abs(daysLeft!)}d`
-                    : dueToday
-                    ? "Vence hoje"
-                    : `em ${daysLeft}d`
-                  : "Sem prazo definido"
-              }
-              subTone={overdue ? "destructive" : dueToday ? "warning" : "muted"}
             />
           </div>
 
@@ -2207,5 +2368,65 @@ function LostPanel({
         </Button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Chip compacto de contato no cabeçalho do negócio: mostra ícone + label,
+ * com botão "abrir" (mailto/tel/WhatsApp) e botão "copiar" opcional.
+ */
+function ContactChip({
+  icon,
+  label,
+  href,
+  openLabel,
+  copyValue,
+  copyToast,
+  external,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  openLabel: string;
+  copyValue?: string;
+  copyToast?: string;
+  external?: boolean;
+}) {
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!copyValue) return;
+    try {
+      await navigator.clipboard.writeText(copyValue);
+      toast.success(copyToast ?? "Copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+  return (
+    <span className="inline-flex items-stretch rounded-full border border-border bg-background text-[12px] font-body text-foreground overflow-hidden shadow-sm">
+      <a
+        href={href}
+        target={external ? "_blank" : undefined}
+        rel={external ? "noopener noreferrer" : undefined}
+        title={openLabel}
+        aria-label={openLabel}
+        className="inline-flex items-center gap-1.5 pl-2.5 pr-2 min-h-[28px] sm:min-h-[26px] max-w-[220px] text-foreground hover:bg-muted active:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset transition-colors"
+      >
+        <span className="shrink-0 text-muted-foreground" aria-hidden>{icon}</span>
+        <span className="truncate">{label}</span>
+      </a>
+      {copyValue && (
+        <button
+          type="button"
+          onClick={handleCopy}
+          title="Copiar"
+          aria-label={`Copiar ${label}`}
+          className="inline-flex items-center justify-center border-l border-border px-2 min-h-[28px] sm:min-h-[26px] text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset transition-colors"
+        >
+          <Copy className="h-3 w-3" aria-hidden />
+        </button>
+      )}
+    </span>
   );
 }

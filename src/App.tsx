@@ -55,6 +55,7 @@ const BugReportsPage = lazy(() => import("./pages/BugReportsPage"));
 const ComercialHome = lazy(() => import("./pages/painel/ComercialHome"));
 const OrcamentistaHome = lazy(() => import("./pages/painel/OrcamentistaHome"));
 const AdminHome = lazy(() => import("./pages/painel/AdminHome"));
+const OperationsHealthPage = lazy(() => import("./pages/admin/OperationsHealthPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -122,6 +123,7 @@ const App = () => (
                     <Route path="/admin/comercial/conversao" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><ConversionDashboard /></RoleGuard></AdminPage>} />
                     <Route path="/admin/comercial/kpis" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><SalesKpisPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/operacoes" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AdminOperationsDashboard /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/saude-operacao" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><OperationsHealthPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/analises" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AnalisesPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/forecast" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><ForecastPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/usuarios" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><UserManagement /></RoleGuard></AdminPage>} />
@@ -142,6 +144,7 @@ const App = () => (
                     <Route path="/admin/insights" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><InsightsPage /></RoleGuard></AdminPage>}/>
                     <Route path="/admin/digisac" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><DigisacPage /></RoleGuard></AdminPage>}/>
                     <Route path="/o/:publicId" element={<PublicBudget />} />
+                    <Route path="/admin/budget/:adminPreviewBudgetId/preview-publica" element={<ProtectedRoute><RoleGuard allowedRoles={["admin", "orcamentista", "comercial"]}><PublicBudget /></RoleGuard></ProtectedRoute>} />
                     <Route path="/obra/:publicId/orcamento" element={<OrcamentoPage />} />
                     <Route path="/qa" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><QAEvaluator /></RoleGuard></AdminPage>} />
                     <Route path="/admin/diagnostico" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><BudgetDiagnosticsPage /></RoleGuard></AdminPage>} />

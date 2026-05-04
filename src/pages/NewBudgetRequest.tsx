@@ -554,29 +554,35 @@ export default function NewBudgetRequest() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ── Sticky Header ── */}
+      {/* ── Sticky Header — em mobile mantemos só voltar + título; o CTA principal vai
+            para a barra sticky de fundo (mais ergonômico em formulários longos). ── */}
       <header className="sticky top-0 z-50 bg-card/85 backdrop-blur-xl border-b border-border/40 shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="max-w-3xl mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               type="button"
               onClick={() => navigate("/admin/solicitacoes")}
+              aria-label="Voltar"
               className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="min-w-0">
               <h1 className="text-sm font-display font-bold text-foreground tracking-tight truncate">
-                {mode === "import" ? "Importar Orçamento Pronto" : "Nova Solicitação"}
+                {mode === "import" ? "Importar Orçamento" : "Nova Solicitação"}
               </h1>
-              <p className="text-[11px] text-muted-foreground/70 font-body">
-                {mode === "import" ? "Anexe o PDF e registre no pipeline" : "Preencha o briefing para iniciar a produção"}
+              <p className="text-[11px] text-muted-foreground/70 font-body truncate">
+                {completionPercent}% preenchido
+                <span className="hidden sm:inline">
+                  {" · "}
+                  {mode === "import" ? "Anexe o PDF e registre no pipeline" : "Preencha o briefing para iniciar a produção"}
+                </span>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            {/* Completion indicator */}
+            {/* Completion indicator — só desktop */}
             <div className="hidden sm:flex items-center gap-2.5">
               <div className="w-24 h-1 rounded-full bg-muted overflow-hidden">
                 <div
@@ -589,12 +595,13 @@ export default function NewBudgetRequest() {
               </span>
             </div>
 
+            {/* CTA do header só em ≥sm — em mobile mostramos no bottom bar para ergonomia. */}
             <Button
               type="submit"
               form="budget-form"
               disabled={loading || !clientName.trim() || (mode === "import" && (!pdfFile || !manualTotalRaw.trim()))}
               size="sm"
-              className="h-8 text-xs gap-1.5 shadow-sm"
+              className="hidden sm:inline-flex h-8 text-xs gap-1.5 shadow-sm"
             >
               {loading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1092,17 +1099,43 @@ export default function NewBudgetRequest() {
           </div>
         </div>
 
-        {/* ── Bottom action (mobile-friendly) ── */}
-        <div className="flex justify-end gap-3 pb-10 sm:hidden">
-          <Button type="button" variant="outline" size="sm" onClick={() => navigate("/admin/solicitacoes")}>
+        {/* Espaço para a barra sticky inferior em mobile não cobrir o último bloco do form */}
+        <div className="sm:hidden h-24" aria-hidden="true" />
+      </form>
+
+      {/* ── CTA sticky inferior — mobile-only. Sempre visível, ergonômico,
+            respeita safe-area. Em ≥sm, o CTA do header é suficiente. ── */}
+      <div
+        className="sm:hidden fixed inset-x-0 bottom-0 z-40 bg-card/95 backdrop-blur-md border-t border-border"
+        style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))" }}
+      >
+        <div className="max-w-3xl mx-auto px-3 pt-2.5 pb-2 flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/admin/solicitacoes")}
+            className="h-11 px-3 shrink-0"
+          >
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading || !clientName.trim()} size="sm" className="gap-2">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            {loading ? "Criando…" : "Criar Solicitação"}
+          <Button
+            type="submit"
+            form="budget-form"
+            disabled={loading || !clientName.trim() || (mode === "import" && (!pdfFile || !manualTotalRaw.trim()))}
+            className="flex-1 h-11 gap-2"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : mode === "import" ? (
+              <PackageCheck className="h-4 w-4" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
+            {loading ? "Criando…" : mode === "import" ? "Importar" : "Criar Solicitação"}
           </Button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

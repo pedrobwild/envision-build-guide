@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { StickyEditorHeader, type SaveStatus } from "@/components/editor/StickyEditorHeader";
 import { INTERNAL_STATUSES, type InternalStatus } from "@/lib/role-constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
@@ -977,7 +978,7 @@ export default function BudgetEditorV2() {
             {/* ── Tab: Planilha ── */}
             <TabsContent value="planilha" className="mt-0 flex-1">
               <div className="flex">
-                <div className={cn("flex-1 min-w-0", briefingOpen && "mr-[320px]")}>
+                <div className={cn("flex-1 min-w-0", briefingOpen && "sm:mr-[320px]")}>
                   {/* Apply template button for orçamentista/admin — só mostra "Aplicar Template" como CTA grande
                       quando temos certeza de que o orçamento está vazio (load concluído). Durante o
                       carregamento inicial mostramos um skeleton em vez do empty state, para evitar
@@ -1072,43 +1073,79 @@ export default function BudgetEditorV2() {
                   />
                 </div>
 
-                {/* Briefing toggle button — hidden on mobile */}
+                {/* Briefing toggle — desktop chip à direita; mobile chip flutuante no canto inferior. */}
                 {!briefingOpen && (
-                  <div className="fixed right-4 top-36 z-30 hidden sm:block">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setBriefingOpen(true)}
-                      className="h-8 text-xs gap-1.5 shadow-md bg-background"
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      Briefing
-                    </Button>
-                  </div>
-                )}
-
-                {/* Briefing sidebar */}
-                {briefingOpen && (
-                  <div className="fixed right-0 top-[96px] bottom-0 w-[320px] z-30 border-l border-border bg-background overflow-y-auto">
-                    <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-                      <span className="text-sm font-body font-medium">Briefing & Histórico</span>
+                  <>
+                    <div className="hidden sm:block fixed right-4 top-36 z-30">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => setBriefingOpen(false)}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBriefingOpen(true)}
+                        className="h-8 text-xs gap-1.5 shadow-md bg-background"
                       >
-                        ✕
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        Briefing
                       </Button>
                     </div>
-                    <BriefingPanel
-                      budgetId={budgetId!}
-                      budget={budget}
-                      onBudgetFieldChange={(field, value) => {
-                        setBudget({ ...budget, [field]: value });
-                      }}
-                    />
-                  </div>
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={() => setBriefingOpen(true)}
+                      aria-label="Abrir briefing e histórico"
+                      className="sm:hidden fixed right-3 z-30 h-11 w-11 rounded-full p-0 shadow-lg"
+                      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                    </Button>
+                  </>
+                )}
+
+                {/* Briefing — desktop sidebar fixa; mobile vira Sheet/Drawer (acessibilidade nativa) */}
+                {briefingOpen && (
+                  <>
+                    <div className="hidden sm:flex fixed right-0 top-[96px] bottom-0 w-[320px] z-30 border-l border-border bg-background overflow-y-auto flex-col">
+                      <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
+                        <span className="text-sm font-body font-medium">Briefing & Histórico</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => setBriefingOpen(false)}
+                          aria-label="Fechar briefing"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                      <BriefingPanel
+                        budgetId={budgetId!}
+                        budget={budget}
+                        onBudgetFieldChange={(field, value) => {
+                          setBudget({ ...budget, [field]: value });
+                        }}
+                      />
+                    </div>
+                    <Sheet open={briefingOpen} onOpenChange={setBriefingOpen}>
+                      <SheetContent
+                        side="right"
+                        className="sm:hidden w-full p-0 flex flex-col"
+                        aria-describedby={undefined}
+                      >
+                        <SheetHeader className="px-4 py-3 border-b border-border text-left shrink-0">
+                          <SheetTitle className="text-sm font-body font-medium">Briefing & Histórico</SheetTitle>
+                        </SheetHeader>
+                        <div className="flex-1 overflow-y-auto">
+                          <BriefingPanel
+                            budgetId={budgetId!}
+                            budget={budget}
+                            onBudgetFieldChange={(field, value) => {
+                              setBudget({ ...budget, [field]: value });
+                            }}
+                          />
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+                  </>
                 )}
               </div>
             </TabsContent>

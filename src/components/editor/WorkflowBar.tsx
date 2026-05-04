@@ -382,21 +382,22 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Actions */}
-        <div className="flex items-center gap-1.5">
+        {/* Actions — em mobile usamos h-9 (≥36px) para tap target confortável; em ≥sm voltamos a h-7. */}
+        <div className="flex items-center gap-1 sm:gap-1.5">
           {/* Primary action button */}
           {canDoPrimary && (
             <Button
               data-workflow-primary
               variant="default"
               size="sm"
-              className={`h-7 text-[10px] sm:text-xs gap-1 sm:gap-1.5 ${
+              className={`h-9 sm:h-7 px-3 text-[11px] sm:text-xs gap-1 sm:gap-1.5 ${
                 internalStatus === "revision_requested" ? "bg-warning hover:bg-warning/90 text-warning-foreground" :
                 internalStatus === "minuta_solicitada" ? "bg-success hover:bg-success/90 text-success-foreground" :
                 internalStatus === "delivered_to_sales" ? "bg-success hover:bg-success/90 text-success-foreground" :
                 ""
               }`}
               onClick={handlePrimaryClick}
+              aria-label={primaryTransition.label}
             >
               {internalStatus === "revision_requested" && <RotateCcw className="h-3.5 w-3.5" />}
               {internalStatus === "ready_for_review" && <PackageCheck className="h-3.5 w-3.5" />}
@@ -413,7 +414,8 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               variant="outline"
               size="sm"
               onClick={() => setRevisionModalOpen(true)}
-              className="h-7 text-[10px] sm:text-xs border-warning/40 text-warning hover:bg-warning/5 gap-1 sm:gap-2"
+              className="h-9 sm:h-7 px-3 text-[11px] sm:text-xs border-warning/40 text-warning hover:bg-warning/5 gap-1 sm:gap-2"
+              aria-label="Solicitar revisão"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Solicitar Revisão</span>
@@ -425,8 +427,8 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
           {showSecondary && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <MoreHorizontal className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" aria-label="Mais ações">
+                  <MoreHorizontal className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -458,10 +460,11 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-9 w-9 sm:h-7 sm:w-7"
+                aria-label="Ver detalhes da demanda"
                 onClick={() => window.open(`/admin/demanda/${budget.id}`, "_blank", "noopener,noreferrer")}
               >
-                <FileText className="h-3.5 w-3.5" />
+                <FileText className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Ver detalhes da demanda</TooltipContent>

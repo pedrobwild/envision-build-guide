@@ -17,12 +17,52 @@
  */
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 // As views são novas — escapamos do tipo gerado.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
+
+/**
+ * Defaults compartilhados das queries de KPI.
+ * - staleTime alto (5 min) porque os dados agregados não mudam segundo a segundo.
+ * - gcTime ainda maior (15 min) para manter o cache vivo entre navegações.
+ * - placeholderData mantém os dados anteriores enquanto o filtro novo carrega,
+ *   eliminando o flash de skeleton e permitindo o indicador "Atualizando…".
+ * - retry: 1 evita repetir RPCs lentas que falharam por timeout.
+ */
+const KPI_QUERY_DEFAULTS = {
+  staleTime: 5 * 60_000,
+  gcTime: 15 * 60_000,
+  placeholderData: keepPreviousData,
+  retry: 1,
+  refetchOnWindowFocus: false,
+} as const;
+
+/** Mede a duração de um RPC e loga em DEV. Não rouba erros. */
+async function measuredRpc<T>(
+  name: string,
+  params: Record<string, unknown>,
+  exec: () => Promise<{ data: T | null; error: unknown }>,
+): Promise<T> {
+  const t0 = performance.now();
+  try {
+    const { data, error } = await exec();
+    const ms = Math.round(performance.now() - t0);
+    if (error) {
+      logger.warn(`[sales-kpis] ${name} failed in ${ms}ms`, { params, error });
+      throw error;
+    }
+    logger.debug(`[sales-kpis] ${name} ok in ${ms}ms`, params);
+    return (data ?? ([] as unknown as T)) as T;
+  } catch (err) {
+    const ms = Math.round(performance.now() - t0);
+    logger.warn(`[sales-kpis] ${name} threw in ${ms}ms`, { params, err });
+    throw err;
+  }
+}
 
 export type SalesRange = "30d" | "90d" | "ytd" | "all" | "custom";
 
@@ -95,16 +135,18 @@ export function useSalesOverview(period: SalesPeriod, ownerId?: string | null) {
   ]);
   return useQuery({
     queryKey: ["sales-kpis", "overview", start, end, ownerId ?? null],
-    queryFn: async (): Promise<SalesOverview> => {
-      const { data, error } = await sb.rpc("sales_kpis_dashboard", {
-        _start_date: start,
-        _end_date: end,
-        _owner_id: ownerId ?? null,
-      });
-      if (error) throw error;
-      return (data ?? {}) as SalesOverview;
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<SalesOverview>(
+        "sales_kpis_dashboard",
+        { _start_date: start, _end_date: end, _owner_id: ownerId ?? null },
+        () =>
+          sb.rpc("sales_kpis_dashboard", {
+            _start_date: start,
+            _end_date: end,
+            _owner_id: ownerId ?? null,
+          }),
+      ).then((d) => (d ?? ({} as SalesOverview)) as SalesOverview),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
@@ -142,15 +184,13 @@ export function useSalesByOwner(period?: SalesPeriod) {
   );
   return useQuery({
     queryKey: ["sales-kpis", "by-owner", start, end],
-    queryFn: async (): Promise<OwnerPerformanceRow[]> => {
-      const { data, error } = await sb.rpc("sales_kpis_by_owner", {
-        _start_date: start,
-        _end_date: end,
-      });
-      if (error) throw error;
-      return (data ?? []) as OwnerPerformanceRow[];
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<OwnerPerformanceRow[]>(
+        "sales_kpis_by_owner",
+        { _start_date: start, _end_date: end },
+        () => sb.rpc("sales_kpis_by_owner", { _start_date: start, _end_date: end }),
+      ),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
@@ -175,16 +215,18 @@ export function useTimeInStageGodMode(period?: SalesPeriod, ownerId?: string | n
   );
   return useQuery({
     queryKey: ["sales-kpis", "time-in-stage", start, end, ownerId ?? null],
-    queryFn: async (): Promise<TimeInStageRow[]> => {
-      const { data, error } = await sb.rpc("sales_kpis_time_in_stage", {
-        _start_date: start,
-        _end_date: end,
-        _owner_id: ownerId ?? null,
-      });
-      if (error) throw error;
-      return (data ?? []) as TimeInStageRow[];
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<TimeInStageRow[]>(
+        "sales_kpis_time_in_stage",
+        { _start_date: start, _end_date: end, _owner_id: ownerId ?? null },
+        () =>
+          sb.rpc("sales_kpis_time_in_stage", {
+            _start_date: start,
+            _end_date: end,
+            _owner_id: ownerId ?? null,
+          }),
+      ),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
@@ -223,17 +265,19 @@ export function useSalesBySegment(
   );
   return useQuery({
     queryKey: ["sales-kpis", "by-segment", dimension, start, end, ownerId ?? null],
-    queryFn: async (): Promise<SegmentRow[]> => {
-      const { data, error } = await sb.rpc("sales_conversion_by_segment", {
-        _dimension: dimension,
-        _start_date: start,
-        _end_date: end,
-        _owner_id: ownerId ?? null,
-      });
-      if (error) throw error;
-      return (data ?? []) as SegmentRow[];
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<SegmentRow[]>(
+        `sales_conversion_by_segment[${dimension}]`,
+        { _dimension: dimension, _start_date: start, _end_date: end, _owner_id: ownerId ?? null },
+        () =>
+          sb.rpc("sales_conversion_by_segment", {
+            _dimension: dimension,
+            _start_date: start,
+            _end_date: end,
+            _owner_id: ownerId ?? null,
+          }),
+      ),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
@@ -259,16 +303,18 @@ export function useSalesCohorts(period?: SalesPeriod, ownerId?: string | null) {
   );
   return useQuery({
     queryKey: ["sales-kpis", "cohorts", start, end, ownerId ?? null],
-    queryFn: async (): Promise<CohortRow[]> => {
-      const { data, error } = await sb.rpc("sales_kpis_cohorts", {
-        _start_date: start,
-        _end_date: end,
-        _owner_id: ownerId ?? null,
-      });
-      if (error) throw error;
-      return (data ?? []) as CohortRow[];
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<CohortRow[]>(
+        "sales_kpis_cohorts",
+        { _start_date: start, _end_date: end, _owner_id: ownerId ?? null },
+        () =>
+          sb.rpc("sales_kpis_cohorts", {
+            _start_date: start,
+            _end_date: end,
+            _owner_id: ownerId ?? null,
+          }),
+      ),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
@@ -306,16 +352,18 @@ export function useLostReasonsRanked(period?: SalesPeriod, ownerId?: string | nu
   );
   return useQuery({
     queryKey: ["sales-kpis", "lost-reasons", start, end, ownerId ?? null],
-    queryFn: async (): Promise<LostReasonRow[]> => {
-      const { data, error } = await sb.rpc("sales_kpis_lost_reasons", {
-        _start_date: start,
-        _end_date: end,
-        _owner_id: ownerId ?? null,
-      });
-      if (error) throw error;
-      return (data ?? []) as LostReasonRow[];
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<LostReasonRow[]>(
+        "sales_kpis_lost_reasons",
+        { _start_date: start, _end_date: end, _owner_id: ownerId ?? null },
+        () =>
+          sb.rpc("sales_kpis_lost_reasons", {
+            _start_date: start,
+            _end_date: end,
+            _owner_id: ownerId ?? null,
+          }),
+      ),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
@@ -327,7 +375,7 @@ export function formatCurrencyBRL(value: number | null | undefined): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
   }).format(value);
 }
 

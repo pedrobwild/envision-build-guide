@@ -21,6 +21,7 @@ import {
   TrendingUp,
   MessageCircle,
   Stethoscope,
+  HeartPulse,
   Bug,
   GitBranch,
   Trash2,
@@ -122,6 +123,7 @@ const ADMIN_SECTION: NavSection = {
   label: "Administração",
   items: [
     { title: "Operações", url: "/admin/operacoes", icon: Settings, roles: ["admin"] },
+    { title: "Saúde da operação", url: "/admin/saude-operacao", icon: HeartPulse, roles: ["admin"] },
     { title: "Análises", url: "/admin/analises", icon: BarChart3, roles: ["admin"] },
     { title: "Forecast", url: "/admin/forecast", icon: TrendingUp, roles: ["admin"] },
     { title: "Financeiro", url: "/admin/financeiro", icon: DollarSign, roles: ["admin"] },
@@ -185,12 +187,14 @@ function NavRow({
       to={item.url}
       end={item.end}
       className={cn(
-        "group relative flex items-center gap-2.5 rounded-md text-[13px] font-body transition-colors duration-100 outline-none",
-        "focus-visible:ring-1 focus-visible:ring-sidebar-ring",
-        collapsed ? "h-8 w-8 mx-auto justify-center" : "h-7 px-2",
+        "group relative flex items-center gap-2.5 rounded-md font-body transition-colors duration-100 outline-none",
+        "focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar focus-visible:bg-sidebar-accent focus-visible:text-white",
+        collapsed
+          ? "h-9 w-9 mx-auto justify-center"
+          : "h-7 px-2 text-[13px]",
         isActive
-          ? "bg-sidebar-accent text-sidebar-foreground"
-          : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+          ? "bg-sidebar-accent text-white"
+          : "text-white/85 hover:text-white hover:bg-sidebar-accent/60",
       )}
       activeClassName=""
     >
@@ -206,10 +210,11 @@ function NavRow({
       )}
       <Icon
         className={cn(
-          "h-[15px] w-[15px] shrink-0 transition-colors",
-          isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/55 group-hover:text-sidebar-foreground/80",
+          "shrink-0 transition-colors",
+          collapsed ? "h-[17px] w-[17px]" : "h-[15px] w-[15px]",
+          isActive ? "text-white" : "text-white/85 group-hover:text-white group-focus-visible:text-white",
         )}
-        strokeWidth={isActive ? 2 : 1.75}
+        strokeWidth={isActive ? 2 : 1.85}
       />
       {!collapsed && (
         <span className="truncate leading-none">{item.title}</span>
@@ -336,7 +341,7 @@ export function AppSidebar() {
             onClick={openCommandPalette}
             className={cn(
               "mt-2.5 group flex items-center rounded-md transition-colors",
-              "bg-sidebar-accent/40 hover:bg-sidebar-accent/70 text-sidebar-foreground/55 hover:text-sidebar-foreground/85",
+              "bg-sidebar-accent/50 hover:bg-sidebar-accent/80 text-white/80 hover:text-white",
               "ring-1 ring-sidebar-border/40 hover:ring-sidebar-border",
               collapsed ? "h-8 w-8 mx-auto justify-center" : "h-7 w-full px-2 gap-2",
             )}
@@ -346,7 +351,7 @@ export function AppSidebar() {
             {!collapsed && (
               <>
                 <span className="text-[12.5px] font-body flex-1 text-left">Buscar…</span>
-                <kbd className="hidden md:inline-flex items-center gap-0.5 text-[10px] font-mono text-sidebar-foreground/40 bg-sidebar-background/60 ring-1 ring-sidebar-border/60 rounded px-1 py-px leading-none">
+                <kbd className="hidden md:inline-flex items-center gap-0.5 text-[10px] font-mono text-white/75 bg-sidebar-background/60 ring-1 ring-sidebar-border/60 rounded px-1 py-px leading-none">
                   ⌘K
                 </kbd>
               </>
@@ -372,7 +377,7 @@ export function AppSidebar() {
             >
               {!collapsed && section.label && (
                 <div className="px-2 mb-1 flex items-center">
-                  <span className="text-[10.5px] uppercase tracking-[0.08em] text-sidebar-foreground/35 font-body font-medium">
+                  <span className="text-[10.5px] uppercase tracking-[0.08em] text-white/70 font-body font-semibold">
                     {section.label}
                   </span>
                 </div>
@@ -417,8 +422,8 @@ export function AppSidebar() {
                       type="button"
                       className={cn(
                         "w-full group flex items-center justify-between px-2 py-1 rounded-md",
-                        "text-[10.5px] uppercase tracking-[0.08em] font-body font-medium",
-                        "text-sidebar-foreground/35 hover:text-sidebar-foreground/65 transition-colors",
+                        "text-[10.5px] uppercase tracking-[0.08em] font-body font-semibold",
+                        "text-white/70 hover:text-white transition-colors",
                       )}
                     >
                       <span>Ferramentas</span>
@@ -435,7 +440,7 @@ export function AppSidebar() {
                     <div className="mt-1 space-y-2.5">
                       {toolGroups.map((group) => (
                         <div key={group.id}>
-                          <div className="px-2 mb-0.5 text-[10px] text-sidebar-foreground/30 font-body font-medium tracking-wide">
+                          <div className="px-2 mb-0.5 text-[10px] uppercase tracking-wide text-white/65 font-body font-semibold">
                             {group.label}
                           </div>
                           <ul className="space-y-px">
@@ -472,7 +477,7 @@ export function AppSidebar() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-8 h-8 mx-auto mb-1 text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+                  className="w-8 h-8 mx-auto mb-1 text-white/85 hover:text-white hover:bg-sidebar-accent/70"
                   onClick={toggleSidebar}
                 >
                   <PanelLeftOpen className="h-3.5 w-3.5" />
@@ -522,12 +527,12 @@ export function AppSidebar() {
                           {profile.full_name || "Usuário"}
                         </span>
                         {primaryRole && (
-                          <span className="block text-[10.5px] font-body text-sidebar-foreground/45 truncate leading-tight">
+                          <span className="block text-[10.5px] font-body text-white/70 truncate leading-tight">
                             {ROLE_LABEL[primaryRole] ?? primaryRole}
                           </span>
                         )}
                       </span>
-                      <ChevronsUpDown className="h-3 w-3 text-sidebar-foreground/35 shrink-0" />
+                      <ChevronsUpDown className="h-3 w-3 text-white/70 shrink-0" />
                     </>
                   )}
                 </button>

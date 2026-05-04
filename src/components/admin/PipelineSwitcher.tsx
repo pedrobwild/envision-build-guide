@@ -35,7 +35,11 @@ export function PipelineSwitcher({
   const totalAll = Object.values(counts).reduce((acc, n) => acc + n, 0);
 
   return (
-    <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-muted/40 border border-border/60">
+    <div
+      className="flex items-center gap-1 p-1 rounded-xl bg-muted/40 border border-border/60 overflow-x-auto scrollbar-none"
+      role="tablist"
+      aria-label="Pipelines comerciais"
+    >
       <Tab
         active={activeSlug === "all"}
         onClick={() => onChange("all")}
@@ -78,9 +82,13 @@ function Tab({
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
       className={cn(
-        "relative inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-body font-medium whitespace-nowrap transition-all",
+        "relative inline-flex items-center gap-1.5 rounded-lg px-3 text-xs font-body font-medium whitespace-nowrap transition-all shrink-0",
+        // Tap target confortável em mobile (≥40px), compacto em desktop.
+        "h-10 sm:h-8",
         active
           ? "bg-card text-foreground shadow-sm ring-1 ring-border"
           : "text-muted-foreground hover:text-foreground hover:bg-card/60",

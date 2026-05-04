@@ -33,6 +33,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -173,6 +174,10 @@ function SectionContextMenu({
   onRename,
   onDuplicate,
   onDelete,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
   isAddendum = false,
   onToggleAddendumRemove,
 }: {
@@ -180,6 +185,10 @@ function SectionContextMenu({
   onRename: (name: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   isAddendum?: boolean;
   onToggleAddendumRemove?: () => void;
 }) {
@@ -193,10 +202,11 @@ function SectionContextMenu({
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
-          className="p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0"
+          className="p-1 rounded hover:bg-muted text-muted-foreground/40 hover:text-muted-foreground transition-colors flex-shrink-0 tap-target"
           title="Configurações da seção"
+          aria-label="Abrir menu da seção"
         >
-          <MoreVertical className="h-3.5 w-3.5" />
+          <MoreVertical className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-60 p-2.5 space-y-1" align="end" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
@@ -209,6 +219,26 @@ function SectionContextMenu({
             className="w-full h-8 px-2 rounded border border-input bg-background text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
+        {(onMoveUp || onMoveDown) && (
+          <div className="flex items-center gap-1 pb-1 border-b border-border/40">
+            <button
+              onClick={() => { onMoveUp?.(); setOpen(false); }}
+              disabled={!canMoveUp}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:hover:bg-transparent tap-target"
+              title="Mover seção para cima"
+            >
+              <ChevronRight className="h-3 w-3 -rotate-90" /> Subir
+            </button>
+            <button
+              onClick={() => { onMoveDown?.(); setOpen(false); }}
+              disabled={!canMoveDown}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:hover:bg-transparent tap-target"
+              title="Mover seção para baixo"
+            >
+              <ChevronRight className="h-3 w-3 rotate-90" /> Descer
+            </button>
+          </div>
+        )}
         <button
           onClick={() => { onDuplicate(); setOpen(false); }}
           className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-xs text-foreground hover:bg-muted transition-colors"
@@ -379,13 +409,14 @@ function SortableItemRow({
         "flex items-center gap-0",
         compact && !rowExpanded ? "h-11" : "py-2",
       )}>
-        {/* [⋮⋮] drag handle */}
+        {/* [⋮⋮] drag handle — long-press em mobile, hover em desktop */}
         <button
           {...listeners}
-          className="hidden sm:flex w-4 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/item:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
+          aria-label="Arrastar item (segure para mover)"
+          className="flex w-5 sm:w-4 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/40 sm:text-muted-foreground/0 sm:group-hover/item:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical className="h-3 w-3" />
+          <GripVertical className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
         </button>
 
         {/* [▶ expand] — 20px mobile, 24px desktop */}
@@ -782,7 +813,16 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   }, []);
   const densityKey = `budget-item-density-${budgetId}`;
   const [compactMode, setCompactMode] = useState(() => {
-    try { return localStorage.getItem(densityKey) !== "expanded"; } catch { return true; }
+    try {
+      const stored = localStorage.getItem(densityKey);
+      if (stored === "expanded") return false;
+      if (stored === "compact") return true;
+      // Default: compacto em mobile, expandido em desktop
+      if (typeof window !== "undefined") {
+        return window.matchMedia("(max-width: 767px)").matches;
+      }
+      return true;
+    } catch { return true; }
   });
   const searchRef = useRef<HTMLInputElement>(null);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -862,6 +902,9 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    // Mobile: long-press de 220ms inicia o drag, com tolerância a leves movimentos
+    // (evita conflitar com scroll vertical da página).
+    useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -1349,6 +1392,30 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     }
   };
 
+  const moveSection = async (sectionId: string, dir: -1 | 1) => {
+    if (blockedByReadOnly()) return;
+    const idx = sections.findIndex(s => s.id === sectionId);
+    if (idx < 0) return;
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= sections.length) return;
+    const previousOrder = [...sections];
+    const reordered = arrayMove(sections, idx, newIdx).map((s, i) => ({ ...s, order_index: i }));
+    onSectionsChange(reordered);
+    onSaveStatusChange?.("saving");
+    try {
+      await Promise.all(
+        reordered.map(s =>
+          dbFrom(cfg.sectionTable).update({ order_index: s.order_index }).eq("id", s.id)
+        )
+      );
+      onSaveStatusChange?.("saved");
+    } catch {
+      onSectionsChange(previousOrder);
+      onSaveStatusChange?.("error");
+      toast.error("Erro ao salvar a ordem. Tente novamente.");
+    }
+  };
+
   const handleItemDragEnd = (sectionId: string) => async (event: DragEndEvent) => {
     if (blockedByReadOnly()) return;
     const { active, over } = event;
@@ -1565,7 +1632,7 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       >
         <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
-            {sections.map((section) => {
+            {sections.map((section, sectionIdx) => {
               const isExpanded = expandedSections.has(section.id);
               const sectionCostTotal = calcSectionCostTotal(section);
               const sectionSaleTotal = calcSectionSaleTotal(section);
@@ -1591,13 +1658,14 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                         )}
                         onClick={() => toggleSection(section.id)}
                       >
-                        {/* [⋮⋮] drag — hidden on mobile, visible on hover desktop */}
+                        {/* [⋮⋮] drag — visível no mobile (long-press); hover desktop */}
                         <button
                           {...dragListeners}
-                          className="hidden sm:flex w-5 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/0 group-hover/section:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none"
+                          aria-label="Arrastar seção (segure para mover)"
+                          className="flex w-6 sm:w-5 flex-shrink-0 items-center justify-center cursor-grab active:cursor-grabbing rounded text-muted-foreground/40 sm:text-muted-foreground/0 sm:group-hover/section:text-muted-foreground/40 hover:!text-muted-foreground transition-colors touch-none tap-target"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <GripVertical className="h-3.5 w-3.5" />
+                          <GripVertical className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                         </button>
 
                         {/* [▶/▼] chevron */}
@@ -1680,13 +1748,17 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
                           </div>
                         </div>
 
-                        {/* [⋮] menu — always visible on mobile via tap, hover on desktop */}
-                        <div className="w-6 flex-shrink-0 flex items-center justify-center sm:opacity-0 sm:group-hover/section:opacity-100 transition-opacity duration-100">
+                        {/* [⋮] menu — sempre visível no mobile, hover no desktop */}
+                        <div className="w-7 sm:w-6 flex-shrink-0 flex items-center justify-center sm:opacity-0 sm:group-hover/section:opacity-100 transition-opacity duration-100">
                           <SectionContextMenu
                             section={section}
                             onRename={(name) => updateSection(section.id, "title", name)}
                             onDuplicate={() => duplicateSection(section.id)}
                             onDelete={() => deleteSection(section.id)}
+                            onMoveUp={() => moveSection(section.id, -1)}
+                            onMoveDown={() => moveSection(section.id, 1)}
+                            canMoveUp={sectionIdx > 0}
+                            canMoveDown={sectionIdx < sections.length - 1}
                             isAddendum={isAddendum}
                             onToggleAddendumRemove={() => {
                               const next = section.addendum_action === "remove" ? null : "remove";

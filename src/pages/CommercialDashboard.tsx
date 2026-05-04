@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,13 @@ import { computeDealTemperature, suggestNextAction, type DealTemperatureResult, 
 import { LostReasonDialog, type LostReasonPayload } from "@/components/demanda/LostReasonDialog";
 import { NewActivityDialog } from "@/components/agenda/NewActivityDialog";
 import { BudgetCommunicationDrawer } from "@/components/admin/BudgetCommunicationDrawer";
+import {
+  parseDashboardSearch,
+  parseDashboardSearchWithInvalid,
+  serializeDashboardFilters,
+  buildDashboardUrlForQueue,
+  type CommercialWorkflowStage,
+} from "@/lib/commercial-dashboard-url";
 
 
 // Pipeline groups for the commercial view
@@ -145,8 +152,7 @@ const PIPELINE_SECTIONS = {
 
 type SortOption = "urgente" | "recente" | "prazo";
 
-// Workflow groups for commercial list view
-type CommercialWorkflowStage = "action_needed" | "overdue" | "em_elaboracao" | "revisao_solicitada" | "enviado" | "solicitado" | "advanced" | "closed";
+// Workflow groups for commercial list view — tipo central em commercial-dashboard-url
 
 interface BudgetRow {
   id: string;
@@ -160,6 +166,9 @@ interface BudgetRow {
   due_at: string | null;
   created_at: string | null;
   updated_at: string | null;
+  generated_at: string | null;
+  last_viewed_at: string | null;
+  view_count: number | null;
   commercial_owner_id: string | null;
   estimator_owner_id: string | null;
   public_id: string | null;
@@ -186,6 +195,41 @@ interface BudgetRow {
 interface ProfileRow { id: string; full_name: string; }
 
 const DELIVERED_FINISHED = new Set(["delivered_to_sales", "sent_to_client", "minuta_solicitada", "lost", "archived", "contrato_fechado"]);
+
+// Thresholds das filas — manter idêntico ao usado em useComercialQueues e no
+// filtro `filtered` para evitar divergência entre contagem e lista.
+const QUEUE_COOLDOWN_DAYS: Record<string, number> = {
+  sent_to_client: 5,
+  minuta_solicitada: 10,
+  waiting_info: 3,
+};
+const QUEUE_HOUR_MS = 1000 * 60 * 60;
+const QUEUE_DAY_MS = QUEUE_HOUR_MS * 24;
+
+type QueueBudgetLike = {
+  internal_status: string;
+  view_count: number | null;
+  generated_at: string | null;
+  updated_at: string | null;
+};
+
+function matchesQueue(b: QueueBudgetLike, queue: "prontos" | "sem-vis" | "esfriando", now: number): boolean {
+  if (queue === "prontos") {
+    return b.internal_status === "delivered_to_sales";
+  }
+  if (queue === "sem-vis") {
+    if (b.internal_status !== "sent_to_client") return false;
+    if ((b.view_count ?? 0) > 0) return false;
+    const ref = b.generated_at ?? b.updated_at;
+    if (!ref) return false;
+    return (now - new Date(ref).getTime()) / QUEUE_HOUR_MS >= 48;
+  }
+  // esfriando
+  const threshold = QUEUE_COOLDOWN_DAYS[b.internal_status];
+  if (!threshold) return false;
+  if (!b.updated_at) return false;
+  return (now - new Date(b.updated_at).getTime()) / QUEUE_DAY_MS >= threshold;
+}
 
 function getDueInfo(dueAt: string | null, internalStatus?: string) {
   if (!dueAt) return { label: null, variant: "default" as const };
@@ -245,32 +289,31 @@ export default function CommercialDashboard() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [syncedBudgetIds, setSyncedBudgetIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  // Persistimos busca/filtros/visualização em sessionStorage para que o usuário
-  // não perca o contexto ao alternar Kanban/Lista, trocar status ou recarregar
-  // a página dentro da mesma sessão. Chave única do dashboard comercial.
-  const PERSIST_KEY = "commercialDashboard:filters:v1";
-  type PersistedFilters = {
-    search?: string;
-    statusFilter?: string;
-    sortBy?: SortOption;
-    viewMode?: "list" | "kanban";
-  };
-  const persisted = (() => {
-    if (typeof window === "undefined") return {} as PersistedFilters;
-    try {
-      const raw = window.sessionStorage.getItem(PERSIST_KEY);
-      return raw ? (JSON.parse(raw) as PersistedFilters) : {};
-    } catch {
-      return {} as PersistedFilters;
-    }
-  })();
-  const [search, setSearch] = useState<string>(persisted.search ?? "");
-  const [statusFilter, setStatusFilter] = useState<string>(persisted.statusFilter ?? "all");
-  const [sortBy, setSortBy] = useState<SortOption>(persisted.sortBy ?? "recente");
-  const [viewMode, setViewMode] = useState<"list" | "kanban">(persisted.viewMode ?? "kanban");
-  const [dueFilter, setDueFilter] = useState<DueFilter>("all");
-  const [commercialFilter, setCommercialFilter] = useState<string>("all");
-  const [pipelineFilter, setPipelineFilter] = useState<string>("all");
+
+  // ─────────────────────────────────────────────────────────────────────
+  // URL = source of truth para filtros, visualização e fila.
+  // Lógica pura extraída para src/lib/commercial-dashboard-url.ts (testada).
+  // ─────────────────────────────────────────────────────────────────────
+  const initialParsed = useMemo(
+    () =>
+      parseDashboardSearchWithInvalid(
+        typeof window === "undefined" ? "" : window.location.search,
+      ),
+    [],
+  );
+  const initial = initialParsed.filters;
+  // O effect URL→estado abaixo já dispara o toast de fallback na montagem.
+
+  const [search, setSearch] = useState<string>(initial.search);
+  const [statusFilter, setStatusFilter] = useState<string>(initial.statusFilter);
+  const [sortBy, setSortBy] = useState<SortOption>(initial.sortBy);
+  const [viewMode, setViewMode] = useState<"list" | "kanban">(initial.viewMode);
+  const [dueFilter, setDueFilter] = useState<DueFilter>(initial.dueFilter);
+  const [commercialFilter, setCommercialFilter] = useState<string>(initial.commercialFilter);
+  const [pipelineFilter, setPipelineFilter] = useState<string>(initial.pipelineFilter);
+  const [queueFilter, setQueueFilter] = useState<"prontos" | "sem-vis" | "esfriando" | null>(
+    initial.queueFilter,
+  );
   const [confirmCloseBudgetId, setConfirmCloseBudgetId] = useState<string | null>(null);
   const [revisionBudget, setRevisionBudget] = useState<BudgetRow | null>(null);
   const [contractUploadBudget, setContractUploadBudget] = useState<BudgetRow | null>(null);
@@ -280,18 +323,64 @@ export default function CommercialDashboard() {
   const [nextActionPreset, setNextActionPreset] = useState<{ type: string; title: string } | null>(null);
   const [historyBudget, setHistoryBudget] = useState<BudgetRow | null>(null);
 
-  // Persiste busca + filtros básicos + visualização sempre que mudarem.
-  // Usamos sessionStorage para não atravessar abas ou reinícios do navegador,
-  // mantendo a experiência limpa em novas sessões.
+  // ─── Escreve estado atual na URL (replace, sem empilhar histórico). ───
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const payload: PersistedFilters = { search, statusFilter, sortBy, viewMode };
-      window.sessionStorage.setItem(PERSIST_KEY, JSON.stringify(payload));
-    } catch {
-      // storage cheio/bloqueado: silenciosamente ignora — não é crítico.
+    const next = serializeDashboardFilters({
+      queueFilter,
+      statusFilter,
+      dueFilter,
+      sortBy,
+      viewMode,
+      search,
+      commercialFilter,
+      pipelineFilter,
+    });
+    const current = window.location.search.startsWith("?")
+      ? window.location.search.slice(1)
+      : window.location.search;
+    if (next === current) return;
+    navigate(`${location.pathname}${next ? `?${next}` : ""}`, { replace: true });
+  }, [
+    search,
+    statusFilter,
+    dueFilter,
+    commercialFilter,
+    pipelineFilter,
+    sortBy,
+    viewMode,
+    queueFilter,
+    navigate,
+    location.pathname,
+  ]);
+
+  // ─── Aplica URL → estado quando location.search muda externamente ───
+  const lastInvalidToastRef = useRef<{ sig: string; at: number }>({ sig: "", at: 0 });
+  useEffect(() => {
+    const { filters: next, invalid } = parseDashboardSearchWithInvalid(location.search);
+    if (invalid.length > 0) {
+      const labels = invalid.map((i) => `${i.key}=${i.value}`).join(", ");
+      const sig = labels;
+      const now = Date.now();
+      const last = lastInvalidToastRef.current;
+      // Dedup: ignora se mesma assinatura disparou nos últimos 3s
+      if (sig !== last.sig || now - last.at > 3000) {
+        lastInvalidToastRef.current = { sig, at: now };
+        toast.warning("Filtro inválido ignorado", {
+          id: `invalid-filter:${sig}`,
+          description: `Voltamos para a visualização padrão (${labels}).`,
+        });
+      }
     }
-  }, [search, statusFilter, sortBy, viewMode]);
+    setQueueFilter((prev) => (prev === next.queueFilter ? prev : next.queueFilter));
+    setStatusFilter((prev) => (prev === next.statusFilter ? prev : next.statusFilter));
+    setDueFilter((prev) => (prev === next.dueFilter ? prev : next.dueFilter));
+    setSortBy((prev) => (prev === next.sortBy ? prev : next.sortBy));
+    setViewMode((prev) => (prev === next.viewMode ? prev : next.viewMode));
+    setSearch((prev) => (prev === next.search ? prev : next.search));
+    setCommercialFilter((prev) => (prev === next.commercialFilter ? prev : next.commercialFilter));
+    setPipelineFilter((prev) => (prev === next.pipelineFilter ? prev : next.pipelineFilter));
+  }, [location.search]);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
   const budgetIds = useMemo(() => budgets.map((b) => b.id), [budgets]);
@@ -345,7 +434,7 @@ export default function CommercialDashboard() {
     const isAdmin = profile?.roles.includes("admin");
     let budgetQuery = supabase
       .from("budgets")
-      .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
+      .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, generated_at, last_viewed_at, view_count, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
       .order("created_at", { ascending: false });
 
     if (!isAdmin) {
@@ -508,7 +597,25 @@ export default function CommercialDashboard() {
     return pipelines.find((p) => p.slug === pipelineFilter)?.id ?? null;
   }, [pipelineFilter, pipelines]);
 
+  // Contagens das filas usando exatamente a mesma regra de matchesQueue.
+  // Aplica os mesmos pré-filtros estruturais de `filtered` (comercial e pipeline)
+  // — só ignora `search`, para refletir o universo total da fila e não a busca textual.
+  const queueCounts = useMemo(() => {
+    const now = Date.now();
+    const base = dedupedBudgets.filter(b => {
+      if (commercialFilter !== "all" && b.commercial_owner_id !== commercialFilter) return false;
+      if (activePipelineId !== null && b.pipeline_id !== activePipelineId) return false;
+      return true;
+    });
+    return {
+      prontos: base.filter(b => matchesQueue(b, "prontos", now)).length,
+      "sem-vis": base.filter(b => matchesQueue(b, "sem-vis", now)).length,
+      esfriando: base.filter(b => matchesQueue(b, "esfriando", now)).length,
+    } as const;
+  }, [dedupedBudgets, commercialFilter, activePipelineId]);
+
   const filtered = useMemo(() => {
+    const now = Date.now();
     const result = dedupedBudgets.filter(b => {
       const q = search.toLowerCase();
       const matchSearch = !q || b.client_name.toLowerCase().includes(q) || b.project_name.toLowerCase().includes(q) || (b.bairro ?? "").toLowerCase().includes(q);
@@ -517,6 +624,12 @@ export default function CommercialDashboard() {
 
       if (activePipelineId !== null) {
         if (b.pipeline_id !== activePipelineId) return false;
+      }
+
+      // Filtro de fila vindo da home do comercial. Tem prioridade sobre statusFilter.
+      if (queueFilter) {
+        if (!matchesQueue(b, queueFilter, now)) return false;
+        return matchSearch;
       }
 
       if (dueFilter !== "all") {
@@ -551,7 +664,7 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId]);
+  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId, queueFilter]);
 
   // Counts per pipeline (for the PipelineSwitcher tabs)
   const pipelineCounts = useMemo(() => {
@@ -985,6 +1098,137 @@ export default function CommercialDashboard() {
         </header>
 
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-5 pb-24 lg:pb-6">
+          {queueFilter && (
+            <div className="rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5 space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] uppercase tracking-wide text-primary/70 font-medium">
+                    Filtro de fila ativo
+                  </p>
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {queueFilter === "prontos" && `Prontos para enviar — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} entregue${filtered.length !== 1 ? "s" : ""} pelo orçamentista, aguardando envio ao cliente`}
+                    {queueFilter === "sem-vis" && `Sem visualização há mais de 48h — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} enviado${filtered.length !== 1 ? "s" : ""} ao cliente sem nenhuma abertura`}
+                    {queueFilter === "esfriando" && `Esfriando — ${filtered.length} negócio${filtered.length !== 1 ? "s" : ""} parado${filtered.length !== 1 ? "s" : ""} além do tempo máximo da etapa`}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 shrink-0"
+                  onClick={() => {
+                    setQueueFilter(null);
+                    navigate("/admin/comercial", { replace: true });
+                  }}
+                >
+                  Limpar filtro
+                </Button>
+              </div>
+
+              {/* Contagens das três filas — mesma regra usada na lista filtrada */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {([
+                  { id: "prontos" as const, label: "Prontos", icon: CheckCircle2 },
+                  { id: "sem-vis" as const, label: "Sem visualização >48h", icon: Eye },
+                  { id: "esfriando" as const, label: "Esfriando", icon: Clock },
+                ]).map(({ id, label, icon: Icon }) => {
+                  const active = queueFilter === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => navigate(buildDashboardUrlForQueue(id), { replace: true })}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background hover:bg-muted text-foreground"
+                      }`}
+                      aria-pressed={active}
+                    >
+                      <Icon className="h-3 w-3" />
+                      <span>{label}</span>
+                      <span className={`font-mono tabular-nums ${active ? "opacity-90" : "text-muted-foreground"}`}>
+                        {queueCounts[id]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {queueFilter === "sem-vis" && (
+                <div className="rounded-md border border-border/60 bg-background/60 p-2.5">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">
+                    Critérios aplicados
+                  </p>
+                  <ul className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-foreground/80">
+                    <li className="flex items-center gap-1.5">
+                      <Send className="h-3 w-3 text-primary shrink-0" />
+                      <span><span className="font-mono text-[11px] text-muted-foreground">internal_status</span> = <span className="font-medium">sent_to_client</span></span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Eye className="h-3 w-3 text-primary shrink-0" />
+                      <span><span className="font-mono text-[11px] text-muted-foreground">view_count</span> = <span className="font-medium">0</span></span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 text-primary shrink-0" />
+                      <span><span className="font-mono text-[11px] text-muted-foreground">generated_at</span> (ou <span className="font-mono text-[11px] text-muted-foreground">updated_at</span>) ≥ <span className="font-medium">48h</span></span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Banner de etapa ativa — aparece quando o usuário chega via
+              ?stage= / ?status= / ?due= (clique na Home Comercial, deep link
+              ou filtro manual). Reduz a confusão "por que estou vendo só
+              esses cards?" e oferece um clique para limpar. Não aparece
+              quando há fila ativa (já tem banner próprio acima). */}
+          {!queueFilter && (statusFilter !== "all" || dueFilter !== "all") && (() => {
+            const section = statusFilter !== "all"
+              ? PIPELINE_SECTIONS[statusFilter as keyof typeof PIPELINE_SECTIONS]
+              : null;
+            const Icon = section?.icon ?? AlertTriangle;
+            const dueLabel =
+              dueFilter === "overdue" ? "Vencidos / Hoje" :
+              dueFilter === "due_soon" ? "Próximos (≤2d)" : null;
+            return (
+              <div
+                className="rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2.5 flex items-center justify-between gap-3"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="min-w-0 flex-1 flex items-center gap-2.5">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wide text-primary/70 font-medium font-body">
+                      Etapa ativa
+                    </p>
+                    <p className="text-sm font-medium text-foreground truncate font-body">
+                      {section?.label ?? "Todas as etapas"}
+                      {dueLabel && (
+                        <span className="text-muted-foreground"> · prazo: {dueLabel}</span>
+                      )}
+                      <span className="text-muted-foreground font-mono tabular-nums ml-2">
+                        {filtered.length}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 shrink-0 gap-1"
+                  onClick={() => { setStatusFilter("all"); setDueFilter("all"); }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Limpar
+                </Button>
+              </div>
+            );
+          })()}
+
           {/* Compact summary strip — desktop */}
           <div className="hidden lg:flex items-center gap-4 px-3 py-2 rounded-lg bg-muted/30 border border-border/50 text-xs font-body text-muted-foreground">
             {counts.needsAction > 0 && (

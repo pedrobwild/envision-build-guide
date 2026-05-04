@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { Surface } from "@/components/dashboard/Surface";
 import { MetaProgressBar } from "@/components/dashboard/MetaProgressBar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -65,12 +65,6 @@ function monthLabel(): string {
   return `${capitalized} ${prev.getFullYear()}`;
 }
 
-function parseBRL(input: string): number | null {
-  if (!input.trim()) return null;
-  const normalized = input.replace(/\./g, "").replace(",", ".").replace(/[^0-9.-]/g, "");
-  const v = Number.parseFloat(normalized);
-  return Number.isFinite(v) ? v : null;
-}
 
 export function EditableMetaCard({
   computedRevenue,
@@ -109,29 +103,26 @@ export function EditableMetaCard({
 
   // ─── Dialog state ───
   const [open, setOpen] = useState(false);
-  const [targetInput, setTargetInput] = useState("");
-  const [resultInput, setResultInput] = useState("");
+  const [targetValue, setTargetValue] = useState<number | null>(null);
+  const [resultValue, setResultValue] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setTargetInput(target ? String(target) : "");
-      setResultInput(override !== null && override !== undefined ? String(override) : "");
+      setTargetValue(target ?? null);
+      setResultValue(override ?? null);
     }
   }, [open, target, override]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const targetValue = parseBRL(targetInput);
-      const resultValue = resultInput.trim() === "" ? null : parseBRL(resultInput);
-
       if (targetValue === null || targetValue < 0) {
         toast.error("Informe uma meta válida (em reais).");
         setSaving(false);
         return;
       }
-      if (resultInput.trim() !== "" && (resultValue === null || resultValue < 0)) {
+      if (resultValue !== null && resultValue < 0) {
         toast.error("Resultado manual inválido. Deixe em branco para usar o cálculo automático.");
         setSaving(false);
         return;
@@ -139,17 +130,41 @@ export function EditableMetaCard({
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sb = supabase as any;
-      const { error } = await sb.from("commercial_targets").upsert(
-        {
+
+      // Não usamos upsert+onConflict aqui porque a UNIQUE original
+      // (owner_id, target_month) trata NULLs como distintos (NULLS DISTINCT),
+      // então metas globais (owner_id IS NULL) não disparam o ON CONFLICT e
+      // colidem com o índice parcial commercial_targets_global_month_uniq.
+      const lookup = sb
+        .from("commercial_targets")
+        .select("id")
+        .eq("target_month", targetMonth)
+        .limit(1)
+        .maybeSingle();
+      const { data: existing, error: lookupError } = ownerId
+        ? await lookup.eq("owner_id", ownerId)
+        : await lookup.is("owner_id", null);
+      if (lookupError) throw lookupError;
+
+      if (existing?.id) {
+        const { error } = await sb
+          .from("commercial_targets")
+          .update({
+            revenue_target_brl: targetValue,
+            revenue_override_brl: resultValue,
+          })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from("commercial_targets").insert({
           owner_id: ownerId ?? null,
           target_month: targetMonth,
           revenue_target_brl: targetValue,
           revenue_override_brl: resultValue,
           deals_target: 0,
-        },
-        { onConflict: "owner_id,target_month" },
-      );
-      if (error) throw error;
+        });
+        if (error) throw error;
+      }
 
       toast.success("Meta atualizada.");
       await qc.invalidateQueries({ queryKey });
@@ -225,12 +240,12 @@ export function EditableMetaCard({
           <div className="space-y-4 pt-1">
             <div className="space-y-1.5">
               <Label htmlFor="meta-target">Meta de receita (R$)</Label>
-              <Input
+              <CurrencyInput
                 id="meta-target"
-                inputMode="decimal"
-                placeholder="250000"
-                value={targetInput}
-                onChange={(e) => setTargetInput(e.target.value)}
+                placeholder="R$ 250.000,00"
+                value={targetValue}
+                onChange={setTargetValue}
+                allowNegative={false}
                 disabled={saving}
               />
               <p className="text-[11px] text-muted-foreground">
@@ -243,16 +258,16 @@ export function EditableMetaCard({
                 Resultado manual (R$){" "}
                 <span className="text-muted-foreground font-normal">— opcional</span>
               </Label>
-              <Input
+              <CurrencyInput
                 id="meta-override"
-                inputMode="decimal"
                 placeholder={`Automático: ${new Intl.NumberFormat("pt-BR", {
                   style: "currency",
                   currency: "BRL",
-                  maximumFractionDigits: 0,
+                  minimumFractionDigits: 2, maximumFractionDigits: 2,
                 }).format(computedRevenue)}`}
-                value={resultInput}
-                onChange={(e) => setResultInput(e.target.value)}
+                value={resultValue}
+                onChange={setResultValue}
+                allowNegative={false}
                 disabled={saving}
               />
               <p className="text-[11px] text-muted-foreground">

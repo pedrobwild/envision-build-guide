@@ -199,7 +199,7 @@ export function ItemImageGallery({ item, budgetId, editable }: ItemImageGalleryP
               i === activeIdx ? "border-primary ring-1 ring-primary/30" : "border-border opacity-60 hover:opacity-100"
             )}
           >
-            <img src={img.url} className="w-full h-full object-cover" alt="" />
+            <img loading="lazy" decoding="async" src={img.url} className="w-full h-full object-cover bg-muted" alt="" />
           </button>
         ))}
         {canAdd && (

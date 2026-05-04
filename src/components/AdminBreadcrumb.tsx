@@ -90,7 +90,7 @@ export function AdminBreadcrumb() {
   if (crumbs.length <= 1) return null;
 
   return (
-    <Breadcrumb className="px-4 sm:px-6 py-2">
+    <Breadcrumb className="hidden lg:block px-4 sm:px-6 py-2">
       <BreadcrumbList>
         {displayCrumbs.map((crumb, i) => {
           const isLast = i === displayCrumbs.length - 1;

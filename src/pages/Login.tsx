@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import authBg from "@/assets/bg-auth-v2.png";
 import bwildLogo from "@/assets/logo-bwild-white.png";
+import bwildEngineLogo from "@/assets/bwild-engine-logo.png";
 import { z } from "zod";
 import { useAuthRetryState } from "@/hooks/useAuthRetryState";
 
@@ -194,10 +195,12 @@ export default function Login() {
       />
 
       {/* Form – centered on mobile, left on desktop */}
-      <div className="flex flex-col justify-center items-center md:items-start w-full md:max-w-lg px-5 sm:px-12 md:px-16 py-10 sm:py-16 mx-auto md:mx-0">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-10 sm:mb-12 text-center md:text-left w-full font-display">
-          Bwild Engine
-        </h1>
+      <div className="flex flex-col items-center md:items-start w-full md:max-w-lg px-5 sm:px-12 md:px-16 pt-8 sm:pt-12 pb-10 sm:pb-16 mx-auto md:mx-0">
+        <img
+          src={bwildEngineLogo}
+          alt="Bwild Engine"
+          className="w-64 sm:w-80 md:w-96 h-auto object-contain mb-6 sm:mb-8 mx-auto"
+        />
 
         {successMessage && (
           <div

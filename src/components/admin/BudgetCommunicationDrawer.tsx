@@ -199,44 +199,47 @@ export function BudgetCommunicationDrawer({
           )}
         </SheetHeader>
 
-        {/* Quick actions */}
-        <div className="px-5 py-3 border-b border-border/60 grid grid-cols-3 gap-2 shrink-0">
+        {/* Quick actions — WhatsApp é a ação primária e ocupa a linha cheia em mobile;
+            Link e Abrir ficam lado a lado abaixo. Em ≥sm volta ao grid de 3. */}
+        <div className="px-4 sm:px-5 py-3 border-b border-border/60 shrink-0 space-y-2 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-2">
           {phone ? (
             <Button
               size="sm"
               variant="default"
-              className="h-9 gap-1.5 bg-success hover:bg-success/90 text-success-foreground"
+              className="w-full h-11 sm:h-9 gap-1.5 bg-success hover:bg-success/90 text-success-foreground sm:col-span-1"
               onClick={() => window.open(buildWhatsAppUrl(phone, whatsappMessage), "_blank", "noopener,noreferrer")}
             >
-              <MessageCircle className="h-3.5 w-3.5" />
+              <MessageCircle className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
               WhatsApp
             </Button>
           ) : (
-            <Button size="sm" variant="outline" className="h-9 gap-1.5" disabled title="Sem telefone">
-              <Phone className="h-3.5 w-3.5" />
+            <Button size="sm" variant="outline" className="w-full h-11 sm:h-9 gap-1.5 sm:col-span-1" disabled title="Sem telefone">
+              <Phone className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
               Sem fone
             </Button>
           )}
-          <Button size="sm" variant="outline" className="h-9 gap-1.5" onClick={handleCopyLink}>
-            <Copy className="h-3.5 w-3.5" />
-            Link
-          </Button>
-          {budget?.public_id ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-9 gap-1.5"
-              onClick={() => window.open(`/orcamento/${budget.public_id}`, "_blank", "noopener,noreferrer")}
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Abrir
+          <div className="grid grid-cols-2 gap-2 sm:contents">
+            <Button size="sm" variant="outline" className="h-11 sm:h-9 gap-1.5" onClick={handleCopyLink}>
+              <Copy className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+              Link
             </Button>
-          ) : (
-            <Button size="sm" variant="outline" className="h-9 gap-1.5" disabled>
-              <ExternalLink className="h-3.5 w-3.5" />
-              Abrir
-            </Button>
-          )}
+            {budget?.public_id ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-11 sm:h-9 gap-1.5"
+                onClick={() => window.open(`/orcamento/${budget.public_id}`, "_blank", "noopener,noreferrer")}
+              >
+                <ExternalLink className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                Abrir
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" className="h-11 sm:h-9 gap-1.5" disabled>
+                <ExternalLink className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                Abrir
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Timeline */}

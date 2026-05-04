@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -105,7 +105,7 @@ function getInitials(name: string): string {
 const SWIPE_THRESHOLD = -60;
 const ACTION_WIDTH = 180;
 
-export function CompactKanbanCard({
+function CompactKanbanCardImpl({
   projectName,
   clientName,
   priority,
@@ -431,3 +431,6 @@ export function CompactKanbanCard({
     </div>
   );
 }
+
+export const CompactKanbanCard = memo(CompactKanbanCardImpl);
+

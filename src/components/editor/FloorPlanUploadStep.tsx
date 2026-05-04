@@ -43,7 +43,7 @@ export function FloorPlanUploadStep({ budgetId, floorPlanUrl, onUploaded, onNext
       {floorPlanUrl ? (
         <div className="space-y-4">
           <div className="relative rounded-xl overflow-hidden border border-border bg-muted/30">
-            <img src={floorPlanUrl} alt="Planta baixa" className="w-full max-h-[500px] object-contain" />
+            <img loading="lazy" decoding="async" src={floorPlanUrl} alt="Planta baixa" className="w-full max-h-[500px] object-contain" />
             <button
               onClick={() => onUploaded("")}
               className="absolute top-3 right-3 p-2 rounded-lg bg-foreground/60 text-card hover:bg-foreground/80 transition-colors"

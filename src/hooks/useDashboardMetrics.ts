@@ -487,7 +487,7 @@ export function computeDashboardMetrics(
     grossMargin: {
       health: margin !== null && margin < 10 ? "critical" : margin !== null && margin < 20 ? "warning" : "healthy",
       microText: margin !== null
-        ? `Receita: R$ ${(periodRevenue / 1000).toFixed(0)}k | Custo: R$ ${(periodCost / 1000).toFixed(0)}k`
+        ? `Receita: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(periodRevenue)} | Custo: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(periodCost)}`
         : "Sem contratos fechados no período",
       target: "≥ 20%",
     },

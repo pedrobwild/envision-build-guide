@@ -54,6 +54,13 @@ export type Database = {
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "adjustments_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ai_bulk_operations: {
@@ -186,6 +193,13 @@ export type Database = {
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "budget_activities_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       budget_comments: {
@@ -226,6 +240,13 @@ export type Database = {
             columns: ["budget_id"]
             isOneToOne: false
             referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_comments_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
             referencedColumns: ["id"]
           },
         ]
@@ -356,6 +377,13 @@ export type Database = {
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "budget_conversations_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       budget_events: {
@@ -407,6 +435,13 @@ export type Database = {
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "budget_events_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       budget_lost_reasons: {
@@ -453,6 +488,13 @@ export type Database = {
             columns: ["budget_id"]
             isOneToOne: true
             referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lost_reasons_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: true
+            referencedRelation: "v_sales_budgets_enriched"
             referencedColumns: ["id"]
           },
         ]
@@ -536,6 +578,13 @@ export type Database = {
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "budget_meetings_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       budget_optional_selections: {
@@ -582,6 +631,13 @@ export type Database = {
             columns: ["budget_id"]
             isOneToOne: false
             referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_optional_selections_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
             referencedColumns: ["id"]
           },
           {
@@ -806,6 +862,13 @@ export type Database = {
             columns: ["budget_id"]
             isOneToOne: false
             referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_tours_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
             referencedColumns: ["id"]
           },
         ]
@@ -1109,6 +1172,13 @@ export type Database = {
             columns: ["addendum_base_budget_id"]
             isOneToOne: false
             referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_addendum_base_budget_id_fkey"
+            columns: ["addendum_base_budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
             referencedColumns: ["id"]
           },
           {
@@ -2544,6 +2614,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lead_sources_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lead_sources_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
@@ -2770,6 +2847,13 @@ export type Database = {
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notifications_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       operations_alerts: {
@@ -2938,6 +3022,13 @@ export type Database = {
             referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "rooms_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sections: {
@@ -3005,6 +3096,13 @@ export type Database = {
             columns: ["budget_id"]
             isOneToOne: false
             referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sections_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "v_sales_budgets_enriched"
             referencedColumns: ["id"]
           },
         ]
@@ -3284,6 +3382,107 @@ export type Database = {
           },
         ]
       }
+      v_sales_budgets_enriched: {
+        Row: {
+          commercial_owner_id: string | null
+          created_at: string | null
+          cycle_days: number | null
+          first_sent_at: string | null
+          id: string | null
+          internal_status: string | null
+          is_lost: boolean | null
+          is_won: boolean | null
+          lead_at: string | null
+          lead_source: string | null
+          location_type: string | null
+          lost_at: string | null
+          metragem_bucket: string | null
+          metragem_m2: number | null
+          metragem_raw: string | null
+          open_days: number | null
+          pipeline_stage: string | null
+          property_type: string | null
+          total_value: number | null
+          updated_at: string | null
+          won_at: string | null
+        }
+        Relationships: []
+      }
+      v_sales_cohort_monthly: {
+        Row: {
+          avg_cycle_days: number | null
+          cohort_month: string | null
+          deals_lost: number | null
+          deals_won: number | null
+          lead_to_won_pct: number | null
+          leads: number | null
+          proposals_sent: number | null
+          revenue_won: number | null
+        }
+        Relationships: []
+      }
+      v_sales_cycle_by_owner: {
+        Row: {
+          avg_cycle_days: number | null
+          avg_deal_size_won: number | null
+          deals_lost: number | null
+          deals_open: number | null
+          deals_won: number | null
+          owner_id: string | null
+          owner_name: string | null
+          p50_cycle_days: number | null
+          p90_cycle_days: number | null
+          pipeline_open_value: number | null
+          proposals_sent: number | null
+          revenue_won: number | null
+          total_leads: number | null
+          win_rate_pct: number | null
+        }
+        Relationships: []
+      }
+      v_sales_kpis_overview: {
+        Row: {
+          avg_cycle_days: number | null
+          avg_deal_size_won: number | null
+          deals_lost: number | null
+          deals_open: number | null
+          deals_won: number | null
+          lead_to_won_pct: number | null
+          p50_cycle_days: number | null
+          p90_cycle_days: number | null
+          pipeline_open_value: number | null
+          proposal_rate_pct: number | null
+          proposals_sent: number | null
+          revenue_lost: number | null
+          revenue_won: number | null
+          total_leads: number | null
+          win_rate_pct: number | null
+        }
+        Relationships: []
+      }
+      v_sales_lost_reasons_ranked: {
+        Row: {
+          avg_deal_size: number | null
+          competitor_value_total: number | null
+          pct_of_lost: number | null
+          qty: number | null
+          reason: string | null
+          revenue_lost: number | null
+        }
+        Relationships: []
+      }
+      v_sales_time_in_stage: {
+        Row: {
+          avg_days: number | null
+          max_days: number | null
+          min_days: number | null
+          p50_days: number | null
+          p90_days: number | null
+          sample_size: number | null
+          stage: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approve_addendum: {
@@ -3354,6 +3553,18 @@ export type Database = {
         Returns: string
       }
       generate_budget_public_id: { Args: never; Returns: string }
+      get_budget_time_markers: {
+        Args: { p_budget_id: string }
+        Returns: {
+          budget_id: string
+          created_at: string
+          current_stage_start: string
+          frozen_at: string
+          internal_status: string
+          is_frozen: boolean
+          reference_at: string
+        }[]
+      }
       get_budget_totals: {
         Args: never
         Returns: {
@@ -3380,10 +3591,12 @@ export type Database = {
         Args: { p_public_id: string }
         Returns: undefined
       }
+      is_lost_status: { Args: { _s: string }; Returns: boolean }
       is_production_ready_for_proposal: {
         Args: { _status: string }
         Returns: boolean
       }
+      is_won_status: { Args: { _s: string }; Returns: boolean }
       list_deleted_budgets: {
         Args: { p_limit?: number }
         Returns: {
@@ -3467,7 +3680,9 @@ export type Database = {
         Args: { _duplicate_ids: string[]; _primary_id: string }
         Returns: Json
       }
+      metragem_bucket: { Args: { _m2: number }; Returns: string }
       normalize_phone: { Args: { p_phone: string }; Returns: string }
+      parse_metragem_m2: { Args: { _raw: string }; Returns: number }
       purge_budget: { Args: { p_budget_id: string }; Returns: undefined }
       reactivate_or_addendum_budget: {
         Args: { _client_id: string; _property_id?: string }
@@ -3501,6 +3716,104 @@ export type Database = {
         Returns: {
           moved_count: number
           sample: Json
+        }[]
+      }
+      sales_conversion_by_segment:
+        | {
+            Args: { _dimension: string }
+            Returns: {
+              avg_cycle_days: number
+              avg_deal_size_won: number
+              deals_lost: number
+              deals_open: number
+              deals_won: number
+              proposal_rate_pct: number
+              proposals_sent: number
+              revenue_won: number
+              segment: string
+              total_leads: number
+              win_rate_pct: number
+            }[]
+          }
+        | {
+            Args: {
+              _dimension: string
+              _end_date: string
+              _owner_id: string
+              _start_date: string
+            }
+            Returns: {
+              avg_cycle_days: number
+              avg_deal_size_won: number
+              deals_lost: number
+              deals_open: number
+              deals_won: number
+              proposal_rate_pct: number
+              proposals_sent: number
+              revenue_won: number
+              segment: string
+              total_leads: number
+              win_rate_pct: number
+            }[]
+          }
+      sales_kpis_by_owner: {
+        Args: { _end_date?: string; _start_date?: string }
+        Returns: {
+          avg_cycle_days: number
+          avg_deal_size_won: number
+          deals_lost: number
+          deals_open: number
+          deals_won: number
+          owner_email: string
+          owner_id: string
+          owner_name: string
+          p50_cycle_days: number
+          p90_cycle_days: number
+          pipeline_open_value: number
+          proposals_sent: number
+          revenue_won: number
+          total_leads: number
+          win_rate_pct: number
+        }[]
+      }
+      sales_kpis_cohorts: {
+        Args: { _end_date?: string; _owner_id?: string; _start_date?: string }
+        Returns: {
+          avg_cycle_days: number
+          cohort_month: string
+          deals_lost: number
+          deals_won: number
+          lead_to_won_pct: number
+          leads: number
+          proposals_sent: number
+          revenue_won: number
+        }[]
+      }
+      sales_kpis_dashboard: {
+        Args: { _end_date?: string; _owner_id?: string; _start_date?: string }
+        Returns: Json
+      }
+      sales_kpis_lost_reasons: {
+        Args: { _end_date?: string; _owner_id?: string; _start_date?: string }
+        Returns: {
+          avg_deal_size: number
+          competitor_value_total: number
+          pct_of_lost: number
+          qty: number
+          reason: string
+          revenue_lost: number
+        }[]
+      }
+      sales_kpis_time_in_stage: {
+        Args: { _end_date?: string; _owner_id?: string; _start_date?: string }
+        Returns: {
+          avg_days: number
+          max_days: number
+          min_days: number
+          p50_days: number
+          p90_days: number
+          sample_size: number
+          stage: string
         }[]
       }
       set_active_role: {

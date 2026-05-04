@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sales_kpis_by_owner(timestamptz, timestamptz) FROM PUBLIC, anon;

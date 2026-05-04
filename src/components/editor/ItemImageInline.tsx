@@ -103,7 +103,7 @@ export function ItemImageInline({
             )}
             onClick={() => openLightbox(idx)}
           >
-            <img src={img.url} alt="" className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={img.url} alt="" className="w-full h-full object-cover bg-muted" />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5">
               <button onClick={(e) => { e.stopPropagation(); setPrimary(img.id!); }} className="p-0.5 rounded hover:bg-white/20" title="Principal">
                 <Star className={cn("h-2.5 w-2.5", img.is_primary ? "text-primary fill-primary" : "text-white")} />

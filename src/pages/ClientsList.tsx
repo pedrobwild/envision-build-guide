@@ -39,7 +39,16 @@ import {
   Building2,
   Mail,
   Phone,
+  UserCog,
+  X,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -73,7 +82,7 @@ function formatBRL(value: number | null | undefined) {
   return value.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
   });
 }
 
@@ -111,6 +120,7 @@ export default function ClientsList() {
     visibleIds.length > 0 && visibleIds.every((id) => selectedSet.has(id));
   const someVisibleSelected =
     !allVisibleSelected && visibleIds.some((id) => selectedSet.has(id));
+  const [actionsClient, setActionsClient] = useState<ClientRowWithStats | null>(null);
 
   function toggleOne(id: string, checked: boolean) {
     setSelectedIds((prev) => {
@@ -248,7 +258,7 @@ export default function ClientsList() {
         />
       </div>
 
-      <Card className="p-3">
+      <Card className="p-3 md:static sticky top-[3.25rem] z-20 md:top-auto md:z-auto bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:backdrop-blur-0">
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
           <div className="relative flex-1 sm:min-w-[240px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -339,11 +349,11 @@ export default function ClientsList() {
                 <div
                   key={c.id}
                   className={cn(
-                    "w-full p-4 transition-colors flex items-start gap-2",
+                    "w-full px-3 py-2.5 transition-colors flex items-center gap-2 press-feedback",
                     isSelected ? "bg-primary/5" : "active:bg-muted/40",
                   )}
                 >
-                  <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                  <div onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={(v) => toggleOne(c.id, !!v)}
@@ -352,49 +362,49 @@ export default function ClientsList() {
                   </div>
                   <button
                     type="button"
-                    className="flex-1 text-left min-w-0"
+                    className="flex-1 text-left min-w-0 py-1"
                     onClick={() => navigate(`/admin/crm/${c.id}`)}
                   >
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          {c.sequential_code && (
-                            <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
-                              {c.sequential_code}
-                            </span>
-                          )}
-                          <p className="font-medium text-foreground font-body truncate">{c.name}</p>
-                          <LeadScoreBadge score={scoresMap?.get(c.id)} />
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
-                        </p>
-                      </div>
-                      <Badge className={cn("font-normal text-[10px] shrink-0", sCfg.color)}>
-                        {sCfg.label}
-                      </Badge>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {c.sequential_code && (
+                        <span className="font-mono text-[10px] tracking-wider text-muted-foreground shrink-0">
+                          {c.sequential_code}
+                        </span>
+                      )}
+                      <span className="font-medium text-sm text-foreground font-body truncate">
+                        {c.name}
+                      </span>
+                      <LeadScoreBadge score={scoresMap?.get(c.id)} />
                     </div>
-                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {c.phone && (
-                          <span className="flex items-center gap-1 truncate">
-                            <Phone className="h-3 w-3 shrink-0" /> {c.phone}
-                          </span>
-                        )}
-                        {!c.phone && c.email && (
-                          <span className="flex items-center gap-1 truncate">
-                            <Mail className="h-3 w-3 shrink-0" /> <span className="truncate">{c.email}</span>
-                          </span>
-                        )}
+                    <div className="flex items-center justify-between gap-2 mt-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <Badge className={cn("font-normal text-[10px] py-0 h-4 shrink-0", sCfg.color)}>
+                          {sCfg.label}
+                        </Badge>
+                        <span className="truncate">
+                          {[c.city, c.bairro].filter(Boolean).join(" · ") || owner}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="tabular-nums">{c.stats?.total_budgets ?? 0} orç.</span>
-                        <span className="tabular-nums font-medium text-foreground">
+                      <div className="flex items-center gap-2 shrink-0 tabular-nums">
+                        <span>{c.stats?.total_budgets ?? 0} orç.</span>
+                        <span className="font-medium text-foreground">
                           {formatBRL(c.stats?.pipeline_value)}
                         </span>
                       </div>
                     </div>
                   </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 tap-target"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActionsClient(c);
+                    }}
+                    aria-label={`Ações de ${c.name}`}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
                 </div>
               );
             })
@@ -598,7 +608,119 @@ export default function ClientsList() {
           if (!editing) navigate(`/admin/crm/${c.id}`);
         }}
       />
+
+      <Sheet open={!!actionsClient} onOpenChange={(o) => !o && setActionsClient(null)}>
+        <SheetContent side="bottom" className="md:hidden rounded-t-2xl p-0 max-h-[80vh]">
+          {actionsClient && (
+            <>
+              <SheetHeader className="px-4 pt-4 pb-2 text-left">
+                <SheetTitle className="truncate text-base">{actionsClient.name}</SheetTitle>
+                <SheetDescription className="text-xs">
+                  {actionsClient.sequential_code ?? "—"} ·{" "}
+                  {[actionsClient.city, actionsClient.bairro].filter(Boolean).join(" · ") ||
+                    "Sem localização"}
+                </SheetDescription>
+              </SheetHeader>
+              <div className="border-t border-border safe-pb-nav">
+                <SheetActionItem
+                  icon={Eye}
+                  label="Ver detalhe"
+                  onClick={() => {
+                    const id = actionsClient.id;
+                    setActionsClient(null);
+                    navigate(`/admin/crm/${id}`);
+                  }}
+                />
+                <SheetActionItem
+                  icon={Pencil}
+                  label="Editar cliente"
+                  onClick={() => {
+                    const c = actionsClient;
+                    setActionsClient(null);
+                    openEdit(c);
+                  }}
+                />
+                {actionsClient.phone && (
+                  <SheetActionItem
+                    icon={Phone}
+                    label={`Ligar ${actionsClient.phone}`}
+                    onClick={() => {
+                      window.location.href = `tel:${actionsClient.phone}`;
+                    }}
+                  />
+                )}
+                {actionsClient.email && (
+                  <SheetActionItem
+                    icon={Mail}
+                    label={`E-mail ${actionsClient.email}`}
+                    onClick={() => {
+                      window.location.href = `mailto:${actionsClient.email}`;
+                    }}
+                  />
+                )}
+                <SheetActionItem
+                  icon={UserCog}
+                  label="Selecionar para ações em lote"
+                  onClick={() => {
+                    toggleOne(actionsClient.id, true);
+                    setActionsClient(null);
+                  }}
+                />
+                <SheetActionItem
+                  icon={Archive}
+                  label="Arquivar cliente"
+                  destructive
+                  onClick={async () => {
+                    const c = actionsClient;
+                    setActionsClient(null);
+                    const ok = await confirm({
+                      title: "Arquivar cliente",
+                      description: `Arquivar ${c.name}? Ele sai da carteira ativa mas o histórico de orçamentos é preservado.`,
+                      confirmText: "Arquivar",
+                      destructive: true,
+                    });
+                    if (ok) deleteClient.mutate(c.id);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setActionsClient(null)}
+                  className="w-full px-4 py-3 text-sm text-muted-foreground border-t border-border tap-target press-feedback flex items-center justify-center gap-2"
+                >
+                  <X className="h-4 w-4" /> Cancelar
+                </button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
+  );
+}
+
+function SheetActionItem({
+  icon: Icon,
+  label,
+  onClick,
+  destructive,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-3 px-4 py-3.5 text-left text-sm border-t border-border first:border-t-0 tap-target press-feedback transition-colors active:bg-muted/60",
+        destructive && "text-destructive",
+      )}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{label}</span>
+    </button>
   );
 }
 

@@ -273,13 +273,13 @@ export function EstimatorListView({
     return (
       <Card
         key={b.id}
-        className={`px-4 py-3 hover:shadow-md transition-all border group cursor-pointer ${
+        className={`px-3 sm:px-4 py-2.5 sm:py-3 hover:shadow-md active:bg-accent/30 transition-all border group cursor-pointer ${
           isSelected ? "ring-2 ring-primary/40 border-primary/40 bg-primary/5" : ""
         }`}
         onClick={() => navigate(`/admin/budget/${b.id}`, { state: { from: "/admin/producao" } })}
       >
-        <div className="flex items-center gap-3">
-          {/* Selection checkbox */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Selection checkbox — em mobile sempre visível para permitir bulk sem hover */}
           <div
             className="shrink-0"
             onClick={(e) => e.stopPropagation()}
@@ -288,13 +288,13 @@ export function EstimatorListView({
               checked={isSelected}
               onCheckedChange={() => onToggleSelect(b.id)}
               aria-label={`Selecionar ${b.project_name || b.client_name}`}
-              className={`${isSelected ? "" : "opacity-40 group-hover:opacity-100"} transition-opacity`}
+              className={`${isSelected ? "" : "opacity-100 sm:opacity-40 sm:group-hover:opacity-100"} transition-opacity`}
             />
           </div>
           {/* Left: main info */}
           <div className="flex-1 min-w-0">
             {/* Row 1: Code + Name + Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               {b.sequential_code && (
                 <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider shrink-0">
                   {b.sequential_code}
@@ -430,43 +430,44 @@ export function EstimatorListView({
               )}
             </div>
 
-            {/* Row 2: Meta — compact */}
-            <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground font-body flex-wrap">
+            {/* Row 2: Meta — em mobile mostramos apenas o essencial (cliente, owner, criado).
+                Localização/tipo/metragem/dois owners ficam só em ≥sm para evitar quebras feias em <430px. */}
+            <div className="flex items-center gap-x-3 gap-y-0.5 mt-1 text-[11px] text-muted-foreground font-body flex-wrap">
               {b.project_name && b.project_name !== b.client_name && (
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 truncate max-w-[180px] sm:max-w-none">
                   <User className="h-3 w-3 shrink-0" />
-                  {b.client_name}
+                  <span className="truncate">{b.client_name}</span>
                 </span>
               )}
               {(b.bairro || b.city) && (
-                <span className="flex items-center gap-1">
+                <span className="hidden sm:flex items-center gap-1">
                   <Building2 className="h-3 w-3 shrink-0" />
                   {[b.bairro, b.city].filter(Boolean).join(", ")}
                 </span>
               )}
               {b.property_type && (
-                <span className="flex items-center gap-1">
+                <span className="hidden sm:flex items-center gap-1">
                   <MapPin className="h-3 w-3 shrink-0" />
                   {b.property_type}
                 </span>
               )}
               {b.metragem && (
-                <span className="flex items-center gap-1">
+                <span className="hidden sm:flex items-center gap-1">
                   <Ruler className="h-3 w-3 shrink-0" />
                   {b.metragem}
                 </span>
               )}
-              <span className="flex items-center gap-1" title="Comercial">
+              <span className="hidden sm:flex items-center gap-1" title="Comercial">
                 <Handshake className="h-3 w-3 shrink-0" />
                 {getProfileName(b.commercial_owner_id)}
               </span>
-              <span className="flex items-center gap-1" title="Orçamentista responsável">
+              <span className="flex items-center gap-1 truncate max-w-[140px] sm:max-w-none" title="Orçamentista responsável">
                 <UserCog className="h-3 w-3 shrink-0" />
-                {getProfileName(b.estimator_owner_id)}
+                <span className="truncate">{getProfileName(b.estimator_owner_id)}</span>
               </span>
               {b.internal_status === "revision_requested" && revisionInfoMap[b.id] && (
                 <span
-                  className="flex items-center gap-1 text-warning"
+                  className="hidden sm:flex items-center gap-1 text-warning"
                   title={`Revisão solicitada por ${revisionInfoMap[b.id].requestedByName} em ${format(
                     new Date(revisionInfoMap[b.id].requestedAt),
                     "dd MMM 'às' HH:mm",
@@ -477,21 +478,21 @@ export function EstimatorListView({
                   {revisionInfoMap[b.id].requestedByName}
                 </span>
               )}
-              {timeAgo && <span>{timeAgo}</span>}
+              {timeAgo && <span className="shrink-0">{timeAgo}</span>}
             </div>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {/* Right: Actions — tap targets confortáveis em mobile, compactos em desktop */}
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
             {(() => {
-              const nextActions: { label: string; targetStatus: InternalStatus; icon: React.ReactNode }[] = [];
+              const nextActions: { label: string; targetStatus: InternalStatus; icon: React.ReactNode; ariaLabel: string }[] = [];
 
               if (PENDING_STATUSES.includes(b.internal_status)) {
-                nextActions.push({ label: "Iniciar", targetStatus: "in_progress", icon: <Clock className="h-3 w-3" /> });
+                nextActions.push({ label: "Iniciar", targetStatus: "in_progress", icon: <Clock className="h-3.5 w-3.5" />, ariaLabel: "Iniciar elaboração" });
               } else if (IN_PROGRESS_STATUSES.includes(b.internal_status)) {
-                nextActions.push({ label: "Revisão", targetStatus: "ready_for_review", icon: <CheckCircle2 className="h-3 w-3" /> });
+                nextActions.push({ label: "Revisão", targetStatus: "ready_for_review", icon: <CheckCircle2 className="h-3.5 w-3.5" />, ariaLabel: "Marcar como pronto para revisão" });
               } else if ((STATUS_GROUPS.REVIEW as readonly string[]).includes(b.internal_status)) {
-                nextActions.push({ label: "Entregar", targetStatus: "delivered_to_sales", icon: <Send className="h-3 w-3" /> });
+                nextActions.push({ label: "Entregar", targetStatus: "delivered_to_sales", icon: <Send className="h-3.5 w-3.5" />, ariaLabel: "Entregar para o comercial" });
               }
 
               return nextActions.map((a) => (
@@ -499,7 +500,8 @@ export function EstimatorListView({
                   key={a.targetStatus}
                   variant="default"
                   size="sm"
-                  className="h-7 text-xs gap-1 px-2.5"
+                  aria-label={a.ariaLabel}
+                  className="h-9 sm:h-7 min-w-9 sm:min-w-0 text-xs gap-1 px-2 sm:px-2.5"
                   onClick={() => onRequestStatusChange(b.id, a.targetStatus)}
                 >
                   {a.icon}
@@ -512,12 +514,12 @@ export function EstimatorListView({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-primary hover:bg-primary/10"
+                className="h-9 w-9 sm:h-7 sm:w-7 text-primary hover:bg-primary/10"
                 onClick={() => void openPublicBudgetByPublicId(b.public_id!)}
                 title="Ver orçamento público"
                 aria-label="Ver orçamento público"
               >
-                <Eye className="h-3.5 w-3.5" />
+                <Eye className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
               </Button>
             )}
 
@@ -584,9 +586,10 @@ export function EstimatorListView({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity"
+                  aria-label="Mais ações"
+                  className="h-9 w-9 sm:h-7 sm:w-7 shrink-0 opacity-100 sm:opacity-50 sm:group-hover:opacity-100 transition-opacity"
                 >
-                  <MoreVertical className="h-3.5 w-3.5" />
+                  <MoreVertical className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                 </Button>
               }
             />

@@ -145,6 +145,7 @@ export interface VersionRow {
   parent_budget_id: string | null;
   created_by: string | null;
   created_by_name: string;
+  public_id: string | null;
 }
 
 // ─── Budget event row (from budget_events table) ───
