@@ -32,6 +32,10 @@ export interface OpenBudgetStep {
 }
 
 export interface OpenBudgetDiagnosis {
+  /** UUID v4 único desta tentativa de abertura. Aparece no toast, no console e na tabela `open_budget_telemetry.event_id` no servidor. */
+  correlationId: string;
+  /** UUID v4 da sessão de navegação (persistido em sessionStorage). Agrupa todas as tentativas de uma mesma aba — `open_budget_telemetry.correlation_id`. */
+  sessionId: string;
   startedAt: number;
   durationMs: number;
   source: "by_public_id" | "by_budget_ref";
@@ -44,6 +48,33 @@ export interface OpenBudgetDiagnosis {
   outcome: OpenBudgetOutcome;
   errorMessage: string | null;
   steps: OpenBudgetStep[];
+}
+
+const SESSION_KEY = "__open_budget_correlation_id";
+
+function uuid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function getSessionId(): string {
+  if (typeof sessionStorage === "undefined") return uuid();
+  try {
+    let id = sessionStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id = uuid();
+      sessionStorage.setItem(SESSION_KEY, id);
+    }
+    return id;
+  } catch {
+    return uuid();
+  }
 }
 
 type Sink = (diag: OpenBudgetDiagnosis) => void;
