@@ -95,6 +95,8 @@ export class OpenBudgetTrace {
 
   constructor(source: OpenBudgetDiagnosis["source"], inputPublicId: string | null, inputBudgetId: string | null = null, inputStatus: string | null = null) {
     this.diag = {
+      correlationId: uuid(),
+      sessionId: getSessionId(),
       startedAt: Date.now(),
       durationMs: 0,
       source,
@@ -108,6 +110,15 @@ export class OpenBudgetTrace {
       errorMessage: null,
       steps: [],
     };
+    this.step("trace_init", {
+      correlationId: this.diag.correlationId,
+      sessionId: this.diag.sessionId,
+    });
+  }
+
+  /** UUID único desta tentativa — use em logs e mensagens de suporte. */
+  get correlationId(): string {
+    return this.diag.correlationId;
   }
 
   step(step: string, detail?: Record<string, unknown>) {
