@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import authBg from "@/assets/bg-auth-v2.png";
 import bwildLogo from "@/assets/logo-bwild-white.png";
+import bwildEngineLogo from "@/assets/bwild-engine-logo.png";
 import { z } from "zod";
 import { useAuthRetryState } from "@/hooks/useAuthRetryState";
 
