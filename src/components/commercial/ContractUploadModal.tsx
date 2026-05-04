@@ -63,13 +63,18 @@ export function ContractUploadModal({
     }
 
     setUploading(true);
+    let stage: "upload" | "update" = "upload";
     try {
-      const ext = file.name.split(".").pop() || "pdf";
+      const rawExt = (file.name.split(".").pop() || "pdf").toLowerCase();
+      const ext = /^[a-z0-9]+$/.test(rawExt) ? rawExt : "pdf";
       const filePath = `${budgetId}/contracts/contrato.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("budget-assets")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, {
+          upsert: true,
+          contentType: file.type || undefined,
+        });
 
       if (uploadError) throw uploadError;
 
@@ -79,7 +84,7 @@ export function ContractUploadModal({
 
       const contractUrl = urlData.publicUrl;
 
-      // Update budget with contract URL and status
+      stage = "update";
       const { error: updateError } = await supabase
         .from("budgets")
         .update({
@@ -96,9 +101,32 @@ export function ContractUploadModal({
       onSuccess(contractUrl);
       handleClose();
     } catch (err: unknown) {
-      logger.error("Contract upload error:", err);
-      const msg = err instanceof Error ? err.message : "Tente novamente";
-      toast.error("Erro ao enviar contrato: " + msg);
+      const raw = err instanceof Error ? err.message : String(err ?? "");
+      logger.error(`Contract ${stage} error:`, { stage, budgetId, error: err });
+
+      const friendly = (() => {
+        if (/row-level security|rls|policy|permission denied/i.test(raw)) {
+          return stage === "upload"
+            ? "Sem permissão para enviar arquivos neste orçamento. Confirme se você é o comercial responsável ou peça a um admin."
+            : "Sem permissão para fechar este orçamento. Confirme se você é o comercial responsável ou peça a um admin.";
+        }
+        if (/payload too large|exceed|413/i.test(raw)) {
+          return "Arquivo excede o limite permitido pelo storage (máx. 50 MB).";
+        }
+        if (/duplicate key|uniq_|unique constraint/i.test(raw)) {
+          return "Já existe outra versão atual marcada como contrato fechado neste grupo. Atualize a página e tente novamente.";
+        }
+        if (/jwt|token|401|403/i.test(raw)) {
+          return "Sessão expirada. Recarregue a página e faça login novamente.";
+        }
+        if (/check constraint|violates check|invalid input value/i.test(raw)) {
+          return "Transição de status não permitida pelo banco. Verifique a etapa atual do orçamento.";
+        }
+        return raw || "Tente novamente.";
+      })();
+
+      const stageLabel = stage === "upload" ? "Erro ao anexar contrato" : "Erro ao fechar contrato";
+      toast.error(stageLabel, { description: friendly });
     } finally {
       setUploading(false);
     }
