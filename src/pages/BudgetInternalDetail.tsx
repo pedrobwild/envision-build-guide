@@ -905,6 +905,29 @@ export default function BudgetInternalDetail() {
               {subtitle && (
                 <p className="text-sm text-muted-foreground font-body mt-1">{subtitle}</p>
               )}
+              {/* Contato do cliente — visível direto no cabeçalho */}
+              {(budget.lead_email || budget.client_phone) && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
+                  {budget.lead_email && (
+                    <a
+                      href={`mailto:${budget.lead_email}`}
+                      className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+                    >
+                      <span className="opacity-70">✉</span>
+                      {budget.lead_email}
+                    </a>
+                  )}
+                  {budget.client_phone && (
+                    <a
+                      href={`tel:${budget.client_phone}`}
+                      className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+                    >
+                      <span className="opacity-70">☎</span>
+                      {budget.client_phone}
+                    </a>
+                  )}
+                </div>
+              )}
               {/* Prazo de execução — mesmo chip editável do BudgetEditor; salva direto no banco. */}
               <div className="mt-2">
                 <PrazoExecucaoChip
