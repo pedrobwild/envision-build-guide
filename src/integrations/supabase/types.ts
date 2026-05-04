@@ -3490,6 +3490,18 @@ export type Database = {
         Returns: boolean
       }
       archive_old_lead_payloads: { Args: never; Returns: number }
+      audit_rpc_grants: {
+        Args: never
+        Returns: {
+          function_name: string
+          function_schema: string
+          grantee: string
+          is_grantable: boolean
+          privilege_type: string
+          return_type: string
+          security_type: string
+        }[]
+      }
       budget_days_in_stage: { Args: { p_budget_id: string }; Returns: number }
       bulk_apply_factor_to_items: {
         Args: { p_budget_ids: string[]; p_factor: number }
