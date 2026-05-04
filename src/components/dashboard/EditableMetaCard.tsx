@@ -56,13 +56,12 @@ function monthStartISO(): string {
 }
 
 function monthLabel(): string {
-  // Mostra o mês anterior (último mês fechado), com inicial maiúscula.
-  // Ex.: "Abril 2026"
+  // Mostra o mês corrente (alinhado com targetMonth = início do mês atual).
+  // Ex.: "Maio 2026"
   const now = new Date();
-  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const month = prev.toLocaleDateString("pt-BR", { month: "long" });
+  const month = now.toLocaleDateString("pt-BR", { month: "long" });
   const capitalized = month.charAt(0).toUpperCase() + month.slice(1);
-  return `${capitalized} ${prev.getFullYear()}`;
+  return `${capitalized} ${now.getFullYear()}`;
 }
 
 
