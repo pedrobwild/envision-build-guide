@@ -303,16 +303,18 @@ export function useSalesCohorts(period?: SalesPeriod, ownerId?: string | null) {
   );
   return useQuery({
     queryKey: ["sales-kpis", "cohorts", start, end, ownerId ?? null],
-    queryFn: async (): Promise<CohortRow[]> => {
-      const { data, error } = await sb.rpc("sales_kpis_cohorts", {
-        _start_date: start,
-        _end_date: end,
-        _owner_id: ownerId ?? null,
-      });
-      if (error) throw error;
-      return (data ?? []) as CohortRow[];
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<CohortRow[]>(
+        "sales_kpis_cohorts",
+        { _start_date: start, _end_date: end, _owner_id: ownerId ?? null },
+        () =>
+          sb.rpc("sales_kpis_cohorts", {
+            _start_date: start,
+            _end_date: end,
+            _owner_id: ownerId ?? null,
+          }),
+      ),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
