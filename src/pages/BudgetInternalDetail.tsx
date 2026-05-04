@@ -254,7 +254,7 @@ export default function BudgetInternalDetail() {
   // Marcos de tempo (criação, início da etapa, congelamento) vindos do backend.
   // Usados como fonte de verdade pelo cabeçalho; recalculados a cada mudança
   // de status do orçamento atual.
-  const { data: timeMarkers } = useBudgetTimeMarkers(
+  const { data: timeMarkers, refetch: refetchTimeMarkers } = useBudgetTimeMarkers(
     budgetId ?? null,
     budget?.internal_status ?? "_",
   );
@@ -566,6 +566,11 @@ export default function BudgetInternalDetail() {
         created_at: new Date().toISOString(),
       },
     ]);
+
+    // Garante que o cabeçalho recalcule "etapa há X dias" usando o novo
+    // status_change recém-inserido — o serializedKey já mudou, mas chamamos
+    // refetch explicitamente para evitar corrida com a inserção do evento.
+    refetchTimeMarkers();
 
     toast.success(`Status → ${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}`);
   }
