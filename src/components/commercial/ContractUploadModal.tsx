@@ -101,11 +101,21 @@ export function ContractUploadModal({
       onSuccess(contractUrl);
       handleClose();
     } catch (err: unknown) {
-      const raw = err instanceof Error ? err.message : String(err ?? "");
-      logger.error(`Contract ${stage} error:`, { stage, budgetId, error: err });
+      // PostgrestError vem como objeto puro (não é instanceof Error). Storage
+      // errors herdam de Error. Extraímos message/details/hint/code de ambos.
+      const errObj = (err && typeof err === "object" ? err : {}) as Record<string, unknown>;
+      const message = typeof errObj.message === "string" ? errObj.message
+        : err instanceof Error ? err.message
+        : "";
+      const details = typeof errObj.details === "string" ? errObj.details : "";
+      const hint    = typeof errObj.hint    === "string" ? errObj.hint    : "";
+      const code    = typeof errObj.code    === "string" ? errObj.code    : "";
+      const raw = [message, details, hint, code].filter(Boolean).join(" | ");
+
+      logger.error(`Contract ${stage} error:`, { stage, budgetId, code, message, details, hint, error: err });
 
       const friendly = (() => {
-        if (/row-level security|rls|policy|permission denied/i.test(raw)) {
+        if (/row-level security|rls|policy|permission denied|42501/i.test(raw)) {
           return stage === "upload"
             ? "Sem permissão para enviar arquivos neste orçamento. Confirme se você é o comercial responsável ou peça a um admin."
             : "Sem permissão para fechar este orçamento. Confirme se você é o comercial responsável ou peça a um admin.";
@@ -113,16 +123,22 @@ export function ContractUploadModal({
         if (/payload too large|exceed|413/i.test(raw)) {
           return "Arquivo excede o limite permitido pelo storage (máx. 50 MB).";
         }
-        if (/duplicate key|uniq_|unique constraint/i.test(raw)) {
-          return "Já existe outra versão atual marcada como contrato fechado neste grupo. Atualize a página e tente novamente.";
+        if (/duplicate key|uniq_current_per_group|uniq_published_per_group|unique constraint|23505/i.test(raw)) {
+          return "Já existe outra versão atual deste orçamento. Atualize a página e tente novamente.";
         }
         if (/jwt|token|401|403/i.test(raw)) {
           return "Sessão expirada. Recarregue a página e faça login novamente.";
         }
-        if (/check constraint|violates check|invalid input value/i.test(raw)) {
+        if (/check constraint|violates check|invalid input value|23514/i.test(raw)) {
           return "Transição de status não permitida pelo banco. Verifique a etapa atual do orçamento.";
         }
-        return raw || "Tente novamente.";
+        if (/foreign key|23503/i.test(raw)) {
+          return "Falha de integridade ao gravar o evento (cliente, perfil ou versão referenciada).";
+        }
+        if (/net\.|http_post|pg_net|extension/i.test(raw)) {
+          return "Falha ao notificar o Portal BWild. O contrato foi salvo, mas a sincronização não disparou — use 'Re-sincronizar' na página da demanda.";
+        }
+        return message || "Erro desconhecido. Verifique o console / BugReporter.";
       })();
 
       const stageLabel = stage === "upload" ? "Erro ao anexar contrato" : "Erro ao fechar contrato";
