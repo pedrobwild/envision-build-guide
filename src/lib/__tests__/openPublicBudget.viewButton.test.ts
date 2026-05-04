@@ -119,12 +119,13 @@ describe("Botão Visualizar — abre URL pública correta por estado do badge", 
     expect(fromMock).not.toHaveBeenCalled();
     expect(toastErrorMock).not.toHaveBeenCalled();
 
-    // window.open recebeu DIRETAMENTE a URL pública correta.
+    // Stub abre about:blank (gesto do usuário) e navega para a URL pública correta.
     expect(openSpy).toHaveBeenCalledWith(
-      getPublicBudgetUrl("pub_abc123"),
+      "about:blank",
       "_blank",
       "noopener,noreferrer",
     );
+    expect(stub.location.href).toBe(getPublicBudgetUrl("pub_abc123"));
   });
 
   it('badge "Rascunho": consulta grupo e abre URL da versão publicada (sibling)', async () => {
