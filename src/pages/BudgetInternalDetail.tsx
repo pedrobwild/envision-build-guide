@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom"
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
 import { CrossPipelineStrip } from "@/components/budget/CrossPipelineStrip";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -254,10 +255,12 @@ export default function BudgetInternalDetail() {
   // Marcos de tempo (criação, início da etapa, congelamento) vindos do backend.
   // Usados como fonte de verdade pelo cabeçalho; recalculados a cada mudança
   // de status do orçamento atual.
-  const { data: timeMarkers, refetch: refetchTimeMarkers } = useBudgetTimeMarkers(
-    budgetId ?? null,
-    budget?.internal_status ?? "_",
-  );
+  const {
+    data: timeMarkers,
+    loading: timeMarkersLoading,
+    error: timeMarkersError,
+    refetch: refetchTimeMarkers,
+  } = useBudgetTimeMarkers(budgetId ?? null, budget?.internal_status ?? "_");
   // Pré-visualização de export antes do download. Os flags `exportingXlsx`
   // e `exportingPdf` são derivados do estado para preservar o spinner nos
   // botões enquanto o diálogo gera o preview.
@@ -706,8 +709,18 @@ export default function BudgetInternalDetail() {
 
   // Tempos do negócio: total desde a criação e tempo na etapa atual.
   // Regra: o cronômetro PARA no PRIMEIRO evento que entra em "contrato_fechado", "lost" ou "archived".
-  // Fonte de verdade: RPC `get_budget_time_markers` (backend). Quando os marcos
-  // ainda não chegaram, caímos no cálculo local sobre `events` para evitar UI vazia.
+  // Fonte de verdade: RPC `get_budget_time_markers` (backend). Se a RPC falhar
+  // ou ainda não tiver respondido, caímos no cálculo local sobre `events` para
+  // evitar UI vazia — `timeMarkersFallback` indica esse estado para o tooltip.
+  const timeMarkersFallback = !timeMarkers;
+  useEffect(() => {
+    if (timeMarkersError) {
+      logger.warn("[BudgetInternalDetail] get_budget_time_markers falhou, usando cálculo local", {
+        budgetId,
+        error: timeMarkersError,
+      });
+    }
+  }, [timeMarkersError, budgetId]);
   const { isFrozen, frozenAt: frozenAtDate, currentStageStart, totalDaysOpen, daysInStage } =
     timeMarkers
       ? budgetTimeFromMarkers(timeMarkers)
@@ -947,15 +960,22 @@ export default function BudgetInternalDetail() {
                   const frozenLine = frozenEvent
                     ? `Cronômetro pausado em ${fmtDateTime(new Date(frozenEvent.created_at))} (entrada em "${status.label}")`
                     : null;
+                  const fallbackLine = timeMarkersError
+                    ? `Cálculo local (não foi possível sincronizar com o servidor: ${timeMarkersError})`
+                    : timeMarkersFallback
+                    ? "Cálculo local (sincronizando com o servidor…)"
+                    : null;
                   const totalTitle = [
                     "Tempo total desde a criação do negócio.",
                     createdLine,
                     frozenLine,
+                    fallbackLine,
                   ].filter(Boolean).join("\n");
                   const stageTitle = [
                     `Tempo na etapa atual ("${status.label}").`,
                     stageStartLine,
                     frozenLine,
+                    fallbackLine,
                   ].filter(Boolean).join("\n");
                   return (
                     <>
@@ -977,6 +997,17 @@ export default function BudgetInternalDetail() {
                           <Clock className="h-3 w-3" />
                           {formatStageFor(daysInStage)}
                         </span>
+                      )}
+                      {timeMarkersError && (
+                        <button
+                          type="button"
+                          onClick={() => refetchTimeMarkers()}
+                          className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-warning/30 bg-warning/5 text-warning uppercase tracking-wide hover:bg-warning/10 transition-colors"
+                          title={`Falha ao carregar tempos do servidor: ${timeMarkersError}\nClique para tentar novamente.`}
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          Tempos: offline
+                        </button>
                       )}
                     </>
                   );
