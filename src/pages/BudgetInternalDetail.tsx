@@ -948,7 +948,7 @@ export default function BudgetInternalDetail() {
                     }
                   >
                     <Clock className="h-3 w-3" />
-                    Aberto {formatDays(totalDaysOpen)}
+                    {formatOpenedFor(totalDaysOpen)}
                     {isFrozen && " (pausado)"}
                   </span>
                 )}
