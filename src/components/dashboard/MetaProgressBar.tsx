@@ -29,9 +29,12 @@ interface MetaProgressBarProps {
 
 function fmt(value: number, mode: "currency" | "number"): string {
   if (mode === "currency") {
-    if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`;
-    if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(0)}k`;
-    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
   }
   return value.toLocaleString("pt-BR");
 }
