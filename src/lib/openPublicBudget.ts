@@ -34,50 +34,28 @@ interface OpenPublicBudgetOptions {
 const PUBLISHABLE = new Set(["published", "minuta_solicitada"]);
 
 /**
- * Mostra um toast de erro com botão "Ver detalhes" que imprime o diagnóstico
- * completo no console — sem usar alert() nativo (anti-padrão UX).
+ * Mostra um toast de erro com botão "Ver detalhes" que abre a modal
+ * `OpenBudgetDiagnosisDialog` com o diagnóstico completo (steps, IDs, outcome).
+ * Mantém um fallback no console para suporte avançado, mas a UI principal
+ * é a modal — sem depender de devtools.
  */
 function showDiagnosisToast(message: string, diag: OpenBudgetDiagnosis) {
-  // ID curto (8 chars) para exibir; ID completo fica disponível para copiar.
   const shortId = diag.correlationId.slice(0, 8);
   toast.error(message, {
     duration: 10000,
-    description: `ID de rastreamento: ${shortId} · clique em "Copiar ID" para reportar ao suporte.`,
+    description: `ID de rastreamento: ${shortId}`,
     action: {
-      label: "Copiar ID",
+      label: "Ver detalhes",
       onClick: () => {
-        const payload = diag.correlationId;
-        const fallback = () => {
-          // eslint-disable-next-line no-console
-          console.log("[openPublicBudget] correlationId:", payload);
-          toast.message("ID copiado no console (clipboard indisponível).");
-        };
-        if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-          navigator.clipboard.writeText(payload).then(
-            () => toast.success(`ID ${shortId} copiado.`),
-            fallback,
-          );
-        } else {
-          fallback();
-        }
-        // Sempre imprime o diagnóstico completo no console para debug local.
-        // eslint-disable-next-line no-console
-        console.group(`[openPublicBudget] diagnóstico ${shortId}`);
-        // eslint-disable-next-line no-console
-        console.log("correlationId:", diag.correlationId);
-        // eslint-disable-next-line no-console
-        console.log("sessionId:", diag.sessionId);
-        // eslint-disable-next-line no-console
-        console.table(diag.steps);
-        // eslint-disable-next-line no-console
-        console.log("Diagnóstico completo:", diag);
-        // eslint-disable-next-line no-console
-        console.log("Disponível em window.__openBudgetDiag");
-        // eslint-disable-next-line no-console
-        console.groupEnd();
+        openDiagnosisDialog(diag);
       },
     },
   });
+  // Fallback console (não bloqueante) — mantém compat com diagnostics legados.
+  if (typeof window !== "undefined") {
+    (window as unknown as { __openBudgetDiag?: OpenBudgetDiagnosis }).__openBudgetDiag = diag;
+  }
+}
 }
 
 /**
