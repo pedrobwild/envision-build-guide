@@ -974,6 +974,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
                             estimatorName={b.estimator_owner_id ? getProfileName(b.estimator_owner_id) : undefined}
                             isSynced={syncedBudgetIds.has(b.id)}
                             publicId={b.public_id}
+                            budgetStatus={b.status}
                             createdAt={b.created_at}
                             updatedAt={b.updated_at}
                             mode="commercial"
