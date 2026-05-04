@@ -201,6 +201,6 @@ CROSS JOIN LATERAL (
 ) bo;
 
 -- Encerrar simulação
-RESET ROLE;
+COMMIT;
 \echo
 \echo '— Fim. Procure por linhas com status = FAIL acima.'
