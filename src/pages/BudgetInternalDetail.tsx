@@ -900,7 +900,16 @@ export default function BudgetInternalDetail() {
                 />
               </div>
               <h1 className="text-xl sm:text-2xl font-display font-semibold tracking-tight leading-tight text-foreground">
-                {budget.project_name} · {budget.client_name}
+                {(() => {
+                  const proj = (budget.project_name || "").trim();
+                  const client = (budget.client_name || "").trim();
+                  if (!proj) return client;
+                  if (!client) return proj;
+                  // Evita repetição quando project_name já contém o nome do cliente
+                  if (proj.toLowerCase().includes(client.toLowerCase())) return proj;
+                  if (client.toLowerCase().includes(proj.toLowerCase())) return client;
+                  return `${proj} · ${client}`;
+                })()}
               </h1>
               {subtitle && (
                 <p className="text-sm text-muted-foreground font-body mt-1">{subtitle}</p>
