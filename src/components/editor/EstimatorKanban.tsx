@@ -211,6 +211,7 @@ const POST_DELIVERY_STATUSES: Set<string> = new Set([
   ...STATUS_GROUPS.DELIVERED,
   ...STATUS_GROUPS.COMMERCIAL_ADVANCED,
   ...STATUS_GROUPS.FINISHED,
+  "revision_requested",
 ]);
 
 function getDueInfo(dueAt: string | null, internalStatus?: string): { label: string; variant: DueVariant } | null {
