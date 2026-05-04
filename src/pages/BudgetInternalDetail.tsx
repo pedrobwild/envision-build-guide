@@ -932,25 +932,30 @@ export default function BudgetInternalDetail() {
                       copyToast="E-mail copiado"
                     />
                   )}
-                  {budget.client_phone && (
-                    <>
-                      <ContactChip
-                        icon={<Phone className="h-3.5 w-3.5" aria-hidden />}
-                        label={budget.client_phone}
-                        href={`tel:${budget.client_phone}`}
-                        openLabel="Ligar para o cliente"
-                        copyValue={budget.client_phone}
-                        copyToast="Telefone copiado"
-                      />
-                      <ContactChip
-                        icon={<MessageCircle className="h-3.5 w-3.5" aria-hidden />}
-                        label="WhatsApp"
-                        href={`https://wa.me/${budget.client_phone.replace(/\D/g, "")}`}
-                        openLabel="Abrir conversa no WhatsApp"
-                        external
-                      />
-                    </>
-                  )}
+                  {budget.client_phone && (() => {
+                    const waUrl = buildWhatsappUrl(budget.client_phone);
+                    return (
+                      <>
+                        <ContactChip
+                          icon={<Phone className="h-3.5 w-3.5" aria-hidden />}
+                          label={budget.client_phone}
+                          href={`tel:${budget.client_phone.replace(/[^\d+]/g, "")}`}
+                          openLabel="Ligar para o cliente"
+                          copyValue={budget.client_phone}
+                          copyToast="Telefone copiado"
+                        />
+                        {waUrl && (
+                          <ContactChip
+                            icon={<MessageCircle className="h-3.5 w-3.5" aria-hidden />}
+                            label="WhatsApp"
+                            href={waUrl}
+                            openLabel="Abrir conversa no WhatsApp"
+                            external
+                          />
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
               {/* Prazo de execução — mesmo chip editável do BudgetEditor; salva direto no banco. */}
