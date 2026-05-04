@@ -869,6 +869,16 @@ export default function SalesKpisPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setCheckOpen(true)}
+            className="h-9"
+            title="Compara totais entre as RPCs do dashboard usando os filtros atuais"
+          >
+            <ShieldCheck className="mr-1.5 h-4 w-4" />
+            Comparar totais
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => navigate("/admin/comercial")}
             className="h-9"
           >
@@ -876,6 +886,14 @@ export default function SalesKpisPage() {
           </Button>
         </div>
       </header>
+
+      <ConsistencyCheckDialog
+        open={checkOpen}
+        onOpenChange={setCheckOpen}
+        period={period}
+        ownerId={ownerId}
+        ownerName={(owners ?? []).find((o) => o.owner_id === ownerId)?.owner_name ?? null}
+      />
 
       {/* Período aplicado */}
       <div className="text-xs text-muted-foreground">
