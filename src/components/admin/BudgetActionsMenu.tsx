@@ -44,6 +44,7 @@ interface BudgetActionsMenuProps {
     public_id?: string | null;
     status?: string;
     internal_status?: string;
+    is_published_version?: boolean | null;
     show_optional_items?: boolean;
     version_group_id?: string | null;
     version_number?: number | null;
