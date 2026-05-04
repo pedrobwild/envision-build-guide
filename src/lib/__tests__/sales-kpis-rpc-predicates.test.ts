@@ -16,16 +16,22 @@ import { execFileSync } from "node:child_process";
 
 const HAS_DB = Boolean(process.env.PGHOST);
 
+const defCache = new Map<string, string>();
 function fetchDef(proname: string, argsLike: string): string {
+  const key = `${proname}::${argsLike}`;
+  const cached = defCache.get(key);
+  if (cached !== undefined) return cached;
   const sql = `SELECT pg_get_functiondef(p.oid)
                FROM pg_proc p
                WHERE p.proname = '${proname}'
                  AND pg_get_function_identity_arguments(p.oid) LIKE '${argsLike}'
                LIMIT 1`;
-  return execFileSync("psql", ["-tAc", sql], {
+  const out = execFileSync("psql", ["-tAc", sql], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
+  defCache.set(key, out);
+  return out;
 }
 
 /** Extract every line that mentions one of the global filter parameters and
