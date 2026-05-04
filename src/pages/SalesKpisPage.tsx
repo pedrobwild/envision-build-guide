@@ -264,7 +264,12 @@ function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: stri
 
   const o = data;
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <RefreshingIndicator show={refreshing} label="Atualizando KPIs…" />
+      </div>
+      <Refreshable refreshing={refreshing}>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
       <KpiTile
         label="Leads no período"
         value={String(o?.total_leads ?? 0)}
