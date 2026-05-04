@@ -15,6 +15,8 @@
  */
 
 import { useMemo, useState } from "react";
+import { ConsistencyCheckDialog } from "@/components/sales-kpis/ConsistencyCheckDialog";
+import { ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowDownRight,
