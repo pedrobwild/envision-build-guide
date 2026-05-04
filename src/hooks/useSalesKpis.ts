@@ -184,15 +184,13 @@ export function useSalesByOwner(period?: SalesPeriod) {
   );
   return useQuery({
     queryKey: ["sales-kpis", "by-owner", start, end],
-    queryFn: async (): Promise<OwnerPerformanceRow[]> => {
-      const { data, error } = await sb.rpc("sales_kpis_by_owner", {
-        _start_date: start,
-        _end_date: end,
-      });
-      if (error) throw error;
-      return (data ?? []) as OwnerPerformanceRow[];
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<OwnerPerformanceRow[]>(
+        "sales_kpis_by_owner",
+        { _start_date: start, _end_date: end },
+        () => sb.rpc("sales_kpis_by_owner", { _start_date: start, _end_date: end }),
+      ),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
