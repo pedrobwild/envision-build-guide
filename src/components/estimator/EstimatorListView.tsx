@@ -84,6 +84,7 @@ type WorkflowStage = "overdue" | "pending" | "in_progress" | "other";
 
 function getWorkflowStage(b: BudgetRow): WorkflowStage {
   if (
+    b.internal_status !== "revision_requested" &&
     b.due_at &&
     isPast(new Date(b.due_at)) &&
     !isToday(new Date(b.due_at)) &&
