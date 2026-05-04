@@ -1516,6 +1516,7 @@ export default function CommercialDashboard() {
               onNextAction={handleNextActionClick}
               onOpenHistory={(b) => setHistoryBudget(b as unknown as BudgetRow)}
               onRefresh={loadData}
+              onRepublishPublicLink={handleRepublishPublicLink}
             />
           )}
 
