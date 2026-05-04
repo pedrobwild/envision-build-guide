@@ -1341,6 +1341,22 @@ export default function CommercialDashboard() {
                 </SelectContent>
               </Select>
 
+              <Select value={linkFilter} onValueChange={v => setLinkFilter(v as typeof linkFilter)}>
+                <SelectTrigger
+                  className={`w-[150px] h-8 text-xs ${linkFilter !== "all" ? "border-primary/40 bg-primary/5" : ""}`}
+                  title="Filtra por estado do link público do orçamento"
+                >
+                  <Link2 className="h-3 w-3 mr-1 shrink-0" />
+                  <SelectValue placeholder="Link público" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os links</SelectItem>
+                  <SelectItem value="published">🟢 Público (publicado)</SelectItem>
+                  <SelectItem value="draft">🟡 Rascunho</SelectItem>
+                  <SelectItem value="missing">⚪ Sem link</SelectItem>
+                </SelectContent>
+              </Select>
+
               {isAdmin && commercialOptions.length > 0 && (
                 <Select value={commercialFilter} onValueChange={setCommercialFilter}>
                   <SelectTrigger className={`w-[150px] h-8 text-xs ${commercialFilter !== "all" ? "border-primary/40 bg-primary/5" : ""}`}>
