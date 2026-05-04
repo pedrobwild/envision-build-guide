@@ -689,6 +689,34 @@ export default function BudgetInternalDetail() {
   const links = (budget.reference_links ?? []).filter((l: unknown) => typeof l === "string" && (l as string).trim());
 
   const totalDisplay = budget.manual_total ?? budgetTotal ?? 0;
+
+  // Tempos do negócio: total desde a criação e tempo na etapa atual.
+  // Regra: o cronômetro PARA quando entra em "contrato_fechado", "lost" ou "archived".
+  const FROZEN_STATUSES = new Set(["contrato_fechado", "lost", "archived"]);
+  const isFrozen = FROZEN_STATUSES.has(budget.internal_status);
+  // Marco em que o negócio "congelou" (último status_change que entrou em estado final)
+  const frozenEvent = isFrozen
+    ? [...events].reverse().find(
+        (e) => e.event_type === "status_change" && e.to_status && FROZEN_STATUSES.has(e.to_status)
+      )
+    : null;
+  const referenceNow = frozenEvent ? new Date(frozenEvent.created_at) : new Date();
+  // Início da etapa atual: último status_change cujo to_status === internal_status; senão, criação.
+  const currentStageStartEvent = [...events].reverse().find(
+    (e) => e.event_type === "status_change" && e.to_status === budget.internal_status,
+  );
+  const currentStageStart = currentStageStartEvent
+    ? new Date(currentStageStartEvent.created_at)
+    : budget.created_at
+    ? new Date(budget.created_at)
+    : null;
+  const totalDaysOpen = budget.created_at
+    ? Math.max(0, differenceInCalendarDays(referenceNow, new Date(budget.created_at)))
+    : null;
+  const daysInStage = currentStageStart
+    ? Math.max(0, differenceInCalendarDays(referenceNow, currentStageStart))
+    : null;
+  const formatDays = (n: number) => (n === 0 ? "hoje" : n === 1 ? "1 dia" : `${n} dias`);
   const locationParts = [budget.bairro, budget.city].filter(Boolean).join(", ");
   const subtitle = [
     budget.condominio,
