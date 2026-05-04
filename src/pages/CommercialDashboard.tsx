@@ -819,6 +819,38 @@ export default function CommercialDashboard() {
     setNextActionBudgetId(budgetId);
   }
 
+  async function handleRepublishPublicLink(b: BudgetRow) {
+    try {
+      const groupId = await ensureVersionGroup(b.id);
+      const fallbackPublicId =
+        b.public_id || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+      const { publicId } = await publishVersion(b.id, groupId, fallbackPublicId, user?.id);
+      setBudgets(prev =>
+        prev.map(x =>
+          x.id === b.id
+            ? {
+                ...x,
+                status: "published",
+                public_id: publicId,
+                is_published_version: true,
+                updated_at: new Date().toISOString(),
+              }
+            : x,
+        ),
+      );
+      try {
+        await navigator.clipboard.writeText(getPublicBudgetUrl(publicId));
+      } catch {
+        // clipboard pode falhar em contextos sem permissão — não é bloqueante
+      }
+      toast.success("Link público publicado", {
+        description: "Versão atual publicada e link copiado para a área de transferência.",
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao publicar";
+      toast.error("Não foi possível publicar o link", { description: msg });
+    }
+  }
 
   async function claimBudget(budgetId: string) {
     if (!user) return;
