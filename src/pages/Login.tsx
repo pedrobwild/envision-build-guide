@@ -196,9 +196,11 @@ export default function Login() {
 
       {/* Form – centered on mobile, left on desktop */}
       <div className="flex flex-col justify-center items-center md:items-start w-full md:max-w-lg px-5 sm:px-12 md:px-16 py-10 sm:py-16 mx-auto md:mx-0">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-10 sm:mb-12 text-center md:text-left w-full font-display">
-          {"\n"}
-        </h1>
+        <img
+          src={bwildEngineLogo}
+          alt="Bwild Engine"
+          className="w-40 sm:w-48 md:w-56 h-auto object-contain mb-8 sm:mb-10 mx-auto md:mx-0"
+        />
 
         {successMessage && (
           <div
