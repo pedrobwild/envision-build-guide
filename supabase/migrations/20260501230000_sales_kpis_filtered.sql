@@ -299,3 +299,10 @@ GRANT EXECUTE ON FUNCTION public.sales_kpis_time_in_stage(timestamptz, timestamp
 GRANT EXECUTE ON FUNCTION public.sales_kpis_cohorts(timestamptz, timestamptz, uuid)                         TO authenticated;
 GRANT EXECUTE ON FUNCTION public.sales_kpis_lost_reasons(timestamptz, timestamptz, uuid)                    TO authenticated;
 GRANT EXECUTE ON FUNCTION public.sales_conversion_by_segment(text, timestamptz, timestamptz, uuid)          TO authenticated;
+
+-- ------------------------------------------------------------
+-- 7. Reload PostgREST schema cache
+-- Sem isso, as novas RPCs ficam invisíveis para o front até o
+-- PostgREST refrescar o schema (pode levar segundos ou minutos).
+-- ------------------------------------------------------------
+NOTIFY pgrst, 'reload schema';

@@ -43,10 +43,8 @@ beforeAll(() => {
       rootMargin = "";
       thresholds = [];
     }
-    // @ts-expect-error — jsdom polyfill
-    globalThis.IntersectionObserver = IO;
-    // @ts-expect-error — jsdom polyfill
-    window.IntersectionObserver = IO;
+    (globalThis as unknown as { IntersectionObserver: typeof IO }).IntersectionObserver = IO;
+    (window as unknown as { IntersectionObserver: typeof IO }).IntersectionObserver = IO;
   }
 });
 

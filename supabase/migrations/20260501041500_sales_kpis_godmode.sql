@@ -439,3 +439,10 @@ CREATE INDEX IF NOT EXISTS budgets_internal_status_idx
 
 CREATE INDEX IF NOT EXISTS budgets_owner_idx
   ON public.budgets (commercial_owner_id);
+
+-- ------------------------------------------------------------
+-- 11. Reload PostgREST schema cache
+-- Sem isso, novas funções/views ficam invisíveis por alguns segundos
+-- após o deploy (PostgREST cacheia o schema do Postgres).
+-- ------------------------------------------------------------
+NOTIFY pgrst, 'reload schema';
