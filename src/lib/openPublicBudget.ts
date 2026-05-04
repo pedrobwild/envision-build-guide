@@ -37,13 +37,35 @@ const PUBLISHABLE = new Set(["published", "minuta_solicitada"]);
  * completo no console — sem usar alert() nativo (anti-padrão UX).
  */
 function showDiagnosisToast(message: string, diag: OpenBudgetDiagnosis) {
+  // ID curto (8 chars) para exibir; ID completo fica disponível para copiar.
+  const shortId = diag.correlationId.slice(0, 8);
   toast.error(message, {
-    duration: 8000,
+    duration: 10000,
+    description: `ID de rastreamento: ${shortId} · clique em "Copiar ID" para reportar ao suporte.`,
     action: {
-      label: "Ver detalhes",
+      label: "Copiar ID",
       onClick: () => {
+        const payload = diag.correlationId;
+        const fallback = () => {
+          // eslint-disable-next-line no-console
+          console.log("[openPublicBudget] correlationId:", payload);
+          toast.message("ID copiado no console (clipboard indisponível).");
+        };
+        if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(payload).then(
+            () => toast.success(`ID ${shortId} copiado.`),
+            fallback,
+          );
+        } else {
+          fallback();
+        }
+        // Sempre imprime o diagnóstico completo no console para debug local.
         // eslint-disable-next-line no-console
-        console.group("[openPublicBudget] diagnóstico");
+        console.group(`[openPublicBudget] diagnóstico ${shortId}`);
+        // eslint-disable-next-line no-console
+        console.log("correlationId:", diag.correlationId);
+        // eslint-disable-next-line no-console
+        console.log("sessionId:", diag.sessionId);
         // eslint-disable-next-line no-console
         console.table(diag.steps);
         // eslint-disable-next-line no-console
