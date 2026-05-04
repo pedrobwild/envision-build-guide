@@ -932,6 +932,33 @@ export default function BudgetInternalDetail() {
                   value={budget.prazo_dias_uteis ?? null}
                   onChange={savePrazoDiasUteis}
                 />
+                {totalDaysOpen !== null && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
+                    title={
+                      isFrozen
+                        ? `Tempo total até ${frozenEvent ? format(new Date(frozenEvent.created_at), "dd/MM/yyyy", { locale: ptBR }) : "encerramento"} (cronômetro pausado)`
+                        : "Tempo total desde a criação do negócio"
+                    }
+                  >
+                    <Clock className="h-3 w-3" />
+                    Aberto {formatDays(totalDaysOpen)}
+                    {isFrozen && " (pausado)"}
+                  </span>
+                )}
+                {daysInStage !== null && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
+                    title={
+                      isFrozen
+                        ? "Tempo na etapa final (cronômetro pausado)"
+                        : `Tempo na etapa "${status.label}"`
+                    }
+                  >
+                    <Clock className="h-3 w-3" />
+                    Etapa {formatDays(daysInStage)}
+                  </span>
+                )}
               </div>
               <h1 className="text-xl sm:text-2xl font-display font-semibold tracking-tight leading-tight text-foreground">
                 {composeBudgetTitle(budget.project_name, budget.client_name)}
