@@ -3718,25 +3718,103 @@ export type Database = {
           sample: Json
         }[]
       }
-      sales_conversion_by_segment: {
-        Args: { _dimension: string }
+      sales_conversion_by_segment:
+        | {
+            Args: { _dimension: string }
+            Returns: {
+              avg_cycle_days: number
+              avg_deal_size_won: number
+              deals_lost: number
+              deals_open: number
+              deals_won: number
+              proposal_rate_pct: number
+              proposals_sent: number
+              revenue_won: number
+              segment: string
+              total_leads: number
+              win_rate_pct: number
+            }[]
+          }
+        | {
+            Args: {
+              _dimension: string
+              _end_date: string
+              _owner_id: string
+              _start_date: string
+            }
+            Returns: {
+              avg_cycle_days: number
+              avg_deal_size_won: number
+              deals_lost: number
+              deals_open: number
+              deals_won: number
+              proposal_rate_pct: number
+              proposals_sent: number
+              revenue_won: number
+              segment: string
+              total_leads: number
+              win_rate_pct: number
+            }[]
+          }
+      sales_kpis_by_owner: {
+        Args: { _end_date?: string; _start_date?: string }
         Returns: {
           avg_cycle_days: number
           avg_deal_size_won: number
           deals_lost: number
           deals_open: number
           deals_won: number
-          proposal_rate_pct: number
+          owner_email: string
+          owner_id: string
+          owner_name: string
+          p50_cycle_days: number
+          p90_cycle_days: number
+          pipeline_open_value: number
           proposals_sent: number
           revenue_won: number
-          segment: string
           total_leads: number
           win_rate_pct: number
+        }[]
+      }
+      sales_kpis_cohorts: {
+        Args: { _end_date?: string; _owner_id?: string; _start_date?: string }
+        Returns: {
+          avg_cycle_days: number
+          cohort_month: string
+          deals_lost: number
+          deals_won: number
+          lead_to_won_pct: number
+          leads: number
+          proposals_sent: number
+          revenue_won: number
         }[]
       }
       sales_kpis_dashboard: {
         Args: { _end_date?: string; _owner_id?: string; _start_date?: string }
         Returns: Json
+      }
+      sales_kpis_lost_reasons: {
+        Args: { _end_date?: string; _owner_id?: string; _start_date?: string }
+        Returns: {
+          avg_deal_size: number
+          competitor_value_total: number
+          pct_of_lost: number
+          qty: number
+          reason: string
+          revenue_lost: number
+        }[]
+      }
+      sales_kpis_time_in_stage: {
+        Args: { _end_date?: string; _owner_id?: string; _start_date?: string }
+        Returns: {
+          avg_days: number
+          max_days: number
+          min_days: number
+          p50_days: number
+          p90_days: number
+          sample_size: number
+          stage: string
+        }[]
       }
       set_active_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
