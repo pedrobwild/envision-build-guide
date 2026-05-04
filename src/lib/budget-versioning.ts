@@ -638,7 +638,7 @@ export async function createDiscountVersionAndPublish(
     if (secErr || !newSec) {
       throw new Error(`Falha ao criar seção de descontos: ${secErr?.message ?? "?"}`);
     }
-    discountSection = { ...newSec, title: SECTION_TITLE, order_index: order } as typeof discountSection;
+    discountSection = { id: newSec.id, title: SECTION_TITLE, order_index: order, section_price: newSec.section_price ?? 0 };
   }
 
   // 3. Insere item de desconto
