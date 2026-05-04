@@ -120,6 +120,7 @@ export default function OrcamentoPage() {
       </div>
     );
   }
+  const hasScope = resolvedBudget.scope && resolvedBudget.scope.length > 0;
   const projectId = resolvedBudget.meta.projectId;
 
   return (
