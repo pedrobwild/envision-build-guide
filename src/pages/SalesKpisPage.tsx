@@ -249,7 +249,8 @@ function BlockError({
 // 2. Overview block
 // ============================================================
 function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading, isError, error, refetch } = useSalesOverview(period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useSalesOverview(period, ownerId);
+  const refreshing = !isLoading && isFetching;
 
   if (isError) {
     return (
