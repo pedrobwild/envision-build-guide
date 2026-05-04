@@ -144,6 +144,9 @@ END $$;
 -- ---------------------------------------------------------------------------
 DO $$
 DECLARE
+  c_admin_uid     constant uuid := 'd9ed2bd8-da00-43e0-9a45-1f6badabc09f';
+  c_comercial_uid constant uuid := '21bcf5e9-5728-4ceb-80df-fb1846168307';
+  c_orc_uid       constant uuid := '62ade0c3-15fb-4e23-9c6d-6aa88d807573';
   v_admin_can_read_all  boolean;
   v_com_is_admin        boolean;
   v_orc_is_admin        boolean;
@@ -152,35 +155,32 @@ DECLARE
   v_com_other_count     int;
 BEGIN
   -- ADMIN: has_role check evaluates true → can read every row
-  SELECT public.has_role(:'ADMIN_UID'::uuid, 'admin'::app_role)
-    INTO v_admin_can_read_all;
+  SELECT public.has_role(c_admin_uid, 'admin'::app_role) INTO v_admin_can_read_all;
   IF NOT v_admin_can_read_all THEN
     RAISE EXCEPTION 'fixture admin uid is not actually admin';
   END IF;
 
   -- COMERCIAL: must NOT pass admin check
-  SELECT public.has_role(:'COMERCIAL_UID'::uuid, 'admin'::app_role)
-    INTO v_com_is_admin;
+  SELECT public.has_role(c_comercial_uid, 'admin'::app_role) INTO v_com_is_admin;
   IF v_com_is_admin THEN
     RAISE EXCEPTION 'fixture comercial uid unexpectedly has admin role';
   END IF;
 
   -- ORCAMENTISTA: must NOT pass admin check
-  SELECT public.has_role(:'ORC_UID'::uuid, 'admin'::app_role)
-    INTO v_orc_is_admin;
+  SELECT public.has_role(c_orc_uid, 'admin'::app_role) INTO v_orc_is_admin;
   IF v_orc_is_admin THEN
     RAISE EXCEPTION 'fixture orcamentista uid unexpectedly has admin role';
   END IF;
 
   -- Self-read policy: each non-admin can see only own row(s)
   SELECT count(*) INTO v_com_self_count
-  FROM public.user_roles WHERE user_id = :'COMERCIAL_UID'::uuid;
+  FROM public.user_roles WHERE user_id = c_comercial_uid;
   IF v_com_self_count = 0 THEN
     RAISE EXCEPTION 'comercial fixture has no user_roles row';
   END IF;
 
   SELECT count(*) INTO v_orc_self_count
-  FROM public.user_roles WHERE user_id = :'ORC_UID'::uuid;
+  FROM public.user_roles WHERE user_id = c_orc_uid;
   IF v_orc_self_count = 0 THEN
     RAISE EXCEPTION 'orcamentista fixture has no user_roles row';
   END IF;
@@ -189,7 +189,7 @@ BEGIN
   -- read policy were still in place — proves the test isn't trivially
   -- passing on an empty table.
   SELECT count(*) INTO v_com_other_count
-  FROM public.user_roles WHERE user_id <> :'COMERCIAL_UID'::uuid;
+  FROM public.user_roles WHERE user_id <> c_comercial_uid;
   IF v_com_other_count = 0 THEN
     RAISE EXCEPTION 'cannot validate isolation: only one user has roles';
   END IF;
