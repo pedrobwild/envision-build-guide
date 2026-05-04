@@ -89,7 +89,7 @@ export function BudgetHeaderClientInfo({
       </button>
 
       {open && (
-        <div className="px-3.5 pb-4 pt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+        <div className="px-3.5 pb-4 pt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 sm:gap-y-5 divide-y divide-border/50 sm:divide-y-0 [&>*+*]:pt-4 sm:[&>*+*]:pt-0">
           {/* Contato */}
           <Section title="Contato">
             <Row icon={<User className="h-3.5 w-3.5" />} label="Nome" value={c?.name || fallback.client_name} />
