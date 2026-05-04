@@ -938,33 +938,51 @@ export default function BudgetInternalDetail() {
                   value={budget.prazo_dias_uteis ?? null}
                   onChange={savePrazoDiasUteis}
                 />
-                {totalDaysOpen !== null && (
-                  <span
-                    className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
-                    title={
-                      isFrozen
-                        ? `Tempo total até ${frozenEvent ? format(new Date(frozenEvent.created_at), "dd/MM/yyyy", { locale: ptBR }) : "encerramento"} (cronômetro pausado)`
-                        : "Tempo total desde a criação do negócio"
-                    }
-                  >
-                    <Clock className="h-3 w-3" />
-                    {formatOpenedFor(totalDaysOpen)}
-                    {isFrozen && " (pausado)"}
-                  </span>
-                )}
-                {daysInStage !== null && (
-                  <span
-                    className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
-                    title={
-                      isFrozen
-                        ? "Tempo na etapa final (cronômetro pausado)"
-                        : `Tempo na etapa "${status.label}"`
-                    }
-                  >
-                    <Clock className="h-3 w-3" />
-                    {formatStageFor(daysInStage)}
-                  </span>
-                )}
+                {(() => {
+                  const fmtDateTime = (d: Date) => format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+                  const createdLine = budget.created_at
+                    ? `Criado em ${fmtDateTime(new Date(budget.created_at))}`
+                    : null;
+                  const stageStartLine = currentStageStart
+                    ? `Etapa "${status.label}" iniciada em ${fmtDateTime(currentStageStart)}`
+                    : null;
+                  const frozenLine = frozenEvent
+                    ? `Cronômetro pausado em ${fmtDateTime(new Date(frozenEvent.created_at))} (entrada em "${status.label}")`
+                    : null;
+                  const totalTitle = [
+                    "Tempo total desde a criação do negócio.",
+                    createdLine,
+                    frozenLine,
+                  ].filter(Boolean).join("\n");
+                  const stageTitle = [
+                    `Tempo na etapa atual ("${status.label}").`,
+                    stageStartLine,
+                    frozenLine,
+                  ].filter(Boolean).join("\n");
+                  return (
+                    <>
+                      {totalDaysOpen !== null && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
+                          title={totalTitle}
+                        >
+                          <Clock className="h-3 w-3" />
+                          {formatOpenedFor(totalDaysOpen)}
+                          {isFrozen && " (pausado)"}
+                        </span>
+                      )}
+                      {daysInStage !== null && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
+                          title={stageTitle}
+                        >
+                          <Clock className="h-3 w-3" />
+                          {formatStageFor(daysInStage)}
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
               <h1 className="text-xl sm:text-2xl font-display font-semibold tracking-tight leading-tight text-foreground">
                 {composeBudgetTitle(budget.project_name, budget.client_name)}
