@@ -35,11 +35,11 @@ function makeFromBuilder() {
   return builder;
 }
 
-const fromMock = vi.fn(() => makeFromBuilder());
+const fromMock = vi.fn((_table?: string) => makeFromBuilder());
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     rpc: vi.fn(),
-    from: (...args: unknown[]) => fromMock(...args),
+    from: (table: string) => fromMock(table),
   },
 }));
 
