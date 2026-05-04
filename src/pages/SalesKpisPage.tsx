@@ -350,7 +350,8 @@ function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: stri
 // 3. Time in stage
 // ============================================================
 function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading, isError, error, refetch } = useTimeInStageGodMode(period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useTimeInStageGodMode(period, ownerId);
+  const refreshing = !isLoading && isFetching;
   const chartData = useMemo(
     () =>
       (data ?? [])
