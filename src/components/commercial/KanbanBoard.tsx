@@ -269,6 +269,8 @@ interface KanbanBoardProps {
   onOpenHistory?: (budget: BudgetRow) => void;
   /** Callback após mutações (ex.: exclusão) para o pai recarregar a lista. */
   onRefresh?: () => void;
+  /** Republica/gera o link público do orçamento (alvo do botão no badge "Rascunho"). */
+  onRepublishPublicLink?: (budget: BudgetRow) => void | Promise<void>;
 }
 
 function getColumnForBudget(internalStatus: string) {
