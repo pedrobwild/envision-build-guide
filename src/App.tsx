@@ -49,6 +49,7 @@ const LeadSourcesPage = lazy(() => import("./pages/LeadSourcesPage"));
 const LeadRoutingRulesPage = lazy(() => import("./pages/LeadRoutingRulesPage"));
 const AnalisesPage = lazy(() => import("./pages/AnalisesPage"));
 const ForecastPage = lazy(() => import("./pages/ForecastPage"));
+const MetasHistoryPage = lazy(() => import("./pages/MetasHistoryPage"));
 const AgendaPage = lazy(() => import("./pages/AgendaPage"));
 const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 const DigisacPage = lazy(() => import("./pages/DigisacPage"));
