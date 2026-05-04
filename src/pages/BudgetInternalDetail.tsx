@@ -939,7 +939,7 @@ export default function BudgetInternalDetail() {
                       <>
                         <ContactChip
                           icon={<Phone className="h-3.5 w-3.5" aria-hidden />}
-                          label={budget.client_phone}
+                          label={phoneDisplay}
                           href={`tel:${budget.client_phone.replace(/[^\d+]/g, "")}`}
                           openLabel="Ligar para o cliente"
                           copyValue={budget.client_phone}
