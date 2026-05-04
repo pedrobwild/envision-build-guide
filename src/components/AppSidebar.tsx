@@ -572,6 +572,33 @@ export function AppSidebar() {
                   <kbd className="ml-auto text-[10px] font-mono text-muted-foreground">⌘K</kbd>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="text-[12.5px]">
+                    <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                    Abrir orçamento em…
+                    <span className="ml-auto text-[10.5px] text-muted-foreground truncate max-w-[80px]">
+                      {openMode === "new_tab" && "Nova aba"}
+                      {openMode === "same_tab" && "Mesma aba"}
+                      {openMode === "auto" && "Automático"}
+                    </span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-72">
+                    <DropdownMenuLabel className="text-[11px] font-normal text-muted-foreground">
+                      Como abrir o link público do orçamento
+                    </DropdownMenuLabel>
+                    <DropdownMenuRadioGroup
+                      value={openMode}
+                      onValueChange={(v) => setOpenModePref(v as OpenMode)}
+                    >
+                      {(Object.keys(OPEN_MODE_LABELS) as OpenMode[]).map((m) => (
+                        <DropdownMenuRadioItem key={m} value={m} className="text-[12.5px]">
+                          {OPEN_MODE_LABELS[m]}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-[12.5px] text-destructive focus:text-destructive">
                   <LogOut className="h-3.5 w-3.5 mr-2" />
                   Sair
