@@ -13,6 +13,8 @@ export type SortOption = "urgente" | "recente" | "prazo";
 export type ViewMode = "list" | "kanban";
 export type QueueFilter = "prontos" | "sem-vis" | "esfriando" | null;
 
+export type LinkFilter = "all" | "published" | "draft" | "missing";
+
 export type ParsedFilters = {
   queueFilter: QueueFilter;
   statusFilter: string;
@@ -22,7 +24,12 @@ export type ParsedFilters = {
   search: string;
   commercialFilter: string;
   pipelineFilter: string;
+  linkFilter: LinkFilter;
 };
+
+export function isLinkFilter(v: string): v is LinkFilter {
+  return v === "all" || v === "published" || v === "draft" || v === "missing";
+}
 
 /**
  * Lista de parâmetros descartados durante o parse por serem inválidos
