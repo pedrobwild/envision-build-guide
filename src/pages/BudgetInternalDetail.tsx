@@ -923,10 +923,10 @@ export default function BudgetInternalDetail() {
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {budget.lead_email && (
                     <ContactChip
-                      icon={<Mail className="h-3.5 w-3.5" />}
+                      icon={<Mail className="h-3.5 w-3.5" aria-hidden />}
                       label={budget.lead_email}
                       href={`mailto:${budget.lead_email}`}
-                      openLabel="Abrir e-mail"
+                      openLabel="Enviar e-mail"
                       copyValue={budget.lead_email}
                       copyToast="E-mail copiado"
                     />
@@ -934,18 +934,18 @@ export default function BudgetInternalDetail() {
                   {budget.client_phone && (
                     <>
                       <ContactChip
-                        icon={<Phone className="h-3.5 w-3.5" />}
+                        icon={<Phone className="h-3.5 w-3.5" aria-hidden />}
                         label={budget.client_phone}
                         href={`tel:${budget.client_phone}`}
-                        openLabel="Ligar"
+                        openLabel="Ligar para o cliente"
                         copyValue={budget.client_phone}
                         copyToast="Telefone copiado"
                       />
                       <ContactChip
-                        icon={<MessageCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
+                        icon={<MessageCircle className="h-3.5 w-3.5" aria-hidden />}
                         label="WhatsApp"
                         href={`https://wa.me/${budget.client_phone.replace(/\D/g, "")}`}
-                        openLabel="Abrir WhatsApp"
+                        openLabel="Abrir conversa no WhatsApp"
                         external
                       />
                     </>
