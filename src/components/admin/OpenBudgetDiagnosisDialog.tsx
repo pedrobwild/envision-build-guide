@@ -148,6 +148,7 @@ function describeReason(diag: OpenBudgetDiagnosis): {
         explanation: "Diagnóstico sem descrição adicional.",
       };
   }
+}
 
 function copyToClipboard(value: string, label: string) {
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
