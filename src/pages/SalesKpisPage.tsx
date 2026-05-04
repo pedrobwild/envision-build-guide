@@ -650,15 +650,19 @@ function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: strin
 // 6. Lost reasons
 // ============================================================
 function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading, isError, error, refetch } = useLostReasonsRanked(period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useLostReasonsRanked(period, ownerId);
+  const refreshing = !isLoading && isFetching;
   const rows = data ?? [];
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <AlertTriangle className="h-4 w-4 text-destructive" /> Motivos de perda
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <AlertTriangle className="h-4 w-4 text-destructive" /> Motivos de perda
+          </CardTitle>
+          <RefreshingIndicator show={refreshing} />
+        </div>
       </CardHeader>
       <CardContent className="pt-0">
         {isLoading ? (
@@ -673,6 +677,7 @@ function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
         ) : rows.length === 0 ? (
           <EmptyState message="Ainda não foram registrados motivos de perda." />
         ) : (
+          <Refreshable refreshing={refreshing}>
           <div className="space-y-2">
             {rows.map((r) => (
               <div
@@ -696,6 +701,7 @@ function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
               </div>
             ))}
           </div>
+          </Refreshable>
         )}
       </CardContent>
     </Card>
