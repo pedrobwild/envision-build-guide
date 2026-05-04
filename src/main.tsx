@@ -27,6 +27,11 @@ installConsoleErrorBuffer();
 // `public_id` (rota pública) e `VITE_APP_VERSION` (versão do deploy).
 installChunkErrorTelemetry();
 
+// Envia cada evento de abertura do orçamento público para
+// `public.open_budget_telemetry` com correlation_id por sessão e event_id
+// único — permite diagnosticar relatos de "não abriu" pelo backend.
+installOpenBudgetSink();
+
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
     <App />
