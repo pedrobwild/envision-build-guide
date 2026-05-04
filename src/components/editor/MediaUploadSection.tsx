@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { ImagePlus, Loader2, Trash2, Play, Image as ImageIcon, FileText, GripVertical, Plus, Compass, Save, Upload, CheckSquare, Square, X, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { uploadWithRetry } from "@/lib/storage-upload-retry";
 import {
   AlertDialog,
   AlertDialogAction,
