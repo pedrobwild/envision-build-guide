@@ -38,8 +38,10 @@ SELECT set_config(
   true
 );
 
--- Sanidade: auth.uid() resolvido?
-SELECT auth.uid() AS resolved_uid, public.has_role(auth.uid(), 'admin'::public.app_role) AS is_admin;
+-- Sanidade: confirma que o JWT foi aceito (auth.uid lê do GUC)
+SELECT
+  current_setting('request.jwt.claims', true)::jsonb->>'sub' AS jwt_sub,
+  public.has_role((current_setting('request.jwt.claims', true)::jsonb->>'sub')::uuid, 'admin'::public.app_role) AS is_admin;
 
 -- 3. Combinações de filtros para testar
 --    NULL/NULL = tudo;  últimos 30d; últimos 90d
