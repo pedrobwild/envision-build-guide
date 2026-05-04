@@ -38,6 +38,7 @@ const CatalogPage = lazy(() => import("./pages/CatalogPage"));
 const SystemToolsPage = lazy(() => import("./pages/SystemToolsPage"));
 const TrashPage = lazy(() => import("./pages/TrashPage"));
 const DuplicatePropertiesPage = lazy(() => import("./pages/admin/DuplicatePropertiesPage"));
+const RpcAuditPage = lazy(() => import("./pages/admin/RpcAuditPage"));
 const PhotoLibraryUpload = lazy(() => import("./pages/PhotoLibraryUpload"));
 const BudgetTemplatesPage = lazy(() => import("./pages/BudgetTemplatesPage"));
 const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
