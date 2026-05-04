@@ -254,7 +254,7 @@ export default function BudgetInternalDetail() {
   // Marcos de tempo (criação, início da etapa, congelamento) vindos do backend.
   // Usados como fonte de verdade pelo cabeçalho; recalculados a cada mudança
   // de status do orçamento atual.
-  const { data: timeMarkers } = useBudgetTimeMarkers(
+  const { data: timeMarkers, refetch: refetchTimeMarkers } = useBudgetTimeMarkers(
     budgetId ?? null,
     budget?.internal_status ?? "_",
   );
