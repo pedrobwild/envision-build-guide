@@ -16,19 +16,17 @@
 \timing on
 
 -- 1. Resolver admin_id (parâmetro ou primeiro admin disponível)
-\if :{?admin_id}
-\else
-  SELECT user_id::text AS admin_id
-  FROM public.user_roles
-  WHERE role = 'admin'
-  ORDER BY user_id
-  LIMIT 1 \gset
-\endif
+SELECT COALESCE(
+  NULLIF(:'admin_id', ''),
+  (SELECT user_id::text FROM public.user_roles WHERE role='admin' ORDER BY user_id LIMIT 1)
+) AS admin_id \gset
 
 \echo '— Autenticando como admin:' :admin_id
 
--- 2. Simular sessão autenticada do PostgREST
-SELECT set_config('role', 'authenticated', true);
+-- 2. Simular sessão autenticada do PostgREST (auth.uid() lê de request.jwt.claims)
+BEGIN;
+SET LOCAL ROLE authenticator;
+SET LOCAL ROLE authenticated;
 SELECT set_config(
   'request.jwt.claims',
   json_build_object(
@@ -38,7 +36,6 @@ SELECT set_config(
   )::text,
   true
 );
-SET LOCAL ROLE authenticated;
 
 -- Sanidade: auth.uid() resolvido?
 SELECT auth.uid() AS resolved_uid, public.has_role(auth.uid(), 'admin'::public.app_role) AS is_admin;
