@@ -36,6 +36,7 @@ import { format, differenceInCalendarDays, isToday, isPast, formatDistanceToNow 
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
+import { ensureVersionGroup, publishVersion } from "@/lib/budget-versioning";
 import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFilterChips";
 import { derivePublicLinkStatus } from "@/components/admin/PublicLinkStatusBadge";
 import { Link2 } from "lucide-react";
