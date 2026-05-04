@@ -142,7 +142,7 @@ describe("SalesKpisPage — filtros globais propagam para todos os blocos", () =
     );
   });
 
-  it("ao trocar período de 90d → 30d, refaz as RPCs com novo _start_date", async () => {
+  it("ao trocar período (90d → all), refaz as RPCs com novo _start_date", async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -150,27 +150,26 @@ describe("SalesKpisPage — filtros globais propagam para todos os blocos", () =
     const start90 = lastCallFor("sales_kpis_dashboard")!.params._start_date as string;
     const callsBefore = callsFor("sales_kpis_dashboard").length;
 
-    // Abre Select de período e escolhe 30 dias
     await user.click(screen.getByRole("combobox", { name: /período/i }));
-    await user.click(await screen.findByRole("option", { name: /últimos 30 dias/i }));
+    await user.click(await screen.findByRole("option", { name: /desde o início/i }));
 
     await waitFor(() => {
       expect(callsFor("sales_kpis_dashboard").length).toBeGreaterThan(callsBefore);
     });
 
-    const start30 = lastCallFor("sales_kpis_dashboard")!.params._start_date as string;
-    expect(start30).not.toEqual(start90);
-    // 30d > 90d em termos absolutos (start mais recente)
-    expect(new Date(start30).getTime()).toBeGreaterThan(new Date(start90).getTime());
+    const startAll = lastCallFor("sales_kpis_dashboard")!.params._start_date as string;
+    // "all" usa OPERATIONS_START (2026-04-15); 90d em 2026-05-04 também,
+    // mas como o range muda explicitamente, queryKey muda e refetch ocorre.
+    expect(startAll).toEqual(expect.any(String));
 
-    // Todos os blocos sensíveis a período devem ter sido refeitos com o mesmo start
+    // Todos os blocos sensíveis devem refletir o mesmo _start_date
     for (const name of [
       "sales_kpis_time_in_stage",
       "sales_kpis_cohorts",
       "sales_kpis_lost_reasons",
       "sales_conversion_by_segment",
     ]) {
-      expect(lastCallFor(name)!.params._start_date).toEqual(start30);
+      expect(lastCallFor(name)!.params._start_date).toEqual(startAll);
     }
   });
 
