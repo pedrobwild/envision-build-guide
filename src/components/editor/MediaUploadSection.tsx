@@ -223,6 +223,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
   const [files, setFiles] = useState<Record<StorageTab, MediaFile[]>>({ "3d": [], fotos: [], exec: [], video: [] });
   const [primary, setPrimary] = useState<PrimaryByTab>({});
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
   const [loading, setLoading] = useState(true);
   const [reordering, setReordering] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
