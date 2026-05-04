@@ -36,6 +36,9 @@ export interface NormalizedLead {
   utm_term?: string | null;
   city?: string | null;
   bairro?: string | null;
+  // Captura (planilhas Meta / Google Sheets)
+  lead_captured_at?: string | null;     // ISO timestamp da geração na origem
+  platform?: string | null;             // ex: 'fb', 'ig', 'an', 'msg' ou rótulo livre
   // Payload bruto para auditoria
   raw_payload: Record<string, unknown>;
 }
@@ -91,6 +94,8 @@ export async function persistRawLead(
     adset_name: lead.adset_name ?? null,
     ad_id: lead.ad_id ?? null,
     ad_name: lead.ad_name ?? null,
+    lead_captured_at: lead.lead_captured_at ?? null,
+    platform: lead.platform ?? null,
     raw_payload: lead.raw_payload,
     processing_status: "pending",
   };
@@ -166,6 +171,8 @@ export async function upsertClientFromLead(
       utm_source: lead.utm_source ?? lead.source.replace("_ads", ""),
       utm_medium: lead.utm_medium ?? "paid_social",
       utm_campaign: lead.utm_campaign ?? lead.campaign_name,
+      lead_captured_at: lead.lead_captured_at,
+      platform: lead.platform,
       external_lead_payload: lead.raw_payload,
     };
     // Remove undefined
@@ -220,6 +227,8 @@ export async function upsertClientFromLead(
     utm_campaign: lead.utm_campaign ?? lead.campaign_name ?? lead.campaign_id ?? null,
     utm_content: lead.utm_content ?? null,
     utm_term: lead.utm_term ?? null,
+    lead_captured_at: lead.lead_captured_at ?? null,
+    platform: lead.platform ?? null,
   };
 
   const { data, error } = await supabase

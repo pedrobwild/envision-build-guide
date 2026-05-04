@@ -57,6 +57,7 @@ const ComercialHome = lazy(() => import("./pages/painel/ComercialHome"));
 const OrcamentistaHome = lazy(() => import("./pages/painel/OrcamentistaHome"));
 const AdminHome = lazy(() => import("./pages/painel/AdminHome"));
 const OperationsHealthPage = lazy(() => import("./pages/admin/OperationsHealthPage"));
+const ImportLeadsPage = lazy(() => import("./pages/admin/ImportLeadsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LoadingFallback() {
@@ -142,6 +143,7 @@ const App = () => (
                     <Route path="/admin/crm/:clientId" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><ClientDetail /></RoleGuard></AdminPage>} />
                     <Route path="/admin/leads" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><LeadSourcesPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/leads/regras" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><LeadRoutingRulesPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/leads/importar" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><ImportLeadsPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/agenda" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><AgendaPage /></RoleGuard></AdminPage>}/>
                     <Route path="/admin/insights" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><InsightsPage /></RoleGuard></AdminPage>}/>
                     <Route path="/admin/digisac" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><DigisacPage /></RoleGuard></AdminPage>}/>

@@ -61,3 +61,6 @@ verify_jwt = true
 
 [functions.ai-bulk-operations]
 verify_jwt = true
+
+[functions.import-leads-csv]
+verify_jwt = true

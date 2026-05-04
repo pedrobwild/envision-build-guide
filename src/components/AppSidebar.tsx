@@ -14,6 +14,7 @@ import {
   ImagePlus,
   LayoutTemplate,
   Inbox,
+  Upload,
   Route as RouteIcon,
   BarChart3,
   CalendarClock,
@@ -143,6 +144,7 @@ const TOOL_GROUPS: ToolGroup[] = [
     label: "Integrações",
     items: [
       { title: "Leads", url: "/admin/leads", icon: Inbox, roles: ["admin", "comercial", "orcamentista"] },
+      { title: "Importar planilha", url: "/admin/leads/importar", icon: Upload, roles: ["admin", "comercial"] },
       { title: "Roteamento", url: "/admin/leads/regras", icon: RouteIcon, roles: ["admin"] },
       { title: "Digisac", url: "/admin/digisac", icon: MessageCircle, roles: ["admin"] },
     ],
