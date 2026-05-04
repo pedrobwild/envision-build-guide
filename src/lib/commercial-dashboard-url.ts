@@ -236,7 +236,7 @@ export function parseDashboardSearchWithInvalid(
   return { filters, invalid };
 }
 
-export function serializeDashboardFilters(f: Omit<ParsedFilters, never>): string {
+export function serializeDashboardFilters(f: Partial<ParsedFilters> & Omit<ParsedFilters, "linkFilter">): string {
   const p = new URLSearchParams();
   if (f.queueFilter) {
     p.set("fila", f.queueFilter);
