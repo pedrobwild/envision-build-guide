@@ -567,6 +567,11 @@ export default function BudgetInternalDetail() {
       },
     ]);
 
+    // Garante que o cabeçalho recalcule "etapa há X dias" usando o novo
+    // status_change recém-inserido — o serializedKey já mudou, mas chamamos
+    // refetch explicitamente para evitar corrida com a inserção do evento.
+    refetchTimeMarkers();
+
     toast.success(`Status → ${INTERNAL_STATUSES[newStatus]?.label ?? newStatus}`);
   }
 
