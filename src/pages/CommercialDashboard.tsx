@@ -37,6 +37,8 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { MobileFilterChips, type FilterChip } from "@/components/admin/MobileFilterChips";
+import { derivePublicLinkStatus } from "@/components/admin/PublicLinkStatusBadge";
+import { Link2 } from "lucide-react";
 import { KanbanBoard, type DueFilter } from "@/components/commercial/KanbanBoard";
 import { RevisionRequestDialog } from "@/components/editor/RevisionRequestDialog";
 import { BudgetActionsMenu } from "@/components/admin/BudgetActionsMenu";
@@ -312,6 +314,7 @@ export default function CommercialDashboard() {
   const [dueFilter, setDueFilter] = useState<DueFilter>(initial.dueFilter);
   const [commercialFilter, setCommercialFilter] = useState<string>(initial.commercialFilter);
   const [pipelineFilter, setPipelineFilter] = useState<string>(initial.pipelineFilter);
+  const [linkFilter, setLinkFilter] = useState<"all" | "published" | "draft" | "missing">(initial.linkFilter);
   const [queueFilter, setQueueFilter] = useState<"prontos" | "sem-vis" | "esfriando" | null>(
     initial.queueFilter,
   );
@@ -336,6 +339,7 @@ export default function CommercialDashboard() {
       search,
       commercialFilter,
       pipelineFilter,
+      linkFilter,
     });
     const current = window.location.search.startsWith("?")
       ? window.location.search.slice(1)
@@ -381,6 +385,7 @@ export default function CommercialDashboard() {
     setSearch((prev) => (prev === next.search ? prev : next.search));
     setCommercialFilter((prev) => (prev === next.commercialFilter ? prev : next.commercialFilter));
     setPipelineFilter((prev) => (prev === next.pipelineFilter ? prev : next.pipelineFilter));
+    setLinkFilter((prev) => (prev === next.linkFilter ? prev : next.linkFilter));
   }, [location.search]);
 
   const { data: pipelines = [], isLoading: pipelinesLoading } = useDealPipelines();
@@ -631,6 +636,11 @@ export default function CommercialDashboard() {
         if (b.pipeline_id !== activePipelineId) return false;
       }
 
+      if (linkFilter !== "all") {
+        const ls = derivePublicLinkStatus(b.public_id, b.status);
+        if (ls !== linkFilter) return false;
+      }
+
       // Filtro de fila vindo da home do comercial. Tem prioridade sobre statusFilter.
       if (queueFilter) {
         if (!matchesQueue(b, queueFilter, now)) return false;
@@ -669,7 +679,7 @@ export default function CommercialDashboard() {
       return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
     });
     return result;
-  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId, queueFilter]);
+  }, [dedupedBudgets, search, statusFilter, sortBy, commercialFilter, dueFilter, activePipelineId, queueFilter, linkFilter]);
 
   // Counts per pipeline (for the PipelineSwitcher tabs)
   const pipelineCounts = useMemo(() => {
@@ -886,9 +896,9 @@ export default function CommercialDashboard() {
   }
 
   // Filter bar state
-  const hasActiveFilters = statusFilter !== "all" || search.length > 0 || dueFilter !== "all" || commercialFilter !== "all";
-  const activeFilterCount = [statusFilter !== "all", dueFilter !== "all", commercialFilter !== "all"].filter(Boolean).length;
-  const clearAllFilters = () => { setSearch(""); setStatusFilter("all"); setDueFilter("all"); setCommercialFilter("all"); };
+  const hasActiveFilters = statusFilter !== "all" || search.length > 0 || dueFilter !== "all" || commercialFilter !== "all" || linkFilter !== "all";
+  const activeFilterCount = [statusFilter !== "all", dueFilter !== "all", commercialFilter !== "all", linkFilter !== "all"].filter(Boolean).length;
+  const clearAllFilters = () => { setSearch(""); setStatusFilter("all"); setDueFilter("all"); setCommercialFilter("all"); setLinkFilter("all"); };
 
   const renderBudgetCard = (b: BudgetRow) => {
     const status = INTERNAL_STATUSES[b.internal_status as InternalStatus] ?? INTERNAL_STATUSES.requested;
@@ -1331,6 +1341,22 @@ export default function CommercialDashboard() {
                 </SelectContent>
               </Select>
 
+              <Select value={linkFilter} onValueChange={v => setLinkFilter(v as typeof linkFilter)}>
+                <SelectTrigger
+                  className={`w-[150px] h-8 text-xs ${linkFilter !== "all" ? "border-primary/40 bg-primary/5" : ""}`}
+                  title="Filtra por estado do link público do orçamento"
+                >
+                  <Link2 className="h-3 w-3 mr-1 shrink-0" />
+                  <SelectValue placeholder="Link público" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os links</SelectItem>
+                  <SelectItem value="published">🟢 Público (publicado)</SelectItem>
+                  <SelectItem value="draft">🟡 Rascunho</SelectItem>
+                  <SelectItem value="missing">⚪ Sem link</SelectItem>
+                </SelectContent>
+              </Select>
+
               {isAdmin && commercialOptions.length > 0 && (
                 <Select value={commercialFilter} onValueChange={setCommercialFilter}>
                   <SelectTrigger className={`w-[150px] h-8 text-xs ${commercialFilter !== "all" ? "border-primary/40 bg-primary/5" : ""}`}>
@@ -1364,12 +1390,13 @@ export default function CommercialDashboard() {
 
               <SavedViewsBar
                 entity="budgets"
-                currentFilters={{ search, statusFilter, dueFilter, commercialFilter, sortBy }}
+                currentFilters={{ search, statusFilter, dueFilter, commercialFilter, linkFilter, sortBy }}
                 onApply={(f) => {
                   if (typeof f.search === "string") setSearch(f.search);
                   if (typeof f.statusFilter === "string") setStatusFilter(f.statusFilter);
                   if (typeof f.dueFilter === "string") setDueFilter(f.dueFilter as DueFilter);
                   if (typeof f.commercialFilter === "string") setCommercialFilter(f.commercialFilter);
+                  if (typeof f.linkFilter === "string" && (f.linkFilter === "all" || f.linkFilter === "published" || f.linkFilter === "draft" || f.linkFilter === "missing")) setLinkFilter(f.linkFilter);
                   if (typeof f.sortBy === "string") setSortBy(f.sortBy as SortOption);
                 }}
               />

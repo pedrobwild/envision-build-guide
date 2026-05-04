@@ -13,6 +13,8 @@ export type SortOption = "urgente" | "recente" | "prazo";
 export type ViewMode = "list" | "kanban";
 export type QueueFilter = "prontos" | "sem-vis" | "esfriando" | null;
 
+export type LinkFilter = "all" | "published" | "draft" | "missing";
+
 export type ParsedFilters = {
   queueFilter: QueueFilter;
   statusFilter: string;
@@ -22,7 +24,12 @@ export type ParsedFilters = {
   search: string;
   commercialFilter: string;
   pipelineFilter: string;
+  linkFilter: LinkFilter;
 };
+
+export function isLinkFilter(v: string): v is LinkFilter {
+  return v === "all" || v === "published" || v === "draft" || v === "missing";
+}
 
 /**
  * Lista de parâmetros descartados durante o parse por serem inválidos
@@ -212,6 +219,9 @@ export function parseDashboardSearchWithInvalid(
     invalid.push({ key: "view", value: viewRaw });
   }
 
+  const linkRaw = p.get("link") ?? "all";
+  const linkFilter: LinkFilter = isLinkFilter(linkRaw) ? linkRaw : "all";
+
   const filters: ParsedFilters = {
     queueFilter,
     statusFilter: queueFilter ? "all" : status,
@@ -221,11 +231,12 @@ export function parseDashboardSearchWithInvalid(
     search: p.get("q") ?? "",
     commercialFilter: p.get("com") ?? "all",
     pipelineFilter: p.get("pipe") ?? "all",
+    linkFilter,
   };
   return { filters, invalid };
 }
 
-export function serializeDashboardFilters(f: Omit<ParsedFilters, never>): string {
+export function serializeDashboardFilters(f: Partial<ParsedFilters> & Omit<ParsedFilters, "linkFilter">): string {
   const p = new URLSearchParams();
   if (f.queueFilter) {
     p.set("fila", f.queueFilter);
@@ -236,6 +247,7 @@ export function serializeDashboardFilters(f: Omit<ParsedFilters, never>): string
   if (f.search) p.set("q", f.search);
   if (f.commercialFilter && f.commercialFilter !== "all") p.set("com", f.commercialFilter);
   if (f.pipelineFilter && f.pipelineFilter !== "all") p.set("pipe", f.pipelineFilter);
+  if (f.linkFilter && f.linkFilter !== "all") p.set("link", f.linkFilter);
   if (f.sortBy && f.sortBy !== "recente") p.set("sort", f.sortBy);
   if (f.viewMode && f.viewMode !== "kanban") p.set("view", f.viewMode);
   return p.toString();

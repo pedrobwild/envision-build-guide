@@ -23,6 +23,7 @@ describe("parseDashboardSearch — defaults", () => {
       search: "",
       commercialFilter: "all",
       pipelineFilter: "all",
+      linkFilter: "all",
     });
   });
 
