@@ -176,6 +176,31 @@ function errorReason(error: unknown): string | null {
   return null;
 }
 
+function RefreshingIndicator({ show, label = "Atualizando…" }: { show: boolean; label?: string }) {
+  if (!show) return null;
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+    >
+      <RefreshCw className="h-3 w-3 animate-spin" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+function Refreshable({ refreshing, children }: { refreshing: boolean; children: React.ReactNode }) {
+  return (
+    <div
+      aria-busy={refreshing || undefined}
+      className={cn("transition-opacity", refreshing && "opacity-60")}
+    >
+      {children}
+    </div>
+  );
+}
+
 function BlockError({
   title,
   error,
@@ -224,7 +249,8 @@ function BlockError({
 // 2. Overview block
 // ============================================================
 function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading, isError, error, refetch } = useSalesOverview(period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useSalesOverview(period, ownerId);
+  const refreshing = !isLoading && isFetching;
 
   if (isError) {
     return (
@@ -238,7 +264,12 @@ function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: stri
 
   const o = data;
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <RefreshingIndicator show={refreshing} label="Atualizando KPIs…" />
+      </div>
+      <Refreshable refreshing={refreshing}>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
       <KpiTile
         label="Leads no período"
         value={String(o?.total_leads ?? 0)}
@@ -310,6 +341,8 @@ function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: stri
         loading={isLoading}
       />
     </div>
+      </Refreshable>
+    </div>
   );
 }
 
@@ -317,7 +350,8 @@ function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: stri
 // 3. Time in stage
 // ============================================================
 function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading, isError, error, refetch } = useTimeInStageGodMode(period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useTimeInStageGodMode(period, ownerId);
+  const refreshing = !isLoading && isFetching;
   const chartData = useMemo(
     () =>
       (data ?? [])
@@ -340,7 +374,10 @@ function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
           <CardTitle className="flex items-center gap-2 text-base">
             <Layers className="h-4 w-4 text-primary" /> Tempo médio em cada etapa
           </CardTitle>
-          <span className="text-xs text-muted-foreground">média · p50 · p90 (em dias)</span>
+          <div className="flex items-center gap-2">
+            <RefreshingIndicator show={refreshing} />
+            <span className="text-xs text-muted-foreground">média · p50 · p90 (em dias)</span>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
@@ -356,6 +393,7 @@ function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
         ) : chartData.length === 0 ? (
           <EmptyState message="Sem histórico suficiente de mudanças de etapa." />
         ) : (
+          <Refreshable refreshing={refreshing}>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
@@ -394,6 +432,7 @@ function TimeInStageBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
               </BarChart>
             </ResponsiveContainer>
           </div>
+          </Refreshable>
         )}
       </CardContent>
     </Card>
@@ -410,7 +449,8 @@ function OwnerTableBlock({
   period: SalesPeriod;
   onSelectOwner: (id: string | null) => void;
 }) {
-  const { data, isLoading, isError, error, refetch } = useSalesByOwner(period);
+  const { data, isLoading, isFetching, isError, error, refetch } = useSalesByOwner(period);
+  const refreshing = !isLoading && isFetching;
   const rows = data ?? [];
 
   return (
@@ -420,7 +460,10 @@ function OwnerTableBlock({
           <CardTitle className="flex items-center gap-2 text-base">
             <Users className="h-4 w-4 text-primary" /> Performance por vendedora
           </CardTitle>
-          <span className="text-xs text-muted-foreground">clique numa linha para filtrar o dashboard</span>
+          <div className="flex items-center gap-2">
+            <RefreshingIndicator show={refreshing} />
+            <span className="text-xs text-muted-foreground">clique numa linha para filtrar o dashboard</span>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
@@ -440,6 +483,7 @@ function OwnerTableBlock({
         ) : rows.length === 0 ? (
           <EmptyState message="Ainda não há orçamentos atribuídos." />
         ) : (
+          <Refreshable refreshing={refreshing}>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -500,6 +544,7 @@ function OwnerTableBlock({
               </TableBody>
             </Table>
           </div>
+          </Refreshable>
         )}
       </CardContent>
     </Card>
@@ -518,15 +563,19 @@ const SEGMENT_TABS: { value: SegmentDimension; label: string; description: strin
 
 function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
   const [dim, setDim] = useState<SegmentDimension>("metragem");
-  const { data, isLoading, isError, error, refetch } = useSalesBySegment(dim, period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useSalesBySegment(dim, period, ownerId);
+  const refreshing = !isLoading && isFetching;
   const rows = data ?? [];
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <BarChart3 className="h-4 w-4 text-primary" /> Conversão por segmento
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BarChart3 className="h-4 w-4 text-primary" /> Conversão por segmento
+          </CardTitle>
+          <RefreshingIndicator show={refreshing} />
+        </div>
       </CardHeader>
       <CardContent className="pt-0">
         <Tabs value={dim} onValueChange={(v) => setDim(v as SegmentDimension)}>
@@ -552,6 +601,7 @@ function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: strin
               ) : rows.length === 0 ? (
                 <EmptyState message="Sem dados nesta dimensão." />
               ) : (
+                <Refreshable refreshing={refreshing}>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -586,6 +636,7 @@ function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: strin
                     </TableBody>
                   </Table>
                 </div>
+                </Refreshable>
               )}
             </TabsContent>
           ))}
@@ -599,15 +650,19 @@ function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: strin
 // 6. Lost reasons
 // ============================================================
 function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading, isError, error, refetch } = useLostReasonsRanked(period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useLostReasonsRanked(period, ownerId);
+  const refreshing = !isLoading && isFetching;
   const rows = data ?? [];
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <AlertTriangle className="h-4 w-4 text-destructive" /> Motivos de perda
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <AlertTriangle className="h-4 w-4 text-destructive" /> Motivos de perda
+          </CardTitle>
+          <RefreshingIndicator show={refreshing} />
+        </div>
       </CardHeader>
       <CardContent className="pt-0">
         {isLoading ? (
@@ -622,6 +677,7 @@ function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
         ) : rows.length === 0 ? (
           <EmptyState message="Ainda não foram registrados motivos de perda." />
         ) : (
+          <Refreshable refreshing={refreshing}>
           <div className="space-y-2">
             {rows.map((r) => (
               <div
@@ -645,6 +701,7 @@ function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
               </div>
             ))}
           </div>
+          </Refreshable>
         )}
       </CardContent>
     </Card>
@@ -655,15 +712,19 @@ function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
 // 7. Cohorts mensais
 // ============================================================
 function CohortBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading, isError, error, refetch } = useSalesCohorts(period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useSalesCohorts(period, ownerId);
+  const refreshing = !isLoading && isFetching;
   const rows = (data ?? []).slice(0, 12);
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Calendar className="h-4 w-4 text-primary" /> Coortes mensais
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Calendar className="h-4 w-4 text-primary" /> Coortes mensais
+          </CardTitle>
+          <RefreshingIndicator show={refreshing} />
+        </div>
       </CardHeader>
       <CardContent className="pt-0">
         {isLoading ? (
@@ -678,6 +739,7 @@ function CohortBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string
         ) : rows.length === 0 ? (
           <EmptyState message="Sem coortes registradas." />
         ) : (
+          <Refreshable refreshing={refreshing}>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -715,6 +777,7 @@ function CohortBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string
               </TableBody>
             </Table>
           </div>
+          </Refreshable>
         )}
       </CardContent>
     </Card>
