@@ -62,7 +62,8 @@ import {
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { buildWhatsappUrl, formatPhoneBR } from "@/lib/phone";
 import { composeBudgetTitle } from "@/lib/budget-title";
-import { computeBudgetTime } from "@/lib/budget-time-in-stage";
+import { computeBudgetTime, budgetTimeFromMarkers } from "@/lib/budget-time-in-stage";
+import { useBudgetTimeMarkers } from "@/hooks/useBudgetTimeMarkers";
 import { openPublicBudget } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
@@ -250,6 +251,13 @@ export default function BudgetInternalDetail() {
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
   const [resolvedBudgetId, setResolvedBudgetId] = useState<string | null>(null);
   const [resolvedSeqCode, setResolvedSeqCode] = useState<string | null>(null);
+  // Marcos de tempo (criação, início da etapa, congelamento) vindos do backend.
+  // Usados como fonte de verdade pelo cabeçalho; recalculados a cada mudança
+  // de status do orçamento atual.
+  const { data: timeMarkers } = useBudgetTimeMarkers(
+    budgetId ?? null,
+    budget?.internal_status ?? "_",
+  );
   // Pré-visualização de export antes do download. Os flags `exportingXlsx`
   // e `exportingPdf` são derivados do estado para preservar o spinner nos
   // botões enquanto o diálogo gera o preview.
@@ -693,13 +701,16 @@ export default function BudgetInternalDetail() {
 
   // Tempos do negócio: total desde a criação e tempo na etapa atual.
   // Regra: o cronômetro PARA no PRIMEIRO evento que entra em "contrato_fechado", "lost" ou "archived".
-  // Lógica centralizada e testada em src/lib/budget-time-in-stage.ts.
+  // Fonte de verdade: RPC `get_budget_time_markers` (backend). Quando os marcos
+  // ainda não chegaram, caímos no cálculo local sobre `events` para evitar UI vazia.
   const { isFrozen, frozenAt: frozenAtDate, currentStageStart, totalDaysOpen, daysInStage } =
-    computeBudgetTime({
-      internalStatus: budget.internal_status,
-      createdAt: budget.created_at,
-      events,
-    });
+    timeMarkers
+      ? budgetTimeFromMarkers(timeMarkers)
+      : computeBudgetTime({
+          internalStatus: budget.internal_status,
+          createdAt: budget.created_at,
+          events,
+        });
   const frozenEvent = frozenAtDate ? { created_at: frozenAtDate.toISOString() } : null;
   const formatOpenedFor = (n: number) =>
     n === 0 ? "Aberto hoje" : n === 1 ? "Aberto há 1 dia" : `Aberto há ${n} dias`;

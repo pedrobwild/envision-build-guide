@@ -177,3 +177,56 @@ describe("computeBudgetTime", () => {
     expect(r.daysInStage).toBe(2);
   });
 });
+
+import { budgetTimeFromMarkers } from "@/lib/budget-time-in-stage";
+
+describe("budgetTimeFromMarkers", () => {
+  it("usa frozen_at como referência quando is_frozen=true", () => {
+    const r = budgetTimeFromMarkers(
+      {
+        internal_status: "contrato_fechado",
+        created_at: iso(20),
+        current_stage_start: iso(3),
+        frozen_at: iso(3),
+        is_frozen: true,
+        reference_at: iso(3),
+      },
+      NOW,
+    );
+    expect(r.isFrozen).toBe(true);
+    expect(r.totalDaysOpen).toBe(17);
+    expect(r.daysInStage).toBe(0);
+  });
+
+  it("usa now() quando não está congelado", () => {
+    const r = budgetTimeFromMarkers(
+      {
+        internal_status: "in_progress",
+        created_at: iso(10),
+        current_stage_start: iso(4),
+        frozen_at: null,
+        is_frozen: false,
+        reference_at: NOW.toISOString(),
+      },
+      NOW,
+    );
+    expect(r.isFrozen).toBe(false);
+    expect(r.totalDaysOpen).toBe(10);
+    expect(r.daysInStage).toBe(4);
+  });
+
+  it("cai em created_at quando current_stage_start vem nulo", () => {
+    const r = budgetTimeFromMarkers(
+      {
+        internal_status: "novo",
+        created_at: iso(5),
+        current_stage_start: null,
+        frozen_at: null,
+        is_frozen: false,
+        reference_at: NOW.toISOString(),
+      },
+      NOW,
+    );
+    expect(r.daysInStage).toBe(5);
+  });
+});

@@ -87,3 +87,37 @@ export function computeBudgetTime(input: BudgetTimeInput): BudgetTimeResult {
     daysInStage,
   };
 }
+
+/**
+ * Converte os marcos vindos da RPC `get_budget_time_markers` no mesmo
+ * formato de `BudgetTimeResult`. Backend é a fonte de verdade — usar este
+ * helper evita divergência entre cliente e banco.
+ */
+export function budgetTimeFromMarkers(
+  markers: {
+    internal_status: string;
+    created_at: string | null;
+    current_stage_start: string | null;
+    frozen_at: string | null;
+    is_frozen: boolean;
+    reference_at: string;
+  },
+  now: Date = new Date(),
+): BudgetTimeResult {
+  const reference = markers.frozen_at ? new Date(markers.frozen_at) : now;
+  const created = markers.created_at ? new Date(markers.created_at) : null;
+  const stageStart = markers.current_stage_start
+    ? new Date(markers.current_stage_start)
+    : created;
+  return {
+    isFrozen: markers.is_frozen,
+    frozenAt: markers.frozen_at ? new Date(markers.frozen_at) : null,
+    currentStageStart: stageStart,
+    totalDaysOpen: created
+      ? Math.max(0, differenceInCalendarDays(reference, created))
+      : null,
+    daysInStage: stageStart
+      ? Math.max(0, differenceInCalendarDays(reference, stageStart))
+      : null,
+  };
+}
