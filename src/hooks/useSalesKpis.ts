@@ -135,16 +135,18 @@ export function useSalesOverview(period: SalesPeriod, ownerId?: string | null) {
   ]);
   return useQuery({
     queryKey: ["sales-kpis", "overview", start, end, ownerId ?? null],
-    queryFn: async (): Promise<SalesOverview> => {
-      const { data, error } = await sb.rpc("sales_kpis_dashboard", {
-        _start_date: start,
-        _end_date: end,
-        _owner_id: ownerId ?? null,
-      });
-      if (error) throw error;
-      return (data ?? {}) as SalesOverview;
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<SalesOverview>(
+        "sales_kpis_dashboard",
+        { _start_date: start, _end_date: end, _owner_id: ownerId ?? null },
+        () =>
+          sb.rpc("sales_kpis_dashboard", {
+            _start_date: start,
+            _end_date: end,
+            _owner_id: ownerId ?? null,
+          }),
+      ).then((d) => (d ?? ({} as SalesOverview)) as SalesOverview),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
