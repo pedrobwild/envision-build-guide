@@ -962,37 +962,12 @@ export default function BudgetInternalDetail() {
             </Select>
           </div>
 
-          {/* Pipeline */}
-          <div className="mt-6">
-            <PipelineProgress stages={PIPELINE_STAGES} currentIndex={pipeline.index} isLost={pipeline.isLost} />
-          </div>
-
-          {/* KPIs financeiros/operacionais (hierarquia primária) */}
-          <div className="border-t border-border/60 mt-6 pt-5 grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {/* KPIs financeiros/operacionais — apenas Valor (probabilidade/previsão e ilustração do pipeline removidos a pedido) */}
+          <div className="border-t border-border/60 mt-6 pt-5">
             <KpiBlock
               label="Valor"
               value={formatBRL(totalDisplay)}
               sub={budget.estimated_weeks ? `${budget.estimated_weeks} semanas` : `${itemsCount} itens · ${sectionsCount} seções`}
-            />
-            <KpiBlock
-              label="Probabilidade"
-              value={`${probability}%`}
-              progress={probability}
-              tone={pipeline.isLost ? "destructive" : "primary"}
-            />
-            <KpiBlock
-              label="Previsão"
-              value={dueDate ? format(dueDate, "dd MMM", { locale: ptBR }) : "—"}
-              sub={
-                dueDate
-                  ? overdue
-                    ? `SLA vencido há ${Math.abs(daysLeft!)}d`
-                    : dueToday
-                    ? "Vence hoje"
-                    : `em ${daysLeft}d`
-                  : "Sem prazo definido"
-              }
-              subTone={overdue ? "destructive" : dueToday ? "warning" : "muted"}
             />
           </div>
 
