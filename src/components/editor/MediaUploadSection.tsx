@@ -799,8 +799,19 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
                     className="gap-2"
                   >
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                    {uploading ? "Enviando..." : "Adicionar arquivos"}
+                    {uploading
+                      ? uploadProgress.total > 0
+                        ? `Enviando ${uploadProgress.done}/${uploadProgress.total}…`
+                        : "Enviando..."
+                      : "Adicionar arquivos"}
                   </Button>
+                  {uploading && uploadProgress.total > 0 && (
+                    <Progress
+                      value={(uploadProgress.done / uploadProgress.total) * 100}
+                      className="h-1.5 w-40"
+                      aria-label="Progresso do upload"
+                    />
+                  )}
 
                   {currentFiles.length > 0 && (
                     <>
