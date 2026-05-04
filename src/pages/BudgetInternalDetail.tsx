@@ -962,7 +962,7 @@ export default function BudgetInternalDetail() {
                     }
                   >
                     <Clock className="h-3 w-3" />
-                    Etapa {formatDays(daysInStage)}
+                    {formatStageFor(daysInStage)}
                   </span>
                 )}
               </div>
