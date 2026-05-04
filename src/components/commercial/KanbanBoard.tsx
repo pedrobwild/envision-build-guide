@@ -470,6 +470,7 @@ function SubSectionGroup({
                     }
                   }}
                   actionsSlot={<CardActionsSlot budget={b} />}
+                  onRepublishPublicLink={onRepublishPublicLink ? () => onRepublishPublicLink(b) : undefined}
                 />
               ) : (
                 <DraggableCard
