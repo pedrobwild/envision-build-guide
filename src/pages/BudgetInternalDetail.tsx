@@ -251,6 +251,13 @@ export default function BudgetInternalDetail() {
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
   const [resolvedBudgetId, setResolvedBudgetId] = useState<string | null>(null);
   const [resolvedSeqCode, setResolvedSeqCode] = useState<string | null>(null);
+  // Marcos de tempo (criação, início da etapa, congelamento) vindos do backend.
+  // Usados como fonte de verdade pelo cabeçalho; recalculados a cada mudança
+  // de status do orçamento atual.
+  const { data: timeMarkers } = useBudgetTimeMarkers(
+    budgetId ?? null,
+    budget?.internal_status ?? "_",
+  );
   // Pré-visualização de export antes do download. Os flags `exportingXlsx`
   // e `exportingPdf` são derivados do estado para preservar o spinner nos
   // botões enquanto o diálogo gera o preview.
