@@ -719,7 +719,10 @@ export default function BudgetInternalDetail() {
   const daysInStage = currentStageStart
     ? Math.max(0, differenceInCalendarDays(referenceNow, currentStageStart))
     : null;
-  const formatDays = (n: number) => (n === 0 ? "hoje" : n === 1 ? "1 dia" : `${n} dias`);
+  const formatOpenedFor = (n: number) =>
+    n === 0 ? "Aberto hoje" : n === 1 ? "Aberto há 1 dia" : `Aberto há ${n} dias`;
+  const formatStageFor = (n: number) =>
+    n === 0 ? "Nesta etapa hoje" : n === 1 ? "Nesta etapa há 1 dia" : `Nesta etapa há ${n} dias`;
   const locationParts = [budget.bairro, budget.city].filter(Boolean).join(", ");
   const subtitle = [
     budget.condominio,
