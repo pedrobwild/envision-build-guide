@@ -352,16 +352,18 @@ export function useLostReasonsRanked(period?: SalesPeriod, ownerId?: string | nu
   );
   return useQuery({
     queryKey: ["sales-kpis", "lost-reasons", start, end, ownerId ?? null],
-    queryFn: async (): Promise<LostReasonRow[]> => {
-      const { data, error } = await sb.rpc("sales_kpis_lost_reasons", {
-        _start_date: start,
-        _end_date: end,
-        _owner_id: ownerId ?? null,
-      });
-      if (error) throw error;
-      return (data ?? []) as LostReasonRow[];
-    },
-    staleTime: 60_000,
+    queryFn: () =>
+      measuredRpc<LostReasonRow[]>(
+        "sales_kpis_lost_reasons",
+        { _start_date: start, _end_date: end, _owner_id: ownerId ?? null },
+        () =>
+          sb.rpc("sales_kpis_lost_reasons", {
+            _start_date: start,
+            _end_date: end,
+            _owner_id: ownerId ?? null,
+          }),
+      ),
+    ...KPI_QUERY_DEFAULTS,
   });
 }
 
