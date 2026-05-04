@@ -86,9 +86,6 @@ function renderPage() {
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } },
   });
-  // Import dinâmico para garantir que o mock do supabase já está aplicado.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const SalesKpisPage = require("@/pages/SalesKpisPage").default;
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter>
