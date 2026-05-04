@@ -580,3 +580,112 @@ export async function assignImportedBudgetToGroup(
     .update({ is_current_version: true })
     .eq("id", newBudgetId);
 }
+
+/**
+ * Cria uma nova versão "somente desconto" a partir de um orçamento já entregue
+ * ao comercial / publicado. O fluxo:
+ *  1. Duplica o orçamento como nova versão formal (mesmo grupo).
+ *  2. Reutiliza ou cria a seção "Descontos" e adiciona um item com custo negativo.
+ *  3. Publica automaticamente a nova versão (herda public_id do grupo, se houver).
+ *
+ * O `amount` deve ser passado como número POSITIVO em reais — a função força o
+ * sinal negativo ao gravar (regra da seção "Descontos" / "Créditos").
+ */
+export async function createDiscountVersionAndPublish(
+  sourceBudgetId: string,
+  userId: string,
+  amount: number,
+  label?: string,
+): Promise<{ newBudgetId: string; publicId: string }> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Informe um valor de desconto maior que zero");
+  }
+
+  // 1. Duplica como nova versão formal
+  const newBudgetId = await duplicateBudgetAsVersion(
+    sourceBudgetId,
+    userId,
+    `Versão com desconto comercial${label ? ` — ${label}` : ""}`,
+  );
+
+  // 2. Localiza ou cria a seção "Descontos" no novo orçamento
+  const SECTION_TITLE = "Descontos";
+  const ITEM_TITLE = label?.trim() || "Desconto comercial";
+  const NEGATIVE = -Math.abs(amount);
+
+  const { data: existingSections } = await supabase
+    .from("sections")
+    .select("id, title, order_index, section_price")
+    .eq("budget_id", newBudgetId)
+    .order("order_index");
+
+  let discountSection = (existingSections || []).find(
+    (s) => (s.title || "").trim().toLowerCase() === SECTION_TITLE.toLowerCase(),
+  );
+
+  if (!discountSection) {
+    const order = (existingSections || []).length;
+    const { data: newSec, error: secErr } = await supabase
+      .from("sections")
+      .insert({
+        budget_id: newBudgetId,
+        title: SECTION_TITLE,
+        subtitle: "Aplicado sobre o subtotal do projeto",
+        order_index: order,
+      })
+      .select("id, section_price")
+      .single();
+    if (secErr || !newSec) {
+      throw new Error(`Falha ao criar seção de descontos: ${secErr?.message ?? "?"}`);
+    }
+    discountSection = { id: newSec.id, title: SECTION_TITLE, order_index: order, section_price: newSec.section_price ?? 0 };
+  }
+
+  // 3. Insere item de desconto
+  const { data: existingItems } = await supabase
+    .from("items")
+    .select("id, order_index")
+    .eq("section_id", discountSection!.id)
+    .order("order_index");
+
+  const itemOrder = (existingItems || []).length;
+  const { error: itemErr } = await supabase.from("items").insert({
+    section_id: discountSection!.id,
+    title: ITEM_TITLE,
+    qty: 1,
+    internal_unit_price: NEGATIVE,
+    internal_total: NEGATIVE,
+    bdi_percentage: 0,
+    order_index: itemOrder,
+  });
+  if (itemErr) {
+    throw new Error(`Falha ao registrar desconto: ${itemErr.message}`);
+  }
+
+  // Atualiza section_price somando o novo abatimento
+  const newSectionPrice = (discountSection!.section_price ?? 0) + NEGATIVE;
+  await supabase
+    .from("sections")
+    .update({ section_price: newSectionPrice })
+    .eq("id", discountSection!.id);
+
+  // 4. Publica automaticamente
+  const groupId = await ensureVersionGroup(newBudgetId);
+  const fallbackPublicId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+  const { publicId } = await publishVersion(newBudgetId, groupId, fallbackPublicId, userId);
+
+  await logVersionEvent({
+    event_type: "version_created",
+    budget_id: newBudgetId,
+    user_id: userId,
+    metadata: {
+      kind: "discount_only",
+      amount: NEGATIVE,
+      label: ITEM_TITLE,
+      source_budget_id: sourceBudgetId,
+      public_id: publicId,
+    },
+  });
+
+  return { newBudgetId, publicId };
+}

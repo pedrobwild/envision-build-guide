@@ -28,13 +28,14 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Pencil, Eye, MoreHorizontal, Copy, Handshake,
-  ShoppingBag, Archive, Trash2, GitCompare, Loader2, Layers, Check, FilePlus2,
+  ShoppingBag, Archive, Trash2, GitCompare, Loader2, Layers, Check, FilePlus2, BadgePercent,
 } from "lucide-react";
 import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { createAddendumFromBudget } from "@/lib/budget-addendum";
 import { safeDeleteBudget } from "@/lib/budget-delete";
+import { DiscountVersionDialog } from "@/components/admin/DiscountVersionDialog";
 
 interface BudgetActionsMenuProps {
   budget: {
@@ -43,6 +44,7 @@ interface BudgetActionsMenuProps {
     public_id?: string | null;
     status?: string;
     internal_status?: string;
+    is_published_version?: boolean | null;
     show_optional_items?: boolean;
     version_group_id?: string | null;
     version_number?: number | null;
@@ -74,11 +76,20 @@ export function BudgetActionsMenu({
   const [closingContract, setClosingContract] = useState(false);
   const [contractModalOpen, setContractModalOpen] = useState(false);
   const [creatingAddendum, setCreatingAddendum] = useState(false);
+  const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
   const { data: pipelines = [] } = useDealPipelines();
-  const { isAdmin, isOrcamentista } = useUserProfile();
+  const { isAdmin, isOrcamentista, isComercial } = useUserProfile();
   const { user } = useAuth();
   const canCreateAddendum = (isAdmin || isOrcamentista)
     && ["sent_to_client", "minuta_solicitada", "contrato_fechado"].includes(budget.internal_status || "");
+  // Comercial (e admin) podem criar uma versão "somente desconto" depois que o orçamento
+  // saiu da produção: entregue ao comercial, enviado, ou já com link público publicado.
+  const isAfterDelivery = ["delivered_to_sales", "sent_to_client", "revision_requested", "minuta_solicitada"]
+    .includes(budget.internal_status || "");
+  const canCreateDiscountVersion = (isAdmin || isComercial || isOrcamentista)
+    && (isAfterDelivery || !!budget.is_published_version)
+    && !["contrato_fechado", "lost", "archived"].includes(budget.internal_status || "")
+    && !["contrato_fechado", "lost", "archived"].includes(budget.status || "");
 
   const handleCreateAddendum = async () => {
     if (!user) { toast.error("Sessão expirada"); return; }
@@ -375,6 +386,12 @@ export function BudgetActionsMenu({
             </DropdownMenuItem>
           )}
 
+          {canCreateDiscountVersion && (
+            <DropdownMenuItem onClick={() => setDiscountDialogOpen(true)}>
+              <BadgePercent className="h-4 w-4 mr-2 text-primary" />
+              Nova versão com desconto
+            </DropdownMenuItem>
+          )}
           {/* Version compare */}
           {budget.version_group_id && (budget.version_number ?? 1) > 1 && (
             <DropdownMenuItem onClick={() => navigate(`/admin/comparar?left=${budget.version_group_id}&right=${budget.id}`)}>
@@ -463,6 +480,15 @@ export function BudgetActionsMenu({
         budgetId={budget.id}
         projectName={budget.project_name || ""}
         onSuccess={handleContractUploadSuccess}
+      />
+
+      {/* Discount-only version dialog */}
+      <DiscountVersionDialog
+        open={discountDialogOpen}
+        onOpenChange={setDiscountDialogOpen}
+        budgetId={budget.id}
+        projectName={budget.project_name}
+        onSuccess={onRefresh}
       />
     </>
   );

@@ -27,6 +27,7 @@ function CardActionsSlot({ budget }: { budget: BudgetRow }) {
         public_id: budget.public_id,
         status: budget.status,
         internal_status: budget.internal_status,
+        is_published_version: budget.is_published_version,
         version_group_id: budget.version_group_id,
         version_number: budget.version_number,
       }}
