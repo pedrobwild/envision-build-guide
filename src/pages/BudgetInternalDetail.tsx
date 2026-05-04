@@ -45,6 +45,8 @@ import {
   X,
   ChevronRight,
   MessageCircle,
+  Mail,
+  Phone,
   Image as ImageIcon,
   History,
   XCircle,
@@ -916,26 +918,37 @@ export default function BudgetInternalDetail() {
               {subtitle && (
                 <p className="text-sm text-muted-foreground font-body mt-1">{subtitle}</p>
               )}
-              {/* Contato do cliente — visível direto no cabeçalho */}
+              {/* Contato do cliente — chips com ação rápida (copiar + abrir) */}
               {(budget.lead_email || budget.client_phone) && (
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {budget.lead_email && (
-                    <a
+                    <ContactChip
+                      icon={<Mail className="h-3.5 w-3.5" />}
+                      label={budget.lead_email}
                       href={`mailto:${budget.lead_email}`}
-                      className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
-                    >
-                      <span className="opacity-70">✉</span>
-                      {budget.lead_email}
-                    </a>
+                      openLabel="Abrir e-mail"
+                      copyValue={budget.lead_email}
+                      copyToast="E-mail copiado"
+                    />
                   )}
                   {budget.client_phone && (
-                    <a
-                      href={`tel:${budget.client_phone}`}
-                      className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
-                    >
-                      <span className="opacity-70">☎</span>
-                      {budget.client_phone}
-                    </a>
+                    <>
+                      <ContactChip
+                        icon={<Phone className="h-3.5 w-3.5" />}
+                        label={budget.client_phone}
+                        href={`tel:${budget.client_phone}`}
+                        openLabel="Ligar"
+                        copyValue={budget.client_phone}
+                        copyToast="Telefone copiado"
+                      />
+                      <ContactChip
+                        icon={<MessageCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
+                        label="WhatsApp"
+                        href={`https://wa.me/${budget.client_phone.replace(/\D/g, "")}`}
+                        openLabel="Abrir WhatsApp"
+                        external
+                      />
+                    </>
                   )}
                 </div>
               )}
@@ -2239,5 +2252,65 @@ function LostPanel({
         </Button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Chip compacto de contato no cabeçalho do negócio: mostra ícone + label,
+ * com botão "abrir" (mailto/tel/WhatsApp) e botão "copiar" opcional.
+ */
+function ContactChip({
+  icon,
+  label,
+  href,
+  openLabel,
+  copyValue,
+  copyToast,
+  external,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  openLabel: string;
+  copyValue?: string;
+  copyToast?: string;
+  external?: boolean;
+}) {
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!copyValue) return;
+    try {
+      await navigator.clipboard.writeText(copyValue);
+      toast.success(copyToast ?? "Copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+  return (
+    <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/30 text-xs font-body text-foreground/90 overflow-hidden">
+      <a
+        href={href}
+        target={external ? "_blank" : undefined}
+        rel={external ? "noopener noreferrer" : undefined}
+        title={openLabel}
+        aria-label={openLabel}
+        className="inline-flex items-center gap-1.5 pl-2.5 pr-2 py-1 hover:bg-muted/60 transition-colors max-w-[220px]"
+      >
+        <span className="shrink-0 text-muted-foreground">{icon}</span>
+        <span className="truncate">{label}</span>
+      </a>
+      {copyValue && (
+        <button
+          type="button"
+          onClick={handleCopy}
+          title="Copiar"
+          aria-label="Copiar"
+          className="border-l border-border/60 px-2 py-1 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+        >
+          <Copy className="h-3 w-3" />
+        </button>
+      )}
+    </span>
   );
 }
