@@ -62,6 +62,7 @@ import {
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { buildWhatsappUrl, formatPhoneBR } from "@/lib/phone";
 import { composeBudgetTitle } from "@/lib/budget-title";
+import { computeBudgetTime } from "@/lib/budget-time-in-stage";
 import { openPublicBudget } from "@/lib/openPublicBudget";
 import { ExportPreviewDialog } from "@/components/budget/ExportPreviewDialog";
 import { calculateBudgetTotal } from "@/lib/supabase-helpers";
@@ -691,34 +692,15 @@ export default function BudgetInternalDetail() {
   const totalDisplay = budget.manual_total ?? budgetTotal ?? 0;
 
   // Tempos do negócio: total desde a criação e tempo na etapa atual.
-  // Regra: o cronômetro PARA quando entra em "contrato_fechado", "lost" ou "archived".
-  const FROZEN_STATUSES = new Set(["contrato_fechado", "lost", "archived"]);
-  const isFrozen = FROZEN_STATUSES.has(budget.internal_status);
-  // Marco em que o negócio "congelou" (último status_change que entrou em estado final)
-  // Marco em que o negócio "congelou": PRIMEIRO status_change que entrou em estado final.
-  // Isso garante que o cronômetro não conta tempo após o evento original de fechamento/perda,
-  // mesmo que haja eventos posteriores (re-status, correções, etc.).
-  const frozenEvent = isFrozen
-    ? events.find(
-        (e) => e.event_type === "status_change" && e.to_status && FROZEN_STATUSES.has(e.to_status),
-      )
-    : null;
-  const referenceNow = frozenEvent ? new Date(frozenEvent.created_at) : new Date();
-  // Início da etapa atual: último status_change cujo to_status === internal_status; senão, criação.
-  const currentStageStartEvent = [...events].reverse().find(
-    (e) => e.event_type === "status_change" && e.to_status === budget.internal_status,
-  );
-  const currentStageStart = currentStageStartEvent
-    ? new Date(currentStageStartEvent.created_at)
-    : budget.created_at
-    ? new Date(budget.created_at)
-    : null;
-  const totalDaysOpen = budget.created_at
-    ? Math.max(0, differenceInCalendarDays(referenceNow, new Date(budget.created_at)))
-    : null;
-  const daysInStage = currentStageStart
-    ? Math.max(0, differenceInCalendarDays(referenceNow, currentStageStart))
-    : null;
+  // Regra: o cronômetro PARA no PRIMEIRO evento que entra em "contrato_fechado", "lost" ou "archived".
+  // Lógica centralizada e testada em src/lib/budget-time-in-stage.ts.
+  const { isFrozen, frozenAt: frozenAtDate, currentStageStart, totalDaysOpen, daysInStage } =
+    computeBudgetTime({
+      internalStatus: budget.internal_status,
+      createdAt: budget.created_at,
+      events,
+    });
+  const frozenEvent = frozenAtDate ? { created_at: frozenAtDate.toISOString() } : null;
   const formatOpenedFor = (n: number) =>
     n === 0 ? "Aberto hoje" : n === 1 ? "Aberto há 1 dia" : `Aberto há ${n} dias`;
   const formatStageFor = (n: number) =>
@@ -938,33 +920,51 @@ export default function BudgetInternalDetail() {
                   value={budget.prazo_dias_uteis ?? null}
                   onChange={savePrazoDiasUteis}
                 />
-                {totalDaysOpen !== null && (
-                  <span
-                    className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
-                    title={
-                      isFrozen
-                        ? `Tempo total até ${frozenEvent ? format(new Date(frozenEvent.created_at), "dd/MM/yyyy", { locale: ptBR }) : "encerramento"} (cronômetro pausado)`
-                        : "Tempo total desde a criação do negócio"
-                    }
-                  >
-                    <Clock className="h-3 w-3" />
-                    {formatOpenedFor(totalDaysOpen)}
-                    {isFrozen && " (pausado)"}
-                  </span>
-                )}
-                {daysInStage !== null && (
-                  <span
-                    className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
-                    title={
-                      isFrozen
-                        ? "Tempo na etapa final (cronômetro pausado)"
-                        : `Tempo na etapa "${status.label}"`
-                    }
-                  >
-                    <Clock className="h-3 w-3" />
-                    {formatStageFor(daysInStage)}
-                  </span>
-                )}
+                {(() => {
+                  const fmtDateTime = (d: Date) => format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+                  const createdLine = budget.created_at
+                    ? `Criado em ${fmtDateTime(new Date(budget.created_at))}`
+                    : null;
+                  const stageStartLine = currentStageStart
+                    ? `Etapa "${status.label}" iniciada em ${fmtDateTime(currentStageStart)}`
+                    : null;
+                  const frozenLine = frozenEvent
+                    ? `Cronômetro pausado em ${fmtDateTime(new Date(frozenEvent.created_at))} (entrada em "${status.label}")`
+                    : null;
+                  const totalTitle = [
+                    "Tempo total desde a criação do negócio.",
+                    createdLine,
+                    frozenLine,
+                  ].filter(Boolean).join("\n");
+                  const stageTitle = [
+                    `Tempo na etapa atual ("${status.label}").`,
+                    stageStartLine,
+                    frozenLine,
+                  ].filter(Boolean).join("\n");
+                  return (
+                    <>
+                      {totalDaysOpen !== null && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
+                          title={totalTitle}
+                        >
+                          <Clock className="h-3 w-3" />
+                          {formatOpenedFor(totalDaysOpen)}
+                          {isFrozen && " (pausado)"}
+                        </span>
+                      )}
+                      {daysInStage !== null && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-border text-muted-foreground uppercase tracking-wide"
+                          title={stageTitle}
+                        >
+                          <Clock className="h-3 w-3" />
+                          {formatStageFor(daysInStage)}
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
               <h1 className="text-xl sm:text-2xl font-display font-semibold tracking-tight leading-tight text-foreground">
                 {composeBudgetTitle(budget.project_name, budget.client_name)}
