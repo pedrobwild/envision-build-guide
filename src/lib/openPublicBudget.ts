@@ -15,6 +15,9 @@ import { getPublicBudgetUrl } from "./getPublicUrl";
 import { toast } from "sonner";
 import { OpenBudgetTrace, type OpenBudgetDiagnosis } from "./openPublicBudgetTelemetry";
 import { getOpenMode, setOpenMode, type OpenMode } from "./openMode";
+import { openDiagnosisDialog } from "@/components/admin/OpenBudgetDiagnosisDialog";
+import { OpenBudgetTrace, type OpenBudgetDiagnosis } from "./openPublicBudgetTelemetry";
+import { getOpenMode, setOpenMode, type OpenMode } from "./openMode";
 
 interface BudgetRefForPublicOpen {
   id: string;
