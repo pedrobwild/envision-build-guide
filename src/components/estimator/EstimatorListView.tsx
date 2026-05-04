@@ -43,7 +43,6 @@ import {
   INTERNAL_STATUSES,
   PRIORITIES,
   STATUS_GROUPS,
-  VALID_INTERNAL_STATUSES,
   type InternalStatus,
   type Priority,
 } from "@/lib/role-constants";
@@ -51,7 +50,21 @@ import { format, formatDistanceToNow, differenceInCalendarDays, isToday, isPast 
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
-const STATUS_OPTIONS = VALID_INTERNAL_STATUSES.map((s) => ({
+// Status disponíveis para o orçamentista durante a elaboração.
+// Termina em "delivered_to_sales" — a transição para "sent_to_client" é exclusiva do comercial.
+const ELABORATION_STATUS_OPTIONS_VALUES: InternalStatus[] = [
+  "novo",
+  "requested",
+  "triage",
+  "assigned",
+  "in_progress",
+  "waiting_info",
+  "ready_for_review",
+  "revision_requested",
+  "delivered_to_sales",
+];
+
+const STATUS_OPTIONS = ELABORATION_STATUS_OPTIONS_VALUES.map((s) => ({
   value: s,
   label: `${INTERNAL_STATUSES[s].icon} ${INTERNAL_STATUSES[s].label}`,
 }));
