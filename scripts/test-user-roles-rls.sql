@@ -25,10 +25,6 @@
 
 \set ON_ERROR_STOP on
 
--- Real fixture user ids
-\set ADMIN_UID    'd9ed2bd8-da00-43e0-9a45-1f6badabc09f'
-\set COMERCIAL_UID '21bcf5e9-5728-4ceb-80df-fb1846168307'
-\set ORC_UID       '62ade0c3-15fb-4e23-9c6d-6aa88d807573'
 
 -- ---------------------------------------------------------------------------
 -- 1) Inventory of surviving policies on user_roles
