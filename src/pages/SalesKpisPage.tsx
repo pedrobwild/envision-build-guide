@@ -563,7 +563,8 @@ const SEGMENT_TABS: { value: SegmentDimension; label: string; description: strin
 
 function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
   const [dim, setDim] = useState<SegmentDimension>("metragem");
-  const { data, isLoading, isError, error, refetch } = useSalesBySegment(dim, period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useSalesBySegment(dim, period, ownerId);
+  const refreshing = !isLoading && isFetching;
   const rows = data ?? [];
 
   return (
