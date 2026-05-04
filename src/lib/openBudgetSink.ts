@@ -166,21 +166,14 @@ async function sendViaClient(row: Record<string, unknown>): Promise<void> {
 
 async function send(diag: OpenBudgetDiagnosis): Promise<void> {
   if (shouldDedup(diag)) return;
-  const correlationId = getCorrelationId();
-  const eventId = uuid();
-  const row = buildRow(diag, correlationId, eventId);
-
-  // Anota o correlation/event_id no diagnóstico exposto em window.__openBudgetDiag
-  // — facilita o suporte ("me passe o ID que aparece no console").
-  if (typeof window !== "undefined") {
-    const w = window as unknown as {
-      __openBudgetDiag?: OpenBudgetDiagnosis & { correlationId?: string; eventId?: string };
-    };
-    if (w.__openBudgetDiag) {
-      w.__openBudgetDiag.correlationId = correlationId;
-      w.__openBudgetDiag.eventId = eventId;
-    }
-  }
+  // O diagnóstico já vem com correlationId (UUID por tentativa) e sessionId
+  // (UUID persistente por aba) gerados no construtor do OpenBudgetTrace.
+  // Reutilizamos esses IDs em vez de gerar novos: o ID que o usuário copia do
+  // toast é exatamente o `event_id` no banco — rastreio ponta-a-ponta sem
+  // necessidade de juntar dois UUIDs.
+  const eventId = diag.correlationId;
+  const sessionId = diag.sessionId || getCorrelationId();
+  const row = buildRow(diag, sessionId, eventId);
 
   if (sendViaBeacon(row)) return;
   if (await sendViaFetch(row)) return;
