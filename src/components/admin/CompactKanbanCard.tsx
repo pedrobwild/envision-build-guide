@@ -366,7 +366,11 @@ function CompactKanbanCardImpl({
               <RotBadge daysInStage={daysInStage} />
             )}
             <VersionBadge versionNumber={versionNumber} isCurrent={isCurrentVersion} />
-            <PublicLinkStatusBadge publicId={publicId} status={budgetStatus} />
+            <PublicLinkStatusBadge
+              publicId={publicId}
+              status={budgetStatus}
+              onRepublish={onRepublishPublicLink}
+            />
             {typeof siblingCount === "number" && siblingCount > 0 && (
               <button
                 type="button"
