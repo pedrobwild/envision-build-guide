@@ -3354,6 +3354,18 @@ export type Database = {
         Returns: string
       }
       generate_budget_public_id: { Args: never; Returns: string }
+      get_budget_time_markers: {
+        Args: { p_budget_id: string }
+        Returns: {
+          budget_id: string
+          created_at: string
+          current_stage_start: string
+          frozen_at: string
+          internal_status: string
+          is_frozen: boolean
+          reference_at: string
+        }[]
+      }
       get_budget_totals: {
         Args: never
         Returns: {
