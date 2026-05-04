@@ -60,6 +60,7 @@ export function BudgetHeaderClientInfo({
     null;
 
   const c = client;
+  // Imóvel: prioriza property selecionado, depois client_properties primário, depois colunas legadas no client, por fim snapshot do orçamento.
   const propertyAddress = property?.address || c?.property_address || null;
   const propertyAddressComplement = property?.address_complement || c?.property_address_complement || null;
   const propertyBairro = property?.bairro || c?.property_bairro || fallback.bairro || null;
@@ -73,6 +74,15 @@ export function BudgetHeaderClientInfo({
 
   const fullAddress = [propertyAddress, propertyAddressComplement].filter(Boolean).join(" — ") || null;
   const cityState = [propertyCity, propertyState].filter(Boolean).join(" / ") || null;
+
+  // Endereço residencial (independente do imóvel) — mesma lógica do ClientModulePanel.
+  const residentialAddress = [c?.address, c?.address_complement].filter(Boolean).join(" — ") || null;
+  const residentialCityState = [c?.city, c?.state].filter(Boolean).join(" / ") || null;
+  const hasResidential = Boolean(c?.address || c?.bairro || c?.city || c?.zip_code);
+
+  // Fonte com label legível, igual ao painel Cliente.
+  const sourceValue = c?.source ? (CLIENT_SOURCES[c.source as keyof typeof CLIENT_SOURCES] ?? c.source) : fallback.lead_source;
+
 
   return (
     <div className="mt-4 rounded-lg border border-border/60 bg-muted/20">
