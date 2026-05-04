@@ -341,6 +341,8 @@ function OverviewBlock({ period, ownerId }: { period: SalesPeriod; ownerId: stri
         loading={isLoading}
       />
     </div>
+      </Refreshable>
+    </div>
   );
 }
 
