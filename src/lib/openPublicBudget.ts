@@ -143,10 +143,10 @@ export async function openPublicBudget(
   const trace = new OpenBudgetTrace("by_budget_ref", budget.public_id, budget.id, budget.status);
   trace.step("input", { budget_id: budget.id, status: budget.status, version_group_id: budget.version_group_id ?? null });
 
-  // 1) Já publicado: abre direto (síncrono, sem risco de popup blocker).
+  // 1) Já publicado: abre respeitando o modo do usuário (síncrono).
   if (budget.public_id && PUBLISHABLE.has(budget.status ?? "")) {
-    const win = window.open(getPublicBudgetUrl(budget.public_id), "_blank", "noopener,noreferrer");
-    trace.setPopupBlocked(!win);
+    const opener = openWithMode(trace);
+    opener.navigate(getPublicBudgetUrl(budget.public_id));
     trace.setResolved(budget.public_id, "direct");
     trace.commit("opened_direct");
     return;
