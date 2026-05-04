@@ -40,7 +40,7 @@ function formatBRL(n: number | null | undefined) {
   return n.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
   });
 }
 
