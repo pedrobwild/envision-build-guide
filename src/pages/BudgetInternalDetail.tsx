@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom"
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
 import { CrossPipelineStrip } from "@/components/budget/CrossPipelineStrip";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
