@@ -695,9 +695,12 @@ export default function BudgetInternalDetail() {
   const FROZEN_STATUSES = new Set(["contrato_fechado", "lost", "archived"]);
   const isFrozen = FROZEN_STATUSES.has(budget.internal_status);
   // Marco em que o negócio "congelou" (último status_change que entrou em estado final)
+  // Marco em que o negócio "congelou": PRIMEIRO status_change que entrou em estado final.
+  // Isso garante que o cronômetro não conta tempo após o evento original de fechamento/perda,
+  // mesmo que haja eventos posteriores (re-status, correções, etc.).
   const frozenEvent = isFrozen
-    ? [...events].reverse().find(
-        (e) => e.event_type === "status_change" && e.to_status && FROZEN_STATUSES.has(e.to_status)
+    ? events.find(
+        (e) => e.event_type === "status_change" && e.to_status && FROZEN_STATUSES.has(e.to_status),
       )
     : null;
   const referenceNow = frozenEvent ? new Date(frozenEvent.created_at) : new Date();
