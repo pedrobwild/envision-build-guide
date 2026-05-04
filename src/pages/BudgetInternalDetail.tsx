@@ -934,6 +934,7 @@ export default function BudgetInternalDetail() {
                   )}
                   {budget.client_phone && (() => {
                     const waUrl = buildWhatsappUrl(budget.client_phone);
+                    const phoneDisplay = formatPhoneBR(budget.client_phone);
                     return (
                       <>
                         <ContactChip
