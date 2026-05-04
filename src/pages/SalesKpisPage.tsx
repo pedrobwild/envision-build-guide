@@ -601,6 +601,7 @@ function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: strin
               ) : rows.length === 0 ? (
                 <EmptyState message="Sem dados nesta dimensão." />
               ) : (
+                <Refreshable refreshing={refreshing}>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -635,6 +636,7 @@ function SegmentBlock({ period, ownerId }: { period: SalesPeriod; ownerId: strin
                     </TableBody>
                   </Table>
                 </div>
+                </Refreshable>
               )}
             </TabsContent>
           ))}
