@@ -507,6 +507,7 @@ function KanbanColumn({
   leadScoreMap,
   onNextAction,
   onOpenHistory,
+  onRepublishPublicLink,
 }: {
   column: (typeof KANBAN_COLUMNS)[number];
   budgets: BudgetRow[];
@@ -520,6 +521,7 @@ function KanbanColumn({
   leadScoreMap?: Map<string, LeadScoreResult>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   onOpenHistory?: (budget: BudgetRow) => void;
+  onRepublishPublicLink?: (budget: BudgetRow) => void | Promise<void>;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: column.id, disabled: column.locked });
   const Icon = column.icon;
