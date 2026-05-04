@@ -122,6 +122,7 @@ function CompactKanbanCardImpl({
   estimatorName,
   isSynced,
   publicId,
+  budgetStatus,
   createdAt,
   updatedAt,
   mode = "commercial",
