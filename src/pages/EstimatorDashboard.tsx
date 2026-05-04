@@ -58,6 +58,7 @@ import { NewRequestsSection } from "@/components/estimator/NewRequestsSection";
 import { NotificationBell } from "@/components/estimator/NotificationBell";
 import { BulkActionsBar } from "@/components/estimator/BulkActionsBar";
 import { logRevisionRequestEvent } from "@/lib/version-audit";
+import { dedupeBudgetsByVersionGroup } from "@/lib/dedupe-versions";
 
 
 const PENDING_STATUSES: string[] = ["requested", "novo"];
@@ -136,7 +137,11 @@ export default function EstimatorDashboard() {
       supabase.from("user_roles").select("user_id, role"),
     ]);
 
-    if (budgetsRes.data) setBudgets(budgetsRes.data as BudgetRow[]);
+    if (budgetsRes.data) {
+      // Dedup defensivo: a base pode ter mais de uma is_current_version=true
+      // por grupo (bug histórico de clonagem). Mantemos só 1 card por grupo.
+      setBudgets(dedupeBudgetsByVersionGroup(budgetsRes.data as BudgetRow[]));
+    }
     if (profilesRes.data) setProfiles(profilesRes.data as ProfileRow[]);
     if (rolesRes.data) setUserRoles(rolesRes.data as RoleRow[]);
     setLoading(false);
