@@ -177,7 +177,7 @@ export default function NewBudgetRequest() {
     (async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, is_active")
+        .select("id, name, is_active, hubspot_contact_url")
         .eq("id", prefillClientId)
         .maybeSingle();
       if (cancelled) return;
@@ -188,6 +188,8 @@ export default function NewBudgetRequest() {
         return;
       }
       setLinkedClientValidated(true);
+      const hub = (data as { hubspot_contact_url?: string | null }).hubspot_contact_url;
+      if (hub) setHubspotDealUrl((prev) => prev || hub);
     })();
     return () => { cancelled = true; };
   }, [prefillClientId]);
