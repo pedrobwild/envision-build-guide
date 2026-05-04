@@ -66,6 +66,7 @@ describe("openPublicBudgetByPublicId — botão Visualizar do card comercial", (
 
   beforeEach(() => {
     rpcMock.mockReset();
+    fromResponses.length = 0;
     openCalls = [];
     stubWin = {
       closed: false,
