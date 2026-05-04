@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useClient } from "@/hooks/useClients";
+import { CLIENT_SOURCES } from "@/hooks/useClients";
 import { useClientProperties } from "@/hooks/useClientProperties";
-import { ChevronDown, User, Mail, Phone, MapPin, Building2, Ruler, Home, Tag, Image as ImageIcon, ExternalLink, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  ChevronDown, User, Mail, Phone, MapPin, Building2, Ruler, Home, Tag,
+  Image as ImageIcon, ExternalLink, Calendar, FileText, Globe, Heart, Briefcase, Users as UsersIcon,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -55,6 +60,7 @@ export function BudgetHeaderClientInfo({
     null;
 
   const c = client;
+  // Imóvel: prioriza property selecionado, depois client_properties primário, depois colunas legadas no client, por fim snapshot do orçamento.
   const propertyAddress = property?.address || c?.property_address || null;
   const propertyAddressComplement = property?.address_complement || c?.property_address_complement || null;
   const propertyBairro = property?.bairro || c?.property_bairro || fallback.bairro || null;
@@ -68,6 +74,15 @@ export function BudgetHeaderClientInfo({
 
   const fullAddress = [propertyAddress, propertyAddressComplement].filter(Boolean).join(" — ") || null;
   const cityState = [propertyCity, propertyState].filter(Boolean).join(" / ") || null;
+
+  // Endereço residencial (independente do imóvel) — mesma lógica do ClientModulePanel.
+  const residentialAddress = [c?.address, c?.address_complement].filter(Boolean).join(" — ") || null;
+  const residentialCityState = [c?.city, c?.state].filter(Boolean).join(" / ") || null;
+  const hasResidential = Boolean(c?.address || c?.bairro || c?.city || c?.zip_code);
+
+  // Fonte com label legível, igual ao painel Cliente.
+  const sourceValue = c?.source ? (CLIENT_SOURCES[c.source as keyof typeof CLIENT_SOURCES] ?? c.source) : fallback.lead_source;
+
 
   return (
     <div className="mt-4 rounded-lg border border-border/60 bg-muted/20">
@@ -93,11 +108,20 @@ export function BudgetHeaderClientInfo({
           {/* Contato */}
           <Section title="Contato">
             <Row icon={<User className="h-3.5 w-3.5" />} label="Nome" value={c?.name || fallback.client_name} />
+            <Row icon={<Globe className="h-3.5 w-3.5" />} label="Nacionalidade" value={c?.nationality} />
+            <Row icon={<Heart className="h-3.5 w-3.5" />} label="Estado civil" value={c?.marital_status} />
+            <Row icon={<Briefcase className="h-3.5 w-3.5" />} label="Profissão" value={c?.profession} />
             <Row icon={<Mail className="h-3.5 w-3.5" />} label="E-mail" value={c?.email || fallback.lead_email} />
             <Row icon={<Phone className="h-3.5 w-3.5" />} label="Telefone" value={c?.phone || fallback.client_phone} />
+            <Row
+              icon={<FileText className="h-3.5 w-3.5" />}
+              label={c?.document_type === "cnpj" ? "CNPJ" : "CPF / CNPJ"}
+              value={c?.document}
+            />
+            <Row icon={<FileText className="h-3.5 w-3.5" />} label="RG" value={c?.rg} />
           </Section>
 
-          {/* Imóvel */}
+          {/* Imóvel (+ endereço residencial quando existir) */}
           <Section title="Imóvel">
             <Row icon={<Home className="h-3.5 w-3.5" />} label="Endereço" value={fullAddress} />
             <Row icon={<MapPin className="h-3.5 w-3.5" />} label="Bairro" value={propertyBairro} />
@@ -119,11 +143,36 @@ export function BudgetHeaderClientInfo({
                 <ExternalLink className="h-3 w-3" />
               </a>
             )}
+            {hasResidential && (
+              <div className="pt-2 mt-1 border-t border-border/40 space-y-2">
+                <p className="text-[10px] font-display font-semibold text-muted-foreground/80 uppercase tracking-wider">
+                  Endereço residencial
+                </p>
+                <Row icon={<Home className="h-3.5 w-3.5" />} label="Endereço" value={residentialAddress} />
+                <Row icon={<MapPin className="h-3.5 w-3.5" />} label="Bairro" value={c?.bairro} />
+                <Row icon={<MapPin className="h-3.5 w-3.5" />} label="Cidade / UF" value={residentialCityState} />
+                <Row icon={<MapPin className="h-3.5 w-3.5" />} label="CEP" value={c?.zip_code} />
+              </div>
+            )}
           </Section>
 
           {/* Relacionamento + Equipe & Datas */}
           <Section title="Relacionamento e equipe">
-            <Row icon={<Tag className="h-3.5 w-3.5" />} label="Fonte" value={c?.source || fallback.lead_source} />
+            <Row icon={<Tag className="h-3.5 w-3.5" />} label="Fonte" value={sourceValue} />
+            <Row icon={<UsersIcon className="h-3.5 w-3.5" />} label="Indicado por" value={c?.referrer_name} />
+            {c?.tags && c.tags.length > 0 && (
+              <div className="flex items-start gap-2">
+                <Tag className="h-3.5 w-3.5 text-muted-foreground/60 mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-body">Tags</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {c.tags.map((t) => (
+                      <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
             <Row icon={<User className="h-3.5 w-3.5" />} label="Comercial" value={commercialOwnerName} />
             <Row icon={<User className="h-3.5 w-3.5" />} label="Orçamentista" value={estimatorOwnerName} />
             <Row icon={<User className="h-3.5 w-3.5" />} label="Criado por" value={createdByName} />
