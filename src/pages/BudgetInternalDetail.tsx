@@ -701,13 +701,16 @@ export default function BudgetInternalDetail() {
 
   // Tempos do negócio: total desde a criação e tempo na etapa atual.
   // Regra: o cronômetro PARA no PRIMEIRO evento que entra em "contrato_fechado", "lost" ou "archived".
-  // Lógica centralizada e testada em src/lib/budget-time-in-stage.ts.
+  // Fonte de verdade: RPC `get_budget_time_markers` (backend). Quando os marcos
+  // ainda não chegaram, caímos no cálculo local sobre `events` para evitar UI vazia.
   const { isFrozen, frozenAt: frozenAtDate, currentStageStart, totalDaysOpen, daysInStage } =
-    computeBudgetTime({
-      internalStatus: budget.internal_status,
-      createdAt: budget.created_at,
-      events,
-    });
+    timeMarkers
+      ? budgetTimeFromMarkers(timeMarkers)
+      : computeBudgetTime({
+          internalStatus: budget.internal_status,
+          createdAt: budget.created_at,
+          events,
+        });
   const frozenEvent = frozenAtDate ? { created_at: frozenAtDate.toISOString() } : null;
   const formatOpenedFor = (n: number) =>
     n === 0 ? "Aberto hoje" : n === 1 ? "Aberto há 1 dia" : `Aberto há ${n} dias`;
