@@ -14,6 +14,7 @@ import logoDark from "@/assets/logo-bwild-dark.png";
 import { RoleRedirect } from "@/components/RoleRedirect";
 import { RoleGuard } from "@/components/RoleGuard";
 import { ConfirmProvider } from "@/hooks/useConfirm";
+import { OpenBudgetDiagnosisDialog } from "@/components/admin/OpenBudgetDiagnosisDialog";
 
 const Login = lazy(() => import("./pages/Login"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -101,6 +102,7 @@ const App = () => (
           <ConfirmProvider>
             <Toaster />
             <Sonner />
+            <OpenBudgetDiagnosisDialog />
             <BrowserRouter>
               <ChunkErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
