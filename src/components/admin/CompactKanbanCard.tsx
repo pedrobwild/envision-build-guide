@@ -65,6 +65,8 @@ interface CompactKanbanCardProps {
   onOpenHistory?: () => void;
   /** Slot opcional renderizado no canto superior direito (ex.: menu de ações com excluir). */
   actionsSlot?: React.ReactNode;
+  /** Handler para regenerar/publicar o link público quando o badge estiver em "Rascunho". */
+  onRepublishPublicLink?: () => void | Promise<void>;
 }
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
