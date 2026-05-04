@@ -14,6 +14,7 @@ import { SnapshotComparisonPanel } from "@/components/dashboard/SnapshotComparis
 import { IntelligentAlertsPanel } from "@/components/dashboard/IntelligentAlertsPanel";
 import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
 import { AiAnalysisPanel } from "@/components/ai-analysis/AiAnalysisPanel";
+import { AiAnalysisPanelV2 } from "@/components/ai-analysis/AiAnalysisPanelV2";
 import { computeDashboardMetrics, OPERATIONS_START_DATE, type DateRange } from "@/hooks/useDashboardMetrics";
 import { useOperationsInsights } from "@/hooks/useOperationsInsights";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,6 +42,13 @@ export default function AnalisesPage() {
     from: subDays(new Date(), 30),
     to: new Date(),
   });
+
+  // Feature flag por query string: ?analysis=v2 ativa o motor novo.
+  // Sem dependência de react-router para manter o componente isolado.
+  const useV2Analysis = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("analysis") === "v2";
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -131,17 +139,28 @@ export default function AnalisesPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* IA — análise unificada com NL e insights ranqueados */}
+          {/* IA — análise unificada com NL e insights ranqueados.
+              ?analysis=v2 ativa o motor genérico determinístico em
+              src/lib/data-analysis (com IA só para interpretação). */}
           <TabsContent value="ia" className="space-y-6 mt-6">
             <motion.div {...anim(0)}>
-              <AiAnalysisPanel
-                budgets={filteredBudgets}
-                profiles={profiles}
-                range={dateRange}
-                loading={loading}
-                role={isAdmin ? "admin" : undefined}
-                screen="/admin/analises"
-              />
+              {useV2Analysis ? (
+                <AiAnalysisPanelV2
+                  budgets={filteredBudgets}
+                  profiles={profiles}
+                  range={dateRange}
+                  loading={loading}
+                />
+              ) : (
+                <AiAnalysisPanel
+                  budgets={filteredBudgets}
+                  profiles={profiles}
+                  range={dateRange}
+                  loading={loading}
+                  role={isAdmin ? "admin" : undefined}
+                  screen="/admin/analises"
+                />
+              )}
             </motion.div>
           </TabsContent>
 
