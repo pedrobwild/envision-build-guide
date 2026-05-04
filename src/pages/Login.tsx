@@ -195,11 +195,11 @@ export default function Login() {
       />
 
       {/* Form – centered on mobile, left on desktop */}
-      <div className="flex flex-col justify-center items-center md:items-start w-full md:max-w-lg px-5 sm:px-12 md:px-16 py-10 sm:py-16 mx-auto md:mx-0">
+      <div className="flex flex-col items-center md:items-start w-full md:max-w-lg px-5 sm:px-12 md:px-16 pt-8 sm:pt-12 pb-10 sm:pb-16 mx-auto md:mx-0">
         <img
           src={bwildEngineLogo}
           alt="Bwild Engine"
-          className="w-40 sm:w-48 md:w-56 h-auto object-contain mb-8 sm:mb-10 mx-auto md:mx-0"
+          className="w-64 sm:w-80 md:w-96 h-auto object-contain mb-6 sm:mb-8 mx-auto"
         />
 
         {successMessage && (
