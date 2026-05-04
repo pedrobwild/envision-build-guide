@@ -210,6 +210,20 @@ export default function NewBudgetRequest() {
   const [commercialOwnerId, setCommercialOwnerId] = useState("");
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
   const [hubspotDealUrl, setHubspotDealUrl] = useState("");
+  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
+
+  // Auto-seleciona o imóvel primário quando o cliente vem do CRM e ainda não houve escolha
+  const autoPickedPropertyRef = useRef(false);
+  useEffect(() => {
+    if (autoPickedPropertyRef.current) return;
+    if (!linkedClientId || clientProperties.length === 0) return;
+    if (selectedPropertyId !== "__new__") return;
+    const primary = clientProperties.find((p) => p.is_primary) ?? clientProperties[0];
+    if (primary) {
+      setSelectedPropertyId(primary.id);
+      autoPickedPropertyRef.current = true;
+    }
+  }, [linkedClientId, clientProperties, selectedPropertyId]);
 
   // Quando um imóvel existente é selecionado, auto-preenche os campos
   useEffect(() => {
@@ -222,6 +236,7 @@ export default function NewBudgetRequest() {
     setMetragemRaw((p.metragem ?? "").replace(/m²?$/i, "").trim());
     setPropertyType(p.property_type ?? "");
     setLocationType(p.location_type ?? "");
+    setFloorPlanUrl(p.floor_plan_url ?? null);
   }, [selectedPropertyId, clientProperties]);
 
   // Import mode fields
