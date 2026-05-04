@@ -264,6 +264,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { profile } = useUserProfile();
   const { signOut, user } = useAuth();
+  const [openMode, setOpenModePref] = useOpenMode();
 
   const userRoles = profile?.roles ?? [];
 
