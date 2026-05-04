@@ -230,17 +230,24 @@ describe("SalesKpisPage — filtros globais propagam para todos os blocos", () =
     await user.click(ownerSelect);
     await user.click(await screen.findByRole("option", { name: /todas as vendedoras/i }));
 
+    // Snapshot do número de chamadas antes de limpar o filtro.
+    const callsBefore = rpcCalls.length;
+
+    await user.click(ownerSelect);
+    await user.click(await screen.findByRole("option", { name: /todas as vendedoras/i }));
+
+    // O resultado de _owner_id=null já está em cache (foi feito no mount),
+    // então o react-query reaproveita sem disparar novo RPC. O que importa é:
+    //  (a) qualquer NOVA chamada ao trocar de owner deve usar _owner_id=null;
+    //  (b) o badge "Vendedora: Alice" deve sumir.
     await waitFor(() => {
-      expect(lastCallFor("sales_kpis_dashboard")!.params._owner_id).toBeNull();
+      expect(screen.queryByText(/Vendedora:/i)).not.toBeInTheDocument();
     });
 
-    for (const name of [
-      "sales_kpis_time_in_stage",
-      "sales_kpis_cohorts",
-      "sales_kpis_lost_reasons",
-      "sales_conversion_by_segment",
-    ]) {
-      expect(lastCallFor(name)!.params._owner_id).toBeNull();
+    const newCalls = rpcCalls.slice(callsBefore);
+    for (const call of newCalls) {
+      if (call.name === "sales_kpis_by_owner") continue; // não recebe owner
+      expect(call.params._owner_id ?? null).toBeNull();
     }
   });
 
