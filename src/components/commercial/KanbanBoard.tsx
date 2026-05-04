@@ -1043,6 +1043,7 @@ export function KanbanBoard({ budgets, onStatusChange, onCardClick, getProfileNa
             nextActionMap={nextActionMap}
             leadScoreMap={leadScoreMap}
             onNextAction={onNextAction}
+            onRepublishPublicLink={onRepublishPublicLink}
           />
         ))}
       </div>
