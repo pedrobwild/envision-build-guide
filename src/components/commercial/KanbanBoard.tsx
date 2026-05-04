@@ -445,6 +445,7 @@ function SubSectionGroup({
                   isSynced={syncedBudgetIds.has(b.id)}
                   publicId={b.public_id}
                   budgetStatus={b.status}
+                  createdAt={b.created_at}
                   updatedAt={b.updated_at}
                   mode="commercial"
                   daysInStage={pipelineMeta?.get(b.id)?.days_in_stage ?? null}
