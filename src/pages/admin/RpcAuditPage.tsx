@@ -93,7 +93,8 @@ export default function RpcAuditPage() {
       if (error) {
         out.push({ name: rpc.name, ok: false, error: error.message, ms });
       } else {
-        const rows = Array.isArray(data) ? data.length : data ? 1 : 0;
+        const d = data as unknown;
+        const rows = Array.isArray(d) ? d.length : d ? 1 : 0;
         out.push({ name: rpc.name, ok: true, rows, ms });
       }
     }
