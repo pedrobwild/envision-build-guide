@@ -951,31 +951,40 @@ export default function BudgetInternalDetail() {
                 />
                 {(() => {
                   const fmtDateTime = (d: Date) => format(d, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-                  const createdLine = budget.created_at
-                    ? `Criado em ${fmtDateTime(new Date(budget.created_at))}`
+                  // Quando os marcos vêm do backend, usamos exatamente os
+                  // timestamps da RPC `get_budget_time_markers` para evitar
+                  // divergência entre tooltip e cálculo. No fallback local,
+                  // caímos em `budget.created_at` / `currentStageStart` / `frozenEvent`.
+                  const sourceLabel = timeMarkers
+                    ? "Fonte: servidor (get_budget_time_markers)"
+                    : timeMarkersError
+                    ? `Fonte: cálculo local — falha na RPC (${timeMarkersError})`
+                    : "Fonte: cálculo local (sincronizando com o servidor…)";
+                  const createdAtIso = timeMarkers?.created_at ?? budget.created_at;
+                  const stageStartIso = timeMarkers?.current_stage_start
+                    ?? (currentStageStart ? currentStageStart.toISOString() : null);
+                  const frozenAtIso = timeMarkers?.frozen_at
+                    ?? (frozenEvent ? frozenEvent.created_at : null);
+                  const createdLine = createdAtIso
+                    ? `Criado em ${fmtDateTime(new Date(createdAtIso))}`
                     : null;
-                  const stageStartLine = currentStageStart
-                    ? `Etapa "${status.label}" iniciada em ${fmtDateTime(currentStageStart)}`
+                  const stageStartLine = stageStartIso
+                    ? `Etapa "${status.label}" iniciada em ${fmtDateTime(new Date(stageStartIso))}`
                     : null;
-                  const frozenLine = frozenEvent
-                    ? `Cronômetro pausado em ${fmtDateTime(new Date(frozenEvent.created_at))} (entrada em "${status.label}")`
-                    : null;
-                  const fallbackLine = timeMarkersError
-                    ? `Cálculo local (não foi possível sincronizar com o servidor: ${timeMarkersError})`
-                    : timeMarkersFallback
-                    ? "Cálculo local (sincronizando com o servidor…)"
+                  const frozenLine = frozenAtIso
+                    ? `Cronômetro pausado em ${fmtDateTime(new Date(frozenAtIso))} (entrada em "${status.label}")`
                     : null;
                   const totalTitle = [
                     "Tempo total desde a criação do negócio.",
                     createdLine,
                     frozenLine,
-                    fallbackLine,
+                    sourceLabel,
                   ].filter(Boolean).join("\n");
                   const stageTitle = [
                     `Tempo na etapa atual ("${status.label}").`,
                     stageStartLine,
                     frozenLine,
-                    fallbackLine,
+                    sourceLabel,
                   ].filter(Boolean).join("\n");
                   return (
                     <>
