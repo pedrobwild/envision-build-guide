@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import type { BudgetRow, EditorSection } from "@/types/budget-common";
+import { logger } from "@/lib/logger";
 import { TemplateSelectorDialog } from "@/components/editor/TemplateSelectorDialog";
 import { sendBudgetPublishedNotification } from "@/lib/digisac-notify";
 import { enqueueOfflineSave, flushOfflineQueue, hasPending } from "@/lib/offline-save-queue";
@@ -362,6 +363,50 @@ export default function BudgetEditorV2() {
     }
     if (budgetData) setBudget(budgetData);
   }, [budgetData, budgetQueryError, navigate]);
+
+  // Backfill: herda planta, HubSpot e dados do imóvel/cliente quando o orçamento
+  // foi criado antes da herança automática e os campos ainda estão vazios.
+  // Atualiza local + persiste em background. Não sobrescreve valores existentes.
+  const backfilledRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!budget?.id || backfilledRef.current === budget.id) return;
+    const propertyId = (budget as { property_id?: string | null }).property_id;
+    const clientId = (budget as { client_id?: string | null }).client_id;
+    if (!propertyId && !clientId) return;
+    backfilledRef.current = budget.id;
+    (async () => {
+      const patch: Record<string, unknown> = {};
+      if (propertyId) {
+        const { data: prop } = await supabase
+          .from("client_properties")
+          .select("empreendimento, bairro, city, metragem, property_type, location_type, floor_plan_url")
+          .eq("id", propertyId)
+          .maybeSingle();
+        if (prop) {
+          if (!budget.condominio && prop.empreendimento) patch.condominio = prop.empreendimento;
+          if (!budget.bairro && prop.bairro) patch.bairro = prop.bairro;
+          if (!budget.city && prop.city) patch.city = prop.city;
+          if (!budget.metragem && prop.metragem) patch.metragem = prop.metragem;
+          if (!budget.property_type && prop.property_type) patch.property_type = prop.property_type;
+          if (!budget.location_type && prop.location_type) patch.location_type = prop.location_type;
+          if (!budget.floor_plan_url && prop.floor_plan_url) patch.floor_plan_url = prop.floor_plan_url;
+        }
+      }
+      if (clientId && !budget.hubspot_deal_url) {
+        const { data: cli } = await supabase
+          .from("clients")
+          .select("hubspot_contact_url")
+          .eq("id", clientId)
+          .maybeSingle();
+        const hub = (cli as { hubspot_contact_url?: string | null } | null)?.hubspot_contact_url;
+        if (hub) patch.hubspot_deal_url = hub;
+      }
+      if (Object.keys(patch).length === 0) return;
+      setBudget((prev) => (prev ? { ...prev, ...patch } as BudgetRow : prev));
+      const { error } = await supabase.from("budgets").update(patch).eq("id", budget.id);
+      if (error) logger.warn("[BudgetEditorV2] backfill imóvel/cliente falhou:", error.message);
+    })();
+  }, [budget?.id, budget?.condominio, budget?.bairro, budget?.city, budget?.metragem, budget?.property_type, budget?.location_type, budget?.floor_plan_url, budget?.hubspot_deal_url]);
 
   useEffect(() => {
     if (sectionsData) setSections(sectionsData);

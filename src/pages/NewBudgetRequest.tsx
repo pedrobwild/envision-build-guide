@@ -177,7 +177,7 @@ export default function NewBudgetRequest() {
     (async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, is_active")
+        .select("id, name, is_active, hubspot_contact_url")
         .eq("id", prefillClientId)
         .maybeSingle();
       if (cancelled) return;
@@ -188,6 +188,8 @@ export default function NewBudgetRequest() {
         return;
       }
       setLinkedClientValidated(true);
+      const hub = (data as { hubspot_contact_url?: string | null }).hubspot_contact_url;
+      if (hub) setHubspotDealUrl((prev) => prev || hub);
     })();
     return () => { cancelled = true; };
   }, [prefillClientId]);
@@ -210,6 +212,20 @@ export default function NewBudgetRequest() {
   const [commercialOwnerId, setCommercialOwnerId] = useState("");
   const [estimatorOwnerId, setEstimatorOwnerId] = useState("");
   const [hubspotDealUrl, setHubspotDealUrl] = useState("");
+  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
+
+  // Auto-seleciona o imóvel primário quando o cliente vem do CRM e ainda não houve escolha
+  const autoPickedPropertyRef = useRef(false);
+  useEffect(() => {
+    if (autoPickedPropertyRef.current) return;
+    if (!linkedClientId || clientProperties.length === 0) return;
+    if (selectedPropertyId !== "__new__") return;
+    const primary = clientProperties.find((p) => p.is_primary) ?? clientProperties[0];
+    if (primary) {
+      setSelectedPropertyId(primary.id);
+      autoPickedPropertyRef.current = true;
+    }
+  }, [linkedClientId, clientProperties, selectedPropertyId]);
 
   // Quando um imóvel existente é selecionado, auto-preenche os campos
   useEffect(() => {
@@ -222,6 +238,7 @@ export default function NewBudgetRequest() {
     setMetragemRaw((p.metragem ?? "").replace(/m²?$/i, "").trim());
     setPropertyType(p.property_type ?? "");
     setLocationType(p.location_type ?? "");
+    setFloorPlanUrl(p.floor_plan_url ?? null);
   }, [selectedPropertyId, clientProperties]);
 
   // Import mode fields
@@ -430,6 +447,7 @@ export default function NewBudgetRequest() {
           internal_notes: (isImport && importNotes.trim()) ? importNotes.trim() : (internalNotes.trim() || null),
           reference_links: links.length > 0 ? links : [],
           hubspot_deal_url: hubspotDealUrl.trim() || null,
+          floor_plan_url: floorPlanUrl || null,
           internal_status: isImport ? "delivered_to_sales" : "requested",
           status: "draft",
           commercial_owner_id: commercialOwnerId || user.id,
