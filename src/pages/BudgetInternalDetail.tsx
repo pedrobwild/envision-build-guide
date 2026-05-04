@@ -998,6 +998,17 @@ export default function BudgetInternalDetail() {
                           {formatStageFor(daysInStage)}
                         </span>
                       )}
+                      {timeMarkersError && (
+                        <button
+                          type="button"
+                          onClick={() => refetchTimeMarkers()}
+                          className="inline-flex items-center gap-1 text-[10px] font-medium font-body px-2 py-0.5 rounded-full border border-warning/30 bg-warning/5 text-warning uppercase tracking-wide hover:bg-warning/10 transition-colors"
+                          title={`Falha ao carregar tempos do servidor: ${timeMarkersError}\nClique para tentar novamente.`}
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          Tempos: offline
+                        </button>
+                      )}
                     </>
                   );
                 })()}
