@@ -176,6 +176,31 @@ function errorReason(error: unknown): string | null {
   return null;
 }
 
+function RefreshingIndicator({ show, label = "Atualizando…" }: { show: boolean; label?: string }) {
+  if (!show) return null;
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+    >
+      <RefreshCw className="h-3 w-3 animate-spin" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+function Refreshable({ refreshing, children }: { refreshing: boolean; children: React.ReactNode }) {
+  return (
+    <div
+      aria-busy={refreshing || undefined}
+      className={cn("transition-opacity", refreshing && "opacity-60")}
+    >
+      {children}
+    </div>
+  );
+}
+
 function BlockError({
   title,
   error,
