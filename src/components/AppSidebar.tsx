@@ -133,6 +133,7 @@ const ADMIN_SECTION: NavSection = {
     { title: "Saúde da operação", url: "/admin/saude-operacao", icon: HeartPulse, roles: ["admin"] },
     { title: "Análises", url: "/admin/analises", icon: BarChart3, roles: ["admin"] },
     { title: "Forecast", url: "/admin/forecast", icon: TrendingUp, roles: ["admin"] },
+    { title: "Metas", url: "/admin/metas", icon: Target, roles: ["admin", "comercial"] },
     { title: "Financeiro", url: "/admin/financeiro", icon: DollarSign, roles: ["admin"] },
     { title: "Usuários", url: "/admin/usuarios", icon: Users, roles: ["admin", "orcamentista"] },
   ],
