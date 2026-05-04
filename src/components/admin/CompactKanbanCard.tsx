@@ -14,6 +14,7 @@ import type { DealTemperatureResult, NextActionSuggestion } from "@/lib/deal-tem
 import type { LeadScoreResult } from "@/lib/lead-score";
 import { LeadScoreBadge } from "@/components/admin/LeadScoreBadge";
 import { VersionBadge } from "@/components/admin/VersionBadge";
+import { PublicLinkStatusBadge } from "@/components/admin/PublicLinkStatusBadge";
 import {
   COMMERCIAL_STAGES,
   PRODUCTION_STAGES,
@@ -40,6 +41,8 @@ interface CompactKanbanCardProps {
   isSynced?: boolean;
   /** Identificador público do orçamento — habilita o botão direto "Ver pública". */
   publicId?: string | null;
+  /** Status bruto do orçamento (`published` | `minuta_solicitada` | draft etc.) — alimenta o badge "Público/Rascunho". */
+  budgetStatus?: string | null;
   /** Data de criação do negócio. */
   createdAt?: string | null;
   /** Data de última atualização. */
@@ -120,6 +123,7 @@ function CompactKanbanCardImpl({
   estimatorName,
   isSynced,
   publicId,
+  budgetStatus,
   createdAt,
   updatedAt,
   mode = "commercial",
@@ -359,6 +363,7 @@ function CompactKanbanCardImpl({
               <RotBadge daysInStage={daysInStage} />
             )}
             <VersionBadge versionNumber={versionNumber} isCurrent={isCurrentVersion} />
+            <PublicLinkStatusBadge publicId={publicId} status={budgetStatus} />
             {typeof siblingCount === "number" && siblingCount > 0 && (
               <button
                 type="button"
