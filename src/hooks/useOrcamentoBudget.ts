@@ -137,12 +137,16 @@ async function fetchOrcamentoBudget(publicId: string): Promise<BudgetSummary> {
   };
 }
 
+export const ORCAMENTO_MAX_RETRIES = 3;
+
 export function useOrcamentoBudget(publicId: string | undefined) {
   return useQuery({
     queryKey: ["orcamento-budget", publicId],
     queryFn: () => fetchOrcamentoBudget(publicId!),
     enabled: !!publicId,
-    retry: 1,
+    // Exponential backoff: 1s, 2s, 4s (capped at 8s)
+    retry: ORCAMENTO_MAX_RETRIES,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     staleTime: 5 * 60 * 1000,
   });
 }
