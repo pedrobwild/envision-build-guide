@@ -203,11 +203,11 @@ export default function EstimatorDashboard() {
     return {
       total: budgets.length,
       overdue: budgets.filter(
-        (b) => b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) &&
+        (b) => b.internal_status !== "revision_requested" && b.due_at && isPast(new Date(b.due_at)) && !isToday(new Date(b.due_at)) &&
           [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES].includes(b.internal_status)
       ).length,
       dueToday: budgets.filter(
-        (b) => b.due_at && isToday(new Date(b.due_at)) &&
+        (b) => b.internal_status !== "revision_requested" && b.due_at && isToday(new Date(b.due_at)) &&
           [...PENDING_STATUSES, ...IN_PROGRESS_STATUSES].includes(b.internal_status)
       ).length,
       pending: budgets.filter((b) => PENDING_STATUSES.includes(b.internal_status)).length,
