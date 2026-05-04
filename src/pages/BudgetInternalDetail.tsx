@@ -126,6 +126,7 @@ interface BudgetDetail {
   version_group_id?: string | null;
   is_current_version?: boolean | null;
   version_number?: number | null;
+  property_id?: string | null;
 }
 
 interface EventRow {
