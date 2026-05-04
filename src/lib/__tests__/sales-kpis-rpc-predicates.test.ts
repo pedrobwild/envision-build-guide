@@ -102,7 +102,7 @@ const SPECS: Spec[] = [
   {
     // EXECUTE'd dynamic SQL — predicates show up as $1/$2/$3 placeholders.
     name: "sales_conversion_by_segment",
-    argsLike: "%text, timestamp%uuid",
+    argsLike: "%_dimension text%uuid",
     expected: [
       "WHERE ($1 IS NULL OR lead_at >= $1)",
       "AND ($2 IS NULL OR lead_at <= $2)",
