@@ -45,6 +45,7 @@ import { ContractUploadModal } from "@/components/commercial/ContractUploadModal
 import { ClientForm } from "@/components/crm/ClientForm";
 import { InlineEdit } from "@/components/ui/inline-edit";
 import { showUndoToast } from "@/lib/inline-edit-undo";
+import { dedupeBudgetsByVersionGroup } from "@/lib/dedupe-versions";
 import { SavedViewsBar } from "@/components/crm/SavedViewsBar";
 import { useDealPipelines, setBudgetPipeline } from "@/hooks/useDealPipelines";
 import { useBudgetPipelineMeta } from "@/hooks/useBudgetPipelineMeta";
@@ -470,7 +471,11 @@ export default function CommercialDashboard() {
     ]);
 
     if (budgetsRes.data) {
-      const rawBudgets = budgetsRes.data as BudgetRow[];
+      // Dedup defensivo: pode haver mais de uma is_current_version=true por
+      // grupo (bug histórico). Mantemos só a "vencedora" antes de tudo.
+      const rawBudgets = dedupeBudgetsByVersionGroup(
+        budgetsRes.data as BudgetRow[],
+      );
       const unresolvedGroupIds = Array.from(
         new Set(
           rawBudgets
