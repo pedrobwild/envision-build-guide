@@ -946,6 +946,29 @@ export default function BudgetInternalDetail() {
                   onChange={savePrazoDiasUteis}
                 />
               </div>
+
+              {/* Detalhes completos do cliente, imóvel e equipe (colapsável) */}
+              <BudgetHeaderClientInfo
+                clientId={budget.client_id}
+                propertyId={budget.property_id ?? null}
+                fallback={{
+                  client_name: budget.client_name,
+                  client_phone: budget.client_phone,
+                  lead_email: budget.lead_email,
+                  bairro: budget.bairro,
+                  city: budget.city,
+                  condominio: budget.condominio,
+                  metragem: budget.metragem,
+                  property_type: budget.property_type,
+                  unit: budget.unit,
+                  lead_source: budget.lead_source,
+                  created_at: budget.created_at,
+                  updated_at: budget.updated_at,
+                }}
+                createdByName={budget.created_by ? getProfileName(budget.created_by) : null}
+                commercialOwnerName={budget.commercial_owner_id ? getProfileName(budget.commercial_owner_id) : null}
+                estimatorOwnerName={budget.estimator_owner_id ? getProfileName(budget.estimator_owner_id) : null}
+              />
             </div>
 
             {/* Quick status change */}
