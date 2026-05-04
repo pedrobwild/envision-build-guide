@@ -712,15 +712,19 @@ function LostReasonsBlock({ period, ownerId }: { period: SalesPeriod; ownerId: s
 // 7. Cohorts mensais
 // ============================================================
 function CohortBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string | null }) {
-  const { data, isLoading, isError, error, refetch } = useSalesCohorts(period, ownerId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useSalesCohorts(period, ownerId);
+  const refreshing = !isLoading && isFetching;
   const rows = (data ?? []).slice(0, 12);
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Calendar className="h-4 w-4 text-primary" /> Coortes mensais
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Calendar className="h-4 w-4 text-primary" /> Coortes mensais
+          </CardTitle>
+          <RefreshingIndicator show={refreshing} />
+        </div>
       </CardHeader>
       <CardContent className="pt-0">
         {isLoading ? (
@@ -735,6 +739,7 @@ function CohortBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string
         ) : rows.length === 0 ? (
           <EmptyState message="Sem coortes registradas." />
         ) : (
+          <Refreshable refreshing={refreshing}>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -772,6 +777,7 @@ function CohortBlock({ period, ownerId }: { period: SalesPeriod; ownerId: string
               </TableBody>
             </Table>
           </div>
+          </Refreshable>
         )}
       </CardContent>
     </Card>
