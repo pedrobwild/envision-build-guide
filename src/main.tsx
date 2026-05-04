@@ -6,6 +6,7 @@ import { installConsoleErrorBuffer } from "./lib/console-error-buffer";
 import { installChunkErrorTelemetry } from "./lib/chunk-telemetry";
 import { installAuthFetchRetry } from "./lib/auth-fetch-retry";
 import { installAuthSessionRecovery } from "./lib/auth-session-recovery";
+import { installOpenBudgetSink } from "./lib/openBudgetSink";
 
 // Retry automático para refresh_token do Supabase em erros de rede
 // ("Failed to fetch"), com aviso visível ao usuário. Deve rodar antes
@@ -25,6 +26,11 @@ installConsoleErrorBuffer();
 // quanto os capturados pelo `ChunkErrorBoundary`. Correlaciona com
 // `public_id` (rota pública) e `VITE_APP_VERSION` (versão do deploy).
 installChunkErrorTelemetry();
+
+// Envia cada evento de abertura do orçamento público para
+// `public.open_budget_telemetry` com correlation_id por sessão e event_id
+// único — permite diagnosticar relatos de "não abriu" pelo backend.
+installOpenBudgetSink();
 
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
