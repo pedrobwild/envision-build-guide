@@ -375,30 +375,42 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
     }
 
     setUploading(true);
+    const fileArr = Array.from(fileList);
+    setUploadProgress({ done: 0, total: fileArr.length });
     try {
       const folder = folderMap[activeTab as StorageTab];
       const existingCount = files[activeTab as StorageTab].length;
 
       // Parallel uploads (batches of 3 to avoid overwhelming)
-      const fileArr = Array.from(fileList);
       const BATCH_SIZE = 3;
       let count = 0;
 
       for (let batch = 0; batch < fileArr.length; batch += BATCH_SIZE) {
         const chunk = fileArr.slice(batch, batch + BATCH_SIZE);
         const results = await Promise.allSettled(
-          chunk.map((file, idx) => {
+          chunk.map(async (file, idx) => {
             const globalIdx = batch + idx;
             const safeName = sanitizeFileName(file.name);
             const prefixed = addPrefix(existingCount + globalIdx, safeName);
             const path = `${folder}/${prefixed}`;
-            return supabase.storage.from("media").upload(path, file, {
-              upsert: true,
-              contentType: file.type || "application/octet-stream",
-            }).then(({ error }) => {
-              if (error) throw { fileName: file.name, message: error.message };
+            try {
+              await uploadWithRetry({
+                bucket: "media",
+                path,
+                file,
+                upsert: true,
+                contentType: file.type || "application/octet-stream",
+                onRetry: (attempt) => {
+                  toast.message(`Reenviando ${file.name} (tentativa ${attempt}/3)…`);
+                },
+              });
               return true;
-            });
+            } catch (e) {
+              const message = e instanceof Error ? e.message : "Erro desconhecido";
+              throw { fileName: file.name, message };
+            } finally {
+              setUploadProgress((p) => ({ ...p, done: p.done + 1 }));
+            }
           })
         );
 
@@ -428,6 +440,7 @@ export function MediaUploadSection({ publicId, budgetId }: MediaUploadSectionPro
       toast.error("Erro inesperado no upload. Tente novamente.");
     } finally {
       setUploading(false);
+      setUploadProgress({ done: 0, total: 0 });
     }
   };
 
