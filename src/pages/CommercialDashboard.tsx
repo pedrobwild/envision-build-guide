@@ -337,6 +337,7 @@ export default function CommercialDashboard() {
       search,
       commercialFilter,
       pipelineFilter,
+      linkFilter,
     });
     const current = window.location.search.startsWith("?")
       ? window.location.search.slice(1)
