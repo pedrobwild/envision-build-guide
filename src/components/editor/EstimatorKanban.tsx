@@ -228,6 +228,18 @@ function getDueInfo(dueAt: string | null, internalStatus?: string): { label: str
   return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" };
 }
 
+function getRevisionDueInfo(dueAt: string | null, requestedAt?: string): { label: string; variant: DueVariant } | null {
+  if (!dueAt) return null;
+  const dueDate = new Date(dueAt);
+  if (requestedAt) {
+    const requestedDate = new Date(requestedAt);
+    if (dueDate.getTime() < requestedDate.getTime()) {
+      return { label: format(dueDate, "dd MMM", { locale: ptBR }), variant: "default" };
+    }
+  }
+  return getDueInfo(dueAt, "revision_requested");
+}
+
 const dueVariantStyles: Record<DueVariant, string> = {
   overdue: "bg-destructive/10 text-destructive",
   today: "bg-warning/10 text-warning",
@@ -505,7 +517,9 @@ function EstimatorCard({
   revisionInfo?: RevisionRequestInfo;
 }) {
   const prio = PRIORITIES[b.priority as Priority] ?? PRIORITIES.normal;
-  const due = getDueInfo(b.due_at, b.internal_status);
+  const due = b.internal_status === "revision_requested"
+    ? getRevisionDueInfo(b.due_at, revisionInfo?.requestedAt)
+    : getDueInfo(b.due_at, b.internal_status);
   const highPrio = isHighPriority(b.priority);
   const borderColor = due ? dueBorderStyles[due.variant] : "border-l-transparent";
 
