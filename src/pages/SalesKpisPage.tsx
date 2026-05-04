@@ -814,6 +814,7 @@ export default function SalesKpisPage() {
   const [range, setRange] = useState<SalesRange>("90d");
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [checkOpen, setCheckOpen] = useState(false);
 
   const period: SalesPeriod = useMemo(() => ({ range }), [range]);
   const bounds = rangeToBounds(period);
