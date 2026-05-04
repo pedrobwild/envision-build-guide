@@ -78,6 +78,7 @@ import { VersionHistoryPanel } from "@/components/editor/VersionHistoryPanel";
 import { BudgetEventsTimeline } from "@/components/admin/BudgetEventsTimeline";
 import { UnifiedActivityPanel } from "@/components/admin/UnifiedActivityPanel";
 import { ClientModulePanel } from "@/components/admin/ClientModulePanel";
+import { BudgetHeaderClientInfo } from "@/components/admin/BudgetHeaderClientInfo";
 import { BudgetTasksPanel } from "@/components/admin/BudgetTasksPanel";
 import { PrazoExecucaoChip } from "@/components/admin/PrazoExecucaoChip";
 import { DemandSidebarNav } from "@/components/demanda/DemandSidebarNav";
