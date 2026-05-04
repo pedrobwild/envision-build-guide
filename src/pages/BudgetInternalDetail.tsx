@@ -905,6 +905,29 @@ export default function BudgetInternalDetail() {
               {subtitle && (
                 <p className="text-sm text-muted-foreground font-body mt-1">{subtitle}</p>
               )}
+              {/* Contato do cliente — visível direto no cabeçalho */}
+              {(budget.lead_email || budget.client_phone) && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-body">
+                  {budget.lead_email && (
+                    <a
+                      href={`mailto:${budget.lead_email}`}
+                      className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+                    >
+                      <span className="opacity-70">✉</span>
+                      {budget.lead_email}
+                    </a>
+                  )}
+                  {budget.client_phone && (
+                    <a
+                      href={`tel:${budget.client_phone}`}
+                      className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+                    >
+                      <span className="opacity-70">☎</span>
+                      {budget.client_phone}
+                    </a>
+                  )}
+                </div>
+              )}
               {/* Prazo de execução — mesmo chip editável do BudgetEditor; salva direto no banco. */}
               <div className="mt-2">
                 <PrazoExecucaoChip
@@ -939,37 +962,12 @@ export default function BudgetInternalDetail() {
             </Select>
           </div>
 
-          {/* Pipeline */}
-          <div className="mt-6">
-            <PipelineProgress stages={PIPELINE_STAGES} currentIndex={pipeline.index} isLost={pipeline.isLost} />
-          </div>
-
-          {/* KPIs financeiros/operacionais (hierarquia primária) */}
-          <div className="border-t border-border/60 mt-6 pt-5 grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {/* KPIs financeiros/operacionais — apenas Valor (probabilidade/previsão e ilustração do pipeline removidos a pedido) */}
+          <div className="border-t border-border/60 mt-6 pt-5">
             <KpiBlock
               label="Valor"
               value={formatBRL(totalDisplay)}
               sub={budget.estimated_weeks ? `${budget.estimated_weeks} semanas` : `${itemsCount} itens · ${sectionsCount} seções`}
-            />
-            <KpiBlock
-              label="Probabilidade"
-              value={`${probability}%`}
-              progress={probability}
-              tone={pipeline.isLost ? "destructive" : "primary"}
-            />
-            <KpiBlock
-              label="Previsão"
-              value={dueDate ? format(dueDate, "dd MMM", { locale: ptBR }) : "—"}
-              sub={
-                dueDate
-                  ? overdue
-                    ? `SLA vencido há ${Math.abs(daysLeft!)}d`
-                    : dueToday
-                    ? "Vence hoje"
-                    : `em ${daysLeft}d`
-                  : "Sem prazo definido"
-              }
-              subTone={overdue ? "destructive" : dueToday ? "warning" : "muted"}
             />
           </div>
 
