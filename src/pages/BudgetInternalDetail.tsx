@@ -678,6 +678,20 @@ export default function BudgetInternalDetail() {
     [budget?.internal_status]
   );
 
+  // IMPORTANTE: este efeito precisa estar acima dos early returns para não
+  // violar as Rules of Hooks. Quando o componente sai de loading e renderiza
+  // o corpo, a contagem de hooks tem que ser estável entre renders — caso
+  // contrário o React lança "Rendered more hooks than during the previous
+  // render" e a página inteira cai no PageErrorBoundary ("Algo deu errado").
+  useEffect(() => {
+    if (timeMarkersError) {
+      logger.warn("[BudgetInternalDetail] get_budget_time_markers falhou, usando cálculo local", {
+        budgetId,
+        error: timeMarkersError,
+      });
+    }
+  }, [timeMarkersError, budgetId]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -713,14 +727,6 @@ export default function BudgetInternalDetail() {
   // ou ainda não tiver respondido, caímos no cálculo local sobre `events` para
   // evitar UI vazia — `timeMarkersFallback` indica esse estado para o tooltip.
   const timeMarkersFallback = !timeMarkers;
-  useEffect(() => {
-    if (timeMarkersError) {
-      logger.warn("[BudgetInternalDetail] get_budget_time_markers falhou, usando cálculo local", {
-        budgetId,
-        error: timeMarkersError,
-      });
-    }
-  }, [timeMarkersError, budgetId]);
   const { isFrozen, frozenAt: frozenAtDate, currentStageStart, totalDaysOpen, daysInStage } =
     timeMarkers
       ? budgetTimeFromMarkers(timeMarkers)
