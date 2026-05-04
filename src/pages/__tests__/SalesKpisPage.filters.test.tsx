@@ -142,34 +142,33 @@ describe("SalesKpisPage — filtros globais propagam para todos os blocos", () =
     );
   });
 
-  it("ao trocar período (90d → all), refaz as RPCs com novo _start_date", async () => {
+  it("trocar período entre ranges com os mesmos bounds não re-dispara as RPCs (otimização de queryKey)", async () => {
     const user = userEvent.setup();
     renderPage();
 
     await waitFor(() => expect(lastCallFor("sales_kpis_dashboard")).toBeTruthy());
-    const start90 = lastCallFor("sales_kpis_dashboard")!.params._start_date as string;
+    const initialStart = lastCallFor("sales_kpis_dashboard")!.params._start_date as string;
     const callsBefore = callsFor("sales_kpis_dashboard").length;
 
+    // Em 2026-05-04, 30d/90d/ytd/all caem todos em OPERATIONS_START (2026-04-15),
+    // então a queryKey é estável e não há refetch redundante.
     await user.click(screen.getByRole("combobox", { name: /período/i }));
     await user.click(await screen.findByRole("option", { name: /desde o início/i }));
 
-    await waitFor(() => {
-      expect(callsFor("sales_kpis_dashboard").length).toBeGreaterThan(callsBefore);
-    });
+    // Espera macro-task para garantir que qualquer refetch teria ocorrido
+    await new Promise((r) => setTimeout(r, 50));
 
-    const startAll = lastCallFor("sales_kpis_dashboard")!.params._start_date as string;
-    // "all" usa OPERATIONS_START (2026-04-15); 90d em 2026-05-04 também,
-    // mas como o range muda explicitamente, queryKey muda e refetch ocorre.
-    expect(startAll).toEqual(expect.any(String));
+    expect(callsFor("sales_kpis_dashboard").length).toBe(callsBefore);
+    expect(lastCallFor("sales_kpis_dashboard")!.params._start_date).toBe(initialStart);
 
-    // Todos os blocos sensíveis devem refletir o mesmo _start_date
+    // Todos os blocos continuam consistentes com o mesmo _start_date
     for (const name of [
       "sales_kpis_time_in_stage",
       "sales_kpis_cohorts",
       "sales_kpis_lost_reasons",
       "sales_conversion_by_segment",
     ]) {
-      expect(lastCallFor(name)!.params._start_date).toEqual(startAll);
+      expect(lastCallFor(name)!.params._start_date).toBe(initialStart);
     }
   });
 
