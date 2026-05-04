@@ -386,6 +386,7 @@ function SubSectionGroup({
   leadScoreMap,
   onNextAction,
   onOpenHistory,
+  onRepublishPublicLink,
 }: {
   subsection: typeof EM_ELABORACAO_SUBSECTIONS[number];
   budgets: BudgetRow[];
@@ -400,6 +401,7 @@ function SubSectionGroup({
   leadScoreMap?: Map<string, LeadScoreResult>;
   onNextAction?: (budgetId: string, suggestion: NextActionSuggestion) => void;
   onOpenHistory?: (budget: BudgetRow) => void;
+  onRepublishPublicLink?: (budget: BudgetRow) => void | Promise<void>;
 }) {
   const Icon = subsection.icon;
   const sorted = sortBudgetsForColumn(budgets);
