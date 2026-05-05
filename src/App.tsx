@@ -127,20 +127,20 @@ const App = () => (
                     <Route path="/admin/comercial" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><CommercialDashboard /></RoleGuard></AdminPage>} />
                     <Route path="/admin/comercial/conversao" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><ConversionDashboard /></RoleGuard></AdminPage>} />
                     <Route path="/admin/comercial/kpis" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><SalesKpisPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/operacoes" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AdminOperationsDashboard /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/saude-operacao" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><OperationsHealthPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/analises" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AnalisesPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/forecast" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><ForecastPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/metas" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><MetasHistoryPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/operacoes" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><AdminOperationsDashboard /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/saude-operacao" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><OperationsHealthPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/analises" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><AnalisesPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/forecast" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><ForecastPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/metas" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><MetasHistoryPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/usuarios" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><UserManagement /></RoleGuard></AdminPage>} />
                     <Route path="/admin/demanda/:budgetId" element={<AdminPage><BudgetInternalDetail /></AdminPage>} />
                     <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
                     <Route path="/admin/catalogo" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><CatalogPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/sistema" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><SystemToolsPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/lixeira" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><TrashPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/imoveis-duplicados" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><DuplicatePropertiesPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/imoveis-duplicados" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><DuplicatePropertiesPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/auditoria-rpc" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><RpcAuditPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/auditoria-acesso" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AccessAuditPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/auditoria-acesso" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><AccessAuditPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/biblioteca-fotos" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><PhotoLibraryUpload /></RoleGuard></AdminPage>} />
                     <Route path="/admin/templates" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><BudgetTemplatesPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/templates/:templateId/editar" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><TemplateEditorPage /></RoleGuard></AdminPage>} />
