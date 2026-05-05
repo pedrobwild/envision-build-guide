@@ -258,7 +258,7 @@ export function RevisionRequestDialog({
               className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white gap-2"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Enviar Solicitação
+              {isComplement ? "Enviar Complemento" : "Enviar Solicitação"}
             </Button>
             <Button
               variant="ghost"
@@ -304,7 +304,7 @@ export function RevisionRequestDialog({
             className="bg-orange-500 hover:bg-orange-600 text-white gap-2"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Enviar Solicitação
+            {isComplement ? "Enviar Complemento" : "Enviar Solicitação"}
           </Button>
         </DialogFooter>
       </DialogContent>
