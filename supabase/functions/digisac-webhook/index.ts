@@ -16,6 +16,7 @@ import {
   jsonResponse,
   loadDigisacConfig,
   makeServiceClient,
+  parseBwMarker,
   parseContact,
   parseMessage,
   parseTicket,
@@ -26,11 +27,13 @@ import {
   upsertConversation,
   upsertDigisacContact,
   upsertMessage,
+  type BwMarker,
   type DigisacConfig,
   type DigisacContact,
   type DigisacMessage,
   type DigisacTicket,
 } from "../_shared/digisac.ts";
+import { ingestLead, type NormalizedLead } from "../_shared/lead-ingest.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 // ----------------------------------------------------------------------------
