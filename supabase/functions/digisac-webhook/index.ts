@@ -469,7 +469,7 @@ async function backfillBudgetAttribution(
   }
 }
 
-
+async function handleMessageEvent(
   supabase: SupabaseClient,
   cfg: DigisacConfig,
   payload: Record<string, unknown>,
