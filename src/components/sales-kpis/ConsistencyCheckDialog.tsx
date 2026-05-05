@@ -381,6 +381,88 @@ export function ConsistencyCheckDialog({
   const [error, setError] = useState<string | null>(null);
   const [lastRunAt, setLastRunAt] = useState<Date | null>(null);
 
+  // ---- Comparison panel state ----
+  const autoCompare = isAutoComparePreset(period.range);
+  const defaults = useMemo(() => {
+    if (!autoCompare) {
+      return { leftStart: "", leftEnd: "", rightStart: "", rightEnd: "" };
+    }
+    const curr = rangeToBounds(period);
+    const prev = previousPeriod(period);
+    const prevBounds = prev ? rangeToBounds(prev) : { start: null, end: null };
+    return {
+      leftStart: toDateInput(curr.start),
+      leftEnd: toDateInput(curr.end ?? new Date().toISOString()),
+      rightStart: toDateInput(prevBounds.start),
+      rightEnd: toDateInput(prevBounds.end),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCompare, period.range, period.startDate, period.endDate]);
+
+  const [leftStart, setLeftStart] = useState(defaults.leftStart);
+  const [leftEnd, setLeftEnd] = useState(defaults.leftEnd);
+  const [rightStart, setRightStart] = useState(defaults.rightStart);
+  const [rightEnd, setRightEnd] = useState(defaults.rightEnd);
+  const [cmpLoading, setCmpLoading] = useState(false);
+  const [cmpError, setCmpError] = useState<string | null>(null);
+  const [cmpData, setCmpData] = useState<{
+    left: ComparisonSnapshot;
+    right: ComparisonSnapshot;
+  } | null>(null);
+
+  // Re-pre-popula quando o preset muda (apenas para presets auto-compare).
+  // Para presets manuais (7d/30d/90d/all/custom) limpa os campos.
+  useEffect(() => {
+    setLeftStart(defaults.leftStart);
+    setLeftEnd(defaults.leftEnd);
+    setRightStart(defaults.rightStart);
+    setRightEnd(defaults.rightEnd);
+    setCmpData(null);
+    setCmpError(null);
+  }, [defaults]);
+
+  const canCompare = !!(leftStart && leftEnd && rightStart && rightEnd);
+
+  const runComparison = useCallback(async () => {
+    if (!canCompare) return;
+    setCmpLoading(true);
+    setCmpError(null);
+    try {
+      const left: ComparisonRange = {
+        start: fromDateInput(leftStart),
+        end: fromDateInput(leftEnd, true),
+        label: "Período A",
+      };
+      const right: ComparisonRange = {
+        start: fromDateInput(rightStart),
+        end: fromDateInput(rightEnd, true),
+        label: "Período B",
+      };
+      const [a, b] = await Promise.all([
+        fetchSnapshot(left, ownerId),
+        fetchSnapshot(right, ownerId),
+      ]);
+      setCmpData({ left: a, right: b });
+    } catch (err) {
+      logger.warn("[consistency-check] comparison failed", err);
+      setCmpError(
+        err instanceof Error ? err.message : "Falha ao buscar comparação.",
+      );
+    } finally {
+      setCmpLoading(false);
+    }
+  }, [canCompare, leftStart, leftEnd, rightStart, rightEnd, ownerId]);
+
+  // Auto-roda comparação quando entra em modo auto-compare e os campos
+  // estão pré-preenchidos. Para presets manuais o usuário aciona via botão.
+  useEffect(() => {
+    if (!open) return;
+    if (!autoCompare) return;
+    if (!canCompare) return;
+    void runComparison();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, autoCompare, defaults]);
+
   const run = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -413,6 +495,8 @@ export function ConsistencyCheckDialog({
       // limpa para não exibir resultado obsoleto na próxima abertura com outros filtros
       setResults(null);
       setError(null);
+      setCmpData(null);
+      setCmpError(null);
     }
   };
 
