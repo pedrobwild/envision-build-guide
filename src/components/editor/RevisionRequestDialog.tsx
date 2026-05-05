@@ -93,16 +93,24 @@ export function RevisionRequestDialog({
         .eq("id", budgetId)
         .maybeSingle();
 
-      // 1. Update budget status
-      const { error: updateErr } = await supabase
-        .from("budgets")
-        .update({
-          internal_status: "revision_requested",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", budgetId);
+      // 1. Atualizar status só se ainda não estiver em revision_requested (modo complemento mantém o status)
+      if (!isComplement) {
+        const { error: updateErr } = await supabase
+          .from("budgets")
+          .update({
+            internal_status: "revision_requested",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", budgetId);
 
-      if (updateErr) throw updateErr;
+        if (updateErr) throw updateErr;
+      } else {
+        // Bump updated_at para deixar claro no histórico que houve nova solicitação
+        await supabase
+          .from("budgets")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", budgetId);
+      }
 
       // 2. Log revision request event
       await logRevisionRequestEvent({
@@ -112,13 +120,15 @@ export function RevisionRequestDialog({
         changeTypes: selectedTypes,
         requestedByName: profile?.full_name || user!.email || "—",
         fromStatus: currentStatus,
+        isComplement,
       });
 
       // 3. Insert visible comment
+      const commentPrefix = isComplement ? "🔄 **Complemento da revisão:**" : "🔄 **Revisão solicitada:**";
       await supabase.from("budget_comments").insert({
         budget_id: budgetId,
         user_id: user!.id,
-        body: `🔄 **Revisão solicitada:**\n${trimmed}`,
+        body: `${commentPrefix}\n${trimmed}`,
       });
 
       // 4. Notificar orçamentista (in-app, realtime via NotificationBell)
@@ -127,11 +137,14 @@ export function RevisionRequestDialog({
         const codeLabel = budgetData.sequential_code ? `${budgetData.sequential_code} · ` : "";
         const subject = budgetData.project_name || budgetData.client_name || "orçamento";
         const preview = trimmed.length > 120 ? `${trimmed.slice(0, 117)}…` : trimmed;
+        const notifTitle = isComplement
+          ? "Complemento na solicitação de revisão"
+          : "Revisão solicitada pelo comercial";
 
         const { error: notifErr } = await supabase.from("notifications").insert({
           user_id: budgetData.estimator_owner_id,
           type: "revision_requested",
-          title: "Revisão solicitada pelo comercial",
+          title: notifTitle,
           message: `${codeLabel}${subject} · ${requesterName}: ${preview}`,
           budget_id: budgetId,
           read: false,
@@ -142,7 +155,11 @@ export function RevisionRequestDialog({
         }
       }
 
-      toast.success("Solicitação de revisão enviada ao orçamentista.");
+      toast.success(
+        isComplement
+          ? "Complemento enviado ao orçamentista."
+          : "Solicitação de revisão enviada ao orçamentista."
+      );
       onSuccess();
     } catch (err) {
       logger.error("Revision request error:", err);
