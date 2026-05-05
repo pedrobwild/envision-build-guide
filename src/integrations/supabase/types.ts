@@ -3394,6 +3394,22 @@ export type Database = {
         }
         Relationships: []
       }
+      monitor_meta_ingestion_health: {
+        Row: {
+          com_ad_id: number | null
+          com_campaign: number | null
+          com_email: number | null
+          com_phone: number | null
+          hora: string | null
+          leads: number | null
+          pct_atribuido: number | null
+          sem_budget: number | null
+          sem_pipeline: number | null
+          source: string | null
+          utm_medium: string | null
+        }
+        Relationships: []
+      }
       v_bug_reports_admin: {
         Row: {
           actual_behavior: string | null
