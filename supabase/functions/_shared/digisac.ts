@@ -18,6 +18,39 @@ export const DIGISAC_DEFAULT_BASE_URL = "https://app.digisac.me/api/v1";
 export const DIGISAC_TIMEOUT_MS = 20000;
 
 // ------------------------------------------------------------
+// Click-to-WhatsApp attribution marker
+// ------------------------------------------------------------
+// Quando um lead vem do anúncio do Meta para WhatsApp via Click-to-WhatsApp,
+// configuramos a primeira mensagem para conter um marcador no formato:
+//   [BW-<ad_id>-<adset_id>-<campaign_id>]
+// Esse marcador permite atribuir o lead à campanha mesmo sem Lead Ads form.
+//
+// O regex é ESTRITO: aceita apenas dígitos para os três IDs e não consome
+// caracteres adicionais. Use `parseBwMarker(text)` para extrair os IDs.
+//
+// Exemplos de match:
+//   "Olá, vim do anúncio [BW-123-456-789]"
+//   "[BW-1-2-3]"
+// Não-match:
+//   "[BW-abc-def-ghi]" (não-numéricos)
+//   "[BW-1-2]"        (faltando IDs)
+export const BW_MARKER_REGEX = /\[BW-(\d+)-(\d+)-(\d+)\]/;
+
+export interface BwMarker {
+  ad_id: string;
+  adset_id: string;
+  campaign_id: string;
+}
+
+export function parseBwMarker(text: string | null | undefined): BwMarker | null {
+  if (!text) return null;
+  const m = text.match(BW_MARKER_REGEX);
+  if (!m) return null;
+  return { ad_id: m[1], adset_id: m[2], campaign_id: m[3] };
+}
+
+
+// ------------------------------------------------------------
 // Types
 // ------------------------------------------------------------
 

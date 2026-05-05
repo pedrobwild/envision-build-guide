@@ -47,13 +47,37 @@ export interface IngestResult {
   error?: string;
 }
 
-/** Normaliza telefone para apenas dígitos, removendo DDI BR. */
+/**
+ * Normaliza telefone BR para `DD9NNNNNNNN` (11 dígitos) ou `DDNNNNNNNN`
+ * (10 dígitos para fixo). Regras:
+ *   - Mantém apenas dígitos.
+ *   - Se vier com DDI 55, remove.
+ *   - Se ficar com 10 dígitos (DDD + 8) e o terceiro dígito for 6-9 (faixa
+ *     de celular), injeta o "9" → vira 11 dígitos. Fixos (terceiro 2-5) ficam
+ *     como estão.
+ *   - Tudo fora desses padrões devolve os dígitos crus (não tenta adivinhar).
+ *
+ * Exemplos:
+ *   "+55 (11) 91234-5678"   → "11912345678"   (já tem 9)
+ *   "+55 (11) 1234-5678"    → "1191234..."?    NÃO — fixo: terceiro=2 → "1112345678"
+ *   "11 91234-5678"         → "11912345678"
+ *   "11 8123-4567"          → "11981234567"   (celular antigo, injeta 9)
+ *   "11 3251-1000"          → "1132511000"    (fixo, mantém 10)
+ */
 export function normalizePhone(phone: string | null | undefined): string | null {
   if (!phone) return null;
-  let digits = phone.replace(/\D/g, "");
+  let digits = String(phone).replace(/\D/g, "");
   if (digits.length === 0) return null;
+  // Remove DDI 55 (Brasil) — payloads vêm às vezes como 5511..., 5511912... ou +5511...
   if (digits.length >= 12 && digits.startsWith("55")) {
     digits = digits.slice(2);
+  }
+  // Injeção do 9º dígito para celulares antigos sem o "9" inicial.
+  if (digits.length === 10) {
+    const third = digits.charCodeAt(2) - 48; // '0'..'9'
+    if (third >= 6 && third <= 9) {
+      digits = `${digits.slice(0, 2)}9${digits.slice(2)}`;
+    }
   }
   return digits;
 }

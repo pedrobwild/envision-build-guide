@@ -16,6 +16,7 @@ import {
   jsonResponse,
   loadDigisacConfig,
   makeServiceClient,
+  parseBwMarker,
   parseContact,
   parseMessage,
   parseTicket,
@@ -26,11 +27,13 @@ import {
   upsertConversation,
   upsertDigisacContact,
   upsertMessage,
+  type BwMarker,
   type DigisacConfig,
   type DigisacContact,
   type DigisacMessage,
   type DigisacTicket,
 } from "../_shared/digisac.ts";
+import { ingestLead, type NormalizedLead } from "../_shared/lead-ingest.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 // ----------------------------------------------------------------------------
@@ -373,6 +376,99 @@ async function resolveContactAndBudget(
   };
 }
 
+// ----------------------------------------------------------------------------
+// Cenário A: criar cliente novo a partir de marcador BW (Click-to-WhatsApp)
+// ----------------------------------------------------------------------------
+// Quando um contato desconhecido manda a primeira mensagem contendo
+// "[BW-<ad_id>-<adset_id>-<campaign_id>]", criamos o cliente via `ingestLead`
+// (que já dedup por phone_normalized graças ao UNIQUE recém-criado e trata
+// 23505 como cliente existente) e devolvemos o contato para re-resolver budget.
+async function tryIngestFromBwMarker(
+  supabase: SupabaseClient,
+  cfg: DigisacConfig,
+  contactFromPayload: DigisacContact | null,
+  contactId: string | null,
+  marker: BwMarker,
+  messageId: string,
+): Promise<{ contact: DigisacContact; clientId: string } | null> {
+  // Garante que temos o contato hidratado (com telefone/nome).
+  let contact = contactFromPayload;
+  if ((!contact || (!contact.phone && !contact.email)) && contactId) {
+    try {
+      contact = await fetchContact(cfg, contactId);
+    } catch (err) {
+      console.warn(JSON.stringify({
+        tag: "[digisac-webhook]",
+        event: "fetch_contact_failed_during_bw",
+        contactId,
+        error: err instanceof Error ? err.message : String(err),
+      }));
+    }
+  }
+  if (!contact) return null;
+  await upsertDigisacContact(supabase, contact);
+
+  // Sem telefone E sem email não temos como criar cliente útil.
+  if (!contact.phone && !contact.email) return null;
+
+  const lead: NormalizedLead = {
+    source: "meta_ads",
+    external_id: `digisac:${messageId}`,
+    name: contact.name || "Lead WhatsApp",
+    email: contact.email ?? null,
+    phone: contact.phone ?? null,
+    ad_id: marker.ad_id,
+    adset_id: marker.adset_id,
+    campaign_id: marker.campaign_id,
+    utm_source: "meta",
+    utm_medium: "click_to_whatsapp",
+    utm_campaign: marker.campaign_id,
+    raw_payload: {
+      origin: "digisac_webhook_bw_marker",
+      digisac_message_id: messageId,
+      digisac_contact_id: contact.id,
+      marker,
+    },
+  };
+
+  const result = await ingestLead(supabase, lead);
+  if (result.status === "failed" || !result.client_id) {
+    return null;
+  }
+  return { contact, clientId: result.client_id };
+}
+
+// Preenche colunas de tracking em budget existente quando estiverem vazias.
+// Não sobrescreve dados já presentes (atribuição original do lead vence).
+async function backfillBudgetAttribution(
+  supabase: SupabaseClient,
+  budgetId: string,
+  marker: BwMarker,
+): Promise<void> {
+  try {
+    const { data: b } = await supabase
+      .from("budgets")
+      .select("ad_id, adset_id, campaign_id, utm_source")
+      .eq("id", budgetId)
+      .maybeSingle();
+    if (!b) return;
+    const patch: Record<string, string> = {};
+    if (!b.ad_id) patch.ad_id = marker.ad_id;
+    if (!b.adset_id) patch.adset_id = marker.adset_id;
+    if (!b.campaign_id) patch.campaign_id = marker.campaign_id;
+    if (!b.utm_source) patch.utm_source = "meta";
+    if (Object.keys(patch).length === 0) return;
+    await supabase.from("budgets").update(patch).eq("id", budgetId);
+  } catch (err) {
+    console.warn(JSON.stringify({
+      tag: "[digisac-webhook]",
+      event: "backfill_attribution_failed",
+      budgetId,
+      error: err instanceof Error ? err.message : String(err),
+    }));
+  }
+}
+
 async function handleMessageEvent(
   supabase: SupabaseClient,
   cfg: DigisacConfig,
@@ -413,16 +509,69 @@ async function handleMessageEvent(
     parseContact((payloadObj.contact as Record<string, unknown>) ?? {}) ?? null;
   const contactId = message.contactId ?? ids.contactId ?? ticket?.contactId ?? null;
 
-  const resolved = await resolveContactAndBudget(
+  let resolved = await resolveContactAndBudget(
     supabase,
     cfg,
     contactFromPayload,
     contactId,
   );
+
+  // ---------- Cenário A: contato desconhecido + marcador BW na mensagem ----------
+  // Click-to-WhatsApp pode trazer um contato que ainda não existe como cliente.
+  // Se a primeira mensagem traz "[BW-<ad_id>-<adset_id>-<campaign_id>]", criamos
+  // o cliente (e o budget MQL é gerado pelo trigger) e re-resolvemos.
+  if (!resolved && message.direction === "in") {
+    const marker = parseBwMarker(message.body);
+    if (marker) {
+      try {
+        const ingested = await tryIngestFromBwMarker(
+          supabase,
+          cfg,
+          contactFromPayload,
+          contactId,
+          marker,
+          message.id,
+        );
+        if (ingested) {
+          // Re-resolve: agora o cliente existe e tem budget criado pelo trigger.
+          resolved = await resolveContactAndBudget(supabase, cfg, ingested.contact, ingested.contact.id);
+          console.log(JSON.stringify({
+            tag: "[digisac-webhook]",
+            event: "bw_marker_ingested",
+            marker,
+            client_id: ingested.clientId,
+            budget_resolved: Boolean(resolved),
+          }));
+        }
+      } catch (err) {
+        console.error(JSON.stringify({
+          tag: "[digisac-webhook]",
+          event: "bw_ingest_failed",
+          marker,
+          error: err instanceof Error ? err.message : String(err),
+        }));
+      }
+    }
+  }
+
+  // ---------- Atribuição de marcador BW para budget JÁ existente ----------
+  // Se temos budget mas as colunas de tracking estão vazias, preenche a partir
+  // do marcador (sem sobrescrever valores existentes).
+  if (resolved) {
+    const marker = parseBwMarker(message.body);
+    if (marker) {
+      await backfillBudgetAttribution(supabase, resolved.budgetId, marker);
+    }
+  }
+
   if (!resolved) {
-    console.warn(
-      `[digisac-webhook] ignorando mensagem ${message.id}: contato sem orçamento vinculado (contactId=${contactId})`,
-    );
+    console.warn(JSON.stringify({
+      tag: "[digisac-webhook]",
+      event: "no_matching_budget",
+      message_id: message.id,
+      contact_id: contactId,
+      had_bw_marker: Boolean(parseBwMarker(message.body)),
+    }));
     return jsonResponse(
       {
         success: false,

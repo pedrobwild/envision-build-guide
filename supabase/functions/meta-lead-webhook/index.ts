@@ -161,23 +161,45 @@ Deno.serve(async (req) => {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
   }
 
+  const t0 = Date.now();
   const rawBody = await req.text();
   const appSecret = getEnv("META_APP_SECRET");
   const pageAccessToken = getEnv("META_PAGE_ACCESS_TOKEN");
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  if (appSecret) {
-    const ok = await verifySignature(
-      rawBody,
-      req.headers.get("x-hub-signature-256"),
-      appSecret,
+  // ---------- Segurança: METAAPPSECRET é obrigatório ----------
+  // Antes pulávamos a validação se a secret não estivesse setada — isso é
+  // inseguro em produção. Agora devolvemos 503 explícito para que o painel do
+  // Meta entenda que ainda não estamos prontos para receber.
+  if (!appSecret) {
+    console.error(JSON.stringify({
+      tag: "[meta-webhook]",
+      event: "missing_app_secret",
+      duration_ms: Date.now() - t0,
+    }));
+    return new Response(
+      JSON.stringify({
+        error: "META_APP_SECRET not configured",
+        hint: "Configure a secret META_APP_SECRET no painel da Lovable Cloud antes de ativar o webhook em produção.",
+      }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-    if (!ok) {
-      console.warn("[meta-webhook] Invalid signature");
-      return new Response("Invalid signature", { status: 401, headers: corsHeaders });
-    }
-  } else {
-    console.warn("[meta-webhook] META_APP_SECRET not configured — skipping signature check");
+  }
+
+  const ok = await verifySignature(
+    rawBody,
+    req.headers.get("x-hub-signature-256"),
+    appSecret,
+  );
+  if (!ok) {
+    console.warn(JSON.stringify({
+      tag: "[meta-webhook]",
+      event: "invalid_signature",
+      has_header: Boolean(req.headers.get("x-hub-signature-256")),
+      body_bytes: rawBody.length,
+      duration_ms: Date.now() - t0,
+    }));
+    return new Response("Invalid signature", { status: 401, headers: corsHeaders });
   }
 
   let payload: MetaWebhookPayload;
@@ -188,7 +210,11 @@ Deno.serve(async (req) => {
   }
 
   if (!payload.entry || payload.entry.length === 0) {
-    console.warn("[meta-webhook] Empty entry array, payload:", JSON.stringify(payload).slice(0, 500));
+    console.warn(JSON.stringify({
+      tag: "[meta-webhook]",
+      event: "empty_entry",
+      duration_ms: Date.now() - t0,
+    }));
     return new Response(JSON.stringify({ success: true, results: [] }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -229,6 +255,7 @@ Deno.serve(async (req) => {
         ad_id: leadFull?.ad_id ?? change.value.ad_id ?? null,
         ad_name: leadFull?.ad_name ?? null,
         form_id: leadFull?.form_id ?? change.value.form_id ?? null,
+        form_name: (leadFull as { form_name?: string } | null)?.form_name ?? null,
         utm_source: "meta",
         utm_medium: "paid_social",
         utm_campaign: leadFull?.campaign_name ?? leadFull?.campaign_id ?? null,
@@ -252,6 +279,14 @@ Deno.serve(async (req) => {
       results.push({ leadgen_id: leadgenId, status: result.status, error: result.error });
     }
   }
+
+  console.log(JSON.stringify({
+    tag: "[meta-webhook]",
+    event: "processed",
+    leads: results.length,
+    statuses: results.map((r) => r.status),
+    duration_ms: Date.now() - t0,
+  }));
 
   return new Response(JSON.stringify({ success: true, results }), {
     status: 200,
