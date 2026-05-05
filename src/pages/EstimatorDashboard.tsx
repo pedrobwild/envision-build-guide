@@ -732,7 +732,7 @@ export default function EstimatorDashboard() {
               onSortByChange={setSortBy}
               commercialOptions={commercialOptions}
               estimatorOptions={estimatorOptions}
-              isAdmin={isAdmin}
+              isAdmin={canManageAll}
               filteredCount={filtered.length}
             />
 
@@ -757,7 +757,7 @@ export default function EstimatorDashboard() {
                 statusFilter={statusFilter}
                 priorityFilter={priorityFilter}
                 counts={{ delivered: counts.delivered, finished: counts.finished }}
-                isAdmin={isAdmin}
+                isAdmin={canManageAll}
                 getProfileName={getProfileName}
                 onRequestStatusChange={requestStatusChange}
                 onSetStatusFilter={setStatusFilter}
@@ -778,7 +778,7 @@ export default function EstimatorDashboard() {
         <BulkActionsBar
           count={selectedIds.size}
           onClear={clearSelection}
-          isAdmin={isAdmin}
+          isAdmin={canManageAll}
           estimatorOptions={bulkEstimatorOptions}
           commercialOptions={bulkCommercialOptions}
           onBulkStatus={bulkUpdateStatus}
