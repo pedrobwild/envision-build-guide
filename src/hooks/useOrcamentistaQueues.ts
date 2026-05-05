@@ -15,6 +15,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { dedupeBudgetsByVersionGroup } from "@/lib/dedupe-versions";
 
 export interface ProductionDealRow {
   id: string;
@@ -26,6 +27,10 @@ export interface ProductionDealRow {
   updated_at: string | null;
   due_at: string | null;
   prazo_dias_uteis: number | null;
+  version_group_id: string | null;
+  version_number: number | null;
+  is_current_version: boolean | null;
+  is_published_version: boolean | null;
 }
 
 export interface OrcamentistaQueues {
