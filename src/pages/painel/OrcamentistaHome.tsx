@@ -40,8 +40,6 @@ import { SectionHeader } from "@/components/dashboard/SectionHeader";
 import { StatusChip } from "@/components/dashboard/StatusChip";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 
-import { useAuth } from "@/hooks/useAuth";
-import { useUserProfile } from "@/hooks/useUserProfile";
 import {
   useOrcamentistaQueues,
   productionStatusLabel,
@@ -59,11 +57,10 @@ const anim = (delay: number) => ({
 
 export default function OrcamentistaHome() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { isAdmin } = useUserProfile();
-  const ownerId = isAdmin ? null : user?.id ?? null;
-
-  const queues = useOrcamentistaQueues(ownerId);
+  // Orçamentistas e admins enxergam toda a fila de produção (mesma regra da
+  // EstimatorDashboard /admin/producao). Sem filtro por owner aqui — quem quiser
+  // ver só os próprios usa o filtro de "Responsável" no pipeline.
+  const queues = useOrcamentistaQueues(null);
   const data = queues.data;
   const isLoading = queues.isLoading;
 
