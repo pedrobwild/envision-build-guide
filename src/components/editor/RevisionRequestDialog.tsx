@@ -59,6 +59,8 @@ export function RevisionRequestDialog({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const isComplement = currentStatus === "revision_requested";
+
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
