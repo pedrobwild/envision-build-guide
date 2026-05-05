@@ -84,7 +84,9 @@ export default function EstimatorDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, loading: profileLoading, isAdmin } = useUserProfile();
+  const { profile, loading: profileLoading, isAdmin, isOrcamentista } = useUserProfile();
+  // Orçamentistas têm a mesma visão completa que admin no dashboard de produção
+  const canManageAll = isAdmin || isOrcamentista;
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [userRoles, setUserRoles] = useState<RoleRow[]>([]);
@@ -188,16 +190,16 @@ export default function EstimatorDashboard() {
   );
 
   const commercialOptions = useMemo(() => {
-    if (!isAdmin) return [];
+    if (!canManageAll) return [];
     const ids = [...new Set(budgets.map((b) => b.commercial_owner_id).filter(Boolean))] as string[];
     return ids.map((id) => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
-  }, [isAdmin, budgets, getProfileName]);
+  }, [canManageAll, budgets, getProfileName]);
 
   const estimatorOptions = useMemo(() => {
-    if (!isAdmin) return [];
+    if (!canManageAll) return [];
     const ids = [...new Set(budgets.map((b) => b.estimator_owner_id).filter(Boolean))] as string[];
     return ids.map((id) => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
-  }, [isAdmin, budgets, getProfileName]);
+  }, [canManageAll, budgets, getProfileName]);
 
   const counts = useMemo(() => {
     return {
