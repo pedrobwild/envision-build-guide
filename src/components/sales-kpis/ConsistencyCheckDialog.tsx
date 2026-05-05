@@ -10,8 +10,8 @@
  * propagando para todas as RPCs sem inconsistências.
  */
 
-import { useState, useCallback } from "react";
-import { CheckCircle2, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { CheckCircle2, AlertTriangle, Loader2, RefreshCw, ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,11 +25,16 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import {
   rangeToBounds,
   formatCurrencyBRL,
+  formatPct,
+  isAutoComparePreset,
+  previousPeriod,
   type SalesPeriod,
 } from "@/hooks/useSalesKpis";
 
@@ -282,6 +287,88 @@ async function runChecks(
   return checks;
 }
 
+// ============================================================
+// Period-vs-period comparison
+// ============================================================
+interface ComparisonRange {
+  start: string;
+  end: string;
+  label: string;
+}
+interface ComparisonSnapshot {
+  total_leads: number;
+  deals_won: number;
+  revenue_won: number;
+  win_rate_pct: number;
+}
+async function fetchSnapshot(
+  range: ComparisonRange,
+  ownerId: string | null,
+): Promise<ComparisonSnapshot> {
+  const data = await rpc<Record<string, number>>("sales_kpis_dashboard", {
+    _start_date: range.start,
+    _end_date: range.end,
+    _owner_id: ownerId,
+  });
+  const o = (data ?? {}) as Record<string, number>;
+  return {
+    total_leads: Number(o.total_leads ?? 0),
+    deals_won: Number(o.deals_won ?? 0),
+    revenue_won: Number(o.revenue_won ?? 0),
+    win_rate_pct: Number(o.win_rate_pct ?? 0),
+  };
+}
+
+function toDateInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function fromDateInput(value: string, endOfDay = false): string {
+  if (!value) return "";
+  const [y, m, d] = value.split("-").map(Number);
+  const dt = endOfDay
+    ? new Date(y, (m ?? 1) - 1, d ?? 1, 23, 59, 59, 999)
+    : new Date(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0, 0);
+  return dt.toISOString();
+}
+
+function deltaPct(curr: number, prev: number): number | null {
+  if (!prev) return curr === 0 ? 0 : null;
+  return ((curr - prev) / Math.abs(prev)) * 100;
+}
+
+function DeltaBadge({ delta, invert }: { delta: number | null; invert?: boolean }) {
+  if (delta === null) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+        <Minus className="h-3 w-3" /> n/a
+      </span>
+    );
+  }
+  const positive = invert ? delta < 0 : delta > 0;
+  const negative = invert ? delta > 0 : delta < 0;
+  const Icon = delta === 0 ? Minus : delta > 0 ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
+        positive && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+        negative && "bg-destructive/10 text-destructive",
+        delta === 0 && "bg-muted text-muted-foreground",
+      )}
+    >
+      <Icon className="h-3 w-3" />
+      {delta > 0 ? "+" : ""}
+      {delta.toFixed(1)}%
+    </span>
+  );
+}
+
 export function ConsistencyCheckDialog({
   open,
   onOpenChange,
@@ -293,6 +380,88 @@ export function ConsistencyCheckDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastRunAt, setLastRunAt] = useState<Date | null>(null);
+
+  // ---- Comparison panel state ----
+  const autoCompare = isAutoComparePreset(period.range);
+  const defaults = useMemo(() => {
+    if (!autoCompare) {
+      return { leftStart: "", leftEnd: "", rightStart: "", rightEnd: "" };
+    }
+    const curr = rangeToBounds(period);
+    const prev = previousPeriod(period);
+    const prevBounds = prev ? rangeToBounds(prev) : { start: null, end: null };
+    return {
+      leftStart: toDateInput(curr.start),
+      leftEnd: toDateInput(curr.end ?? new Date().toISOString()),
+      rightStart: toDateInput(prevBounds.start),
+      rightEnd: toDateInput(prevBounds.end),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCompare, period.range, period.startDate, period.endDate]);
+
+  const [leftStart, setLeftStart] = useState(defaults.leftStart);
+  const [leftEnd, setLeftEnd] = useState(defaults.leftEnd);
+  const [rightStart, setRightStart] = useState(defaults.rightStart);
+  const [rightEnd, setRightEnd] = useState(defaults.rightEnd);
+  const [cmpLoading, setCmpLoading] = useState(false);
+  const [cmpError, setCmpError] = useState<string | null>(null);
+  const [cmpData, setCmpData] = useState<{
+    left: ComparisonSnapshot;
+    right: ComparisonSnapshot;
+  } | null>(null);
+
+  // Re-pre-popula quando o preset muda (apenas para presets auto-compare).
+  // Para presets manuais (7d/30d/90d/all/custom) limpa os campos.
+  useEffect(() => {
+    setLeftStart(defaults.leftStart);
+    setLeftEnd(defaults.leftEnd);
+    setRightStart(defaults.rightStart);
+    setRightEnd(defaults.rightEnd);
+    setCmpData(null);
+    setCmpError(null);
+  }, [defaults]);
+
+  const canCompare = !!(leftStart && leftEnd && rightStart && rightEnd);
+
+  const runComparison = useCallback(async () => {
+    if (!canCompare) return;
+    setCmpLoading(true);
+    setCmpError(null);
+    try {
+      const left: ComparisonRange = {
+        start: fromDateInput(leftStart),
+        end: fromDateInput(leftEnd, true),
+        label: "Período A",
+      };
+      const right: ComparisonRange = {
+        start: fromDateInput(rightStart),
+        end: fromDateInput(rightEnd, true),
+        label: "Período B",
+      };
+      const [a, b] = await Promise.all([
+        fetchSnapshot(left, ownerId),
+        fetchSnapshot(right, ownerId),
+      ]);
+      setCmpData({ left: a, right: b });
+    } catch (err) {
+      logger.warn("[consistency-check] comparison failed", err);
+      setCmpError(
+        err instanceof Error ? err.message : "Falha ao buscar comparação.",
+      );
+    } finally {
+      setCmpLoading(false);
+    }
+  }, [canCompare, leftStart, leftEnd, rightStart, rightEnd, ownerId]);
+
+  // Auto-roda comparação quando entra em modo auto-compare e os campos
+  // estão pré-preenchidos. Para presets manuais o usuário aciona via botão.
+  useEffect(() => {
+    if (!open) return;
+    if (!autoCompare) return;
+    if (!canCompare) return;
+    void runComparison();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, autoCompare, defaults]);
 
   const run = useCallback(async () => {
     setLoading(true);
@@ -326,6 +495,8 @@ export function ConsistencyCheckDialog({
       // limpa para não exibir resultado obsoleto na próxima abertura com outros filtros
       setResults(null);
       setError(null);
+      setCmpData(null);
+      setCmpError(null);
     }
   };
 
@@ -333,18 +504,162 @@ export function ConsistencyCheckDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Comparar totais entre RPCs</DialogTitle>
+          <DialogTitle>Comparar totais</DialogTitle>
           <DialogDescription>
-            Roda checagens cruzadas usando os filtros globais aplicados (
+            Compara dois períodos lado a lado e roda checagens cruzadas entre as
+            RPCs do dashboard usando os filtros aplicados (
             {period.range === "custom" ? "período personalizado" : period.range}
-            {ownerId ? ` · ${ownerName ?? "vendedora"}` : " · todas as vendedoras"}).
-            Divergências indicam inconsistência entre as RPCs do dashboard.
+            {ownerId ? ` · ${ownerName ?? "vendedora"}` : " · todas as vendedoras"}
+            ).
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* ===== Comparação de períodos ===== */}
+          <section className="rounded-md border bg-muted/20 p-3">
+            <header className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium">Comparar dois períodos</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {autoCompare
+                    ? "Pré-preenchido a partir do preset selecionado. Ajuste os campos para comparar outras janelas (ex.: abr/2026 vs abr/2025)."
+                    : "Defina manualmente as duas janelas a comparar."}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void runComparison()}
+                disabled={!canCompare || cmpLoading}
+              >
+                {cmpLoading ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Comparando…
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Comparar
+                  </>
+                )}
+              </Button>
+            </header>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2 rounded-md border bg-background p-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Período A {autoCompare && <span className="normal-case text-muted-foreground/70">(corrente)</span>}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="cmp-left-start" className="text-[11px]">De</Label>
+                    <Input
+                      id="cmp-left-start"
+                      type="date"
+                      value={leftStart}
+                      onChange={(e) => setLeftStart(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cmp-left-end" className="text-[11px]">Até</Label>
+                    <Input
+                      id="cmp-left-end"
+                      type="date"
+                      value={leftEnd}
+                      onChange={(e) => setLeftEnd(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2 rounded-md border bg-background p-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Período B {autoCompare && <span className="normal-case text-muted-foreground/70">(anterior)</span>}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="cmp-right-start" className="text-[11px]">De</Label>
+                    <Input
+                      id="cmp-right-start"
+                      type="date"
+                      value={rightStart}
+                      onChange={(e) => setRightStart(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cmp-right-end" className="text-[11px]">Até</Label>
+                    <Input
+                      id="cmp-right-end"
+                      type="date"
+                      value={rightEnd}
+                      onChange={(e) => setRightEnd(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {cmpError && (
+              <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+                {cmpError}
+              </div>
+            )}
+
+            {cmpData && !cmpError && (
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full border-collapse text-xs">
+                  <thead className="text-muted-foreground">
+                    <tr className="border-b">
+                      <th className="py-1.5 pr-2 text-left font-medium">Métrica</th>
+                      <th className="py-1.5 px-2 text-right font-medium">Período A</th>
+                      <th className="py-1.5 px-2 text-right font-medium">Período B</th>
+                      <th className="py-1.5 pl-2 text-right font-medium">Δ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="tabular-nums">
+                    <tr className="border-b border-border/60">
+                      <td className="py-1.5 pr-2">Leads</td>
+                      <td className="py-1.5 px-2 text-right">{cmpData.left.total_leads}</td>
+                      <td className="py-1.5 px-2 text-right">{cmpData.right.total_leads}</td>
+                      <td className="py-1.5 pl-2 text-right">
+                        <DeltaBadge delta={deltaPct(cmpData.left.total_leads, cmpData.right.total_leads)} />
+                      </td>
+                    </tr>
+                    <tr className="border-b border-border/60">
+                      <td className="py-1.5 pr-2">Fechados</td>
+                      <td className="py-1.5 px-2 text-right">{cmpData.left.deals_won}</td>
+                      <td className="py-1.5 px-2 text-right">{cmpData.right.deals_won}</td>
+                      <td className="py-1.5 pl-2 text-right">
+                        <DeltaBadge delta={deltaPct(cmpData.left.deals_won, cmpData.right.deals_won)} />
+                      </td>
+                    </tr>
+                    <tr className="border-b border-border/60">
+                      <td className="py-1.5 pr-2">Win rate</td>
+                      <td className="py-1.5 px-2 text-right">{formatPct(cmpData.left.win_rate_pct)}</td>
+                      <td className="py-1.5 px-2 text-right">{formatPct(cmpData.right.win_rate_pct)}</td>
+                      <td className="py-1.5 pl-2 text-right">
+                        <DeltaBadge delta={deltaPct(cmpData.left.win_rate_pct, cmpData.right.win_rate_pct)} />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="py-1.5 pr-2">Receita</td>
+                      <td className="py-1.5 px-2 text-right">{formatCurrencyBRL(cmpData.left.revenue_won)}</td>
+                      <td className="py-1.5 px-2 text-right">{formatCurrencyBRL(cmpData.right.revenue_won)}</td>
+                      <td className="py-1.5 pl-2 text-right">
+                        <DeltaBadge delta={deltaPct(cmpData.left.revenue_won, cmpData.right.revenue_won)} />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          {/* ===== Checagens cruzadas ===== */}
           {loading && (
             <div className="space-y-2">
               {[0, 1, 2, 3].map((i) => (

@@ -801,9 +801,15 @@ function EmptyState({ message }: { message: string }) {
 // Filtros globais
 // ============================================================
 const RANGE_OPTIONS: { value: SalesRange; label: string }[] = [
+  { value: "7d", label: "Últimos 7 dias" },
   { value: "30d", label: "Últimos 30 dias" },
   { value: "90d", label: "Últimos 90 dias" },
-  { value: "ytd", label: "Ano atual (YTD)" },
+  { value: "mtd", label: "Mês corrente" },
+  { value: "last_month", label: "Mês anterior" },
+  { value: "qtd", label: "Trimestre corrente" },
+  { value: "last_quarter", label: "Trimestre anterior" },
+  { value: "ytd", label: "Ano corrente (YTD)" },
+  { value: "last_year", label: "Ano anterior" },
   { value: "all", label: "Desde o início" },
 ];
 
