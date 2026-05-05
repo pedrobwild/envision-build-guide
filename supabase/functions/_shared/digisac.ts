@@ -48,7 +48,7 @@ export function parseBwMarker(text: string | null | undefined): BwMarker | null 
   if (!m) return null;
   return { ad_id: m[1], adset_id: m[2], campaign_id: m[3] };
 }
-export const DIGISAC_TIMEOUT_MS = 20000;
+
 
 // ------------------------------------------------------------
 // Types
