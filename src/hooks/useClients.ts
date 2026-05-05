@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { sanitizePostgrestPattern } from "@/lib/postgrest-escape";
+import { dedupeBudgetsByVersionGroup } from "@/lib/dedupe-versions";
 
 import { logger } from "@/lib/logger";
 
@@ -193,12 +194,14 @@ export function useClientBudgets(clientId: string | undefined) {
       const { data, error } = await supabase
         .from("budgets")
         .select(
-          "id, sequential_code, project_name, status, internal_status, manual_total, internal_cost, created_at, updated_at, due_at, priority, commercial_owner_id, estimator_owner_id, condominio, bairro, city, metragem, public_id, property_id",
+          "id, sequential_code, project_name, status, internal_status, manual_total, internal_cost, created_at, updated_at, due_at, priority, commercial_owner_id, estimator_owner_id, condominio, bairro, city, metragem, public_id, property_id, version_group_id, version_number, is_current_version, is_published_version",
         )
         .eq("client_id", clientId)
+        .or("is_current_version.eq.true,is_current_version.is.null")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+
+      return dedupeBudgetsByVersionGroup(data ?? []);
     },
   });
 }
