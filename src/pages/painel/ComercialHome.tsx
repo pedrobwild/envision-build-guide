@@ -63,8 +63,8 @@ const anim = (delay: number) => ({
 export default function ComercialHome() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isAdmin } = useUserProfile();
-  const ownerId = isAdmin ? null : user?.id ?? null;
+  const { isAdmin, isOrcamentista } = useUserProfile();
+  const ownerId = isAdmin || isOrcamentista ? null : user?.id ?? null;
 
   const queues = useComercialQueues(ownerId);
   const overview = useSalesOverview({ range: "30d" }, ownerId);
