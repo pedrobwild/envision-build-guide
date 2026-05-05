@@ -306,14 +306,46 @@ export async function openPublicBudgetByPublicId(publicId: string): Promise<void
       trace.setResolved(target, "rpc");
     }
 
-    // Camada 3: nada publicado — não navega para draft.
+    // Camada 3: nada publicado — tenta auto-publicar o orçamento atual.
     if (!target) {
-      stub.close();
-      const diag = trace.commit("blocked_no_published");
-      showDiagnosisToast(
-        "Nenhuma versão publicada disponível para este orçamento. Publique antes de compartilhar.",
-        diag,
-      );
+      trace.step("auto_publish_attempt_by_public_id", { publicId });
+      const { data: src, error: srcErr } = await supabase
+        .from("budgets")
+        .select("id, status")
+        .eq("public_id", publicId)
+        .maybeSingle();
+
+      if (srcErr || !src?.id) {
+        stub.close();
+        if (srcErr) trace.setError(srcErr.message);
+        const diag = trace.commit("blocked_no_published");
+        showDiagnosisToast(
+          "Nenhuma versão publicada disponível para este orçamento. Publique antes de compartilhar.",
+          diag,
+        );
+        return;
+      }
+
+      const toastId = toast.loading("Publicando orçamento...");
+      const { error: updErr } = await supabase
+        .from("budgets")
+        .update({ status: "published" })
+        .eq("id", src.id);
+      toast.dismiss(toastId);
+
+      if (updErr) {
+        stub.close();
+        trace.setError(updErr.message);
+        const diag = trace.commit("blocked_publish_error");
+        showDiagnosisToast("Não foi possível publicar: " + updErr.message, diag);
+        return;
+      }
+
+      toast.success("Orçamento publicado");
+      target = publicId;
+      trace.setResolved(target, "direct");
+      stub.navigate(getPublicBudgetUrl(target));
+      trace.commit("opened_after_publish");
       return;
     }
 
