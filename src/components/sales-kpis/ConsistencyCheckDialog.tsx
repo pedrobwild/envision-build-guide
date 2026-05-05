@@ -287,6 +287,88 @@ async function runChecks(
   return checks;
 }
 
+// ============================================================
+// Period-vs-period comparison
+// ============================================================
+interface ComparisonRange {
+  start: string;
+  end: string;
+  label: string;
+}
+interface ComparisonSnapshot {
+  total_leads: number;
+  deals_won: number;
+  revenue_won: number;
+  win_rate_pct: number;
+}
+async function fetchSnapshot(
+  range: ComparisonRange,
+  ownerId: string | null,
+): Promise<ComparisonSnapshot> {
+  const data = await rpc<Record<string, number>>("sales_kpis_dashboard", {
+    _start_date: range.start,
+    _end_date: range.end,
+    _owner_id: ownerId,
+  });
+  const o = (data ?? {}) as Record<string, number>;
+  return {
+    total_leads: Number(o.total_leads ?? 0),
+    deals_won: Number(o.deals_won ?? 0),
+    revenue_won: Number(o.revenue_won ?? 0),
+    win_rate_pct: Number(o.win_rate_pct ?? 0),
+  };
+}
+
+function toDateInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function fromDateInput(value: string, endOfDay = false): string {
+  if (!value) return "";
+  const [y, m, d] = value.split("-").map(Number);
+  const dt = endOfDay
+    ? new Date(y, (m ?? 1) - 1, d ?? 1, 23, 59, 59, 999)
+    : new Date(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0, 0);
+  return dt.toISOString();
+}
+
+function deltaPct(curr: number, prev: number): number | null {
+  if (!prev) return curr === 0 ? 0 : null;
+  return ((curr - prev) / Math.abs(prev)) * 100;
+}
+
+function DeltaBadge({ delta, invert }: { delta: number | null; invert?: boolean }) {
+  if (delta === null) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+        <Minus className="h-3 w-3" /> n/a
+      </span>
+    );
+  }
+  const positive = invert ? delta < 0 : delta > 0;
+  const negative = invert ? delta > 0 : delta < 0;
+  const Icon = delta === 0 ? Minus : delta > 0 ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
+        positive && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+        negative && "bg-destructive/10 text-destructive",
+        delta === 0 && "bg-muted text-muted-foreground",
+      )}
+    >
+      <Icon className="h-3 w-3" />
+      {delta > 0 ? "+" : ""}
+      {delta.toFixed(1)}%
+    </span>
+  );
+}
+
 export function ConsistencyCheckDialog({
   open,
   onOpenChange,
