@@ -231,6 +231,21 @@ function ContractForm({
         return;
       }
 
+      // Audit: solicitação de contrato submetida
+      if (publicId) {
+        void import("@/lib/access-audit").then(({ logPublicAccess }) =>
+          logPublicAccess({
+            publicId,
+            event: "public_contract_request_submitted",
+            metadata: {
+              payment_method: paymentMethod,
+              parcelas: paymentMethod === "cartao" ? parcelas : 1,
+            },
+            dedupKey: `contract-submit:${publicId}:${Date.now()}`,
+          })
+        );
+      }
+
       const valorParcela = formatBRL(total / parcelas);
       const pagamentoLinha =
         paymentMethod === "cartao"
