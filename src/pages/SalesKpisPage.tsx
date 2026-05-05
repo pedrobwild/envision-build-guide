@@ -816,11 +816,34 @@ const RANGE_OPTIONS: { value: SalesRange; label: string }[] = [
 // ============================================================
 // Página
 // ============================================================
+const VALID_RANGES: SalesRange[] = RANGE_OPTIONS.map((o) => o.value);
+
 export default function SalesKpisPage() {
-  const [range, setRange] = useState<SalesRange>("90d");
-  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlPeriod = searchParams.get("period") as SalesRange | null;
+  const urlOwner = searchParams.get("owner");
+  const initialRange: SalesRange =
+    urlPeriod && VALID_RANGES.includes(urlPeriod) ? urlPeriod : "90d";
+
+  const [range, setRange] = useState<SalesRange>(initialRange);
+  const [ownerId, setOwnerId] = useState<string | null>(urlOwner || null);
   const navigate = useNavigate();
   const [checkOpen, setCheckOpen] = useState(false);
+
+  // Sync state → URL (replace, sem poluir history)
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (range === "90d") next.delete("period");
+    else next.set("period", range);
+    if (ownerId) next.set("owner", ownerId);
+    else next.delete("owner");
+    const currentStr = searchParams.toString();
+    const nextStr = next.toString();
+    if (currentStr !== nextStr) {
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range, ownerId]);
 
   const period: SalesPeriod = useMemo(() => ({ range }), [range]);
   const bounds = rangeToBounds(period);
