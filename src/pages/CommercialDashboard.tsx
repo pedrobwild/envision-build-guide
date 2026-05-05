@@ -1041,9 +1041,9 @@ export default function CommercialDashboard() {
                 <Send className="h-3 w-3" /><span className="hidden sm:inline">Enviar</span>
               </Button>
             )}
-            {["delivered_to_sales", "sent_to_client"].includes(b.internal_status) && (
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => setRevisionBudget(b)}>
-                <RotateCcw className="h-3 w-3" /><span className="hidden sm:inline">Revisão</span>
+            {["delivered_to_sales", "sent_to_client", "revision_requested"].includes(b.internal_status) && (
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1 px-2" onClick={() => setRevisionBudget(b)} title={b.internal_status === "revision_requested" ? "Complementar instruções de revisão" : "Solicitar revisão"}>
+                <RotateCcw className="h-3 w-3" /><span className="hidden sm:inline">{b.internal_status === "revision_requested" ? "Complementar" : "Revisão"}</span>
               </Button>
             )}
             {b.public_id && (
