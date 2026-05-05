@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_audit_log: {
+        Row: {
+          actor_role: string | null
+          actor_user_id: string | null
+          budget_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json
+          public_id: string | null
+          referrer: string | null
+          route: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          actor_role?: string | null
+          actor_user_id?: string | null
+          budget_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          public_id?: string | null
+          referrer?: string | null
+          route?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          actor_role?: string | null
+          actor_user_id?: string | null
+          budget_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          public_id?: string | null
+          referrer?: string | null
+          route?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       adjustments: {
         Row: {
           amount: number
@@ -3763,6 +3808,16 @@ export type Database = {
           target_group_size: number
           target_version_group_id: string
         }[]
+      }
+      log_public_budget_access: {
+        Args: {
+          p_event_type?: string
+          p_metadata?: Json
+          p_public_id: string
+          p_referrer?: string
+          p_route?: string
+        }
+        Returns: string
       }
       mark_budget_as_manual_baseline: {
         Args: { p_budget_id: string; p_reason?: string }
