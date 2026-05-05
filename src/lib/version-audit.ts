@@ -139,6 +139,7 @@ export async function logRevisionRequestEvent({
   changeTypes,
   requestedByName,
   fromStatus,
+  isComplement = false,
 }: {
   budgetId: string;
   userId: string;
@@ -146,18 +147,21 @@ export async function logRevisionRequestEvent({
   changeTypes: string[];
   requestedByName: string;
   fromStatus: string;
+  isComplement?: boolean;
 }) {
+  const verb = isComplement ? "Complemento de revisão" : "Revisão solicitada";
   return logVersionEvent({
     event_type: "revision_requested",
     budget_id: budgetId,
     user_id: userId,
     from_status: fromStatus,
     to_status: "revision_requested",
-    note: `Revisão solicitada por ${requestedByName}: ${instructions.slice(0, 100)}${instructions.length > 100 ? "…" : ""}`,
+    note: `${verb} por ${requestedByName}: ${instructions.slice(0, 100)}${instructions.length > 100 ? "…" : ""}`,
     metadata: {
       instructions,
       change_types: changeTypes,
       requested_by_name: requestedByName,
+      is_complement: isComplement,
     },
   });
 }
