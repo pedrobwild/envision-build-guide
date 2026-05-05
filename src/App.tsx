@@ -129,9 +129,9 @@ const App = () => (
                     <Route path="/admin/comercial/kpis" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><SalesKpisPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/operacoes" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><AdminOperationsDashboard /></RoleGuard></AdminPage>} />
                     <Route path="/admin/saude-operacao" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><OperationsHealthPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/analises" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AnalisesPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/forecast" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><ForecastPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/metas" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial"]}><MetasHistoryPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/analises" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><AnalisesPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/forecast" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><ForecastPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/metas" element={<AdminPage><RoleGuard allowedRoles={["admin", "comercial", "orcamentista"]}><MetasHistoryPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/usuarios" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><UserManagement /></RoleGuard></AdminPage>} />
                     <Route path="/admin/demanda/:budgetId" element={<AdminPage><BudgetInternalDetail /></AdminPage>} />
                     <Route path="/admin/comparar" element={<AdminPage><VersionCompare /></AdminPage>} />
