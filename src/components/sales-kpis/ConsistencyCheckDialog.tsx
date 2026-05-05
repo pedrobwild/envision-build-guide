@@ -504,18 +504,162 @@ export function ConsistencyCheckDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Comparar totais entre RPCs</DialogTitle>
+          <DialogTitle>Comparar totais</DialogTitle>
           <DialogDescription>
-            Roda checagens cruzadas usando os filtros globais aplicados (
+            Compara dois períodos lado a lado e roda checagens cruzadas entre as
+            RPCs do dashboard usando os filtros aplicados (
             {period.range === "custom" ? "período personalizado" : period.range}
-            {ownerId ? ` · ${ownerName ?? "vendedora"}` : " · todas as vendedoras"}).
-            Divergências indicam inconsistência entre as RPCs do dashboard.
+            {ownerId ? ` · ${ownerName ?? "vendedora"}` : " · todas as vendedoras"}
+            ).
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* ===== Comparação de períodos ===== */}
+          <section className="rounded-md border bg-muted/20 p-3">
+            <header className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium">Comparar dois períodos</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {autoCompare
+                    ? "Pré-preenchido a partir do preset selecionado. Ajuste os campos para comparar outras janelas (ex.: abr/2026 vs abr/2025)."
+                    : "Defina manualmente as duas janelas a comparar."}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void runComparison()}
+                disabled={!canCompare || cmpLoading}
+              >
+                {cmpLoading ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Comparando…
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Comparar
+                  </>
+                )}
+              </Button>
+            </header>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2 rounded-md border bg-background p-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Período A {autoCompare && <span className="normal-case text-muted-foreground/70">(corrente)</span>}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="cmp-left-start" className="text-[11px]">De</Label>
+                    <Input
+                      id="cmp-left-start"
+                      type="date"
+                      value={leftStart}
+                      onChange={(e) => setLeftStart(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cmp-left-end" className="text-[11px]">Até</Label>
+                    <Input
+                      id="cmp-left-end"
+                      type="date"
+                      value={leftEnd}
+                      onChange={(e) => setLeftEnd(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2 rounded-md border bg-background p-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Período B {autoCompare && <span className="normal-case text-muted-foreground/70">(anterior)</span>}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="cmp-right-start" className="text-[11px]">De</Label>
+                    <Input
+                      id="cmp-right-start"
+                      type="date"
+                      value={rightStart}
+                      onChange={(e) => setRightStart(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cmp-right-end" className="text-[11px]">Até</Label>
+                    <Input
+                      id="cmp-right-end"
+                      type="date"
+                      value={rightEnd}
+                      onChange={(e) => setRightEnd(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {cmpError && (
+              <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+                {cmpError}
+              </div>
+            )}
+
+            {cmpData && !cmpError && (
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full border-collapse text-xs">
+                  <thead className="text-muted-foreground">
+                    <tr className="border-b">
+                      <th className="py-1.5 pr-2 text-left font-medium">Métrica</th>
+                      <th className="py-1.5 px-2 text-right font-medium">Período A</th>
+                      <th className="py-1.5 px-2 text-right font-medium">Período B</th>
+                      <th className="py-1.5 pl-2 text-right font-medium">Δ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="tabular-nums">
+                    <tr className="border-b border-border/60">
+                      <td className="py-1.5 pr-2">Leads</td>
+                      <td className="py-1.5 px-2 text-right">{cmpData.left.total_leads}</td>
+                      <td className="py-1.5 px-2 text-right">{cmpData.right.total_leads}</td>
+                      <td className="py-1.5 pl-2 text-right">
+                        <DeltaBadge delta={deltaPct(cmpData.left.total_leads, cmpData.right.total_leads)} />
+                      </td>
+                    </tr>
+                    <tr className="border-b border-border/60">
+                      <td className="py-1.5 pr-2">Fechados</td>
+                      <td className="py-1.5 px-2 text-right">{cmpData.left.deals_won}</td>
+                      <td className="py-1.5 px-2 text-right">{cmpData.right.deals_won}</td>
+                      <td className="py-1.5 pl-2 text-right">
+                        <DeltaBadge delta={deltaPct(cmpData.left.deals_won, cmpData.right.deals_won)} />
+                      </td>
+                    </tr>
+                    <tr className="border-b border-border/60">
+                      <td className="py-1.5 pr-2">Win rate</td>
+                      <td className="py-1.5 px-2 text-right">{formatPct(cmpData.left.win_rate_pct)}</td>
+                      <td className="py-1.5 px-2 text-right">{formatPct(cmpData.right.win_rate_pct)}</td>
+                      <td className="py-1.5 pl-2 text-right">
+                        <DeltaBadge delta={deltaPct(cmpData.left.win_rate_pct, cmpData.right.win_rate_pct)} />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="py-1.5 pr-2">Receita</td>
+                      <td className="py-1.5 px-2 text-right">{formatCurrencyBRL(cmpData.left.revenue_won)}</td>
+                      <td className="py-1.5 px-2 text-right">{formatCurrencyBRL(cmpData.right.revenue_won)}</td>
+                      <td className="py-1.5 pl-2 text-right">
+                        <DeltaBadge delta={deltaPct(cmpData.left.revenue_won, cmpData.right.revenue_won)} />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          {/* ===== Checagens cruzadas ===== */}
           {loading && (
             <div className="space-y-2">
               {[0, 1, 2, 3].map((i) => (
