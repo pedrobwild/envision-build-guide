@@ -14,10 +14,10 @@
  * estados loading/empty/error em todas as zonas.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ConsistencyCheckDialog } from "@/components/sales-kpis/ConsistencyCheckDialog";
 import { ShieldCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowDownRight,
   ArrowUpRight,
