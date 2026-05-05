@@ -10,8 +10,8 @@
  * propagando para todas as RPCs sem inconsistências.
  */
 
-import { useState, useCallback } from "react";
-import { CheckCircle2, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { CheckCircle2, AlertTriangle, Loader2, RefreshCw, ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,11 +25,16 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import {
   rangeToBounds,
   formatCurrencyBRL,
+  formatPct,
+  isAutoComparePreset,
+  previousPeriod,
   type SalesPeriod,
 } from "@/hooks/useSalesKpis";
 
