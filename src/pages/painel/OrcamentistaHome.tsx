@@ -60,8 +60,10 @@ const anim = (delay: number) => ({
 export default function OrcamentistaHome() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isAdmin } = useUserProfile();
-  const ownerId = isAdmin ? null : user?.id ?? null;
+  // Orçamentistas e admins enxergam toda a fila de produção (mesma regra da
+  // EstimatorDashboard /admin/producao). Sem filtro por owner aqui — quem quiser
+  // ver só os próprios usa o filtro de "Responsável" no pipeline.
+  const ownerId = null;
 
   const queues = useOrcamentistaQueues(ownerId);
   const data = queues.data;
