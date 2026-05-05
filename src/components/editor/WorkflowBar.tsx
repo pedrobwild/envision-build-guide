@@ -432,7 +432,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {internalStatus === "revision_requested" && isAdmin && (
+                {internalStatus === "revision_requested" && (isAdmin || isOrcamentista || isComercial) && (
                   <>
                     <DropdownMenuItem onClick={openRevisionInstructions}>
                       <RotateCcw className="h-4 w-4 mr-2" />
