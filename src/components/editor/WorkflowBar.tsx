@@ -219,7 +219,7 @@ export function WorkflowBar({ budget, onBudgetUpdate }: WorkflowBarProps) {
   const canDoPrimary = primaryTransition && primaryTransition.roles.some((r) => userRoles.includes(r));
 
   // Secondary actions
-  const showSecondary = isAdmin || isComercial;
+  const showSecondary = isAdmin || isComercial || isOrcamentista;
   const isWaiting = internalStatus === "waiting_info";
 
   async function ensurePublishedSilently(): Promise<string | null> {
