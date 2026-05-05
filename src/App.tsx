@@ -138,7 +138,7 @@ const App = () => (
                     <Route path="/admin/catalogo" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><CatalogPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/sistema" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><SystemToolsPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/lixeira" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><TrashPage /></RoleGuard></AdminPage>} />
-                    <Route path="/admin/imoveis-duplicados" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><DuplicatePropertiesPage /></RoleGuard></AdminPage>} />
+                    <Route path="/admin/imoveis-duplicados" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><DuplicatePropertiesPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/auditoria-rpc" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><RpcAuditPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/auditoria-acesso" element={<AdminPage><RoleGuard allowedRoles={["admin"]}><AccessAuditPage /></RoleGuard></AdminPage>} />
                     <Route path="/admin/biblioteca-fotos" element={<AdminPage><RoleGuard allowedRoles={["admin", "orcamentista"]}><PhotoLibraryUpload /></RoleGuard></AdminPage>} />
