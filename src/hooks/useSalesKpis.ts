@@ -64,7 +64,18 @@ async function measuredRpc<T>(
   }
 }
 
-export type SalesRange = "30d" | "90d" | "ytd" | "all" | "custom";
+export type SalesRange =
+  | "7d"
+  | "30d"
+  | "90d"
+  | "mtd"
+  | "last_month"
+  | "qtd"
+  | "last_quarter"
+  | "ytd"
+  | "last_year"
+  | "all"
+  | "custom";
 
 export interface SalesPeriod {
   range: SalesRange;
@@ -76,11 +87,29 @@ export interface SalesPeriod {
 
 const OPERATIONS_START = "2026-04-15T00:00:00.000Z";
 
+function clampStart(iso: string): string {
+  return iso < OPERATIONS_START ? OPERATIONS_START : iso;
+}
+
+function startOfMonthISO(year: number, monthZeroIdx: number): string {
+  return new Date(Date.UTC(year, monthZeroIdx, 1, 0, 0, 0, 0)).toISOString();
+}
+function endOfMonthISO(year: number, monthZeroIdx: number): string {
+  // Último ms do último dia do mês (UTC)
+  return new Date(Date.UTC(year, monthZeroIdx + 1, 1, 0, 0, 0, 0) - 1).toISOString();
+}
+function quarterStartMonth(monthZeroIdx: number): number {
+  return Math.floor(monthZeroIdx / 3) * 3;
+}
+
 export function rangeToBounds(period: SalesPeriod): {
   start: string | null;
   end: string | null;
 } {
   const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+
   if (period.range === "custom") {
     return {
       start: period.startDate ?? OPERATIONS_START,
@@ -89,14 +118,146 @@ export function rangeToBounds(period: SalesPeriod): {
   }
   if (period.range === "all") return { start: OPERATIONS_START, end: null };
   if (period.range === "ytd") {
-    const jan = new Date(now.getFullYear(), 0, 1).toISOString();
-    return { start: jan < OPERATIONS_START ? OPERATIONS_START : jan, end: null };
+    return { start: clampStart(startOfMonthISO(y, 0)), end: null };
   }
-  const days = period.range === "30d" ? 30 : 90;
+  if (period.range === "last_year") {
+    return {
+      start: clampStart(startOfMonthISO(y - 1, 0)),
+      end: endOfMonthISO(y - 1, 11),
+    };
+  }
+  if (period.range === "mtd") {
+    return { start: clampStart(startOfMonthISO(y, m)), end: null };
+  }
+  if (period.range === "last_month") {
+    const lmYear = m === 0 ? y - 1 : y;
+    const lmMonth = m === 0 ? 11 : m - 1;
+    return {
+      start: clampStart(startOfMonthISO(lmYear, lmMonth)),
+      end: endOfMonthISO(lmYear, lmMonth),
+    };
+  }
+  if (period.range === "qtd") {
+    return { start: clampStart(startOfMonthISO(y, quarterStartMonth(m))), end: null };
+  }
+  if (period.range === "last_quarter") {
+    const qStart = quarterStartMonth(m);
+    const lqStartMonth = qStart === 0 ? 9 : qStart - 3;
+    const lqYear = qStart === 0 ? y - 1 : y;
+    return {
+      start: clampStart(startOfMonthISO(lqYear, lqStartMonth)),
+      end: endOfMonthISO(lqYear, lqStartMonth + 2),
+    };
+  }
+  // rolling: 7d / 30d / 90d
+  const days = period.range === "7d" ? 7 : period.range === "30d" ? 30 : 90;
   const d = new Date();
   d.setDate(d.getDate() - days);
-  const iso = d.toISOString();
-  return { start: iso < OPERATIONS_START ? OPERATIONS_START : iso, end: null };
+  return { start: clampStart(d.toISOString()), end: null };
+}
+
+/**
+ * Calcula o período "anterior equivalente" para comparações.
+ * - Presets calendar-based (mtd/qtd/ytd, last_*): retorna o ciclo completo
+ *   imediatamente anterior do mesmo tipo (mês passado, trimestre passado, etc).
+ * - Rolling (7d/30d/90d): janela do mesmo tamanho, imediatamente anterior.
+ * - all/custom: retorna null (sem auto-comparação).
+ */
+export function previousPeriod(period: SalesPeriod): SalesPeriod | null {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+
+  switch (period.range) {
+    case "mtd": {
+      const lmYear = m === 0 ? y - 1 : y;
+      const lmMonth = m === 0 ? 11 : m - 1;
+      return {
+        range: "custom",
+        startDate: startOfMonthISO(lmYear, lmMonth),
+        endDate: endOfMonthISO(lmYear, lmMonth),
+      };
+    }
+    case "last_month": {
+      const lmYear = m === 0 ? y - 1 : y;
+      const lmMonth = m === 0 ? 11 : m - 1;
+      const ppYear = lmMonth === 0 ? lmYear - 1 : lmYear;
+      const ppMonth = lmMonth === 0 ? 11 : lmMonth - 1;
+      return {
+        range: "custom",
+        startDate: startOfMonthISO(ppYear, ppMonth),
+        endDate: endOfMonthISO(ppYear, ppMonth),
+      };
+    }
+    case "qtd": {
+      const qStart = quarterStartMonth(m);
+      const lqStartMonth = qStart === 0 ? 9 : qStart - 3;
+      const lqYear = qStart === 0 ? y - 1 : y;
+      return {
+        range: "custom",
+        startDate: startOfMonthISO(lqYear, lqStartMonth),
+        endDate: endOfMonthISO(lqYear, lqStartMonth + 2),
+      };
+    }
+    case "last_quarter": {
+      const qStart = quarterStartMonth(m);
+      const lqStartMonth = qStart === 0 ? 9 : qStart - 3;
+      const lqYear = qStart === 0 ? y - 1 : y;
+      const ppStartMonth = lqStartMonth === 0 ? 9 : lqStartMonth - 3;
+      const ppYear = lqStartMonth === 0 ? lqYear - 1 : lqYear;
+      return {
+        range: "custom",
+        startDate: startOfMonthISO(ppYear, ppStartMonth),
+        endDate: endOfMonthISO(ppYear, ppStartMonth + 2),
+      };
+    }
+    case "ytd": {
+      // Mesmo intervalo (1 jan → hoje) do ano anterior
+      const todayMs = Date.UTC(y - 1, m, now.getDate(), 23, 59, 59, 999);
+      return {
+        range: "custom",
+        startDate: startOfMonthISO(y - 1, 0),
+        endDate: new Date(todayMs).toISOString(),
+      };
+    }
+    case "last_year": {
+      return {
+        range: "custom",
+        startDate: startOfMonthISO(y - 2, 0),
+        endDate: endOfMonthISO(y - 2, 11),
+      };
+    }
+    case "7d":
+    case "30d":
+    case "90d": {
+      const days = period.range === "7d" ? 7 : period.range === "30d" ? 30 : 90;
+      const end = new Date();
+      end.setDate(end.getDate() - days);
+      const start = new Date(end);
+      start.setDate(start.getDate() - days);
+      return {
+        range: "custom",
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+      };
+    }
+    case "all":
+    case "custom":
+    default:
+      return null;
+  }
+}
+
+/** Presets que disparam auto-comparação no card de "Comparar totais". */
+export function isAutoComparePreset(range: SalesRange): boolean {
+  return (
+    range === "mtd" ||
+    range === "last_month" ||
+    range === "qtd" ||
+    range === "last_quarter" ||
+    range === "ytd" ||
+    range === "last_year"
+  );
 }
 
 // ============================================================
