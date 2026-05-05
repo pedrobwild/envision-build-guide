@@ -340,6 +340,14 @@ export default function PublicBudget() {
             supabase.rpc('increment_view_count', { p_public_id: publicId }).then(({ error }) => {
               if (error) { /* view count increment failed silently */ }
             });
+            // Audit: registrar visualização pública (best-effort, dedup por sessão)
+            void import("@/lib/access-audit").then(({ logPublicAccess }) =>
+              logPublicAccess({
+                publicId,
+                event: "public_budget_view",
+                metadata: { view_count_before: data.view_count ?? 0 },
+              })
+            );
             if ((data.view_count || 0) === 0) {
               supabase.functions.invoke('notify-budget-view', {
                 body: { public_id: publicId },
@@ -362,6 +370,15 @@ export default function PublicBudget() {
       const { exportBudgetPdf } = await import("@/lib/pdf-export");
       const filename = `${budget?.project_name || 'orcamento'}.pdf`;
       await exportBudgetPdf("budget-content", filename, budget!);
+      if (publicId) {
+        void import("@/lib/access-audit").then(({ logPublicAccess }) =>
+          logPublicAccess({
+            publicId,
+            event: "public_budget_pdf_export",
+            dedupKey: `pdf:${publicId}:${Date.now()}`,
+          })
+        );
+      }
       toast.success("PDF gerado com sucesso.");
     } catch (err) {
       
