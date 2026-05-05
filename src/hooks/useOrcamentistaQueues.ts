@@ -64,9 +64,12 @@ export function useOrcamentistaQueues(ownerId?: string | null) {
       let q = supabase
         .from("budgets")
         .select(
-          "id, client_name, project_name, internal_status, estimator_owner_id, created_at, updated_at, due_at, prazo_dias_uteis",
+          "id, client_name, project_name, internal_status, estimator_owner_id, created_at, updated_at, due_at, prazo_dias_uteis, version_group_id, version_number, is_current_version, is_published_version",
         )
         .in("internal_status", ACTIVE_STATUSES)
+        // Mostra apenas a versão atual de cada grupo (versões antigas
+        // continuam acessíveis pelo histórico do editor).
+        .or("is_current_version.eq.true,is_current_version.is.null")
         .order("due_at", { ascending: true, nullsFirst: false })
         .limit(200);
       if (ownerId) q = q.eq("estimator_owner_id", ownerId);
@@ -74,7 +77,11 @@ export function useOrcamentistaQueues(ownerId?: string | null) {
       const { data: rows, error } = await q;
       if (error) throw error;
 
-      const deals: ProductionDealRow[] = (rows || []).map((b) => ({
+      // Dedup defensivo: a base pode ter mais de uma is_current_version=true
+      // por grupo (bug histórico de clonagem). Mantemos só 1 card por grupo.
+      const deduped = dedupeBudgetsByVersionGroup((rows || []) as ProductionDealRow[]);
+
+      const deals: ProductionDealRow[] = deduped.map((b) => ({
         id: b.id,
         client_name: b.client_name,
         project_name: b.project_name,
@@ -84,6 +91,10 @@ export function useOrcamentistaQueues(ownerId?: string | null) {
         updated_at: b.updated_at,
         due_at: b.due_at,
         prazo_dias_uteis: b.prazo_dias_uteis,
+        version_group_id: b.version_group_id,
+        version_number: b.version_number,
+        is_current_version: b.is_current_version,
+        is_published_version: b.is_published_version,
       }));
 
       const triagem = deals.filter((d) => d.internal_status === "pending");
