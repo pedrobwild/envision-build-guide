@@ -69,6 +69,7 @@ import { useOpenMode, OPEN_MODE_LABELS, type OpenMode } from "@/lib/openMode";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import type { AppRole } from "@/lib/role-constants";
+import { homePathForRole, useActiveRole } from "@/hooks/useActiveRole";
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* Tipos                                                                      */
@@ -266,7 +267,9 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { profile } = useUserProfile();
   const { signOut, user } = useAuth();
+  const { activeRole } = useActiveRole();
   const [openMode, setOpenModePref] = useOpenMode();
+  const dashboardPath = homePathForRole(activeRole);
 
   const userRoles = profile?.roles ?? [];
 
@@ -289,11 +292,18 @@ export function AppSidebar() {
   }, [isBudgetEditor]);
 
   const sections = useMemo(() => {
-    return [PRIMARY_SECTION, COMERCIAL_SECTION, PRODUCAO_SECTION, ADMIN_SECTION]
+    const primarySection: NavSection = {
+      ...PRIMARY_SECTION,
+      items: PRIMARY_SECTION.items.map((item) =>
+        item.url === "/admin" ? { ...item, url: dashboardPath } : item,
+      ),
+    };
+
+    return [primarySection, COMERCIAL_SECTION, PRODUCAO_SECTION, ADMIN_SECTION]
       .map((s) => ({ ...s, items: s.items.filter(canSee) }))
       .filter((s) => s.items.length > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userRoles.join(",")]);
+  }, [dashboardPath, userRoles.join(",")]);
 
   const toolGroups = useMemo(() => {
     return TOOL_GROUPS.map((g) => ({ ...g, items: g.items.filter(canSee) })).filter(

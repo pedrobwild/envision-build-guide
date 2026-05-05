@@ -21,6 +21,16 @@ import { logger } from "@/lib/logger";
 
 const ROLE_PRIORITY: AppRole[] = ["admin", "comercial", "orcamentista"];
 
+function getNavigableRoles(roles: AppRole[]): AppRole[] {
+  // Quando a pessoa também atua como orçamentista, a home principal deve ser
+  // sempre a visão de produção — mantendo permissões administrativas nas áreas
+  // específicas, mas sem expor o painel admin como cockpit principal.
+  if (roles.includes("orcamentista") && roles.includes("admin")) {
+    return roles.filter((role) => role !== "admin");
+  }
+  return roles;
+}
+
 /** Resolve papel ativo a partir do que está persistido + papéis disponíveis. */
 function resolveActiveRole(
   persisted: AppRole | null | undefined,
@@ -102,7 +112,7 @@ export function useActiveRole(): UseActiveRoleReturn {
     };
   }, [user]);
 
-  const availableRoles = profile?.roles ?? [];
+  const availableRoles = getNavigableRoles(profile?.roles ?? []);
   const activeRole = resolveActiveRole(persisted, availableRoles);
 
   const setActiveRole = useCallback(

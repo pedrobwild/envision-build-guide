@@ -3,6 +3,7 @@ import { LayoutDashboard, Hammer, Briefcase, BarChart3, Plus } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import type { AppRole } from "@/lib/role-constants";
+import { homePathForRole, useActiveRole } from "@/hooks/useActiveRole";
 
 interface TabItem {
   label: string;
@@ -64,7 +65,9 @@ export function AdminBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useUserProfile();
+  const { activeRole } = useActiveRole();
   const userRoles = profile?.roles ?? [];
+  const dashboardPath = homePathForRole(activeRole);
 
   const shouldHide = HIDDEN_PATTERNS.some((p) => p.test(location.pathname));
   if (shouldHide) return null;
@@ -74,12 +77,20 @@ export function AdminBottomNav() {
     return (tab.roles as AppRole[]).some((r) => userRoles.includes(r));
   };
 
-  const visibleTabs = TABS.filter(canSee);
+  const visibleTabs = TABS.filter(canSee).map((tab) =>
+    tab.path === "/admin"
+      ? {
+          ...tab,
+          path: dashboardPath,
+          matchPaths: [dashboardPath],
+        }
+      : tab,
+  );
 
   const isActive = (tab: TabItem) =>
     tab.matchPaths.some((p) =>
-      p === "/admin"
-        ? location.pathname === "/admin"
+      p === dashboardPath
+        ? location.pathname === dashboardPath
         : location.pathname.startsWith(p)
     );
 
