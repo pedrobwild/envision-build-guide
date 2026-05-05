@@ -176,11 +176,13 @@ export function RevisionRequestDialog({
       <div className="p-1.5 rounded-md bg-warning/10">
         <RotateCcw className="h-4 w-4 text-warning" />
       </div>
-      Solicitar Revisão
+      {isComplement ? "Complementar Solicitação de Revisão" : "Solicitar Revisão"}
     </div>
   );
 
-  const descriptionText = "Descreva as alterações que o cliente solicitou. O orçamentista receberá estas instruções ao abrir o orçamento.";
+  const descriptionText = isComplement
+    ? "O cliente enviou mais informações? Acrescente aqui. A solicitação anterior continua válida e o orçamentista verá ambas no histórico."
+    : "Descreva as alterações que o cliente solicitou. O orçamentista receberá estas instruções ao abrir o orçamento.";
 
   const body = (
     <div className="space-y-5 py-2">
