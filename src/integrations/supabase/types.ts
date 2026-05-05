@@ -962,6 +962,7 @@ export type Database = {
           external_source: string | null
           floor_plan_url: string | null
           form_id: string | null
+          form_name: string | null
           generated_at: string | null
           header_config: Json | null
           hubspot_deal_url: string | null
@@ -1057,6 +1058,7 @@ export type Database = {
           external_source?: string | null
           floor_plan_url?: string | null
           form_id?: string | null
+          form_name?: string | null
           generated_at?: string | null
           header_config?: Json | null
           hubspot_deal_url?: string | null
@@ -1152,6 +1154,7 @@ export type Database = {
           external_source?: string | null
           floor_plan_url?: string | null
           form_id?: string | null
+          form_name?: string | null
           generated_at?: string | null
           header_config?: Json | null
           hubspot_deal_url?: string | null
@@ -3671,6 +3674,10 @@ export type Database = {
           p_pipeline_stages?: string[]
         }
         Returns: number
+      }
+      create_mql_budget_for_client: {
+        Args: { p_client_id: string }
+        Returns: string
       }
       default_win_probability: { Args: { _stage: string }; Returns: number }
       derive_internal_status_from_stage: {
