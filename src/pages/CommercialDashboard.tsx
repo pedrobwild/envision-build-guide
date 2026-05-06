@@ -438,6 +438,7 @@ export default function CommercialDashboard() {
   async function loadData() {
     setLoading(true);
     const canManageAll = isAdmin || isOrcamentista;
+    const canViewCommercialPipeline = canManageAll || profile?.roles.includes("comercial");
     let budgetQuery = supabase
       .from("budgets")
       .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, generated_at, last_viewed_at, view_count, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone, floor_plan_url")
@@ -445,6 +446,14 @@ export default function CommercialDashboard() {
 
     // Sempre mostra apenas a versão atual de cada grupo.
     budgetQuery = budgetQuery.or("is_current_version.eq.true,is_current_version.is.null");
+
+    if (!canViewCommercialPipeline) {
+      setBudgets([]);
+      setProfiles([]);
+      setSyncedBudgetIds(new Set());
+      setLoading(false);
+      return;
+    }
 
     if (!canManageAll) {
       // Comercial vê apenas o que já está atribuído a ele. O restante da
