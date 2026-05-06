@@ -35,6 +35,7 @@ interface BriefingPanelProps {
   budgetId: string;
   budget: BudgetRow;
   onBudgetFieldChange: (field: string, value: string | number | boolean | string[] | null) => void;
+  autoSaveField?: (field: string, value: string | number | boolean | string[] | null) => void;
 }
 
 const EVENT_ICONS: Record<string, React.ElementType> = {
@@ -52,14 +53,13 @@ const PRIORITY_COLORS: Record<string, string> = {
   baixa: "bg-muted text-muted-foreground border-border",
 };
 
-export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: BriefingPanelProps) {
+export function BriefingPanel({ budgetId, budget, onBudgetFieldChange, autoSaveField }: BriefingPanelProps) {
   const { isAdmin, isComercial, isOrcamentista } = useUserProfile();
   const isMobile = useIsMobile();
 
   const [expanded, setExpanded] = useState(() => window.innerWidth >= 1280);
   const [events, setEvents] = useState<Tables<"budget_events">[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
-  const autoSaveTimers = useRef<Record<string, NodeJS.Timeout>>({});
   const briefingTextareaRef = useRef<HTMLTextAreaElement>(null);
   const estimatorTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -114,17 +114,14 @@ export function BriefingPanel({ budgetId, budget, onBudgetFieldChange }: Briefin
     };
   }, [budgetId]);
 
-  const debouncedSave = useCallback((field: string, value: string | number | boolean | string[] | null) => {
-    if (autoSaveTimers.current[field]) clearTimeout(autoSaveTimers.current[field]);
-    autoSaveTimers.current[field] = setTimeout(async () => {
-      await supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", budgetId);
-    }, 800);
-  }, [budgetId]);
-
   const handleFieldChange = useCallback((field: string, value: string | number | boolean | string[] | null) => {
     onBudgetFieldChange(field, value);
-    debouncedSave(field, value);
-  }, [onBudgetFieldChange, debouncedSave]);
+    if (autoSaveField) {
+      autoSaveField(field, value);
+      return;
+    }
+    void supabase.from("budgets").update({ [field]: value } as Record<string, unknown>).eq("id", budgetId);
+  }, [onBudgetFieldChange, autoSaveField, budgetId]);
 
   const canEditBriefing = isAdmin || isComercial;
   const canEditEstimatorNotes = isAdmin || isOrcamentista;

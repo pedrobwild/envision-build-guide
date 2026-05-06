@@ -1379,10 +1379,11 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     onSectionsChange(withNewOrder);
     onSaveStatusChange?.("saving");
     try {
-      await Promise.all(
-        withNewOrder.map(s =>
-          dbFrom(cfg.sectionTable).update({ order_index: s.order_index }).eq("id", s.id)
-        )
+      const results = await Promise.all(
+        withNewOrder.map(async (s) => {
+          const { error } = await dbFrom(cfg.sectionTable).update({ order_index: s.order_index }).eq("id", s.id);
+          if (error) throw error;
+        })
       );
       onSaveStatusChange?.("saved");
     } catch {
@@ -1404,9 +1405,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
     onSaveStatusChange?.("saving");
     try {
       await Promise.all(
-        reordered.map(s =>
-          dbFrom(cfg.sectionTable).update({ order_index: s.order_index }).eq("id", s.id)
-        )
+        reordered.map(async (s) => {
+          const { error } = await dbFrom(cfg.sectionTable).update({ order_index: s.order_index }).eq("id", s.id);
+          if (error) throw error;
+        })
       );
       onSaveStatusChange?.("saved");
     } catch {
@@ -1439,9 +1441,10 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       const targetSection = updated.find(s => s.id === sectionId);
       if (targetSection) {
         await Promise.all(
-          targetSection.items.map(item =>
-            dbFrom(cfg.itemTable).update({ order_index: item.order_index }).eq("id", item.id)
-          )
+          targetSection.items.map(async (item) => {
+            const { error } = await dbFrom(cfg.itemTable).update({ order_index: item.order_index }).eq("id", item.id);
+            if (error) throw error;
+          })
         );
       }
       onSaveStatusChange?.("saved");
