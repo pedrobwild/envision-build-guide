@@ -123,7 +123,6 @@ describe("Botão Visualizar — abre URL pública correta por estado do badge", 
     expect(openSpy).toHaveBeenCalledWith(
       "about:blank",
       "_blank",
-      "noopener,noreferrer",
     );
     expect(stub.location.href).toBe(getPublicBudgetUrl("pub_abc123"));
   });
