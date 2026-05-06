@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.can_access_budget(uuid, uuid) TO authenticated, anon, service_role;
