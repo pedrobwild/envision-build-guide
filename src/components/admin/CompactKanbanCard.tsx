@@ -1,6 +1,6 @@
 import { memo, useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye, Layers } from "lucide-react";
+import { Calendar, Pin, ExternalLink, MessageCircle, ArrowRight, Copy, History, Eye, Layers, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { openPublicBudgetByPublicId } from "@/lib/openPublicBudget";
@@ -67,6 +67,7 @@ interface CompactKanbanCardProps {
   actionsSlot?: React.ReactNode;
   /** Handler para regenerar/publicar o link público quando o badge estiver em "Rascunho". */
   onRepublishPublicLink?: () => void | Promise<void>;
+  floorPlanUrl?: string | null;
 }
 
 type DueVariant = "overdue" | "today" | "soon" | "ok" | "default";
@@ -139,6 +140,7 @@ function CompactKanbanCardImpl({
   onOpenHistory,
   actionsSlot,
   onRepublishPublicLink,
+  floorPlanUrl,
 }: CompactKanbanCardProps) {
   const prio = PRIORITIES[priority as Priority] ?? PRIORITIES.normal;
   const statusMeta = INTERNAL_STATUSES[internalStatus as InternalStatus];
@@ -423,7 +425,22 @@ function CompactKanbanCardImpl({
           </button>
         )}
       </div>
-      <div className="mt-1 px-0.5 min-h-[22px]">
+      <div className="mt-1 px-0.5 min-h-[22px] space-y-1">
+        {floorPlanUrl && (
+          <a
+            href={floorPlanUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 rounded-md ring-1 ring-border/40 bg-muted/30 text-foreground/80 hover:bg-muted/50 text-[10px] font-body font-medium px-1.5 py-0.5"
+            title="Abrir planta do imóvel"
+          >
+            <Building2 className="h-3 w-3" />
+            <span className="truncate">Planta</span>
+            <ExternalLink className="h-2.5 w-2.5" />
+          </a>
+        )}
+
         {nextAction ? (
           <NextActionChip
             suggestion={nextAction}

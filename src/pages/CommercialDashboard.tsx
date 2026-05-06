@@ -187,11 +187,10 @@ interface BudgetRow {
   client_phone: string | null;
   client_id: string | null;
   property_id: string | null;
+  floor_plan_url: string | null;
   /**
-   * Quando dois ou mais orçamentos pertencem ao mesmo cliente+imóvel mas têm
-   * `version_group_id` diferentes (foram criados como orçamentos novos em vez
-   * de versões), o pipeline mostra apenas o mais recente e enumera os demais
-   * aqui para o card exibir um badge "+N versões".
+   * Versões irmãs do mesmo orçamento formal (mesmo version_group_id), usadas
+   * apenas para sinalização visual no card.
    */
   sibling_budget_ids?: string[];
 }
@@ -288,7 +287,7 @@ export default function CommercialDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useUserProfile();
+  const { profile, isAdmin, isOrcamentista } = useUserProfile();
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [syncedBudgetIds, setSyncedBudgetIds] = useState<Set<string>>(new Set());
@@ -438,13 +437,13 @@ export default function CommercialDashboard() {
 
   async function loadData() {
     setLoading(true);
-    const isAdmin = profile?.roles.includes("admin");
+    const canManageAll = isAdmin || isOrcamentista;
     let budgetQuery = supabase
       .from("budgets")
-      .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, generated_at, last_viewed_at, view_count, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone")
+      .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, generated_at, last_viewed_at, view_count, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone, floor_plan_url")
       .order("created_at", { ascending: false });
 
-    if (!isAdmin) {
+    if (!canManageAll) {
       // Visibilidade do comercial: orçamentos atribuídos a ele OU orçamentos
       // sem owner comercial em qualquer etapa relevante do funil
       // (do MQL ao fechamento). Combinamos o filtro de versão atual com o de
@@ -530,52 +529,51 @@ export default function CommercialDashboard() {
   );
 
   /**
-   * Deduplica orçamentos do mesmo negócio quando foram criados como
-   * orçamentos novos (version_group_id distinto) em vez de versões. Mantém
-   * apenas o mais recente (created_at desc) e expõe os ids dos demais em
-   * `sibling_budget_ids` para o card mostrar um badge "+N versões".
-   *
-   * Chave de agrupamento (em ordem de prioridade), sempre escopada ao mesmo
-   * pipeline_id para não juntar negócios de pipelines diferentes:
-   *   1. version_group_id (versões formais do mesmo orçamento)
-   *   2. client_id + property_id (mesmo imóvel do mesmo cliente)
-   *   3. client_id (fallback quando property_id está ausente em algum)
+   * Mantém apenas uma linha por version_group_id quando houver bug histórico de
+   * múltiplas versões correntes. Orçamentos paralelos do mesmo cliente/imóvel
+   * NÃO podem ser colapsados — ambos precisam aparecer no comercial.
    */
   const dedupedBudgets = useMemo<BudgetRow[]>(() => {
     const groups = new Map<string, BudgetRow[]>();
-    const ungrouped: BudgetRow[] = [];
-    for (const b of budgets) {
-      const pipelineKey = b.pipeline_id ?? "no-pipeline";
-      let key: string | null = null;
-      if (b.version_group_id) {
-        key = `vg::${pipelineKey}::${b.version_group_id}`;
-      } else if (b.client_id && b.property_id) {
-        key = `cp::${pipelineKey}::${b.client_id}::${b.property_id}`;
-      } else if (b.client_id) {
-        key = `c::${pipelineKey}::${b.client_id}`;
-      }
-      if (!key) {
-        ungrouped.push(b);
+    const passthrough: BudgetRow[] = [];
+
+    for (const budget of budgets) {
+      const groupId = budget.version_group_id;
+      if (!groupId) {
+        passthrough.push(budget);
         continue;
       }
-      const list = groups.get(key);
-      if (list) list.push(b);
-      else groups.set(key, [b]);
+
+      const list = groups.get(groupId);
+      if (list) list.push(budget);
+      else groups.set(groupId, [budget]);
     }
-    const champions: BudgetRow[] = [];
+
+    const winners: BudgetRow[] = [];
     for (const list of groups.values()) {
       if (list.length === 1) {
-        champions.push(list[0]);
+        winners.push(list[0]);
         continue;
       }
-      const sorted = [...list].sort((a, b) =>
-        new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
-      );
+
+      const sorted = [...list].sort((a, b) => {
+        if (!!a.is_published_version !== !!b.is_published_version) {
+          return a.is_published_version ? -1 : 1;
+        }
+        const av = a.version_number ?? 0;
+        const bv = b.version_number ?? 0;
+        if (av !== bv) return bv - av;
+        return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
+      });
+
       const champion = sorted[0];
-      const siblings = sorted.slice(1).map((s) => s.id);
-      champions.push({ ...champion, sibling_budget_ids: siblings });
+      winners.push({
+        ...champion,
+        sibling_budget_ids: sorted.slice(1).map((s) => s.id),
+      });
     }
-    return [...champions, ...ungrouped];
+
+    return [...winners, ...passthrough];
   }, [budgets]);
 
   const counts = useMemo(() => {
@@ -594,13 +592,13 @@ export default function CommercialDashboard() {
     return c;
   }, [dedupedBudgets]);
 
-  const isAdmin = profile?.roles.includes("admin");
+  const canManageAll = isAdmin || isOrcamentista;
 
   const commercialOptions = useMemo(() => {
-    if (!isAdmin) return [];
+    if (!canManageAll) return [];
     const ids = [...new Set(budgets.map(b => b.commercial_owner_id).filter(Boolean))] as string[];
     return ids.map(id => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
-  }, [isAdmin, budgets, getProfileName]);
+  }, [canManageAll, budgets, getProfileName]);
 
   // Lookup pipeline_id from active slug for filtering
   const activePipelineId = useMemo(() => {
@@ -982,6 +980,16 @@ export default function CommercialDashboard() {
               )}
               <VersionBadge versionNumber={b.version_number} isCurrent={b.is_current_version} />
 
+              {b.floor_plan_url && (
+                <a
+                  href={b.floor_plan_url}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-[10px] font-body font-medium px-1.5 py-0.5 rounded-full bg-accent/15 text-accent-foreground hover:bg-accent/25 transition-colors"
+                >
+                  <Building2 className="h-3 w-3" />Planta
+                </a>
+              )}
               {b.budget_pdf_url && (
                 <a
                   href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/budget-pdfs/${b.budget_pdf_url}`}
@@ -1390,7 +1398,7 @@ export default function CommercialDashboard() {
                 </SelectContent>
               </Select>
 
-              {isAdmin && commercialOptions.length > 0 && (
+              {canManageAll && commercialOptions.length > 0 && (
                 <Select value={commercialFilter} onValueChange={setCommercialFilter}>
                   <SelectTrigger className={`w-[150px] h-8 text-xs ${commercialFilter !== "all" ? "border-primary/40 bg-primary/5" : ""}`}>
                     <User className="h-3 w-3 mr-1 shrink-0" />
@@ -1572,7 +1580,7 @@ export default function CommercialDashboard() {
             ? ({
                 // Pré-atribui o comercial atual (não-admins) para que o card
                 // criado já apareça com dono no pipeline e nas listagens.
-                commercial_owner_id: !isAdmin && user?.id ? user.id : null,
+                commercial_owner_id: !canManageAll && user?.id ? user.id : null,
                 status: "lead",
               } as Partial<import("@/hooks/useClients").Client>)
             : null

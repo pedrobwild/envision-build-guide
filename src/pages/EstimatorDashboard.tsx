@@ -127,7 +127,7 @@ export default function EstimatorDashboard() {
     const budgetQuery = supabase
       .from("budgets")
       .select(
-        "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context, version_number, version_group_id, is_current_version, sequential_code, metragem, public_id"
+        "id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, commercial_owner_id, estimator_owner_id, briefing, demand_context, version_number, version_group_id, is_current_version, sequential_code, metragem, public_id, floor_plan_url"
       )
       // Pipeline do orçamentista mostra apenas a versão atual de cada grupo.
       // Versões anteriores ficam acessíveis via histórico interno do editor.
