@@ -619,22 +619,19 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
             )}
           </div>
 
-          {/* Aviso de possíveis duplicatas */}
+          {/* Sugestão informativa de itens parecidos — não bloqueia, oferece reuso em 1 clique */}
           {duplicates.length > 0 && !duplicatesDismissed && (
-            <div
-              role="alert"
-              className="rounded-md border border-warning/40 bg-warning/10 p-3 space-y-2"
-            >
+            <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                <Sparkles className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">
                     {duplicates.length === 1
-                      ? "Já existe um item parecido no catálogo"
+                      ? "Já existe um item parecido — quer reusar?"
                       : `${duplicates.length} itens parecidos no catálogo`}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    Verifique se não está duplicando antes de criar um novo.
+                    Vincule o existente em vez de criar um novo cadastro.
                   </p>
                 </div>
               </div>
@@ -642,7 +639,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
                 {duplicates.map((d) => (
                   <li
                     key={d.id}
-                    className="flex items-center gap-2 rounded-sm bg-background/60 px-2 py-1.5 text-xs"
+                    className="flex items-center gap-2 rounded-sm bg-background/80 px-2 py-1.5 text-xs"
                   >
                     {d.item_type === "product" ? (
                       <Package className="h-3 w-3 text-primary flex-shrink-0" />
@@ -656,6 +653,15 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
                     <span className="text-[10px] text-muted-foreground tabular-nums">
                       {Math.round(d.similarity * 100)}%
                     </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-[11px] px-2"
+                      onClick={() => handleUseExisting(d)}
+                    >
+                      Usar este
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -664,10 +670,10 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs"
+                  className="h-7 text-xs text-muted-foreground"
                   onClick={() => setDuplicatesDismissed(true)}
                 >
-                  Criar mesmo assim
+                  Criar novo mesmo assim
                 </Button>
               </div>
             </div>
