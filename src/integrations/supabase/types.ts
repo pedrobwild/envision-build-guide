@@ -4019,6 +4019,10 @@ export type Database = {
           stage: string
         }[]
       }
+      seed_budget_from_template: {
+        Args: { p_budget_id: string; p_template_id: string }
+        Returns: Json
+      }
       set_active_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined
