@@ -5,7 +5,7 @@ import { Loader2, User, ChevronDown, DollarSign, RotateCcw, PackageCheck, Send, 
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MetadataStep } from "@/components/editor/MetadataStep";
-import { SectionsEditor } from "@/components/editor/SectionsEditor";
+import { SectionsEditor, type SectionsEditorHandle } from "@/components/editor/SectionsEditor";
 import { getPublicBudgetUrl } from "@/lib/getPublicUrl";
 import { VersionTimeline } from "@/components/editor/VersionTimeline";
 import { ensureVersionGroup, publishVersion, duplicateBudgetAsVersion, deleteDraftVersion, setCurrentVersion } from "@/lib/budget-versioning";
@@ -68,6 +68,7 @@ export default function BudgetEditorV2() {
   const [mediaCount, setMediaCount] = useState(0);
   const [creatingVersionFromBanner, setCreatingVersionFromBanner] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const sectionsEditorRef = useRef<SectionsEditorHandle | null>(null);
 
   // Query base budget identification for addendum banner
   const { data: addendumBaseBudget } = useQuery({
@@ -698,6 +699,10 @@ export default function BudgetEditorV2() {
     autoSaveTimer.current = setTimeout(async () => {
       autoSaveTimer.current = null;
       await flushPendingBudgetUpdates();
+      const sectionsSaved = await sectionsEditorRef.current?.flushPendingSaves();
+      if (sectionsSaved === false) {
+        throw new Error("Algumas alterações da planilha ainda não foram salvas. Aguarde alguns segundos e tente republicar novamente.");
+      }
     }, 600);
   }, [budgetId, isPublishedVersion, forkPublishedThenEdit, flushPendingBudgetUpdates]);
 
@@ -1180,6 +1185,7 @@ export default function BudgetEditorV2() {
                     </div>
                   )}
                   <SectionsEditor
+                    ref={sectionsEditorRef}
                     budgetId={budgetId!}
                     sections={sections}
                     onSectionsChange={setSections}

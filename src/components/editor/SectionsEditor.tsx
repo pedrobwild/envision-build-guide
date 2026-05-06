@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { forwardRef, useState, useCallback, useRef, useEffect, useMemo, useImperativeHandle } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { formatBRL } from "@/lib/formatBRL";
@@ -167,6 +167,10 @@ interface SectionsEditorProps {
    * Status possíveis: "saving" | "saved" | "error".
    */
   onSaveStatusChange?: (status: "saving" | "saved" | "error") => void;
+}
+
+export interface SectionsEditorHandle {
+  flushPendingSaves: () => Promise<boolean>;
 }
 
 /* ── Section context menu (rename + duplicate + delete) ── */
@@ -777,7 +781,7 @@ function SortableItemRow({
   );
 }
 
-export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, loadingStage, readOnly = false, isAddendum = false, onProtectedEditAttempt, onSaveStatusChange }: SectionsEditorProps) {
+export const SectionsEditor = forwardRef<SectionsEditorHandle, SectionsEditorProps>(function SectionsEditor({ budgetId, sections, onSectionsChange, tableConfig, loading, loadingStage, readOnly = false, isAddendum = false, onProtectedEditAttempt, onSaveStatusChange }: SectionsEditorProps, ref) {
   // Centralised guard so any mutation attempted while in readOnly mode can be
   // intercepted by the parent (e.g. to auto-fork a published version into a
   // new draft instead of silently no-op'ing the user's action).
@@ -832,31 +836,37 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
   // Flush imediato de qualquer save pendente (debounce em voo). Usado em
   // unmount, pagehide, beforeunload — garante que edições não se percam quando
   // o usuário troca de aba/dá refresh durante a janela de 600ms do debounce.
-  const flushPendingNow = useCallback(() => {
+  const flushPendingNow = useCallback(async (): Promise<boolean> => {
     const pending = pendingUpdates.current;
     pendingUpdates.current = {};
     Object.values(timers.current).forEach(t => clearTimeout(t));
     timers.current = {};
-    Object.entries(pending).forEach(([key, updates]) => {
+    const results = await Promise.all(Object.entries(pending).map(async ([key, updates]) => {
       if (!updates || Object.keys(updates).length === 0) return;
       const [logicalTable, id] = key.split("-");
-      if (!logicalTable || !id) return;
+      if (!logicalTable || !id) return true;
       const actualTable = logicalTable === "sections" ? cfg.sectionTable : cfg.itemTable;
-      // Persiste localmente antes de tentar a rede — se a página fechar antes
-      // do UPDATE responder, a fila garante reenvio no próximo mount/online.
       enqueueRowUpdate(budgetId, actualTable, id, updates);
-      void supabase
+      const { error } = await supabase
         .from(actualTable as never)
         .update(updates as never)
         .eq("id", id)
-        .then(({ error }) => {
-          if (!error) {
-            // Sucesso → remove da fila offline.
-            void flushSectionsQueue(budgetId);
-          }
-        });
-    });
+      if (!error) {
+        await flushSectionsQueue(budgetId);
+        return true;
+      }
+      return false;
+    }));
+    return results.every((ok) => ok !== false);
   }, [budgetId, cfg]);
+
+  useImperativeHandle(ref, () => ({
+    flushPendingSaves: async () => {
+      const inlineOk = await flushPendingNow();
+      const offlineOk = await flushSectionsQueue(budgetId);
+      return inlineOk && offlineOk;
+    },
+  }), [flushPendingNow, budgetId]);
 
   // Persiste pendências ao sair da página, e tenta drenar fila offline ao
   // montar / reconectar.
@@ -2071,4 +2081,4 @@ export function SectionsEditor({ budgetId, sections, onSectionsChange, tableConf
       )}
     </div>
   );
-}
+});
