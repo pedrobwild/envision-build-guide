@@ -450,13 +450,13 @@ export default function BudgetEditorV2() {
       const { error } = await supabase.from("budgets").update(patch).eq("id", budget.id);
       if (error) logger.warn("[BudgetEditorV2] backfill imóvel/cliente falhou:", error.message);
       if (!error && inheritedFields.length > 0 && inheritedFromId) {
-        const { error: auditError } = await supabase.from("budget_inheritance_audit").insert({
+        const { error: auditError } = await supabase.from("budget_inheritance_audit").insert([{
           budget_id: budget.id,
           source_budget_id: inheritedFromId,
           inherited_fields: inheritedFields,
           field_values: inheritedValues,
           source: "editor_backfill",
-        });
+        }]);
         if (auditError) logger.warn("[BudgetEditorV2] auditoria de herança falhou:", auditError.message);
       }
     })();
