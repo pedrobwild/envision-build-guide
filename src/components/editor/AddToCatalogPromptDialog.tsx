@@ -281,7 +281,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
             unit_of_measure: row.unit_of_measure,
             similarity: tokenSimilarity(trimmed, row.name),
           }))
-          .filter((d) => d.similarity >= 0.5)
+          .filter((d) => d.similarity >= 0.6)
           .sort((a, b) => b.similarity - a.similarity)
           .slice(0, 4);
         setDuplicates(ranked);
