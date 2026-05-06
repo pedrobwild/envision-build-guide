@@ -1,6 +1,16 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText, Link2, Copy, ExternalLink, Download, FileSpreadsheet, FileDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Loader2, Check, X, RotateCcw, Save, FileText, Link2, Copy, ExternalLink, Download, FileSpreadsheet, FileDown, ChevronDown, MoreHorizontal, Send, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -107,6 +117,74 @@ function AutoSaveChip({ status, lastSavedAt, onRetry }: { status: SaveStatus; la
   }
 
   return null;
+}
+
+/**
+ * Botão de Publicar com confirmação explícita — separado do auto-save de rascunho.
+ * O auto-save (chip "Salvo") cuida do rascunho continuamente; este botão envia
+ * a versão visível ao cliente e por isso exige confirmação.
+ */
+function PublishButton({
+  onConfirm,
+  publishing,
+  isAlreadyPublished,
+}: {
+  onConfirm: () => void;
+  publishing: boolean;
+  isAlreadyPublished: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="default"
+        className="h-9 sm:h-8 px-3 text-xs gap-1.5 shrink-0"
+        onClick={() => setOpen(true)}
+        disabled={publishing}
+        aria-label={publishing ? "Publicando" : "Publicar versão"}
+      >
+        {publishing ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Send className="h-3.5 w-3.5" />
+        )}
+        <span className="hidden sm:inline">
+          {publishing ? "Publicando…" : isAlreadyPublished ? "Republicar" : "Publicar"}
+        </span>
+        <span className="sm:hidden">{publishing ? "…" : "Publicar"}</span>
+      </Button>
+
+      <AlertDialog open={open} onOpenChange={(o) => !publishing && setOpen(o)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-primary" />
+              {isAlreadyPublished ? "Republicar versão visível ao cliente?" : "Publicar para o cliente?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {isAlreadyPublished
+                ? "Esta ação substitui o conteúdo que o cliente vê no link público pelo estado atual. O link permanece o mesmo, mas o conteúdo muda imediatamente."
+                : "O orçamento ficará visível ao cliente no link público. Suas edições já estão sendo salvas como rascunho automaticamente — só publique quando estiver pronto para enviar."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={publishing}>Continuar editando</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setOpen(false);
+                onConfirm();
+              }}
+              disabled={publishing}
+            >
+              {isAlreadyPublished ? "Sim, republicar" : "Sim, publicar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 }
 
 export function StickyEditorHeader({
@@ -391,21 +469,11 @@ export function StickyEditorHeader({
           </div>
 
           {onPublish && (
-            <Button
-              size="sm"
-              className="h-9 sm:h-8 px-3 text-xs gap-1.5 shrink-0"
-              onClick={onPublish}
-              disabled={publishing}
-              aria-label={publishing ? "Publicando" : "Salvar e Publicar"}
-            >
-              {publishing ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5" />
-              )}
-              <span className="hidden sm:inline">{publishing ? "Publicando…" : "Salvar e Publicar"}</span>
-              <span className="sm:hidden">{publishing ? "…" : "Publicar"}</span>
-            </Button>
+            <PublishButton
+              onConfirm={onPublish}
+              publishing={!!publishing}
+              isAlreadyPublished={budget.is_published_version === true}
+            />
           )}
 
           {primaryAction && (
