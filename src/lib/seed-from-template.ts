@@ -1,33 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Json } from "@/integrations/supabase/types";
 import { applyDefaultMediaWithGuardrail } from "@/lib/apply-default-media";
 
 import { logger } from "@/lib/logger";
-
-interface TemplateSectionRow {
-  id: string;
-  title: string;
-  subtitle: string | null;
-  order_index: number;
-  notes: string | null;
-  tags: unknown;
-  included_bullets: unknown;
-  excluded_bullets: unknown;
-  is_optional: boolean;
-}
-
-interface TemplateItemRow {
-  title: string;
-  description: string | null;
-  unit: string | null;
-  qty: number | null;
-  order_index: number;
-  coverage_type: string;
-  reference_url: string | null;
-  internal_unit_price: number | null;
-  internal_total: number | null;
-  bdi_percentage: number | null;
-}
 
 export interface SeedProgress {
   /** Fase atual em linguagem humana (ex.: "Limpando seções existentes…") */
