@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
+import { MediaUploadSection } from "@/components/editor/MediaUploadSection";
 import { CrossPipelineStrip } from "@/components/budget/CrossPipelineStrip";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
