@@ -60,7 +60,7 @@ export default function BudgetEditorV2() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-  const lastSavePayload = useRef<{ field: string; value: unknown } | null>(null);
+  const pendingBudgetUpdates = useRef<Record<string, unknown>>({});
   const saveErrorCount = useRef(0);
   const errorToastId = useRef<string | number | null>(null);
   const [activeTab, setActiveTab] = useState("planilha");
@@ -557,6 +557,72 @@ export default function BudgetEditorV2() {
   }, [budgetId, user, navigate]);
 
 
+  const flushPendingBudgetUpdates = useCallback(async () => {
+    if (!budgetId) return true;
+
+    const payload = {
+      ...(() => {
+        try {
+          return JSON.parse(localStorage.getItem(`budget-offline-queue:${budgetId}`) || "{}");
+        } catch {
+          return {};
+        }
+      })(),
+      ...pendingBudgetUpdates.current,
+    } as Record<string, unknown>;
+
+    if (Object.keys(payload).length === 0) return true;
+
+    const { error } = await supabase
+      .from("budgets")
+      .update(payload)
+      .eq("id", budgetId);
+
+    if (error) {
+      Object.entries(payload).forEach(([field, fieldValue]) => {
+        enqueueOfflineSave(budgetId, field, fieldValue);
+      });
+      saveErrorCount.current += 1;
+      setSaveStatus("error");
+      if (errorToastId.current) toast.dismiss(errorToastId.current);
+      const persistent = saveErrorCount.current >= 2;
+      errorToastId.current = toast.error(
+        "Sem conexão — alteração salva localmente.",
+        {
+          duration: Infinity,
+          description: persistent
+            ? "Vamos tentar enviar novamente automaticamente quando a conexão voltar."
+            : "Sua edição não será perdida.",
+          action: {
+            label: "Tentar novamente",
+            onClick: () => {
+              void flushPendingBudgetUpdates();
+            },
+          },
+        }
+      );
+      return false;
+    }
+
+    pendingBudgetUpdates.current = {};
+    try { localStorage.removeItem(`budget-offline-queue:${budgetId}`); } catch { /* ignore */ }
+    saveErrorCount.current = 0;
+    if (errorToastId.current) { toast.dismiss(errorToastId.current); errorToastId.current = null; }
+    setSaveStatus("saved");
+    setLastSavedAt(new Date());
+    setTimeout(() => {
+      setSaveStatus(prev => prev === "saved" ? "idle" : prev);
+    }, 3000);
+    return true;
+  }, [budgetId]);
+
+  const persistPendingBudgetUpdatesLocally = useCallback(() => {
+    if (!budgetId) return;
+    Object.entries(pendingBudgetUpdates.current).forEach(([field, value]) => {
+      enqueueOfflineSave(budgetId, field, value);
+    });
+  }, [budgetId]);
+
   const autoSaveBudgetField = useCallback((field: string, value: unknown) => {
     if (!budgetId) return;
     if (PROTECTED_FIELDS.current.has(field)) {
@@ -569,58 +635,17 @@ export default function BudgetEditorV2() {
       void forkPublishedThenEdit(field, value);
       return;
     }
-    lastSavePayload.current = { field, value };
+    pendingBudgetUpdates.current = {
+      ...pendingBudgetUpdates.current,
+      [field]: value,
+    };
     setSaveStatus("saving");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      // Flush qualquer pendência anterior junto com o save atual.
-      const pending = (() => {
-        try { return JSON.parse(localStorage.getItem(`budget-offline-queue:${budgetId}`) || "{}"); } catch { return {}; }
-      })();
-      const payload = { ...pending, [field]: value };
-
-      const { error } = await supabase
-        .from("budgets")
-        .update(payload as Record<string, unknown>)
-        .eq("id", budgetId);
-      if (error) {
-        // Persistência local: não perdemos a edição mesmo se a rede/RLS falhar.
-        enqueueOfflineSave(budgetId, field, value);
-        saveErrorCount.current += 1;
-        setSaveStatus("error");
-        if (errorToastId.current) toast.dismiss(errorToastId.current);
-        const persistent = saveErrorCount.current >= 2;
-        errorToastId.current = toast.error(
-          "Sem conexão — alteração salva localmente.",
-          {
-            duration: Infinity,
-            description: persistent
-              ? "Vamos tentar enviar novamente automaticamente quando a conexão voltar."
-              : "Sua edição não será perdida.",
-            action: {
-              label: "Tentar novamente",
-              onClick: () => {
-                if (lastSavePayload.current) {
-                  autoSaveBudgetField(lastSavePayload.current.field, lastSavePayload.current.value);
-                }
-              },
-            },
-          }
-        );
-      } else {
-        // Sucesso — limpa fila local (foi flushada junto no UPDATE acima).
-        try { localStorage.removeItem(`budget-offline-queue:${budgetId}`); } catch { /* ignore */ }
-        saveErrorCount.current = 0;
-        if (errorToastId.current) { toast.dismiss(errorToastId.current); errorToastId.current = null; }
-        setSaveStatus("saved");
-        setLastSavedAt(new Date());
-        // Reset to idle after 3 seconds
-        setTimeout(() => {
-          setSaveStatus(prev => prev === "saved" ? "idle" : prev);
-        }, 3000);
-      }
+      autoSaveTimer.current = null;
+      await flushPendingBudgetUpdates();
     }, 600);
-  }, [budgetId, isPublishedVersion, forkPublishedThenEdit]);
+  }, [budgetId, isPublishedVersion, forkPublishedThenEdit, flushPendingBudgetUpdates]);
 
   // C3: Cancel auto-save timer on unmount
   useEffect(() => {
@@ -671,10 +696,8 @@ export default function BudgetEditorV2() {
   }, [budgetId, budget, isPublishedVersion]);
 
   const retrySave = useCallback(() => {
-    if (lastSavePayload.current) {
-      autoSaveBudgetField(lastSavePayload.current.field, lastSavePayload.current.value);
-    }
-  }, [autoSaveBudgetField]);
+    void flushPendingBudgetUpdates();
+  }, [flushPendingBudgetUpdates]);
 
   const handleSaveAndPublish = async () => {
     if (!budgetId || !budget) return;
