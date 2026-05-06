@@ -14,6 +14,7 @@ import {
   AlertTriangle, Paperclip, Rows3, Rows4, MoreVertical, Building2, BadgePercent, MinusCircle,
 } from "lucide-react";
 import { EmptyState } from "@/components/editor/EmptyState";
+import { enqueueRowUpdate, flushSectionsQueue, hasSectionsPending } from "@/lib/sections-offline-queue";
 import { ItemImageLightbox } from "@/components/editor/ItemImageLightbox";
 import { ItemDetailSheet } from "@/components/editor/ItemDetailSheet";
 import { MobileItemEditor } from "@/components/editor/MobileItemEditor";
