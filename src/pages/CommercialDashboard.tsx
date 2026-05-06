@@ -287,7 +287,7 @@ export default function CommercialDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useUserProfile();
+  const { profile, isAdmin, isOrcamentista } = useUserProfile();
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [syncedBudgetIds, setSyncedBudgetIds] = useState<Set<string>>(new Set());
@@ -437,13 +437,13 @@ export default function CommercialDashboard() {
 
   async function loadData() {
     setLoading(true);
-    const isAdmin = profile?.roles.includes("admin");
+    const canManageAll = isAdmin || isOrcamentista;
     let budgetQuery = supabase
       .from("budgets")
       .select("id, client_id, property_id, client_name, project_name, property_type, city, bairro, internal_status, priority, due_at, created_at, updated_at, generated_at, last_viewed_at, view_count, commercial_owner_id, estimator_owner_id, public_id, status, version_number, version_group_id, is_current_version, is_published_version, sequential_code, budget_pdf_url, manual_total, pipeline_id, client_phone, floor_plan_url")
       .order("created_at", { ascending: false });
 
-    if (!isAdmin) {
+    if (!canManageAll) {
       // Visibilidade do comercial: orçamentos atribuídos a ele OU orçamentos
       // sem owner comercial em qualquer etapa relevante do funil
       // (do MQL ao fechamento). Combinamos o filtro de versão atual com o de
@@ -592,13 +592,13 @@ export default function CommercialDashboard() {
     return c;
   }, [dedupedBudgets]);
 
-  const isAdmin = profile?.roles.includes("admin");
+  const canManageAll = isAdmin || isOrcamentista;
 
   const commercialOptions = useMemo(() => {
-    if (!isAdmin) return [];
+    if (!canManageAll) return [];
     const ids = [...new Set(budgets.map(b => b.commercial_owner_id).filter(Boolean))] as string[];
     return ids.map(id => ({ id, name: getProfileName(id) })).sort((a, b) => a.name.localeCompare(b.name));
-  }, [isAdmin, budgets, getProfileName]);
+  }, [canManageAll, budgets, getProfileName]);
 
   // Lookup pipeline_id from active slug for filtering
   const activePipelineId = useMemo(() => {
