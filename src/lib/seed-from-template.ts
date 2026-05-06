@@ -55,27 +55,17 @@ export async function seedFromTemplate(
   };
 
   report("Verificando seções existentes…", 2);
-  // Delete existing items first, then sections
-  const { data: existingSections } = await supabase
-    .from("sections")
-    .select("id")
-    .eq("budget_id", budgetId);
-
-  const sectionIds = existingSections?.map(s => s.id) ?? [];
-  if (sectionIds.length > 0) {
-    report("Limpando itens existentes…", 6);
-    const { error: itemsDelErr } = await supabase.from("items").delete().in("section_id", sectionIds);
-    if (itemsDelErr) throw new Error(`Falha ao limpar itens existentes: ${itemsDelErr.message}`);
-  }
-  report("Limpando seções existentes…", 10);
-  const { error: secDelErr } = await supabase.from("sections").delete().eq("budget_id", budgetId);
-  if (secDelErr) throw new Error(`Falha ao limpar seções existentes: ${secDelErr.message}`);
 
   if (!templateId) {
+    // Sem template: limpa via RPC (bypass de RLS) + aplica default sections via TS
+    report("Limpando seções existentes…", 10);
+    const { error: clearErr } = await supabase.rpc("seed_budget_from_template", {
+      p_budget_id: budgetId,
+      p_template_id: null,
+    });
+    if (clearErr) throw new Error(`Falha ao limpar seções: ${clearErr.message}`);
+
     report("Aplicando mídia padrão…", 30);
-    // Guardrail: nunca sobrescreve upload manual. Aplica padrão em camadas
-    // (template selecionado → primeiro ativo → hardcoded) somente se o
-    // orçamento ainda não tiver mídia.
     try {
       const result = await applyDefaultMediaWithGuardrail(budgetId, null);
       if (result.applied && result.source === "hardcoded_fallback") {
