@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { BudgetBreakdownPanel } from "@/components/budget/BudgetBreakdownPanel";
+import { MediaUploadSection } from "@/components/editor/MediaUploadSection";
 import { CrossPipelineStrip } from "@/components/budget/CrossPipelineStrip";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
@@ -1247,9 +1248,10 @@ export default function BudgetInternalDetail() {
                 {
                   key: "media",
                   icon: ImageIcon,
-                  label: "Mídias & Projetos",
-                  description: "Vídeos 3D, fotos e PDFs.",
-                  onClick: () => navigate(`/admin/budget/${budget.id}`),
+                  label: "Mídias & Anexos",
+                  description: "Fotos da planta, estado do imóvel, renders 3D, vídeos e referências.",
+                  active: activeModule === "media",
+                  onClick: () => setActiveModule("media"),
                 },
                 {
                   key: "client",
@@ -1515,6 +1517,13 @@ export default function BudgetInternalDetail() {
                     />
                   )}
 
+                  {activeModule === "media" && (
+                    <MediaUploadSection
+                      publicId={budget.public_id || budget.id}
+                      budgetId={budget.id}
+                    />
+                  )}
+
                   {activeModule === "activities" && (
                     <div className="space-y-6">
                       <BudgetEventsTimeline events={events} getProfileName={getProfileName} />
@@ -1738,7 +1747,7 @@ const moduleTitles: Record<ModuleKey, string> = {
   activities: "Atividades & Notas",
   meetings: "Reuniões",
   conversations: "Conversas",
-  media: "Mídias & Projetos",
+  media: "Mídias & Anexos",
   client: "Cliente",
   versions: "Versões & PDFs",
   lost: "Marcar como perdida",
@@ -1751,7 +1760,7 @@ const moduleSubtitles: Record<ModuleKey, string> = {
   activities: "Histórico cronológico e notas internas da equipe.",
   meetings: "Gravações e transcrições integradas.",
   conversations: "Mensagens e canais de atendimento.",
-  media: "Vídeos 3D, fotos e PDFs do projeto.",
+  media: "Anexe fotos da planta, estado do imóvel, renders 3D, vídeos e PDFs do projeto.",
   client: "Informações detalhadas do cliente, imóvel e equipe.",
   versions: "Histórico de versões publicadas.",
   lost: "Registre o motivo estruturado da perda.",
