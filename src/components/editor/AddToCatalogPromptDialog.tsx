@@ -34,7 +34,19 @@ interface DuplicateSuggestion {
   similarity: number;
 }
 
-/** Normalize string for similarity comparison: lowercase, strip accents, collapse whitespace. */
+/** Singularize trivial Portuguese plurals so 'torneiras' matches 'torneira'.
+ *  Heuristic only — fine for catalog item-name comparison. */
+function singularizePt(token: string): string {
+  if (token.length <= 3) return token;
+  if (token.endsWith("oes") || token.endsWith("aes") || token.endsWith("aos")) return token.slice(0, -3) + "ao";
+  if (token.endsWith("ais") || token.endsWith("eis") || token.endsWith("ois") || token.endsWith("uis")) return token.slice(0, -2) + "l";
+  if (token.endsWith("ns")) return token.slice(0, -2) + "m";
+  if (token.endsWith("res") || token.endsWith("ses") || token.endsWith("zes")) return token.slice(0, -2);
+  if (token.endsWith("s")) return token.slice(0, -1);
+  return token;
+}
+
+/** Normalize string for similarity comparison: lowercase, strip accents, singularize, collapse whitespace. */
 function normalizeForCompare(s: string): string {
   return s
     .toLowerCase()
@@ -42,7 +54,10 @@ function normalizeForCompare(s: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^\w\s]/g, " ")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .split(" ")
+    .map(singularizePt)
+    .join(" ");
 }
 
 /** Token-based Jaccard similarity (0..1). Cheap and good enough for short item names. */
@@ -266,7 +281,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
             unit_of_measure: row.unit_of_measure,
             similarity: tokenSimilarity(trimmed, row.name),
           }))
-          .filter((d) => d.similarity >= 0.5)
+          .filter((d) => d.similarity >= 0.6)
           .sort((a, b) => b.similarity - a.similarity)
           .slice(0, 4);
         setDuplicates(ranked);
@@ -485,6 +500,16 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
   };
 
 
+  /** Reuse an existing catalog item instead of creating a duplicate.
+   *  Hands its id off to the editor exactly like a freshly-created one,
+   *  but with a no-op undo (we didn't create anything new). */
+  const handleUseExisting = (existing: DuplicateSuggestion) => {
+    const sectionsToLink = Array.from(new Set(selectedSections.filter(Boolean)));
+    onCreated?.(existing.id, existing.item_type, sectionsToLink, async () => {});
+    toast.success(`Vinculado a "${existing.name}" — sem cadastro duplicado.`);
+    onOpenChange(false);
+  };
+
   const handleSkip = () => {
     onOpenChange(false);
   };
@@ -594,22 +619,19 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
             )}
           </div>
 
-          {/* Aviso de possíveis duplicatas */}
+          {/* Sugestão informativa de itens parecidos — não bloqueia, oferece reuso em 1 clique */}
           {duplicates.length > 0 && !duplicatesDismissed && (
-            <div
-              role="alert"
-              className="rounded-md border border-warning/40 bg-warning/10 p-3 space-y-2"
-            >
+            <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                <Sparkles className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">
                     {duplicates.length === 1
-                      ? "Já existe um item parecido no catálogo"
+                      ? "Já existe um item parecido — quer reusar?"
                       : `${duplicates.length} itens parecidos no catálogo`}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    Verifique se não está duplicando antes de criar um novo.
+                    Vincule o existente em vez de criar um novo cadastro.
                   </p>
                 </div>
               </div>
@@ -617,7 +639,7 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
                 {duplicates.map((d) => (
                   <li
                     key={d.id}
-                    className="flex items-center gap-2 rounded-sm bg-background/60 px-2 py-1.5 text-xs"
+                    className="flex items-center gap-2 rounded-sm bg-background/80 px-2 py-1.5 text-xs"
                   >
                     {d.item_type === "product" ? (
                       <Package className="h-3 w-3 text-primary flex-shrink-0" />
@@ -631,6 +653,15 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
                     <span className="text-[10px] text-muted-foreground tabular-nums">
                       {Math.round(d.similarity * 100)}%
                     </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-[11px] px-2"
+                      onClick={() => handleUseExisting(d)}
+                    >
+                      Usar este
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -639,10 +670,10 @@ export function AddToCatalogPromptDialog({ open, onOpenChange, suggested, onCrea
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs"
+                  className="h-7 text-xs text-muted-foreground"
                   onClick={() => setDuplicatesDismissed(true)}
                 >
-                  Criar mesmo assim
+                  Criar novo mesmo assim
                 </Button>
               </div>
             </div>
