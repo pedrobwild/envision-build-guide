@@ -110,8 +110,11 @@ function openWithMode(trace: OpenBudgetTrace, mode: OpenMode = getOpenMode()) {
 
   // new_tab / auto: abre stub agora (dentro do gesto)
   const win = typeof window !== "undefined"
-    ? window.open("about:blank", "_blank", "noopener,noreferrer")
+    ? window.open("about:blank", "_blank")
     : null;
+  // Proteção manual contra reverse tabnabbing (equivalente a noopener),
+  // sem o efeito colateral de window.open retornar null em alguns browsers.
+  if (win) { try { (win as Window).opener = null; } catch { /* cross-origin */ } }
   trace.setPopupBlocked(!win);
 
   return {
